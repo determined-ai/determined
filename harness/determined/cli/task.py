@@ -166,6 +166,11 @@ def pause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_PauseGenericTask(sess, taskId=args.task_id)
 
+@authentication.required
+def resume(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_ResumeGenericTask(sess, taskId=args.task_id)
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
@@ -333,6 +338,14 @@ args_description: List[Any] = [
                 "pause",
                 pause,
                 "pause task",
+                [
+                    Arg("task_id", type=str, help=""),
+                ],
+            ),
+            Cmd(
+                "resume",
+                resume,
+                "resume task",
                 [
                     Arg("task_id", type=str, help=""),
                 ],

@@ -19130,6 +19130,30 @@ def post_PauseGenericTask(
         return None
     raise APIHttpError("post_PauseGenericTask", _resp)
 
+def post_ResumeGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Resume the requested task.
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/resume",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return None
+    raise APIHttpError("post_ResumeGenericTask", _resp)
+
 def post_KillTensorboard(
     session: "api.Session",
     *,
