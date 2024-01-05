@@ -1553,7 +1553,6 @@ class PyTorchTrial(det.LegacyTrial):
         """
         return {}
 
-    @abstractmethod
     def evaluate_batch(self, batch: pytorch.TorchData, batch_idx: int) -> Dict[str, Any]:
         """
         Calculate validation metrics for a batch and return them as a
@@ -1587,7 +1586,6 @@ class PyTorchTrial(det.LegacyTrial):
         """
         return pytorch.Reducer.AVG
 
-    @abstractmethod
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         """
         Calculate validation metrics on the entire validation dataset and
