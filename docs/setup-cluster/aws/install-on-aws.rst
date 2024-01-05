@@ -61,16 +61,19 @@ The basic command to deploy a cluster is as follows:
 
    det deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
-``CLUSTER_ID`` is an arbitrary unique identifier (ID) for your cluster. You should pick a name that's easy
-to remember and reflects the purpose of your cluster. This ID is also used as the name for the AWS CloudFormation stack.
+``CLUSTER_ID`` is an arbitrary unique identifier (ID) for your cluster. You should pick a name
+that's easy to remember and reflects the purpose of your cluster. This ID is also used as the name
+for the AWS CloudFormation stack.
 
-``KEYPAIR_NAME`` refers to the name of the AWS EC2 key pair that you'll use for your cluster. If you have
-the AWS CLI installed on your machine, you can find out the names of available key pairs by running ``aws ec2 describe-key-pairs``.
+``KEYPAIR_NAME`` refers to the name of the AWS EC2 key pair that you'll use for your cluster. If you
+have the AWS CLI installed on your machine, you can find out the names of available key pairs by
+running ``aws ec2 describe-key-pairs``.
 
-Setting up the cluster usually takes between 5 to 10 minutes. Once it's done, you'll see summary information 
-that includes the URL for the Determined master.
+Setting up the cluster usually takes between 5 to 10 minutes. Once it's done, you'll see summary
+information that includes the URL for the Determined master.
 
-If you want to easily save your work in JupyterLab on AWS, make sure to add either ``--deployment-type efs`` or ``--deployment-type fsx`` to your deployment command.
+If you want to easily save your work in JupyterLab on AWS, make sure to add either
+``--deployment-type efs`` or ``--deployment-type fsx`` to your deployment command.
 
 .. _determined-deploy-deployment-types:
 
