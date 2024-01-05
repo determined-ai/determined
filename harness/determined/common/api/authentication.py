@@ -204,6 +204,9 @@ def logout(
 ) -> None:
     """
     Logout if there is an active session for this master/username pair, otherwise do nothing.
+
+    Additionally, if the user happens to be the active user, drop the active user from the
+    TokenStore.
     """
 
     master_address = master_address or util.get_default_master_address()
@@ -214,6 +217,9 @@ def logout(
 
     if session_user is None:
         return
+
+    if session_user == token_store.get_active_user():
+        token_store.clear_active()
 
     session_token = token_store.get_token(session_user)
 
@@ -240,6 +246,8 @@ def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> Non
     for user in users:
         logout(master_address, user, cert)
 
+    token_store.clear_active()
+
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
     """
@@ -258,7 +266,8 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
 class TokenStore:
     """
     TokenStore is a class for reading/updating a persistent store of user authentication tokens.
-    TokenStore can remember tokens for many users for each of many masters.
+    TokenStore can remember tokens for many users for each of many masters.  It can also remembers
+    one "active user" for each master, which is set via `det user login`.
 
     All updates to the file follow a read-modify-write pattern, and use file locks to protect the
     integrity of the underlying file cache.
@@ -304,8 +313,6 @@ class TokenStore:
             tokens = substore.setdefault("tokens", {})
             if username in tokens:
                 del tokens[username]
-            if substore.get("active_user") == username:
-                del substore["active_user"]
 
     def set_token(self, username: str, token: str) -> None:
         with self._persistent_store() as substore:
@@ -318,6 +325,10 @@ class TokenStore:
             if username not in tokens:
                 raise api.errors.UnauthenticatedException(username=username)
             substore["active_user"] = username
+
+    def clear_active(self) -> None:
+        with self._persistent_store() as substore:
+            substore.pop("active_user", None)
 
     @contextlib.contextmanager
     def _persistent_store(self) -> Iterator[Dict[str, Any]]:
