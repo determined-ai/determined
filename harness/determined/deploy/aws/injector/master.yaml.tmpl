@@ -57,7 +57,7 @@ security:
     key: /etc/determined/master.key
 {{ end }}
 
-{{ if ne .lore_version "" }}
+{{ if ne .genai_version "" }}
 feature_switches:
   - genai
 
