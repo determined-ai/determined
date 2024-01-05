@@ -3,7 +3,7 @@ codecov:
   notify:
     wait_for_ci: no
 
-# Coverage of backend PRs must be at least 80% with 5% leeway.
+# Backend code coverage must be >= 37% +/- 3%. Backend PR coverage must be >= 80% +/- 5%.
 coverage:
   status:
     project:
@@ -14,7 +14,8 @@ coverage:
         threshold: 3%
         flags: 
           - backend
-    patch:
+        informational: false
+    patch: 
       default:
         informational: true
       backend: 
@@ -22,6 +23,7 @@ coverage:
         threshold: 5%
         flags: 
           - backend
+        informational: false
 
 flags:
   backend:
