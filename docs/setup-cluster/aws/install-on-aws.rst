@@ -6,11 +6,11 @@
 
 This user guide describes how to deploy a Determined cluster on Amazon Web Services (AWS). The
 :ref:`det deploy <determined-deploy>` tool makes it easy to create and install these resources. If
-you would rather create the cluster manually, see the :ref:`aws-manual-deployment` section below.
+you would rather create the cluster manually, visit :ref:`aws-manual-deployment`.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 
-For more information about using Determined on AWS, see the :ref:`topic_guide_aws` topic guide.
+For more information about using Determined on AWS, visit :ref:`topic_guide_aws`.
 
 .. _determined-deploy:
 
@@ -61,16 +61,19 @@ The basic command to deploy a cluster is as follows:
 
    det deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
-``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We recommend choosing a cluster ID
-that is memorable and helps identify what the cluster is being used for. The cluster ID will be used
-as the AWS CloudFormation stack name.
+``CLUSTER_ID`` is an arbitrary unique identifier (ID) for your cluster. You should pick a name
+that's easy to remember and reflects the purpose of your cluster. This ID is also used as the name
+for the AWS CloudFormation stack.
 
-``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when provisioning the cluster. If the
-AWS CLI is installed on your machine, you can get a list of the available keypair names by running
-``aws ec2 describe-key-pairs``.
+``KEYPAIR_NAME`` refers to the name of the AWS EC2 key pair that you'll use for your cluster. If you
+have the AWS CLI installed on your machine, you can find out the names of available key pairs by
+running ``aws ec2 describe-key-pairs``.
 
-The deployment process may take 5--10 minutes. When it completes, summary information about the
-newly deployed cluster will be printed, including the URL of the Determined master.
+Setting up the cluster usually takes between 5 to 10 minutes. Once it's done, you'll see summary
+information that includes the URL for the Determined master.
+
+If you want to easily save your work in JupyterLab on AWS, make sure to add either
+``--deployment-type efs`` or ``--deployment-type fsx`` to your deployment command.
 
 .. _determined-deploy-deployment-types:
 
@@ -367,7 +370,7 @@ To modify an already deployed cluster you have a few options:
    cluster using ``det deploy``. Use the same full ``det deploy`` command as on cluster creation,
    but update the options as necessary, while keeping the ``cluster-id`` the same. ``det deploy``
    will then find the existing cluster, take it down, and spin up a new one with the updated
-   options.
+   options. Your experiment data is not deleted.
 
 #. If you want more control over the master configuration while minimizing downtime, you can SSH
    into the master instance using the private key from the keypair that was used to provision the

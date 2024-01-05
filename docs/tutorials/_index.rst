@@ -43,7 +43,10 @@ Examples let you build off of an existing model that already runs on Determined.
 
 .. toctree::
    :hidden:
-   :glob:
 
-   ./*
-   ./*/_index
+   Quickstart for Model Developers <quickstart-mdldev>
+   Running Your First Experiment <pytorch-mnist-local-qs>
+   Porting Your PyTorch Model to Determined <pytorch-mnist-tutorial>
+   Get Started with Detached Mode <detached-mode/_index>
+   Viewing Epoch-Based Metrics in the WebUI <viewing-epoch-based-metrics>
+   Using Pachyderm to Create a Batch Inferencing Pipeline <pachyderm-cat-dog>
