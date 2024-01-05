@@ -1,18 +1,17 @@
 //go:build integration
 // +build integration
 
-package db
+package command
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetCommandOwnerID(t *testing.T) {

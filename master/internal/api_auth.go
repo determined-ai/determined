@@ -143,7 +143,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 
 	serviceNotFoundErr := api.NotFoundErrs("service", fmt.Sprint(taskID), false)
 
-	spec, err := db.IdentifyTask(ctx, taskID)
+	spec, err := command.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
 		// Check if it's an experiment.
 		e, err := db.ExperimentByTaskID(ctx, taskID)

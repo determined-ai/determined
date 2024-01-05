@@ -1,6 +1,5 @@
-package db
+package command
 
-// TODO(DET-10003) move this file to internal/command.
 import (
 	"context"
 	"database/sql"
@@ -8,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -19,12 +19,12 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 		OwnerID       model.UserID `bun:"owner_id"`
 	}{}
 
-	if err := Bun().NewSelect().Model(ownerIDBun).
+	if err := db.Bun().NewSelect().Model(ownerIDBun).
 		ColumnExpr("generic_command_spec->'Base'->'Owner'->'id' AS owner_id").
 		Where("task_id = ?", taskID).
 		Scan(ctx); err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
-			return 0, ErrNotFound
+			return 0, db.ErrNotFound
 		}
 		return 0, err
 	}
@@ -45,7 +45,7 @@ type TaskMetadata struct {
 // Returns db.ErrNotFound if a command with given taskID does not exist.
 func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error) {
 	metadata := TaskMetadata{}
-	if err := Bun().NewSelect().Model(&metadata).
+	if err := db.Bun().NewSelect().Model(&metadata).
 		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
 		// TODO(DET-10004) TaskType needs
 		// to have ->> instead of -> so task_type doesn't get surrounded by double quotes.
@@ -55,7 +55,7 @@ func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error
 		Where("task_id = ?", taskID).
 		Scan(ctx); err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
-			return metadata, ErrNotFound
+			return metadata, db.ErrNotFound
 		}
 		return metadata, err
 	}
