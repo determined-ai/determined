@@ -456,6 +456,7 @@ args_description: ArgsDescription = [
                     Arg(
                         "--smaller-is-better",
                         type=string_to_bool,
+                        metavar="(true|false)",
                         default=None,
                         help="The sort order for metrics when using --best with --sort-by. For "
                         "example, 'accuracy' would require passing '--smaller-is-better false'. If "
