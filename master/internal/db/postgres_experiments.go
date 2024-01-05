@@ -461,12 +461,12 @@ func AddExperiment(
 }
 
 func upsertExperiment(
-	ctx context.Context, idb bun.Tx, rc *model.RunCollection, activeConfigBytes []byte,
+	ctx context.Context, tx bun.Tx, rc *model.RunCollection, activeConfigBytes []byte,
 ) (expID int, experimentExists bool, err error) {
 	if rc.ExternalRunCollectionID == nil { // Can't conflict with a null key.
 		return 0, false, nil
 	}
-	if err := takeAdvisoryLock(ctx, idb, *rc.ExternalRunCollectionID); err != nil {
+	if err := takeAdvisoryLock(ctx, tx, "externalRCID"+*rc.ExternalRunCollectionID); err != nil {
 		return 0, false, fmt.Errorf("locking around external_experiment_id %s: %w",
 			*rc.ExternalRunCollectionID, err)
 	}
@@ -477,7 +477,7 @@ func upsertExperiment(
 		RunCollectionID int
 		HasExperiment   bool
 	}
-	if err := idb.NewSelect().Model(&res).
+	if err := tx.NewSelect().Model(&res).
 		ColumnExpr("id AS run_collection_id").
 		ColumnExpr("e.run_collection_id IS NOT NULL AS has_experiment").
 		Join("LEFT JOIN experiments_v2 e ON e.run_collection_id = run_collections.id").
@@ -496,7 +496,7 @@ func upsertExperiment(
 			*rc.ExternalRunCollectionID, res.RunCollectionID)
 	}
 
-	if _, err := idb.NewUpdate().Model(&model.ExperimentV2{}).
+	if _, err := tx.NewUpdate().Model(&model.ExperimentV2{}).
 		Set("config = ?", string(activeConfigBytes)).
 		Where("run_collection_id = ?", res.RunCollectionID).
 		Exec(ctx); err != nil {
