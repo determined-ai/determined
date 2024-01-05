@@ -1,4 +1,3 @@
-import { Space, Typography } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -12,9 +11,11 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import Toggle from 'hew/Toggle';
 import Tooltip from 'hew/Tooltip';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -418,8 +419,8 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const columns = useMemo(() => {
     const tagsRenderer = (_CHART_HEIGHTvalue: string, record: ModelItem) => (
       <div className={css.tagsRenderer}>
-        <Typography.Text
-          ellipsis={{
+        <Label
+          truncate={{
             tooltip: <Tags disabled tags={record.labels ?? []} />,
           }}>
           <div>
@@ -432,7 +433,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
               )}
             />
           </div>
-        </Typography.Text>
+        </Label>
       </div>
     );
 
@@ -673,7 +674,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   return (
     <>
       <div className={css.options}>
-        <Space>
+        <Row>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
@@ -689,7 +690,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
               </div>
             </Tooltip>
           )}
-        </Space>
+        </Row>
       </div>
       {models.length === 0 && !isLoading && filterCount === 0 ? (
         <Message

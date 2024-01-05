@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="model-hub",
-    version="0.26.5-dev0",
+    version="0.27.0-dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -17,7 +17,6 @@ setuptools.setup(
     # libraries that are guaranteed to work with our code.  Other versions
     # may work with model-hub as well but are not officially supported.
     install_requires=[
-        "attrdict",
         "determined>=0.13.11",  # We require custom reducers for PyTorchTrial.
     ],
 )

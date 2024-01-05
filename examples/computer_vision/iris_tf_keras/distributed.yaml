@@ -8,7 +8,7 @@ hyperparameters:
   layer1_dense_size: 16
   global_batch_size: 32
 resources:
-  slots_per_trial: 16 # Use 2 GPUs to train the model.
+  slots_per_trial: 2 # Use 2 GPUs to train the model.
 searcher:
   name: single
   metric: val_categorical_accuracy

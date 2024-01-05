@@ -45,6 +45,7 @@ def test_fasterrcnn_distributed_fake() -> None:
 
 
 @pytest.mark.model_hub_mmdetection
+@pytest.mark.skip(reason="mmdetection requires maintenance")
 def test_retinanet_distributed_fake() -> None:
     example_path = conf.fixtures_path("mmdetection")
     config = conf.load_config(os.path.join(example_path, "distributed_fake_data.yaml"))

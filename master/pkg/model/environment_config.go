@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -30,10 +30,10 @@ type Environment struct {
 	EnvironmentVariables RuntimeItems     `json:"environment_variables,omitempty"`
 	ProxyPorts           ProxyPortsConfig `json:"proxy_ports"`
 
-	Ports          map[string]int    `json:"ports"`
-	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`
-	ForcePullImage bool              `json:"force_pull_image"`
-	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
+	Ports          map[string]int       `json:"ports"`
+	RegistryAuth   *registry.AuthConfig `json:"registry_auth,omitempty"`
+	ForcePullImage bool                 `json:"force_pull_image"`
+	PodSpec        *k8sV1.Pod           `json:"pod_spec"`
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`

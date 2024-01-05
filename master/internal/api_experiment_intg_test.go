@@ -813,6 +813,35 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
 }
 
+func TestSearchExperimentsMalformed(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// No trial doesn't cause errors.
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	req := &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("wow.it's.mean=asc"),
+	}
+	resp, err := api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+
+	req = &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("hp.tests'=asc"),
+	}
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+}
+
 // Test that endpoints don't puke when running against old experiments.
 func TestLegacyExperiments(t *testing.T) {
 	err := etc.SetRootPath("../static/srv")

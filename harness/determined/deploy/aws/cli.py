@@ -30,6 +30,10 @@ def validate_spot_max_price() -> Callable:
     return validate
 
 
+def is_full_git_commit_hash(s: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{40}", s))
+
+
 def parse_add_tag() -> Callable:
     def parse(s: str) -> Tuple[str, str]:
         try:
@@ -69,7 +73,7 @@ def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
         constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
-        constants.deployment_types.LORE: vpc.Lore,
+        constants.deployment_types.GENAI: vpc.Lore,
     }  # type: Dict[str, Type[base.DeterminedDeployment]]
     return deployment_type_map[deployment_type]
 
@@ -116,7 +120,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             val = input(
                 "Deleting an AWS stack will lose all your data, including the created network "
                 "file system. Please back up the file system before deleting it. Do you still "
-                "want to delete the stack? [y/N]"
+                f"want to delete the stack with cluster-id ({args.cluster_id})? [y/N]"
             )
             if val.lower() != "y":
                 print("Delete cancelled.")
@@ -172,13 +176,29 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.db_size is not None and args.db_size < 20:
             raise ValueError("--db-size must be greater than or equal to 20 GB")
 
-    if args.deployment_type != constants.deployment_types.LORE:
-        if args.lore_version is not None:
-            raise ValueError("--lore-version can only be specified for 'lore' deployments")
+    if args.deployment_type != constants.deployment_types.GENAI:
+        if args.genai_version is not None:
+            raise ValueError("--genai-version can only be specified for 'genai' deployments")
+    else:
+        print(
+            colored(
+                "GenAI deployment type is experimental and not ready for production use.",
+                "yellow",
+            )
+        )
+        if args.genai_version is not None and is_full_git_commit_hash(args.genai_version):
+            short_hash = args.genai_version[:7]
+            print(
+                colored(
+                    f"GenAI tags are not full commit hashes. Using {short_hash} instead.",
+                    "yellow",
+                )
+            )
+            args.genai_version = short_hash
 
     if args.deployment_type not in {
         constants.deployment_types.EFS,
-        constants.deployment_types.LORE,
+        constants.deployment_types.GENAI,
     }:
         if args.efs_id is not None:
             raise ValueError("--efs-id can only be specified for 'efs' deployments")
@@ -247,7 +267,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
-        constants.cloudformation.LORE_VERSION: args.lore_version,
+        constants.cloudformation.GENAI_VERSION: args.genai_version,
     }
 
     if args.master_config_template_path:
@@ -262,10 +282,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     if not args.no_preflight_checks:
         check_quotas(det_configs, deployment_object)
-
-    if args.dry_run:
-        print("Dry run complete. Exiting.")
-        return
 
     print("Starting Determined Deployment")
     try:
@@ -437,7 +453,7 @@ args_description = Cmd(
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
-                    help="deployment type",
+                    help="deployment type. GenAI support is experimental.",
                 ),
                 Arg(
                     "--inbound-cidr",
@@ -523,11 +539,6 @@ args_description = Cmd(
                     default="false",
                     help="whether task preemption is supported in the scheduler "
                     "(only configurable for priority scheduler).",
-                ),
-                Arg(
-                    "--dry-run",
-                    action="store_true",
-                    help="only validate flags and check quota. Do not deploy.",
                 ),
                 Arg(
                     "--cpu-env-image",
@@ -637,9 +648,10 @@ args_description = Cmd(
                     "are automatically terminated",
                 ),
                 Arg(
-                    "--lore-version",
+                    "--genai-version",
                     type=str,
-                    help=argparse.SUPPRESS,
+                    help="Specifies the version of GenAI to install. The value must be a valid"
+                    + " GenAI tag available on Docker Hub.",
                 ),
             ],
         ),

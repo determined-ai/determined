@@ -85,6 +85,11 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     assert ckpt.metadata
     assert "newkey" not in ckpt.metadata
 
+    # Test creation of experiment without a model definition
+    with open(conf.fixtures_path("no_op/empty_model_dir.yaml")) as f:
+        config = util.yaml_safe_load(f)
+    exp = client.create_experiment(config)
+
 
 @pytest.mark.e2e_cpu
 def test_checkpoint_apis(client: _client.Determined) -> None:

@@ -24,7 +24,6 @@ import logging
 import os
 from typing import Any, Dict, List
 
-import attrdict
 import mmcv
 import mmcv.parallel
 import mmcv.runner
@@ -36,10 +35,11 @@ import torch
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
+from model_hub import utils
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
-from model_hub.mmdetection import utils as utils
+from model_hub.mmdetection import utils as mmdetutils
 
 
 class MMDetTrial(det_torch.PyTorchTrial):
@@ -55,8 +55,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
         self.context = context
-        self.hparams = attrdict.AttrDict(context.get_hparams())
-        self.data_config = attrdict.AttrDict(context.get_data_config())
+        self.hparams = utils.AttrDict(context.get_hparams())
+        self.data_config = utils.AttrDict(context.get_data_config())
         self.cfg = self.build_mmdet_config()
         # We will control how data is moved to GPU.
         self.context.experimental.disable_auto_to_device()
@@ -69,7 +69,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
         # If use_pretrained, try loading pretrained weights for the mmcv config if available.
         if self.hparams.use_pretrained:
-            ckpt_path, ckpt = utils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)
+            ckpt_path, ckpt = mmdetutils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)
             if ckpt_path is not None:
                 logging.info("Loading from pretrained weights.")
                 if "state_dict" in ckpt:
@@ -117,7 +117,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
             if config_dir is not None:
                 config_file = os.path.join(config_dir, config_file)
             if config_dir is None or not os.path.exists(config_file):
-                raise OSError(f"Config file {self.hparams.config_file} not found.")
+                raise OSError(f"Config file {config_file} not found.")
         cfg = mmcv.Config.fromfile(config_file)
         cfg.data.val.test_mode = True
 
@@ -151,7 +151,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         to see how to configure fp16 training.
         """
         mmcv.runner.wrap_fp16_model(self.model)
-        loss_scaler = utils.build_fp16_loss_scaler(fp16_cfg.loss_scale)
+        loss_scaler = mmdetutils.build_fp16_loss_scaler(fp16_cfg.loss_scale)
         self.loss_scaler = self.context.wrap_scaler(loss_scaler)
         self.context.experimental._auto_amp = True
 

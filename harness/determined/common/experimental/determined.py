@@ -122,12 +122,9 @@ class Determined:
 
         authentication.logout(self._session._master, user, self._session._cert)
 
-    def list_users(self) -> List[user.User]:
+    def list_users(self, active: Optional[bool] = None) -> List[user.User]:
         def get_with_offset(offset: int) -> bindings.v1GetUsersResponse:
-            return bindings.get_GetUsers(
-                session=self._session,
-                offset=offset,
-            )
+            return bindings.get_GetUsers(session=self._session, offset=offset, active=active)
 
         resps = api.read_paginated(get_with_offset)
 
@@ -143,7 +140,7 @@ class Determined:
     def create_experiment(
         self,
         config: Union[str, pathlib.Path, Dict],
-        model_dir: Union[str, pathlib.Path],
+        model_dir: Optional[Union[str, pathlib.Path]] = None,
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> experiment.Experiment:
         """
@@ -153,7 +150,7 @@ class Determined:
         Arguments:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
-            model_dir(string): directory containing model definition.
+            model_dir(string, optional): directory containing model definition. (default: ``None``)
             includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or
             directories to include in the model definition.  (default: ``None``)
         """
@@ -176,7 +173,10 @@ class Determined:
             model_dir = pathlib.Path(model_dir)
 
         path_includes = (pathlib.Path(i) for i in includes or [])
-        model_context = context.read_v1_context(model_dir, includes=path_includes)
+
+        model_context = None
+        if model_dir is not None:
+            model_context = context.read_v1_context(model_dir, includes=path_includes)
 
         req = bindings.v1CreateExperimentRequest(
             # TODO: add this as a param to create_experiment()

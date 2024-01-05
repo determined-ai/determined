@@ -160,7 +160,7 @@ def login(
 @_require_singleton
 def create_experiment(
     config: Union[str, pathlib.Path, Dict],
-    model_dir: str,
+    model_dir: Optional[str] = None,
     includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
 ) -> Experiment:
     """Create an experiment with config parameters and model directory.
@@ -294,10 +294,10 @@ def logout() -> None:
 
 
 @_require_singleton
-def list_users() -> List[User]:
+def list_users(active: Optional[bool] = None) -> List[User]:
     """Get a list of all Users."""
     assert _determined is not None
-    return _determined.list_users()
+    return _determined.list_users(active=active)
 
 
 @_require_singleton

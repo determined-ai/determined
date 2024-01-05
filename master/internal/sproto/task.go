@@ -1,6 +1,7 @@
 package sproto
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -172,6 +173,12 @@ func (a *ResourcesSubscription) Get() ResourcesEvent {
 	return a.inbox.Get()
 }
 
+// GetWithContext blocks until an event is published for our subscription's topic or the context
+// is canceled. When the subscription is closed, ResourcesReleasedEvent is returned.
+func (a *ResourcesSubscription) GetWithContext(ctx context.Context) (ResourcesEvent, error) {
+	return a.inbox.GetWithContext(ctx)
+}
+
 // Close unsubscribes us from further updates.
 func (a *ResourcesSubscription) Close() {
 	a.unsub()
@@ -273,7 +280,7 @@ type (
 		ForcePreemption bool
 		ForceKill       bool
 	}
-	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
+	// ResourcesRuntimeInfo is all the information provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
 		Token        string
 		AgentRank    int

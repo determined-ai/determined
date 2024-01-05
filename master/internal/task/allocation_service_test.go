@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -169,6 +170,111 @@ func TestServiceRendezvous(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, info.Addresses, 1)
 	require.Equal(t, "remotehost", info.Addresses[0])
+}
+
+func TestGracefullyTerminateAfterRestart(t *testing.T) {
+	pgDB := requireDeps(t)
+
+	t.Log("setting up mocks")
+	var rm mocks.ResourceManager
+	subq := queue.New[sproto.ResourcesEvent]()
+	sub := sproto.NewAllocationSubscription(subq, func() {})
+	rm.On("Allocate", mock.Anything).Return(sub, nil).Once()
+	rm.On("Release", mock.Anything).Return().Run(func(args mock.Arguments) {
+		msg := args[0].(sproto.ResourcesReleased)
+		if msg.ResourcesID == nil {
+			subq.Put(sproto.ResourcesReleasedEvent{})
+		}
+	})
+	taskModel := db.RequireMockTask(t, pgDB, nil)
+
+	t.Log("running allocation")
+	var exitFuture atomic.Pointer[AllocationExited]
+	ar := stubAllocateRequest(taskModel)
+	err := DefaultService.StartAllocation(
+		logger.Context{},
+		ar,
+		pgDB,
+		&rm,
+		mockTaskSpecifier{},
+		func(ae *AllocationExited) { exitFuture.Store(ae) },
+	)
+	require.NoError(t, err)
+
+	t.Log("move to the running state and send container addresses")
+	rID, resources := requireAssigned(t, pgDB, ar.AllocationID, subq)
+	subq.Put(&sproto.ResourcesStateChanged{
+		ResourcesID:    rID,
+		ResourcesState: sproto.Running,
+		ResourcesStarted: &sproto.ResourcesStarted{
+			Addresses: []cproto.Address{
+				{
+					ContainerIP:   "localhost",
+					ContainerPort: minLocalRendezvousPort,
+					HostIP:        "remotehost",
+					HostPort:      minLocalRendezvousPort,
+				},
+			},
+		},
+	})
+	requireState(t, pgDB, ar.AllocationID, model.AllocationStateRunning)
+
+	t.Log("do rendezvous (sets ready bit)")
+	info, err := DefaultService.WatchRendezvous(context.TODO(), ar.AllocationID, rID)
+	require.NoError(t, err)
+	require.Len(t, info.Addresses, 1)
+	require.Equal(t, "remotehost", info.Addresses[0])
+	require.True(t, waitForCondition(time.Second, func() bool {
+		state, err := DefaultService.State(ar.AllocationID)
+		require.NoError(t, err)
+		return state.Ready
+	}), "allocation never became ready")
+
+	t.Log("detach the allocation")
+	err = DefaultService.Detach(ar.AllocationID)
+	require.NoError(t, err)
+	require.True(t, waitForCondition(time.Second, func() bool {
+		return !slices.Contains(DefaultService.GetAllAllocationIDs(), ar.AllocationID)
+	}), "allocation never went away after detached")
+
+	t.Log("restore the allocation")
+	ar.Restore = true
+	rm.On("Allocate", mock.MatchedBy(func(req sproto.AllocateRequest) bool {
+		return req.Restore
+	})).Return(sub, nil).Once()
+	err = DefaultService.StartAllocation(
+		logger.Context{},
+		ar,
+		pgDB,
+		&rm,
+		mockTaskSpecifier{},
+		func(ae *AllocationExited) { exitFuture.Store(ae) },
+	)
+	require.NoError(t, err)
+
+	t.Log("wait for restore to happen")
+	subq.Put(&sproto.ResourcesAllocated{
+		ID:           ar.AllocationID,
+		ResourcePool: ar.ResourcePool,
+		Resources:    map[sproto.ResourcesID]sproto.Resources{rID: resources},
+		Recovered:    true,
+	})
+	err = DefaultService.WaitForRestore(context.TODO(), ar.AllocationID)
+	require.NoError(t, err)
+
+	t.Log("terminate, should be graceful")
+	err = DefaultService.Signal(ar.AllocationID, TerminateAllocation, "user requested pause or something")
+	require.NoError(t, err)
+
+	t.Log("check we didn't get killed")
+	require.False(t, waitForCondition(time.Second, func() bool {
+		state, err := DefaultService.State(ar.AllocationID)
+		require.NoError(t, err, "allocation is gone before expected, must have not been a graceful close")
+		return state.State == model.AllocationStateTerminated
+	}), "allocation terminated before expected, must have not been a graceful close")
+
+	t.Log("cleanup")
+	requireKilled(t, pgDB, ar.AllocationID, subq, &exitFuture)
 }
 
 func TestAllGather(t *testing.T) {

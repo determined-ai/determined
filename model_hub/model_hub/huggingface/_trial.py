@@ -2,14 +2,13 @@ import dataclasses
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import attrdict
 import datasets as hf_datasets
 import torch
 import transformers
 import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
-import model_hub.utils
+from model_hub import utils
 from model_hub.huggingface import _config_parser as hf_parse
 
 MODEL_MODES = {
@@ -27,10 +26,10 @@ MODEL_MODES = {
 
 
 def build_using_auto(
-    config_kwargs: Union[Dict, attrdict.AttrDict],
-    tokenizer_kwargs: Union[Dict, attrdict.AttrDict],
+    config_kwargs: Union[Dict, utils.AttrDict],
+    tokenizer_kwargs: Union[Dict, utils.AttrDict],
     model_mode: str,
-    model_kwargs: Union[Dict, attrdict.AttrDict],
+    model_kwargs: Union[Dict, utils.AttrDict],
     use_pretrained_weights: bool = True,
 ) -> Tuple[
     transformers.PretrainedConfig,  # This is how it's named in transformers
@@ -146,7 +145,7 @@ def build_default_lr_scheduler(
 
 
 def default_load_dataset(
-    data_config: Union[Dict, attrdict.AttrDict]
+    data_config_input: Union[Dict, utils.AttrDict],
 ) -> Union[
     hf_datasets.Dataset,
     hf_datasets.IterableDataset,
@@ -155,7 +154,7 @@ def default_load_dataset(
 ]:
     """
     Creates the dataset using HuggingFace datasets' load_dataset method.
-    If a dataset_name is provided, we will use that long with the dataset_config_name.
+    If a dataset_name is provided, we will use that along with the dataset_config_name.
     Otherwise, we will create the dataset using provided train_file and validation_file.
 
     Args:
@@ -163,7 +162,9 @@ def default_load_dataset(
     Returns:
         Dataset returned from hf_datasets.load_dataset.
     """
-    (data_config,) = hf_parse.parse_dict_to_dataclasses((hf_parse.DatasetKwargs,), data_config)
+    (data_config,) = hf_parse.parse_dict_to_dataclasses(
+        (hf_parse.DatasetKwargs,), data_config_input
+    )
     # This method is common in nearly all main HF examples.
     if data_config.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
@@ -215,11 +216,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
         if not hasattr(self, "hparams"):
-            self.hparams = attrdict.AttrDict(context.get_hparams())
+            self.hparams = utils.AttrDict(context.get_hparams())
         if not hasattr(self, "data_config"):
-            self.data_config = attrdict.AttrDict(context.get_data_config())
+            self.data_config = utils.AttrDict(context.get_data_config())
         if not hasattr(self, "exp_config"):
-            self.exp_config = attrdict.AttrDict(context.get_experiment_config())
+            self.exp_config = utils.AttrDict(context.get_experiment_config())
         # Check to make sure all expected hyperparameters are set.
         self.check_hparams()
 
@@ -266,13 +267,13 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
     def check_hparams(self) -> None:
         # We require hparams to be an AttrDict.
-        if not isinstance(self.hparams, attrdict.AttrDict):
-            self.hparams = attrdict.AttrDict(self.hparams)
+        if not isinstance(self.hparams, utils.AttrDict):
+            self.hparams = utils.AttrDict(self.hparams)
 
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
-            self.hparams.num_training_steps = model_hub.utils.compute_num_training_steps(
+            self.hparams.num_training_steps = utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
         if "use_pretrained_weights" not in self.hparams:

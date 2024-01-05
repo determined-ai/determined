@@ -723,11 +723,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [isLoadingSettings, settings.columns],
   );
 
-  const experimentsIfLoaded = useMemo(
-    () => (isLoading ? [NotLoaded] : experiments),
-    [isLoading, experiments],
-  );
-
   const showPagination = useMemo(() => {
     return (
       isPagedView &&
@@ -788,8 +783,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 colorMap={colorMap}
                 columnWidths={settings.columnWidths}
                 comparisonViewOpen={settings.compare}
-                data={experimentsIfLoaded}
-                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(0, total)}
+                data={experiments}
+                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
                 formStore={formStore}
                 heatmapOn={settings.heatmapOn}
                 heatmapSkipped={settings.heatmapSkipped}

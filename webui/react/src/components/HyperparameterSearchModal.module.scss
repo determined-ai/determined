@@ -1,4 +1,4 @@
-.modal:global(.ant-modal) > :global(.ant-modal-content) {
+:global(.ant-modal-content) {
   padding: 0;
 
   & > :global(.ant-modal-body) {
@@ -62,15 +62,6 @@
         justify-content: space-between;
         width: 100%;
       }
-      .searcherGroup {
-        display: flex;
-        gap: 8px;
-        height: 80px;
-
-        > * {
-          flex-grow: 1;
-        }
-      }
       .hyperparameterContainer {
         display: grid;
         gap: 8px;
@@ -109,17 +100,6 @@
         span {
           height: min-content;
         }
-      }
-    }
-    .footer {
-      border-top: solid var(--theme-stroke-width) var(--theme-surface-border);
-      display: flex;
-      flex-direction: row;
-      padding-block: 8px;
-      padding-inline: 16px;
-
-      .spacer {
-        flex-grow: 1;
       }
     }
     .error {

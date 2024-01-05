@@ -1,12 +1,15 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'hew/Dropdown';
+import { useModal } from 'hew/Modal';
+import { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import InteractiveTable, { onRightClickableCell } from 'components/Table/InteractiveTable';
@@ -14,7 +17,6 @@ import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'componen
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -42,7 +44,7 @@ import { openCommandResponse } from 'utils/wait';
 import css from './ExperimentTrials.module.scss';
 import { configForExperiment, isOfSortKey, Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
-import TrialsComparisonModal from './TrialsComparisonModal';
+import TrialsComparisonModalComponent from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
@@ -62,7 +64,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
   const [canceler] = useState(new AbortController());
-
+  const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
@@ -70,10 +72,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
   const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -124,19 +123,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [experiment.id],
   );
 
-  const handleHyperparameterSearch = useCallback(
-    (trial: TrialItem) => {
-      openModalHyperparameterSearch({ trial });
-    },
-    [openModalHyperparameterSearch],
-  );
-
   const dropDownOnTrigger = useCallback(
     (trial: TrialItem) => {
       const opts: Partial<Record<TrialAction, () => Promise<void> | void>> = {
         [TrialAction.OpenTensorBoard]: () => handleOpenTensorBoard(trial),
         [TrialAction.ViewLogs]: () => handleViewLogs(trial),
-        [TrialAction.HyperparameterSearch]: () => handleHyperparameterSearch(trial),
+        [TrialAction.HyperparameterSearch]: HyperparameterSearchModal.open,
       };
       if (!canHparam || !!experiment.unmanaged) {
         delete opts[TrialAction.HyperparameterSearch];
@@ -146,7 +138,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [
       canHparam,
       experiment.unmanaged,
-      handleHyperparameterSearch,
+      HyperparameterSearchModal,
       handleOpenTensorBoard,
       handleViewLogs,
     ],
@@ -294,7 +286,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         { signal: canceler.signal },
       );
       setTotal(responsePagination?.total || 0);
-      setTrials(experimentTrials);
+      if (!isEqual(trials, experimentTrials)) {
+        setTrials(experimentTrials);
+      }
       setIsLoading(false);
     } catch (e) {
       handleError(e, {
@@ -304,7 +298,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, settings, stateString, trials]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
@@ -363,6 +357,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     return () => canceler.abort();
   }, [canceler]);
 
+  useEffect(() => {
+    if (settings.compare) {
+      trialsComparisonModal.open();
+    }
+  }, [settings.compare, trialsComparisonModal]);
+
   const handleTableRowSelect = useCallback(
     (rowKeys: React.Key[]) => {
       updateSettings({ row: rowKeys.map(Number) });
@@ -406,7 +406,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       const handleDropdown = (key: string) => {
         switch (key) {
           case MenuKey.HyperparameterSearch:
-            handleHyperparameterSearch(record);
+            HyperparameterSearchModal.open();
             break;
           case MenuKey.OpenTensorboard:
             handleOpenTensorBoard(record);
@@ -423,7 +423,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         </Dropdown>
       );
     },
-    [handleHyperparameterSearch, handleOpenTensorBoard, handleViewLogs],
+    [HyperparameterSearchModal, handleOpenTensorBoard, handleViewLogs],
   );
 
   return (
@@ -464,17 +464,19 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           updateSettings={updateSettings}
           onChange={handleTableChange}
         />
-      </Section>
+      </Section>{' '}
       {settings.compare && (
-        <TrialsComparisonModal
+        <trialsComparisonModal.Component
           experiment={experiment}
           trialIds={settings.row ?? []}
-          visible={settings.compare}
           onCancel={handleTrialCompareCancel}
           onUnselect={handleTrialUnselect}
         />
       )}
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </div>
   );
 };

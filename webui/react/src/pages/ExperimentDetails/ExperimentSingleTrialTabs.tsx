@@ -1,7 +1,7 @@
-import type { TabsProps } from 'antd';
 import Button from 'hew/Button';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import { useModal } from 'hew/Modal';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import Spinner from 'hew/Spinner';
 import Tooltip from 'hew/Tooltip';
@@ -9,10 +9,10 @@ import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
@@ -76,12 +76,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const [canceler] = useState(new AbortController());
   const [trialDetails, setTrialDetails] = useState<TrialDetails>();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openHyperparameterSearchModal,
-  } = useModalHyperparameterSearch({ experiment });
 
   const waitingForTrials = !trialId && !wontHaveTrials;
+
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -222,10 +220,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     [experiment.id, fetchExperimentDetails],
   );
 
-  const handleHPSearch = useCallback(() => {
-    openHyperparameterSearchModal({});
-  }, [openHyperparameterSearchModal]);
-
   const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
     usePermissions();
   const workspace = { id: experiment.workspaceId };
@@ -233,8 +227,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
   const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
-    const items: TabsProps['items'] = [
+  const tabItems: PivotProps['items'] = useMemo(() => {
+    const items: PivotProps['items'] = [
       {
         children: waitingForTrials ? (
           <Spinner spinning tip="Waiting for trials..." />
@@ -357,14 +351,17 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           tabBarExtraContent={
             tabKey === TabType.Hyperparameters && showCreateExperiment && !experiment.unmanaged ? (
               <div style={{ padding: 4 }}>
-                <Button onClick={handleHPSearch}>Hyperparameter Search</Button>
+                <Button onClick={HyperparameterSearchModal.open}>Hyperparameter Search</Button>
               </div>
             ) : undefined
           }
           onChange={handleTabChange}
         />
       </div>
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </TrialLogPreview>
   );
 };

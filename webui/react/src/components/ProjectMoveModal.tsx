@@ -1,9 +1,8 @@
-import { Typography } from 'antd';
-import { SelectValue } from 'antd/lib/select';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
-import Select, { Option } from 'hew/Select';
+import Select, { Option, SelectValue } from 'hew/Select';
 import { useToast } from 'hew/Toast';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
@@ -91,7 +90,7 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
           return (
             <Option disabled={disabled} key={workspace.id} value={workspace.id}>
               <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
                 {workspace.archived && <Icon name="archive" title="Archived" />}
                 {workspace.id === project.workspaceId && (
                   <Icon name="checkmark" title="Project's current workspace" />

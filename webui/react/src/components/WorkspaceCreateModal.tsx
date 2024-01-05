@@ -1,9 +1,10 @@
-import { Divider, Switch } from 'antd';
+import { Divider } from 'antd';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
+import Toggle from 'hew/Toggle';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo } from 'react';
@@ -113,7 +114,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           <>
             <Divider />
             <Form.Item label="Configure Agent User" name="useAgentUser" valuePropName="checked">
-              <Switch />
+              <Toggle />
             </Form.Item>
             {useAgentUser && (
               <>
@@ -132,7 +133,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               </>
             )}
             <Form.Item label="Configure Agent Group" name="useAgentGroup" valuePropName="checked">
-              <Switch />
+              <Toggle />
             </Form.Item>
             {useAgentGroup && (
               <>
@@ -159,7 +160,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               label="Configure Checkpoint Storage"
               name="useCheckpointStorage"
               valuePropName="checked">
-              <Switch />
+              <Toggle />
             </Form.Item>
             {useCheckpointStorage && (
               <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>

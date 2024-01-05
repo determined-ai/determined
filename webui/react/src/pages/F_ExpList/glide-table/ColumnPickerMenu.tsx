@@ -1,7 +1,6 @@
 import { Space } from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import Button from 'hew/Button';
-import Checkbox from 'hew/Checkbox';
+import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import Dropdown from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';

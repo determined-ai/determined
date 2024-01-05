@@ -1,8 +1,9 @@
-import { Modal, Tag, Typography } from 'antd';
+import { Tag } from 'antd';
 import Message from 'hew/Message';
+import { Modal } from 'hew/Modal';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
-import { useTheme } from 'hew/Theme';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
@@ -14,7 +15,6 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
-import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails, XOR } from 'types';
@@ -40,38 +40,31 @@ type TableProps = XOR<
   TablePropsBase;
 
 type ModalProps = TableProps & {
-  onCancel: () => void;
-  visible: boolean;
+  onCancel?: () => void;
 };
 
-const TrialsComparisonModal: React.FC<ModalProps> = ({
+const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
   onCancel,
-  visible,
   ...props
 }: ModalProps) => {
-  const resize = useResize();
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
-
   useEffect(() => {
-    if (props.trialIds?.length === 0 || props.trials?.length === 0) onCancel();
+    if ((props.trialIds?.length === 0 || props.trials?.length === 0) && onCancel) onCancel();
   }, [onCancel, props.trialIds?.length, props.trials?.length]);
 
   return (
     <Modal
-      centered
-      footer={null}
-      open={visible}
-      style={{ height: resize.height * 0.9 }}
+      submit={{
+        handleError: () => {},
+        handler: () => {},
+        onComplete: onCancel,
+        text: 'Close',
+      }}
       title={
         !Array.isArray(props.experiment)
           ? `Experiment ${props.experiment.id} Trial Comparison`
           : 'Trial Comparison'
       }
-      width={resize.width * 0.9}
-      wrapClassName={themeClass}
-      onCancel={onCancel}>
+      onClose={onCancel}>
       <TrialsComparisonTable {...props} />
     </Modal>
   );
@@ -246,9 +239,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                       onClose={() => handleTrialUnselect(trial.id)}>
                       <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
                         {Array.isArray(experiment) ? (
-                          <Typography.Text ellipsis={{ tooltip: true }}>
+                          <Label truncate={{ tooltip: true }}>
                             {experimentMap[trial.experimentId]?.name}
-                          </Typography.Text>
+                          </Label>
                         ) : (
                           `Trial ${trial.id}`
                         )}
@@ -273,9 +266,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     <th scope="row">Experiment ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
-                        <Typography.Text ellipsis={{ tooltip: true }}>
-                          {trial.experimentId}
-                        </Typography.Text>
+                        <Label truncate={{ tooltip: true }}>{trial.experimentId}</Label>
                       </td>
                     ))}
                   </tr>
@@ -283,7 +274,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     <th scope="row">Trial ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
-                        <Typography.Text ellipsis={{ tooltip: true }}>{trial.id}</Typography.Text>
+                        <Label truncate={{ tooltip: true }}>{trial.id}</Label>
                       </td>
                     ))}
                   </tr>
@@ -293,9 +284,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 <th scope="row">Batched Processed</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id}>
-                    <Typography.Text ellipsis={{ tooltip: true }}>
-                      {trial.totalBatchesProcessed}
-                    </Typography.Text>
+                    <Label truncate={{ tooltip: true }}>{trial.totalBatchesProcessed}</Label>
                   </td>
                 ))}
               </tr>
@@ -303,9 +292,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 <th scope="row">Total Checkpoint Size</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id}>
-                    <Typography.Text ellipsis={{ tooltip: true }}>
-                      {totalCheckpointsSizes[trial.id]}
-                    </Typography.Text>
+                    <Label truncate={{ tooltip: true }}>{totalCheckpointsSizes[trial.id]}</Label>
                   </td>
                 ))}
               </tr>
@@ -366,7 +353,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               {selectedHyperparameters.map((hp) => (
                 <tr key={hp}>
                   <th scope="row">
-                    <Typography.Text ellipsis={{ tooltip: true }}>{hp}</Typography.Text>
+                    <Label truncate={{ tooltip: true }}>{hp}</Label>
                   </th>
                   {trialsDetails.map((trial) => {
                     const hpValue = trial.hyperparameters[hp];
@@ -376,9 +363,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                         {isNumber(hpValue) ? (
                           <HumanReadableNumber num={hpValue} />
                         ) : (
-                          <Typography.Text ellipsis={{ tooltip: true }}>
-                            {stringValue}
-                          </Typography.Text>
+                          <Label truncate={{ tooltip: true }}>{stringValue}</Label>
                         )}
                       </td>
                     );
@@ -395,4 +380,4 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   );
 };
 
-export default TrialsComparisonModal;
+export default TrialsComparisonModalComponent;

@@ -2,6 +2,7 @@ package expconf
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -108,18 +109,52 @@ type SharedFSConfigV0 struct {
 }
 
 // PathInContainer caclulates where the full StoragePath will be inside the container.
-func (s SharedFSConfigV0) PathInContainer() string {
+func (s SharedFSConfigV0) PathInContainer() (string, error) {
+	if s.RawHostPath == nil {
+		return "", errors.New("host_path must be set")
+	}
 	if s.RawStoragePath == nil {
-		return DefaultSharedFSContainerPath
+		return DefaultSharedFSContainerPath, nil
 	}
 	if filepath.IsAbs(*s.RawStoragePath) {
 		relPath, err := filepath.Rel(*s.RawHostPath, *s.RawStoragePath)
 		if err != nil {
-			panic("detected unvalidated sharedfs config")
+			return "", errors.New("detected unvalidated sharedfs config")
 		}
-		return filepath.Join(DefaultSharedFSContainerPath, relPath)
+		return filepath.Join(DefaultSharedFSContainerPath, relPath), nil
 	}
-	return filepath.Join(DefaultSharedFSContainerPath, *s.RawStoragePath)
+	return filepath.Join(DefaultSharedFSContainerPath, *s.RawStoragePath), nil
+}
+
+// PathInHost caclulates where the full StoragePath will be on the host.
+func (s SharedFSConfigV0) PathInHost() (string, error) {
+	if s.RawHostPath == nil {
+		return "", errors.New("host_path must be set")
+	}
+	if s.RawStoragePath == nil {
+		return *s.RawHostPath, nil
+	}
+	if filepath.IsAbs(*s.RawStoragePath) {
+		_, err := filepath.Rel(*s.RawHostPath, *s.RawStoragePath)
+		if err != nil {
+			return "", errors.New("detected unvalidated sharedfs config")
+		}
+		return *s.RawStoragePath, nil
+	}
+	return filepath.Join(*s.RawHostPath, *s.RawStoragePath), nil
+}
+
+// PathInContainerOrHost returns the PathInContainer if it exists,
+// otherwise returns PathInHost.
+func (s SharedFSConfigV0) PathInContainerOrHost() (string, error) {
+	path, err := s.PathInContainer()
+	if err != nil {
+		return "", err
+	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return s.PathInHost()
+	}
+	return path, nil
 }
 
 // S3ConfigV0 configures storing checkpoints on S3.

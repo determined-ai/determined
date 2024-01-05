@@ -1,4 +1,4 @@
-import { Switch, Typography } from 'antd';
+import { Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
@@ -6,6 +6,7 @@ import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
+import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
@@ -187,7 +188,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           </Form.Item>
           {!rbacEnabled && (
             <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
-              <Switch disabled={viewOnly} />
+              <Toggle disabled={viewOnly} />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (
@@ -196,7 +197,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
               label={REMOTE_LABEL}
               name={REMOTE_NAME}
               valuePropName="checked">
-              <Switch disabled={viewOnly} />
+              <Toggle disabled={viewOnly} />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (

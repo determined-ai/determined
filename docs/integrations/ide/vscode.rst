@@ -6,7 +6,7 @@
 
 #. Make sure `Visual Studio Code Remote - SSH
    <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh>`__ extension is
-   installed.
+   installed. Windows users should run these steps in a Windows shell outside of WSL.
 
 #. Start a new shell and get its SSH command by running:
 

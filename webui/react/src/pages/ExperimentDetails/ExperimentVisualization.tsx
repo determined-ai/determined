@@ -1,6 +1,5 @@
-import { type TabsProps } from 'antd';
 import Message from 'hew/Message';
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
@@ -195,7 +194,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     );
   }, [batches, filters, handleFiltersChange, handleFiltersReset, metrics, typeKey]);
 
-  const tabItems: TabsProps['items'] = useMemo(() => {
+  const tabItems: PivotProps['items'] = useMemo(() => {
     /**
      * In the case of Custom Searchers, all the tabs besides
      * "Learning Curve" aren't helpful or relevant, so we are hiding them
@@ -208,7 +207,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       return [];
     }
 
-    const tabs: TabsProps['items'] = [
+    const tabs: PivotProps['items'] = [
       {
         children: (
           <LearningCurve

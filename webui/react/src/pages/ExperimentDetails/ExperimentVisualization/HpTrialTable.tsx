@@ -1,5 +1,5 @@
-import { Typography } from 'antd';
 import { TablePaginationConfig } from 'antd/es/table/interface';
+import { Body } from 'hew/Typography';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -115,11 +115,7 @@ const HpTrialTable: React.FC<Props> = ({
         if (isNumber(value) && isValidType) {
           return <HumanReadableNumber num={value} />;
         }
-        return (
-          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-            {JSON.stringify(value)}
-          </Typography.Paragraph>
-        );
+        return <Body truncate={{ rows: 1, tooltip: true }}>{JSON.stringify(value)}</Body>;
       };
     };
     const hpColumnSorter = (key: string) => {

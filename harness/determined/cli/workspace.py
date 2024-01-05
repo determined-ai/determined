@@ -203,12 +203,6 @@ def describe_workspace(args: Namespace) -> None:
         determined.cli.render.print_json(w.to_json())
     else:
         render_workspaces([w])
-        print("\nAssociated Projects")
-        vars(args)["order_by"] = "asc"
-        vars(args)["sort_by"] = "id"
-        vars(args)["offset"] = 0
-        vars(args)["limit"] = 200
-        list_workspace_projects(args)
 
 
 @authentication.required

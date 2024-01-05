@@ -34,6 +34,8 @@ from .trial import logs_args_description
 # a filter like `head`.
 FLUSH = False
 
+ZERO_OR_ONE = "?"
+
 
 @authentication.required
 def activate(args: Namespace) -> None:
@@ -1112,7 +1114,13 @@ main_cmd = Cmd(
             "create experiment",
             [
                 Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)"),
-                Arg("model_def", type=Path, help="file or directory containing model definition"),
+                Arg(
+                    "model_def",
+                    nargs=ZERO_OR_ONE,
+                    default=None,
+                    type=Path,
+                    help="file or directory containing model definition",
+                ),
                 Arg(
                     "-i",
                     "--include",

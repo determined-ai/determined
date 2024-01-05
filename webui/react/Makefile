@@ -2,21 +2,15 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
-export PLAYWRIGHT_BROWSERS_PATH=0
 source_files := $(shell find src public -type f)
-merge_base := $(shell git merge-base main HEAD)
 
 .PHONY: default
 default: get-deps
 	$(MAKE) build
 
-node_modules/playwright-core/.local-browsers:
-	npx playwright install
-
 .PHONY: get-deps-npm
 get-deps-npm:
 	npm ci --no-audit
-	$(MAKE) node_modules/playwright-core/.local-browsers
 
 node_modules/done.stamp: package-lock.json
 	$(MAKE) get-deps-npm

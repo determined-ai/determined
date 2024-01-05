@@ -1,7 +1,8 @@
 import logging
 import os
+import typing
 import urllib.parse
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import filelock
 import numpy as np
@@ -86,3 +87,20 @@ def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) 
         )
     # Otherwise, max_length_unit=='records'
     return int(max_length / global_batch_size)
+
+
+class AttrDict(dict):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+        for key in self.keys():
+            if isinstance(self[key], dict):
+                self[key] = AttrDict(self[key])
+
+    if typing.TYPE_CHECKING:
+
+        def __getattr__(self, item: Any) -> Any:
+            return True
+
+        def __setattr__(self, item: Any, value: Any) -> None:
+            return None

@@ -1,5 +1,6 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
+import RadioGroup from 'hew/RadioGroup';
 import Select, { Option, SelectValue } from 'hew/Select';
 import * as t from 'io-ts';
 import _ from 'lodash';
@@ -7,7 +8,6 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import HpSelect from 'components/HpSelect';
 import MetricSelect from 'components/MetricSelect';
-import RadioGroup from 'components/RadioGroup';
 import ScaleSelect from 'components/ScaleSelect';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import { Metric, Scale, ValueOf } from 'types';

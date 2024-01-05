@@ -36,11 +36,19 @@ def do_enum_test(sdk_enum: Any, bindings_enum: Any, *, ignore: Optional[list] = 
 
 
 def test_experiment_state() -> None:
-    do_enum_test(client.ExperimentState, bindings.experimentv1State)
+    do_enum_test(
+        client.ExperimentState,
+        bindings.experimentv1State,
+        ignore=[bindings.experimentv1State.UNSPECIFIED],  # UNSPECIFIED is not a valid sdk value.
+    )
 
 
 def test_trial_sort_by() -> None:
-    do_enum_test(client.TrialSortBy, bindings.v1GetExperimentTrialsRequestSortBy)
+    do_enum_test(
+        client.TrialSortBy,
+        bindings.v1GetExperimentTrialsRequestSortBy,
+        ignore=[bindings.v1GetExperimentTrialsRequestSortBy.UNSPECIFIED],
+    )
 
 
 def test_trial_order_by() -> None:
@@ -61,7 +69,11 @@ def test_checkpoint_state() -> None:
 
 
 def test_model_sort_by() -> None:
-    do_enum_test(client.ModelSortBy, bindings.v1GetModelsRequestSortBy)
+    do_enum_test(
+        client.ModelSortBy,
+        bindings.v1GetModelsRequestSortBy,
+        ignore=[bindings.v1GetModelsRequestSortBy.UNSPECIFIED],
+    )
 
 
 def test_model_order_by() -> None:

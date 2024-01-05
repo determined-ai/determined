@@ -46,7 +46,7 @@ jobs:
       - name: Print SARIF report for ${{ matrix.image }}
         run: cat ${{ steps.scan.outputs.sarif }}
       - name: Upload SARIF report for ${{ matrix.image }}
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
       - name: Fail job if scan failed

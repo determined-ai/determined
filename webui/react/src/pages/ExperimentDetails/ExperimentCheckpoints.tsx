@@ -1,12 +1,15 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import { useModal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isEqual } from 'lodash';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import ModelCreateModal from 'components/ModelCreateModal';
+import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import Section from 'components/Section';
 import InteractiveTable, { ContextMenuProps } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
@@ -17,12 +20,14 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { getExperimentCheckpoints } from 'services/api';
-import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
+import { getExperimentCheckpoints, getModels } from 'services/api';
+import {
+  Checkpointv1SortBy,
+  Checkpointv1State,
+  V1GetModelsRequestSortBy,
+} from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { encodeCheckpointState } from 'services/decoder';
 import { readStream } from 'services/utils';
@@ -32,6 +37,7 @@ import {
   CheckpointState,
   CoreApiGenericCheckpoint,
   ExperimentBase,
+  ModelItem,
   RecordKey,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
@@ -55,31 +61,24 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const modelCreateModal = useModal(ModelCreateModal);
-
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({
-    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
-      // TODO: fix the behavior along with checkpoint modal migration
-      // It used to open checkpoint modal again after creating a model,
-      // but it doesn't with new create model modal since we don't use context holder anymore.
-      // This should be able to fix it along with checkpoint modal migration.
-      if (checkpoints) modelCreateModal.open();
-    },
-  });
+  const registerModal = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
-    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
+      }
     },
-    [openModalCheckpointRegister],
+    [setSelectedModelName, registerModal],
   );
 
   const clearSelected = useCallback(() => {
@@ -115,12 +114,40 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
 
-  const handleRegisterCheckpoint = useCallback(
-    (checkpoints: string[]) => {
-      openModalCheckpointRegister({ checkpoints });
-    },
-    [openModalCheckpointRegister],
-  );
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels(
+        {
+          archived: false,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: validateDetApiEnum(
+            V1GetModelsRequestSortBy,
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+          ),
+        },
+        { signal: canceler.signal },
+      );
+      setModels((prev) => {
+        const loadedModels = Loaded(response.models);
+        if (isEqual(prev, loadedModels)) return prev;
+        return loadedModels;
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [canceler.signal]);
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
+
+  const handleRegisterCheckpoint = useCallback(() => {
+    registerModal.open();
+  }, [registerModal]);
 
   const handleDelete = useCallback((checkpoints: string[]) => {
     readStream(
@@ -156,7 +183,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (checkpoints: string | string[]) => {
       const checkpointsArr = ensureArray(checkpoints);
       return {
-        [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
+        [checkpointAction.Register]: () => handleRegisterCheckpoint(),
         [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
       };
     },
@@ -259,7 +286,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
-      setCheckpoints(response.checkpoints);
+      if (!isEqual(response.checkpoints, checkpoints)) {
+        setCheckpoints(response.checkpoints);
+      }
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to fetch experiment ${experiment.id} checkpoints.`,
@@ -269,7 +298,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [experiment.id, canceler, settings, stateString, checkpoints]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -375,7 +404,13 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         )}
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-      {modalCheckpointRegisterContextHolder}
+      <registerModal.Component
+        checkpoints={(checkpoints ?? []).map((c) => c.uuid)}
+        closeModal={registerModal.close}
+        modelName={selectedModelName}
+        models={models}
+        openModelModal={modelCreateModal.open}
+      />
     </>
   );
 };

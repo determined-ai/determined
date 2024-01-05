@@ -10,7 +10,6 @@ import { useObservable } from 'micro-observables';
 import { useId, useState } from 'react';
 
 import Link from 'components/Link';
-import { ModalCloseReason } from 'hooks/useModal/useModal';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModel } from 'services/api';
@@ -33,8 +32,7 @@ type FormInputs = {
 };
 
 interface Props {
-  // TODO: we should be able to remove `reason` from onClose props after modal migration
-  onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
+  onClose?: (modelName?: string) => void;
   workspaceId?: number;
 }
 
@@ -79,6 +77,7 @@ const ModelCreateModal = ({ onClose, workspaceId }: Props): JSX.Element => {
         severity: 'Info',
         title: 'Model Created',
       });
+      onClose?.(response.name);
     } catch (e) {
       if (e instanceof DetError) {
         handleError(e, {

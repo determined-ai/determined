@@ -72,4 +72,6 @@ type AllocationService interface {
 		id model.AllocationID,
 		log *sproto.ContainerLog,
 	)
+	WaitForRestore(ctx context.Context, id model.AllocationID) error
+	Detach(id model.AllocationID) error
 }

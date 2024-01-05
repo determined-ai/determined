@@ -1,12 +1,10 @@
-import { Radio } from 'antd';
+import RadioGroup from 'hew/RadioGroup';
 import React, { useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import ClusterHistoricalUsageChart from 'pages/Cluster/ClusterHistoricalUsageChart';
 import { V1RPQueueStat } from 'services/api-ts-sdk';
 import { DURATION_DAY, durationInEnglish } from 'utils/datetime';
-
-import css from './ClusterQueuedChart.module.scss';
 
 interface Props {
   poolStats: V1RPQueueStat | undefined;
@@ -38,13 +36,14 @@ const ClusterQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
       <Section
         bodyBorder
         options={
-          <Radio.Group
-            className={css.filter}
+          <RadioGroup
+            options={[
+              { id: 7, label: '7 days' },
+              { id: 30, label: '30 days' },
+            ]}
             value={viewDays}
-            onChange={(e) => setViewDays(e.target.value)}>
-            <Radio.Button value={7}>7 days</Radio.Button>
-            <Radio.Button value={30}>30 days</Radio.Button>
-          </Radio.Group>
+            onChange={setViewDays}
+          />
         }
         title="Avg Queue Time">
         <ClusterHistoricalUsageChart

@@ -1,4 +1,6 @@
-import { Button, Space, Typography } from 'antd';
+import { Button as AntdButton, Space } from 'antd';
+import Button from 'hew/Button';
+import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -6,10 +8,14 @@ import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
+import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';
+import ExperimentContinueModalComponent, {
+  ContinueExperimentType,
+} from 'components/ExperimentContinueModal';
 import ExperimentCreateModalComponent, {
   CreateExperimentType,
 } from 'components/ExperimentCreateModal';
@@ -18,14 +24,14 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
+import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import Link from 'components/Link';
-import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
+import PageHeaderFoldable, { Option, renderOptionLabel } from 'components/PageHeaderFoldable';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import useExperimentTags from 'hooks/useExperimentTags';
-import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
@@ -60,6 +66,11 @@ import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
 
+export interface ActionOptions {
+  content?: React.ReactNode;
+  key: string;
+  menuOptions: Option[];
+}
 // Actionable means that user can take an action, such as pause, stop
 const isActionableIcon = (state: CompoundRunState): boolean => {
   switch (state) {
@@ -132,6 +143,7 @@ const headerActions = [
   Action.Delete,
 ];
 
+// prettier-ignore
 const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchExperimentDetails,
@@ -177,14 +189,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const ExperimentStopModal = useModal(ExperimentStopModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentDeleteModal = useModal(ExperimentDeleteModalComponent);
-  const ContinueTrialModal = useModal(ExperimentCreateModalComponent);
+  const ReactivateExperimentModal = useModal(ExperimentContinueModalComponent);
+  const ContinueExperimentModal = useModal(ExperimentContinueModalComponent);
   const ForkModal = useModal(ExperimentCreateModalComponent);
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
-
-  const {
-    contextHolder: modalHyperparameterSearchContextHolder,
-    modalOpen: openModalHyperparameterSearch,
-  } = useModalHyperparameterSearch({ experiment });
+  const ContinueTrialModal = useModal(ExperimentCreateModalComponent);
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   const stateStyle = useMemo(
     () => ({
@@ -237,10 +247,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }
   }, [experiment.id, fetchExperimentDetails]);
 
-  const handleHyperparameterSearch = useCallback(() => {
-    openModalHyperparameterSearch();
-  }, [openModalHyperparameterSearch]);
-
   const fetchErroredTrial = useCallback(async () => {
     // No need to fetch errored trial count if it's single trial experiment or experiment is not completed.
     if (isSingleTrialExperiment(experiment) || experiment.state !== RunState.Completed) return;
@@ -264,138 +270,248 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
 
+  const continueExperimentOption = useMemo(
+    () =>
+      experiment?.config.searcher.name === 'single'
+        ? {
+          content: (
+            <Dropdown
+              menu={[
+                {
+                  key: 'Create New Experiment',
+                  label: 'Create New Experiment...',
+                },
+                {
+                  key: 'Reactivate Current Trial',
+                  label: 'Reactivate Current Trial...',
+                },
+              ]}
+              onClick={(key: string) => {
+                if (key === 'Create New Experiment') ContinueExperimentModal.open();
+                if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
+              }}>
+              <Button disabled={experiment.unmanaged}>Continue Trial</Button>
+            </Dropdown>
+          ),
+          menuOptions: [
+            {
+              key: 'create-new-experiment',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+              ) : (
+                'Create New Experiment'
+              ),
+              onClick: ContinueExperimentModal.open,
+            },
+            {
+              key: 'reactivate-current-trial',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current Trial</Tooltip>
+              ) : (
+                'Reactivate Current Trial'
+              ),
+              onClick: ReactivateExperimentModal.open,
+            },
+          ],
+        }
+        : {
+          menuOptions: [
+            {
+              disabled: experiment.unmanaged,
+              key: 'continue-trial',
+              label: experiment.unmanaged ? (
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+              ) : (
+                'Continue Trial'
+              ),
+              onClick: ContinueTrialModal.open,
+            },
+          ],
+        },
+    [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal],
+  );
+
   useEffect(() => {
     fetchErroredTrial();
   }, [fetchErroredTrial]);
 
   const headerOptions = useMemo(() => {
-    const options: Partial<Record<Action, Option>> = {
+    const options: Partial<Record<Action, ActionOptions>> = {
       [Action.Unarchive]: {
-        isLoading: isRunningArchive,
         key: 'unarchive',
-        label: 'Unarchive',
-        onClick: async (): Promise<void> => {
-          setIsRunningUnarchive(true);
-          try {
-            await unarchiveExperiment({ experimentId: experiment.id });
-            await fetchExperimentDetails();
-          } catch (e) {
-            setIsRunningUnarchive(false);
-          }
-        },
+        menuOptions: [
+          {
+            isLoading: isRunningArchive,
+            key: 'unarchive',
+            label: 'Unarchive',
+            onClick: async (): Promise<void> => {
+              setIsRunningUnarchive(true);
+              try {
+                await unarchiveExperiment({ experimentId: experiment.id });
+                await fetchExperimentDetails();
+              } catch (e) {
+                setIsRunningUnarchive(false);
+              }
+            },
+          },
+        ],
       },
+
       [Action.ContinueTrial]: {
-        disabled: experiment.unmanaged,
+        ...continueExperimentOption,
         key: 'continue-trial',
-        label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
-        ) : (
-          'Continue Trial'
-        ),
-        onClick: ContinueTrialModal.open,
       },
       [Action.Delete]: {
-        isLoading: isRunningDelete,
         key: 'delete',
-        label: 'Delete',
-        onClick: ExperimentDeleteModal.open,
+        menuOptions: [
+          {
+            isLoading: isRunningDelete,
+            key: 'delete',
+            label: 'Delete',
+            onClick: ExperimentDeleteModal.open,
+          },
+        ],
       },
       [Action.HyperparameterSearch]: {
-        disabled: experiment.unmanaged,
         key: 'hyperparameter-search',
-        label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>Hyperparameter Search</Tooltip>
-        ) : (
-          'Hyperparameter Search'
-        ),
-        onClick: handleHyperparameterSearch,
+        menuOptions: [
+          {
+            disabled: experiment.unmanaged,
+            key: 'hyperparameter-search',
+            label: experiment.unmanaged ? (
+              <Tooltip content={UNMANAGED_MESSAGE}>Hyperparameter Search</Tooltip>
+            ) : (
+              'Hyperparameter Search'
+            ),
+            onClick: HyperparameterSearchModal.open,
+          },
+        ],
       },
       [Action.DownloadCode]: {
-        icon: <Icon name="download" size="small" title={Action.DownloadCode} />,
         key: 'download-model',
-        label: 'Download Experiment Code',
-        onClick: (e) => {
-          handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
-        },
+        menuOptions: [
+          {
+            icon: <Icon name="download" size="small" title={Action.DownloadCode} />,
+            key: 'download-model',
+            label: 'Download Experiment Code',
+            onClick: (e) => {
+              handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
+            },
+          },
+        ],
       },
       [Action.Retry]: {
-        disabled: experiment.unmanaged,
-        icon: <Icon decorative name="reset" />,
         key: 'retry',
-        label: erroredTrialCount ?? 0 > 0 ? `Retry Errored (${erroredTrialCount})` : 'Retry',
-        onClick: () => {
-          confirm({
-            content:
-              erroredTrialCount && erroredTrialCount > 0
-                ? `Retry will attempt to complete ${erroredTrialCount} errored ${pluralizer(
-                    erroredTrialCount,
-                    'trial',
-                  )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
-                : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
-            okText: 'Retry',
-            onConfirm: async () => {
-              await continueExperiment({ id: experiment.id });
-              await fetchExperimentDetails();
+        menuOptions: [
+          {
+            disabled: experiment.unmanaged,
+            icon: <Icon decorative name="reset" />,
+            key: 'retry',
+            label: erroredTrialCount ?? 0 > 0 ? `Retry Errored (${erroredTrialCount})` : 'Retry',
+            onClick: () => {
+              confirm({
+                content:
+                  erroredTrialCount && erroredTrialCount > 0
+                    ? `Retry will attempt to complete ${erroredTrialCount} errored ${pluralizer(
+                      erroredTrialCount,
+                      'trial',
+                    )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
+                    : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
+                okText: 'Retry',
+                onConfirm: async () => {
+                  await continueExperiment({ id: experiment.id });
+                  await fetchExperimentDetails();
+                },
+                onError: handleError,
+                title: 'Retry Experiment',
+              });
             },
-            onError: handleError,
-            title: 'Retry Experiment',
-          });
-        },
+          },
+        ],
       },
       [Action.Fork]: {
-        disabled: experiment.unmanaged,
-        icon: <Icon name="fork" size="small" title={Action.Fork} />,
         key: 'fork',
-        label: experiment.unmanaged ? <Tooltip content={UNMANAGED_MESSAGE}>Fork</Tooltip> : 'Fork',
-        onClick: ForkModal.open,
+        menuOptions: [
+          {
+            disabled: experiment.unmanaged,
+            icon: <Icon name="fork" size="small" title={Action.Fork} />,
+            key: 'fork',
+            label: experiment.unmanaged ? (
+              <Tooltip content={UNMANAGED_MESSAGE}>Fork</Tooltip>
+            ) : (
+              'Fork'
+            ),
+            onClick: ForkModal.open,
+          },
+        ],
       },
       [Action.Edit]: {
         key: 'edit',
-        label: 'Edit',
-        onClick: ExperimentEditModal.open,
+        menuOptions: [
+          {
+            key: 'edit',
+            label: 'Edit',
+            onClick: ExperimentEditModal.open,
+          },
+        ],
       },
       [Action.Move]: {
         key: 'move',
-        label: 'Move',
-        onClick: ExperimentMoveModal.open,
+        menuOptions: [
+          {
+            key: 'move',
+            label: 'Move',
+            onClick: ExperimentMoveModal.open,
+          },
+        ],
       },
       [Action.OpenTensorBoard]: {
-        disabled: experiment.unmanaged,
-        icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
-        isLoading: isRunningTensorBoard,
         key: 'tensorboard',
-        label: experiment.unmanaged ? (
-          <Tooltip content={UNMANAGED_MESSAGE}>TensorBoard</Tooltip>
-        ) : (
-          'TensorBoard'
-        ),
-        onClick: async () => {
-          setIsRunningTensorBoard(true);
-          try {
-            const commandResponse = await openOrCreateTensorBoard({
-              experimentIds: [experiment.id],
-              workspaceId: experiment.workspaceId,
-            });
-            openCommandResponse(commandResponse);
-            setIsRunningTensorBoard(false);
-          } catch (e) {
-            setIsRunningTensorBoard(false);
-          }
-        },
+        menuOptions: [
+          {
+            disabled: experiment.unmanaged,
+            icon: <Icon name="tensor-board" size="small" title={Action.OpenTensorBoard} />,
+            isLoading: isRunningTensorBoard,
+            key: 'tensorboard',
+            label: experiment.unmanaged ? (
+              <Tooltip content={UNMANAGED_MESSAGE}>TensorBoard</Tooltip>
+            ) : (
+              'TensorBoard'
+            ),
+            onClick: async () => {
+              setIsRunningTensorBoard(true);
+              try {
+                const commandResponse = await openOrCreateTensorBoard({
+                  experimentIds: [experiment.id],
+                  workspaceId: experiment.workspaceId,
+                });
+                openCommandResponse(commandResponse);
+                setIsRunningTensorBoard(false);
+              } catch (e) {
+                setIsRunningTensorBoard(false);
+              }
+            },
+          },
+        ],
       },
       [Action.Archive]: {
-        isLoading: isRunningUnarchive,
         key: 'archive',
-        label: 'Archive',
-        onClick: async (): Promise<void> => {
-          setIsRunningArchive(true);
-          try {
-            await archiveExperiment({ experimentId: experiment.id });
-            await fetchExperimentDetails();
-          } catch (e) {
-            setIsRunningArchive(false);
-          }
-        },
+        menuOptions: [
+          {
+            isLoading: isRunningUnarchive,
+            key: 'archive',
+            label: 'Archive',
+            onClick: async (): Promise<void> => {
+              setIsRunningArchive(true);
+              try {
+                await archiveExperiment({ experimentId: experiment.id });
+                await fetchExperimentDetails();
+              } catch (e) {
+                setIsRunningArchive(false);
+              }
+            },
+          },
+        ],
       },
     };
 
@@ -406,17 +522,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       erroredTrialCount,
     );
 
-    return availableActions.map((action) => options[action]) as Option[];
+    return availableActions.map((action) => options[action]) as ActionOptions[];
   }, [
     expPermissions,
     isRunningArchive,
-    ContinueTrialModal,
+    continueExperimentOption,
     isRunningDelete,
     ExperimentDeleteModal,
-    handleHyperparameterSearch,
     ForkModal,
     ExperimentEditModal,
     ExperimentMoveModal,
+    HyperparameterSearchModal,
     isRunningTensorBoard,
     isRunningUnarchive,
     experiment,
@@ -460,14 +576,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const rows = [
       {
         label: 'Description',
-        value: (
-          <Typography.Paragraph
-            disabled={!experiment.description}
-            ellipsis={{ rows: 1, tooltip: true }}
-            style={{ margin: 0 }}>
-            {experiment.description || 'N/A'}
-          </Typography.Paragraph>
-        ),
+        value: <Body truncate={{ rows: 1, tooltip: true }}>{experiment.description || 'N/A'}</Body>,
       },
     ];
     if (experiment.forkedFrom && experiment.config.searcher.sourceTrialId) {
@@ -547,7 +656,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isActionableIcon(experiment.state) ? (
                   <div className={classes.join(' ')} style={stateStyle}>
                     {isPausable && (
-                      <Button
+                      <AntdButton
                         className={
                           isShownAnimation(experiment.state)
                             ? css.buttonWithAnimation
@@ -560,7 +669,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       />
                     )}
                     {isPaused && (
-                      <Button
+                      <AntdButton
                         className={
                           isShownAnimation(experiment.state)
                             ? css.buttonWithAnimation
@@ -573,7 +682,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       />
                     )}
                     {!isTerminated && (
-                      <Button
+                      <AntdButton
                         className={css.buttonStop}
                         disabled={!canPausePlay}
                         icon={<Icon name="stop" size="large" title="Stop" />}
@@ -605,15 +714,39 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             ) : null}
           </Space>
         }
-        options={headerOptions}
+        options={headerOptions.map((option) => ({
+          content: option?.content
+            ? option.content
+            : option.menuOptions.map((menuOption) => (
+              <Button
+                disabled={menuOption.disabled || !menuOption.onClick}
+                icon={menuOption?.icon}
+                key={menuOption.key}
+                loading={menuOption.isLoading}
+                onClick={menuOption.onClick}>
+                {renderOptionLabel(menuOption)}
+              </Button>
+            )),
+          key: option.key,
+          menuOptions: option.menuOptions,
+        }))}
       />
       <ExperimentHeaderProgress experiment={experiment} />
+      <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />
+      <ReactivateExperimentModal.Component
+        experiment={experiment}
+        type={ContinueExperimentType.Reactivate}
+      />
+      <ContinueExperimentModal.Component
+        experiment={experiment}
+        trial={trial}
+        type={ContinueExperimentType.Continue}
+      />
       <ContinueTrialModal.Component
         experiment={experiment}
         trial={trial}
         type={CreateExperimentType.ContinueTrial}
       />
-      <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />
       <ExperimentDeleteModal.Component experiment={experiment} />
       <ExperimentMoveModal.Component
         experimentIds={isMovable ? [experiment.id] : []}
@@ -631,7 +764,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         experimentName={experiment.name}
         onEditComplete={fetchExperimentDetails}
       />
-      {modalHyperparameterSearchContextHolder}
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </>
   );
 };

@@ -1,11 +1,10 @@
 import Breadcrumb from 'hew/Breadcrumb';
 import Button from 'hew/Button';
 import Glossary, { InfoRow } from 'hew/Glossary';
-import { Modal } from 'hew/Modal';
+import { Modal, ModalCloseReason } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
-import { ModalCloseReason } from 'hooks/useModal/useModal';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -30,7 +29,7 @@ export interface Props {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   children?: React.ReactNode;
   config: ExperimentConfig;
-  onClose: (reason?: ModalCloseReason) => void;
+  onClose?: (reason?: ModalCloseReason) => void;
   searcherValidation?: number;
   title: string;
 }
@@ -81,9 +80,9 @@ const CheckpointModalComponent: React.FC<Props> = ({
 }: Props) => {
   const confirm = useConfirm();
 
-  const handleCancel = useCallback(() => onClose(ModalCloseReason.Cancel), [onClose]);
+  const handleCancel = useCallback(() => onClose?.('Cancel'), [onClose]);
 
-  const handleOk = useCallback(() => onClose(ModalCloseReason.Ok), [onClose]);
+  const handleOk = useCallback(() => onClose?.('Ok'), [onClose]);
 
   const handleDelete = useCallback(async () => {
     if (!checkpoint?.uuid) return;

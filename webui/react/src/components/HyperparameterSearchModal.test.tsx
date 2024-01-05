@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import Button from 'hew/Button';
+import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
@@ -8,7 +9,7 @@ import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
-import useModalHyperparameterSearch from './useModalHyperparameterSearch';
+import HyperparameterSearchModalComponent from './HyperparameterSearchModal';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
@@ -77,12 +78,15 @@ vi.mock('services/api', () => ({
 const { experiment } = generateTestExperimentData();
 
 const ModalTrigger: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalHyperparameterSearch({ experiment: experiment });
+  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
   return (
     <>
-      <Button onClick={() => modalOpen()}>Open Modal</Button>
-      {contextHolder}
+      <Button onClick={() => HyperparameterSearchModal.open()}>Open Modal</Button>
+      <HyperparameterSearchModal.Component
+        closeModal={HyperparameterSearchModal.close}
+        experiment={experiment}
+      />
     </>
   );
 };

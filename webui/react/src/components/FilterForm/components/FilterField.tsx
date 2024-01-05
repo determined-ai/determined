@@ -1,12 +1,10 @@
-import { type SelectProps as AntdSelectProps } from 'antd';
-import type { DatePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import Button from 'hew/Button';
-import DatePicker from 'hew/DatePicker';
+import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
-import Select, { SelectValue } from 'hew/Select';
+import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import { useCallback, useState } from 'react';
@@ -96,7 +94,7 @@ const FilterField = ({
     }
   };
 
-  const getSpecialOptions = (columnName: SpecialColumnNames): AntdSelectProps['options'] => {
+  const getSpecialOptions = (columnName: SpecialColumnNames): SelectProps['options'] => {
     switch (columnName) {
       case 'resourcePool':
         return resourcePools.map((rp) => ({ label: rp.name, value: rp.name }));

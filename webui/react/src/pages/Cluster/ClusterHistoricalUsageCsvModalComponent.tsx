@@ -1,12 +1,13 @@
-import { Form, Modal } from 'antd';
+import { Form } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import DatePicker from 'hew/DatePicker';
+import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { useTheme } from 'hew/Theme';
 import React from 'react';
 
 import { handlePath, serverAddress } from 'routes/utils';
 import { ValueOf } from 'types';
+import handleError from 'utils/error';
 
 export const CSVGroupBy = {
   Allocations: '/resources/allocation/allocations-csv?',
@@ -22,17 +23,13 @@ interface Props {
   onVisibleChange: (visible: boolean) => void;
 }
 
-const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
+const ClusterHistoricalUsageCsvModalComponent: React.FC<Props> = ({
   afterDate,
   beforeDate,
   groupBy,
   onVisibleChange,
 }: Props) => {
   const [form] = Form.useForm();
-
-  const {
-    themeSettings: { className: themeClass },
-  } = useTheme();
 
   const handleOk = (event: React.MouseEvent): void => {
     const formAfterDate = form.getFieldValue('afterDate');
@@ -61,12 +58,14 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
 
   return (
     <Modal
-      okText="Proceed to Download"
-      open={true}
+      size="small"
+      submit={{
+        handleError: handleError,
+        handler: handleOk,
+        text: 'Proceed to Download',
+      }}
       title="Download Resource Usage Data in CSV"
-      wrapClassName={themeClass}
-      onCancel={() => onVisibleChange(false)}
-      onOk={handleOk}>
+      onClose={() => onVisibleChange(false)}>
       <Form form={form} initialValues={{ afterDate, beforeDate, groupBy }} labelCol={{ span: 8 }}>
         <Form.Item label="Start" name="afterDate">
           <DatePicker allowClear={false} disabledDate={isAfterDateDisabled} width={150} />
@@ -85,4 +84,4 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
   );
 };
 
-export default ClusterHistoricalUsageCsvModal;
+export default ClusterHistoricalUsageCsvModalComponent;

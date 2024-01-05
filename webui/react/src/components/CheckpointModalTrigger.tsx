@@ -1,12 +1,22 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
-import { useModal } from 'hew/Modal';
-import React, { useCallback } from 'react';
+import { ModalCloseReason, useModal } from 'hew/Modal';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isEqual } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';
-import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
-import { ModalCloseReason } from 'hooks/useModal/useModal';
-import { CheckpointWorkloadExtended, CoreApiGenericCheckpoint, ExperimentBase } from 'types';
+import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
+import { getModels } from 'services/api';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import {
+  CheckpointWorkloadExtended,
+  CoreApiGenericCheckpoint,
+  ExperimentBase,
+  ModelItem,
+} from 'types';
+import handleError, { ErrorType } from 'utils/error';
+import { validateDetApiEnum } from 'utils/service';
 
 import CheckpointModalComponent from './CheckpointModal';
 
@@ -26,34 +36,52 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
 
-  const {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({
-    onClose: (_reason?: ModalCloseReason, checkpoints?: string[]) => {
-      // TODO: fix the behavior along with checkpoint modal migration
-      // It used to open checkpoint modal again after creating a model,
-      // but it doesn't with new create model modal since we don't use context holder anymore.
-      // This should be able to fix it along with checkpoint modal migration.
-      if (checkpoints) modelCreateModal.open();
-    },
-  });
+  const registerModal = useModal(RegisterCheckpointModal);
+
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedModelName, setSelectedModelName] = useState<string>();
+  const [canceler] = useState(new AbortController());
 
   const handleOnCloseCreateModel = useCallback(
-    (_reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
-      if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
-    },
-    [openModalCheckpointRegister],
-  );
-
-  const handleOnCloseCheckpoint = useCallback(
-    (reason?: ModalCloseReason) => {
-      if (reason === ModalCloseReason.Ok && checkpoint.uuid) {
-        openModalCheckpointRegister({ checkpoints: checkpoint.uuid });
+    (modelName?: string) => {
+      if (modelName) {
+        setSelectedModelName(modelName);
+        registerModal.open();
       }
     },
-    [checkpoint, openModalCheckpointRegister],
+    [setSelectedModelName, registerModal],
   );
+
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels(
+        {
+          archived: false,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: validateDetApiEnum(
+            V1GetModelsRequestSortBy,
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+          ),
+        },
+        { signal: canceler.signal },
+      );
+      setModels((prev) => {
+        const loadedModels = Loaded(response.models);
+        if (isEqual(prev, loadedModels)) return prev;
+        return loadedModels;
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [canceler.signal]);
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   const handleModalCheckpointClick = useCallback(() => {
     checkpointModal.open();
@@ -71,14 +99,22 @@ const CheckpointModalTrigger: React.FC<Props> = ({
           />
         )}
       </span>
-      {modalCheckpointRegisterContextHolder}
-      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
+      <registerModal.Component
+        checkpoints={checkpoint.uuid ? [checkpoint.uuid] : []}
+        closeModal={registerModal.close}
+        modelName={selectedModelName}
+        models={models}
+        openModelModal={modelCreateModal.open}
+      />
       <checkpointModal.Component
         checkpoint={checkpoint}
         config={experiment.config}
         title={title}
-        onClose={handleOnCloseCheckpoint}
+        onClose={(reason?: ModalCloseReason) => {
+          if (reason === 'Ok') registerModal.open();
+        }}
       />
+      <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
     </>
   );
 };

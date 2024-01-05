@@ -17,17 +17,16 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import useUI, { ThemeProvider } from 'components/ThemeProvider';
+import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
-import { useSettings } from 'hooks/useSettings';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
-import { config as themeConfig, Settings as themeSettings } from 'hooks/useTheme.settings';
+import { STORAGE_PATH, settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
@@ -44,6 +43,9 @@ import css from './App.module.scss';
 import 'antd/dist/reset.css';
 import '@hpe.com/glide-data-grid/dist/index.css';
 
+const updateThemeSetting = (mode: Mode) => userSettings.set(themeSettings, STORAGE_PATH, { mode });
+const themeSetting = userSettings.get(themeSettings, STORAGE_PATH);
+
 const AppView: React.FC = () => {
   const resize = useResize();
 
@@ -55,11 +57,7 @@ const AppView: React.FC = () => {
   const isServerReachable = useObservable(determinedStore.isServerReachable);
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck();
-  const {
-    settings,
-    isLoading: isSettingsLoading,
-    updateSettings,
-  } = useSettings<themeSettings>(themeConfig);
+  const settings = useObservable(themeSetting);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { ui, actions: uiActions, theme, isDarkMode } = useUI();
 
@@ -136,17 +134,17 @@ const AppView: React.FC = () => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
-    if (isSettingsLoading) return;
+    !isSettingsReady &&
+      settings.forEach((s) => {
+        const mode = s?.mode || Mode.System;
+        setIsSettingsReady(true);
+        uiActions.setMode(mode);
+      });
+  }, [settings, uiActions, isSettingsReady]);
 
-    if (isSettingsReady) {
-      // We have read from the settings, going forward any mode difference requires an update.
-      if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });
-    } else {
-      // Initially set the mode from settings.
-      uiActions.setMode(settings.mode);
-      setIsSettingsReady(true);
-    }
-  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
+  useLayoutEffect(() => {
+    isSettingsReady && updateThemeSetting(ui.mode);
+  }, [isSettingsReady, ui.mode]);
 
   // Check permissions and params for JupyterLabGlobal.
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
