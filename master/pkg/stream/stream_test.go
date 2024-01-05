@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	TestMsgUpsertKey   = "testmsg"
-	TestMsgDeleteKey   = "testmsg_deleted"
-	TestMsgJrUpsertKey = "testmsgjr"
-	TestMsgJrDeleteKey = "testmsgjr_deleted"
+	TestMsgAUpsertKey = "testmsgA"
+	TestMsgADeleteKey = "testmsgA_deleted"
+	TestMsgBUpsertKey = "testmsgB"
+	TestMsgBDeleteKey = "testmsgB_deleted"
 )
 
 type TestMsgTypeA struct {
@@ -25,7 +25,7 @@ func (tm TestMsgTypeA) SeqNum() int64 {
 
 func (tm TestMsgTypeA) UpsertMsg() UpsertMsg {
 	return UpsertMsg{
-		JSONKey: TestMsgUpsertKey,
+		JSONKey: TestMsgAUpsertKey,
 		Msg:     tm,
 	}
 }
@@ -33,7 +33,7 @@ func (tm TestMsgTypeA) UpsertMsg() UpsertMsg {
 func (tm TestMsgTypeA) DeleteMsg() DeleteMsg {
 	deleted := strconv.FormatInt(int64(tm.ID), 10)
 	return DeleteMsg{
-		Key:     TestMsgDeleteKey,
+		Key:     TestMsgADeleteKey,
 		Deleted: deleted,
 	}
 }
@@ -50,7 +50,7 @@ func (em TestMsgTypeB) SeqNum() int64 {
 
 func (em TestMsgTypeB) UpsertMsg() UpsertMsg {
 	return UpsertMsg{
-		JSONKey: TestMsgJrUpsertKey,
+		JSONKey: TestMsgBUpsertKey,
 		Msg:     em,
 	}
 }
@@ -58,7 +58,7 @@ func (em TestMsgTypeB) UpsertMsg() UpsertMsg {
 func (em TestMsgTypeB) DeleteMsg() DeleteMsg {
 	deleted := strconv.FormatInt(int64(em.ID), 10)
 	return DeleteMsg{
-		Key:     TestMsgJrDeleteKey,
+		Key:     TestMsgBDeleteKey,
 		Deleted: deleted,
 	}
 }
@@ -340,43 +340,43 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 	require.Equal(t, "1", deleteMsg.Deleted, "Deleted number incorrect")
 
 	// Msgs sent on publisherTwo should not be picked up.
-	afterMsgJr := TestMsgTypeB{
+	afterMsgB := TestMsgTypeB{
 		Seq: 2,
 		ID:  2,
 	}
-	eventJr := Event[TestMsgTypeB]{After: &afterMsgJr}
-	publisherTwo.Broadcast([]Event[TestMsgTypeB]{eventJr})
+	eventB := Event[TestMsgTypeB]{After: &afterMsgB}
+	publisherTwo.Broadcast([]Event[TestMsgTypeB]{eventB})
 
 	require.Equal(t, 2, len(streamer.Msgs), "picked up message we don't want")
 
-	beforeMsgJr := TestMsgTypeB{
+	beforeMsgB := TestMsgTypeB{
 		Seq: 3,
 		ID:  3,
 	}
-	eventJr = Event[TestMsgTypeB]{Before: &beforeMsgJr}
-	publisherTwo.Broadcast([]Event[TestMsgTypeB]{eventJr})
+	eventB = Event[TestMsgTypeB]{Before: &beforeMsgB}
+	publisherTwo.Broadcast([]Event[TestMsgTypeB]{eventB})
 
 	require.Equal(t, 2, len(streamer.Msgs), "picked up message we don't want")
 
 	// Msgs sent onf publisherthree should be picked up.
-	afterMsgJr = TestMsgTypeB{
+	afterMsgB = TestMsgTypeB{
 		Seq: 4,
 		ID:  4,
 	}
-	eventJr = Event[TestMsgTypeB]{After: &afterMsgJr}
-	publisherThree.Broadcast([]Event[TestMsgTypeB]{eventJr})
+	eventB = Event[TestMsgTypeB]{After: &afterMsgB}
+	publisherThree.Broadcast([]Event[TestMsgTypeB]{eventB})
 
 	require.Equal(t, 3, len(streamer.Msgs), "upsert message was not upserted")
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
 	require.Equal(t, 4, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
-	beforeMsgJr = TestMsgTypeB{
+	beforeMsgB = TestMsgTypeB{
 		Seq: 5,
 		ID:  5,
 	}
-	eventJr = Event[TestMsgTypeB]{Before: &beforeMsgJr}
-	publisherThree.Broadcast([]Event[TestMsgTypeB]{eventJr})
+	eventB = Event[TestMsgTypeB]{Before: &beforeMsgB}
+	publisherThree.Broadcast([]Event[TestMsgTypeB]{eventB})
 
 	require.Equal(t, 4, len(streamer.Msgs), "upsert message was not upserted")
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
