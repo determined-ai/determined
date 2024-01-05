@@ -71,7 +71,7 @@ You can use the WebUI to view :ref:`historical-cluster-usage-data`.
 **************************
 
 To view a resource pool's node and GPU distribution, as well as check which GPUs are currently in
-use, start by ensuring there's an active experiment running. Then, follow these steps:
+use, follow these steps:
 
 #. Navigate to Resource Pools.
 
