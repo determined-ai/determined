@@ -107,6 +107,7 @@ Parameters:
   DBSnapshot:
     Type: String
     Description: Snapshot to start database with on creation
+    Default: ""
 
   DBSize:
     Type: Number
