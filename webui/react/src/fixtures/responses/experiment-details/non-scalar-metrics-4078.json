@@ -114,10 +114,6 @@
   "start_time": "2020-09-04T22:14:25.441633+00:00",
   "end_time": "2020-09-04T22:14:55.208371+00:00",
   "archived": false,
-  "git_remote": null,
-  "git_commit": null,
-  "git_committer": null,
-  "git_commit_date": null,
   "progress": null,
   "trials": [
     {

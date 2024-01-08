@@ -54,8 +54,7 @@ func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, er
 // ProjectExperiments returns a list of experiments within a project.
 func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err error) {
 	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+SELECT e.id, state, config, model_definition, start_time, end_time, archived, owner_id, notes,
 		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
@@ -599,8 +598,7 @@ func ExperimentByID(ctx context.Context, expID int) (*model.Experiment, error) {
 
 	if err := Bun().NewRaw(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username, project_id, unmanaged, external_experiment_id
+	   owner_id, notes, job_id, u.username as username, project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = ?`, expID).Scan(ctx, &experiment); err != nil {
@@ -617,8 +615,7 @@ func ExperimentByTrialID(ctx context.Context, trialID int) (*model.Experiment, e
 
 	if err := Bun().NewRaw(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
-       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-       e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
 JOIN users u ON (e.owner_id = u.id)
@@ -636,8 +633,7 @@ func ExperimentByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.model_definition, e.start_time,
-       e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
+SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
@@ -657,8 +653,7 @@ func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperime
 	var experiment model.Experiment
 
 	if err := idb.NewRaw(`
-	SELECT e.id, state, config, model_definition, start_time, end_time, archived,
-	git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
+	SELECT e.id, state, config, model_definition, start_time, end_time, archived,owner_id, notes,
 		job_id, u.username as username, project_id, unmanaged, external_experiment_id
 	FROM experiments e
 	JOIN users u ON (e.owner_id = u.id)
@@ -702,8 +697,7 @@ SELECT experiment_id FROM trials where id = $1
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
+SELECT e.id, state, config, model_definition, start_time, end_time, archived, owner_id, job_id,
        u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id

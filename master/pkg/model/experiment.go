@@ -348,10 +348,6 @@ type Experiment struct {
 	EndTime              *time.Time `db:"end_time"`
 	ParentID             *int       `db:"parent_id"`
 	Archived             bool       `db:"archived"`
-	GitRemote            *string    `db:"git_remote"`
-	GitCommit            *string    `db:"git_commit"`
-	GitCommitter         *string    `db:"git_committer"`
-	GitCommitDate        *time.Time `db:"git_commit_date"`
 	OwnerID              *UserID    `db:"owner_id"`
 	Username             string     `db:"username"`
 	ProjectID            int        `db:"project_id"`
@@ -414,16 +410,9 @@ func NewExperiment(
 	modelDefinitionBytes []byte,
 	parentID *int,
 	archived bool,
-	gitRemote, gitCommit, gitCommitter *string,
-	gitCommitDate *time.Time,
 	projectID int,
 	unmanaged bool,
 ) (*Experiment, error) {
-	if !(gitRemote == nil && gitCommit == nil && gitCommitter == nil && gitCommitDate == nil) &&
-		!(gitRemote != nil && gitCommit != nil && gitCommitter != nil && gitCommitDate != nil) {
-		return nil, errors.New(
-			"all of git_remote, git_commit, git_committer and git_commit_date must be nil or non-nil")
-	}
 	return &Experiment{
 		State:                PausedState,
 		JobID:                NewJobID(),
@@ -433,10 +422,6 @@ func NewExperiment(
 		StartTime:            time.Now().UTC(),
 		ParentID:             parentID,
 		Archived:             archived,
-		GitRemote:            gitRemote,
-		GitCommit:            gitCommit,
-		GitCommitter:         gitCommitter,
-		GitCommitDate:        gitCommitDate,
 		ProjectID:            projectID,
 	}, nil
 }
