@@ -467,10 +467,11 @@ func (a *apiServer) ResumeGenericTask(
 			if err != nil {
 				return nil, err
 			}
-			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			allocationString, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
+			allocationID := model.AllocationID(allocationString)
 			logCtx := logger.Context{
 				"job-id":    childTask.JobID,
 				"task-id":   childTask.TaskID,
@@ -491,9 +492,13 @@ func (a *apiServer) ResumeGenericTask(
 					syslog.WithError(err).Error("deleting group priority change registry")
 				}
 			}
+			allocationSpecifier, err := allocationID.GetAllocationSpecifier()
+			if err != nil {
+				return nil, err
+			}
 			err = task.DefaultService.StartAllocation(
 				nil, sproto.AllocateRequest{
-					AllocationID:      model.AllocationID(allocationID),
+					AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", childTask.TaskID, allocationSpecifier+1)),
 					TaskID:            childTask.TaskID,
 					JobID:             *childTask.JobID,
 					JobSubmissionTime: time.Now(),
@@ -505,7 +510,7 @@ func (a *apiServer) ResumeGenericTask(
 						SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
 					},
 					Preemptible: true,
-					Restore:     true,
+					Restore:     false,
 				}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
 			if err != nil {
 				return nil, err
@@ -520,7 +525,8 @@ func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.Ta
 	allocation := model.Allocation{}
 	err := db.Bun().NewSelect().Model(&allocation).
 		ColumnExpr("allocation_id").
-		Where("task_id = ?", taskID).Scan(ctx)
+		Where("task_id = ?", taskID).
+		OrderExpr("start_time ASC").Scan(ctx)
 	if err != nil {
 		return "", err
 	}

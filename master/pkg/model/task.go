@@ -109,6 +109,14 @@ func (a AllocationID) ToTaskID() TaskID {
 	return TaskID(a[:strings.LastIndex(string(a), ".")])
 }
 
+func (a AllocationID) GetAllocationSpecifier() (int, error) {
+	i, err := strconv.Atoi(a[strings.LastIndex(string(a), ".")+1:].String())
+	if err != nil {
+		return 0, err
+	}
+	return i, nil
+}
+
 // Allocation is the model for an allocation in the database.
 type Allocation struct {
 	bun.BaseModel `bun:"table:allocations"`
