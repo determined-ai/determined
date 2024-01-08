@@ -218,6 +218,9 @@ def scrape_tree(root, excludes):
 
 
 def upload(app_id, api_key, records, version):
+    # Configure maximum amount of retries if desired
+    max_retries = 3
+
     client = search_client.SearchClient.create(app_id, api_key)
 
     temp_name = f"determined-{version}.tmp"
@@ -231,13 +234,29 @@ def upload(app_id, api_key, records, version):
 
     # Upload to temp index.
     print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
-    index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True}).wait()
-    print("upload complete", file=sys.stderr)
+    num_tries = 1
+    while num_tries <= max_retries:
+        index_response = index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
+        index_response.wait()
+        if all(200 <= raw_response.status_code < 300 for raw_response in index_response):
+            print("upload complete", file=sys.stderr)
+            break
+        else:
+            if num_tries == max_retries:
+                print(f"upload failed after {num_tries} retries", file=sys.stderr)
 
     # Rename index into place.
     print(f"renaming temp index {temp_name} -> {final_name}...", file=sys.stderr)
-    client.move_index(temp_name, final_name).wait()
-    print("rename done", file=sys.stderr)
+    num_tries = 1
+    while num_tries <= max_retries:
+        client_response = client.move_index(temp_name, final_name)
+        client_response.wait()
+        if all(200 <= raw_response.status_code < 300 for raw_response in client_response):
+            print("rename done", file=sys.stderr)
+            break
+        else:
+            if num_tries == max_retries:
+                print(f"rename failed after {num_tries} retries", file=sys.stderr)
 
 
 if __name__ == "__main__":
