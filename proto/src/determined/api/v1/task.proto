@@ -302,6 +302,9 @@ message KillGenericTaskRequest {
   };
   // The id of the task.
   string task_id = 1;
+
+  // Kill entire task tree
+  bool kill_from_root = 2;
 }
 
 // Response to KillGenericTaskRequest

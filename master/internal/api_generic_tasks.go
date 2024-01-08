@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -386,16 +387,29 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 func (a *apiServer) KillGenericTask(
 	ctx context.Context, req *apiv1.KillGenericTaskRequest,
 ) (*apiv1.KillGenericTaskResponse, error) {
-	rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
+	killTaskId := model.TaskID(req.TaskId)
+	var taskModel model.Task
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskId).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
+	// Validate state
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
-	err = a.PropagateTaskState(ctx, rootID, model.TaskStateStoppingCanceled, overrideStates)
+	if slices.Contains(overrideStates, *taskModel.State) {
+		return nil, fmt.Errorf("cannot cancel task %s as it is in state '%s'", req.TaskId, *taskModel.State)
+	}
+	if req.KillFromRoot {
+		rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
+		if err != nil {
+			return nil, err
+		}
+		killTaskId = rootID
+	}
+	err = a.PropagateTaskState(ctx, killTaskId, model.TaskStateStoppingCanceled, overrideStates)
 	if err != nil {
 		return nil, err
 	}
-	tasksToDelete, err := a.GetTaskChildren(ctx, rootID, overrideStates)
+	tasksToDelete, err := a.GetTaskChildren(ctx, killTaskId, overrideStates)
 	if err != nil {
 		return nil, err
 	}
