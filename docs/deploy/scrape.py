@@ -231,7 +231,7 @@ def upload(app_id, api_key, records, version):
 
     # Upload to temp index.
     print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
-    index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
+    index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True}).wait()
     print("upload complete", file=sys.stderr)
 
     # Rename index into place.
