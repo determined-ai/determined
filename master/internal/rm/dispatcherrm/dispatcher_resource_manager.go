@@ -341,7 +341,7 @@ func (m *DispatcherResourceManager) GetJobQ(
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if len(strings.TrimSpace(msg.ResourcePool)) == 0 {
-		msg.ResourcePool = *m.rmConfig.DefaultComputeResourcePool
+		msg.ResourcePool = m.hpcDetailsCache.lastSample.Load().DefaultComputePoolPartition
 		m.syslog.WithField("resource-pool", msg.ResourcePool).
 			Trace("no resource pool name provided, selected the default compute pool")
 	}
