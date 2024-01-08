@@ -120,6 +120,7 @@ func TestUserAddDuplicate(t *testing.T) {
 	require.Error(t, err)
 	if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
 		require.Equal(t, pgerr.Code, db.CodeUniqueViolation)
+		require.Equal(t, err, db.ErrDuplicateRecord)
 	}
 }
 
