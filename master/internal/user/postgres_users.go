@@ -187,7 +187,7 @@ func AddUserTx(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID
 		OwnerID: user.ID,
 	}
 	if _, err := idb.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
-		return 0, fmt.Errorf("error inserting personal grou: %s", err)
+		return 0, fmt.Errorf("error inserting personal group: %s", err)
 	}
 
 	groupMembership := model.GroupMembership{
