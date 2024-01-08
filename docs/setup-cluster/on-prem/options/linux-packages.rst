@@ -12,9 +12,9 @@ systemd services on machines running Linux.
 
 You have two options for installing the Determined master and agent:
 
--  Using Debian packages on Ubuntu 16.04 or 18.04, or
--  Using Red Hat 7-based Linux distributions (e.g., Red Hat Enterprise Linux, CentOS, Oracle Linux,
-   and Scientific Linux).
+-  Using Debian packages on Ubuntu 20.04 or 22.04, or
+-  Using RPM packages on Enterprise Linux distributions (e.g., AlmaLinux, Oracle Linux, 
+   Red Hat Enterprise Linux, or Rocky Linux).
 
 *******************
  Preliminary Setup
@@ -75,10 +75,10 @@ Install PostgreSQL using ``apt`` or ``yum``
 
       sudo apt install postgresql-10
 
-   **Red Hat Distributions**
+   **Enterprise Linux Distributions**
 
-   On Red Hat distributions, you'll need to configure the PostgreSQL yum repository as described in
-   the `Red Hat Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
+   On Enterprise Linux distributions, you'll need to configure the PostgreSQL yum repository as described in
+   the `Enterprise Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
    install version 10:
 
    .. code::
@@ -136,9 +136,9 @@ Install the Determined Master and Agent
 
          sudo apt install <path to downloaded package>
 
-   **Red Hat Distributions**
+   **Enterprise Linux Distributions**
 
-   On Red Hat distributions, use the following command during the initial installation:
+   On Enterprise Linux distributions, use the following command during the initial installation:
 
       .. code::
 
@@ -304,7 +304,7 @@ To upgrade, reinstall Determined.
 
 .. note::
 
-   **Red Hat Distributions**
+   **Enterprise Linux Distributions**
 
    When installing the Determined master and agent during the upgrade process, use the following
    command:
