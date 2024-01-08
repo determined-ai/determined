@@ -386,16 +386,20 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 func (a *apiServer) KillGenericTask(
 	ctx context.Context, req *apiv1.KillGenericTaskRequest,
 ) (*apiv1.KillGenericTaskResponse, error) {
-	rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
-	if err != nil {
-		return nil, err
+	killTaskId := model.TaskID(req.TaskId)
+	if req.KillFromRoot {
+		rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
+		if err != nil {
+			return nil, err
+		}
+		killTaskId = rootID
 	}
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
-	err = a.PropagateTaskState(ctx, rootID, model.TaskStateStoppingCanceled, overrideStates)
+	err := a.PropagateTaskState(ctx, killTaskId, model.TaskStateStoppingCanceled, overrideStates)
 	if err != nil {
 		return nil, err
 	}
-	tasksToDelete, err := a.GetTaskChildren(ctx, rootID, overrideStates)
+	tasksToDelete, err := a.GetTaskChildren(ctx, killTaskId, overrideStates)
 	if err != nil {
 		return nil, err
 	}

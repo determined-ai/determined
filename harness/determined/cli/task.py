@@ -159,7 +159,7 @@ def config(args: Namespace) -> None:
 @authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.post_KillGenericTask(sess, taskId=args.task_id)
+    bindings.post_KillGenericTask(sess, taskId=args.task_id, killFromRoot=args.root)
 
 
 common_log_options: List[Any] = [
@@ -323,6 +323,11 @@ args_description: List[Any] = [
                 "kill task",
                 [
                     Arg("task_id", type=str, help=""),
+                    Arg(
+                        "--root",
+                        action="store_true",
+                        help="",
+                    )
                 ],
             ),
         ],
