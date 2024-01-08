@@ -445,7 +445,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           </Column>
         </Row>
       </Section>
-      <Spinner spinning={isLoading}>
+      <Spinner conditionalRender spinning={isLoading}>
         {projects.length !== 0 ? (
           projectsList
         ) : workspace.numProjects === 0 ? (

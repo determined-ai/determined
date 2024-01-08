@@ -371,7 +371,7 @@ const WorkspaceList: React.FC = () => {
           </Column>
         </Row>
       </Section>
-      <Spinner spinning={isLoading}>
+      <Spinner conditionalRender spinning={isLoading}>
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
