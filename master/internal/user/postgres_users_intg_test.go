@@ -117,10 +117,10 @@ func TestUserAddDuplicate(t *testing.T) {
 
 	// Then try to add another user with the same username, expect an error.
 	_, err = Add(context.TODO(), &user2, &model.AgentUserGroup{})
-	require.Error(t, err)
+	require.Equal(t, err, db.ErrDuplicateRecord)
+
 	if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
 		require.Equal(t, pgerr.Code, db.CodeUniqueViolation)
-		require.Equal(t, err, db.ErrDuplicateRecord)
 	}
 }
 
