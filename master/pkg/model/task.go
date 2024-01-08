@@ -85,6 +85,8 @@ type Task struct {
 	State *TaskState `db:"task_state" bun:"task_state"`
 
 	Config *string `db:"config"`
+
+	NoPause *bool `db:"no_pause"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form

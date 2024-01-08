@@ -431,8 +431,22 @@ func (a *apiServer) KillGenericTask(
 func (a *apiServer) PauseGenericTask(
 	ctx context.Context, req *apiv1.PauseGenericTaskRequest,
 ) (*apiv1.PauseGenericTaskResponse, error) {
+	killTaskId := model.TaskID(req.TaskId)
+	var taskModel model.Task
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskId).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Validate state
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted, model.TaskStatePaused}
-	err := a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
+	if slices.Contains(overrideStates, *taskModel.State) {
+		return nil, fmt.Errorf("cannot pause task %s as it is in state '%s'", req.TaskId, *taskModel.State)
+	}
+	// Check for flag
+	if *taskModel.NoPause {
+		return nil, fmt.Errorf("cannot pause task %s as it is flagged as not pausable", req.TaskId)
+	}
+	err = a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
 	if err != nil {
 		return nil, err
 	}
