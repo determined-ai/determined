@@ -546,9 +546,11 @@ export const defaultNumberColumn = (
       }
       return {
         allowOverlay: false,
-        data: Number(data),
-        displayData: data !== undefined ? String(data) : '',
-        kind: GridCellKind.Number,
+        copyData: data !== undefined ? String(data) : '',
+        data: {
+          kind: 'text-cell',
+        },
+        kind: GridCellKind.Custom,
         themeOverride: theme,
       };
     },
