@@ -159,7 +159,7 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
 };
 
 export const jobStateToLabel: { [key in JobState]: string } = {
-  [JobState.SCHEDULED]: 'Running',
+  [JobState.SCHEDULED]: 'Scheduled',
   [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
   [JobState.UNSPECIFIED]: 'Unspecified',
