@@ -675,10 +675,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 )}
               </Spinner>
             </Column>
-            <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name} role="experimentName">
+            <span>Experiment {experiment.id}</span>
+            <span role="experimentName">
               {experiment.name}
-            </div>
+            </span>
             {experiment.unmanaged && (
               <Badge tooltip="Workload not managed by Determined" type="Header">
                 Unmanaged

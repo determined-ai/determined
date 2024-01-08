@@ -11,14 +11,3 @@
   position: absolute;
   top: 3px;
 }
-.id {
-  flex-shrink: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.name {
-  flex-shrink: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: normal;
-}

@@ -81,7 +81,7 @@ const ModelHeader: React.FC<Props> = ({
       { label: 'Updated', value: <TimeAgo datetime={new Date(model.lastUpdatedTime)} /> },
       {
         label: 'Description',
-        value: <div>{(model.description ?? '') || <span>N/A</span>}</div>,
+        value: <div>{model.description || <span>N/A</span>}</div>,
       },
       {
         label: 'Tags',
@@ -143,7 +143,7 @@ const ModelHeader: React.FC<Props> = ({
   );
 
   return (
-    <div className={css.base}>
+    <header className={css.base}>
       <Column gap={16}>
         {model.archived && (
           <Message icon="warning" title="This model has been archived and is now read-only." />
@@ -170,7 +170,7 @@ const ModelHeader: React.FC<Props> = ({
       <deleteModelModal.Component model={model} redirectOnDelete />
       <modelMoveModal.Component model={model} />
       <modelEditModal.Component fetchModel={fetchModel} model={model} />
-    </div>
+    </header>
   );
 };
 
