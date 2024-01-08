@@ -3,6 +3,7 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import useConfirm from 'hew/useConfirm';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import usePermissions from 'hooks/usePermissions';
@@ -12,8 +13,6 @@ import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from '
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isTaskKillable } from 'utils/task';
-
-import Link from './Link';
 
 interface Props {
   children?: React.ReactNode;
@@ -35,11 +34,13 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
   const menuItems: MenuItem[] = [
     {
       key: Action.ViewLogs,
-      label: <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>,
+      label: 'View Logs',
     },
   ];
 
   if (isKillable) menuItems.unshift({ key: Action.Kill, label: 'Kill' });
+
+  const navigate = useNavigate();
 
   const handleDropdown = (key: string) => {
     try {
@@ -58,6 +59,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           });
           break;
         case Action.ViewLogs:
+          onComplete?.(key);
+          navigate(paths.taskLogs(task as CommandTask));
           break;
       }
     } catch (e) {
