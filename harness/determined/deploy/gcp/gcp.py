@@ -364,7 +364,7 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
 
 def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
     master_url = terraform_output(configs, env, "Web-UI")
-    healthcheck.wait_for_master_url(master_url, timeout)
+    healthcheck.wait_for_master(master_url, timeout)
 
 
 def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:

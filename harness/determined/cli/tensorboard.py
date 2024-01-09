@@ -1,3 +1,4 @@
+import webbrowser
 from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -8,7 +9,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import ntsc, render, task
 from determined.common import api, context
-from determined.common.api import bindings, request
+from determined.common.api import bindings
 from determined.common.check import check_none
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
@@ -47,7 +48,7 @@ def start_tensorboard(args: Namespace) -> None:
     cli.wait_ntsc_ready(sess, api.NTSC_Kind.tensorboard, tsb.id)
 
     assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
-    nb_path = request.make_interactive_task_url(
+    tb_path = ntsc.make_interactive_task_url(
         task_id=tsb.id,
         service_address=tsb.serviceAddress,
         description=tsb.description,
@@ -55,10 +56,10 @@ def start_tensorboard(args: Namespace) -> None:
         task_type="tensorboard",
         currentSlotsExceeded=currentSlotsExceeded,
     )
-    url = api.make_url(args.master, nb_path)
+    url = f"{args.master}/{tb_path}"
     if not args.no_browser:
-        api.browser_open(args.master, nb_path)
-    print(colored("Tensorboard is running at: {}".format(url), "green"))
+        webbrowser.open(url)
+    print(colored(f"Tensorboard is running at: {url}", "green"))
 
 
 def open_tensorboard(args: Namespace) -> None:
@@ -70,17 +71,15 @@ def open_tensorboard(args: Namespace) -> None:
 
     tsb = bindings.get_GetTensorboard(sess, tensorboardId=tensorboard_id).tensorboard
     assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
-    api.browser_open(
-        args.master,
-        request.make_interactive_task_url(
-            task_id=tsb.id,
-            service_address=tsb.serviceAddress,
-            description=tsb.description,
-            resource_pool=tsb.resourcePool,
-            task_type="tensorboard",
-            currentSlotsExceeded=False,
-        ),
+    tb_path = ntsc.make_interactive_task_url(
+        task_id=tsb.id,
+        service_address=tsb.serviceAddress,
+        description=tsb.description,
+        resource_pool=tsb.resourcePool,
+        task_type="tensorboard",
+        currentSlotsExceeded=False,
     )
+    webbrowser.open(f"{args.master}/{tb_path}")
 
 
 args_description: ArgsDescription = [

@@ -83,22 +83,6 @@ def sizeof_fmt(val: Union[int, float]) -> str:
     return "%.1f%sB" % (val, "Y")
 
 
-def get_default_master_address() -> str:
-    return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "localhost:8080"))
-
-
-def get_det_username_from_env() -> Optional[str]:
-    return os.environ.get("DET_USER")
-
-
-def get_det_user_token_from_env() -> Optional[str]:
-    return os.environ.get("DET_USER_TOKEN")
-
-
-def get_det_password_from_env() -> Optional[str]:
-    return os.environ.get("DET_PASS")
-
-
 def debug_mode() -> bool:
     return os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes")
 

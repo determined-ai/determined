@@ -7,7 +7,7 @@ import time
 import requests
 
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 
 class IdleType(enum.Enum):
@@ -73,8 +73,10 @@ def main():
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
     notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"
-    master_url = os.environ["DET_MASTER"]
+    master_url = api.canonicalize_master_url(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
+    utp = authentication.login_with_cache(info.master_url, cert=cert)
+    sess = api.Session(master_url, utp, cert)
     try:
         idle_type = IdleType[os.environ["NOTEBOOK_IDLE_TYPE"].upper()]
     except KeyError:
@@ -88,11 +90,9 @@ def main():
     while True:
         try:
             idle = is_idle(notebook_server, idle_type)
-            api.put(
-                master_url,
+            sess.put(
                 f"/api/v1/notebooks/{notebook_id}/report_idle",
                 {"notebook_id": notebook_id, "idle": idle},
-                cert=cert,
             )
         except Exception:
             logging.warning("ignoring error communicating with master", exc_info=True)
