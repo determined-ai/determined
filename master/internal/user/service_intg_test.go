@@ -253,6 +253,43 @@ func TestAuthzPostUser(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+func TestAuthzPostUserDuplicate(t *testing.T) {
+	svc, authzUser, ctx := setup(t)
+	ctx.SetParamNames("username")
+	ctx.SetParamValues("admin")
+	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(
+		`{"username":"e","agent_user_group":{"uid":1,"gid":2,"user":"u","group":"g"}}`)))
+
+	agentGroup := &model.AgentUserGroup{
+		UID:   1,
+		GID:   2,
+		User:  "u",
+		Group: "g",
+	}
+
+	authzUser.On("CanCreateUser", mock.Anything, model.User{}, model.User{Username: "e"}, agentGroup).
+		Return(nil).Once()
+
+	// post user once
+	_, err := svc.postUser(ctx)
+	require.NoError(t, err)
+
+	// post user a second time, expect an error.
+	svc2, authzUser2, ctx2 := setup(t)
+	ctx2.SetParamNames("username")
+	ctx2.SetParamValues("admin")
+	ctx2.SetRequest(httptest.NewRequest("", "/", strings.NewReader(
+		`{"username":"e","agent_user_group":{"uid":1,"gid":2,"user":"u","group":"g"}}`)))
+
+	authzUser2.On("CanCreateUser", mock.Anything, model.User{}, model.User{Username: "e"}, agentGroup).
+		Return(nil).Once()
+
+	expectedErr := api.ErrUserExists
+
+	_, err = svc2.postUser(ctx2)
+	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
 func TestAuthzGetUserImage(t *testing.T) {
 	svc, authzUser, ctx := setup(t)
 

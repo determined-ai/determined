@@ -54,6 +54,10 @@ var (
 	// ErrAPIRemoved is an error to inform the client they are calling an old, removed API.
 	ErrAPIRemoved = errors.New(`the API being called was removed,
 please ensure the client consuming the API is up to date and report a bug if the problem persists`)
+
+	// ErrUserExists is an error to inform the client that a user cannot be added to the DB since
+	// there exists a duplicate. Pachyderm integration with Determined checks this error.
+	ErrUserExists = echo.NewHTTPError(http.StatusBadRequest, "user already exists")
 )
 
 // NotFoundErrMsg creates a formatted message about a resource not being found.
