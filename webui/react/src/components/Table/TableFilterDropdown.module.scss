@@ -1,6 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
+  font-family: var(--theme-font-family);
 
   .search {
     border-bottom: solid var(--theme-stroke-width) var(--theme-float-border);
@@ -17,7 +18,6 @@
     align-items: center;
     cursor: pointer;
     display: flex;
-    font-family: var(--theme-font-family);
     justify-content: space-between;
   }
   .option:hover {
