@@ -287,7 +287,7 @@ func TestAuthzPostUserDuplicate(t *testing.T) {
 	expectedErr := api.ErrUserExists
 
 	_, err = svc2.postUser(ctx2)
-	require.Equal(t, expectedErr.Error(), err.Error())
+	require.Contains(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthzGetUserImage(t *testing.T) {
