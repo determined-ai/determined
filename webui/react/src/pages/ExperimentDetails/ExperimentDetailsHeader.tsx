@@ -1,12 +1,13 @@
-import { Button as AntdButton, Space } from 'antd';
-import Button from 'hew/Button';
+import Button, { status } from 'hew/Button';
+import Column from 'hew/Column';
 import Dropdown from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Tags from 'hew/Tags';
-import { useTheme } from 'hew/Theme';
+import { stateColorMapping } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
 import { Body } from 'hew/Typography';
 import useConfirm from 'hew/useConfirm';
@@ -53,7 +54,6 @@ import {
   RunState,
   TrialItem,
 } from 'types';
-import { getStateColorThemeVar } from 'utils/color';
 import { getDuration } from 'utils/datetime';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import {
@@ -149,7 +149,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
-  const { getThemeVar } = useTheme();
   const [isChangingState, setIsChangingState] = useState(false);
   const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
@@ -160,7 +159,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [erroredTrialCount, setErroredTrialCount] = useState<number>();
   const [canceler] = useState(new AbortController());
   const confirm = useConfirm();
-  const classes = [css.state];
 
   const maxRestarts = experiment.config.maxRestarts;
   const autoRestarts = trial?.autoRestarts ?? 0;
@@ -168,8 +166,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const isPausable = pausableRunStates.has(experiment.state);
   const isPaused = experiment.state === RunState.Paused;
   const isTerminated = terminalRunStates.has(experiment.state);
-
-  if (isTerminated) classes.push(css.terminated);
 
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
@@ -195,16 +191,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ContinueTrialModal = useModal(ExperimentCreateModalComponent);
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
-
-  const stateStyle = useMemo(
-    () => ({
-      backgroundColor: getThemeVar(getStateColorThemeVar(experiment.state)),
-      color: getThemeVar(
-        getStateColorThemeVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
-      ),
-    }),
-    [experiment.state, getThemeVar],
-  );
 
   const disabled =
     experiment?.parentArchived ||
@@ -559,10 +545,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               backgroundColor="white" // only gets applied for scheduled and queued states
               opacity={0.25} // only gets applied for scheduled and queued states
               showTooltip={false}
-              size="large"
+              size="big"
               state={experiment.state}
             />
-            <div className={css.icon}>{iconNode}</div>
+            <span className={css.backgroundIcon}>{iconNode}</span>
           </>
         ) : (
           iconNode
@@ -584,7 +570,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Continued from',
         value: (
           <Link
-            className={css.link}
             path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
             Trial {experiment.config.searcher.sourceTrialId}
           </Link>
@@ -595,7 +580,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       rows.push({
         label: 'Forked from',
         value: (
-          <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
+          <Link path={paths.experimentDetails(experiment.forkedFrom)}>
             Experiment {experiment.forkedFrom}
           </Link>
         ),
@@ -612,7 +597,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       rows.push({
         label: 'Job info',
         value: (
-          <Link className={css.link} path={paths.jobs()}>
+          <Link path={paths.jobs()}>
             {jobInfoLinkText}
           </Link>
         ),
@@ -650,57 +635,50 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       <PageHeaderFoldable
         foldableContent={<Glossary content={foldableRows} />}
         leftContent={
-          <Space align="center" className={css.base}>
-            <Spinner spinning={isChangingState}>
-              <div className={css.stateIcon}>
+          <Row align="center" wrap>
+            <Column>
+              <Spinner spinning={isChangingState}>
                 {isActionableIcon(experiment.state) ? (
-                  <div className={classes.join(' ')} style={stateStyle}>
+                  <Button shape="round" status={stateColorMapping[experiment.state] as status}>
                     {isPausable && (
-                      <AntdButton
-                        className={
-                          isShownAnimation(experiment.state)
-                            ? css.buttonWithAnimation
-                            : css.buttonPause
-                        }
+                      <Button
                         disabled={!canPausePlay}
                         icon={returnStatusIcon(<Icon name="pause" size="large" title="Pause" />)}
                         shape="circle"
+                        status={stateColorMapping[experiment.state] as status}
                         onClick={handlePauseClick}
                       />
                     )}
                     {isPaused && (
-                      <AntdButton
-                        className={
-                          isShownAnimation(experiment.state)
-                            ? css.buttonWithAnimation
-                            : css.buttonPlay
-                        }
+                      <Button
                         disabled={!canPausePlay}
                         icon={returnStatusIcon(<Icon name="play" size="large" title="Play" />)}
                         shape="circle"
+                        status={stateColorMapping[experiment.state] as status}
                         onClick={handlePlayClick}
                       />
                     )}
                     {!isTerminated && (
-                      <AntdButton
-                        className={css.buttonStop}
+                      <Button
                         disabled={!canPausePlay}
                         icon={<Icon name="stop" size="large" title="Stop" />}
                         shape="circle"
+                        status={stateColorMapping[experiment.state] as status}
+                        type="text"
                         onClick={ExperimentStopModal.open}
                       />
                     )}
-                    <label>{stateToLabel(experiment.state)}</label>
-                  </div>
+                    <label className={css.buttonLabel}>{stateToLabel(experiment.state)}</label>
+                  </Button>
                 ) : (
                   <ExperimentIcons state={experiment.state} />
                 )}
-              </div>
-            </Spinner>
-            <div className={css.id}>Experiment {experiment.id}</div>
-            <div className={css.name} role="experimentName">
+              </Spinner>
+            </Column>
+            <span>Experiment {experiment.id}</span>
+            <span role="experimentName">
               {experiment.name}
-            </div>
+            </span>
             {experiment.unmanaged && (
               <Badge tooltip="Workload not managed by Determined" type="Header">
                 Unmanaged
@@ -709,10 +687,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {trial ? (
               <>
                 <Icon name="arrow-right" size="tiny" title="Trial" />
-                <div className={css.trial}>Trial {trial.id}</div>
+                <span>Trial {trial.id}</span>
               </>
             ) : null}
-          </Space>
+          </Row>
         }
         options={headerOptions.map((option) => ({
           content: option?.content

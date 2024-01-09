@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
@@ -6,6 +5,7 @@ import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import { useModal } from 'hew/Modal';
 import Progress from 'hew/Progress';
+import Row from 'hew/Row';
 import Tags from 'hew/Tags';
 import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
@@ -911,11 +911,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
     return (
       <div className={css.tabOptions}>
-        <Space className={css.actionList}>
+        <Row>
           <Toggle checked={settings.archived} label="Show Archived" onChange={switchShowArchived} />
           <Button onClick={ColumnsCustomizeModal.open}>Columns</Button>
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
-        </Space>
+        </Row>
         <div className={css.actionOverflow} title="Open actions menu">
           <Dropdown menu={menuItems} onClick={handleDropdown}>
             <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />

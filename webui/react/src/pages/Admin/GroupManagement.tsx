@@ -1,10 +1,11 @@
-import { Space, Table } from 'antd';
+import { Table } from 'antd';
 import dayjs from 'dayjs';
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
+import Row from 'hew/Row';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -322,11 +323,11 @@ const GroupManagement: React.FC = () => {
     <>
       <Section
         options={
-          <Space>
+          <Row>
             <Button disabled={!canModifyGroups} onClick={CreateGroupModal.open}>
               New Group
             </Button>
-          </Space>
+          </Row>
         }
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}

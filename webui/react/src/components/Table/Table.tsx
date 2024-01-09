@@ -1,6 +1,6 @@
-import { Space } from 'antd';
 import Avatar from 'hew/Avatar';
 import Icon from 'hew/Icon';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import { StateOfUnion } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
@@ -224,12 +224,10 @@ export const experimentNameRenderer = (
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => (
-  <Space className={css.wordBreak}>
-    <div style={{ paddingInline: 4 }}>
-      <Icon name="model" size="medium" title="Model" />
-    </div>
+  <Row>
+    <Icon name="model" size="medium" title="Model" />
     <Link path={paths.modelDetails(String(record.id))}>{value}</Link>
-  </Space>
+  </Row>
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (

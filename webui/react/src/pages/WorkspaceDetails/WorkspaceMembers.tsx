@@ -1,10 +1,10 @@
-import { Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
+import Row from 'hew/Row';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
@@ -240,7 +240,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   return (
     <>
       <div className={css.headerButton}>
-        <Space>
+        <Row>
           {rbacEnabled &&
             canAssignRoles({ workspace }) &&
             !workspace.immutable &&
@@ -248,7 +248,7 @@ const WorkspaceMembers: React.FC<Props> = ({
               <Button onClick={WorkspaceMemberAddModal.open}> Add Members</Button>
             )}
           {settings.name && <Button onClick={handleNameSearchReset}>{'Clear Filter'}</Button>}
-        </Space>
+        </Row>
       </div>
       {settings ? (
         <InteractiveTable<UserOrGroupWithRoleInfo, WorkspaceMembersSettings>

@@ -1,10 +1,10 @@
-import { Space, Typography } from 'antd';
 import Button from 'hew/Button';
 import Dropdown, { MenuOption } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -65,7 +65,7 @@ const ModelVersionHeader: React.FC<Props> = ({
             {(users) => {
               const user = users.find((user) => user.id === modelVersion.userId);
               return (
-                <Space>
+                <Row>
                   <Nameplate
                     alias={getDisplayName(user)}
                     compact
@@ -73,7 +73,7 @@ const ModelVersionHeader: React.FC<Props> = ({
                     name={user?.username ?? 'Unavailable'}
                   />{' '}
                   on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
-                </Space>
+                </Row>
               );
             }}
           </Spinner>
@@ -87,16 +87,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       },
       {
         label: 'Description',
-        value: (
-          <div>
-            {(modelVersion.comment ?? '') || (
-              <Typography.Text
-                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}>
-                N/A
-              </Typography.Text>
-            )}
-          </div>
-        ),
+        value: <div>{modelVersion.comment || <span>N/A</span>}</div>,
       },
       {
         label: 'Tags',

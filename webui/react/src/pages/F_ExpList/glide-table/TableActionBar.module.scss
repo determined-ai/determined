@@ -1,5 +1,5 @@
 .base {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-md);
   width: 100%;
 
   :empty {

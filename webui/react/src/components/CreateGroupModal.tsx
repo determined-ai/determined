@@ -1,4 +1,3 @@
-import { Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
@@ -6,6 +5,7 @@ import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
+import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -223,12 +223,12 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
                     ))}
                 </Select>
               </Form.Item>
-              <Typography.Text type="secondary">
+              <Body inactive>
                 Groups may have additional inherited workspace roles not reflected here. &nbsp;
                 <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
                   Learn more
                 </Link>
-              </Typography.Text>
+              </Body>
             </>
           )}
         </Form>

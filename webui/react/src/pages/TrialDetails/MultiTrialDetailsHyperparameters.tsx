@@ -1,4 +1,5 @@
-import { Space } from 'antd';
+import Column from 'hew/Column';
+import Row from 'hew/Row';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -172,20 +173,24 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
   }, [batches, handleFiltersChange, handleFiltersReset, metrics, filters]);
 
   return (
-    <Space direction="vertical">
-      <HpParallelCoordinates
-        experiment={experiment}
-        filters={visualizationFilters}
-        focusedTrial={trial}
-        fullHParams={fullHParams.current}
-        selectedBatch={settings.batch}
-        selectedBatchMargin={settings.batchMargin}
-        selectedHParams={settings.hParams}
-        selectedMetric={settings.metric}
-        selectedScale={settings.scale}
-      />
-      <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
-    </Space>
+    <Column>
+      <Row width="fill">
+        <HpParallelCoordinates
+          experiment={experiment}
+          filters={visualizationFilters}
+          focusedTrial={trial}
+          fullHParams={fullHParams.current}
+          selectedBatch={settings.batch}
+          selectedBatchMargin={settings.batchMargin}
+          selectedHParams={settings.hParams}
+          selectedMetric={settings.metric}
+          selectedScale={settings.scale}
+        />
+      </Row>
+      <Row>
+        <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
+      </Row>
+    </Column>
   );
 };
 

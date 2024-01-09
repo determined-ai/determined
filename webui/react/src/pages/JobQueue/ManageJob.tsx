@@ -1,10 +1,10 @@
-import { List, Typography } from 'antd';
 import Form from 'hew/Form';
+import Glossary from 'hew/Glossary';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
-import React, { ReactNode, useCallback, useMemo, useState } from 'react';
+import React, { ReactElement, ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
@@ -16,8 +16,6 @@ import handleError, { ErrorType } from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { useObservable } from 'utils/observable';
 import { floatToPercent, truncate } from 'utils/string';
-
-import css from './ManageJob.module.scss';
 
 interface Props {
   initialPool: string;
@@ -243,15 +241,13 @@ const ManageJobModalComponent: React.FC<Props> = ({
         </Form.Item>
       </Form>
       <h6>Job Details</h6>
-      <List
-        dataSource={details}
-        renderItem={(item) => (
-          <List.Item className={css.item}>
-            <Typography.Text className={css.key}>{item.label}</Typography.Text>
-            <div className={css.value}>{item.value}</div>
-          </List.Item>
-        )}
-        size="small"
+      <Glossary
+        content={details.map((item) => {
+          return {
+            label: item.label as string,
+            value: item.value as ReactElement,
+          };
+        })}
       />
     </Modal>
   );

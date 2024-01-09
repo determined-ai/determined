@@ -1,10 +1,10 @@
-import { Space } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import Row from 'hew/Row';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -203,9 +203,9 @@ const WebhooksView: React.FC = () => {
       containerRef={pageRef}
       id="webhooks"
       options={
-        <Space>
+        <Row>
           {canEditWebhooks && <Button onClick={WebhookCreateModal.open}>New Webhook</Button>}
-        </Space>
+        </Row>
       }
       title="Webhooks">
       {webhooks.length === 0 && !isLoading ? (

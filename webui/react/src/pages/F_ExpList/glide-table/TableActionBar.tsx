@@ -1,4 +1,3 @@
-import { Space } from 'antd';
 import Button from 'hew/Button';
 import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
@@ -357,10 +356,10 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <>
+    <div className={css.base}>
       <Row>
         <Column>
-          <Space className={css.base}>
+          <Row>
             <TableFilter
               formStore={formStore}
               isMobile={isMobile}
@@ -393,7 +392,7 @@ const TableActionBar: React.FC<Props> = ({
               </Dropdown>
             )}
             {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
-          </Space>
+          </Row>
         </Column>
         <Column align="right">
           <Row>
@@ -441,7 +440,7 @@ const TableActionBar: React.FC<Props> = ({
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
-    </>
+    </div>
   );
 };
 

@@ -1,80 +1,13 @@
-.base {
-  flex-wrap: wrap;
-  font-size: 14px;
-
-  .state {
-    align-items: center;
-    border-radius: 24px;
-    display: flex;
-    justify-content: center;
-    padding: 4px 16px 4px 4px;
-
-    button {
-      background-color: transparent;
-      color: #fff;
-      opacity: 0.75;
-      position: relative;
-
-      &[disabled],
-      &[disabled]:active,
-      &[disabled]:focus,
-      &[disabled]:hover {
-        background-color: transparent !important;
-        border-color: transparent !important;
-      }
-    }
-    .buttonPause,
-    .buttonPlay {
-      border-color: #fff;
-      border-radius: 100%;
-    }
-    .buttonPlay i {
-      margin-left: 3px;
-    }
-    .buttonStop {
-      border-color: transparent;
-    }
-    .buttonPause:hover,
-    .buttonPlay:hover,
-    .buttonStop:hover {
-      color: inherit;
-      opacity: 1;
-    }
-    .buttonPause:hover,
-    .buttonPlay:hover {
-      border-color: inherit;
-    }
-    label {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: bold;
-      line-height: 16px;
-      text-transform: uppercase;
-    }
-    .icon {
-      position: absolute;
-      top: 4px;
-
-      & > i {
-        font-size: var(--icon-small);
-      }
-    }
-    .buttonWithAnimation {
-      border: none;
-    }
-  }
-  .state.terminated {
-    padding: 4px 12px;
-  }
-  .id {
-    flex-shrink: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .name {
-    flex-shrink: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: normal;
-  }
+.buttonLabel {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 16px;
+  margin: 0 var(--spacing-md);
+  text-transform: uppercase;
+}
+.backgroundIcon {
+  left: 3px;
+  position: absolute;
+  top: 3px;
 }

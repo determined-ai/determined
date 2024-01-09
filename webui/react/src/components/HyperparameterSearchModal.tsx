@@ -7,6 +7,7 @@ import InputNumber from 'hew/InputNumber';
 import Message from 'hew/Message';
 import { Modal, ModalCloseReason } from 'hew/Modal';
 import RadioGroup from 'hew/RadioGroup';
+import Row from 'hew/Row';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
 import { Label, TypographySize } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
@@ -573,12 +574,12 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       <>
         {currentPage > 0 && <Button onClick={handleBack}>Back</Button>}
         <div className={css.spacer} />
-        <div>
+        <Row>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
             {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
-        </div>
+        </Row>
       </>
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
