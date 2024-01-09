@@ -7,7 +7,7 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
 
 // add new feature switches here
-export type ValidFeature = 'explist_v2' | 'rp_binding';
+export type ValidFeature = 'explist_v2' | 'rp_binding' | 'genai';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -20,6 +20,11 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: true,
     description: 'Enable improved experiment listing, filtering, and comparison',
     friendlyName: 'New Experiment List',
+  },
+  genai: {
+    defaultValue: false,
+    description: 'Enable links to Generative AI Studio',
+    friendlyName: 'Generative AI Studio (genai)',
   },
   rp_binding: {
     defaultValue: true,
