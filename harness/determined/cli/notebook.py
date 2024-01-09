@@ -89,65 +89,121 @@ def open_notebook(args: Namespace) -> None:
     )
 
 
-# fmt: off
-
 args_description = [
-    Cmd("notebook", None, "manage notebooks", [
-        Cmd("list ls", partial(command.list_tasks), "list notebooks", [
-            Arg("-q", "--quiet", action="store_true",
-                help="only display the IDs"),
-            Arg("--all", "-a", action="store_true",
-                help="show all notebooks (including other users')"),
-            cli.workspace.workspace_arg,
-            Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
-        ], is_default=True),
-        Cmd("config", partial(command.config),
-            "display notebook config", [
-                Arg("notebook_id", type=str, help="notebook ID"),
-        ]),
-        Cmd("start", start_notebook, "start a new notebook", [
-            Arg("--config-file", default=None, type=FileType("r"),
-                help="command config file (.yaml)"),
-            cli.workspace.workspace_arg,
-            Arg("-v", "--volume", action="append", default=[],
-                help=command.VOLUME_DESC),
-            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
-            Arg(
-                "-i",
-                "--include",
-                default=[],
-                action="append",
-                type=Path,
-                help=command.INCLUDE_DESC
+    Cmd(
+        "notebook",
+        None,
+        "manage notebooks",
+        [
+            Cmd(
+                "list ls",
+                partial(command.list_tasks),
+                "list notebooks",
+                [
+                    Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
+                    Arg(
+                        "--all",
+                        "-a",
+                        action="store_true",
+                        help="show all notebooks (including other users')",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                ],
+                is_default=True,
             ),
-            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
-            Arg("--template", type=str,
-                help="name of template to apply to the notebook configuration"),
-            Arg("--no-browser", action="store_true",
-                help="don't open the notebook in a browser after startup"),
-            Arg("-d", "--detach", action="store_true",
-                help="run in the background and print the ID"),
-            Arg("--preview", action="store_true",
-                help="preview the notebook configuration"),
-        ]),
-        Cmd("open", open_notebook, "open an existing notebook", [
-            Arg("notebook_id", help="notebook ID")
-        ]),
-        Cmd("logs", partial(task.logs), "fetch notebook logs", [
-            Arg("task_id", help="notebook ID", metavar="notebook_id"),
-            *task.common_log_options
-        ]),
-        Cmd("kill", partial(command.kill), "kill a notebook", [
-            Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
-            Arg("-f", "--force", action="store_true", help="ignore errors"),
-        ]),
-        Cmd("set", None, "set notebook attributes", [
-            Cmd("priority", partial(command.set_priority), "set notebook priority", [
-                Arg("notebook_id", help="notebook ID"),
-                Arg("priority", type=int, help="priority"),
-            ]),
-        ]),
-    ])
+            Cmd(
+                "config",
+                partial(command.config),
+                "display notebook config",
+                [
+                    Arg("notebook_id", type=str, help="notebook ID"),
+                ],
+            ),
+            Cmd(
+                "start",
+                start_notebook,
+                "start a new notebook",
+                [
+                    Arg(
+                        "--config-file",
+                        default=None,
+                        type=FileType("r"),
+                        help="command config file (.yaml)",
+                    ),
+                    cli.workspace.workspace_arg,
+                    Arg("-v", "--volume", action="append", default=[], help=command.VOLUME_DESC),
+                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg(
+                        "-i",
+                        "--include",
+                        default=[],
+                        action="append",
+                        type=Path,
+                        help=command.INCLUDE_DESC,
+                    ),
+                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg(
+                        "--template",
+                        type=str,
+                        help="name of template to apply to the notebook configuration",
+                    ),
+                    Arg(
+                        "--no-browser",
+                        action="store_true",
+                        help="don't open the notebook in a browser after startup",
+                    ),
+                    Arg(
+                        "-d",
+                        "--detach",
+                        action="store_true",
+                        help="run in the background and print the ID",
+                    ),
+                    Arg(
+                        "--preview", action="store_true", help="preview the notebook configuration"
+                    ),
+                ],
+            ),
+            Cmd(
+                "open",
+                open_notebook,
+                "open an existing notebook",
+                [Arg("notebook_id", help="notebook ID")],
+            ),
+            Cmd(
+                "logs",
+                partial(task.logs),
+                "fetch notebook logs",
+                [
+                    Arg("task_id", help="notebook ID", metavar="notebook_id"),
+                    *task.common_log_options,
+                ],
+            ),
+            Cmd(
+                "kill",
+                partial(command.kill),
+                "kill a notebook",
+                [
+                    Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
+                    Arg("-f", "--force", action="store_true", help="ignore errors"),
+                ],
+            ),
+            Cmd(
+                "set",
+                None,
+                "set notebook attributes",
+                [
+                    Cmd(
+                        "priority",
+                        partial(command.set_priority),
+                        "set notebook priority",
+                        [
+                            Arg("notebook_id", help="notebook ID"),
+                            Arg("priority", type=int, help="priority"),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
 ]  # type: List[Any]
-
-# fmt: on
