@@ -354,7 +354,7 @@ func (a *apiServer) PostUser(
 	userID, err := user.Add(ctx, userToAdd, agentUserGroup)
 	switch {
 	case err == db.ErrDuplicateRecord:
-		return nil, status.Error(codes.InvalidArgument, "")
+		return nil, api.ErrUserExists
 	case err != nil:
 		return nil, err
 	}

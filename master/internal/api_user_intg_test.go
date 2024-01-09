@@ -625,6 +625,31 @@ func TestAuthzPostUser(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+func TestAuthzPostUserDuplicate(t *testing.T) {
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
+	username := uuid.New().String()
+	authzUsers.On("CanCreateUser", mock.Anything, curUser,
+		mock.Anything, mock.Anything).Return(nil)
+	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username:       username,
+			Admin:          true,
+			AgentUserGroup: nil,
+		},
+	})
+	require.NoError(t, err)
+
+	expectedErr := apiPkg.ErrUserExists
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username:       username,
+			Admin:          true,
+			AgentUserGroup: nil,
+		},
+	})
+	require.Contains(t, expectedErr.Error(), err.Error())
+}
+
 func TestAuthzSetUserPassword(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
