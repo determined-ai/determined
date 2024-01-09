@@ -121,21 +121,6 @@ WHERE task_id = $1
 	return nil
 }
 
-// TerminateGenericTask persists the termination of a task of type GENERIC.
-func (db *PgDB) TerminateGenericTask(tID model.TaskID, endTime time.Time) error {
-	if _, err := db.sql.Exec(`
-	UPDATE tasks
-	SET task_state = (
-	CASE WHEN task_state=$2 THEN $3::task_state
-	ELSE $4::task_state END)
-	WHERE task_id = $1
-	`, tID, model.TaskStateStoppingPaused,
-		model.TaskStatePaused, model.TaskStateCanceled); err != nil {
-		return errors.Wrap(err, "killing/pausing task")
-	}
-	return nil
-}
-
 func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 	query := fmt.Sprintf(`
 SELECT count(*)
