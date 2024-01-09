@@ -111,9 +111,11 @@ func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	}
 	if _, err := db.sql.Exec(`
 UPDATE tasks
-SET task_state = $2
+SET task_state = (
+    CASE WHEN task_state=$2 THEN $3::task_state
+    ELSE $4::task_state END)
 WHERE task_id = $1
-	`, tID, model.TaskStateCompleted); err != nil {
+    `, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
 		return errors.Wrap(err, "completing task")
 	}
 	return nil

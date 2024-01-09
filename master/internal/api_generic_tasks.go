@@ -240,14 +240,8 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if ae.FinalState.State == model.AllocationStateTerminated {
-			if err := a.m.db.KillGenericTask(taskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task canceled")
-			}
-		} else {
-			if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task complete")
-			}
+		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
+			syslog.WithError(err).Error("marking generic task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
 			syslog.WithError(err).Error("deleting group priority change registry")
