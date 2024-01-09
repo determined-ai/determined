@@ -134,9 +134,7 @@ export const getColumnDefs = ({
       copyData: record.experiment.checkpointSize
         ? humanReadableBytes(record.experiment.checkpointSize)
         : '',
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Checkpoint Size',
@@ -148,9 +146,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.description),
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Description',
@@ -163,9 +159,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getDurationInEnglish(record.experiment),
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Duration',
@@ -177,9 +171,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.externalExperimentId ?? '',
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'External Experiment ID',
@@ -191,9 +183,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.externalTrialId ?? '',
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'External Trial ID',
@@ -307,9 +297,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.resourcePool),
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Resource Pool',
@@ -324,9 +312,7 @@ export const getColumnDefs = ({
       return {
         allowOverlay: false,
         copyData: sMetric,
-        data: {
-          kind: 'text-cell',
-        },
+        data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
       };
     },
@@ -339,9 +325,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.searcherType),
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Searcher',
@@ -372,9 +356,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.experiment.startTime)),
-      data: {
-        kind: 'text-cell',
-      },
+      data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
     title: 'Start Time',
@@ -472,9 +454,7 @@ export const searcherMetricsValColumn = (
             ? humanReadableNumber(sMetricValue)
             : sMetricValue
           : '',
-        data: {
-          kind: 'text-cell',
-        },
+        data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
         themeOverride: theme,
       };
@@ -497,9 +477,7 @@ export const defaultTextColumn = (
       return {
         allowOverlay: false,
         copyData: String(data ?? ''),
-        data: {
-          kind: 'text-cell',
-        },
+        data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
       };
     },
@@ -547,9 +525,7 @@ export const defaultNumberColumn = (
       return {
         allowOverlay: false,
         copyData: data !== undefined ? String(data) : '',
-        data: {
-          kind: 'text-cell',
-        },
+        data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
         themeOverride: theme,
       };
@@ -572,9 +548,7 @@ export const defaultDateColumn = (
       return {
         allowOverlay: false,
         copyData: formatDatetime(String(data), { outputUTC: false }),
-        data: {
-          kind: 'text-cell',
-        },
+        data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
       };
     },
