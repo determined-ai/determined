@@ -15,7 +15,7 @@ import appdirs
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render, task
+from determined.cli import ntsc, render, task
 from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
@@ -26,10 +26,10 @@ def start_shell(args: argparse.Namespace) -> None:
     data = {}
     if args.passphrase:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
-    config = command.parse_config(args.config_file, None, args.config, args.volume)
+    config = ntsc.parse_config(args.config_file, None, args.config, args.volume)
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
 
-    resp = command.launch_command(
+    resp = ntsc.launch_command(
         args.master,
         "api/v1/shells",
         config,
@@ -63,7 +63,7 @@ def start_shell(args: argparse.Namespace) -> None:
 
 @authentication.required
 def open_shell(args: argparse.Namespace) -> None:
-    shell_id = cast(str, command.expand_uuid_prefixes(args))
+    shell_id = cast(str, ntsc.expand_uuid_prefixes(args))
 
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
@@ -85,7 +85,7 @@ def show_ssh_command(args: argparse.Namespace) -> None:
             "command in a Windows shell. For PyCharm users, configure the Pycharm "
             "ssh command to target the WSL ssh command."
         )
-    shell_id = command.expand_uuid_prefixes(args)
+    shell_id = ntsc.expand_uuid_prefixes(args)
     shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
         cli.setup_session(args),
@@ -234,9 +234,9 @@ args_description: ArgsDescription = [
         [
             Cmd(
                 "list ls",
-                partial(command.list_tasks),
+                partial(ntsc.list_tasks),
                 "list shells",
-                command.ls_sort_args
+                ntsc.ls_sort_args
                 + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
@@ -252,7 +252,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "config",
-                partial(command.config),
+                partial(ntsc.config),
                 "display shell config",
                 [
                     Arg("shell_id", type=str, help="shell ID"),
@@ -275,17 +275,17 @@ args_description: ArgsDescription = [
                         help="command config file (.yaml)",
                     ),
                     cli.workspace.workspace_arg,
-                    Arg("-v", "--volume", action="append", default=[], help=command.VOLUME_DESC),
-                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg("-v", "--volume", action="append", default=[], help=ntsc.VOLUME_DESC),
+                    Arg("-c", "--context", default=None, type=Path, help=ntsc.CONTEXT_DESC),
                     Arg(
                         "-i",
                         "--include",
                         default=[],
                         action="append",
                         type=Path,
-                        help=command.INCLUDE_DESC,
+                        help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
                     Arg(
                         "-p",
                         "--passphrase",
@@ -362,7 +362,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "kill",
-                partial(command.kill),
+                partial(ntsc.kill),
                 "kill a shell",
                 [
                     Arg("shell_id", help="shell ID", nargs=argparse.ONE_OR_MORE),
@@ -376,7 +376,7 @@ args_description: ArgsDescription = [
                 [
                     Cmd(
                         "priority",
-                        partial(command.set_priority),
+                        partial(ntsc.set_priority),
                         "set shell priority",
                         [
                             Arg("shell_id", help="shell ID"),

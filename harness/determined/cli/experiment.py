@@ -18,8 +18,8 @@ import determined.experimental
 import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
-from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.cli.errors import CliError
+from determined.cli.ntsc import CONFIG_DESC, parse_config_overrides
 from determined.common import api, context, set_logger, util
 from determined.common.api import authentication, bindings, logs
 from determined.common.declarative_argparse import Arg, Cmd, Group

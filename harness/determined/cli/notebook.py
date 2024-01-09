@@ -6,7 +6,7 @@ from typing import cast
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render, task
+from determined.cli import ntsc, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_none
@@ -15,7 +15,7 @@ from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Gr
 
 @authentication.required
 def start_notebook(args: Namespace) -> None:
-    config = command.parse_config(args.config_file, None, args.config, args.volume)
+    config = ntsc.parse_config(args.config_file, None, args.config, args.volume)
 
     files = context.read_v1_context(args.context, args.include)
 
@@ -67,7 +67,7 @@ def start_notebook(args: Namespace) -> None:
 
 @authentication.required
 def open_notebook(args: Namespace) -> None:
-    notebook_id = cast(str, command.expand_uuid_prefixes(args))
+    notebook_id = cast(str, ntsc.expand_uuid_prefixes(args))
 
     sess = cli.setup_session(args)
     task = bindings.get_GetTask(sess, taskId=notebook_id).task
@@ -97,9 +97,9 @@ args_description: ArgsDescription = [
         [
             Cmd(
                 "list ls",
-                partial(command.list_tasks),
+                partial(ntsc.list_tasks),
                 "list notebooks",
-                command.ls_sort_args
+                ntsc.ls_sort_args
                 + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
@@ -115,7 +115,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "config",
-                partial(command.config),
+                partial(ntsc.config),
                 "display notebook config",
                 [
                     Arg("notebook_id", type=str, help="notebook ID"),
@@ -133,17 +133,17 @@ args_description: ArgsDescription = [
                         help="command config file (.yaml)",
                     ),
                     cli.workspace.workspace_arg,
-                    Arg("-v", "--volume", action="append", default=[], help=command.VOLUME_DESC),
-                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg("-v", "--volume", action="append", default=[], help=ntsc.VOLUME_DESC),
+                    Arg("-c", "--context", default=None, type=Path, help=ntsc.CONTEXT_DESC),
                     Arg(
                         "-i",
                         "--include",
                         default=[],
                         action="append",
                         type=Path,
-                        help=command.INCLUDE_DESC,
+                        help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
                     Arg(
                         "--template",
                         type=str,
@@ -182,7 +182,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "kill",
-                partial(command.kill),
+                partial(ntsc.kill),
                 "kill a notebook",
                 [
                     Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
@@ -196,7 +196,7 @@ args_description: ArgsDescription = [
                 [
                     Cmd(
                         "priority",
-                        partial(command.set_priority),
+                        partial(ntsc.set_priority),
                         "set notebook priority",
                         [
                             Arg("notebook_id", help="notebook ID"),

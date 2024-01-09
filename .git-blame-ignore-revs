@@ -3,3 +3,5 @@
 85396ebc4f0ec95c6b4ef9625061c92fa324cdce
 # chore: migrate shared-web to subtree (#4402)
 0505422648e7f98aa25495b4cc525cd776a87840
+# style: reformat `det (n|t|s|c)` arguments code. (#8652)
+7d9f29532492788b05051e6745234cdaf6a0fa4e

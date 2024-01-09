@@ -13,7 +13,7 @@ import pytest
 import requests
 import requests_mock
 
-from determined.cli import cli, command, render
+from determined.cli import cli, ntsc, render
 from determined.common import constants, context
 from determined.common.api import bindings
 from tests.filetree import FileTree
@@ -22,10 +22,10 @@ MINIMAL_CONFIG = '{"description": "test"}'
 
 
 def test_parse_config() -> None:
-    assert command.parse_config(None, [], [], []) == {}
+    assert ntsc.parse_config(None, [], [], []) == {}
 
     config = ["resources.slots=4"]
-    assert command.parse_config(None, ["python", "train.py"], config, []) == {
+    assert ntsc.parse_config(None, ["python", "train.py"], config, []) == {
         "resources": {"slots": 4},
         "entrypoint": ["python", "train.py"],
     }
@@ -33,13 +33,13 @@ def test_parse_config() -> None:
     config = [
         "resources.slots=4",
     ]
-    assert command.parse_config(None, ["python", "train.py"], config, []) == {
+    assert ntsc.parse_config(None, ["python", "train.py"], config, []) == {
         "resources": {"slots": 4},
         "entrypoint": ["python", "train.py"],
     }
 
     config = ["""bind_mounts=host_path: /bin\ncontainer_path: /foo-bar"""]
-    assert command.parse_config(None, [], config, ["/bin:/foo-bar2"]) == {
+    assert ntsc.parse_config(None, [], config, ["/bin:/foo-bar2"]) == {
         "bind_mounts": [
             {"host_path": "/bin", "container_path": "/foo-bar"},
             {"host_path": "/bin", "container_path": "/foo-bar2"},

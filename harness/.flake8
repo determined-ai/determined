@@ -26,11 +26,11 @@ per-file-ignores =
   determined/cli/master.py:I2041
   determined/cli/model.py:I2041
   determined/cli/notebook.py:I2041
+  determined/cli/ntsc.py:I2041
   determined/cli/oauth.py:I2041
   determined/cli/project.py:I2041
   determined/cli/proxy.py:I2041
   determined/cli/rbac.py:I2041
-  determined/cli/remote.py:I2041
   determined/cli/render.py:I2041
   determined/cli/resource_pool.py:I2041
   determined/cli/resources.py:I2041
