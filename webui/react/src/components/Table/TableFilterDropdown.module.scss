@@ -18,6 +18,7 @@
     cursor: pointer;
     display: flex;
     justify-content: space-between;
+    font-family: var(--theme-font-family);
   }
   .option:hover {
     background-color: var(--theme-float-strong);
