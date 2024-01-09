@@ -3,6 +3,7 @@ import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/es/table/interface';
 import Spinner from 'hew/Spinner';
+import { useTheme } from 'hew/Theme';
 import { useEffect, useRef, useState } from 'react';
 
 import useResize from 'hooks/useResize';
@@ -58,6 +59,10 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const resize = useResize(tableRef);
 
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
+
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   useEffect(() => {
@@ -93,7 +98,7 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
         {spinning ? (
           <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
         ) : (
-          <Table bordered scroll={tableScroll} tableLayout="auto" {...props} />
+          <Table bordered className={themeClass} scroll={tableScroll} tableLayout="auto" {...props} />
         )}
       </Spinner>
     </div>
