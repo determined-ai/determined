@@ -21,5 +21,5 @@
    :maxdepth: 1
    :hidden:
 
-   Huggingface Trainsformers <transformers/_index>
+   Huggingface Transformers <transformers/_index>
    MMDetection <mmdetection/_index>
