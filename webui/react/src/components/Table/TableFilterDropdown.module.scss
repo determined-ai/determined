@@ -1,6 +1,7 @@
 .base {
   display: flex;
   flex-direction: column;
+  font-family: var(--theme-font-family);
 
   .search {
     border-bottom: solid var(--theme-stroke-width) var(--theme-float-border);
