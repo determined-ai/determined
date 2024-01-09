@@ -98,7 +98,13 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
         {spinning ? (
           <SkeletonTable columns={props.columns?.length} rows={props.columns?.length} />
         ) : (
-          <Table bordered className={themeClass} scroll={tableScroll} tableLayout="auto" {...props} />
+          <Table
+            bordered
+            className={themeClass}
+            scroll={tableScroll}
+            tableLayout="auto"
+            {...props}
+          />
         )}
       </Spinner>
     </div>
