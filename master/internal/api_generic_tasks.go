@@ -240,17 +240,17 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if ae.FinalState.State == model.AllocationStateTerminated {
-			if err := a.m.db.TerminateGenericTask(taskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task canceled/paused")
-			}
-		} else {
+		isPaused, err := a.m.db.IsPaused(ctx, taskID)
+		if err != nil {
+			syslog.WithError(err).Error("on allocation exit")
+		}
+		if !isPaused {
 			if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
 				syslog.WithError(err).Error("marking generic task complete")
 			}
-		}
-		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
-			syslog.WithError(err).Error("deleting group priority change registry")
+			if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+				syslog.WithError(err).Error("deleting group priority change registry")
+			}
 		}
 	}
 
@@ -431,9 +431,8 @@ func (a *apiServer) KillGenericTask(
 func (a *apiServer) PauseGenericTask(
 	ctx context.Context, req *apiv1.PauseGenericTaskRequest,
 ) (*apiv1.PauseGenericTaskResponse, error) {
-	killTaskId := model.TaskID(req.TaskId)
 	var taskModel model.Task
-	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskId).Scan(ctx)
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", req.TaskId).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -464,6 +463,10 @@ func (a *apiServer) PauseGenericTask(
 			if err != nil {
 				return nil, err
 			}
+			err = a.SetTaskState(ctx, childTask.TaskID, model.TaskStatePaused)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return &apiv1.PauseGenericTaskResponse{}, nil
@@ -472,6 +475,15 @@ func (a *apiServer) PauseGenericTask(
 func (a *apiServer) ResumeGenericTask(
 	ctx context.Context, req *apiv1.ResumeGenericTaskRequest,
 ) (*apiv1.ResumeGenericTaskResponse, error) {
+	var taskModel model.Task
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", req.TaskId).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Validate state
+	if *taskModel.State != model.TaskStatePaused {
+		return nil, fmt.Errorf("cannot unpause task %s as it is not in paused state", req.TaskId)
+	}
 	var projectID int
 	if req.ProjectId != nil {
 		projectID = int(*req.ProjectId)
@@ -479,7 +491,6 @@ func (a *apiServer) ResumeGenericTask(
 		projectID = model.DefaultProjectID
 	}
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
-	err := a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
 	if err != nil {
 		return nil, err
 	}
@@ -507,17 +518,17 @@ func (a *apiServer) ResumeGenericTask(
 			}
 			onAllocationExit := func(ae *task.AllocationExited) {
 				syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-				if ae.FinalState.State == model.AllocationStateTerminated {
-					if err := a.m.db.TerminateGenericTask(childTask.TaskID, time.Now().UTC()); err != nil {
-						syslog.WithError(err).Error("marking generic task canceled/paused")
-					}
-				} else {
+				isPaused, err := a.m.db.IsPaused(ctx, childTask.TaskID)
+				if err != nil {
+					syslog.WithError(err).Error("on allocation exit")
+				}
+				if !isPaused {
 					if err := a.m.db.CompleteGenericTask(childTask.TaskID, time.Now().UTC()); err != nil {
 						syslog.WithError(err).Error("marking generic task complete")
 					}
-				}
-				if err := tasklist.GroupPriorityChangeRegistry.Delete(*childTask.JobID); err != nil {
-					syslog.WithError(err).Error("deleting group priority change registry")
+					if err := tasklist.GroupPriorityChangeRegistry.Delete(*childTask.JobID); err != nil {
+						syslog.WithError(err).Error("deleting group priority change registry")
+					}
 				}
 			}
 			allocationSpecifier, err := allocationID.GetAllocationSpecifier()
@@ -525,11 +536,12 @@ func (a *apiServer) ResumeGenericTask(
 				return nil, err
 			}
 			err = task.DefaultService.StartAllocation(
-				nil, sproto.AllocateRequest{
+				logCtx, sproto.AllocateRequest{
 					AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", childTask.TaskID, allocationSpecifier+1)),
 					TaskID:            childTask.TaskID,
 					JobID:             *childTask.JobID,
-					JobSubmissionTime: time.Now(),
+					JobSubmissionTime: time.Now().UTC(),
+					RequestTime:       time.Now().UTC(),
 					IsUserVisible:     true,
 					Name:              fmt.Sprintf("Generic Task %s", childTask.TaskID),
 					SlotsNeeded:       *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
@@ -540,6 +552,10 @@ func (a *apiServer) ResumeGenericTask(
 					Preemptible: true,
 					Restore:     false,
 				}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
+			if err != nil {
+				return nil, err
+			}
+			err = a.SetTaskState(ctx, childTask.TaskID, model.TaskStateActive)
 			if err != nil {
 				return nil, err
 			}
@@ -554,7 +570,7 @@ func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.Ta
 	err := db.Bun().NewSelect().Model(&allocation).
 		ColumnExpr("allocation_id").
 		Where("task_id = ?", taskID).
-		OrderExpr("start_time ASC").Scan(ctx)
+		OrderExpr("start_time DESC").Scan(ctx)
 	if err != nil {
 		return "", err
 	}

@@ -111,9 +111,11 @@ func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	}
 	if _, err := db.sql.Exec(`
 UPDATE tasks
-SET task_state = $2
+SET task_state = (
+	CASE WHEN task_state=$2 THEN $3::task_state
+	ELSE $4::task_state END)
 WHERE task_id = $1
-	`, tID, model.TaskStateCompleted); err != nil {
+	`, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
 		return errors.Wrap(err, "completing task")
 	}
 	return nil
@@ -128,11 +130,24 @@ func (db *PgDB) TerminateGenericTask(tID model.TaskID, endTime time.Time) error 
 	ELSE $4::task_state END)
 	WHERE task_id = $1
 	`, tID, model.TaskStateStoppingPaused,
-		model.TaskStatePaused, model.TaskStateCanceled,
-		model.TaskStateStoppingCanceled, endTime); err != nil {
+		model.TaskStatePaused, model.TaskStateCanceled); err != nil {
 		return errors.Wrap(err, "killing/pausing task")
 	}
 	return nil
+}
+
+func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
+	query := fmt.Sprintf(`
+SELECT count(*)
+FROM tasks
+WHERE task_id = '%s' AND (task_state='%s' OR task_state='%s')
+`, tID, model.TaskStateStoppingPaused, model.TaskStatePaused)
+	var count int
+	if err := db.sql.QueryRow(query).Scan(&count); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+
 }
 
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
