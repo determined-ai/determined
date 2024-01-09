@@ -398,7 +398,12 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             # 59.6.0.  The bug is that it attempts to import distutils then access distutils.version
             # without actually importing distutils.version.  We can workaround this by prepopulating
             # the distutils.version submodule in the distutils module.
-            import distutils.version  # noqa: F401
+            #
+            # Except, starting with python 3.12 distutils isn't available at all.
+            try:
+                import distutils.version  # noqa: F401
+            except ImportError:
+                pass
 
             from torch.utils.tensorboard import SummaryWriter
 

@@ -348,3 +348,15 @@ def deprecated(message: Optional[str] = None) -> Callable[[U], U]:
         return cast(U, wrapper_deprecated)
 
     return decorator
+
+
+def strtobool(val: str) -> bool:
+    """
+    A port of the distutils.util.strtobool function, removed in python 3.12.
+
+    The only difference in this function is that any non-falsy value which is a non-empty string is
+    accepted as a true value.  That small difference gives us a small headstart on this todo:
+
+    TODO(MLG-1520): we should instead treat any nonempty string as "true".
+    """
+    return bool(val and val.lower() not in ("n", "no", "f", "false", "off", "0"))

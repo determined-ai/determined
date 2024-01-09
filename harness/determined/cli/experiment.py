@@ -1,5 +1,4 @@
 import base64
-import distutils.util
 import json
 import numbers
 import pathlib
@@ -1269,7 +1268,7 @@ main_cmd = Cmd(
                 ),
                 Arg(
                     "--smaller-is-better",
-                    type=lambda s: bool(distutils.util.strtobool(s)),
+                    type=lambda s: util.strtobool(s),
                     default=None,
                     help="The sort order for metrics when using --sort-by. For "
                     "example, 'accuracy' would require passing '--smaller-is-better false'. If "
