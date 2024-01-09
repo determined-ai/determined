@@ -2,6 +2,7 @@ import { FilterDropdownProps } from 'antd/es/table/interface';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Input, { InputRef } from 'hew/Input';
+import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
@@ -41,7 +42,9 @@ const TableFilterDropdown: React.FC<Props> = ({
   const [search, setSearch] = useState('');
   const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>({});
   const prevVisible = usePrevious(visible, undefined);
-
+  const {
+    themeSettings: { className: themeClass },
+  } = useTheme();
   const filteredOptions = useMemo(() => {
     const searchString = search.toLocaleLowerCase();
     return (filters || []).filter((filter) => {
@@ -147,8 +150,9 @@ const TableFilterDropdown: React.FC<Props> = ({
     }
   }, [prevVisible, values, visible]);
 
+  const classes = [css.base, themeClass];
   return (
-    <div aria-label={ARIA_LABEL_CONTAINER} className={css.base} style={{ width }}>
+    <div aria-label={ARIA_LABEL_CONTAINER} className={classes.join(' ')} style={{ width }}>
       {searchable && (
         <div className={css.search}>
           <Input
