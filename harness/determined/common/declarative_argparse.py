@@ -1,4 +1,3 @@
-import distutils.util
 import functools
 import itertools
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
@@ -247,4 +246,4 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
 
 def string_to_bool(s: str) -> bool:
     """Converts string values to boolean for flag arguments (e.g. --active=true)"""
-    return bool(distutils.util.strtobool(s))
+    return util.strtobool(s)

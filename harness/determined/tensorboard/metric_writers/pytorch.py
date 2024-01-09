@@ -12,7 +12,11 @@ from determined import tensorboard
 # importing distutils.version.  We can workaround this by prepopulating the distutils.version
 # submodule in the distutils module.
 if version.parse("1.9.0") <= version.parse(torch.__version__) < version.parse("1.11.0"):
-    import distutils.version  # isort:skip  # noqa: F401
+    # Except, starting with python 3.12 distutils isn't available at all.
+    try:
+        import distutils.version  # isort:skip  # noqa: F401
+    except ImportError:
+        pass
 
 from torch.utils.tensorboard import SummaryWriter  # isort:skip
 
