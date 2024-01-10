@@ -16,20 +16,16 @@ spec:
       labels:
         app: genai-{{ .Release.Name }}
         determined-system: master
-      annotations:
-        # This is added so that the master deployment restarts when an upgrade occurs that
-        # changes the master-config.yaml.
-        checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}
     spec:
       priorityClassName: determined-system-priority
       serviceAccount: genai-{{ .Release.Name }}
-      # serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: genai-{{ .Release.Name }}
         {{ $image := "environments-dev" }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:lore-backend-image-{{ $tag }}
+        # TODO: Point to always in the real thing
         # imagePullPolicy: "Always"
         imagePullPolicy: "Never"
         env:
@@ -49,60 +45,26 @@ spec:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
             readOnly: false
-          {{- if .Values.tlsSecret }}
-          - name: tls-secret
-            mountPath: {{ include "determined.secretPath" . }}
-            readOnly: true
-          {{ end }}
-          {{- if .Values.db.certResourceName }}
-          - name: database-cert
-            mountPath: {{ include "determined.secretPath" . }}
-            readOnly: true
-          {{- end }}
-          # Additional volume mount for ca.crt or boundle to perform the ca cert injection
-          {{- if .Values.externalCaCertSecretName }}
-          - name: etc-ssl-certs
-            mountPath: /etc/ssl/certs
-            readOnly: true
-          {{- end }}
-          # end - Additional volume mount
+          
         resources:
           requests:
-            {{- if .Values.masterCpuRequest }}
-            cpu: {{ .Values.masterCpuRequest  | quote }}
+            {{- if .Values.genai.cpuRequest }}
+            cpu: {{ .Values.genai.cpuRequest  | quote }}
             {{- end }}
-            {{- if .Values.masterMemRequest }}
-            memory: {{ .Values.masterMemRequest  | quote }}
+            {{- if .Values.genai.memRequest }}
+            memory: {{ .Values.genai.memRequest  | quote }}
             {{- end}}
 
-          {{- if or .Values.masterCpuLimit .Values.masterMemLimit }}
+          {{- if or .Values.genai.cpuLimit .Values.genai.memLimit }}
           limits:
-            {{- if .Values.masterCpuLimit }}
-            cpu: {{ .Values.masterCpuLimit  | quote }}
+            {{- if .Values.genai.cpuLimit }}
+            cpu: {{ .Values.genai.cpuLimit  | quote }}
             {{- end }}
-            {{- if .Values.masterMemLimit }}
-            memory: {{ .Values.masterMemLimit  | quote }}
+            {{- if .Values.genai.memLimit }}
+            memory: {{ .Values.genai.memLimit  | quote }}
             {{- end}}
           {{- end}}
-      # Init container to update ca.crt or ca bundle into the master image
-      {{- if .Values.externalCaCertSecretName }}
-      initContainers:
-      - name: update-ca-certificates
-        command:
-          - sh
-          - -c
-          - update-ca-certificates --fresh
-        image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
-        imagePullPolicy: "Always"
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        volumeMounts:
-          - mountPath: /usr/local/share/ca-certificates/
-            name: usr-local-share-ca-certificates
-          - mountPath: /etc/ssl/certs
-            name: etc-ssl-certs
-      {{- end }}
-      # end - Init container
+      
       {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
         - name: {{ .Values.imagePullSecretName }}
@@ -114,30 +76,4 @@ spec:
         - name: master-config
           secret:
             secretName: genai-config-{{ .Release.Name }}
-        {{- if .Values.tlsSecret }}
-        - name: tls-secret
-          secret:
-            secretName: {{ .Values.tlsSecret }}
-        {{- end }}
-        {{- if .Values.db.sslMode }}
-        - name: database-cert
-          {{- $resourceType := (required "A valid .Values.db.resourceType entry required!" .Values.db.resourceType | trim)}}
-          {{- if eq $resourceType "configMap"}}
-          configMap:
-            name: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
-          {{- else }}
-          secret:
-            secretName: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
-          {{- end }}
-        {{- end }}
-        # Additional volumes for ca.crt or ca boundle injection
-        {{- if .Values.externalCaCertSecretName }}
-        - name: usr-local-share-ca-certificates
-          secret:
-            defaultMode: 420
-            secretName: {{ .Values.externalCaCertSecretName }}
-        - name: etc-ssl-certs
-          emptyDir: {}
-        {{- end }}
-        # end - Additional volumes 
-
+ 
