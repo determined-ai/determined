@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -102,6 +103,24 @@ func TestUserAdd(t *testing.T) {
 				require.Equal(t, tt.ug.UID, resAUG.UID)
 			}
 		})
+	}
+}
+
+func TestUserAddDuplicate(t *testing.T) {
+	username := uuid.NewString()
+	user1 := model.User{Username: username}
+	user2 := model.User{Username: username}
+
+	// Test Add.
+	_, err := Add(context.TODO(), &user1, &model.AgentUserGroup{})
+	require.NoError(t, err)
+
+	// Then try to add another user with the same username, expect an error.
+	_, err = Add(context.TODO(), &user2, &model.AgentUserGroup{})
+	require.Equal(t, err, db.ErrDuplicateRecord)
+
+	if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
+		require.Equal(t, pgerr.Code, db.CodeUniqueViolation)
 	}
 }
 

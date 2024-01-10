@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgconn"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -172,7 +173,12 @@ func DeleteSessionByID(ctx context.Context, sessionID model.SessionID) error {
 // AddUserTx & addAgentUserGroup are helper methods for Add & Update.
 // AddUserTx UPSERT's the existence of a new user.
 func AddUserTx(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID, error) {
-	if _, err := idb.NewInsert().Model(user).Returning("id").Exec(ctx); err != nil {
+	if _, err := idb.NewInsert().Model(user).ExcludeColumn("id").Returning("id").Exec(ctx); err != nil {
+		if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
+			if pgerr.Code == db.CodeUniqueViolation {
+				return 0, db.ErrDuplicateRecord
+			}
+		}
 		return 0, fmt.Errorf("error inserting user: %s", err)
 	}
 
@@ -181,7 +187,7 @@ func AddUserTx(ctx context.Context, idb bun.IDB, user *model.User) (model.UserID
 		OwnerID: user.ID,
 	}
 	if _, err := idb.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
-		return 0, fmt.Errorf("error inserting personal grou: %s", err)
+		return 0, fmt.Errorf("error inserting personal group: %s", err)
 	}
 
 	groupMembership := model.GroupMembership{

@@ -253,6 +253,27 @@ func TestAuthzPostUser(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+func TestAuthzPostUserDuplicate(t *testing.T) {
+	userString := fmt.Sprintf("{\"username\":\"%s\"}", uuid.New().String())
+	svc, authzUser, ctx := setup(t)
+	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(userString)))
+
+	authzUser.On("CanCreateUser", mock.Anything, model.User{}, mock.Anything, mock.Anything).Return(nil)
+
+	// post user once
+	_, err := svc.postUser(ctx)
+	require.NoError(t, err)
+
+	// post user a second time, expect an error.
+	_, _, ctx2 := setup(t)
+	ctx2.SetRequest(httptest.NewRequest("", "/", strings.NewReader(userString)))
+
+	expectedErr := api.ErrUserExists
+
+	_, err = svc.postUser(ctx2)
+	require.Contains(t, expectedErr.Error(), err.Error())
+}
+
 func TestAuthzGetUserImage(t *testing.T) {
 	svc, authzUser, ctx := setup(t)
 

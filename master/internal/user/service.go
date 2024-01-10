@@ -546,8 +546,8 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 
 	_, err = Add(ctx, &userToAdd, ug)
 	switch {
-	case err == db.ErrDuplicateRecord:
-		return nil, echo.NewHTTPError(http.StatusBadRequest, "user already exists")
+	case errors.Is(err, db.ErrDuplicateRecord):
+		return nil, api.ErrUserExists
 	case err != nil:
 		return nil, err
 	}
