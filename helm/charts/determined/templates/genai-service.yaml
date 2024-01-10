@@ -11,6 +11,6 @@ spec:
   - port: {{ required "A valid Values.genai.port entry required!" .Values.genai.port }}
     targetPort: {{ .Values.genai.port }}
     protocol: TCP
-  type: {{ if (.Values.useNodePortForMaster | default false) }}NodePort{{ else }}LoadBalancer{{ end }}
+  type: LoadBalancer
   selector:
     app: genai-{{ .Release.Name }}

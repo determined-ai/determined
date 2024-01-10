@@ -248,9 +248,6 @@ taskContainerDefaults:
   cpuPodSpec:
     apiVersion: v1
     kind: Pod
-    metadata:
-      labels:
-        customLabel: i-was-here
     spec:
       containers:
         - name: determined-container
@@ -266,9 +263,6 @@ taskContainerDefaults:
   gpuPodSpec:
     apiVersion: v1
     kind: Pod
-    metadata:
-      labels:
-        customLabel: i-was-here
     spec:
       containers:
         - name: determined-container
@@ -362,3 +356,10 @@ resourcePools:
 genai:
   version: "26ec909"
   port: 9011
+  memRequest: 1Gi
+  cpuRequest: 2
+  # memLimit: 1Gi
+  # cpuLimit: 2
+
+  imagePullSecretName:
+
