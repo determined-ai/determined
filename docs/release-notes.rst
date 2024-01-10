@@ -7,6 +7,28 @@
 ###############
 
 **************
+ Version 0.27
+**************
+
+Version 0.27.0
+==============
+
+**Release Date:** January 09, 2024
+
+**Breaking Changes**
+
+-  Experiments: Allow empty model definitions when creating experiments.
+
+-  CLI: Optional flags must come before or after positional arguments when creating experiments;
+   orderings such as ``det e create const.yaml -f .`` are no longer supported. Instead, you should
+   use ``det e create -f const.yaml .`` or ``det e create const.yaml . -f``.
+
+**Improvements**
+
+-  Allow checkpoint downloads through the server for ``checkpoint_storage`` types ``shared_fs`` and
+   ``directory``.
+
+**************
  Version 0.26
 **************
 
