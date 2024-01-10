@@ -253,12 +253,13 @@ def upload(app_id, api_key, records, version):
         search_iterator.next()
         remote_length = search_iterator._raw_response["nbHits"]
         if remote_length == len(records):
-            print(f"verified that {final_name} contains {len(records)} records")
+            print(f"verified that {final_name} contains {len(records)} records", file=sys.stderr)
             break
         else:
             print(
                 f"{final_name} contains {remote_length} records but expected {len(records)}"
-                f" records."
+                f" records.",
+                file=sys.stderr,
             )
             if num_tries == max_retries:
                 raise Exception("Maximum number of retries reached with no success")
