@@ -6,6 +6,7 @@ import os
 import pathlib
 import re
 import sys
+import time
 import traceback
 from xml.etree import ElementTree
 
@@ -255,9 +256,10 @@ def upload(app_id, api_key, records, version):
             print(f"verified that {final_name} contains {len(records)} records", file=sys.stderr)
             break
         print(
-            f"Expected {len(records)} in {final_name} but got {remote_length}  instead",
+            f"Expected {len(records)} in {final_name} but got {remote_length} instead.",
             file=sys.stderr,
         )
+        time.sleep(60)
 
     else:
         raise ValueError("Maximum number of retries reached with no success")
