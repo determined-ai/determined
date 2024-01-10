@@ -70,6 +70,10 @@ class ZMQBroadcastServer:
         self._pub_socket = context.socket(zmq.PUB)
         self._pull_socket = context.socket(zmq.PULL)
 
+        # Enable a 60-second keepalive.
+        self._pub_socket.setsockopt(zmq.HEARTBEAT_IVL, 60 * 1000)
+        self._pull_socket.setsockopt(zmq.HEARTBEAT_IVL, 60 * 1000)
+
         self._pub_port = None  # type: Optional[int]
         self._pull_port = None  # type: Optional[int]
 
@@ -181,6 +185,10 @@ class ZMQBroadcastClient:
 
         self._push_socket = context.socket(zmq.PUSH)
         self._push_socket.connect(srv_pull_url)
+
+        # Enable a 60-second keepalive.
+        self._sub_socket.setsockopt(zmq.HEARTBEAT_IVL, 60 * 1000)
+        self._push_socket.setsockopt(zmq.HEARTBEAT_IVL, 60 * 1000)
 
         self._send_serial = 0
         self._recv_serial = 0
