@@ -362,4 +362,5 @@ genai:
   # cpuLimit: 2
 
   imagePullSecretName:
-
+  # storageClassName:
+  storageSize: 30Gi

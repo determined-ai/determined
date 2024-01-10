@@ -45,7 +45,6 @@ spec:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
             readOnly: false
-          
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}
@@ -54,7 +53,6 @@ spec:
             {{- if .Values.genai.memRequest }}
             memory: {{ .Values.genai.memRequest  | quote }}
             {{- end}}
-
           {{- if or .Values.genai.cpuLimit .Values.genai.memLimit }}
           limits:
             {{- if .Values.genai.cpuLimit }}
@@ -64,7 +62,6 @@ spec:
             memory: {{ .Values.genai.memLimit  | quote }}
             {{- end}}
           {{- end}}
-      
       {{- if .Values.imagePullSecretName}}
       imagePullSecrets:
         - name: {{ .Values.imagePullSecretName }}
@@ -76,4 +73,3 @@ spec:
         - name: master-config
           secret:
             secretName: genai-config-{{ .Release.Name }}
- 
