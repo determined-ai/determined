@@ -111,6 +111,7 @@ func (a AllocationID) ToTaskID() TaskID {
 	return TaskID(a[:strings.LastIndex(string(a), ".")])
 }
 
+// GetAllocationSpecifier retrieves number at the end of the allocation's id.
 func (a AllocationID) GetAllocationSpecifier() (int, error) {
 	i, err := strconv.Atoi(a[strings.LastIndex(string(a), ".")+1:].String())
 	if err != nil {
@@ -169,7 +170,7 @@ const (
 	TaskStateError TaskState = "ERROR"
 	// TaskStatePaused denotes that task has been paused.
 	TaskStatePaused TaskState = "PAUSED"
-	// TaskStatePaused denotes that task has been paused.
+	// TaskStateStoppingPaused denotes that task has been paused.
 	TaskStateStoppingPaused TaskState = "STOPPING_PAUSED"
 	// TaskStateStoppingCanceled denotes that the task is in the process of being canceled.
 	TaskStateStoppingCanceled TaskState = "STOPPING_CANCELED"

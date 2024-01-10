@@ -387,9 +387,9 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 func (a *apiServer) KillGenericTask(
 	ctx context.Context, req *apiv1.KillGenericTaskRequest,
 ) (*apiv1.KillGenericTaskResponse, error) {
-	killTaskId := model.TaskID(req.TaskId)
+	killTaskID := model.TaskID(req.TaskId)
 	var taskModel model.Task
-	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskId).Scan(ctx)
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskID).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -403,13 +403,13 @@ func (a *apiServer) KillGenericTask(
 		if err != nil {
 			return nil, err
 		}
-		killTaskId = rootID
+		killTaskID = rootID
 	}
-	err = a.PropagateTaskState(ctx, killTaskId, model.TaskStateStoppingCanceled, overrideStates)
+	err = a.PropagateTaskState(ctx, killTaskID, model.TaskStateStoppingCanceled, overrideStates)
 	if err != nil {
 		return nil, err
 	}
-	tasksToDelete, err := a.GetTaskChildren(ctx, killTaskId, overrideStates)
+	tasksToDelete, err := a.GetTaskChildren(ctx, killTaskID, overrideStates)
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +459,9 @@ func (a *apiServer) PauseGenericTask(
 			if err != nil {
 				return nil, err
 			}
-			err = task.DefaultService.Signal(model.AllocationID(allocationID), task.TerminateAllocation, "user requested task kill")
+			err = task.DefaultService.Signal(model.AllocationID(allocationID),
+				task.TerminateAllocation,
+				"user requested task kill")
 			if err != nil {
 				return nil, err
 			}

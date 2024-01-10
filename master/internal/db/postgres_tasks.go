@@ -121,6 +121,7 @@ WHERE task_id = $1
 	return nil
 }
 
+// IsPaused returns true if given task is in paused/pausing state.
 func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 	query := fmt.Sprintf(`
 SELECT count(*)
@@ -132,7 +133,6 @@ WHERE task_id = '%s' AND (task_state='%s' OR task_state='%s')
 		return false, err
 	}
 	return count > 0, nil
-
 }
 
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {

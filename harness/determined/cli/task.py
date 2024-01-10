@@ -161,15 +161,18 @@ def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_KillGenericTask(sess, taskId=args.task_id, killFromRoot=args.root)
 
+
 @authentication.required
 def pause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_PauseGenericTask(sess, taskId=args.task_id)
 
+
 @authentication.required
 def resume(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_ResumeGenericTask(sess, taskId=args.task_id, projectId=args.project_id)
+
 
 common_log_options: List[Any] = [
     Arg(
@@ -336,7 +339,7 @@ args_description: List[Any] = [
                         "--root",
                         action="store_true",
                         help="",
-                    )
+                    ),
                 ],
             ),
             Cmd(
