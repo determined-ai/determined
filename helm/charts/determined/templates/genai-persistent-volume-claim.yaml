@@ -1,5 +1,3 @@
-{{- if or .Values.db.hostAddress .Values.db.disablePVC }}
-{{ else }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -13,8 +11,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ required  "A valid Values.db.storageSize entry is required!" .Values.db.storageSize }}
-  {{- if .Values.db.storageClassName }}
-  storageClassName: {{ .Values.db.storageClassName }}
+      storage: {{ required  "A valid Values.genai.storageSize entry is required!" .Values.genai.storageSize }}
+  {{- if .Values.genai.storageClassName }}
+  storageClassName: {{ .Values.genai.storageClassName }}
   {{ end }}
-{{ end }}

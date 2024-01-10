@@ -48,9 +48,6 @@ spec:
         {{- end }}
         {{- end }}
         volumeMounts:
-          - name: genai-pvc-storage
-            mountPath: /run/determined/workdir/shared_fs
-            readOnly: false
           - name: master-config
             mountPath: /etc/determined/
             readOnly: true
@@ -117,9 +114,6 @@ spec:
         - name: {{ .Values.imagePullSecretName }}
       {{- end}}
       volumes:
-        - name: genai-pvc-storage
-          persistentVolumeClaim:
-            claimName: genai-pvc-{{ .Release.Name }}
         - name: master-config
           secret:
             secretName: determined-master-config-{{ .Release.Name }}
