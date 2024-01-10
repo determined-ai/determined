@@ -232,8 +232,7 @@ def upload(app_id, api_key, records, version):
     # Pick some settings for this index.
     index.set_settings(SETTINGS)
 
-    num_tries = 1
-    while num_tries <= max_retries:
+    for _ in range(max_retries):
         # Upload to temp index.
         print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
         index_response = index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
@@ -247,7 +246,7 @@ def upload(app_id, api_key, records, version):
         print("rename done", file=sys.stderr)
 
         # Verify remote record length
-        print(f"checking that {final_name} contains {len(records)} records")
+        print(f"checking that {final_name} contains {len(records)} records", file=sys.stderr)
         final_index = client.init_index(final_name)
         search_iterator = final_index.browse_objects()
         search_iterator.next()
@@ -255,14 +254,13 @@ def upload(app_id, api_key, records, version):
         if remote_length == len(records):
             print(f"verified that {final_name} contains {len(records)} records", file=sys.stderr)
             break
-        else:
-            print(
-                f"{final_name} contains {remote_length} records but expected {len(records)}"
-                f" records.",
-                file=sys.stderr,
-            )
-            if num_tries == max_retries:
-                raise Exception("Maximum number of retries reached with no success")
+        print(
+            f"Expected {len(records)} in {final_name} but got {remote_length}  instead",
+            file=sys.stderr,
+        )
+
+    else:
+        raise ValueError("Maximum number of retries reached with no success")
 
 
 if __name__ == "__main__":
