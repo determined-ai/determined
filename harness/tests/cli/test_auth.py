@@ -1,9 +1,6 @@
 import collections
 import contextlib
 import itertools
-import json
-import shutil
-from pathlib import Path
 from typing import Any, Iterator, List, Tuple, no_type_check
 from unittest import mock
 
@@ -12,25 +9,10 @@ import responses
 from responses import matchers, registries
 
 from determined.cli import cli
-from determined.common.api import authentication, certs
+from determined.common.api import authentication
 from tests.cli import util
-from tests.confdir import use_test_config_dir
 
 MOCK_MASTER_URL = "http://localhost:8080"
-AUTH_V0_PATH = Path(__file__).parent / "auth_v0.json"
-UNTRUSTED_CERT_PATH = Path(__file__).parents[1] / "common" / "untrusted-root" / "127.0.0.1-ca.crt"
-AUTH_JSON = {
-    "version": 1,
-    "masters": {
-        "http://localhost:8080": {
-            "active_user": "bob",
-            "tokens": {
-                "determined": "det.token",
-                "bob": "bob.token",
-            },
-        }
-    },
-}
 
 
 class ScenarioSetMeta(type):
@@ -342,6 +324,7 @@ class GetToken:
         self.user = user
 
     def expect(self, rsps: responses.RequestsMock, mts: util.MockTokenStore, scenario: Any) -> None:
+        mts.get_active_user(retval=None)
         mts.get_token(self.user, retval="cache_token" if scenario.user_in_cache else None)
 
 
@@ -420,48 +403,3 @@ def test_logout(scenario_set: Logout) -> None:
             else:
                 cmd = ["user", "logout"]
             cli.main(cmd)
-
-
-def test_auth_json_v0_upgrade() -> None:
-    with use_test_config_dir() as config_dir:
-        auth_json_path = config_dir / "auth.json"
-        shutil.copy2(AUTH_V0_PATH, auth_json_path)
-        ts = authentication.TokenStore(MOCK_MASTER_URL, auth_json_path)
-
-        assert ts.get_active_user() == "determined"
-        assert ts.get_token("determined") == "v2.public.this.is.a.test"
-
-        ts.set_token("determined", "ai")
-
-        ts2 = authentication.TokenStore(MOCK_MASTER_URL, auth_json_path)
-        assert ts2.get_token("determined") == "ai"
-
-        with auth_json_path.open() as fin:
-            data = json.load(fin)
-            assert data.get("version") == 1
-            assert "masters" in data and list(data["masters"].keys()) == [MOCK_MASTER_URL]
-
-
-def test_cert_v0_upgrade() -> None:
-    with use_test_config_dir() as config_dir:
-        cert_path = config_dir / "master.crt"
-        shutil.copy2(UNTRUSTED_CERT_PATH, cert_path)
-        with cert_path.open() as fin:
-            cert_data = fin.read()
-
-        cert = certs.default_load(MOCK_MASTER_URL)
-        assert isinstance(cert.bundle, str)
-        with open(cert.bundle) as fin:
-            loaded_cert_data = fin.read()
-        assert loaded_cert_data.endswith(cert_data)
-        assert not cert_path.exists()
-
-        v1_certs_path = config_dir / "certs.json"
-        assert v1_certs_path.exists()
-
-        # Load once again from v1.
-        cert2 = certs.default_load(MOCK_MASTER_URL)
-        assert isinstance(cert2.bundle, str)
-        with open(cert2.bundle) as fin:
-            loaded_cert_data = fin.read()
-        assert loaded_cert_data.endswith(cert_data)

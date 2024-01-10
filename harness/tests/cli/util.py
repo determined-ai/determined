@@ -56,7 +56,11 @@ class MockTokenStore:
         if self._strict:
             if self._ncalls == len(self._exp_calls):
                 raise ValueError(f"unexpected call to TokenStore: {call}")
-            assert self._exp_calls[self._ncalls] == call
+            if self._exp_calls[self._ncalls] != call:
+                raise ValueError(
+                    f"mismstached call to TokenStore: expected {self._exp_calls[self._ncalls]} "
+                    f"but got {call}"
+                )
             retval = self._retvals[self._ncalls]
             self._ncalls += 1
             return retval
@@ -91,6 +95,10 @@ class MockTokenStore:
         self._exp_calls.append(("set_active", username))
         self._retvals.append(None)
 
+    def clear_active(self) -> None:
+        self._exp_calls.append("clear_active")
+        self._retvals.append(None)
+
 
 class MockTokenStoreInstance:
     def __init__(self, mts: MockTokenStore) -> None:
@@ -113,6 +121,9 @@ class MockTokenStoreInstance:
 
     def set_active(self, username: str) -> None:
         self._mts._match_call(("set_active", username))
+
+    def clear_active(self) -> None:
+        self._mts._match_call("clear_active")
 
 
 @contextlib.contextmanager
