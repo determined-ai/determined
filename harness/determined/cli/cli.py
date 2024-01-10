@@ -24,6 +24,7 @@ import determined.cli
 from determined.cli import render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.checkpoint import args_description as checkpoint_args_description
+from determined.cli.command import args_description as command_args_description
 from determined.cli.dev import args_description as dev_args_description
 from determined.cli.experiment import args_description as experiment_args_description
 from determined.cli.job import args_description as job_args_description
@@ -33,7 +34,6 @@ from determined.cli.notebook import args_description as notebook_args_descriptio
 from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
 from determined.cli.rbac import args_description as rbac_args_description
-from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resource_pool import args_description as resource_pool_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
@@ -169,7 +169,7 @@ all_args_description: ArgsDescription = (
     + template_args_description
     + tensorboard_args_description
     + trial_args_description
-    + remote_args_description
+    + command_args_description
     + user_args_description
     + user_groups_args_description
     + rbac_args_description

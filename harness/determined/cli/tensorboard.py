@@ -6,7 +6,7 @@ from typing import cast
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render, task
+from determined.cli import ntsc, render, task
 from determined.common import api, context
 from determined.common.api import authentication, bindings, request
 from determined.common.check import check_none
@@ -18,7 +18,7 @@ def start_tensorboard(args: Namespace) -> None:
     if not (args.trial_ids or args.experiment_ids):
         raise ArgumentError(None, "Either experiment_ids or trial_ids must be specified.")
 
-    config = command.parse_config(args.config_file, None, args.config, [])
+    config = ntsc.parse_config(args.config_file, None, args.config, [])
 
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
 
@@ -63,7 +63,7 @@ def start_tensorboard(args: Namespace) -> None:
 
 @authentication.required
 def open_tensorboard(args: Namespace) -> None:
-    tensorboard_id = cast(str, command.expand_uuid_prefixes(args))
+    tensorboard_id = cast(str, ntsc.expand_uuid_prefixes(args))
 
     sess = cli.setup_session(args)
     task = bindings.get_GetTask(sess, taskId=tensorboard_id).task
@@ -93,9 +93,10 @@ args_description: ArgsDescription = [
         [
             Cmd(
                 "list ls",
-                partial(command.list_tasks),
+                partial(ntsc.list_tasks),
                 "list TensorBoard instances",
-                [
+                ntsc.ls_sort_args
+                + [
                     Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
                     Arg(
                         "--all",
@@ -137,16 +138,16 @@ args_description: ArgsDescription = [
                         type=FileType("r"),
                         help="command config file (.yaml)",
                     ),
-                    Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+                    Arg("-c", "--context", default=None, type=Path, help=ntsc.CONTEXT_DESC),
                     Arg(
                         "-i",
                         "--include",
                         default=[],
                         action="append",
                         type=Path,
-                        help=command.INCLUDE_DESC,
+                        help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
                     Arg(
                         "--no-browser",
                         action="store_true",
@@ -162,7 +163,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "config",
-                partial(command.config),
+                partial(ntsc.config),
                 "display TensorBoard config",
                 [Arg("tensorboard_id", type=str, help="TensorBoard ID")],
             ),
@@ -183,7 +184,7 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "kill",
-                partial(command.kill),
+                partial(ntsc.kill),
                 "kill TensorBoard instance",
                 [
                     Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
@@ -197,7 +198,7 @@ args_description: ArgsDescription = [
                 [
                     Cmd(
                         "priority",
-                        partial(command.set_priority),
+                        partial(ntsc.set_priority),
                         "set TensorBoard priority",
                         [
                             Arg("tensorboard_id", help="TensorBoard ID"),

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union, cast
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, render
+from determined.cli import ntsc, render
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.api.bindings import v1AllocationSummary
@@ -78,7 +78,7 @@ def list_tasks(args: Namespace) -> None:
 
 @authentication.required
 def logs(args: Namespace) -> None:
-    task_id = cast(str, command.expand_uuid_prefixes(args, args.task_id))
+    task_id = cast(str, ntsc.expand_uuid_prefixes(args, args.task_id))
     try:
         logs = api.task_logs(
             cli.setup_session(args),
