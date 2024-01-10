@@ -6,6 +6,7 @@ import os
 import pathlib
 import re
 import sys
+import time
 import traceback
 from xml.etree import ElementTree
 
@@ -218,6 +219,9 @@ def scrape_tree(root, excludes):
 
 
 def upload(app_id, api_key, records, version):
+    # Configure maximum amount of retries if desired
+    max_retries = 3
+
     client = search_client.SearchClient.create(app_id, api_key)
 
     temp_name = f"determined-{version}.tmp"
@@ -229,15 +233,36 @@ def upload(app_id, api_key, records, version):
     # Pick some settings for this index.
     index.set_settings(SETTINGS)
 
-    # Upload to temp index.
-    print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
-    index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
-    print("upload complete", file=sys.stderr)
+    for _ in range(max_retries):
+        # Upload to temp index.
+        print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
+        index_response = index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
+        index_response.wait()
+        print("upload complete", file=sys.stderr)
 
-    # Rename index into place.
-    print(f"renaming temp index {temp_name} -> {final_name}...", file=sys.stderr)
-    client.move_index(temp_name, final_name).wait()
-    print("rename done", file=sys.stderr)
+        # Rename index into place.
+        print(f"renaming temp index {temp_name} -> {final_name}...", file=sys.stderr)
+        client_response = client.move_index(temp_name, final_name)
+        client_response.wait()
+        print("rename done", file=sys.stderr)
+
+        # Verify remote record length
+        print(f"checking that {final_name} contains {len(records)} records", file=sys.stderr)
+        final_index = client.init_index(final_name)
+        search_iterator = final_index.browse_objects()
+        search_iterator.next()
+        remote_length = search_iterator._raw_response["nbHits"]
+        if remote_length == len(records):
+            print(f"verified that {final_name} contains {len(records)} records", file=sys.stderr)
+            break
+        print(
+            f"Expected {len(records)} in {final_name} but got {remote_length} instead.",
+            file=sys.stderr,
+        )
+        time.sleep(60)
+
+    else:
+        raise ValueError("Maximum number of retries reached with no success")
 
 
 if __name__ == "__main__":
