@@ -160,6 +160,7 @@ def config(args: Namespace) -> None:
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_KillGenericTask(sess, taskId=args.task_id, killFromRoot=args.root)
+    print(f"Sucessfully killed task: {args.task_id}")
 
 
 @authentication.required
