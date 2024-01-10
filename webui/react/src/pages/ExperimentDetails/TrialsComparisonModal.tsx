@@ -2,6 +2,7 @@ import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { Label } from 'hew/Typography';
@@ -80,7 +81,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const [trialsDetails, setTrialsDetails] = useState(trials ?? []);
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
-  const colSpan = Array.isArray(trialsDetails) ? trialsDetails.length + 1 : 2;
+  const colSpan = (Array.isArray(experiment) ? experiment.length : trialIds?.length ?? 0) + 1;
 
   useEffect(() => {
     if (trialIds === undefined) return;
@@ -233,20 +234,20 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 <th />
                 {trialsDetails.map((trial) => (
                   <th className={css.trialTag} key={trial.id}>
-                    <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
-                      {Array.isArray(experiment) ? (
-                        <Label truncate={{ tooltip: true }}>
-                          {experimentMap[trial.experimentId]?.name}
-                        </Label>
-                      ) : (
-                        `Trial ${trial.id}`
-                      )}
-                    </Link>
-                    <Button
-                      icon={<Icon name="close" size="tiny" title="close" />}
-                      size="small"
-                      onClick={() => handleTrialUnselect(trial.id)}
-                    />
+                    <Row justifyContent="space-between" width="fill">
+                      <Label truncate={{ tooltip: true }}>
+                        <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
+                          {Array.isArray(experiment)
+                            ? experimentMap[trial.experimentId]?.name
+                            : `Trial ${trial.id}`}
+                        </Link>
+                      </Label>
+                      <Button
+                        icon={<Icon name="close" size="tiny" title="close" />}
+                        size="small"
+                        onClick={() => handleTrialUnselect(trial.id)}
+                      />
+                    </Row>
                   </th>
                 ))}
               </tr>
