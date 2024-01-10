@@ -30,7 +30,8 @@ spec:
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:lore-backend-image-{{ $tag }}
-        imagePullPolicy: "Always"
+        # imagePullPolicy: "Always"
+        imagePullPolicy: "Never"
         env:
           - name: DET_MASTER
             value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
