@@ -244,8 +244,44 @@ taskContainerDefaults:
   # task, that pod spec will replace the default one that is defined here. See
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
-  # gpuPodSpec:
 
+  cpuPodSpec:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        customLabel: i-was-here
+    spec:
+      containers:
+        - name: determined-container
+          volumeMounts:
+            - name: genai-pvc-storage
+              mountPath: /run/determined/workdir/shared_fs
+              readOnly: false
+      volumes:
+        - name: genai-pvc-storage
+          persistentVolumeClaim:
+            claimName: genai-pvc-taylor
+
+  gpuPodSpec:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        customLabel: i-was-here
+    spec:
+      containers:
+        - name: determined-container
+          volumeMounts:
+            - name: genai-pvc-storage
+              mountPath: /run/determined/workdir/shared_fs
+              readOnly: false
+      volumes:
+        - name: genai-pvc-storage
+          persistentVolumeClaim:
+            claimName: genai-pvc-taylor
+
+  # TODO: Fix this to use {{ tpl .Release.Name . }}
 
   # Configure default Docker images for all GPU tasks (experiments, notebooks, commands) and
   # CPU tasks (CPU notebooks, TensorBoards, zero-slot commands). If a Docker image is defined
@@ -324,5 +360,5 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 genai:
-  version: "latest"
+  version: "26ec909"
   port: 9011
