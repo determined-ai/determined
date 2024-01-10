@@ -50,11 +50,9 @@
   .trialTag {
     font-size: 14px;
 
-    & * {
-      margin: 0;
-    }
-    :hover {
-      color: var(--theme-status-active);
+    > * {
+      margin: 0 3px;
+      vertical-align: middle;
     }
   }
 }
