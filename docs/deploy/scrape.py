@@ -232,31 +232,33 @@ def upload(app_id, api_key, records, version):
     # Pick some settings for this index.
     index.set_settings(SETTINGS)
 
-    # Upload to temp index.
-    print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
     num_tries = 1
     while num_tries <= max_retries:
+        # Upload to temp index.
+        print(f"uploading {len(records)} records to temp index {temp_name}...", file=sys.stderr)
         index_response = index.save_objects(records, {"autoGenerateObjectIDIfNotExist": True})
         index_response.wait()
-        if all(200 <= raw_response.status_code < 300 for raw_response in index_response):
-            print("upload complete", file=sys.stderr)
-            break
-        else:
-            if num_tries == max_retries:
-                print(f"upload failed after {num_tries} retries", file=sys.stderr)
+        print("upload complete", file=sys.stderr)
 
-    # Rename index into place.
-    print(f"renaming temp index {temp_name} -> {final_name}...", file=sys.stderr)
-    num_tries = 1
-    while num_tries <= max_retries:
+        # Rename index into place.
+        print(f"renaming temp index {temp_name} -> {final_name}...", file=sys.stderr)
         client_response = client.move_index(temp_name, final_name)
         client_response.wait()
-        if all(200 <= raw_response.status_code < 300 for raw_response in client_response):
-            print("rename done", file=sys.stderr)
+        print("rename done", file=sys.stderr)
+
+        # Verify remote record length
+        print(f"checking that {final_name} contains {len(records)} records")
+        final_index=client.init_index(final_name)
+        search_iterator = final_index.browse_objects()
+        search_iterator.next()
+        if search_iterator._raw_response['nbHits'] == len(records):
+            print(f"verified that {final_name} contains {len(records)} records")
             break
         else:
+            print(f"{final_name} contains {search_iterator._raw_response['nbHits']} records "
+                  f"but expected {len(records)} records.")
             if num_tries == max_retries:
-                print(f"rename failed after {num_tries} retries", file=sys.stderr)
+                raise Exception("Maximum number of retries reached with no success")
 
 
 if __name__ == "__main__":
