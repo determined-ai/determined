@@ -118,17 +118,6 @@ message Project {
   string error_message = 15;
 }
 
-// ProjectModel is a checkpoint associated with a project.
-message ProjectModel {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name", "checkpoint" ] }
-  };
-  // Name of the saved checkpoint.
-  string name = 1;
-  // Checkpoint associated with the project.
-  determined.checkpoint.v1.Checkpoint checkpoint = 2;
-}
-
 // PatchProject is a partial update to a project with all optional fields.
 message PatchProject {
   // The new name for the project.
