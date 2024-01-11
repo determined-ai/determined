@@ -98,10 +98,10 @@ stringData:
       auto_provision_users: {{ .Values.oidc.autoProvisionUsers }}
       {{- end }}
       {{- if .Values.oidc.groupsClaimName }}
-      groups_claim_name: {{ .Values.oidc.groupsClaimName }}
+      groups_attribute_name: {{ .Values.oidc.groupsAttributeName }}
       {{- end }}
       {{- if .Values.oidc.displayNameClaimName }}
-      display_name_claim_name: {{ .Values.oidc.displayNameClaimName }}
+      display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
     {{- end }}
 
