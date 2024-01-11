@@ -101,7 +101,7 @@ stringData:
       groups_claim_name: {{ .Values.oidc.groupsClaimName }}
       {{- end }}
       {{- if .Values.oidc.displayNameClaimName }}
-      groups_claim_name: {{ .Values.oidc.displayNameClaimName }}
+      display_name_claim_name: {{ .Values.oidc.displayNameClaimName }}
       {{- end }}
     {{- end }}
 
@@ -128,7 +128,7 @@ stringData:
       auto_provision_users: {{ .Values.saml.autoProvisionUsers }}
       {{- end }}
       {{- if .Values.saml.groupsAttributeName }}
-      groups_claim_name: {{ .Values.saml.groupsAttributeName }}
+      groups_attribute_name: {{ .Values.saml.groupsAttributeName }}
       {{- end }}
       {{- if .Values.saml.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
