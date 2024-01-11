@@ -249,10 +249,3 @@ stringData:
   {{- end }}
   {{- end }}
   {{- end }}
-
-# __internal:
-#   proxied_servers:
-#     - destination: "http://genai-service-{{ .Release.Name }}:9011/lore"
-#       path_prefix: /lore
-#     - destination: "http://genai-service-{{ .Release.Name }}:9011/genai"
-#       path_prefix: /genai
