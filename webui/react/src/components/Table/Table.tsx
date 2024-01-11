@@ -184,18 +184,14 @@ export const taskWorkspaceRenderer = (
   const isUncategorized = workspaceId === 1;
 
   return (
-    <Tooltip content={workspace?.name} placement="top">
-      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-        <Link
-          path={
-            isUncategorized
-              ? paths.projectDetails(workspaceId)
-              : paths.workspaceDetails(workspaceId)
-          }>
-          <Avatar palette="muted" square text={workspace?.name ?? ''} />
-        </Link>
-      </div>
-    </Tooltip>
+    <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+      <Link
+        path={
+          isUncategorized ? paths.projectDetails(workspaceId) : paths.workspaceDetails(workspaceId)
+        }>
+        <Avatar palette="muted" square text={workspace?.name ?? ''} />
+      </Link>
+    </div>
   );
 };
 
