@@ -99,6 +99,9 @@ func NewS3Downloader(
 	prefix string,
 ) (*S3Downloader, error) {
 	prefix = strings.TrimLeft(prefix, "/")
+	if !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
 
 	// We do not pass in credentials explicitly. Instead, we reply on
 	// the existing AWS credentials.
