@@ -255,15 +255,17 @@ def _make_shutil_ignore(root_path: pathlib.Path) -> Callable:
         with ignore_path.open("r") as detignore_file:
             ignore.extend(detignore_file)
 
+    # Lazy import to speed up load time.
+    # See https://github.com/determined-ai/determined/pull/6590 for details.
     import pathspec
 
     ignore_spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore)
 
     def _ignore(path: str, names: List[str]) -> Set[str]:
-        ignored_names = []  # type: List[str]
+        ignored_names = set()  # type: Set[str]
         for name in names:
             if name == ".detignore":
-                ignored_names.append(name)
+                ignored_names.add(name)
                 continue
 
             file_path = pathlib.Path(path) / name
@@ -272,9 +274,9 @@ def _make_shutil_ignore(root_path: pathlib.Path) -> Callable:
             if ignore_spec.match_file(str(file_rel_path)) or ignore_spec.match_file(
                 str(file_rel_path) + "/"
             ):
-                ignored_names.append(name)
+                ignored_names.add(name)
 
-        return set(ignored_names)
+        return ignored_names
 
     return _ignore
 
