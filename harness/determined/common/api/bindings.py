@@ -2605,14 +2605,16 @@ class v1CreateGenericTaskRequest(Printable):
         self,
         *,
         config: str,
-        contextDirectory: "typing.Optional[typing.Sequence[v1File]]",
+        contextDirectory: "typing.Optional[typing.Sequence[v1File]]" = None,
         projectId: int,
         parentId: int,
+        inheritContext: bool,
     ):
         self.config = config
         self.contextDirectory = contextDirectory
         self.projectId = projectId
         self.parentId = parentId
+        self.inheritContext = inheritContext
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
@@ -2620,9 +2622,11 @@ class v1CreateGenericTaskRequest(Printable):
             "config": obj["config"],
             "projectId": obj["projectId"],
             "parentId": obj["parentId"],
+            "inheritContext": obj["inheritContext"]
         }
         if "contextDirectory" in obj:
-            kwargs["contextDirectory"] = [v1File.from_json(x) for x in obj["contextDirectory"]],
+            print("here")
+            kwargs["contextDirectory"] = [v1File.from_json(x) for x in obj["contextDirectory"]]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -2630,9 +2634,10 @@ class v1CreateGenericTaskRequest(Printable):
             "config": self.config,
             "projectId": self.projectId,
             "parentId": self.parentId,
+            "inheritContext": self.inheritContext,
         }
         if self.contextDirectory is not None:
-            out["contextDirectory"] = [x.to_json(omit_unset) for x in self.contextDirectory], 
+            out["contextDirectory"] = [x.to_json(omit_unset) for x in self.contextDirectory] 
         return out
 
 class v1CreateGenericTaskResponse(Printable):

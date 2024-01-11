@@ -172,6 +172,16 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
+	if req.InheritContext != nil && *req.InheritContext {
+		if req.ParentId == nil {
+			return nil, fmt.Errorf("could not inherit config directory since no parent task id provided")
+		}
+		contextDirectoryBytes, err = db.NonExperimentTasksContextDirectory(ctx, model.TaskID(*req.ParentId))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := check.Validate(genericTaskSpec.GenericTaskConfig); err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
