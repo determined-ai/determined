@@ -169,6 +169,86 @@ func (TaskType) EnumDescriptor() ([]byte, []int) {
 	return file_determined_task_v1_task_proto_rawDescGZIP(), []int{1}
 }
 
+type GenericTaskState int32
+
+const (
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_UNSPECIFIED GenericTaskState = 0
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_ACTIVE GenericTaskState = 1
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_CANCELED GenericTaskState = 2
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_COMPLETED GenericTaskState = 3
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_ERROR GenericTaskState = 4
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_PAUSED GenericTaskState = 5
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_STOPPING_PAUSED GenericTaskState = 6
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_STOPPING_CANCELED GenericTaskState = 7
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_STOPPING_COMPLETED GenericTaskState = 8
+	// The task state unknown
+	GenericTaskState_GENERIC_TASK_STATE_STOPPING_ERROR GenericTaskState = 9
+)
+
+// Enum value maps for GenericTaskState.
+var (
+	GenericTaskState_name = map[int32]string{
+		0: "GENERIC_TASK_STATE_UNSPECIFIED",
+		1: "GENERIC_TASK_STATE_ACTIVE",
+		2: "GENERIC_TASK_STATE_CANCELED",
+		3: "GENERIC_TASK_STATE_COMPLETED",
+		4: "GENERIC_TASK_STATE_ERROR",
+		5: "GENERIC_TASK_STATE_PAUSED",
+		6: "GENERIC_TASK_STATE_STOPPING_PAUSED",
+		7: "GENERIC_TASK_STATE_STOPPING_CANCELED",
+		8: "GENERIC_TASK_STATE_STOPPING_COMPLETED",
+		9: "GENERIC_TASK_STATE_STOPPING_ERROR",
+	}
+	GenericTaskState_value = map[string]int32{
+		"GENERIC_TASK_STATE_UNSPECIFIED":        0,
+		"GENERIC_TASK_STATE_ACTIVE":             1,
+		"GENERIC_TASK_STATE_CANCELED":           2,
+		"GENERIC_TASK_STATE_COMPLETED":          3,
+		"GENERIC_TASK_STATE_ERROR":              4,
+		"GENERIC_TASK_STATE_PAUSED":             5,
+		"GENERIC_TASK_STATE_STOPPING_PAUSED":    6,
+		"GENERIC_TASK_STATE_STOPPING_CANCELED":  7,
+		"GENERIC_TASK_STATE_STOPPING_COMPLETED": 8,
+		"GENERIC_TASK_STATE_STOPPING_ERROR":     9,
+	}
+)
+
+func (x GenericTaskState) Enum() *GenericTaskState {
+	p := new(GenericTaskState)
+	*p = x
+	return p
+}
+
+func (x GenericTaskState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (GenericTaskState) Descriptor() protoreflect.EnumDescriptor {
+	return file_determined_task_v1_task_proto_enumTypes[2].Descriptor()
+}
+
+func (GenericTaskState) Type() protoreflect.EnumType {
+	return &file_determined_task_v1_task_proto_enumTypes[2]
+}
+
+func (x GenericTaskState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use GenericTaskState.Descriptor instead.
+func (GenericTaskState) EnumDescriptor() ([]byte, []int) {
+	return file_determined_task_v1_task_proto_rawDescGZIP(), []int{2}
+}
+
 // The failure type of a resource.
 type FailureType int32
 
@@ -238,11 +318,11 @@ func (x FailureType) String() string {
 }
 
 func (FailureType) Descriptor() protoreflect.EnumDescriptor {
-	return file_determined_task_v1_task_proto_enumTypes[2].Descriptor()
+	return file_determined_task_v1_task_proto_enumTypes[3].Descriptor()
 }
 
 func (FailureType) Type() protoreflect.EnumType {
-	return &file_determined_task_v1_task_proto_enumTypes[2]
+	return &file_determined_task_v1_task_proto_enumTypes[3]
 }
 
 func (x FailureType) Number() protoreflect.EnumNumber {
@@ -251,7 +331,7 @@ func (x FailureType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FailureType.Descriptor instead.
 func (FailureType) EnumDescriptor() ([]byte, []int) {
-	return file_determined_task_v1_task_proto_rawDescGZIP(), []int{2}
+	return file_determined_task_v1_task_proto_rawDescGZIP(), []int{3}
 }
 
 // Allocation tracks a specific instance of a Task.
@@ -482,11 +562,11 @@ func (x *Task) GetParentId() string {
 	return ""
 }
 
-func (x *Task) GetTaskState() string {
+func (x *Task) GetTaskState() GenericTaskState {
 	if x != nil && x.TaskState != nil {
 		return *x.TaskState
 	}
-	return ""
+	return GenericTaskState_GENERIC_TASK_STATE_UNSPECIFIED
 }
 
 func (x *Task) GetNoPause() bool {
@@ -1540,52 +1620,54 @@ func file_determined_task_v1_task_proto_rawDescGZIP() []byte {
 	return file_determined_task_v1_task_proto_rawDescData
 }
 
-var file_determined_task_v1_task_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_determined_task_v1_task_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_determined_task_v1_task_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_determined_task_v1_task_proto_goTypes = []interface{}{
 	(State)(0),                       // 0: determined.task.v1.State
 	(TaskType)(0),                    // 1: determined.task.v1.TaskType
-	(FailureType)(0),                 // 2: determined.task.v1.FailureType
-	(*Allocation)(nil),               // 3: determined.task.v1.Allocation
-	(*Task)(nil),                     // 4: determined.task.v1.Task
-	(*Address)(nil),                  // 5: determined.task.v1.Address
-	(*ResourcesStarted)(nil),         // 6: determined.task.v1.ResourcesStarted
-	(*ResourcesFailure)(nil),         // 7: determined.task.v1.ResourcesFailure
-	(*ResourcesStopped)(nil),         // 8: determined.task.v1.ResourcesStopped
-	(*ResourcesSummary)(nil),         // 9: determined.task.v1.ResourcesSummary
-	(*ProxyPortConfig)(nil),          // 10: determined.task.v1.ProxyPortConfig
-	(*AllocationSummary)(nil),        // 11: determined.task.v1.AllocationSummary
-	(*TaskLog)(nil),                  // 12: determined.task.v1.TaskLog
-	(*ResourcesSummary_Devices)(nil), // 13: determined.task.v1.ResourcesSummary.Devices
-	nil,                              // 14: determined.task.v1.ResourcesSummary.AgentDevicesEntry
-	(*timestamp.Timestamp)(nil),      // 15: google.protobuf.Timestamp
-	(logv1.LogLevel)(0),              // 16: determined.log.v1.LogLevel
-	(*devicev1.Device)(nil),          // 17: determined.device.v1.Device
+	(GenericTaskState)(0),            // 2: determined.task.v1.GenericTaskState
+	(FailureType)(0),                 // 3: determined.task.v1.FailureType
+	(*Allocation)(nil),               // 4: determined.task.v1.Allocation
+	(*Task)(nil),                     // 5: determined.task.v1.Task
+	(*Address)(nil),                  // 6: determined.task.v1.Address
+	(*ResourcesStarted)(nil),         // 7: determined.task.v1.ResourcesStarted
+	(*ResourcesFailure)(nil),         // 8: determined.task.v1.ResourcesFailure
+	(*ResourcesStopped)(nil),         // 9: determined.task.v1.ResourcesStopped
+	(*ResourcesSummary)(nil),         // 10: determined.task.v1.ResourcesSummary
+	(*ProxyPortConfig)(nil),          // 11: determined.task.v1.ProxyPortConfig
+	(*AllocationSummary)(nil),        // 12: determined.task.v1.AllocationSummary
+	(*TaskLog)(nil),                  // 13: determined.task.v1.TaskLog
+	(*ResourcesSummary_Devices)(nil), // 14: determined.task.v1.ResourcesSummary.Devices
+	nil,                              // 15: determined.task.v1.ResourcesSummary.AgentDevicesEntry
+	(*timestamp.Timestamp)(nil),      // 16: google.protobuf.Timestamp
+	(logv1.LogLevel)(0),              // 17: determined.log.v1.LogLevel
+	(*devicev1.Device)(nil),          // 18: determined.device.v1.Device
 }
 var file_determined_task_v1_task_proto_depIdxs = []int32{
 	0,  // 0: determined.task.v1.Allocation.state:type_name -> determined.task.v1.State
 	1,  // 1: determined.task.v1.Task.task_type:type_name -> determined.task.v1.TaskType
-	3,  // 2: determined.task.v1.Task.allocations:type_name -> determined.task.v1.Allocation
-	15, // 3: determined.task.v1.Task.start_time:type_name -> google.protobuf.Timestamp
-	15, // 4: determined.task.v1.Task.end_time:type_name -> google.protobuf.Timestamp
-	5,  // 5: determined.task.v1.ResourcesStarted.addresses:type_name -> determined.task.v1.Address
-	2,  // 6: determined.task.v1.ResourcesFailure.failure_type:type_name -> determined.task.v1.FailureType
-	7,  // 7: determined.task.v1.ResourcesStopped.failure:type_name -> determined.task.v1.ResourcesFailure
-	14, // 8: determined.task.v1.ResourcesSummary.agent_devices:type_name -> determined.task.v1.ResourcesSummary.AgentDevicesEntry
-	6,  // 9: determined.task.v1.ResourcesSummary.started:type_name -> determined.task.v1.ResourcesStarted
-	8,  // 10: determined.task.v1.ResourcesSummary.exited:type_name -> determined.task.v1.ResourcesStopped
-	15, // 11: determined.task.v1.AllocationSummary.registered_time:type_name -> google.protobuf.Timestamp
-	9,  // 12: determined.task.v1.AllocationSummary.resources:type_name -> determined.task.v1.ResourcesSummary
-	10, // 13: determined.task.v1.AllocationSummary.proxy_ports:type_name -> determined.task.v1.ProxyPortConfig
-	15, // 14: determined.task.v1.TaskLog.timestamp:type_name -> google.protobuf.Timestamp
-	16, // 15: determined.task.v1.TaskLog.level:type_name -> determined.log.v1.LogLevel
-	17, // 16: determined.task.v1.ResourcesSummary.Devices.devices:type_name -> determined.device.v1.Device
-	13, // 17: determined.task.v1.ResourcesSummary.AgentDevicesEntry.value:type_name -> determined.task.v1.ResourcesSummary.Devices
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	4,  // 2: determined.task.v1.Task.allocations:type_name -> determined.task.v1.Allocation
+	16, // 3: determined.task.v1.Task.start_time:type_name -> google.protobuf.Timestamp
+	16, // 4: determined.task.v1.Task.end_time:type_name -> google.protobuf.Timestamp
+	2,  // 5: determined.task.v1.Task.task_state:type_name -> determined.task.v1.GenericTaskState
+	6,  // 6: determined.task.v1.ResourcesStarted.addresses:type_name -> determined.task.v1.Address
+	3,  // 7: determined.task.v1.ResourcesFailure.failure_type:type_name -> determined.task.v1.FailureType
+	8,  // 8: determined.task.v1.ResourcesStopped.failure:type_name -> determined.task.v1.ResourcesFailure
+	15, // 9: determined.task.v1.ResourcesSummary.agent_devices:type_name -> determined.task.v1.ResourcesSummary.AgentDevicesEntry
+	7,  // 10: determined.task.v1.ResourcesSummary.started:type_name -> determined.task.v1.ResourcesStarted
+	9,  // 11: determined.task.v1.ResourcesSummary.exited:type_name -> determined.task.v1.ResourcesStopped
+	16, // 12: determined.task.v1.AllocationSummary.registered_time:type_name -> google.protobuf.Timestamp
+	10, // 13: determined.task.v1.AllocationSummary.resources:type_name -> determined.task.v1.ResourcesSummary
+	11, // 14: determined.task.v1.AllocationSummary.proxy_ports:type_name -> determined.task.v1.ProxyPortConfig
+	16, // 15: determined.task.v1.TaskLog.timestamp:type_name -> google.protobuf.Timestamp
+	17, // 16: determined.task.v1.TaskLog.level:type_name -> determined.log.v1.LogLevel
+	18, // 17: determined.task.v1.ResourcesSummary.Devices.devices:type_name -> determined.device.v1.Device
+	14, // 18: determined.task.v1.ResourcesSummary.AgentDevicesEntry.value:type_name -> determined.task.v1.ResourcesSummary.Devices
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_determined_task_v1_task_proto_init() }
@@ -1738,7 +1820,7 @@ func file_determined_task_v1_task_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_task_v1_task_proto_rawDesc,
-			NumEnums:      3,
+			NumEnums:      4,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
