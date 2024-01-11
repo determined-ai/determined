@@ -173,14 +173,7 @@ const Dashboard: React.FC = () => {
 
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
   if (projectsLoading && submissionsLoading) {
-    return (
-      <Page
-        breadcrumb={pageBreadCrumb}
-        options={<JupyterLabButton enabled={canCreateNSC} />}
-        title="Home">
-        <Spinner center spinning />
-      </Page>
-    );
+    return null;
   }
 
   return (
