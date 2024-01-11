@@ -1,8 +1,8 @@
 .. _qs-webui:
 
-##################
- WebUI Quickstart
-##################
+###########################################
+ Create Your First Experiment in the WebUI
+###########################################
 
 If you already have a Determined cluster and are signed in to the WebUI, you can follow these steps
 to see how to run your first experiment.
@@ -29,6 +29,12 @@ to see how to run your first experiment.
       Train a single model for a fixed number of batches, using constant values for all
       hyperparameters on a single *slot*. A slot is a CPU or CPU computing device, which the
       Determined master schedules to run.
+
+      .. note::
+
+         To run an experiment in a local training environment, your Determined cluster requires only
+         only a single CPU or GPU. A cluster is made up of a master and one or more agents. A single
+         machine can serve as both a master and an agent.
 
       #. Download and extract the tar file: :download:`mnist_pytorch.tgz
          <../examples/mnist_pytorch.tgz>`.
