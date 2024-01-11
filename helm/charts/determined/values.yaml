@@ -372,6 +372,7 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 # TODO: Explain this
+# TODO: Find a way to not hardcode this?
 proxiedServers:
   - destination: "http://genai-service-taylor:9011/lore"
     path_prefix: /lore
