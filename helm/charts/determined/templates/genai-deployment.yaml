@@ -41,6 +41,9 @@ spec:
             value: "5432"
           - name: DB_HOST
             value: determined-db-service-{{ .Release.Name }}
+          # TODO: Enable this in the real thing
+          # - name: LORE_DOCKER_TAG_SUFFIX
+          #   value: {{ $tag }}
         volumeMounts:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
