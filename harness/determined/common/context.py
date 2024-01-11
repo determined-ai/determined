@@ -1,66 +1,11 @@
-import base64
 import collections
-import os
 import pathlib
-import tarfile
 from typing import Any, Dict, Iterable, List, Optional
 
-from determined.common import constants, util
+from determined.common import constants, detignore, util, v1file_utils
 from determined.common.api import bindings
 
 LegacyContext = List[Dict[str, Any]]
-
-
-def v1File_size(f: bindings.v1File) -> int:
-    if f.content:
-        # The content is already base64-encoded, and we want the real length.
-        return len(f.content) // 4 * 3
-    return 0
-
-
-def v1File_to_dict(f: bindings.v1File) -> Dict[str, Any]:
-    d = {
-        "path": f.path,
-        "type": f.type,
-        "uid": f.uid,
-        "gid": f.gid,
-        # Echo API expects int-type int64 value
-        "mtime": int(f.mtime),
-        "mode": f.mode,
-    }
-    if f.type in (ord(tarfile.REGTYPE), ord(tarfile.DIRTYPE)):
-        d["content"] = f.content
-    return d
-
-
-def v1File_from_local_file(archive_path: str, path: pathlib.Path) -> bindings.v1File:
-    with path.open("rb") as f:
-        content = base64.b64encode(f.read()).decode("utf8")
-    st = path.stat()
-    return bindings.v1File(
-        path=archive_path,
-        type=ord(tarfile.REGTYPE),
-        content=content,
-        # Protobuf expects string-encoded int64
-        mtime=str(int(st.st_mtime)),
-        mode=st.st_mode,
-        uid=0,
-        gid=0,
-    )
-
-
-def v1File_from_local_dir(archive_path: str, path: pathlib.Path) -> bindings.v1File:
-    st = path.stat()
-    return bindings.v1File(
-        path=archive_path,
-        type=ord(tarfile.DIRTYPE),
-        content="",
-        # Protobuf expects string-encoded int64
-        mtime=str(int(st.st_mtime)),
-        mode=st.st_mode,
-        uid=0,
-        gid=0,
-    )
 
 
 class _Builder:
@@ -73,7 +18,7 @@ class _Builder:
 
     def add_v1File(self, f: bindings.v1File) -> None:
         self.items.append(f)
-        self.size += v1File_size(f)
+        self.size += v1file_utils.v1File_size(f)
         if self.size > self.limit:
             raise ValueError(
                 "The total size of context directory and included files and directories exceeds "
@@ -97,70 +42,16 @@ class _Builder:
             raise ValueError(f"Path '{root_path}' doesn't exist")
 
         if root_path.is_file():
-            self.add_v1File(v1File_from_local_file(root_path.name, root_path))
+            self.add_v1File(v1file_utils.v1File_from_local_file(root_path.name, root_path))
             return
 
         if str(entry_prefix) != ".":
             # For non-context directories, include the root directory.
-            self.add_v1File(v1File_from_local_dir(str(entry_prefix), root_path))
+            self.add_v1File(v1file_utils.v1File_from_local_dir(str(entry_prefix), root_path))
 
-        ignore = list(constants.DEFAULT_DETIGNORE)
-        ignore_path = root_path.joinpath(".detignore")
-        if ignore_path.is_file():
-            with ignore_path.open("r") as detignore_file:
-                ignore.extend(detignore_file)
-
-        import pathspec
-
-        ignore_spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore)
-
-        # We could use pathlib.Path.rglob for scanning the directory;
-        # however, the Python documentation claims a warning that rglob may be
-        # inefficient on large directory trees, so we use the older os.walk().
-        for parent, dirs, files in os.walk(str(root_path)):
-            keep_dirs = []
-            for directory in dirs:
-                dir_path = pathlib.Path(parent).joinpath(directory)
-                dir_rel_path = dir_path.relative_to(root_path)
-
-                # If the directory matches any path specified in .detignore, then ignore it.
-                if ignore_spec.match_file(str(dir_rel_path)):
-                    continue
-                if ignore_spec.match_file(str(dir_rel_path) + "/"):
-                    continue
-                keep_dirs.append(directory)
-                # Determined only supports POSIX-style file paths.  Use as_posix() in case this code
-                # is executed in a non-POSIX environment.
-                entry_path = (entry_prefix / dir_rel_path).as_posix()
-
-                self.add_v1File(v1File_from_local_dir(entry_path, dir_path))
-            # We can modify dirs in-place so that we do not recurse into ignored directories
-            #  See https://docs.python.org/3/library/os.html#os.walk
-            dirs[:] = keep_dirs
-
-            for file in files:
-                file_path = pathlib.Path(parent).joinpath(file)
-                file_rel_path = file_path.relative_to(root_path)
-
-                # If the file is the .detignore file or matches one of the
-                # paths specified in .detignore, then ignore it.
-                if file_rel_path.name == ".detignore":
-                    continue
-                if ignore_spec.match_file(str(file_rel_path)):
-                    continue
-
-                # Determined only supports POSIX-style file paths.  Use as_posix() in case this code
-                # is executed in a non-POSIX environment.
-                entry_path = (entry_prefix / file_rel_path).as_posix()
-
-                try:
-                    entry = v1File_from_local_file(entry_path, file_path)
-                except OSError:
-                    print(f"Error reading '{entry_path}', skipping this file.")
-                    continue
-
-                self.add_v1File(entry)
-                self.update_msg()
+        for file in detignore.os_walk_to_v1Files(root_path, entry_prefix):
+            self.add_v1File(file)
+            self.update_msg()
 
     def get_items(self) -> List[bindings.v1File]:
         print()
@@ -217,4 +108,4 @@ def read_legacy_context(
     includes: Iterable[pathlib.Path] = (),
     limit: int = constants.MAX_CONTEXT_SIZE,
 ) -> LegacyContext:
-    return [v1File_to_dict(f) for f in read_v1_context(context_root, includes, limit)]
+    return [v1file_utils.v1File_to_dict(f) for f in read_v1_context(context_root, includes, limit)]

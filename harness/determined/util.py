@@ -38,9 +38,7 @@ import psutil
 
 import determined as det
 from determined import constants
-from determined.common import check
-from determined.common import constants as common_constants
-from determined.common import util
+from determined.common import check, detignore, util
 
 logger = logging.getLogger("determined")
 
@@ -248,39 +246,6 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
     return json.dumps(jsonable(obj), indent=indent, sort_keys=sort_keys)
 
 
-def _make_shutil_ignore(root_path: pathlib.Path) -> Callable:
-    ignore = list(common_constants.DEFAULT_DETIGNORE)
-    ignore_path = root_path / ".detignore"
-    if ignore_path.is_file():
-        with ignore_path.open("r") as detignore_file:
-            ignore.extend(detignore_file)
-
-    # Lazy import to speed up load time.
-    # See https://github.com/determined-ai/determined/pull/6590 for details.
-    import pathspec
-
-    ignore_spec = pathspec.PathSpec.from_lines(pathspec.patterns.GitWildMatchPattern, ignore)
-
-    def _ignore(path: str, names: List[str]) -> Set[str]:
-        ignored_names = set()  # type: Set[str]
-        for name in names:
-            if name == ".detignore":
-                ignored_names.add(name)
-                continue
-
-            file_path = pathlib.Path(path) / name
-            file_rel_path = file_path.relative_to(root_path)
-
-            if ignore_spec.match_file(str(file_rel_path)) or ignore_spec.match_file(
-                str(file_rel_path) + "/"
-            ):
-                ignored_names.add(name)
-
-        return ignored_names
-
-    return _ignore
-
-
 def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
     code_path = path.joinpath("code")
 
@@ -301,7 +266,7 @@ def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
         ignore_func = shutil.ignore_patterns("__pycache__")
     else:
         model_dir = "."
-        ignore_func = _make_shutil_ignore(pathlib.Path(model_dir))
+        ignore_func = detignore.make_shutil_ignore(pathlib.Path(model_dir))
 
     shutil.copytree(model_dir, code_path, ignore=ignore_func)
     os.chmod(code_path, 0o755)
