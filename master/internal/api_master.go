@@ -284,7 +284,7 @@ func (a *apiServer) SetMaintenanceMessage(
 	mm := model.MaintenanceMessage{
 		CreatorID: int(u.ID),
 		Message:   req.Message,
-		StartTime: &startTime,
+		StartTime: startTime,
 	}
 
 	var endTime time.Time
