@@ -53,3 +53,37 @@ def wait_for_master_url(
     finally:
         if polling:
             print()
+
+
+def wait_for_genai_url(
+    master_url: str,
+    timeout: int = DEFAULT_TIMEOUT,
+    cert: Optional[certs.Cert] = None,
+) -> None:
+    POLL_INTERVAL = 2
+    polling = False
+    start_time = time.time()
+    GENAI_PREFIX = "/genai"
+    check_path = GENAI_PREFIX + "/api/v1/workspaces"
+
+    try:
+        while time.time() - start_time < timeout:
+            try:
+                auth = api.Authentication(master_address=master_url, cert=cert)
+                r = api.get(master_url, check_path, authenticated=True, cert=cert, auth=auth)
+                print(r)
+                print(r.status_code)
+                if r.status_code == requests.codes.ok:
+                    _ = r.json()
+                    return
+            except (api.errors.MasterNotFoundException, api.errors.APIException):
+                pass
+            if not polling:
+                polling = True
+                print("Waiting for GenAI instance to be available...", end="", flush=True)
+            time.sleep(POLL_INTERVAL)
+            print(".", end="", flush=True)
+        raise MasterTimeoutExpired
+    finally:
+        if polling:
+            print()

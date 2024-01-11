@@ -1,3 +1,5 @@
+from determined.common.api import certs
+from determined.deploy import healthcheck
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
 
@@ -51,3 +53,11 @@ class Lore(VPCBase):
         # Interal references will be updated in a later stage if prioritized
         print(f"GenAI Version: {lore_tag}")
         print(f"GenAI Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
+
+    def wait_for_genai(self, timeout: int = 60) -> None:
+        self.wait_for_master()
+        cert = None
+        if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
+            cert = certs.Cert(noverify=True)
+        master_url = self._get_master_url()
+        return healthcheck.wait_for_genai_url(master_url, timeout=timeout, cert=cert)
