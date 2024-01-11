@@ -9,6 +9,7 @@ import (
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -299,9 +300,24 @@ func (a *apiServer) SetMaintenanceMessage(
 		mm.EndTime = &endTime
 	}
 
-	_, err = db.Bun().NewInsert().Model(&mm).Exec(ctx)
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err = tx.NewUpdate().
+			Table("maintenance_messages").
+			Set("end_time = NOW()").
+			Where("end_time >= NOW() OR end_time IS NULL").
+			Exec(ctx)
+		if err != nil {
+			return errors.Wrap(err, "error clearing previous server maintenance messages")
+		}
+
+		_, err = tx.NewInsert().Model(&mm).Exec(ctx)
+		if err != nil {
+			return errors.Wrap(err, "error setting the server maintenance message")
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, errors.Wrap(err, "error setting the server maintenance message")
+		return nil, err
 	}
 
 	return &apiv1.SetMaintenanceMessageResponse{}, nil
