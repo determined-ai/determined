@@ -49,6 +49,29 @@ enum TaskType {
   TASK_TYPE_GENERIC = 7;
 }
 
+enum GenericTaskState {
+  // The task state unknown
+  GENERIC_TASK_STATE_UNSPECIFIED = 0;
+  // The task state unknown
+  GENERIC_TASK_STATE_ACTIVE = 1;
+  // The task state unknown
+  GENERIC_TASK_STATE_CANCELED = 2;
+  // The task state unknown
+  GENERIC_TASK_STATE_COMPLETED = 3;
+  // The task state unknown
+  GENERIC_TASK_STATE_ERROR = 4;
+  // The task state unknown
+  GENERIC_TASK_STATE_PAUSED = 5;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_PAUSED = 6;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_CANCELED = 7;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_COMPLETED = 8;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_ERROR = 9;
+}
+
 // Allocation tracks a specific instance of a Task.
 message Allocation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -96,7 +119,7 @@ message Task {
   // ID of parent task (empty if root task)
   optional string parent_id = 8;
   // State of task execution.
-  optional string task_state = 9;
+  optional GenericTaskState task_state = 9;
 }
 
 // Address represents an exposed port on a container.
