@@ -320,6 +320,21 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 "For details, SSH to master instance and check /var/log/cloud-init-output.log."
             )
 
+    if args.deployment_type == constants.deployment_types.GENAI:
+        assert isinstance(deployment_object, vpc.Lore)
+        try:
+            deployment_object.wait_for_genai(timeout=5 * 60)
+        except MasterTimeoutExpired:
+            print(
+                colored(
+                    "Determined cluster has been deployed, but GenAI health check has failed.",
+                    "red",
+                )
+            )
+            raise CliError(
+                "For details, SSH to master instance and check /var/log/cloud-init-output.log."
+            )
+
     print("Determined Deployment Successful")
 
 
