@@ -395,6 +395,24 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 	return err
 }
 
+func (a *apiServer) SetPausedState(ctx context.Context, taskID model.TaskID) error {
+	_, err := db.Bun().NewUpdate().Table("tasks").
+		Set("task_state = ?", model.TaskStatePaused).
+		Set("end_time = ?", time.Now().UTC()).
+		Where("task_id = ?", taskID).
+		Exec(ctx)
+	return err
+}
+
+func (a *apiServer) SetResumedState(ctx context.Context, taskID model.TaskID) error {
+	_, err := db.Bun().NewUpdate().Table("tasks").
+		Set("task_state = ?", model.TaskStateActive).
+		Set("end_time = NULL").
+		Where("task_id = ?", taskID).
+		Exec(ctx)
+	return err
+}
+
 func (a *apiServer) KillGenericTask(
 	ctx context.Context, req *apiv1.KillGenericTaskRequest,
 ) (*apiv1.KillGenericTaskResponse, error) {
@@ -476,7 +494,7 @@ func (a *apiServer) PauseGenericTask(
 			if err != nil {
 				return nil, err
 			}
-			err = a.SetTaskState(ctx, childTask.TaskID, model.TaskStatePaused)
+			err = a.SetPausedState(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
@@ -568,7 +586,7 @@ func (a *apiServer) ResumeGenericTask(
 			if err != nil {
 				return nil, err
 			}
-			err = a.SetTaskState(ctx, childTask.TaskID, model.TaskStateActive)
+			err = a.SetResumedState(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
