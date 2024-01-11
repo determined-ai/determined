@@ -2605,7 +2605,7 @@ class v1CreateGenericTaskRequest(Printable):
         self,
         *,
         config: str,
-        contextDirectory: "typing.Sequence[v1File]",
+        contextDirectory: "typing.Optional[typing.Sequence[v1File]]",
         projectId: int,
         parentId: int,
     ):
@@ -2618,19 +2618,21 @@ class v1CreateGenericTaskRequest(Printable):
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
-            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
             "projectId": obj["projectId"],
             "parentId": obj["parentId"],
         }
+        if "contextDirectory" in obj:
+            kwargs["contextDirectory"] = [v1File.from_json(x) for x in obj["contextDirectory"]],
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
-            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
             "projectId": self.projectId,
             "parentId": self.parentId,
         }
+        if self.contextDirectory is not None:
+            out["contextDirectory"] = [x.to_json(omit_unset) for x in self.contextDirectory], 
         return out
 
 class v1CreateGenericTaskResponse(Printable):

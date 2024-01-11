@@ -212,14 +212,15 @@ func (a *apiServer) CreateGenericTask(
 		}
 
 		// TODO persist config elemnts
-
+		if contextDirectoryBytes == nil {
+			contextDirectoryBytes = []byte{}
+		}
 		if _, err := tx.NewInsert().Model(&model.TaskContextDirectory{
 			TaskID:           taskID,
 			ContextDirectory: contextDirectoryBytes,
 		}).Exec(ctx); err != nil {
 			return fmt.Errorf("persisting context directory files: %w", err)
 		}
-
 		return nil
 	})
 	if err != nil {

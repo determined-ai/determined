@@ -116,7 +116,9 @@ def logs(args: Namespace) -> None:
 def create(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
-    context_directory = context.read_v1_context(args.context, args.include)
+    context_directory = None
+    if args.context is not None:
+        context_directory = context.read_v1_context(args.context, args.include)
 
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
@@ -291,9 +293,10 @@ args_description: List[Any] = [
                 [
                     Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                     Arg(
-                        "context",
+                        "--context",
                         type=Path,
-                        help="file or directory containing task context directory",
+                        help=command.CONTEXT_DESC,
+                        default=None,
                     ),
                     Arg(
                         "-i",
