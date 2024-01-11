@@ -108,12 +108,10 @@ stringData:
     {{- end }}
     {{- end }}
 
+    {{- if .Values.proxiedServers }}
     __internal:
-      proxied_servers:
-        - destination: "http://genai-service-{{ .Release.Name }}:9011/lore"
-          path_prefix: /lore
-        - destination: "http://genai-service-{{ .Release.Name }}:9011/genai"
-          path_prefix: /genai
+      proxied_servers: {{ toYaml .Values.proxiedServers | nindent 8 }}
+    {{- end}}
 
     resource_manager:
       type: "kubernetes"
@@ -251,3 +249,10 @@ stringData:
   {{- end }}
   {{- end }}
   {{- end }}
+
+# __internal:
+#   proxied_servers:
+#     - destination: "http://genai-service-{{ .Release.Name }}:9011/lore"
+#       path_prefix: /lore
+#     - destination: "http://genai-service-{{ .Release.Name }}:9011/genai"
+#       path_prefix: /genai
