@@ -13,4 +13,8 @@
     display: flex;
     justify-content: space-between;
   }
+  .rows {
+    text-wrap: nowrap;
+    white-space: nowrap;
+  }
 }

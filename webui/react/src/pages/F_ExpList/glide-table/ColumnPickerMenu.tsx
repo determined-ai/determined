@@ -8,6 +8,7 @@ import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { FixedSizeList as List } from 'react-window';
 
 import { useSettings } from 'hooks/useSettings';
 import {
@@ -161,6 +162,23 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     [setSearchString],
   );
 
+  const rows = useCallback(
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
+      const col = filteredColumns[index];
+      return (
+        <div className={css.rows} key={col.column} style={style}>
+          <Checkbox
+            checked={checkedColumn.has(col.column)}
+            id={col.column}
+            onChange={handleColumnChange}>
+            {col.displayName || col.column}
+          </Checkbox>
+        </div>
+      );
+    },
+    [filteredColumns, checkedColumn, handleColumnChange],
+  );
+
   return (
     <div>
       <Input
@@ -173,15 +191,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       {totalColumns.length !== 0 ? (
         <div className={css.columns}>
           {filteredColumns.length > 0 ? (
-            filteredColumns.map((col) => (
-              <Checkbox
-                checked={checkedColumn.has(col.column)}
-                id={col.column}
-                key={col.column}
-                onChange={handleColumnChange}>
-                {col.displayName || col.column}
-              </Checkbox>
-            ))
+            <List height={360} itemCount={filteredColumns.length} itemSize={30} width="100%">
+              {rows}
+            </List>
           ) : (
             <Message description="No results" icon="warning" />
           )}
