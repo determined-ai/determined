@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -26,14 +28,20 @@ import (
 )
 
 const (
+	// MIMEApplicationXTar is Tar's MIME type.
+	MIMEApplicationXTar = "application/x-tar"
 	// MIMEApplicationGZip is GZip's MIME type.
 	MIMEApplicationGZip = "application/gzip"
 	// MIMEApplicationZip is Zip's MIME type.
 	MIMEApplicationZip = "application/zip"
 )
 
+var checkpointLogger = logrus.WithField("component", "core-checkpoint")
+
 func mimeToArchiveType(mimeType string) archive.ArchiveType {
 	switch mimeType {
+	case MIMEApplicationXTar:
+		return archive.ArchiveTar
 	case MIMEApplicationGZip:
 		return archive.ArchiveTgz
 	case MIMEApplicationZip:
@@ -87,8 +95,32 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	return ptrs.Ptr(legacyConfig.CheckpointStorage), nil
 }
 
+func archiveContentLength(
+	ctx context.Context,
+	downloader checkpoints.CheckpointDownloader,
+	aw archive.ArchiveWriter,
+) (int64, error) {
+	files, err := downloader.ListFiles(ctx)
+	if err != nil {
+		return 0, err
+	}
+	contentLength := int64(0)
+	for _, file := range files {
+		size, err := aw.DryRunLength(file.Path, file.Size)
+		if err != nil {
+			return 0, err
+		}
+		contentLength += size
+	}
+	closeSize, err := aw.DryRunClose()
+	if err != nil {
+		return 0, err
+	}
+	return contentLength + closeSize, nil
+}
+
 func (m *Master) getCheckpointImpl(
-	ctx context.Context, id uuid.UUID, mimeType string, content io.Writer,
+	ctx context.Context, id uuid.UUID, mimeType string, content *echo.Response,
 ) error {
 	// Assume a checkpoint always has experiment configs
 	storageConfig, err := m.getCheckpointStorageConfig(id)
@@ -104,10 +136,26 @@ func (m *Master) getCheckpointImpl(
 	// DelayWriter delays the first write until we have successfully downloaded
 	// some bytes and are more confident that the download will succeed.
 	dw := newDelayWriter(content, 16*1024)
-	downloader, err := checkpoints.NewDownloader(
-		dw, id.String(), storageConfig, mimeToArchiveType(mimeType))
+	aw, err := archive.NewArchiveWriter(dw, mimeToArchiveType(mimeType))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	downloader, err := checkpoints.NewDownloader(ctx, dw, id.String(), storageConfig, aw)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if aw.DryRunEnabled() {
+		log := checkpointLogger.WithField("checkpoint", id.String())
+		contentLength, err := archiveContentLength(ctx, downloader, aw)
+		if err != nil {
+			log.Debugf("failed to get content length: %s", err.Error())
+		}
+		if contentLength > 0 {
+			log.Debugf("dry-run content-length: %d", contentLength)
+			content.Header().Set(echo.HeaderContentLength, strconv.FormatInt(contentLength, 10))
+		}
 	}
 
 	err = downloader.Download(ctx)
@@ -131,11 +179,11 @@ func (m *Master) getCheckpointImpl(
 	return nil
 }
 
-//	@Summary	Get a checkpoint's contents in a tgz or zip file.
+//	@Summary	Get a checkpoint's contents in a tar, tgz, or zip file.
 //	@Tags		Checkpoints
 //	@ID			get-checkpoint
 //	@Accept		json
-//	@Produce	application/gzip,application/zip
+//	@Produce	application/x-tar,application/gzip,application/zip
 //	@Param		checkpoint_uuid	path	string	true	"Checkpoint UUID"
 //	@Success	200				{}		string	""
 //	@Router		/checkpoints/{checkpoint_uuid} [get]
@@ -144,7 +192,8 @@ func (m *Master) getCheckpointImpl(
 func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")
-	if mimeType != MIMEApplicationGZip &&
+	if mimeType != MIMEApplicationXTar &&
+		mimeType != MIMEApplicationGZip &&
 		mimeType != MIMEApplicationZip {
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType,
 			fmt.Sprintf("unsupported media type to download a checkpoint: '%s'", mimeType))
