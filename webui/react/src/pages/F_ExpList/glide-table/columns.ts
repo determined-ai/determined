@@ -131,13 +131,11 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: record.experiment.checkpointSize
+      copyData: record.experiment.checkpointSize
         ? humanReadableBytes(record.experiment.checkpointSize)
         : '',
-      displayData: record.experiment.checkpointSize
-        ? humanReadableBytes(record.experiment.checkpointSize)
-        : '',
-      kind: GridCellKind.Text,
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Checkpoint Size',
     tooltip: () => undefined,
@@ -147,9 +145,9 @@ export const getColumnDefs = ({
     id: 'description',
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.experiment.description),
-      displayData: String(record.experiment.description),
-      kind: GridCellKind.Text,
+      copyData: String(record.experiment.description),
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Description',
     tooltip: () => undefined,
@@ -160,9 +158,9 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: getDurationInEnglish(record.experiment),
-      displayData: getDurationInEnglish(record.experiment),
-      kind: GridCellKind.Text,
+      copyData: getDurationInEnglish(record.experiment),
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Duration',
     tooltip: () => undefined,
@@ -172,9 +170,9 @@ export const getColumnDefs = ({
     id: 'externalExperimentId',
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: record.experiment.externalExperimentId ?? '',
-      displayData: record.experiment.externalExperimentId ?? '',
-      kind: GridCellKind.Text,
+      copyData: record.experiment.externalExperimentId ?? '',
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'External Experiment ID',
     tooltip: () => undefined,
@@ -184,9 +182,9 @@ export const getColumnDefs = ({
     id: 'externalTrialId',
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: record.experiment.externalTrialId ?? '',
-      displayData: record.experiment.externalTrialId ?? '',
-      kind: GridCellKind.Text,
+      copyData: record.experiment.externalTrialId ?? '',
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'External Trial ID',
     tooltip: () => undefined,
@@ -298,9 +296,9 @@ export const getColumnDefs = ({
     id: 'resourcePool',
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.experiment.resourcePool),
-      displayData: String(record.experiment.resourcePool),
-      kind: GridCellKind.Text,
+      copyData: String(record.experiment.resourcePool),
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Resource Pool',
     tooltip: () => undefined,
@@ -313,9 +311,9 @@ export const getColumnDefs = ({
       const sMetric = record.experiment.config.searcher.metric;
       return {
         allowOverlay: false,
-        data: sMetric,
-        displayData: sMetric,
-        kind: GridCellKind.Text,
+        copyData: sMetric,
+        data: { kind: 'text-cell' },
+        kind: GridCellKind.Custom,
       };
     },
     title: 'Searcher Metric',
@@ -326,9 +324,9 @@ export const getColumnDefs = ({
     id: 'searcherType',
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: String(record.experiment.searcherType),
-      displayData: String(record.experiment.searcherType),
-      kind: GridCellKind.Text,
+      copyData: String(record.experiment.searcherType),
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Searcher',
     tooltip: () => undefined,
@@ -357,9 +355,9 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
-      data: getTimeInEnglish(new Date(record.experiment.startTime)),
-      displayData: getTimeInEnglish(new Date(record.experiment.startTime)),
-      kind: GridCellKind.Text,
+      copyData: getTimeInEnglish(new Date(record.experiment.startTime)),
+      data: { kind: 'text-cell' },
+      kind: GridCellKind.Custom,
     }),
     title: 'Start Time',
     tooltip: () => undefined,
@@ -451,13 +449,13 @@ export const searcherMetricsValColumn = (
       }
       return {
         allowOverlay: false,
-        data: sMetricValue?.toString() || '',
-        displayData: sMetricValue
+        copyData: sMetricValue
           ? typeof sMetricValue === 'number'
             ? humanReadableNumber(sMetricValue)
             : sMetricValue
           : '',
-        kind: GridCellKind.Text,
+        data: { kind: 'text-cell' },
+        kind: GridCellKind.Custom,
         themeOverride: theme,
       };
     },
@@ -478,9 +476,9 @@ export const defaultTextColumn = (
       const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
       return {
         allowOverlay: false,
-        data: String(data),
-        displayData: String(data ?? ''),
-        kind: GridCellKind.Text,
+        copyData: String(data ?? ''),
+        data: { kind: 'text-cell' },
+        kind: GridCellKind.Custom,
       };
     },
     title: column.displayName || column.column,
@@ -526,9 +524,9 @@ export const defaultNumberColumn = (
       }
       return {
         allowOverlay: false,
-        data: Number(data),
-        displayData: data !== undefined ? String(data) : '',
-        kind: GridCellKind.Number,
+        copyData: data !== undefined ? String(data) : '',
+        data: { kind: 'text-cell' },
+        kind: GridCellKind.Custom,
         themeOverride: theme,
       };
     },
@@ -549,9 +547,9 @@ export const defaultDateColumn = (
       const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
       return {
         allowOverlay: false,
-        data: String(data),
-        displayData: formatDatetime(String(data), { outputUTC: false }),
-        kind: GridCellKind.Text,
+        copyData: formatDatetime(String(data), { outputUTC: false }),
+        data: { kind: 'text-cell' },
+        kind: GridCellKind.Custom,
       };
     },
     title: column.displayName || column.column,

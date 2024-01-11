@@ -7,6 +7,7 @@ import LoadingCell from './cells/loadingCell';
 import ProgressCell from './cells/progressCell';
 import SparklineCell from './cells/sparklineCell';
 import TagsCell from './cells/tagsCell';
+import TextCell from './cells/textCell';
 import UserProfileCell from './cells/userAvatarCell';
 
 export const customRenderers: DataEditorProps['customRenderers'] = [
@@ -17,5 +18,6 @@ export const customRenderers: DataEditorProps['customRenderers'] = [
   ProgressCell,
   SparklineCell,
   TagsCell,
+  TextCell,
   UserProfileCell,
 ];
