@@ -44,7 +44,12 @@ const ExperimentIcons: React.FC<Props> = ({
       case RunState.Unspecified:
       case JobState.UNSPECIFIED:
         return { name: 'active', title: stateToLabel(state) };
-      default:
+      case RunState.StoppingCanceled:
+      case RunState.StoppingCompleted:
+      case RunState.StoppingError:
+      case RunState.StoppingKilled:
+        return { color: 'cancel', name: 'spin-shadow', title: stateToLabel(state) };
+      case RunState.Canceled:
         return { color: 'cancel', name: 'cancelled', title: 'Stopped' };
     }
   }, [backgroundColor, opacity, state]);
