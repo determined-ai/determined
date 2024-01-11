@@ -1,8 +1,10 @@
+import contextlib
+import os
 import shutil
 import tempfile
 from pathlib import Path
 from types import TracebackType
-from typing import ContextManager, Dict, Optional, Type, Union
+from typing import ContextManager, Dict, Iterator, Optional, Type, Union
 
 
 class FileTree(ContextManager[Path]):
@@ -39,3 +41,13 @@ class FileTree(ContextManager[Path]):
         traceback: Optional[TracebackType],
     ) -> None:
         shutil.rmtree(str(self.dir), ignore_errors=True)
+
+
+@contextlib.contextmanager
+def chdir(path: Path) -> Iterator:
+    old = os.getcwd()
+    os.chdir(str(path))
+    try:
+        yield
+    finally:
+        os.chdir(old)

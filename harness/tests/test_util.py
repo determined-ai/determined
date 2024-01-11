@@ -7,6 +7,7 @@ import pytest
 
 import determined as det
 from determined import util
+from tests import filetree
 
 
 def test_list_to_dict() -> None:
@@ -101,3 +102,31 @@ def test_is_numerical_scalar() -> None:
     assert util.is_numerical_scalar(np.array(1))
     assert util.is_numerical_scalar(np.array(-3.14))
     assert util.is_numerical_scalar(np.array([1.0])[0])
+
+
+def test_local_trial_user_code_detignore(tmp_path: pathlib.Path) -> None:
+    src_path = tmp_path / "src"
+    dst_path = tmp_path / "dst"
+    src_path.mkdir()
+    dst_path.mkdir()
+
+    with filetree.FileTree(
+        src_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
+            "dir/anotherdir/D.py": "",
+            ".detignore": "\ndir/sub*/\n",
+        },
+    ) as tree:
+        with filetree.chdir(tree):
+            det.util.write_user_code(dst_path, on_cluster=False)
+            code_path = dst_path / "code"
+            glob = [str(p.relative_to(code_path)) for p in dst_path.glob("**/*.py")]
+            assert "dir/file.py" in glob
+            assert "dir/anotherdir/D.py" in glob
+            assert "dir/subdir/A.py" not in glob
+            print(list((code_path / "dir").iterdir()))
+            assert not code_path.joinpath("dir/subdir").exists()
