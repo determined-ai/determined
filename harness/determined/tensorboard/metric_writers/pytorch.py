@@ -37,9 +37,6 @@ class _TorchWriter(tensorboard.MetricWriter):
     def flush(self) -> None:
         self.writer.flush()
 
-    def close(self) -> None:
-        self.writer.close()
-
 
 class TorchWriter(_TorchWriter):
     """
