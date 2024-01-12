@@ -5,23 +5,48 @@ from typing import List
 
 import pytest
 
+from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import ray_utils
 
 EXAMPLES_ROOT = conf.EXAMPLES_PATH / "features" / "unmanaged"
 
 
-def _run_unmanaged_script(cmd: List) -> None:
+def _run_unmanaged_script(cmd: List) -> subprocess.CompletedProcess:
     master_url = conf.make_master_url()
     env = os.environ.copy()
     env["DET_MASTER"] = master_url
-    subprocess.run(cmd, env=env, check=True)
+    return subprocess.run(cmd, env=env, check=True, stdout=subprocess.PIPE, text=True)
 
 
 @pytest.mark.e2e_cpu
 def test_unmanaged() -> None:
     exp_path = EXAMPLES_ROOT / "1_singleton.py"
     _run_unmanaged_script(["python", exp_path])
+
+
+@pytest.mark.e2e_cpu
+def test_unmanaged_checkpoints() -> None:
+    exp_path = conf.fixtures_path("unmanaged/checkpointing.py")
+    p = _run_unmanaged_script(["python", exp_path])
+
+    exp_id = None
+    prefix = "determined experiment id: "
+    lines = ""
+    assert p.stdout
+    for line in p.stdout.split("\n"):
+        lines += line
+        if prefix in line:
+            exp_id = int(line.split(prefix)[1].strip())
+            break
+    assert exp_id is not None, "couldn't parse experiment id " + lines
+
+    checkpoints = bindings.get_GetExperimentCheckpoints(
+        session=api_utils.determined_test_session(), id=exp_id
+    ).checkpoints
+    assert len(checkpoints) > 0
+    assert all(checkpoint.storageId is not None for checkpoint in checkpoints)
 
 
 @pytest.mark.e2e_cpu

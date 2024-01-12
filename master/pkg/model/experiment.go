@@ -631,6 +631,9 @@ const (
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
+// StorageBackendID is the ID for the storage backend.
+type StorageBackendID int
+
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
 	bun.BaseModel `bun:"table:checkpoints_v2"`
@@ -643,6 +646,7 @@ type CheckpointV2 struct {
 	Resources     map[string]int64       `db:"resources"`
 	Metadata      map[string]interface{} `db:"metadata"`
 	Size          int64                  `db:"size"`
+	StorageID     *StorageBackendID      `db:"storage_id"`
 }
 
 // RunCheckpoints represents a row from the `run_checkpoints` table.
@@ -670,14 +674,15 @@ type Checkpoint struct {
 	bun.BaseModel `bun:"table:checkpoints_view"`
 	ID            int `db:"id"`
 
-	UUID         *uuid.UUID    `db:"uuid"`
-	TaskID       *TaskID       `db:"task_id"`
-	AllocationID *AllocationID `db:"allocation_id"`
-	ReportTime   time.Time     `db:"report_time"`
-	State        State         `db:"state"`
-	Resources    JSONObj       `db:"resources"`
-	Metadata     JSONObj       `db:"metadata"`
-	Size         int64         `db:"size"`
+	UUID         *uuid.UUID        `db:"uuid"`
+	TaskID       *TaskID           `db:"task_id"`
+	AllocationID *AllocationID     `db:"allocation_id"`
+	ReportTime   time.Time         `db:"report_time"`
+	State        State             `db:"state"`
+	Resources    JSONObj           `db:"resources"`
+	Metadata     JSONObj           `db:"metadata"`
+	Size         int64             `db:"size"`
+	StorageID    *StorageBackendID `db:"storage_id"`
 
 	CheckpointTrainingMetadata
 }

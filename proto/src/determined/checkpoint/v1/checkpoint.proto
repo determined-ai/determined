@@ -90,6 +90,8 @@ message Checkpoint {
   State state = 7;
   // Training-related data for this checkpoint.
   CheckpointTrainingMetadata training = 8;
+  // Optional ID that describes where this checkpoint is stored.
+  optional int32 storage_id = 9;
 }
 
 // Request to change checkpoint database information.

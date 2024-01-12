@@ -7,7 +7,8 @@ import appdirs
 import determined as det
 from determined import core, experimental, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import certs
+from determined.common.api import bindings, certs
+from determined.common.storage import shared
 
 logger = logging.getLogger("determined.core")
 
@@ -98,6 +99,7 @@ def _make_v2_context(
             if tensorboard_mode == core.TensorboardMode.AUTO:
                 tbd_writer = tensorboard.get_metric_writer()
 
+        run_prepare_response = run_prepare(session, info.trial.trial_id, checkpoint_storage)
         train = core.TrainContext(
             session,
             info.trial.trial_id,
@@ -135,6 +137,7 @@ def _make_v2_context(
             None,  # No allocations when off-cluster.
             tensorboard_mode,
             tensorboard_manager,
+            run_prepare_response.storageId,
         )
 
         # At present, detached mode does not support preemption.
@@ -174,4 +177,22 @@ def _make_v2_context(
         _tensorboard_manager=tensorboard_manager,
         _heartbeat=heartbeat,
         _log_shipper=log_shipper,
+    )
+
+
+def run_prepare(
+    sess: api.Session, run_id: int, checkpoint_storage: Optional[Union[str, Dict[str, Any]]]
+) -> bindings.v1RunPrepareForReportResponse:
+    cs = None
+    if isinstance(checkpoint_storage, str):
+        cs = shared._shortcut_to_config(checkpoint_storage)
+    elif isinstance(checkpoint_storage, dict):
+        cs = checkpoint_storage
+
+    return bindings.post_RunPrepareForReport(
+        sess,
+        body=bindings.v1RunPrepareForReportRequest(
+            runId=run_id,
+            checkpointStorage=cs,
+        ),
     )

@@ -22,6 +22,7 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -366,13 +367,21 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 
 		go func() {
-			err = runCheckpointGCTask(
-				a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
-				exps[i].Config, checkpointUUIDs, req.CheckpointGlobs, false, agentUserGroup, curUser,
-				nil,
-			)
+			groups, err := storage.GroupCheckpoints(context.Background(), checkpointUUIDs)
 			if err != nil {
-				log.WithError(err).Error("failed to start checkpoint GC task")
+				log.WithError(err).Error("failed to group GC experiment in delete experiments")
+				return
+			}
+
+			for _, g := range groups {
+				err = runCheckpointGCTask(
+					a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+					exps[i].Config, g.StorageID, g.Checkpoints, req.CheckpointGlobs,
+					false, agentUserGroup, curUser, nil,
+				)
+				if err != nil {
+					log.WithError(err).Error("failed to start checkpoint GC task")
+				}
 			}
 		}()
 	}

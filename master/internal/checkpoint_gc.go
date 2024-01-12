@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -33,6 +35,7 @@ func runCheckpointGCTask(
 	taskSpec tasks.TaskSpec,
 	expID int,
 	legacyConfig expconf.LegacyConfig,
+	storageID *model.StorageBackendID,
 	toDeleteCheckpoints []uuid.UUID,
 	checkpointGlobs []string,
 	deleteTensorboards bool,
@@ -74,6 +77,15 @@ func runCheckpointGCTask(
 		ToDelete:           deleteCheckpointsStr,
 		CheckpointGlobs:    checkpointGlobs,
 		DeleteTensorboards: deleteTensorboards,
+	}
+
+	// Update checkpoint storage with storageID.
+	if storageID != nil {
+		checkpointStorage, err := storage.Backend(context.TODO(), *storageID)
+		if err != nil {
+			return fmt.Errorf("getting storage id %d in create gc task: %w", *storageID, err)
+		}
+		gcSpec.LegacyConfig.CheckpointStorage = checkpointStorage
 	}
 
 	logCtx = logger.MergeContexts(logCtx, logger.Context{

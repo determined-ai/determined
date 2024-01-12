@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
@@ -26,6 +28,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -187,6 +190,138 @@ func TestCheckpointsOnArchivedSteps(t *testing.T) {
 		actual.Training.TrainingMetrics.AvgMetrics.AsMap())
 	require.Equal(t, map[string]any{"expected": expected},
 		actual.Training.ValidationMetrics.AvgMetrics.AsMap())
+}
+
+func TestCheckpointReturned(t *testing.T) {
+	// This tries to test all places where we will return a checkpointv1.Checkpoint.
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	checkpointStorage, err := structpb.NewStruct(map[string]any{
+		"type":        "shared_fs",
+		"host_path":   uuid.New().String(),
+		"propagation": "private",
+	})
+	require.NoError(t, err)
+
+	reportResponse, err := api.RunPrepareForReport(ctx, &apiv1.RunPrepareForReportRequest{
+		RunId: int32(trial.ID),
+	})
+	require.NoError(t, err)
+	require.Nil(t, reportResponse.StorageId)
+
+	reportResponse, err = api.RunPrepareForReport(ctx, &apiv1.RunPrepareForReportRequest{
+		RunId:             int32(trial.ID),
+		CheckpointStorage: checkpointStorage,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, reportResponse.StorageId)
+	checkpointMeta, err := structpb.NewStruct(map[string]any{
+		"steps_completed": 1,
+	})
+	require.NoError(t, err)
+	checkpointID := uuid.New().String()
+	checkpoint := &checkpointv1.Checkpoint{
+		TaskId:       string(task.TaskID),
+		AllocationId: nil,
+		Uuid:         checkpointID,
+		ReportTime:   timestamppb.New(time.Now().UTC().Truncate(time.Millisecond)),
+		Resources:    map[string]int64{"x": 128, "y/": 0},
+		Metadata:     checkpointMeta,
+		State:        checkpointv1.State_STATE_COMPLETED,
+		StorageId:    reportResponse.StorageId,
+	}
+	_, err = api.ReportCheckpoint(ctx, &apiv1.ReportCheckpointRequest{
+		Checkpoint: checkpoint,
+	})
+	require.NoError(t, err)
+
+	// Create expected.
+	getExperimentRes, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(trial.ExperimentID),
+	})
+	require.NoError(t, err)
+	checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
+		TrialId:           wrapperspb.Int32(int32(trial.ID)),
+		ExperimentId:      wrapperspb.Int32(int32(trial.ExperimentID)),
+		ExperimentConfig:  getExperimentRes.Experiment.Config,
+		TrainingMetrics:   &commonv1.Metrics{},
+		ValidationMetrics: &commonv1.Metrics{},
+	}
+	expected, err := json.MarshalIndent(checkpoint, "", "  ")
+	require.NoError(t, err)
+
+	assertCheckpoints := func(ckpts ...*checkpointv1.Checkpoint) {
+		require.Len(t, ckpts, 1)
+
+		actual, err := json.MarshalIndent(ckpts[0], "", "  ")
+		require.NoError(t, err)
+
+		require.Equal(t, string(expected), string(actual))
+	}
+
+	t.Run("GetCheckpoint returns storageID", func(t *testing.T) {
+		res, err := api.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{
+			CheckpointUuid: checkpointID,
+		})
+		require.NoError(t, err)
+		assertCheckpoints(res.Checkpoint)
+	})
+
+	t.Run("GetExperimentCheckpoints returns storageID", func(t *testing.T) {
+		res, err := api.GetExperimentCheckpoints(ctx, &apiv1.GetExperimentCheckpointsRequest{
+			Id: int32(trial.ExperimentID),
+		})
+		require.NoError(t, err)
+		assertCheckpoints(res.Checkpoints...)
+	})
+
+	t.Run("GetTrialCheckpoints returns storageID", func(t *testing.T) {
+		res, err := api.GetTrialCheckpoints(ctx, &apiv1.GetTrialCheckpointsRequest{
+			Id: int32(trial.ID),
+		})
+		require.NoError(t, err)
+		assertCheckpoints(res.Checkpoints...)
+	})
+
+	t.Run("Model verson APIs", func(t *testing.T) {
+		modelName := uuid.New().String()
+		_, err := api.PostModel(ctx, &apiv1.PostModelRequest{
+			Name: modelName,
+		})
+		require.NoError(t, err)
+
+		res, err := api.PostModelVersion(ctx, &apiv1.PostModelVersionRequest{
+			ModelName:      modelName,
+			CheckpointUuid: checkpointID,
+		})
+		require.NoError(t, err)
+		assertCheckpoints(res.ModelVersion.Checkpoint)
+
+		patchRes, err := api.PatchModelVersion(ctx, &apiv1.PatchModelVersionRequest{
+			ModelName:       modelName,
+			ModelVersionNum: res.ModelVersion.Version,
+			ModelVersion: &modelv1.PatchModelVersion{
+				Comment: wrapperspb.String("new comment"),
+			},
+		})
+		require.NoError(t, err)
+		assertCheckpoints(patchRes.ModelVersion.Checkpoint)
+
+		versionRes, err := api.GetModelVersion(ctx, &apiv1.GetModelVersionRequest{
+			ModelName:       modelName,
+			ModelVersionNum: res.ModelVersion.Version,
+		})
+		require.NoError(t, err)
+		assertCheckpoints(versionRes.ModelVersion.Checkpoint)
+
+		versionsRes, err := api.GetModelVersions(ctx, &apiv1.GetModelVersionsRequest{
+			ModelName: modelName,
+		})
+		require.NoError(t, err)
+		require.Len(t, versionsRes.ModelVersions, 1)
+		assertCheckpoints(versionsRes.ModelVersions[0].Checkpoint)
+	})
 }
 
 func TestCheckpointRemoveFilesPrefixAndEmpty(t *testing.T) {

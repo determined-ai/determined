@@ -4,6 +4,7 @@ import logging
 import os
 import pathlib
 import shutil
+import urllib
 from typing import Any, Callable, Dict, Iterator, List, Optional, Union
 
 from determined import errors, util
@@ -95,6 +96,37 @@ def copytree(
         selector=selector,
         src_root=src_root,
     )
+
+
+def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
+    p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
+    if any((p.params, p.query, p.fragment)):
+        raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
+
+    scheme = p.scheme.lower()
+
+    if scheme in ["", "file"]:
+        return {
+            "type": "shared_fs",
+            "host_path": p.path,
+        }
+    elif scheme in ["s3", "gs"]:
+        bucket = p.netloc
+        prefix = p.path.lstrip("/")
+        storage_type = {
+            "s3": "s3",
+            "gs": "gcs",
+        }[scheme]
+
+        return {
+            "type": storage_type,
+            "bucket": bucket,
+            "prefix": prefix,
+        }
+    else:
+        raise NotImplementedError(
+            "tensorboard only supports shared_fs, s3, and gs " "shortcuts at the moment"
+        )
 
 
 def _full_storage_path(

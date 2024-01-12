@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Request to prepare to start reporting to a run.
+message RunPrepareForReportRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "run_id" ] }
+  };
+  // RunID to sync to.
+  int32 run_id = 1;
+  // Checkpoint storage config.
+  optional google.protobuf.Struct checkpoint_storage = 2;
+}
+// Response to prepare to start reporting to a run.
+message RunPrepareForReportResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [] }
+  };
+  // The storage_id to be used when creating new checkpoints. This will be
+  // returned always when checkpoint storage is set in the request.
+  optional int32 storage_id = 1;
+}

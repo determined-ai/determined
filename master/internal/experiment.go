@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/webhooks"
@@ -479,13 +480,22 @@ func (e *internalExperiment) stop() error {
 	if len(checkpoints) > 0 {
 		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		go func() {
-			err := runCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
-				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
-				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
-			)
+			groups, err := storage.GroupCheckpoints(context.Background(), checkpoints)
 			if err != nil {
-				e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
+				e.syslog.WithError(err).Error("failed to group GC experiment checkpoints")
+				return
+			}
+
+			for _, g := range groups {
+				err := runCheckpointGCTask(
+					e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
+					e.Experiment.ID, e.activeConfig.AsLegacy(), g.StorageID, g.Checkpoints,
+					[]string{fullDeleteGlob},
+					false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
+				)
+				if err != nil {
+					e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
+				}
 			}
 		}()
 	}

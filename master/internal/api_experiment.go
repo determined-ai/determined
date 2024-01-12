@@ -36,6 +36,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -487,15 +488,22 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return err
 			}
 			if len(checkpoints) > 0 {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-					true, agentUserGroup, userModel, nil,
-				)
-			}
-			if err != nil {
-				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-				return err
+				groups, err := storage.GroupCheckpoints(context.Background(), checkpoints)
+				if err != nil {
+					log.WithError(err).Error("failed to group GC experiment in delete experiments")
+					return err
+				}
+
+				for _, g := range groups {
+					if err = runCheckpointGCTask(
+						a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
+						taskSpec, exp.ID, exp.Config, g.StorageID, g.Checkpoints,
+						[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+					); err != nil {
+						log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+						return err
+					}
+				}
 			}
 
 			// delete jobs per experiment
@@ -1297,13 +1305,21 @@ func (a *apiServer) PatchExperiment(
 
 			taskID := model.NewTaskID()
 			go func() {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
-					agentUserGroup, user, nil,
-				)
+				groups, err := storage.GroupCheckpoints(context.Background(), checkpoints)
 				if err != nil {
-					log.WithError(err).Error("failed to GC checkpoints in patch experiment")
+					log.WithError(err).Error("failed to group GC experiment in patch experiment")
+					return
+				}
+
+				for _, g := range groups {
+					err = runCheckpointGCTask(
+						a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
+						taskSpec, modelExp.ID, modelExp.Config, g.StorageID, g.Checkpoints,
+						[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
+					)
+					if err != nil {
+						log.WithError(err).Error("failed to GC checkpoints in patch experiment")
+					}
 				}
 			}()
 		}
@@ -3044,7 +3060,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 	var uuidList []uuid.UUID
 	err = runCheckpointGCTask(
 		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
-		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
+		exp.Config, nil, uuidList, nil, true, agentUserGroup, curUser,
 		nil,
 	)
 	if err != nil {
