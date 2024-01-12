@@ -1,5 +1,6 @@
 import abc
 import logging
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from determined import util
@@ -19,10 +20,15 @@ class MetricWriter(abc.ABC):
     def reset(self) -> None:
         pass
 
+    @abc.abstractmethod
+    def flush(self) -> None:
+        pass
+
 
 class BatchMetricWriter:
     def __init__(self, writer: MetricWriter) -> None:
         self.writer = writer
+        self._last_write_ts: Optional[float] = None
 
     def _maybe_write_metric(self, metric_key: str, metric_val: Any, step: int) -> None:
         # For now, we only log scalar metrics.
@@ -40,6 +46,8 @@ class BatchMetricWriter:
         logger.debug("Write training metrics for TensorBoard")
         metrics_seen = set()
 
+        self._maybe_reset()
+
         # Log all batch metrics.
         if batch_metrics:
             for batch_idx, batch in enumerate(batch_metrics):
@@ -54,13 +62,37 @@ class BatchMetricWriter:
                 continue
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.reset()
+        self.writer.flush()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         logger.debug("Write validation metrics for TensorBoard")
+
+        self._maybe_reset()
+
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.reset()
+        self.writer.flush()
+
+    def _maybe_reset(self) -> None:
+        """
+        Reset (close current file and open a new one) the current writer if more than 1 second
+        has elapsed since the last reset.
+
+        The TensorFlow event writer names each event file by the epoch second it is created, so
+        if events are written quickly in succession (< 1 second apart), they will overwrite each
+        other.
+
+        This effectively batches event writes so each event file may contain more than one event.
+        """
+        current_ts = time.time()
+        if not self._last_write_ts:
+            self._last_write_ts = current_ts
+
+        assert self._last_write_ts
+
+        if int(current_ts) != int(self._last_write_ts):
+            self.writer.reset()
+            self._last_write_ts = current_ts

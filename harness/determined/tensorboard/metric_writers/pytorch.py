@@ -34,6 +34,12 @@ class _TorchWriter(tensorboard.MetricWriter):
         # flush AND close the writer so that the next attempt to write will create a new file
         self.writer.close()
 
+    def flush(self) -> None:
+        self.writer.flush()
+
+    def close(self) -> None:
+        self.writer.close()
+
 
 class TorchWriter(_TorchWriter):
     """
