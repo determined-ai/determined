@@ -129,6 +129,8 @@ def compare_stats() -> None:
     print(f"Agent time: logs={gpu_from_log}, api={gpu_from_api}")
     # make sure agent stats get from script is less than 5% difference with those get from api
     max_diff = max(gpu_from_api, gpu_from_log) * 0.05
+    # For shorter tests, a tolerance that is percentage based can make unreasonably tight timing.
+    max_diff = max(max_diff, 3)
     # slurm and pbs needs looser tolerances
     if api_utils.is_hpc():
         max_diff = max(max_diff, 10)
