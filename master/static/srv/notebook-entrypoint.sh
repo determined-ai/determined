@@ -58,4 +58,6 @@ jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
     --LabServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     --LabApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
     --ServerApp.log_format="$JUPYTER_LAB_LOG_FORMAT" \
+    --ServerApp.root_dir="/" \
+    --ContentsManager.preferred_dir="$PWD" \
     2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
