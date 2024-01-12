@@ -47,7 +47,7 @@ func TestAddSCIMUser(t *testing.T) {
 		{"duplicate-case", []*model.SCIMUser{
 			mockSCIMUserWithUsername(t, testUUID),
 			mockSCIMUserWithUsername(t, testUUID),
-		}, "duplicate key value violates"},
+		}, db.ErrDuplicateRecord.Error()},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {

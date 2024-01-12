@@ -188,7 +188,7 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 	}
 
 	added, err := user.AddSCIMUser(c.Request().Context(), &u)
-	if err == db.ErrDuplicateRecord {
+	if errors.Is(err, db.ErrDuplicateRecord) {
 		return nil, newConflictError(err)
 	} else if err != nil {
 		return nil, err
