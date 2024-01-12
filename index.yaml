@@ -7,7 +7,7 @@ entries:
     description: A Helm chart for Determined
     digest: 749199d9f2cbb664548d097b1f5b2143da15c01e83edf5f1c486ebdd95574705
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.27.0/determined-helm-chart_0.27.0.tgz
@@ -18,7 +18,7 @@ entries:
     description: A Helm chart for Determined
     digest: 54685c29028c14748283e9b41c4afdbf8f259c06a84163580b42b85cb34545fe
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.7/determined-helm-chart_0.26.7.tgz
@@ -29,7 +29,7 @@ entries:
     description: A Helm chart for Determined
     digest: 10f2ec06d2a3dfda1e44e8c16ad8d5d0c88a582aa716dc3d2a836f1beabd5679
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.6/determined-helm-chart_0.26.6.tgz
@@ -40,7 +40,7 @@ entries:
     description: A Helm chart for Determined
     digest: f91badf9c6f74a93ad75f5a5ccb3cfd59ae8463674d653b7c97b60de6ce4f596
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.5/determined-helm-chart_0.26.5.tgz
@@ -51,7 +51,7 @@ entries:
     description: A Helm chart for Determined
     digest: 9583744c26008486181a313151b24fda43c199469924cc415cfb9b1b21de8cfa
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.4/determined-helm-chart_0.26.4.tgz
@@ -62,7 +62,7 @@ entries:
     description: A Helm chart for Determined
     digest: 72c10cea82b83830eba14f5f47dda17ad5d1826193951711d8c427bab7cf7c57
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.3/determined-helm-chart_0.26.3.tgz
@@ -73,7 +73,7 @@ entries:
     description: A Helm chart for Determined
     digest: 231141c0a183f475f30a66ab71f57cd6150964466ec58764ae34c75f22f1a7bc
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.2/determined-helm-chart_0.26.2.tgz
@@ -84,7 +84,7 @@ entries:
     description: A Helm chart for Determined
     digest: 9df3ed76f7b356101fd9f7eeefcafd067d6f9c4075d4114ffb76ce77d757ad3b
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.1/determined-helm-chart_0.26.1.tgz
@@ -95,7 +95,7 @@ entries:
     description: A Helm chart for Determined
     digest: ac79848baa8ec821bc96fab3ffa6dd571626828bfb91519868a0976096bfdca7
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.26.0/determined-helm-chart_0.26.0.tgz
@@ -106,7 +106,7 @@ entries:
     description: A Helm chart for Determined
     digest: bb1a004ce6e60890448779b973ccccd4298ff970325a064f6fade32948761880
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.25.1/determined-helm-chart_0.25.1.tgz
@@ -117,7 +117,7 @@ entries:
     description: A Helm chart for Determined
     digest: da896d443965a34ddfd678cd6e98d5c639f13f19fff40aae21d60c22e202f84b
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.25.0/determined-helm-chart_0.25.0.tgz
@@ -128,7 +128,7 @@ entries:
     description: A Helm chart for Determined
     digest: fc02a0d243e7e9ebdf11d9cbcd0608b05d822dc5ede9699c26b2eddc3cab20ee
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.24.0/determined-helm-chart_0.24.0.tgz
@@ -139,7 +139,7 @@ entries:
     description: A Helm chart for Determined
     digest: 90047a9aedff3b82d3e66bd13b954638aa8a0ae1cfe7f8dc17a42710da843a54
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.23.4/determined-helm-chart_0.23.4.tgz
@@ -150,7 +150,7 @@ entries:
     description: A Helm chart for Determined
     digest: b52a713b63fbccda21b71996b85a207e7b2113d4e821df6c91491c9f8381844a
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.23.3/determined-helm-chart_0.23.3.tgz
@@ -161,7 +161,7 @@ entries:
     description: A Helm chart for Determined
     digest: 449277fc3cfd494323547560de0225e651cc7b4f7dbe75d0c44517b39ff3bbe1
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.23.2/determined-helm-chart_0.23.2.tgz
@@ -172,7 +172,7 @@ entries:
     description: A Helm chart for Determined
     digest: dda4fb0b7b35704f69f6b5bb735ac0b7ced82013a2b298d0ecb104a39b194db5
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.23.1/determined-helm-chart_0.23.1.tgz
@@ -183,7 +183,7 @@ entries:
     description: A Helm chart for Determined
     digest: e779a605a2e060081ca1fbc172ebb565f548f74269c1875c372989312ed1e40c
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.23.0/determined-helm-chart_0.23.0.tgz
@@ -194,7 +194,7 @@ entries:
     description: A Helm chart for Determined
     digest: 1a7b4686c3a1fb6cce4383b2635cd7c270abba34c70f0b1dc6a03e018c627463
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.22.2/determined-helm-chart_0.22.2.tgz
@@ -205,7 +205,7 @@ entries:
     description: A Helm chart for Determined
     digest: 927150c256cbacdc1445c0f44154f1c9bb352fb4411769d866a8b3eaf03a613e
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.22.1/determined-helm-chart_0.22.1.tgz
@@ -216,7 +216,7 @@ entries:
     description: A Helm chart for Determined
     digest: 644136909a8cc072448bac24090f7b388ac99addae030ae89fc8beff976ddd42
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.22.0/determined-helm-chart_0.22.0.tgz
@@ -227,7 +227,7 @@ entries:
     description: A Helm chart for Determined
     digest: 90a0f376b1e61f49ecbb27303ca53686a009d5054426c033771dec364e54c6a8
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.21.2/determined-helm-chart_0.21.2.tgz
@@ -238,7 +238,7 @@ entries:
     description: A Helm chart for Determined
     digest: a39f5fbce9d7a59faff2cd5d827e4d950ae5ea3bd8139b85dfb4a3ee35a1e929
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.21.1/determined-helm-chart_0.21.1.tgz
@@ -249,7 +249,7 @@ entries:
     description: A Helm chart for Determined
     digest: 101b1782b9bc24fc44b2803fd9994f528dc95914cc197bd0522b073c7373bae2
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.21.0/determined-helm-chart_0.21.0.tgz
@@ -260,7 +260,7 @@ entries:
     description: A Helm chart for Determined
     digest: ae3e3bd960df72e17ba04170f36fc8a8b11551a497f33d1b03e722939e479666
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.20.1/determined-helm-chart_0.20.1.tgz
@@ -271,7 +271,7 @@ entries:
     description: A Helm chart for Determined
     digest: c6f6a2ec64aa7cb0cafe1e937e5b6eae3956384e97b6b81f2760f4882af75616
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.20.0/determined-helm-chart_0.20.0.tgz
@@ -282,7 +282,7 @@ entries:
     description: A Helm chart for Determined
     digest: 56bbd36ef9aa1a7553ffcd4f8be461b07997a00a01ac6fdebaaed277b6ffe4d2
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.11/determined-helm-chart_0.19.11.tgz
@@ -293,7 +293,7 @@ entries:
     description: A Helm chart for Determined
     digest: 56cfcf914ea48cf7e7de087fcfe4ab7c56f7720cc320cf12a26156fc3753d204
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.10/determined-helm-chart_0.19.10.tgz
@@ -304,7 +304,7 @@ entries:
     description: A Helm chart for Determined
     digest: 8da618aa48e64489c5229121bdb6357700b997ab0af9461b6f52cee7145b1db4
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.9/determined-helm-chart_0.19.9.tgz
@@ -315,7 +315,7 @@ entries:
     description: A Helm chart for Determined
     digest: bcdced1c5f2fcd9beb4092487655b03fb8272d8a5e7dbc31a22ebe4916ea4a1c
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.8/determined-helm-chart_0.19.8.tgz
@@ -326,7 +326,7 @@ entries:
     description: A Helm chart for Determined
     digest: 6a56b6632da13facbd77c5959e5f353f1b462a1ac265af23b97d242f51cb3bae
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.7/determined-helm-chart_0.19.7.tgz
@@ -337,7 +337,7 @@ entries:
     description: A Helm chart for Determined
     digest: 243f526ee2231c0c953c0ce33c05ccc85e8e0ad19430974f2c1b77cac2b53bf0
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.6/determined-helm-chart_0.19.6.tgz
@@ -348,7 +348,7 @@ entries:
     description: A Helm chart for Determined
     digest: 2b0920df0062fa93c8b0158a8aadfd9372696020176c64d56de3f02772a9d5f4
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.5/determined-helm-chart_0.19.5.tgz
@@ -359,7 +359,7 @@ entries:
     description: A Helm chart for Determined
     digest: 0eb3e60eb77850470df190b1db3ae01ca4352c32f4483a0111e296a263bfa92e
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.4/determined-helm-chart_0.19.4.tgz
@@ -370,7 +370,7 @@ entries:
     description: A Helm chart for Determined
     digest: 789bfed95c5bff74710e9415ec17d89190a7aa8c27faf92f61837d2a35874bda
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.3/determined-helm-chart_0.19.3.tgz
@@ -381,7 +381,7 @@ entries:
     description: A Helm chart for Determined
     digest: a170e12839765deb440fd2c1acc97ba1a90902a561abc83d2c8a7a0adda88f55
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.2/determined-helm-chart_0.19.2.tgz
@@ -392,7 +392,7 @@ entries:
     description: A Helm chart for Determined
     digest: dedbdea105c64e59a2a97da815d072a16194b3e25bd119bdf68756d89db959d6
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.1/determined-helm-chart_0.19.1.tgz
@@ -403,7 +403,7 @@ entries:
     description: A Helm chart for Determined
     digest: 63f8bcd5a1e22712cdf8f25fd2c94cb060bfb75a8041a1b33bb506d0d0f7e5e4
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.19.0/determined-helm-chart_0.19.0.tgz
@@ -414,7 +414,7 @@ entries:
     description: A Helm chart for Determined
     digest: 0f598f1e47e56834662fab04073bd89330a2829e2d3276d52483859bee236e6f
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.4/determined-helm-chart_0.18.4.tgz
@@ -425,7 +425,7 @@ entries:
     description: A Helm chart for Determined
     digest: 4f3098ded209a31a514a998f947e4de756098b82d6de6a223c69e1da8733561d
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.3/determined-helm-chart_0.18.3.tgz
@@ -436,7 +436,7 @@ entries:
     description: A Helm chart for Determined
     digest: adcbda42d51b77a2bdda6f7b83a87b27c4f1cc08759c60ae302ba9454d59ffe1
     home: https://github.com/determined-ai/determined.git
-    icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
+    icon: https://github.com/determined-ai/determined/blob/main/determined-logo.svg?raw=true
     name: determined
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.2/determined-helm-chart_0.18.2.tgz
