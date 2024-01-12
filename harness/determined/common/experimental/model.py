@@ -16,9 +16,10 @@ from determined.common.experimental._util import OrderBy  # noqa: I2041
 class ModelVersion:
     """A class representing a combination of Model and Checkpoint.
 
-    This class can be fetched using the ``model.get_version()`` method. Once a model has been
-    added to the registry, checkpoints can be added to it. These registered checkpoints are
-    ModelVersions.
+    This class can be fetched using the
+    :meth:`model.get_version() <determined.experimental.client.Model.get_version>` method.
+    Once a model has been added to the registry, checkpoints can be added to it.
+    These registered checkpoints are ModelVersions.
 
     Attributes:
         session: HTTP request session.
@@ -35,7 +36,7 @@ class ModelVersion:
         All attributes are cached by default.
 
         Mutable properties may be changed by methods that update these values either automatically
-        (eg. `set_name`, `set_notes`) or explicitly with `reload()`.
+        (eg. :meth:`set_name`, :meth:`set_notes`) or explicitly with :meth:`reload`.
     """
 
     def __init__(
@@ -203,8 +204,8 @@ class Model:
     """
     Class representing a model in the model registry.
 
-    A Model object is usually obtained from ``determined.experimental.client.create_model()``
-    or ``determined.experimental.client.get_model()``. It contains methods for model
+    A Model object is usually obtained from :func:`determined.experimental.client.create_model`
+    or :func:`determined.experimental.client.get_model`. It contains methods for model
     versions and metadata.
     """
 
