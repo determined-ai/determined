@@ -15,7 +15,8 @@ sphinx-book-theme==1.0.0
 # forked version of pydata-sphinx-theme
 # - pinned to 0.13.1
 # - Includes some aria labelling changes to satisfy compliance
-pydata-sphinx-theme @ git+https://github.com/determined-ai/pydata-sphinx-theme@chore/WEB-1292/hpe-accessibility-patches
+# - Includes a backported version-switcher fix from 0.14.0
+pydata-sphinx-theme @ git+https://github.com/determined-ai/pydata-sphinx-theme@9993e98e8a3a54ae4ad81903e9f93c68261b5226
 
 # live.py
 watchdog
