@@ -38,7 +38,7 @@ import psutil
 
 import determined as det
 from determined import constants
-from determined.common import check, util
+from determined.common import check, detignore, util
 
 logger = logging.getLogger("determined")
 
@@ -259,11 +259,16 @@ def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
     # since it is rather common that users mount large, non-model files into their working directory
     # (like data or their entire HOME directory), when we are training on-cluster we use a
     # specially-prepared clean copy of the model rather than the working directory.
+    #
+    # When running locally, we filter out the files using detignore.
     if on_cluster:
         model_dir = constants.MANAGED_TRAINING_MODEL_COPY
+        ignore_func = None
     else:
         model_dir = "."
-    shutil.copytree(model_dir, code_path, ignore=shutil.ignore_patterns("__pycache__"))
+        ignore_func = detignore.make_shutil_ignore(pathlib.Path(model_dir))
+
+    shutil.copytree(model_dir, code_path, ignore=ignore_func)
     os.chmod(code_path, 0o755)
 
 
