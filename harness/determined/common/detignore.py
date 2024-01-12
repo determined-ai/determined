@@ -51,9 +51,6 @@ def os_walk_to_v1Files(
 ) -> Iterable[bindings.v1File]:
     ignore_spec = _build_detignore_pathspec(root_path)
 
-    # We could use pathlib.Path.rglob for scanning the directory;
-    # however, the Python documentation claims a warning that rglob may be
-    # inefficient on large directory trees, so we use the older os.walk().
     for parent, dirs, files in os.walk(str(root_path)):
         keep_dirs = []
         for directory in dirs:

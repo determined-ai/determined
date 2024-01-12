@@ -263,7 +263,7 @@ def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
     # When running locally, we filter out the files using detignore.
     if on_cluster:
         model_dir = constants.MANAGED_TRAINING_MODEL_COPY
-        ignore_func = shutil.ignore_patterns("__pycache__")
+        ignore_func = None
     else:
         model_dir = "."
         ignore_func = detignore.make_shutil_ignore(pathlib.Path(model_dir))
