@@ -1479,6 +1479,9 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 	return bytes.([]byte), isSingle, nil
 }
 
+var errContinueHPSearchCompleted = status.Error(codes.FailedPrecondition,
+	"experiment has been completed, cannot continue this experiment")
+
 func (a *apiServer) ContinueExperiment(
 	ctx context.Context, req *apiv1.ContinueExperimentRequest,
 ) (*apiv1.ContinueExperimentResponse, error) {
@@ -1538,14 +1541,13 @@ func (a *apiServer) ContinueExperiment(
 		if expState == model.CompletedState && !isSingle {
 			hasIncompleteTrials := false
 			for _, trial := range trialsResp.Trials {
-				if model.StateFromProto(experimentv1.State(trial.State)) != model.CompletedState {
+				if trial.State != trialv1.State_STATE_COMPLETED {
 					hasIncompleteTrials = true
 					break
 				}
 			}
 			if !hasIncompleteTrials {
-				return status.Error(codes.FailedPrecondition,
-					"experiment has been completed, cannot continue this experiment")
+				return errContinueHPSearchCompleted
 			}
 		} else if isSingle && len(trialsResp.Trials) > 0 {
 			if _, err := tx.NewUpdate().Table("runs"). // TODO(nick-runs) call runs package.
