@@ -95,30 +95,6 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	return ptrs.Ptr(legacyConfig.CheckpointStorage), nil
 }
 
-func archiveContentLength(
-	ctx context.Context,
-	downloader checkpoints.CheckpointDownloader,
-	aw archive.ArchiveWriter,
-) (int64, error) {
-	files, err := downloader.ListFiles(ctx)
-	if err != nil {
-		return 0, err
-	}
-	contentLength := int64(0)
-	for _, file := range files {
-		size, err := aw.DryRunLength(file.Path, file.Size)
-		if err != nil {
-			return 0, err
-		}
-		contentLength += size
-	}
-	closeSize, err := aw.DryRunClose()
-	if err != nil {
-		return 0, err
-	}
-	return contentLength + closeSize, nil
-}
-
 func (m *Master) getCheckpointImpl(
 	ctx context.Context, id uuid.UUID, mimeType string, content *echo.Response,
 ) error {
@@ -147,8 +123,14 @@ func (m *Master) getCheckpointImpl(
 	}
 
 	if aw.DryRunEnabled() {
+		files, err := downloader.ListFiles(ctx)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError,
+				fmt.Sprintf("unable to list checkpoint %s files: %s", id.String(), err.Error()))
+		}
+
 		log := checkpointLogger.WithField("checkpoint", id.String())
-		contentLength, err := archiveContentLength(ctx, downloader, aw)
+		contentLength, err := archive.DryRunLength(aw, files)
 		if err != nil {
 			log.Debugf("failed to get content length: %s", err.Error())
 		}

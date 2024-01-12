@@ -4,6 +4,8 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 // ArchiveType currently includes tgz and zip.
@@ -57,4 +59,43 @@ func NewArchiveWriter(w io.Writer, archiveType ArchiveType) (ArchiveWriter, erro
 		return nil, fmt.Errorf(
 			"archive type must be %s, %s, or %s. received %s", ArchiveTar, ArchiveTgz, ArchiveZip, archiveType)
 	}
+}
+
+type archiveClosers struct {
+	closers []io.Closer
+}
+
+// Close() closes all items in closers in reverse order.
+func (ac *archiveClosers) Close() error {
+	for i := len(ac.closers) - 1; i >= 0; i-- {
+		err := ac.closers[i].Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// DryRunLength returns the length of the archive file that would be created if the files were
+// written to the archive.
+func DryRunLength(
+	aw ArchiveWriter,
+	files []FileEntry,
+) (int64, error) {
+	if !aw.DryRunEnabled() {
+		return 0, errors.New("dry run not enabled")
+	}
+	contentLength := int64(0)
+	for _, file := range files {
+		size, err := aw.DryRunLength(file.Path, file.Size)
+		if err != nil {
+			return 0, err
+		}
+		contentLength += size
+	}
+	closeSize, err := aw.DryRunClose()
+	if err != nil {
+		return 0, err
+	}
+	return contentLength + closeSize, nil
 }
