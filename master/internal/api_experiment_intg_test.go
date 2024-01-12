@@ -252,6 +252,48 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	t.Error("expected experiment to delete after 1 minute and it did not")
 }
 
+func TestHPSearchContinueProvideConfigError(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, _ := createTestTrial(t, api, curUser)
+
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Set("config = jsonb_set(config, '{searcher}', "+
+			`'{"name": "random", "metric": "loss", "max_trials": 5, "max_length": 5}', false)`).
+		Where("id = ?", trial.ExperimentID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.ContinueExperiment(ctx, &apiv1.ContinueExperimentRequest{
+		Id:             int32(trial.ExperimentID),
+		OverrideConfig: `name: "new"`,
+	})
+	require.ErrorContains(t, err, "override config is provided and experiment")
+}
+
+func TestHPSearchContinueCompletedError(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, _ := createTestTrial(t, api, curUser)
+
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Set("config = jsonb_set(config, '{searcher}', "+
+			`'{"name": "random", "metric": "loss", "max_trials": 5, "max_length": 5}', false)`).
+		Where("id = ?", trial.ExperimentID).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", trial.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.ContinueExperiment(ctx, &apiv1.ContinueExperimentRequest{
+		Id: int32(trial.ExperimentID),
+	})
+	require.ErrorIs(t, err, errContinueHPSearchCompleted)
+}
+
 func TestParseAndMergeContinueConfig(t *testing.T) {
 	// Blank config.
 	api, curUser, ctx := setupAPITest(t, nil)
