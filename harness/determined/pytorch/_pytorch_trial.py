@@ -986,6 +986,9 @@ class _PyTorchTrialController:
                 ),
             )
 
+            # Gather a list of per-worker (num_inputs, num_batches) tuples.
+            input_counts = self.context.distributed.gather((num_inputs, idx + 1))
+
         else:
             assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
             assert self.validation_loader is not None
@@ -1025,8 +1028,6 @@ class _PyTorchTrialController:
             # common than evaluate_batch() and we can't know how the user processed their
             # validation data.
             if self._evaluate_batch_defined():
-                # Gather a list of per-worker (num_inputs, num_batches) tuples.
-                input_counts = self.context.distributed.gather((num_inputs, idx + 1))
                 # Reshape and sum.
                 # TODO: remove the type directive once we upgrade to mypy >= 1.7.0
                 inputs_total, batches_total = [sum(n) for n in zip(*input_counts)]  # type: ignore
