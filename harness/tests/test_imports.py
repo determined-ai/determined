@@ -10,6 +10,7 @@ from typing import Iterator
 import pytest
 
 import determined as det
+from tests import filetree
 
 
 def test_import_side_effects() -> None:
@@ -75,15 +76,6 @@ def test_import_from_path() -> None:
         finally:
             sys.path = old
 
-    @contextlib.contextmanager
-    def chdir(path: pathlib.Path) -> Iterator:
-        old = os.getcwd()
-        os.chdir(str(path))
-        try:
-            yield
-        finally:
-            os.chdir(old)
-
     fixture = pathlib.Path(__file__).parent / "fixtures" / "import_from_path"
     # Modify sys.path so that lib1.py and lib2.py are treated as if it were an installed library.
     # Installed libraries should not be affected by the caching behavior
@@ -92,7 +84,7 @@ def test_import_from_path() -> None:
         import lib1
 
         # Execute from the a/ directory like we were in a normal interactive interpreter.
-        with chdir(fixture / "a"), prepend_sys_path(""):
+        with filetree.chdir(fixture / "a"), prepend_sys_path(""):
             import model_def as a  # noqa: I2001
 
             with det.import_from_path(fixture / "b"):
