@@ -1,3 +1,5 @@
+{{- if not .Values.genai.version }}
+{{ else }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,7 +42,7 @@ spec:
           - name: DB_PORT
             value: "5432"
           - name: DB_HOST
-            value: determined-db-service-{{ .Release.Name }}
+            value: determined-db-service-{{ .Release.Name }} 
           # TODO: Enable this in the real thing
           # - name: LORE_DOCKER_TAG_SUFFIX
           #   value: {{ $tag }}
@@ -72,7 +74,5 @@ spec:
       volumes:
         - name: genai-pvc-storage
           persistentVolumeClaim:
-            claimName: genai-pvc-{{ .Release.Name }}
-        - name: master-config
-          secret:
-            secretName: genai-config-{{ .Release.Name }}
+            claimName: {{ include "genai.PVCName" . }}
+{{ end }}

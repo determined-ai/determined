@@ -1,3 +1,5 @@
+{{- if not .Values.genai.version }}
+{{ else }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,3 +16,4 @@ spec:
   type: LoadBalancer
   selector:
     app: genai-{{ .Release.Name }}
+{{ end }}

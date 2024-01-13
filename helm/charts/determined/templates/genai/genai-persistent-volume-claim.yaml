@@ -1,0 +1,20 @@
+{{- if or (not .Values.genai.version) .Values.genai.sharedPVCName }}
+{{ else }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "genai.PVCName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "genai.PVCName" . }}
+    release: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ required  "A valid .Values.genai.generatedPVC.storageSize entry is required if a .Values.sharedPVCName is not specified" (and .Values.genai.generatedPVC .Values.genai.generatedPVC.storageSize) }}
+  {{- if .Values.genai.generatedPVC.storageClassName }}
+  storageClassName: {{ .Values.genai.generatedPVC.storageClassName }}
+  {{ end }}
+{{ end }}

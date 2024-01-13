@@ -371,32 +371,17 @@ resourcePools:
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
-# TODO: Explain this
-# TODO: Find a way to not hardcode this?
-proxiedServers:
-  - destination: "http://genai-service-taylor:9011/lore"
-    path_prefix: /lore
-  - destination: "http://genai-service-taylor:9011/genai"
-    path_prefix: /genai
-  # - destination: "http://genai-service-{{ .Release.Name }}:9011/lore"
-  #   path_prefix: /lore
-  # - destination: "http://genai-service-{{ .Release.Name }}:9011/genai"
-  #   path_prefix: /genai
-  # - destination: "http://genai-service-{{ .Release.Name }}:{{ tpl .Values.genai.port . }}/lore"
-  #   path_prefix: /lore
-  # - destination: "http://genai-service-{{ .Release.Name }}:{{ tpl .Values.genai.port . }}/genai"
-  #   path_prefix: /genai
-
 genai:
   version: "26ec909"
   port: 9011
+  imagePullSecretName:
+
   memRequest: 1Gi
   cpuRequest: 2
   # memLimit: 1Gi
   # cpuLimit: 2
-
-  imagePullSecretName:
-  # storageClassName:
-  storageSize: 30Gi
-
-
+  
+  # sharedPVCName: wow
+  generatedPVC:
+    # storageClassName:
+    storageSize: 30Gi

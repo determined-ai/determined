@@ -136,9 +136,13 @@ stringData:
     {{- end }}
     {{- end }}
 
-    {{- if .Values.proxiedServers }}
+    {{- if and .Values.genai.version .Values.genai.port }}
     __internal:
-      proxied_servers: {{ toYaml .Values.proxiedServers | nindent 8 }}
+      proxied_servers:
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ .Values.genai.port }}/lore"
+          path_prefix: /lore
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ .Values.genai.port }}/genai"
+          path_prefix: /genai
     {{- end}}
 
     resource_manager:
