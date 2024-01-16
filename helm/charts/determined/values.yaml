@@ -263,6 +263,7 @@ taskContainerDefaults:
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
 
+  # TODO: GenAI should support this directly
   cpuPodSpec:
     apiVersion: v1
     kind: Pod
@@ -371,17 +372,38 @@ resourcePools:
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
+## Configure the GenAI Deployment
 genai:
+  ## Version of GenAI to use. If unset, GenAI will not be deployed
   version: "26ec909"
-  port: 9011
-  imagePullSecretName:
-
-  memRequest: 1Gi
-  cpuRequest: 2
-  # memLimit: 1Gi
-  # cpuLimit: 2
   
-  # sharedPVCName: wow
+  ## Port for GenAI to use
+  port: 9011
+  
+  ## Secret to pull the GenAI image
+  # imagePullSecretName:
+
+  ## GenAI pod memory request
+  memRequest: 1Gi
+
+  ## GenAI pod cpu request
+  cpuRequest: 2
+
+  ## GenAI pod memory limit
+  # memLimit: 1Gi
+
+  ## GenAI pod cpu limit
+  # cpuLimit: 2
+
+  ## PVC Name for the shared file system for GenAI.
+  ## Note: Either `sharedPVCName` or `generatedPVC.storageSize` (to
+  ## generate a new PVC) is required
+  # sharedPVCName:
+
+  ## Spec for the generated PVC for GenAI
   generatedPVC:
+    ## Storage class name for the generated PVC
     # storageClassName:
+
+    ## Size of the generated PVC
     storageSize: 30Gi
