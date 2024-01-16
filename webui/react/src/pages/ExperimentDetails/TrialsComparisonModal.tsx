@@ -242,11 +242,13 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                             : `Trial ${trial.id}`}
                         </Link>
                       </Label>
-                      <Button
-                        icon={<Icon name="close" size="tiny" title="close" />}
-                        size="small"
-                        onClick={() => handleTrialUnselect(trial.id)}
-                      />
+                      {onUnselect ? (
+                        <Button
+                          icon={<Icon name="close" size="tiny" title="close" />}
+                          size="small"
+                          onClick={() => handleTrialUnselect(trial.id)}
+                        />
+                      ) : null}
                     </Row>
                   </th>
                 ))}

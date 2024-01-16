@@ -92,16 +92,19 @@ const ComparisonView: React.FC<Props> = ({
       children
     );
 
-  const rightPane =
-    selectedExperiments.length === 0 ? (
-      <Message
-        description="Select experiments you would like to compare."
-        icon="warning"
-        title="No experiments selected."
-      />
-    ) : (
-      <Pivot items={tabs} />
-    );
+  const rightPane = useMemo(
+    () =>
+      selectedExperiments.length === 0 ? (
+        <Message
+          description="Select experiments you would like to compare."
+          icon="warning"
+          title="No experiments selected."
+        />
+      ) : (
+        <Pivot items={tabs} />
+      ),
+    [selectedExperiments.length, tabs],
+  );
 
   return (
     <SplitPane
