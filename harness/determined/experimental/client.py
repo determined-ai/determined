@@ -303,7 +303,7 @@ def list_users(active: Optional[bool] = None) -> List[User]:
             When false, filter for inactive users. Return all users otherwise.
 
     Returns:
-        :class:`~determined.common.experimental.user.User`.
+        A list of :class:`~determined.experimental.client.User` objects.
     """
     assert _determined is not None
     return _determined.list_users(active=active)
