@@ -336,8 +336,7 @@ is useful in the future.
 
 We want to separate the REST API server into its own process some day.
 
-That means that our streaming server must not hook into the actor system, and
-should only depend on the database connection.
+That means that our streaming server should only depend on the database connection.
 
 ### Multiple Streaming Servers
 
