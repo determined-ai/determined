@@ -8,7 +8,8 @@ class User:
     """
     A User object represents an individual account on a Determined installation.
 
-    It can be obtained from ``client.list_users`` or ``client.get_user_by_name()``.
+    It can be obtained from :func:`determined.experimental.client.list_users`
+    or :func:`determined.experimental.client.get_user_by_name`.
 
     Attributes:
         session: HTTP request session.
@@ -27,7 +28,7 @@ class User:
         All attributes are cached by default.
 
         Mutable properties may be changed by methods that update these values either automatically
-        (eg. `rename`, `change_display_name`) or explicitly with `reload()`.
+        (eg. `rename`, `change_display_name`) or explicitly with :meth:`reload()`.
     """
 
     def __init__(self, user_id: int, session: api.Session):

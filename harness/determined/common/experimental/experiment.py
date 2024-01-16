@@ -86,9 +86,9 @@ class Experiment:
     """A class representing an Experiment object.
 
     An Experiment object is usually obtained from
-    ``determined.experimental.client.create_experiment()``
-    or ``determined.experimental.client.get_experiment()`` and contains helper methods that support
-    querying the set of checkpoints associated with an experiment.
+    :func:`determined.experimental.client.create_experiment`
+    or :func:`determined.experimental.client.get_experiment` and contains helper methods
+    that support querying the set of checkpoints associated with an experiment.
 
     Attributes:
         id: ID of experiment object in database.
@@ -109,7 +109,7 @@ class Experiment:
         All attributes are cached by default.
 
         Some attributes are mutable and may be changed by methods that update these values,
-        either automatically (eg. `wait()`) or explicitly with `reload()`.
+        either automatically (eg. :meth:`wait()`) or explicitly with :meth:`reload()`.
     """
 
     def __init__(
