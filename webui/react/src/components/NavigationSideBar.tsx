@@ -327,7 +327,6 @@ const NavigationSideBar: React.FC = () => {
                               icon={<Avatar palette="muted" square text={workspace.name} />}
                               label={workspace.name}
                               path={paths.workspaceDetails(workspace.id)}
-                              tooltip={settings.navbarCollapsed}
                             />
                           </li>
                         </WorkspaceActionDropdown>
