@@ -10,8 +10,6 @@ import React, { useCallback, useMemo } from 'react';
 import { ALL_VALUE } from 'types';
 import { isObject } from 'utils/data';
 
-import css from './HpSelect.module.scss';
-
 interface Props extends SelectProps {
   fullHParams: string[];
 }
@@ -73,7 +71,7 @@ const HpSelect: React.FC<Props> = ({ fullHParams, onChange, value, ...props }: P
       </Option>
       {fullHParams.map((hParam) => {
         return (
-          <Option className={css.option} key={hParam} value={hParam}>
+          <Option key={hParam} value={hParam}>
             {hParam}
           </Option>
         );

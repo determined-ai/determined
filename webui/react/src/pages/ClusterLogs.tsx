@@ -7,8 +7,6 @@ import { jsonToClusterLog } from 'services/decoder';
 import { isNumber } from 'utils/data';
 import handleError from 'utils/error';
 
-import css from './ClusterLogs.module.scss';
-
 const ClusterLogs: React.FC = () => {
   const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
     const options = { follow: false, limit: config.limit, offset: 0 };
@@ -32,7 +30,7 @@ const ClusterLogs: React.FC = () => {
   }, []);
 
   return (
-    <div className={css.base}>
+    <div>
       <LogViewer
         decoder={jsonToClusterLog}
         serverAddress={serverAddress}
