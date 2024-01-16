@@ -49,7 +49,6 @@ func TestSimpleTar(t *testing.T) {
 	require.Equal(t, byte(tar.TypeReg), hdr.Typeflag)
 	result := make([]byte, 3)
 	size, err = tr.Read(result)
-	// require.NoError(t, err)
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, 3, size)
 	require.Equal(t, "bar", string(result))
@@ -70,16 +69,16 @@ func TestTarDryRun(t *testing.T) {
 	entries := []FileEntry{
 		{
 			Path: strings.Repeat("a", 10),
-			Size: int64(math.Pow(2, 4)),
+			Size: int64(math.Pow(2, 4)) + 1,
 		},
 		{
 			Path: strings.Repeat("a", 100),
-			Size: int64(math.Pow(2, 32)),
+			Size: int64(math.Pow(2, 32)) + 2,
 		},
 		// this entry should trigger an extended header
 		{
 			Path: strings.Repeat("a", 1000),
-			Size: int64(math.Pow(2, 36)),
+			Size: int64(math.Pow(2, 34)) + 3,
 		},
 	}
 
@@ -124,5 +123,6 @@ func TestTarDryRun(t *testing.T) {
 	_, err = tr.Next()
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, buf.Len(), 0)
+	require.Equal(t, buf.writeCount, buf.readCount)
 	require.Equal(t, buf.writeCount, contentLength)
 }
