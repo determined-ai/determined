@@ -1720,6 +1720,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup-go-intg-deps
+      - run: make -C master build/mock_gen.stamp
       - run: cd master && go tool cover -func coverage.out
       - run: cd master && go tool cover -html coverage.out -o coverage.html
       - run: cd agent && go tool cover -func coverage.out
