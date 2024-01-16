@@ -20,11 +20,6 @@ def main():
 
     assert "DET_TEST_EXTERNAL_EXP_ID" in os.environ
     name = os.environ["DET_TEST_EXTERNAL_EXP_ID"]
-    # Adding a dist.get_rank() is not ideal or correct and is just a way to test
-    # that we only call prepare run once and share the storage id returned.
-    # If we use the same storage_path all checkpoints will have the same storageID since
-    # it is deduped on the backend.
-    storage_path = f"/tmp/determined-cp/{dist.get_rank()}"
 
     logging.basicConfig(format=determined.LOG_FORMAT)
     logging.getLogger("determined").setLevel(logging.INFO)
@@ -32,7 +27,7 @@ def main():
     core_v2.init(
         defaults=core_v2.DefaultConfig(
             name=name,
-            checkpoint_storage=storage_path,
+            checkpoint_storage="/tmp/determined-cp",
         ),
         distributed=distributed,
         unmanaged=core_v2.UnmanagedConfig(
