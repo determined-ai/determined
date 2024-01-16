@@ -289,7 +289,13 @@ def init(
         storage_used = checkpoint_storage
         if storage_used is None:
             storage_used = info.trial._config["checkpoint_storage"]
-        run_prepare_response = _run_prepare(session, info.trial.trial_id, storage_used)
+
+        run_prepare_response = None
+        if distributed is None or distributed.rank == 0:
+            run_prepare_response = _run_prepare(session, info.trial.trial_id, storage_used)
+        if distributed is not None:
+            run_prepare_response = distributed.broadcast(run_prepare_response)
+        assert run_prepare_response
 
         checkpoint = core.CheckpointContext(
             distributed,
