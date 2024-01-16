@@ -345,18 +345,16 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
       }
       const workspaceId = record.workspaceId;
       return (
-        <Tooltip content={workspace?.name} placement="top">
-          <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-            <Link
-              path={
-                workspaceId === 1
-                  ? paths.projectDetails(workspaceId)
-                  : paths.workspaceDetails(workspaceId)
-              }>
-              <Avatar palette="muted" square text={workspace?.name} />
-            </Link>
-          </div>
-        </Tooltip>
+        <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+          <Link
+            path={
+              workspaceId === 1
+                ? paths.projectDetails(workspaceId)
+                : paths.workspaceDetails(workspaceId)
+            }>
+            <Avatar palette="muted" square text={workspace?.name} />
+          </Link>
+        </div>
       );
     },
     [workspaces],
