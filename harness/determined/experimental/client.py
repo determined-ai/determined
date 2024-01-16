@@ -70,6 +70,7 @@ from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy  # noqa: F401
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.project import Project  # noqa: F401
+from determined.common.experimental.resource_pool import ResourcePool  # noqa: F401
 from determined.common.experimental.trial import (  # noqa: F401
     Trial,
     TrialOrderBy,
@@ -295,7 +296,15 @@ def logout() -> None:
 
 @_require_singleton
 def list_users(active: Optional[bool] = None) -> List[User]:
-    """Get a list of all Users."""
+    """Get a list of all Users.
+
+    Arg:
+        active: if this parameter is set to True, filter for active users only.
+            When false, filter for inactive users. Return all users otherwise.
+
+    Returns:
+        A list of :class:`~determined.experimental.client.User` objects.
+    """
     assert _determined is not None
     return _determined.list_users(active=active)
 

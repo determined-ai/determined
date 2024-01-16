@@ -78,7 +78,8 @@ with an object-oriented interface.
 ==========
 
 .. automodule:: determined.experimental.client
-   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models, iter_trials_metrics
+   :members:
+   :exclude-members: stream_trials_metrics, stream_trials_training_metrics, stream_trials_validation_metrics
    :member-order: bysource
 
 ``OrderBy``
@@ -147,6 +148,13 @@ with an object-oriented interface.
    :members:
    :member-order: bysource
 
+``ResourcePool``
+================
+
+.. autoclass:: determined.experimental.client.ResourcePool
+   :members:
+   :member-order: bysource
+
 ``Trial``
 =========
 
@@ -159,6 +167,13 @@ with an object-oriented interface.
 ================
 
 .. autoclass:: determined.experimental.client.TrialMetrics
+
+``User``
+========
+
+.. autoclass:: determined.experimental.client.User
+   :members:
+   :member-order: bysource
 
 ``Workspace``
 =============

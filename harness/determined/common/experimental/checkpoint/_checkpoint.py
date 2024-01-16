@@ -120,10 +120,10 @@ class Checkpoint:
     A class representing a Checkpoint instance of a trained model.
 
     A Checkpoint object is usually obtained from
-    ``determined.experimental.client.get_checkpoint()``. This class provides helper functionality
+    :func:`determined.experimental.client.get_checkpoint`. This class provides helper functionality
     for downloading checkpoints to local storage and loading checkpoints into memory.
 
-    The :class:`~determined.experimental.Trial` class contains methods
+    The :class:`~determined.experimental.client.Trial` class contains methods
     that return instances of this class.
 
     Attributes:
@@ -143,7 +143,7 @@ class Checkpoint:
             All attributes are cached by default.
 
             Some attributes are mutable and may be changed by methods that update these values,
-            either automatically (eg. `add_metadata()`) or explicitly with `reload()`.
+            either automatically (eg. :meth:`add_metadata()`) or explicitly with :meth:`reload()`.
     """
 
     def __init__(
@@ -196,7 +196,6 @@ class Checkpoint:
 
           - :func:`determined.pytorch.load_trial_from_checkpoint_path`
           - :func:`determined.keras.load_model_from_checkpoint_path`
-          - :func:`determined.estimator.load_estimator_from_checkpoint_path`
 
         Arguments:
             path (string, optional): Top level directory to place the

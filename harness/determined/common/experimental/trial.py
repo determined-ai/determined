@@ -45,7 +45,7 @@ class Trial:
     """
     A class representing a Trial object.
 
-    A Trial object is usually obtained from ``determined.experimental.client.get_trial()``.
+    A Trial object is usually obtained from :func:`determined.experimental.client.get_trial`.
     Trial reference class used for querying relevant :class:`~determined.experimental.Checkpoint`
     instances.
 
@@ -59,6 +59,7 @@ class Trial:
         summary_metrics: (Mutable, Optional[Dict]) Summary metrics for the trial. Includes
             aggregated metrics for training and validation steps for each reported metric name.
             Example:
+
             .. code::
 
                 {
@@ -76,8 +77,8 @@ class Trial:
     Note:
         All attributes are cached by default.
 
-        The `hparams` and `summary` attributes are mutable and may be changed by methods that
-        update these values, either automatically or explicitly with `reload()`.
+        The :attr:`hparams` and :attr:`summary_metrics` attributes are mutable and may be changed
+        by methods that update these values, either automatically or explicitly with :meth:`reload`.
 
     """
 
