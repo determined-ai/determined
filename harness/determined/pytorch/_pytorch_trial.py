@@ -1527,20 +1527,30 @@ class PyTorchTrial(det.LegacyTrial):
         pass
 
     @abstractmethod
-    def build_training_data_loader(self) -> pytorch.DataLoader:
+    def build_training_data_loader(self) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         """
         Defines the data loader to use during training.
 
-        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+        For full "determined" functionality, this must return an instance of
+        :py:class:`determined.pytorch.DataLoader`. It can also return an unwrapped
+        :py:class:`torch.utils.data.DataLoader` if you need more control over the underlying
+        DataLoader and are willing to sacrifice some determined features (ex: automatic data
+        sharding).
         """
         pass
 
     @abstractmethod
-    def build_validation_data_loader(self) -> pytorch.DataLoader:
+    def build_validation_data_loader(
+        self,
+    ) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         """
         Defines the data loader to use during validation.
 
-        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+        For full "determined" functionality, this must return an instance of
+        :py:class:`determined.pytorch.DataLoader`. It can also return an unwrapped
+        :py:class:`torch.utils.data.DataLoader` if you need more control over the underlying
+        DataLoader and are willing to sacrifice some Determined features (ex: automatic data
+        sharding).
         """
         pass
 
