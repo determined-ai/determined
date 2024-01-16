@@ -68,10 +68,7 @@ func alwaysTrue[T Msg](msg T) bool {
 }
 
 func trueAfterTwo[T Msg](msg T) bool {
-	if msg.SeqNum() > 2 {
-		return true
-	}
-	return false
+	return msg.SeqNum() > 2
 }
 
 func alwaysFalse[T Msg](msg T) bool {
