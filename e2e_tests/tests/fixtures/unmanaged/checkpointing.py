@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
+import os
 import random
-import time
 
 from determined.experimental import core_v2
 
 
 def main():
-    name = f"unmanaged-checkpoints-{int(time.time())}"
+    assert "DET_TEST_EXTERNAL_EXP_ID" in os.environ
+    name = os.environ["DET_TEST_EXTERNAL_EXP_ID"]
     core_v2.init(
         defaults=core_v2.DefaultConfig(
             name=name,

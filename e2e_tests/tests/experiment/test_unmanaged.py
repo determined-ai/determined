@@ -1,7 +1,8 @@
 import json
 import os
 import subprocess
-from typing import List
+import uuid
+from typing import List, Optional
 
 import pytest
 
@@ -13,11 +14,15 @@ from tests import ray_utils
 EXAMPLES_ROOT = conf.EXAMPLES_PATH / "features" / "unmanaged"
 
 
-def _run_unmanaged_script(cmd: List) -> subprocess.CompletedProcess:
+def _run_unmanaged_script(cmd: List, env_to_add: Optional[dict] = None) -> None:
     master_url = conf.make_master_url()
     env = os.environ.copy()
     env["DET_MASTER"] = master_url
-    return subprocess.run(cmd, env=env, check=True, stdout=subprocess.PIPE, text=True)
+
+    if env_to_add is not None:
+        env.update(env_to_add)
+
+    subprocess.run(cmd, env=env, check=True, text=True)
 
 
 @pytest.mark.e2e_cpu
@@ -28,23 +33,18 @@ def test_unmanaged() -> None:
 
 @pytest.mark.e2e_cpu
 def test_unmanaged_checkpoints() -> None:
+    external_id = str(uuid.uuid4())
+
     exp_path = conf.fixtures_path("unmanaged/checkpointing.py")
-    p = _run_unmanaged_script(["python", exp_path])
+    _run_unmanaged_script(["python", exp_path], {"DET_TEST_EXTERNAL_EXP_ID": external_id})
 
-    exp_id = None
-    prefix = "determined experiment id: "
-    lines = ""
-    assert p.stdout
-    for line in p.stdout.split("\n"):
-        lines += line
-        if prefix in line:
-            exp_id = int(line.split(prefix)[1].strip())
-            break
-    assert exp_id is not None, "couldn't parse experiment id " + lines
+    sess = api_utils.determined_test_session()
+    exps = bindings.get_GetExperiments(sess, limit=-1).experiments
+    exps = [exp for exp in exps if exp.externalExperimentId == external_id]
+    assert len(exps) == 1
+    exp_id = exps[0].id
 
-    checkpoints = bindings.get_GetExperimentCheckpoints(
-        session=api_utils.determined_test_session(), id=exp_id
-    ).checkpoints
+    checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp_id).checkpoints
     assert len(checkpoints) > 0
     assert all(checkpoint.storageId is not None for checkpoint in checkpoints)
 
