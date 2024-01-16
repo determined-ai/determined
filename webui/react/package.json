@@ -152,7 +152,7 @@
     "vite": "^5.0.11",
     "vite-plugin-checker": "^0.6.2",
     "vite-tsconfig-paths": "^4.2.3",
-    "vitest": "^0.31.0",
+    "vitest": "^0.34.5",
     "whatwg-fetch": "^3.6.19"
   }
 }
