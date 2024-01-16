@@ -35,8 +35,24 @@ def test_unmanaged() -> None:
 def test_unmanaged_checkpoints() -> None:
     external_id = str(uuid.uuid4())
 
-    exp_path = conf.fixtures_path("unmanaged/checkpointing.py")
-    _run_unmanaged_script(["python", exp_path], {"DET_TEST_EXTERNAL_EXP_ID": external_id})
+    exp_path = conf.fixtures_path("unmanaged/checkpoint_distributed.py")
+    _run_unmanaged_script(
+        [
+            "python",
+            "-m",
+            "torch.distributed.run",
+            "--nnodes=1",
+            "--nproc_per_node=2",
+            "--master_addr",
+            "127.0.0.1",
+            "--master_port",
+            "29400",
+            "--max_restarts",
+            "0",
+            exp_path,
+        ],
+        {"DET_TEST_EXTERNAL_EXP_ID": external_id},
+    )
 
     sess = api_utils.determined_test_session()
     exps = bindings.get_GetExperiments(sess, limit=-1).experiments
@@ -46,7 +62,11 @@ def test_unmanaged_checkpoints() -> None:
 
     checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp_id).checkpoints
     assert len(checkpoints) > 0
-    assert all(checkpoint.storageId is not None for checkpoint in checkpoints)
+    first_id = checkpoints[0].storageId
+    assert all(
+        checkpoint.storageId is not None and first_id == checkpoint.storageId
+        for checkpoint in checkpoints
+    )
 
 
 @pytest.mark.e2e_cpu

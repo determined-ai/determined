@@ -16,6 +16,7 @@ from determined.experimental.core_v2._core_context_v2 import _make_v2_context
 from determined.experimental.core_v2._unmanaged import (
     _get_or_create_experiment_and_trial,
     _url_reverse_webui_exp_view,
+    _run_prepare,
 )
 
 # Core V2 singleton variables.

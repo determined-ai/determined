@@ -124,9 +124,7 @@ def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
             "prefix": prefix,
         }
     else:
-        raise NotImplementedError(
-            "tensorboard only supports shared_fs, s3, and gs " "shortcuts at the moment"
-        )
+        raise NotImplementedError("only shared_fs, s3, and gs storage shortcuts are supported")
 
 
 def _full_storage_path(

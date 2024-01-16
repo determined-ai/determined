@@ -45,4 +45,5 @@ from determined.core._context import (
     _dummy_init,
     _get_storage_manager,
     _install_stacktrace_on_sigusr1,
+    _run_prepare,
 )

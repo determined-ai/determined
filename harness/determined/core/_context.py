@@ -289,7 +289,7 @@ def init(
         storage_used = checkpoint_storage
         if storage_used is None:
             storage_used = info.trial._config["checkpoint_storage"]
-        run_prepare_response = run_prepare(session, info.trial.trial_id, storage_used)
+        run_prepare_response = _run_prepare(session, info.trial.trial_id, storage_used)
 
         checkpoint = core.CheckpointContext(
             distributed,
@@ -327,7 +327,7 @@ def init(
     )
 
 
-def run_prepare(
+def _run_prepare(
     sess: api.Session, run_id: int, checkpoint_storage: Optional[Union[str, Dict[str, Any]]]
 ) -> bindings.v1RunPrepareForReportResponse:
     cs = None

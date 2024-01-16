@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 import determined as det
 from determined import core, experimental
@@ -26,6 +26,17 @@ def _run_on_rank_0_and_broadcast(
     assert result
 
     return result
+
+
+def _run_prepare(
+    sess: api.Session,
+    run_id: int,
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]],
+    distributed: Optional[core.DistributedContext] = None,
+) -> bindings.v1RunPrepareForReportResponse:
+    return _run_on_rank_0_and_broadcast(
+        lambda: core._run_prepare(sess, run_id, checkpoint_storage), distributed
+    )
 
 
 def _create_unmanaged_experiment_inner(
