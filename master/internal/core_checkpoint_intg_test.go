@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -197,11 +198,11 @@ func TestGetCheckpointEchoUSEast1(t *testing.T) {
 }
 
 func testGetCheckpointEcho(t *testing.T, bucket string) {
-	// gitBranch := os.Getenv("CIRCLE_BRANCH")
-	// if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
-	// 	t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
-	// 		t.Name(), gitBranch)
-	// }
+	gitBranch := os.Getenv("CIRCLE_BRANCH")
+	if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
+		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
+			t.Name(), gitBranch)
+	}
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func() error
