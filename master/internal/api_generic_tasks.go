@@ -243,6 +243,7 @@ func (a *apiServer) CreateGenericTask(
 		"task-type": model.TaskTypeGeneric,
 	}
 	priorityChange := func(priority int) error {
+		genericTaskSpec.GenericTaskConfig.Resources.SetPriority(&priority)
 		return nil
 	}
 	if err = tasklist.GroupPriorityChangeRegistry.Add(jobID, priorityChange); err != nil {
@@ -536,6 +537,17 @@ func (a *apiServer) ResumeGenericTask(
 			)
 			if err != nil {
 				return nil, err
+			}
+			// check if job still in registry
+			_, exists := tasklist.GroupPriorityChangeRegistry.Load(*childTask.JobID)
+			if !exists {
+				priorityChange := func(priority int) error {
+					genericTaskSpec.GenericTaskConfig.Resources.SetPriority(&priority)
+					return nil
+				}
+				if err = tasklist.GroupPriorityChangeRegistry.Add(*childTask.JobID, priorityChange); err != nil {
+					return nil, err
+				}
 			}
 			allocationString, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
