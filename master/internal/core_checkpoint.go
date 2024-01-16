@@ -175,7 +175,7 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 	// Get the MIME type. Only a single type is accepted.
 	mimeType := c.Request().Header.Get("Accept")
 	// Default to tar if no MIME type is specified.
-	if mimeType == "" {
+	if mimeType == "" || mimeType == "*/*" || mimeType == "application/*" {
 		mimeType = MIMEApplicationXTar
 	}
 	if mimeType != MIMEApplicationXTar &&
