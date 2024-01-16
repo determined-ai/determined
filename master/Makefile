@@ -150,7 +150,7 @@ test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@l
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg: build/mock_gen.stamp
-	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -race -coverprofile=coverage.out -covermode atomic -cover ./...
+	gotestsum --junitfile test-intg.junit.xml -- -tags=integration -race -coverprofile=coverage.out -covermode atomic -cover ./...  -coverpkg=./...
 
 .PHONY: pre-package
 pre-package:
