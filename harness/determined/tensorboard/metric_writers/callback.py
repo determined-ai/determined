@@ -28,7 +28,7 @@ class MetricWriter(abc.ABC):
 class BatchMetricWriter:
     def __init__(self, writer: MetricWriter) -> None:
         self.writer = writer
-        self._last_write_ts: Optional[float] = None
+        self._last_flush_ts: Optional[float] = None
 
     def _maybe_write_metric(self, metric_key: str, metric_val: Any, step: int) -> None:
         # For now, we only log scalar metrics.
@@ -63,6 +63,7 @@ class BatchMetricWriter:
             self._maybe_write_metric(name, value, steps_completed)
 
         self.writer.flush()
+        self._last_flush_ts = time.time()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         logger.debug("Write validation metrics for TensorBoard")
@@ -75,6 +76,7 @@ class BatchMetricWriter:
             self._maybe_write_metric(name, value, steps_completed)
 
         self.writer.flush()
+        self._last_flush_ts = time.time()
 
     def _maybe_reset(self) -> None:
         """
@@ -88,11 +90,8 @@ class BatchMetricWriter:
         This effectively batches event writes so each event file may contain more than one event.
         """
         current_ts = time.time()
-        if not self._last_write_ts:
-            self._last_write_ts = current_ts
+        if not self._last_flush_ts:
+            return
 
-        assert self._last_write_ts
-
-        if int(current_ts) != int(self._last_write_ts):
+        if int(current_ts) > int(self._last_flush_ts):
             self.writer.reset()
-            self._last_write_ts = current_ts
