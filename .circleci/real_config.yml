@@ -1720,7 +1720,7 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - run: make -C master get-deps && make -C agent get-deps
+      - go-get-deps
       - run: make -C master build/mock_gen.stamp
       - run: cd master && go tool cover -func coverage.out
       - run: cd master && go tool cover -html coverage.out -o coverage.html
@@ -1744,6 +1744,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - go-get-deps
+      - run: make -C master build/mock_gen.stamp
       - run: go run master/cmd/cover-regex/cover_regex.go master/coverage.out || true
 
   check-go-coverage-agent:
@@ -1757,6 +1759,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - go-get-deps
+      - run: make -C master build/mock_gen.stamp
       - run: go run master/cmd/cover-regex/cover_regex.go agent/coverage.out || true
 
   lint-docs:
