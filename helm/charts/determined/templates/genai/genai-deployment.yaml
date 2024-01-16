@@ -46,6 +46,8 @@ spec:
           # TODO: Enable this in the real thing
           # - name: LORE_DOCKER_TAG_SUFFIX
           #   value: {{ $tag }}
+          - name: K8S_SHARED_PVC_NAME
+            value: {{ include "genai.PVCName" . }}
         volumeMounts:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
