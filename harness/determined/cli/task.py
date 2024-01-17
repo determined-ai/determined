@@ -363,9 +363,9 @@ args_description: List[Any] = [
                 ],
             ),
             Cmd(
-                "resume",
+                "resume unpause",
                 resume,
-                "resume task",
+                "resume or unpause a task",
                 [
                     Arg("task_id", type=str, help=""),
                     Arg("--project_id", type=int, help="place this task inside this project"),
