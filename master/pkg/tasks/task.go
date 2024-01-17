@@ -9,6 +9,7 @@ import (
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/jinzhu/copier"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -111,6 +112,17 @@ type TaskSpec struct {
 	Labels    []string
 	// Ports required by trial or commands and their respective base port values.
 	UniqueExposedPortRequests map[string]int
+}
+
+// Clone deep copies a taskSpec.
+func (t *TaskSpec) Clone() (*TaskSpec, error) {
+	var res TaskSpec
+	if err := copier.CopyWithOption(
+		&res, t, copier.Option{DeepCopy: true, IgnoreEmpty: true},
+	); err != nil {
+		return nil, fmt.Errorf("copying task spec %+v: %w", t, err)
+	}
+	return &res, nil
 }
 
 // ResolveWorkDir resolves the work dir.
