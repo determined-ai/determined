@@ -466,7 +466,7 @@ func (a *apiServer) PauseGenericTask(
 	if err != nil {
 		return nil, err
 	}
-	// Validate state
+	// Check if the task is in a state which allows pausing.
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted, model.TaskStatePaused}
 	if slices.Contains(overrideStates, *taskModel.State) {
 		return nil, fmt.Errorf("cannot pause task %s as it is in state '%s'", req.TaskId, *taskModel.State)
