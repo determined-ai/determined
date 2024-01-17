@@ -465,14 +465,14 @@ func (e *internalExperiment) stop() error {
 		e.syslog.WithError(err).Error("")
 	}
 
-	taskSpec := *e.taskSpec
+	taskSpec := e.taskSpec.Clone()
 
 	// May be no checkpoints to gc, if so skip
 	if len(checkpoints) > 0 {
 		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		go func() {
 			err := runCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+				e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
 				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 			)
@@ -796,7 +796,7 @@ func (e *internalExperiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
+				state, e.rm, e.db, config, checkpoint, e.taskSpec.Clone(), e.generatedKeys, false,
 				nil, continueFromTrialID, e.TrialClosed,
 			)
 			if err != nil {

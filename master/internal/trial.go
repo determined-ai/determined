@@ -500,7 +500,7 @@ func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
 	}
 
 	return &tasks.TrialSpec{
-		Base: *t.taskSpec,
+		Base: *t.taskSpec, // copy here.
 
 		ExperimentID:     t.experimentID,
 		TrialID:          t.id,
