@@ -31,27 +31,33 @@ information about each, visit the :ref:`Experiment Configuration Reference
 Software
 ========
 
--  Determined *agent* and *master* nodes must be configured with Ubuntu 16.04 or higher, CentOS 7,
-   or macOS 10.13 or higher.
+-  Determined *agent* and *master* nodes must be configured with the following operating systems:
+
+   - Ubuntu 20.04 or later
+   - Enterprise Linux (e.g., AlmaLinux, Oracle Linux, Red Hat Enterprise Linux, or Rocky Linux) 7 or higher
+   - Windows Subsystem for Linux (WSL) 2 on Windows 10 version 1903 or higher, with a supported Linux distribution
+     installed
+   - macOS 10.13 or later
 
 -  Agent nodes must have Docker installed.
 
--  To run jobs with GPUs, install NVIDIA drivers, version 384.81 or higher, on each agent. The
-   drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
-   required.
+-  To run jobs that use GPUs, you need NVIDIA drivers with a version of 384.81 or later installed on each agent. 
+   These drivers can be installed independently, but you don't need to install the entire CUDA toolkit.
 
 Hardware
 ========
 
 -  Master node:
 
-   -  At least 4 CPU cores, Intel Broadwell or later. The master node does not require GPUs.
+   -  At least 4 CPU cores. The master node does not require GPUs.
+   -  Intel/AMD x86, Arm, and PowerPC architectures are supported.
    -  8GB RAM
    -  200GB of free disk space.
 
 -  Agent node:
 
-   -  At least 2 CPU cores, Intel Broadwell or later.
+   -  At least 2 CPU cores.
+   -  Intel/AMD x86, Arm, and PowerPC architectures are supported.
    -  If you are using GPUs, NVIDIA GPUs with compute capability 3.7 or greater are required: K80,
       P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, or TITAN XP.
    -  4GB RAM
