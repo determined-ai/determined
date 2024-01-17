@@ -36,7 +36,7 @@
       background-color: var(--theme-background);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 15;
     }
     th:first-of-type {
       background-clip: padding-box;
@@ -45,16 +45,10 @@
       position: sticky;
       text-align: left;
       width: 200px;
+      z-index: 10;
     }
   }
   .trialTag {
     font-size: 14px;
-
-    & * {
-      margin: 0;
-    }
-    :hover {
-      color: var(--theme-status-active);
-    }
   }
 }
