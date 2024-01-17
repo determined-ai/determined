@@ -9,15 +9,13 @@ import (
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
+	"github.com/jinzhu/copier"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -116,55 +114,15 @@ type TaskSpec struct {
 	UniqueExposedPortRequests map[string]int
 }
 
-// Clone deep copies most of a taskSpec. Some fields are shallow copied.
-func (t *TaskSpec) Clone() *TaskSpec {
-	if t == nil {
-		return nil
+// Clone deep copies a taskSpec.
+func (t *TaskSpec) Clone() (*TaskSpec, error) {
+	var res TaskSpec
+	if err := copier.CopyWithOption(
+		&res, t, copier.Option{DeepCopy: true, IgnoreEmpty: true},
+	); err != nil {
+		return nil, fmt.Errorf("copying task spec %+v: %w", t, err)
 	}
-
-	return &TaskSpec{
-		TaskContainerDefaults: t.TaskContainerDefaults, // Not cloned.
-		Owner:                 t.Owner,                 // Not cloned.
-		AgentUserGroup:        t.AgentUserGroup,        // Not cloned.
-		ExtraArchives:         t.ExtraArchives,         // Not cloned.
-		Mounts:                t.Mounts,                // Not cloned.
-
-		Description:     t.Description,
-		LoggingFields:   maps.Clone(t.LoggingFields),
-		ClusterID:       t.ClusterID,
-		HarnessPath:     t.HarnessPath,
-		MasterCert:      slices.Clone(t.MasterCert),
-		SSHRsaSize:      t.SSHRsaSize,
-		SegmentEnabled:  t.SegmentEnabled,
-		SegmentAPIKey:   t.SegmentAPIKey,
-		Environment:     schemas.Copy(t.Environment),
-		ResourcesConfig: schemas.Copy(t.ResourcesConfig),
-		WorkDir:         t.WorkDir,
-
-		ExtraEnvVars:           maps.Clone(t.ExtraEnvVars),
-		Entrypoint:             slices.Clone(t.Entrypoint),
-		UseHostMode:            t.UseHostMode,
-		ShmSize:                t.ShmSize,
-		TaskID:                 t.TaskID,
-		AllocationID:           t.AllocationID,
-		AllocationSessionToken: t.AllocationSessionToken,
-		ResourcesID:            t.ResourcesID,
-		ContainerID:            t.ContainerID,
-		Devices:                slices.Clone(t.Devices),
-
-		UserSessionToken: t.UserSessionToken,
-		TaskType:         t.TaskType,
-		SlurmConfig:      schemas.Copy(t.SlurmConfig),
-		PbsConfig:        schemas.Copy(t.PbsConfig),
-
-		ExtraProxyPorts: schemas.Copy(t.ExtraProxyPorts),
-
-		Workspace: t.Workspace,
-		Project:   t.Project,
-		Labels:    slices.Clone(t.Labels),
-
-		UniqueExposedPortRequests: maps.Clone(t.UniqueExposedPortRequests),
-	}
+	return &res, nil
 }
 
 // ResolveWorkDir resolves the work dir.
