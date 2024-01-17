@@ -16,7 +16,7 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
   const column = (
     <Column>
       <Row>
-        <Label size={TypographySize.XS} truncate={{ rows: 1, tooltip: true }}>
+        <Label size={TypographySize.XS} truncate={{ tooltip: true }}>
           {props.title}
         </Label>
       </Row>
