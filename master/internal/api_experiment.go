@@ -1680,6 +1680,10 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, err
 	}
+
+	if taskSpec.ExtraEnvVars == nil {
+		taskSpec.ExtraEnvVars = map[string]string{}
+	}
 	maps.Copy(taskSpec.ExtraEnvVars, pachyEnvVars)
 
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {

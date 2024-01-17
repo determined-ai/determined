@@ -455,6 +455,11 @@ func (e *internalExperiment) stop() error {
 	}
 	e.syslog.Infof("PostStop state changed to %s", e.State)
 
+	taskSpec, err := e.taskSpec.Clone()
+	if err != nil {
+		return fmt.Errorf("cloning checkpoint gc task spec: %w", err)
+	}
+
 	checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
 		e.Experiment.ID,
 		e.activeConfig.CheckpointStorage().SaveExperimentBest(),
@@ -465,14 +470,17 @@ func (e *internalExperiment) stop() error {
 		e.syslog.WithError(err).Error("")
 	}
 
-	taskSpec := *e.taskSpec
+	if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
+		e.syslog.WithError(err).Errorf(
+			"failure to delete snapshots for experiment: %d", e.Experiment.ID)
+	}
 
 	// May be no checkpoints to gc, if so skip
 	if len(checkpoints) > 0 {
 		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		go func() {
 			err := runCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, taskSpec,
+				e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
 				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
 			)
@@ -480,11 +488,6 @@ func (e *internalExperiment) stop() error {
 				e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
 			}
 		}()
-	}
-
-	if err := e.db.DeleteSnapshotsForExperiment(e.Experiment.ID); err != nil {
-		e.syslog.WithError(err).Errorf(
-			"failure to delete snapshots for experiment: %d", e.Experiment.ID)
 	}
 
 	if err := user.DeleteSessionByToken(
@@ -794,9 +797,17 @@ func (e *internalExperiment) processOperations(
 			config := schemas.Copy(e.activeConfig)
 			state := experiment.TrialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
+
+			clonedSpec, err := e.taskSpec.Clone()
+			if err != nil {
+				e.syslog.WithError(err).Error("failed to create trial")
+				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
+				continue
+			}
+
 			t, err := newTrial(
 				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-				state, e.rm, e.db, config, checkpoint, e.taskSpec, e.generatedKeys, false,
+				state, e.rm, e.db, config, checkpoint, clonedSpec, e.generatedKeys, false,
 				nil, continueFromTrialID, e.TrialClosed,
 			)
 			if err != nil {
