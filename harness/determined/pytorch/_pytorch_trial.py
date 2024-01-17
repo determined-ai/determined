@@ -940,7 +940,7 @@ class _PyTorchTrialController:
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
 
-            idx = -1
+            idx = -1  # Later, we'll use this default to see if we've iterated at all.
             for idx, batch in enumerate(iter(self.validation_loader)):
                 if self.context.experimental._auto_to_device:
                     batch = self.context.to_device(batch)
@@ -1531,11 +1531,11 @@ class PyTorchTrial(det.LegacyTrial):
         """
         Defines the data loader to use during training.
 
-        For full "determined" functionality, this must return an instance of
-        :py:class:`determined.pytorch.DataLoader`. It can also return an unwrapped
-        :py:class:`torch.utils.data.DataLoader` if you need more control over the underlying
-        DataLoader and are willing to sacrifice some determined features (ex: automatic data
-        sharding).
+        Most implementations of :class:`determined.pytorch.PyTorchTrial` will return a
+        :class:`determined.pytorch.DataLoader` here. Some use cases may not fit the assumptions of
+        :class:`determined.pytorch.DataLoader`. In that event, a bare
+        ``torch.utils.data.DataLoader`` may be returned if steps in the note atop
+        :ref:`pytorch-reproducible-dataset` are followed.
         """
         pass
 
@@ -1547,8 +1547,8 @@ class PyTorchTrial(det.LegacyTrial):
         Defines the data loader to use during validation.
 
         For full "determined" functionality, this must return an instance of
-        :py:class:`determined.pytorch.DataLoader`. It can also return an unwrapped
-        :py:class:`torch.utils.data.DataLoader` if you need more control over the underlying
+        class:`determined.pytorch.DataLoader`. It can also return an unwrapped
+        class:`torch.utils.data.DataLoader` if you need more control over the underlying
         DataLoader and are willing to sacrifice some Determined features (ex: automatic data
         sharding).
         """
@@ -1620,7 +1620,7 @@ class PyTorchTrial(det.LegacyTrial):
         """Count the number of records in a given batch.
 
         Override this method when you are using custom batch types, as produced
-        when iterating over the :py:class:`determined.pytorch.DataLoader`.
+        when iterating over the class:`determined.pytorch.DataLoader`.
         For example, when using ``pytorch_geometric``:
 
         .. code-block:: python
