@@ -75,12 +75,7 @@ const WorkspaceDetails: React.FC = () => {
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(id));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
-  useEffect(() => {
-    userStore.startPolling();
-    return () => {
-      userStore.startPolling({ delay: 60_000 });
-    };
-  }, []);
+  useEffect(() => userStore.startPolling(), []);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
