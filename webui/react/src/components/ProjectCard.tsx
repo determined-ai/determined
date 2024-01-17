@@ -1,4 +1,5 @@
 import Avatar, { Size } from 'hew/Avatar';
+import Badge from 'hew/Badge';
 import Card from 'hew/Card';
 import Column from 'hew/Column';
 import Icon from 'hew/Icon';
@@ -79,7 +80,7 @@ const ProjectCard: React.FC<Props> = ({
                 </Tooltip>
               </div>
               {project.archived ? (
-                <div className={css.archivedBadge}>Archived</div>
+                <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
               ) : (
                 project.lastExperimentStartedAt && (
                   <TimeAgo

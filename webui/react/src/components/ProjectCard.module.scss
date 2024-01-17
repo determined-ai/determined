@@ -18,13 +18,6 @@
       gap: 4px;
     }
   }
-  .archivedBadge {
-    background-color: var(--theme-status-inactive);
-    border-radius: var(--theme-border-radius);
-    color: var(--theme-status-warning-on);
-    opacity: 1;
-    padding: 2px 4px;
-  }
 }
 .archived .name,
 .archived .experiments {
