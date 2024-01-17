@@ -46,7 +46,7 @@ JOB_SUFFIXES = [
     "pt-gpu",
     "pt2-gpu",
     "pytorch13-tf210-rocm56",
-    "pytorch20-tf210-rocm56"
+    "pytorch20-tf210-rocm56",
 ]
 
 JOB_SUFFIXES_WITHOUT_MPI = [
