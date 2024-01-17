@@ -90,6 +90,7 @@ class misc:
         # "ap-southeast-1",
         # "ap-southeast-2",
         "eu-central-1",
+        "eu-north-1",
         "eu-west-1",
         # "eu-west-2",
         "us-east-1",
