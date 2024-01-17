@@ -109,3 +109,11 @@ test-ci:
 .PHONY: test-ci-flaky
 test-ci-flaky:
 	INCLUDE_FLAKY=true VITEST_MAX_THREADS=6 VITEST_MIN_THREADS=1 npm run test -- --reporter=default
+
+.PHONY: get-playwright
+get-playwright:
+	npx playwright install
+
+.PHONY: get-playwright-ci
+get-playwright-ci:
+	npx playwright install --with-deps && npx playwright install chrome

@@ -1530,12 +1530,7 @@ jobs:
       - skip-if-github-only
       - run: apt-get update && apt-get -y install make
       - react-get-deps
-      - run:
-          name: Install Playwright
-          command: |
-            cd ./webui/react
-            npx playwright install --with-deps && npx playwright install chrome
-            cd -
+      - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
       - store_artifacts:
