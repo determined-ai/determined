@@ -33,16 +33,18 @@ Software
 
 -  Determined *agent* and *master* nodes must be configured with the following operating systems:
 
-   - Ubuntu 20.04 or later
-   - Enterprise Linux (e.g., AlmaLinux, Oracle Linux, Red Hat Enterprise Linux, or Rocky Linux) 7 or higher
-   - Windows Subsystem for Linux (WSL) 2 on Windows 10 version 1903 or higher, with a supported Linux distribution
-     installed
-   - macOS 10.13 or later
+   -  Ubuntu 20.04 or later
+   -  Enterprise Linux (e.g., AlmaLinux, Oracle Linux, Red Hat Enterprise Linux, or Rocky Linux) 7
+      or higher
+   -  Windows Subsystem for Linux (WSL) 2 on Windows 10 version 1903 or higher, with a supported
+      Linux distribution installed
+   -  macOS 10.13 or later
 
 -  Agent nodes must have Docker installed.
 
--  To run jobs that use GPUs, you need NVIDIA drivers with a version of 384.81 or later installed on each agent. 
-   These drivers can be installed independently, but you don't need to install the entire CUDA toolkit.
+-  To run jobs that use GPUs, you need NVIDIA drivers with a version of 384.81 or later installed on
+   each agent. These drivers can be installed independently, but you don't need to install the
+   entire CUDA toolkit.
 
 Hardware
 ========
