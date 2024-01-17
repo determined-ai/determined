@@ -21,7 +21,7 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
         </Label>
       </Row>
       <Row width="fill">
-        <Label strong truncate={{ rows: 1, tooltip: true }}>
+        <Label strong truncate={{ tooltip: true }}>
           {props.children}
         </Label>
       </Row>
