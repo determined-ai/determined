@@ -15,7 +15,7 @@ A Determined cluster has the following requirements.
 Software
 ========
 
--  The Determined agent and master nodes must be configured with Ubuntu 20.04 or later, Enterprise
+-  The Determined agent and master nodes must be configured with Ubuntu 20.04 or later, Enterprise 
    Linux 7 (such as AlmaLinux, Red Hat Enterprise Linux, or Rocky Linux), or macOS 10.13 or later.
 
 -  The agent nodes must have :ref:`Docker installed <install-docker>`.
@@ -144,7 +144,7 @@ Install on macOS
 Docker on macOS does not support containers that use GPUs. Because of this, macOS Determined agents
 are only able to run CPU-based workloads.
 
-.. _install-docker-on-wsl:
+.. _install-docker-on-WSL:
 
 Install on Windows Subsystem for Linux (WSL)
 ============================================
