@@ -5,10 +5,10 @@ Mappings:
   RegionMap:
     us-gov-east-1:
       Master: ami-04ef693ebcf519dc3
-      Agent: ami-00126631d6e55c1bb
+      Agent: ami-065d670b7d0d648bf
     us-gov-west-1:
       Master: ami-08bd15d820a3c087e
-      Agent: ami-0ca659511f1cd0294
+      Agent: ami-058ffd48428aaeaeb
 Parameters:
   Keypair:
     Type: AWS::EC2::KeyPair::KeyName
