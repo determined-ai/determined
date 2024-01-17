@@ -12,7 +12,7 @@ import clusterStore, { maxClusterSlotCapacity } from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
 import experimentStore from 'stores/experiments';
 import taskStore from 'stores/tasks';
-import { ResourceType } from 'types';
+import { ResourceType, RunState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { useObservable } from 'utils/observable';
 
@@ -87,12 +87,14 @@ export const ClusterOverallStats: React.FC = () => {
           <>
             {Loadable.match(activeExperiments, {
               _: () => null,
-              Loaded: (activeExperiments) =>
-                (activeExperiments.pagination?.total ?? 0) > 0 && (
-                  <OverviewStats title="Active Experiments">
-                    {activeExperiments.pagination?.total}
-                  </OverviewStats>
-                ),
+              Loaded: (activeExperiments) => {
+                const count = activeExperiments.experiments.filter(
+                  (e) => e.state !== RunState.Queued,
+                ).length;
+                return (
+                  count > 0 && <OverviewStats title="Active Experiments">{count}</OverviewStats>
+                );
+              },
             })}
             {Loadable.match(activeTasks, {
               _: () => null,
