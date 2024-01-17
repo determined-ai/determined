@@ -1,5 +1,6 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
+import { useChartSync } from 'hew/LineChart/SyncProvider';
 import Spinner from 'hew/Spinner';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
@@ -10,7 +11,6 @@ import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
-import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
 import css from './UPlotChart.module.scss';
 
