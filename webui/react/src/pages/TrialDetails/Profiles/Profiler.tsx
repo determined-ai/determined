@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
+import { SyncProvider } from 'hew/LineChart/SyncProvider';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
 
