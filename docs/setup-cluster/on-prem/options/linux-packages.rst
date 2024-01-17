@@ -13,8 +13,8 @@ systemd services on machines running Linux.
 You have two options for installing the Determined master and agent:
 
 -  Using Debian packages on Ubuntu 20.04 or 22.04, or
--  Using RPM packages on Enterprise Linux distributions (e.g., AlmaLinux, Oracle Linux, 
-   Red Hat Enterprise Linux, or Rocky Linux).
+-  Using RPM packages on Enterprise Linux distributions (e.g., AlmaLinux, Oracle Linux, Red Hat
+   Enterprise Linux, or Rocky Linux).
 
 *******************
  Preliminary Setup
@@ -77,9 +77,9 @@ Install PostgreSQL using ``apt`` or ``yum``
 
    **Enterprise Linux Distributions**
 
-   On Enterprise Linux distributions, you'll need to configure the PostgreSQL yum repository as described in
-   the `Enterprise Linux documentation <https://www.postgresql.org/download/linux/redhat>`_. Then,
-   install version 10:
+   On Enterprise Linux distributions, you'll need to configure the PostgreSQL yum repository as
+   described in the `Enterprise Linux documentation
+   <https://www.postgresql.org/download/linux/redhat>`_. Then, install version 10:
 
    .. code::
 
