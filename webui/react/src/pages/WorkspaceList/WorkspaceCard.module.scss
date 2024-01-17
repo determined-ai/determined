@@ -1,12 +1,6 @@
 .archived {
   opacity: 0.55;
 }
-.archivedBadge {
-  background-color: var(--theme-status-inactive);
-  border-radius: var(--theme-border-radius);
-  color: var(--theme-status-warning-on);
-  padding: 2px 4px;
-}
 .info {
   flex-direction: column;
   justify-content: space-between;
