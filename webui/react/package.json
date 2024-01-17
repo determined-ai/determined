@@ -55,6 +55,7 @@
     "lodash": "^4.17.21",
     "markdown-to-jsx": "^7.3.2",
     "micro-observables": "^1.7.2",
+    "modern-normalize": "^2.0.0",
     "notebook": "file:src/vendor/notebook",
     "omnibar": "github:hamidzr/omnibar",
     "path-to-regexp": "^6.2.1",
