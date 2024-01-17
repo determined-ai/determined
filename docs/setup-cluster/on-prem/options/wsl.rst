@@ -23,8 +23,7 @@ master and agent running on the same machine within WSL.
 -  WSL 2 `installed and enabled <https://learn.microsoft.com/en-us/windows/wsl/install>`_ on your
    Windows machine.
 
--  An Ubuntu or an Enterprise Linux WSL distribution installed from the Microsoft Store,
-   such as:
+-  An Ubuntu or an Enterprise Linux WSL distribution installed from the Microsoft Store, such as:
 
       -  `Ubuntu 22.04 LTS <https://www.microsoft.com/store/productId/9PDXGNCFSCZV>`_
       -  `AlmaLinux 9 <https://www.microsoft.com/store/productId/9P5RWLM70SN9>`_
@@ -67,7 +66,7 @@ Edit the configuration file to enable ``systemd`` within your WSL distribution. 
 #########################################
 
 This user guide provides instructions for using the ``det deploy`` command-line tool to deploy
-Determined locally on WSL. ``det deploy`` automates the process of starting Determined as a 
+Determined locally on WSL. ``det deploy`` automates the process of starting Determined as a
 collection of Docker containers.
 
 You can also use ``det deploy`` to install Determined on the cloud. For more information, see the
@@ -137,8 +136,7 @@ master and an agent on the same node. To do this, run one of the following comma
    det deploy local cluster-up --no-gpu
 
 This will start a master and an agent on that machine. To verify that the master is running,
-navigate to ``http://localhost:8080`` in a browser, which should bring up the Determined
-WebUI.
+navigate to ``http://localhost:8080`` in a browser, which should bring up the Determined WebUI.
 
 To open the WebUI from WSL:
 
