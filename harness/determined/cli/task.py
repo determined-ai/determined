@@ -170,14 +170,14 @@ def kill(args: Namespace) -> None:
 def pause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_PauseGenericTask(sess, taskId=args.task_id)
-    print(f"Sucessfully paused task: {args.task_id}")
+    print(f"Paused task: {args.task_id}")
 
 
 @authentication.required
 def resume(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_ResumeGenericTask(sess, taskId=args.task_id, projectId=args.project_id)
-    print(f"Sucessfully resumed task: {args.task_id}")
+    print(f"Resumed task: {args.task_id}")
 
 
 common_log_options: List[Any] = [
@@ -363,9 +363,9 @@ args_description: List[Any] = [
                 ],
             ),
             Cmd(
-                "resume",
+                "resume unpause",
                 resume,
-                "resume task",
+                "resume or unpause a task",
                 [
                     Arg("task_id", type=str, help=""),
                     Arg("--project_id", type=int, help="place this task inside this project"),
