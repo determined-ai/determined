@@ -126,7 +126,7 @@ def create(args: Namespace) -> None:
         contextDirectory=context_directory,
         projectId=args.project_id,
         parentId=args.parent,
-        inheritContext=args.inherit_context
+        inheritContext=args.inherit_context,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
@@ -324,7 +324,7 @@ args_description: List[Any] = [
                     Arg(
                         "--inherit_context",
                         action="store_true",
-                        help="inherit the context directory of the parent task (--parent flag required)",
+                        help="inherit the context directory of the parent task",
                     ),
                 ],
             ),
