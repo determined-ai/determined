@@ -2233,6 +2233,50 @@ export interface V1CreateGenericTaskResponse {
     warnings?: Array<V1LaunchWarning>;
 }
 /**
+ * Request to create a new generic task.
+ * @export
+ * @interface V1CreateGenericTaskRequest
+ */
+export interface V1CreateGenericTaskRequest {
+    /**
+     * Generic task context.
+     * @type {Array<V1File>}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    contextDirectory: Array<V1File>;
+    /**
+     * Generic task config (YAML).
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    config: string;
+    /**
+     * Project id to contain the experiment.
+     * @type {number}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    projectId: number;
+}
+/**
+ * Response to CreateExperimentRequest.
+ * @export
+ * @interface V1CreateGenericTaskResponse
+ */
+export interface V1CreateGenericTaskResponse {
+    /**
+     * The created generic taskID.
+     * @type {string}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    taskId: string;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
  * CreateGroupRequest is the body of the request for the call to create a group.
  * @export
  * @interface V1CreateGroupRequest

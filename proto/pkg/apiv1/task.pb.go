@@ -9,6 +9,7 @@ import (
 	logv1 "github.com/determined-ai/determined/proto/pkg/logv1"
 	taskv1 "github.com/determined-ai/determined/proto/pkg/taskv1"
 	utilv1 "github.com/determined-ai/determined/proto/pkg/utilv1"
+	utilv1 "github.com/determined-ai/determined/proto/pkg/utilv1"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
