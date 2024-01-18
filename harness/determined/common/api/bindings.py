@@ -13178,7 +13178,6 @@ class v1Task(Printable):
         taskType: "v1TaskType",
         config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        taskState: "v1GenericTaskState",
         noPause: "typing.Union[bool, None, Unset]" = _unset,
         parentId: "typing.Union[str, None, Unset]" = _unset,
         taskState: "typing.Union[v1GenericTaskState, None, Unset]" = _unset,
@@ -13187,7 +13186,6 @@ class v1Task(Printable):
         self.startTime = startTime
         self.taskId = taskId
         self.taskType = taskType
-        self.taskState = taskState
         if not isinstance(config, Unset):
             self.config = config
         if not isinstance(endTime, Unset):
@@ -13206,7 +13204,6 @@ class v1Task(Printable):
             "startTime": obj["startTime"],
             "taskId": obj["taskId"],
             "taskType": v1TaskType(obj["taskType"]),
-            "taskState": v1GenericTaskState(obj["taskState"])
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
@@ -13515,20 +13512,6 @@ class v1TaskType(DetEnum):
     TENSORBOARD = "TASK_TYPE_TENSORBOARD"
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
     GENERIC = "TASK_TYPE_GENERIC"
-
-class v1GenericTaskState(DetEnum):
-    """
-    """
-    UNSPECIFIED = "GENERIC_TASK_STATE_UNSPECIFIED"
-    ACTIVE = "GENERIC_TASK_STATE_ACTIVE"
-    CANCELED = "GENERIC_TASK_STATE_CANCELED"
-    COMPLETED = "GENERIC_TASK_STATE_COMPLETED"
-    ERROR = "GENERIC_TASK_STATE_ERROR"
-    PAUSED = "GENERIC_TASK_STATE_PAUSED"
-    STOPPING_PAUSED = "GENERIC_TASK_STATE_STOPPING_PAUSED"
-    STOPPING_CANCELED = "GENERIC_TASK_STATE_STOPPING_CANCELED"
-    STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
-    STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
 class v1Template(Printable):
     """Templates move settings that are shared by many experiments into a single
@@ -19185,33 +19168,6 @@ def post_KillShell(
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
     raise APIHttpError("post_KillShell", _resp)
-
-def post_KillGenericTask(
-    session: "api.Session",
-    *,
-    taskId: str,
-    killFromRoot: bool,
-) -> None:
-    """Kill the requested task.
-
-    - taskId: The id of the task.
-    """
-    _params = {
-        "killFromRoot": killFromRoot
-    }
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/tasks/{taskId}/kill",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return None
-    raise APIHttpError("post_KillGenericTask", _resp)
 
 def post_KillTensorboard(
     session: "api.Session",
