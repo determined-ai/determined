@@ -36,7 +36,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -488,21 +487,13 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return err
 			}
 			if len(checkpoints) > 0 {
-				groups, err := storage.GroupCheckpoints(context.Background(), checkpoints)
-				if err != nil {
-					log.WithError(err).Error("failed to group GC experiment in delete experiments")
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+					&taskSpec, exp.ID, exp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+				); err != nil {
+					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
 					return err
-				}
-
-				for _, g := range groups {
-					if err = runCheckpointGCTask(
-						a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-						taskSpec, exp.ID, exp.Config, g.StorageID, g.Checkpoints,
-						[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
-					); err != nil {
-						log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-						return err
-					}
 				}
 			}
 
@@ -1303,23 +1294,13 @@ func (a *apiServer) PatchExperiment(
 				Username: ownerFullUser.Username,
 			}
 
-			taskID := model.NewTaskID()
 			go func() {
-				groups, err := storage.GroupCheckpoints(context.Background(), checkpoints)
-				if err != nil {
-					log.WithError(err).Error("failed to group GC experiment in patch experiment")
-					return
-				}
-
-				for _, g := range groups {
-					err = runCheckpointGCTask(
-						a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-						taskSpec, modelExp.ID, modelExp.Config, g.StorageID, g.Checkpoints,
-						[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
-					)
-					if err != nil {
-						log.WithError(err).Error("failed to GC checkpoints in patch experiment")
-					}
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, modelExp.JobID, modelExp.StartTime,
+					&taskSpec, modelExp.ID, modelExp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
+				); err != nil {
+					log.WithError(err).Error("failed to GC checkpoints in patch experiment")
 				}
 			}()
 		}

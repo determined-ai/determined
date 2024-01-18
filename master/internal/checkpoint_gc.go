@@ -21,10 +21,55 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 const fullDeleteGlob = "**/*"
+
+func runCheckpointGCForCheckpoints(
+	rm rm.ResourceManager,
+	db *db.PgDB,
+	jobID model.JobID,
+	jobSubmissionTime time.Time,
+	taskSpec *tasks.TaskSpec,
+	expID int,
+	legacyConfig expconf.LegacyConfig,
+	toDeleteCheckpoints []uuid.UUID,
+	checkpointGlobs []string,
+	deleteTensorboards bool,
+	agentUserGroup *model.AgentUserGroup,
+	owner *model.User,
+	logCtx logger.Context,
+) error {
+	groups, err := storage.GroupCheckpoints(context.TODO(), toDeleteCheckpoints)
+	if err != nil {
+		return err
+	}
+
+	var wg errgroupx.Group
+	for _, g := range groups {
+		wg.Go(func(ctx context.Context) error {
+			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
+			if err := runCheckpointGCTask(
+				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
+				expID, legacyConfig, g.StorageID, g.Checkpoints,
+				checkpointGlobs, deleteTensorboards,
+				taskSpec.AgentUserGroup, taskSpec.Owner, logCtx,
+			); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		return fmt.Errorf("one or more checkpoint GC jobs failed: %w", err)
+	}
+
+	return nil
+}
 
 func runCheckpointGCTask(
 	rm rm.ResourceManager,
