@@ -8,7 +8,6 @@ import determined as det
 from determined import core, experimental, tensorboard
 from determined.common import api, constants, storage, util
 from determined.common.api import certs
-from determined.experimental import core_v2
 
 logger = logging.getLogger("determined.core")
 
@@ -99,8 +98,11 @@ def _make_v2_context(
             if tensorboard_mode == core.TensorboardMode.AUTO:
                 tbd_writer = tensorboard.get_metric_writer()
 
-        run_prepare_response = core_v2._run_prepare(
-            session, info.trial.trial_id, checkpoint_storage, distributed
+        run_prepare_response = core._run_prepare(
+            distributed,
+            session,
+            info.trial.trial_id,
+            checkpoint_storage,
         )
         train = core.TrainContext(
             session,
