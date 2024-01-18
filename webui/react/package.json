@@ -117,7 +117,7 @@
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
-    "@vitest/coverage-c8": "^0.33.0",
+    "@vitest/coverage-v8": "^0.34.6",
     "browserslist": "^4.22.1",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.3.1",
@@ -150,10 +150,10 @@
     "svgo": "^3.0.4",
     "typescript": "^5.3.2",
     "unimported": "^1.31.1",
-    "vite": "^4.3.5",
+    "vite": "^5.0.11",
     "vite-plugin-checker": "^0.6.2",
-    "vite-tsconfig-paths": "^4.2.1",
-    "vitest": "^0.31.0",
+    "vite-tsconfig-paths": "^4.2.3",
+    "vitest": "^0.34.5",
     "whatwg-fetch": "^3.6.19"
   }
 }
