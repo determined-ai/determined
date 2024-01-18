@@ -1,3 +1,4 @@
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import React from 'react';
 
@@ -33,7 +34,7 @@ const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => 
           title="No profiling enabled"
         />
       ) : !trial ? (
-        <Message icon="warning" title="Waiting for trial to become available." />
+        <Alert message="Waiting for trial to become available." type="warning" />
       ) : (
         <Profiler trial={trial} />
       )}
