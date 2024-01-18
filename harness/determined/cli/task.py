@@ -1,12 +1,13 @@
-from argparse import Namespace
+from argparse import FileType, Namespace
 from functools import partial
+from pathlib import Path
 from typing import Any, Dict, List, Union, cast
 
 from termcolor import colored
 
 from determined import cli
 from determined.cli import ntsc, render
-from determined.common import api
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings
 from determined.common.api.bindings import v1AllocationSummary
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -108,6 +109,38 @@ def logs(args: Namespace) -> None:
                 "green",
             )
         )
+
+
+@authentication.required
+def create(args: Namespace) -> None:
+    config = command.parse_config(args.config_file, None, args.config, [])
+    config_text = util.yaml_safe_dump(config)
+    context_directory = context.read_v1_context(args.context, args.include)
+
+    sess = cli.setup_session(args)
+    req = bindings.v1CreateGenericTaskRequest(
+        config=config_text,
+        contextDirectory=context_directory,
+        projectId=args.project_id,
+    )
+    task_resp = bindings.post_CreateGenericTask(sess, body=req)
+    print(f"created task {task_resp.taskId}")
+
+    if task_resp.warnings:
+        cli.print_launch_warnings(task_resp.warnings)
+
+    if args.follow:
+        try:
+            logs = api.task_logs(sess, task_resp.taskId, follow=True)
+            api.pprint_logs(logs)
+        finally:
+            print(
+                colored(
+                    "Task log stream ended. To reopen log stream, run: "
+                    "det task logs -f {}".format(task_resp.taskId),
+                    "green",
+                )
+            )
 
 
 common_log_options: List[Any] = [
@@ -215,6 +248,35 @@ args_description: List[Any] = [
                 [
                     Arg("task_id", help="task ID"),
                     *common_log_options,
+                ],
+            ),
+            Cmd(
+                "create",
+                create,
+                "create task (EXPERIMENTAL: This command should only be used in dev environments)",
+                [
+                    Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
+                    Arg(
+                        "context",
+                        type=Path,
+                        help=command.CONTEXT_DESC,
+                    ),
+                    Arg(
+                        "-i",
+                        "--include",
+                        action="append",
+                        default=[],
+                        type=Path,
+                        help=command.INCLUDE_DESC,
+                    ),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
+                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg(
+                        "-f",
+                        "--follow",
+                        action="store_true",
+                        help="follow the logs of the task that is created",
+                    ),
                 ],
             ),
         ],
