@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -9,6 +10,19 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+// AddJobTx persists the existence of a job with a transaction.
+func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
+	if idb == nil {
+		idb = Bun()
+	}
+
+	if _, err := idb.NewInsert().Model(j).Exec(ctx); err != nil {
+		return fmt.Errorf("adding job: %w", err)
+	}
+
+	return nil
+}
 
 // AddJob persists the existence of a job.
 func (db *PgDB) AddJob(j *model.Job) error {
@@ -26,15 +40,6 @@ WHERE job_id = $1
 		return nil, errors.Wrap(err, "querying job")
 	}
 	return &j, nil
-}
-
-// AddJobTx persists the existence of a job from a tx.
-func AddJobTx(ctx context.Context, idb bun.IDB, j *model.Job) error {
-	_, err := idb.NewInsert().Model(j).Exec(ctx)
-	if err != nil {
-		return errors.Wrap(err, "adding job")
-	}
-	return nil
 }
 
 // UpdateJobPosition propagates the new queue position to the job.

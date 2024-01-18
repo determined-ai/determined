@@ -5,11 +5,37 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/timestamp.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
 import "determined/api/v1/trial.proto";
 import "determined/log/v1/log.proto";
+import "determined/util/v1/util.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+
+// Request to create a new generic task.
+message CreateGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "context_directory", "config", "project_id" ] }
+  };
+  // Generic task context.
+  repeated determined.util.v1.File context_directory = 1;
+  // Generic task config (YAML).
+  string config = 2;
+  // Project id to contain the experiment.
+  optional int32 project_id = 3;
+}
+
+// Response to CreateExperimentRequest.
+message CreateGenericTaskResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The created generic taskID.
+  string task_id = 1;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 2;
+}
 
 // Get the requested task.
 message GetTaskRequest {
