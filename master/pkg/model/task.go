@@ -79,9 +79,9 @@ type Task struct {
 	LogVersion TaskLogVersion `db:"log_version"`
 
 	// Relations.
-	Job *Job `bun:"rel:belongs-to,join:job_id=job_id"`
-
-	Config *string `db:"config"`
+	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
+	ForkedFrom *string `db:"forked_from"`
+	Config     *string `db:"config"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form

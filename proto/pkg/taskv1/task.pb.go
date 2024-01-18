@@ -7,6 +7,7 @@ package taskv1
 import (
 	devicev1 "github.com/determined-ai/determined/proto/pkg/devicev1"
 	logv1 "github.com/determined-ai/determined/proto/pkg/logv1"
+	_ "github.com/golang/protobuf/ptypes/struct"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -114,6 +115,10 @@ const (
 	TaskType_TASK_TYPE_TENSORBOARD TaskType = 5
 	// "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_CHECKPOINT_GC TaskType = 6
+	// "GENERIC" task type for the enum public.task_type in Postgres.
+	TaskType_TASK_TYPE_GENERIC TaskType = 7
+	// "GENERIC" task type for the enum public.task_type in Postgres.
+	TaskType_TASK_TYPE_GENERIC TaskType = 7
 	// "GENERIC" task type for the enum public.task_type in Postgres.
 	TaskType_TASK_TYPE_GENERIC TaskType = 7
 )

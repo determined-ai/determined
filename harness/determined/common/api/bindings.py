@@ -2661,6 +2661,72 @@ class v1CreateGenericTaskResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
+class v1CreateGenericTaskRequest(Printable):
+    """Request to create a new generic task."""
+
+    def __init__(
+        self,
+        *,
+        config: str,
+        contextDirectory: "typing.Sequence[v1File]",
+        projectId: int,
+        forkedFrom: "typing.Optional[int]" = None
+    ):
+        self.config = config
+        self.contextDirectory = contextDirectory
+        self.projectId = projectId
+        self.forkedFrom = forkedFrom
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
+            "projectId": obj["projectId"],
+            "forkedFrom": obj["forkedFrom"]
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
+            "projectId": self.projectId,
+            "forkedFrom": self.forkedFrom
+        }
+        return out
+
+class v1CreateGenericTaskResponse(Printable):
+    """Response to CreateExperimentRequest."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        taskId: str,
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.taskId = taskId
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
 class v1CreateGroupRequest(Printable):
     """CreateGroupRequest is the body of the request for the call
     to create a group.
@@ -5688,6 +5754,29 @@ class v1GetTaskResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "task": self.task.to_json(omit_unset),
+        }
+        return out
+
+class v1GetTaskConfigResponse(Printable):
+    """Response to GetTaskConfigRequest."""
+
+    def __init__(
+        self,
+        *,
+        config: str,
+    ):
+        self.config = config
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTaskConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
         }
         return out
 
@@ -18021,6 +18110,30 @@ def get_GetTask(
     if _resp.status_code == 200:
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
+
+def get_GetTaskConfig(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetTaskConfigResponse":
+    """Check the status of a requested task.
+
+    - taskId: The requested task id.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/config",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTaskConfigResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTaskConfig", _resp)
 
 def get_GetTaskAcceleratorData(
     session: "api.Session",
