@@ -1675,7 +1675,7 @@ jobs:
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
-          xtra_args: "-v"
+          xtra_args: "-v -X fixes"
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -1701,7 +1701,7 @@ jobs:
       - run: make -C agent test-intg
       - codecov/upload:
           flags: "backend"
-          xtra_args: "-v"
+          xtra_args: "-v -X fixes"
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
