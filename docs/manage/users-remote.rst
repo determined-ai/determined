@@ -50,7 +50,7 @@ enable user auto-provisioning and the remote management of any information attac
              client_id: "xx0xx0"
              client_secret: "xx0xx0"
              auto_provision_users: true
-             display_name_claim_name: "XYZ"
+             display_name_attribute_name: "XYZ"
 
    .. tab::
 
@@ -93,7 +93,7 @@ To enable group membership synchronization:
 
       OIDC
 
-      -  Set the ``groups_claim_name`` option to match the claim name for group memberships from
+      -  Set the ``groups_attribute_name`` option to match the claim name for group memberships from
          your authenticator (i.e., either a custom user attribute such as ``groups_memberships`` or
          ``usergroup_memberships``, or the authenticator's groups claim, passed in as ``groups``,
          etc.).

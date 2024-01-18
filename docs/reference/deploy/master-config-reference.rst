@@ -1613,8 +1613,8 @@ used for :ref:`remote user <remote-users>` management.
           authentication_claim: "string"
           scim_authentication_attribute: "string"
           auto_provision_users: true
-          groups_claim_name: "XYZ"
-          display_name_claim_name: "XYZ"
+          groups_attribute_name: "XYZ"
+          display_name_attribute_name: "XYZ"
 
 ``enabled``
 ===========
@@ -1673,15 +1673,16 @@ Determines if users should be automatically created in Determined upon successfu
    -  ``true``: Automatic user provisioning is enabled.
    -  ``false``: Automatic user provisioning is disabled.
 
-``groups_claim_name``
-=====================
+``groups_attribute_name``
+=========================
 
-The claim name that specifies group memberships in OIDC.
+The name of the attribute passed in through the claim that specifies group memberships in OIDC.
 
-``display_name_claim_name``
-===========================
+``display_name_attribute_name``
+===============================
 
-The claim name from the OIDC provider used to set the user's display name in Determined.
+The name of the attribute passed in through the claim from the OIDC provider used to set the user's
+display name in Determined.
 
 **********
  ``saml``
