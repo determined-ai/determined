@@ -19074,12 +19074,15 @@ def post_KillGenericTask(
     session: "api.Session",
     *,
     taskId: str,
+    killFromRoot: bool,
 ) -> None:
-    """Kill generic task
+    """Kill the requested task.
 
     - taskId: The id of the task.
     """
-    _params = None
+    _params = {
+        "killFromRoot": killFromRoot
+    }
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tasks/{taskId}/kill",
@@ -19091,7 +19094,7 @@ def post_KillGenericTask(
         stream=False,
     )
     if _resp.status_code == 200:
-        return
+        return None
     raise APIHttpError("post_KillGenericTask", _resp)
 
 def post_KillNotebook(
