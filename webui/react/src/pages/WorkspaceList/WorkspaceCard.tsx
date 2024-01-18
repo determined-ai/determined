@@ -1,4 +1,5 @@
 import Avatar, { Size } from 'hew/Avatar';
+import Badge from 'hew/Badge';
 import Card from 'hew/Card';
 import Column from 'hew/Column';
 import Icon from 'hew/Icon';
@@ -60,7 +61,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
                 <Spinner conditionalRender spinning={Loadable.isNotLoaded(loadableUser)}>
                   {Loadable.isLoaded(loadableUser) && <UserAvatar user={user} />}
                 </Spinner>
-                {workspace.archived && <div className={css.archivedBadge}>Archived</div>}
+                {workspace.archived && (
+                  <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
+                )}
               </Row>
             </Column>
           </div>
