@@ -24,8 +24,11 @@ message CreateGenericTaskRequest {
   string config = 2;
   // Project id to contain the experiment.
   optional int32 project_id = 3;
-  // Unmanaged experiments are detached. Maybe?
-  // optional bool unmanaged = 40;
+  // Parent ID of new task
+  optional string parent_id = 4;
+  // If True inherits the context directory from the paren task (requires parent_id)
+  optional bool inherit_context = 5;
+  // Id of the task that this task is forked from
   optional string forked_from = 4;
 }
 
@@ -39,7 +42,6 @@ message CreateGenericTaskResponse {
   // List of any related warnings.
   repeated LaunchWarning warnings = 2;
 }
-
 // Get the requested task.
 message GetTaskRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
