@@ -13147,11 +13147,13 @@ class v1Task(Printable):
         taskType: "v1TaskType",
         config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        taskState: "v1GenericTaskState",
     ):
         self.allocations = allocations
         self.startTime = startTime
         self.taskId = taskId
         self.taskType = taskType
+        self.taskState = taskState
         if not isinstance(config, Unset):
             self.config = config
         if not isinstance(endTime, Unset):
@@ -13164,6 +13166,7 @@ class v1Task(Printable):
             "startTime": obj["startTime"],
             "taskId": obj["taskId"],
             "taskType": v1TaskType(obj["taskType"]),
+            "taskState": v1GenericTaskState(obj["taskState"])
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
@@ -13177,6 +13180,7 @@ class v1Task(Printable):
             "startTime": self.startTime,
             "taskId": self.taskId,
             "taskType": self.taskType.value,
+            "taskState": self.taskState.value,
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
@@ -13459,6 +13463,20 @@ class v1TaskType(DetEnum):
     TENSORBOARD = "TASK_TYPE_TENSORBOARD"
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
     GENERIC = "TASK_TYPE_GENERIC"
+
+class v1GenericTaskState(DetEnum):
+    """
+    """
+    UNSPECIFIED = "GENERIC_TASK_STATE_UNSPECIFIED"
+    ACTIVE = "GENERIC_TASK_STATE_ACTIVE"
+    CANCELED = "GENERIC_TASK_STATE_CANCELED"
+    COMPLETED = "GENERIC_TASK_STATE_COMPLETED"
+    ERROR = "GENERIC_TASK_STATE_ERROR"
+    PAUSED = "GENERIC_TASK_STATE_PAUSED"
+    STOPPING_PAUSED = "GENERIC_TASK_STATE_STOPPING_PAUSED"
+    STOPPING_CANCELED = "GENERIC_TASK_STATE_STOPPING_CANCELED"
+    STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
 class v1Template(Printable):
     """Templates move settings that are shared by many experiments into a single
