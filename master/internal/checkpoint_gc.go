@@ -47,7 +47,7 @@ func runCheckpointGCForCheckpoints(
 		return err
 	}
 
-	var wg errgroupx.Group
+	wg := errgroupx.WithContext(context.Background())
 	for _, g := range groups {
 		wg.Go(func(ctx context.Context) error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
@@ -55,7 +55,7 @@ func runCheckpointGCForCheckpoints(
 				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
 				expID, legacyConfig, g.StorageID, g.Checkpoints,
 				checkpointGlobs, deleteTensorboards,
-				taskSpec.AgentUserGroup, taskSpec.Owner, logCtx,
+				agentUserGroup, owner, logCtx,
 			); err != nil {
 				return err
 			}
