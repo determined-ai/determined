@@ -60,7 +60,8 @@ const TableFilter = ({
               if (e.key === 'Escape') {
                 onHidePopOver();
               }
-            }}>
+            }}
+            onMouseMove={(e) => e.stopPropagation()}>
             <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
           </div>
         }

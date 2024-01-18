@@ -1,7 +1,7 @@
-import { Dropdown, DropDownProps, type MenuProps } from 'antd';
 import Button from 'hew/Button';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
@@ -90,26 +90,29 @@ const FilterGroup = ({
     },
   });
 
-  const menuItems: DropDownProps['menu'] = useMemo(() => {
-    const onItemClick: MenuProps['onClick'] = (e) => {
-      if (e.key === FormKind.Field || e.key === FormKind.Group) {
-        formStore.addChild(group.id, e.key);
+  const onItemClick = useCallback(
+    (key: string) => {
+      if (key === FormKind.Field || key === FormKind.Group) {
+        formStore.addChild(group.id, key);
         setTimeout(() => {
           scrollBottomRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 100);
       }
-    };
+    },
+    [formStore, group.id],
+  );
 
-    const items: MenuProps['items'] = [
+  const menuItems: MenuItem[] = useMemo(
+    () => [
       { key: FormKind.Field, label: <div>Add condition</div> },
       {
         disabled: level > 1,
         key: FormKind.Group,
         label: <div>Add condition group</div>,
       },
-    ];
-    return { items: items, onClick: onItemClick };
-  }, [formStore, group.id, level]);
+    ],
+    [level],
+  );
 
   if (level === 0 && group.children.length === 0) {
     // return empty div if there's nothing to show
@@ -141,7 +144,7 @@ const FilterGroup = ({
               <Dropdown
                 disabled={group.children.length > ITEM_LIMIT}
                 menu={menuItems}
-                trigger={['click']}>
+                onClick={onItemClick}>
                 <Button icon={<Icon name="add" size="tiny" title="Add field" />} type="text" />
               </Dropdown>
               <Button
