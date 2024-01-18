@@ -58,6 +58,8 @@ const ExperimentIcons: React.FC<Props> = ({
       case RunState.Canceled:
       case CommandState.Terminated:
         return { color: 'cancel', name: 'cancelled', title: 'Stopped' };
+      default:
+        return { color: 'cancel', name: 'exclamation-circle', title: 'Unknown State' };
     }
   }, [backgroundColor, opacity, state]);
 
