@@ -272,3 +272,21 @@ message GetAllocationResponse {
   // The id of the allocation.
   determined.task.v1.Allocation allocation = 1;
 }
+
+// Gets task configuration JSON
+message GetGenericTaskConfigRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to GetTaskConfigRequest
+message GetGenericTaskConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config" ] }
+  };
+  // The config of the task
+  string config = 1;
+}
