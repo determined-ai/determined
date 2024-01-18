@@ -63,7 +63,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       </Checkbox>
       {type !== ActionType.Cancel && (
         <Alert
-          message={'Note: Any progress/data on incomplete workflows will be lost.'}
+          message="Note: Any progress/data on incomplete workflows will be lost."
           type="warning"
         />
       )}
