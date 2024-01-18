@@ -1,7 +1,7 @@
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
@@ -90,8 +90,8 @@ const FilterGroup = ({
     },
   });
 
-  const onItemClick = useMemo(
-    () => (key: string) => {
+  const onItemClick = useCallback(
+    (key: string) => {
       if (key === FormKind.Field || key === FormKind.Group) {
         formStore.addChild(group.id, key);
         setTimeout(() => {
