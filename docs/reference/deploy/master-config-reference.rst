@@ -1674,14 +1674,15 @@ Determines if users should be automatically created in Determined upon successfu
    -  ``false``: Automatic user provisioning is disabled.
 
 ``groups_attribute_name``
-=====================
+=========================
 
 The name of the attribute passed in through the claim that specifies group memberships in OIDC.
 
 ``display_name_attribute_name``
-===========================
+===============================
 
-The name of the attribute passed in through the claim from the OIDC provider used to set the user's display name in Determined.
+The name of the attribute passed in through the claim from the OIDC provider used to set the user's
+display name in Determined.
 
 **********
  ``saml``
