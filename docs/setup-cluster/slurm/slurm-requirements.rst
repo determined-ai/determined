@@ -228,6 +228,94 @@ interacts with PBS, we recommend the following steps:
    define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
    your experiment configuration to indicate how many GPU slots are intended for Determined to use.
 
+-  Configure PBS to manage GPU resources.
+
+   Determined works best when allocating GPUs. By default, Determined selects compute nodes with
+   GPUs using the option ``-select={slots_per_trial}:ngpus=1``. If PBS cannot be configured to
+   identify GPUs in this manner, specify the :ref:`pbs section <cluster-configuration-slurm>`
+   ``gres_supported`` option to ``false`` when configuring Determined, and it will then be the
+   user's responsibility to ensure that GPUs will be available on nodes selected for the job using
+   other configurations such as targeting a specific resource pool with only GPU nodes, or
+   specifying a PBS constraint in the experiment configuration.
+
+   PBS should be configured to provide the environment variable ``CUDA_VISIBLE_DEVICES``
+   (``ROCR_VISIBLE_DEVICES`` for ROCm) using a PBS cgroup hook as described in the PBS
+   Administrator's Guide. If PBS is not configured to set ``CUDA_VISIBLE_DEVICES``, Determined will
+   utilize a single GPU on each node. To fully utilize multiple GPUs, you must either manually
+   define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
+   your experiment configuration to indicate how many GPU slots are intended for Determined to use.
+
+-  Ensure ``ngpus`` resource is defined with appropriate values.
+
+   It is necessary to define the ``ngpus`` resource value for every node on the cluster for
+   DeterminedAI to work successfully. Additionally, the resource should also have appropriate flags
+   for PBS to process the value properly while scheduling jobs. Use the following command to check
+   if ``ngpus`` resource is defined with appropriate flags.
+
+   .. code:: bash
+
+      [~]$ qmgr -c "list resource ngpus"
+      Resource ngpus
+          type = long
+          flag = hn
+
+   The above output indicates that ngpus is defined as a type ``long`` resource with flags ``h``
+   (indicating this is a host level resource) and ``n`` (indicating this is a consumable resource).
+   If the nodes on your hpc cluster do not provide the same output, use the following commands to
+   create and set the resource ``ngpus`` for every node.
+
+   .. code:: bash
+
+      [~]$ qmgr -c "create resource ngpus type=long, flag=hn" # create the ngpus resource
+      [~]$ qmgr -c "set node <nodename> ngpus=<number of GPUs>" # set the value for ngpus
+
+   If you are using virtual nodes (vnodes), ensure ``ngpus`` value is only set on the vnodes and not
+   the actual parent node. Below are the commands and sample output to ensure the same.
+
+   .. code:: bash
+
+      [~]$ sudo qmgr -c "list node node002[0] resources_available"
+      Node node002[0]
+          resources_available.arch = linux
+          resources_available.host = node002
+          resources_available.hpmem = 0b
+          resources_available.mem = 45943mb
+          resources_available.ncpus = 18
+          resources_available.ngpus = 2 # ngpus value is set on vnode node002[0]
+          resources_available.vmem = 46933mb
+          resources_available.vnode = node002[0]
+      [~]$ sudo qmgr -c "list node node002 resources_available"
+      Node node002
+          resources_available.accel_type = tesla
+          resources_available.arch = linux
+          resources_available.host = node002
+          resources_available.hpmem = 0b
+          resources_available.mem = 0b
+          resources_available.ncpus = 0 # ngpus value is not set on parent node node002
+          resources_available.Qlist = gpuQ,gpu_hi_priQ
+          resources_available.vmem = 0b
+          resources_available.vnode = node002
+
+   If the ``ngpus`` value is set on the parent node, use the below command to unset it.
+
+   .. code:: bash
+
+      [madagund@node003 ~]$ sudo qmgr -c "unset node <node_name> resources_available.ngpus"
+
+   The next step is to ensure that ``ngpus`` is listed as a resource in the
+   ``<sched_priv_directory>/sched_config`` file.
+
+   .. code:: bash
+
+      [~]$ sudo cat <sched_priv_directory>/sched_config | grep "resources:"
+      resources: "ngpus, ncpus, mem, arch, host, vnode, ..., foo"
+
+   Finally, restart the pbs server to apply the changes.
+
+   .. code:: bash
+
+      [~]$ sudo systemctl restart pbs
+
 -  Configure PBS to report GPU Accelerator type.
 
    It is recommended that PBS administrators set the value for ``resources_available.accel_type`` on
