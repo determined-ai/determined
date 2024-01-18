@@ -94,6 +94,15 @@ stringData:
       {{- if .Values.oidc.scimAuthenticationAttribute }}
       scim_authentication_attribute: {{ .Values.oidc.scimAuthenticationAttribute }}
       {{- end }}
+      {{- if .Values.oidc.autoProvisionUsers }}
+      auto_provision_users: {{ .Values.oidc.autoProvisionUsers }}
+      {{- end }}
+      {{- if .Values.oidc.groupsClaimName }}
+      groups_claim_name: {{ .Values.oidc.groupsClaimName }}
+      {{- end }}
+      {{- if .Values.oidc.displayNameClaimName }}
+      display_name_claim_name: {{ .Values.oidc.displayNameClaimName }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}
@@ -105,6 +114,25 @@ stringData:
         username: {{ required "A valid username is required!" .Values.scim.auth.username }}
         password: {{ required "A valid password type is required!" .Values.scim.auth.password }}
         {{- end }}
+    {{- end }}
+
+    {{- if .Values.saml }}
+    saml:
+      enabled: {{ .Values.saml.enabled | default false }}
+      provider: {{ required "A valid provider entry is required!" .Values.saml.provider}}
+      idp_recipient_url: {{ required "A valid recipient url is required!" .Values.saml.idpRecipientUrl }}
+      idp_sso_url: {{ required "A valid sso url is required!" .Values.saml.idpSsoUrl }}
+      idp_sso_descriptor_url: {{ required "A valid sso descriptor url is required!" .Values.saml.idpSsoDescriptorUrl }}
+      idp_cert_path: {{ required "A valid idp cert path is required!" .Values.saml.idpCertPath }}
+      {{- if .Values.saml.autoProvisionUsers }}
+      auto_provision_users: {{ .Values.saml.autoProvisionUsers }}
+      {{- end }}
+      {{- if .Values.saml.groupsAttributeName }}
+      groups_attribute_name: {{ .Values.saml.groupsAttributeName }}
+      {{- end }}
+      {{- if .Values.saml.displayNameAttributeName }}
+      display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
+      {{- end }}
     {{- end }}
     {{- end }}
 
