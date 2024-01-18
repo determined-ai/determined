@@ -112,29 +112,27 @@ func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	if _, err := db.sql.Exec(`
 UPDATE tasks
 SET task_state = (
-    CASE WHEN task_state=$2 THEN $3::task_state
-    ELSE $4::task_state END)
+	CASE WHEN task_state=$2 THEN $3::task_state
+	ELSE $4::task_state END)
 WHERE task_id = $1
-    `, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
+	`, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
 		return errors.Wrap(err, "completing task")
 	}
 	return nil
 }
 
-// KillGenericTask persists the termination of a task of type GENERIC.
-func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
-	err := completeTask(db.sql, tID, endTime)
-	if err != nil {
-		return err
+// IsPaused returns true if given task is in paused/pausing state.
+func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
+	query := fmt.Sprintf(`
+SELECT count(*)
+FROM tasks
+WHERE task_id = '%s' AND (task_state='%s' OR task_state='%s')
+`, tID, model.TaskStateStoppingPaused, model.TaskStatePaused)
+	var count int
+	if err := db.sql.QueryRow(query).Scan(&count); err != nil {
+		return false, err
 	}
-	if _, err := db.sql.Exec(`
-UPDATE tasks
-SET task_state = $2
-WHERE task_id = $1
-	`, tID, model.TaskStateCanceled); err != nil {
-		return errors.Wrap(err, "killing task")
-	}
-	return nil
+	return count > 0, nil
 }
 
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {

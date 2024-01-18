@@ -2416,4 +2416,26 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Pause generic task
+  rpc PauseGenericTask(PauseGenericTaskRequest)
+      returns (PauseGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tasks/{task_id}/pause"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Resume generic task
+  rpc ResumeGenericTask(ResumeGenericTaskRequest)
+      returns (ResumeGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tasks/{task_id}/resume"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

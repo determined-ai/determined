@@ -309,3 +309,30 @@ message KillGenericTaskRequest {
 
 // Response to KillGenericTaskRequest
 message KillGenericTaskResponse {}
+
+// Pauses generic task
+message PauseGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to PauseGenericTaskRequest
+message PauseGenericTaskResponse {}
+
+// Resumes generic task
+message ResumeGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+
+  // Project id to contain the experiment.
+  optional int32 project_id = 3;
+}
+
+// Response to ResumeGenericTaskRequest
+message ResumeGenericTaskResponse {}

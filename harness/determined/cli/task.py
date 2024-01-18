@@ -126,7 +126,7 @@ def create(args: Namespace) -> None:
         contextDirectory=context_directory,
         projectId=args.project_id,
         parentId=args.parent,
-        inheritContext=args.inherit_context
+        inheritContext=args.inherit_context,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     print(f"created task {task_resp.taskId}")
@@ -164,6 +164,20 @@ def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_KillGenericTask(sess, taskId=args.task_id, killFromRoot=args.root)
     print(f"Sucessfully killed task: {args.task_id}")
+
+
+@authentication.required
+def pause(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_PauseGenericTask(sess, taskId=args.task_id)
+    print(f"Paused task: {args.task_id}")
+
+
+@authentication.required
+def resume(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_ResumeGenericTask(sess, taskId=args.task_id, projectId=args.project_id)
+    print(f"Resumed task: {args.task_id}")
 
 
 common_log_options: List[Any] = [
@@ -310,7 +324,7 @@ args_description: List[Any] = [
                     Arg(
                         "--inherit_context",
                         action="store_true",
-                        help="inherit the context directory of the parent task (--parent flag required)",
+                        help="inherit the context directory of the parent task",
                     ),
                 ],
             ),
@@ -337,7 +351,24 @@ args_description: List[Any] = [
                         "--root",
                         action="store_true",
                         help="",
-                    )
+                    ),
+                ],
+            ),
+            Cmd(
+                "pause",
+                pause,
+                "pause task",
+                [
+                    Arg("task_id", type=str, help=""),
+                ],
+            ),
+            Cmd(
+                "resume unpause",
+                resume,
+                "resume or unpause a task",
+                [
+                    Arg("task_id", type=str, help=""),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
                 ],
             ),
         ],

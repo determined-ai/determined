@@ -120,6 +120,8 @@ message Task {
   optional string parent_id = 8;
   // State of task execution.
   optional GenericTaskState task_state = 9;
+  // Flag for whether task can be paused or not.
+  optional bool no_pause = 10;
 }
 
 // Address represents an exposed port on a container.

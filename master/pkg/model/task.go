@@ -85,6 +85,8 @@ type Task struct {
 	State *TaskState `db:"task_state" bun:"task_state"`
 
 	Config *string `db:"config"`
+
+	NoPause *bool `db:"no_pause"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form
@@ -107,6 +109,15 @@ func (a AllocationID) String() string {
 // ToTaskID converts an AllocationID to its taskID.
 func (a AllocationID) ToTaskID() TaskID {
 	return TaskID(a[:strings.LastIndex(string(a), ".")])
+}
+
+// GetAllocationSpecifier retrieves number at the end of the allocation's id.
+func (a AllocationID) GetAllocationSpecifier() (int, error) {
+	i, err := strconv.Atoi(a[strings.LastIndex(string(a), ".")+1:].String())
+	if err != nil {
+		return 0, err
+	}
+	return i, nil
 }
 
 // Allocation is the model for an allocation in the database.
