@@ -6949,29 +6949,6 @@ class v1KillShellResponse(Printable):
         if not omit_unset or "shell" in vars(self):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
-
-class v1KillGenericTaskRequest(Printable):
-    """Kill multiple experiments."""
-
-    def __init__(
-        self,
-        *,
-        taskId: int,
-    ):
-        self.taskId = taskId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1KillGenericTaskRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "taskId": obj["taskId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "taskId": self.taskId,
-        }
-        return out
     
 class v1KillTensorboardResponse(Printable):
     """Response to KillTensorboardRequest."""
@@ -13223,7 +13200,6 @@ class v1Task(Printable):
             "startTime": self.startTime,
             "taskId": self.taskId,
             "taskType": self.taskType.value,
-            "taskState": self.taskState.value,
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
