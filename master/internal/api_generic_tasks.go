@@ -29,6 +29,7 @@ import (
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -200,12 +201,18 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
+		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
+		if err != nil {
+			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
+		}
+
 		if err := db.AddTaskTx(ctx, tx, &model.Task{
 			TaskID:     taskID,
 			TaskType:   model.TaskTypeGeneric,
 			StartTime:  startTime,
 			JobID:      &jobID,
 			LogVersion: model.CurrentTaskLogVersion,
+			Config:     ptrs.Ptr(string(configBytes)),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
