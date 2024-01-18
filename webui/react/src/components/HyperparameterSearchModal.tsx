@@ -668,7 +668,7 @@ const HyperparameterRow: React.FC<RowProps> = ({ hyperparameter, name, searcher 
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Label size={TypographySize.L} truncate={{ rows: 1, tooltip: true }}>
+        <Label size={TypographySize.L} truncate={{ tooltip: true }}>
           {name}
         </Label>
       </div>
