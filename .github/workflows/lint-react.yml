@@ -21,7 +21,7 @@ jobs:
           node-version: 20.9.0
       # Explicitly caching node_modules manually as actions/setup-node does not
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: webui/react/node_modules.${{ hashFiles('webui/react/package-lock.json') }}
           path: webui/react/node_modules
