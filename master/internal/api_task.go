@@ -43,7 +43,6 @@ func (a *apiServer) GetGenericTaskConfig(
 	switch err := db.Bun().NewSelect().Model(t).
 		Column("config").
 		Where("task_id = ?", req.TaskId).
-		Limit(1).
 		Scan(ctx); {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
