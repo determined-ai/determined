@@ -1,3 +1,4 @@
+import json
 from argparse import FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -143,6 +144,17 @@ def create(args: Namespace) -> None:
             )
 
 
+@authentication.required
+def config(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
+    if args.json:
+        render.print_json(config_resp.config)
+    else:
+        yaml_dict = json.loads(config_resp.config)
+        print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
+
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
@@ -276,6 +288,19 @@ args_description: List[Any] = [
                         "--follow",
                         action="store_true",
                         help="follow the logs of the task that is created",
+                    ),
+                ],
+            ),
+            Cmd(
+                "config",
+                config,
+                "get config for given task",
+                [
+                    Arg("task_id", type=str, help="ID of task to pull config from"),
+                    Arg(
+                        "--json",
+                        action="store_true",
+                        help="return config in JSON format",
                     ),
                 ],
             ),

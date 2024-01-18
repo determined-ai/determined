@@ -4450,6 +4450,28 @@ class v1GetExperimentsResponse(Printable):
         }
         return out
 
+class v1GetGenericTaskConfigResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        config: str,
+    ):
+        self.config = config
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGenericTaskConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+        }
+        return out
+
 class v1GetGroupResponse(Printable):
     """GetGroupResponse is the body of the response for the call
     to get a group by id.
@@ -13057,6 +13079,7 @@ class v1StartTrialResponse(Printable):
 
 class v1Task(Printable):
     """Task is the model for a task in the database."""
+    config: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
 
     def __init__(
@@ -13066,12 +13089,15 @@ class v1Task(Printable):
         startTime: str,
         taskId: str,
         taskType: "v1TaskType",
+        config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocations = allocations
         self.startTime = startTime
         self.taskId = taskId
         self.taskType = taskType
+        if not isinstance(config, Unset):
+            self.config = config
         if not isinstance(endTime, Unset):
             self.endTime = endTime
 
@@ -13083,6 +13109,8 @@ class v1Task(Printable):
             "taskId": obj["taskId"],
             "taskType": v1TaskType(obj["taskType"]),
         }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
@@ -13094,6 +13122,8 @@ class v1Task(Printable):
             "taskId": self.taskId,
             "taskType": self.taskType.value,
         }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         return out
@@ -13363,6 +13393,7 @@ class v1TaskType(DetEnum):
     - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.
     - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.
     - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
     """
     UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
     TRIAL = "TASK_TYPE_TRIAL"
@@ -13371,6 +13402,7 @@ class v1TaskType(DetEnum):
     COMMAND = "TASK_TYPE_COMMAND"
     TENSORBOARD = "TASK_TYPE_TENSORBOARD"
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
+    GENERIC = "TASK_TYPE_GENERIC"
 
 class v1Template(Printable):
     """Templates move settings that are shared by many experiments into a single
@@ -16902,6 +16934,30 @@ usernames.
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiments", _resp)
+
+def get_GetGenericTaskConfig(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetGenericTaskConfigResponse":
+    """Get task config
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/config",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGenericTaskConfigResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGenericTaskConfig", _resp)
 
 def get_GetGroup(
     session: "api.Session",
