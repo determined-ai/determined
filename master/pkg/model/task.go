@@ -80,8 +80,10 @@ type Task struct {
 
 	// Relations.
 	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
+	ParentID   *TaskID `db:"parent_id"`
 	ForkedFrom *string `db:"forked_from"`
-	Config     *string `db:"config"`
+
+	Config *string `db:"config"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form

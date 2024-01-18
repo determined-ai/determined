@@ -2606,28 +2606,42 @@ class v1CreateGenericTaskRequest(Printable):
         self,
         *,
         config: str,
-        contextDirectory: "typing.Sequence[v1File]",
+        contextDirectory: "typing.Optional[typing.Sequence[v1File]]" = None,
         projectId: int,
+        forkedFrom: "typing.Optional[int]" = None,
+        parentId: int,
+        inheritContext: bool,
     ):
         self.config = config
         self.contextDirectory = contextDirectory
         self.projectId = projectId
+        self.parentId = parentId
+        self.inheritContext = inheritContext
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
-            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
             "projectId": obj["projectId"],
+            "forkedFrom": obj["forkedFrom"],
+            "parentId": obj["parentId"],
+            "inheritContext": obj["inheritContext"]
         }
+        if "contextDirectory" in obj:
+            print("here")
+            kwargs["contextDirectory"] = [v1File.from_json(x) for x in obj["contextDirectory"]]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
-            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
             "projectId": self.projectId,
+            "forkedFrom": self.forkedFrom,
+            "parentId": self.parentId,
+            "inheritContext": self.inheritContext,
         }
+        if self.contextDirectory is not None:
+            out["contextDirectory"] = [x.to_json(omit_unset) for x in self.contextDirectory] 
         return out
 
 class v1CreateGenericTaskResponse(Printable):
@@ -2661,71 +2675,6 @@ class v1CreateGenericTaskResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
-class v1CreateGenericTaskRequest(Printable):
-    """Request to create a new generic task."""
-
-    def __init__(
-        self,
-        *,
-        config: str,
-        contextDirectory: "typing.Sequence[v1File]",
-        projectId: int,
-        forkedFrom: "typing.Optional[int]" = None
-    ):
-        self.config = config
-        self.contextDirectory = contextDirectory
-        self.projectId = projectId
-        self.forkedFrom = forkedFrom
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
-            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
-            "projectId": obj["projectId"],
-            "forkedFrom": obj["forkedFrom"]
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
-            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
-            "projectId": self.projectId,
-            "forkedFrom": self.forkedFrom
-        }
-        return out
-
-class v1CreateGenericTaskResponse(Printable):
-    """Response to CreateExperimentRequest."""
-    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
-
-    def __init__(
-        self,
-        *,
-        taskId: str,
-        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
-    ):
-        self.taskId = taskId
-        if not isinstance(warnings, Unset):
-            self.warnings = warnings
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CreateGenericTaskResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "taskId": obj["taskId"],
-        }
-        if "warnings" in obj:
-            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "taskId": self.taskId,
-        }
-        if not omit_unset or "warnings" in vars(self):
-            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
-        return out
 
 class v1CreateGroupRequest(Printable):
     """CreateGroupRequest is the body of the request for the call

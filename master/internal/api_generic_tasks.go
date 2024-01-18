@@ -94,11 +94,10 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 
-	combinedTaskConfig := combineTaskConfig([]byte(configYAML), forkedConfig)
-
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
 
+	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -239,11 +238,17 @@ func (a *apiServer) CreateGenericTask(
 	genericTaskSpec, warnings, contextDirectoryBytes, err := a.getGenericTaskLaunchParameters(
 		ctx, req.ContextDirectory, projectID, configBytes,
 	)
-	if len(contextDirectoryBytes) == 0 {
-		contextDirectoryBytes = forkedContextDirectory
-	}
 	if err != nil {
 		return nil, err
+	}
+	if req.InheritContext != nil && *req.InheritContext {
+		if req.ParentId == nil {
+			return nil, fmt.Errorf("could not inherit config directory since no parent task id provided")
+		}
+		contextDirectoryBytes, err = db.NonExperimentTasksContextDirectory(ctx, model.TaskID(*req.ParentId))
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(contextDirectoryBytes) == 0 {
 		contextDirectoryBytes = forkedContextDirectory
@@ -287,12 +292,15 @@ func (a *apiServer) CreateGenericTask(
 			LogVersion: model.CurrentTaskLogVersion,
 			ForkedFrom: req.ForkedFrom,
 			Config:     ptrs.Ptr(string(configBytesJSON)),
+			ParentID:   (*model.TaskID)(req.ParentId),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
 
 		// TODO persist config elemnts
-
+		if contextDirectoryBytes == nil {
+			contextDirectoryBytes = []byte{}
+		}
 		if _, err := tx.NewInsert().Model(&model.TaskContextDirectory{
 			TaskID:           taskID,
 			ContextDirectory: contextDirectoryBytes,

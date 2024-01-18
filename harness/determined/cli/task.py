@@ -146,6 +146,8 @@ def create(args: Namespace) -> None:
         contextDirectory=context_directory,
         projectId=args.project_id,
         forkedFrom=args.fork,
+        parentId=args.parent,
+        inheritContext=args.inherit_context
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
@@ -171,7 +173,6 @@ def fork(args: Namespace) -> None:
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
-
 
 common_log_options: List[Any] = [
     Arg(
@@ -308,6 +309,17 @@ args_description: List[Any] = [
                         help="follow the logs of the task that is created",
                     ),
                     Arg("--fork", type=str, help="id of parent task to fork from"),
+                    Arg(
+                        "-p",
+                        "--parent",
+                        type=str,
+                        help="task id of parent task",
+                    ),
+                    Arg(
+                        "--inherit_context",
+                        action="store_true",
+                        help="inherit the context directory of the parent task (--parent flag required)",
+                    ),
                 ],
             ),
             Cmd(
