@@ -35,3 +35,6 @@ vi.mock('router');
 vi.mock('services/api', () => ({}));
 
 global.ResizeObserver = require('resize-observer-polyfill');
+
+// https://vitest.dev/guide/common-errors#cannot-mock-mocked-file-js-because-it-is-already-loaded
+vi.resetModules();
