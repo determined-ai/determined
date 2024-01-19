@@ -116,9 +116,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 
 	// Copy discovered (default) resource pool name and slot count.
 
-	fillTaskConfig(*resources.RawSlots, taskSpec, &taskConfig.Environment)
+	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
 	taskConfig.Resources.RawResourcePool = &poolName
-	taskConfig.Resources.RawSlots = resources.RawSlots
+	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte
 	taskConfig.WorkDir, contextDirectoryBytes, err = fillContextDir(
