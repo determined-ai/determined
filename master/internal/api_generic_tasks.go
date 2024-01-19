@@ -254,9 +254,13 @@ func (a *apiServer) CreateGenericTask(
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
 		isPaused, err := a.m.db.IsPaused(ctx, taskID)
 		if err != nil {
-			syslog.WithError(err).Error("on allocation exit")
+			syslog.WithError(err).Error("checking if a task is paused")
 		}
 		if isPaused {
+			err = a.m.db.SetPausedState(taskID, time.Now().UTC())
+			if err != nil {
+				syslog.WithError(err).Error("setting task to paused state")
+			}
 			return
 		}
 		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
@@ -397,15 +401,6 @@ func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state
 	return err
 }
 
-func (a *apiServer) SetPausedState(ctx context.Context, taskID model.TaskID) error {
-	_, err := db.Bun().NewUpdate().Table("tasks").
-		Set("task_state = ?", model.TaskStatePaused).
-		Set("end_time = ?", time.Now().UTC()).
-		Where("task_id = ?", taskID).
-		Exec(ctx)
-	return err
-}
-
 func (a *apiServer) SetResumedState(ctx context.Context, taskID model.TaskID) error {
 	_, err := db.Bun().NewUpdate().Table("tasks").
 		Set("task_state = ?", model.TaskStateActive).
@@ -506,10 +501,6 @@ func (a *apiServer) PauseGenericTask(
 		if err != nil {
 			return nil, err
 		}
-		err = a.SetPausedState(ctx, pausingTask.TaskID)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return &apiv1.PauseGenericTaskResponse{}, nil
 }
@@ -578,6 +569,10 @@ func (a *apiServer) ResumeGenericTask(
 				syslog.WithError(err).Error("checking if a task is paused")
 			}
 			if isPaused {
+				err = a.m.db.SetPausedState(resumingTask.TaskID, time.Now().UTC())
+				if err != nil {
+					syslog.WithError(err).Error("setting task to paused state")
+				}
 				return
 			}
 			if err := a.m.db.CompleteGenericTask(resumingTask.TaskID, time.Now().UTC()); err != nil {

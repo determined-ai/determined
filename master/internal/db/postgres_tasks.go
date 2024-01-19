@@ -121,6 +121,16 @@ WHERE task_id = $1
 	return nil
 }
 
+func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
+	if _, err := db.sql.Exec(`
+	UPDATE tasks
+	SET task_state = $1, end_time = $2
+	WHERE task_id = $3`, model.TaskStatePaused, endTime, taskID); err != nil {
+		return errors.Wrap(err, "pausing task")
+	}
+	return nil
+}
+
 // IsPaused returns true if given task is in paused/pausing state.
 func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 	query := fmt.Sprintf(`
