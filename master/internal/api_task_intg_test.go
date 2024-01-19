@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 func TestGetGenericTaskConfig(t *testing.T) {
@@ -27,4 +28,21 @@ func TestGetGenericTaskConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, expectedConfig, resp.Config)
+}
+
+func TestGetTask(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	taskID := model.NewTaskID()
+	state := model.TaskStateCompleted
+
+	task := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: taskID, State: &state}
+	require.NoError(t, api.m.db.AddTask(task))
+
+	resp, err := api.GetTask(ctx, &apiv1.GetTaskRequest{TaskId: taskID.String()})
+
+	require.NoError(t, err)
+	require.Equal(t, taskv1.GenericTaskState_GENERIC_TASK_STATE_COMPLETED, *resp.Task.TaskState)
+	require.Equal(t, taskID.String(), resp.Task.TaskId)
+	require.Equal(t, taskv1.TaskType_TASK_TYPE_GENERIC, resp.Task.TaskType)
 }

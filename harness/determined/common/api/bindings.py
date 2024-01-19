@@ -6949,7 +6949,7 @@ class v1KillShellResponse(Printable):
         if not omit_unset or "shell" in vars(self):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
-
+    
 class v1KillTensorboardResponse(Printable):
     """Response to KillTensorboardRequest."""
     tensorboard: "typing.Optional[v1Tensorboard]" = None
