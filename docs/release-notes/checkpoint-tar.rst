@@ -2,6 +2,6 @@
 
 **API Changes**
 
--  Checkpoints: The checkpoint download endpoint will now allow `application/x-tar` as a valid
-   accept type in the request, and responds with an uncompressed tar file that should include a
-   content-length in the headers.
+-  Checkpoints: The checkpoint download endpoint will now allow the use of `application/x-tar`` as
+   an accepted content type in the request. It will provide a response in the form of an
+   uncompressed tar file, complete with content-length information included in the headers.
