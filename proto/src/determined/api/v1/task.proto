@@ -29,7 +29,7 @@ message CreateGenericTaskRequest {
   // If True inherits the context directory from the paren task (requires parent_id)
   optional bool inherit_context = 5;
   // Id of the task that this task is forked from
-  optional string forked_from = 4;
+  optional string forked_from = 6;
 }
 
 // Response to CreateExperimentRequest.
