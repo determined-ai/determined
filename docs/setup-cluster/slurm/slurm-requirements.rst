@@ -213,20 +213,19 @@ interacts with PBS, we recommend the following steps:
 
 -  Configure PBS to manage GPU resources.
 
-   Determined works best when allocating GPUs. By default, Determined selects compute nodes with
-   GPUs using the option ``-select={slots_per_trial}:ngpus=1``. If PBS cannot be configured to
-   identify GPUs in this manner, specify the :ref:`pbs section <cluster-configuration-slurm>`
-   ``gres_supported`` option to ``false`` when configuring Determined, and it will then be the
-   user's responsibility to ensure that GPUs will be available on nodes selected for the job using
-   other configurations such as targeting a specific resource pool with only GPU nodes, or
-   specifying a PBS constraint in the experiment configuration.
+   To optimize GPU allocation, Determined automatically selects compute nodes with GPUs by default
+   using the ``-select={slots_per_trial}:ngpus=1`` option. If PBS cannot identify GPUs in this way,
+   set the :ref:`pbs section <cluster-configuration-slurm>` ``gres_supported`` option to ``false``
+   when configuring Determined. In this case, users must ensure GPU availability on nodes by other
+   means, such as targeting GPU-only resource pools, or specifying a PBS constraint in the
+   experiment configuration.
 
-   PBS should be configured to provide the environment variable ``CUDA_VISIBLE_DEVICES``
-   (``ROCR_VISIBLE_DEVICES`` for ROCm) using a PBS cgroup hook as described in the PBS
+   PBS should be configured to set the environment variable ``CUDA_VISIBLE_DEVICES`` (or
+   ``ROCR_VISIBLE_DEVICES`` for ROCm) using a PBS cgroup hook, as explained in the PBS
    Administrator's Guide. If PBS is not configured to set ``CUDA_VISIBLE_DEVICES``, Determined will
-   utilize a single GPU on each node. To fully utilize multiple GPUs, you must either manually
-   define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
-   your experiment configuration to indicate how many GPU slots are intended for Determined to use.
+   utilize only a single GPU on each node. To fully utilize multiple GPUs, you must either manually
+   configure ``CUDA_VISIBLE_DEVICES`` or set the ``pbs.slots_per_node`` setting in your experiment
+   configuration file to indicate the desired number of GPU slots for Determined.
 
 -  Ensure the ``ngpus`` resource is defined with the correct values.
 
