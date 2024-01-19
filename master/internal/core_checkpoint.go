@@ -132,7 +132,7 @@ func (m *Master) getCheckpointImpl(
 		log := checkpointLogger.WithField("checkpoint", id.String())
 		contentLength, err := archive.DryRunLength(aw, files)
 		if err != nil {
-			log.Debugf("failed to get content length: %s", err.Error())
+			log.Warnf("failed to get dry-run content-length: %s", err.Error())
 		}
 		if contentLength > 0 {
 			log.Debugf("dry-run content-length: %d", contentLength)
