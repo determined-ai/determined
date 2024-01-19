@@ -213,20 +213,90 @@ interacts with PBS, we recommend the following steps:
 
 -  Configure PBS to manage GPU resources.
 
-   Determined works best when allocating GPUs. By default, Determined selects compute nodes with
-   GPUs using the option ``-select={slots_per_trial}:ngpus=1``. If PBS cannot be configured to
-   identify GPUs in this manner, specify the :ref:`pbs section <cluster-configuration-slurm>`
-   ``gres_supported`` option to ``false`` when configuring Determined, and it will then be the
-   user's responsibility to ensure that GPUs will be available on nodes selected for the job using
-   other configurations such as targeting a specific resource pool with only GPU nodes, or
-   specifying a PBS constraint in the experiment configuration.
+   To optimize GPU allocation, Determined automatically selects compute nodes with GPUs by default
+   using the ``-select={slots_per_trial}:ngpus=1`` option. If PBS cannot identify GPUs in this way,
+   set the :ref:`pbs section <cluster-configuration-slurm>` ``gres_supported`` option to ``false``
+   when configuring Determined. In this case, users must ensure GPU availability on nodes by other
+   means, such as targeting GPU-only resource pools, or specifying a PBS constraint in the
+   experiment configuration.
 
-   PBS should be configured to provide the environment variable ``CUDA_VISIBLE_DEVICES``
-   (``ROCR_VISIBLE_DEVICES`` for ROCm) using a PBS cgroup hook as described in the PBS
+   PBS should be configured to set the environment variable ``CUDA_VISIBLE_DEVICES`` (or
+   ``ROCR_VISIBLE_DEVICES`` for ROCm) using a PBS cgroup hook, as explained in the PBS
    Administrator's Guide. If PBS is not configured to set ``CUDA_VISIBLE_DEVICES``, Determined will
-   utilize a single GPU on each node. To fully utilize multiple GPUs, you must either manually
-   define ``CUDA_VISIBLE_DEVICES`` appropriately or provide the ``pbs.slots_per_node`` setting in
-   your experiment configuration to indicate how many GPU slots are intended for Determined to use.
+   utilize only a single GPU on each node. To fully utilize multiple GPUs, you must either manually
+   configure ``CUDA_VISIBLE_DEVICES`` or set the ``pbs.slots_per_node`` setting in your experiment
+   configuration file to indicate the desired number of GPU slots for Determined.
+
+-  Ensure the ``ngpus`` resource is defined with the correct values.
+
+   To ensure the successful operation of Determined, define the ``ngpus`` resource value for each
+   node on the cluster. Additionally, the resource should have the appropriate flags to enable
+   proper processing by PBS when scheduling jobs. You can check if the ``ngpus`` resource is defined
+   with the appropriate flags using the following command:
+
+   .. code:: bash
+
+      [~]$ qmgr -c "list resource ngpus"
+      Resource ngpus
+          type = long
+          flag = hn
+
+   The output should indicate that ``ngpus`` is defined as a type ``long`` resource with flags ``h``
+   (host-level resource) and ``n`` (consumable resource). If your HPC cluster nodes do not produce
+   the same output, use the following commands to create and set the resource ``ngpus`` for each
+   node:
+
+   .. code:: bash
+
+      [~]$ qmgr -c "create resource ngpus type=long, flag=hn" # create the ngpus resource
+      [~]$ qmgr -c "set node <nodename> ngpus=<number of GPUs>" # set the value for ngpus
+
+   If you use virtual nodes (vnodes), make sure the ``ngpus`` value is set only on the vnodes, not
+   the parent node. Below are the commands and sample output to ensure this:
+
+   .. code:: bash
+
+      [~]$ sudo qmgr -c "list node node002[0] resources_available"
+      Node node002[0]
+          resources_available.arch = linux
+          resources_available.host = node002
+          resources_available.hpmem = 0b
+          resources_available.mem = 45943mb
+          resources_available.ncpus = 18
+          resources_available.ngpus = 2 # ngpus value is set on vnode node002[0]
+          resources_available.vmem = 46933mb
+          resources_available.vnode = node002[0]
+      [~]$ sudo qmgr -c "list node node002 resources_available"
+      Node node002
+          resources_available.accel_type = tesla
+          resources_available.arch = linux
+          resources_available.host = node002
+          resources_available.hpmem = 0b
+          resources_available.mem = 0b
+          resources_available.ncpus = 0 # ngpus value is not set on parent node node002
+          resources_available.Qlist = gpuQ,gpu_hi_priQ
+          resources_available.vmem = 0b
+          resources_available.vnode = node002
+
+   If the ``ngpus`` value is set on the parent node, use the following command to unset it:
+
+   .. code:: bash
+
+      [madagund@node003 ~]$ sudo qmgr -c "unset node <node_name> resources_available.ngpus"
+
+   Next, make sure that ``ngpus`` is listed as a resource in the
+   ``<sched_priv_directory>/sched_config`` file.
+
+   .. code:: bash
+
+      [~]$ sudo cat <sched_priv_directory>/sched_config | grep "resources:"
+      resources: "ngpus, ncpus, mem, arch, host, vnode, ..., foo"
+
+   Finally, restart the pbs server to apply the changes.
+
+   .. code:: bash
+
+      [~]$ sudo systemctl restart pbs
 
 -  Configure PBS to report GPU Accelerator type.
 
