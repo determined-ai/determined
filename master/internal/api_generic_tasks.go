@@ -492,7 +492,7 @@ func (a *apiServer) PauseGenericTask(
 			}
 			err = task.DefaultService.Signal(model.AllocationID(allocationID),
 				task.TerminateAllocation,
-				"user requested task kill")
+				"user requested pause")
 			if err != nil {
 				return nil, err
 			}
