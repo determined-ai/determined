@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -93,7 +94,29 @@ func createMockCheckpointS3(bucket string, prefix string) error {
 	return nil
 }
 
-func checkTgz(t *testing.T, content io.Reader, id string) {
+func checkTar(t *testing.T, rec *httptest.ResponseRecorder, id string) {
+	require.Equal(t, strconv.Itoa(rec.Body.Len()), rec.Header().Get("Content-Length"))
+	content := rec.Body
+	tr := tar.NewReader(content)
+	gotMap := make(map[string]string)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+		require.NoError(t, err, "failed to read record header")
+		buf := &strings.Builder{}
+		if hdr.Size > 0 {
+			_, err := io.Copy(buf, tr) //nolint: gosec
+			require.NoError(t, err, "failed to read content of file", hdr.Name)
+		}
+		gotMap[hdr.Name] = buf.String()
+	}
+	require.Equal(t, mockCheckpointContent, gotMap)
+}
+
+func checkTgz(t *testing.T, rec *httptest.ResponseRecorder, id string) {
+	content := rec.Body
 	zr, err := gzip.NewReader(content)
 	require.NoError(t, err, "failed to create a gzip reader")
 	tr := tar.NewReader(zr)
@@ -114,7 +137,8 @@ func checkTgz(t *testing.T, content io.Reader, id string) {
 	require.Equal(t, mockCheckpointContent, gotMap)
 }
 
-func checkZip(t *testing.T, content string, id string) {
+func checkZip(t *testing.T, rec *httptest.ResponseRecorder, id string) {
+	content := rec.Body.String()
 	zr, err := zip.NewReader(strings.NewReader(content), int64(len(content)))
 	require.NoError(t, err, "failed to create a zip reader")
 	gotMap := make(map[string]string)
@@ -184,6 +208,21 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 		IDToReqCall  func() error
 		Params       []any
 	}{
+		{"CanGetCheckpointTar", func() error {
+			api, ctx, rec := setupCheckpointTestEcho(t)
+			id, err := createCheckpoint(t, api.m.db, bucket)
+			if err != nil {
+				return err
+			}
+			ctx.SetParamNames("checkpoint_uuid")
+			ctx.SetParamValues(id)
+			ctx.SetRequest(httptest.NewRequest(http.MethodGet, "/", nil))
+			ctx.Request().Header.Set("Accept", MIMEApplicationXTar)
+			err = api.m.getCheckpoint(ctx)
+			require.NoError(t, err, "API call returns error")
+			checkTar(t, rec, id)
+			return err
+		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointTgz", func() error {
 			api, ctx, rec := setupCheckpointTestEcho(t)
 			id, err := createCheckpoint(t, api.m.db, bucket)
@@ -196,7 +235,7 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 			ctx.Request().Header.Set("Accept", MIMEApplicationGZip)
 			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
-			checkTgz(t, rec.Body, id)
+			checkTgz(t, rec, id)
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetCheckpointZip", func() error {
@@ -211,7 +250,7 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 			ctx.Request().Header.Set("Accept", MIMEApplicationZip)
 			err = api.m.getCheckpoint(ctx)
 			require.NoError(t, err, "API call returns error")
-			checkZip(t, rec.Body.String(), id)
+			checkZip(t, rec, id)
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 	}

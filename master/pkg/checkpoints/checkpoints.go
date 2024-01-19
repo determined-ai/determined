@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/gcs"
@@ -14,8 +15,9 @@ import (
 
 // CheckpointDownloader defines the interface for downloading checkpoints.
 type CheckpointDownloader interface {
-	Download(ctx context.Context) error
+	Download(context.Context) error
 	Close() error
+	ListFiles(context.Context) ([]archive.FileEntry, error)
 }
 
 // NewDownloader returns a new CheckpointDownloader that writes to w.
@@ -26,17 +28,14 @@ type CheckpointDownloader interface {
 //   - archiveType: The ArchiveType (file format) in which the checkpoint shall
 //     be downloaded
 func NewDownloader(
+	ctx context.Context,
 	w io.Writer,
 	id string,
 	storageConfig *expconf.CheckpointStorageConfig,
-	archiveType archive.ArchiveType,
+	aw archive.ArchiveWriter,
 ) (CheckpointDownloader, error) {
-	aw, err := archive.NewArchiveWriter(w, archiveType)
-	if err != nil {
-		return nil, err
-	}
-
 	idPrefix := func(prefix string) string {
+		prefix = strings.TrimRight(prefix, "/")
 		return prefix + "/" + id
 	}
 	idPrefixRef := func(prefixRef *string) string {
@@ -50,11 +49,11 @@ func NewDownloader(
 	switch storage := storageConfig.GetUnionMember().(type) {
 	case expconf.S3Config:
 		prefix := idPrefixRef(storage.Prefix())
-		return s3.NewS3Downloader(aw, storage.Bucket(), prefix), nil
+		return s3.NewS3Downloader(ctx, aw, storage.Bucket(), prefix)
 
 	case expconf.GCSConfig:
 		prefix := idPrefixRef(storage.Prefix())
-		return gcs.NewGCSDownloader(aw, storage.Bucket(), prefix), nil
+		return gcs.NewGCSDownloader(ctx, aw, storage.Bucket(), prefix)
 
 	case expconf.SharedFSConfig:
 		pathPrefix, err := storage.PathInContainerOrHost()
@@ -62,11 +61,11 @@ func NewDownloader(
 			return nil, err
 		}
 		prefix := idPrefix(pathPrefix)
-		return local.NewLocalDownloader(aw, prefix), nil
+		return local.NewLocalDownloader(aw, prefix)
 
 	case expconf.DirectoryConfig:
 		prefix := idPrefix(storage.ContainerPath())
-		return local.NewLocalDownloader(aw, prefix), nil
+		return local.NewLocalDownloader(aw, prefix)
 
 	default:
 		return nil,
