@@ -381,9 +381,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
  PBS Known Issues
 ******************
 
--  If the ``Cluster`` tab on the DeterminedAI WebUI does not display the GPU information, there
-   could be an issue in the PBS configuration. Please refer to :ref:`PBS Requirements
-   <pbs-config-requirements>` to ensure PBS is configured properly.
+-  If the ``Cluster`` tab in the WebUI does not display the GPU information, there may be an issue
+   with the PBS configuration. Visit :ref:`PBS Requirements <pbs-config-requirements>` to ensure PBS
+   is properly configured.
 
 -  Jobs are treated as successful even in the presence of a failure when PBS job history is not
    enabled. Without job history enabled, the launcher is unable to obtain the exit status of jobs
