@@ -153,7 +153,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         <JsonGlossary alignValues="right" json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
-            <Divider />
+            <hr />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
             <JsonGlossary
               json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
@@ -211,14 +211,14 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const ManageNodesModal = useModal(ManageNodesModalComponent);
 
-  const menu: MenuItem[] = useMemo(() =>
+  const menu: MenuItem[] | undefined = useMemo(() =>
     canManageResourcePoolBindings ? [
       {
         disabled: false,
         key: MenuKey.ManageNodes,
         label: 'Manage Nodes',
       },
-    ] : [], [canManageResourcePoolBindings]);
+    ] : undefined, [canManageResourcePoolBindings]);
 
   const handleDropdown = useCallback(
     (key: string) => {
@@ -278,7 +278,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             />
           )}
         </Section>
-        <ManageNodesModal.Component />
+        <ManageNodesModal.Component nodes={topologyAgentPool} />
       </div>
     </Page>
   );
