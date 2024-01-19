@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/gcs"
@@ -34,6 +35,7 @@ func NewDownloader(
 	aw archive.ArchiveWriter,
 ) (CheckpointDownloader, error) {
 	idPrefix := func(prefix string) string {
+		prefix = strings.TrimRight(prefix, "/")
 		return prefix + "/" + id
 	}
 	idPrefixRef := func(prefixRef *string) string {

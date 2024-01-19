@@ -120,7 +120,7 @@ func NewLocalDownloader(aw archive.ArchiveWriter, prefix string) (*LocalDownload
 	}
 	return &LocalDownloader{
 		aw:     aw,
-		prefix: prefix,
+		prefix: filepath.Clean(prefix),
 		buffer: make([]byte, DefaultDownloadPartSize),
 	}, nil
 }
