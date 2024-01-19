@@ -222,15 +222,15 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 		return nil, fmt.Errorf("user info authenticationClaim missing")
 	}
 
-	if cs[s.config.DisplayNameClaimName] != nil {
-		displayName, ok := cs[s.config.DisplayNameClaimName].(string)
+	if cs[s.config.DisplayNameAttributeName] != nil {
+		displayName, ok := cs[s.config.DisplayNameAttributeName].(string)
 		if !ok {
 			return nil, fmt.Errorf("user info displayName value was not a string")
 		}
 		c.DisplayName = displayName
 	}
-	if cs[s.config.GroupsClaimName] != nil {
-		gs, ok := cs[s.config.GroupsClaimName].([]interface{})
+	if cs[s.config.GroupsAttributeName] != nil {
+		gs, ok := cs[s.config.GroupsAttributeName].([]interface{})
 		if !ok {
 			return nil, fmt.Errorf("user info groups value was not a slice")
 		}
@@ -282,7 +282,7 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenCl
 					}
 				}
 			}
-			if s.config.GroupsClaimName != "" {
+			if s.config.GroupsAttributeName != "" {
 				if err := usergroup.UpdateUserGroupMembershipTx(ctx, tx, u, claims.Groups); err != nil {
 					return fmt.Errorf("could not update user group membership: %s", err)
 				}
@@ -313,7 +313,7 @@ func (s *Service) provisionUser(
 			if _, err := user.AddUserTx(ctx, tx, &u); err != nil {
 				return errNotProvisioned
 			}
-			if s.config.GroupsClaimName != "" {
+			if s.config.GroupsAttributeName != "" {
 				if err := usergroup.UpdateUserGroupMembershipTx(ctx, tx, &u, groups); err != nil {
 					return fmt.Errorf("could not update user group membership: %s", err)
 				}

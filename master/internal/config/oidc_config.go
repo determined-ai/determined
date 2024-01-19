@@ -15,8 +15,8 @@ type OIDCConfig struct {
 	AuthenticationClaim         string `json:"authentication_claim"`
 	SCIMAuthenticationAttribute string `json:"scim_authentication_attribute"`
 	AutoProvisionUsers          bool   `json:"auto_provision_users"`
-	GroupsClaimName             string `json:"groups_claim_name"`
-	DisplayNameClaimName        string `json:"display_name_claim_name"`
+	GroupsAttributeName         string `json:"groups_attribute_name"`
+	DisplayNameAttributeName    string `json:"display_name_attribute_name"`
 }
 
 // Validate implements the check.Validatable interface.
