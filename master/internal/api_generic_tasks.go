@@ -475,7 +475,7 @@ func (a *apiServer) PauseGenericTask(
 	}
 	// Check for flag (default to false for root task)
 	if taskModel.NoPause != nil && *taskModel.NoPause {
-		return nil, fmt.Errorf("cannot pause task %s as it is flagged as not pausable", req.TaskId)
+		return nil, fmt.Errorf("cannot pause task %s with `no_pause` set to true", req.TaskId)
 	}
 	err = a.PropagateTaskState(ctx, model.TaskID(req.TaskId), model.TaskStateStoppingPaused, overrideStates)
 	if err != nil {
