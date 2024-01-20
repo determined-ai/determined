@@ -227,6 +227,8 @@ interacts with PBS, we recommend the following steps:
    configure ``CUDA_VISIBLE_DEVICES`` or set the ``pbs.slots_per_node`` setting in your experiment
    configuration file to indicate the desired number of GPU slots for Determined.
 
+.. _pbs-ngpus-config:
+
 -  Ensure the ``ngpus`` resource is defined with the correct values.
 
    To ensure the successful operation of Determined, define the ``ngpus`` resource value for each

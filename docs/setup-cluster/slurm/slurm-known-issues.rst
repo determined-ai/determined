@@ -381,6 +381,10 @@ Some constraints are due to differences in behavior between Docker and Singulari
  PBS Known Issues
 ******************
 
+-  If the ``Cluster`` tab in the WebUI does not display the GPU information, there may be an issue
+   with the PBS configuration. Visit :ref:`Ensure the ngpus resource is defined with the correct
+   values <pbs-ngpus-config>` section to ensure PBS is properly configured.
+
 -  Jobs are treated as successful even in the presence of a failure when PBS job history is not
    enabled. Without job history enabled, the launcher is unable to obtain the exit status of jobs
    and therefore they are all reported as successful. This will prevent failed jobs from
