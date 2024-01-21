@@ -254,7 +254,7 @@ commands:
 
   install-protoc:
     steps:
-      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v24.3/protoc-24.3-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   install-codecov:
