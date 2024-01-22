@@ -344,7 +344,7 @@ resourcePools:
 ## Configure GenAI Deployment
 genai:
   ## Version of GenAI to use. If unset, GenAI will not be deployed
-  version: "release"
+  # version: "release"
   
   ## Port for GenAI to use
   port: 9011
