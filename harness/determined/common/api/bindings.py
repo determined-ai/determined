@@ -2609,7 +2609,7 @@ class v1CreateGenericTaskRequest(Printable):
         contextDirectory: "typing.Optional[typing.Sequence[v1File]]" = None,
         projectId: int,
         forkedFrom: "typing.Optional[int]" = None,
-        parentId: int,
+        parentId: "typing.Optional[int]" = None,
         inheritContext: bool,
     ):
         self.config = config
@@ -2617,6 +2617,7 @@ class v1CreateGenericTaskRequest(Printable):
         self.projectId = projectId
         self.parentId = parentId
         self.inheritContext = inheritContext
+        self.forkedFrom = forkedFrom
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":

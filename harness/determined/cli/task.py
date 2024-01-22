@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Union, cast
 from termcolor import colored
 
 from determined import cli
-from determined.cli import command, ntsc, render
+from determined.cli import ntsc, render
 from determined.common import api, context, util
 from determined.common.api import authentication, bindings
 from determined.common.api.bindings import v1AllocationSummary, v1CreateGenericTaskResponse
@@ -136,7 +136,7 @@ def task_creation_output(
 
 @authentication.required
 def create(args: Namespace) -> None:
-    config = command.parse_config(args.config_file, None, args.config, [])
+    config = ntsc.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
     context_directory = context.read_v1_context(args.context, args.include)
 
@@ -169,7 +169,7 @@ def config(args: Namespace) -> None:
 def fork(args: Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
-        config="", contextDirectory="", projectId=args.project_id, forkedFrom=args.parent_task_id
+        config="", contextDirectory="", projectId=args.project_id, forkedFrom=args.parent_task_id, inheritContext=False
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
@@ -290,7 +290,7 @@ args_description: List[Any] = [
                     Arg(
                         "context",
                         type=Path,
-                        help=command.CONTEXT_DESC,
+                        help=ntsc.CONTEXT_DESC,
                     ),
                     Arg(
                         "-i",
@@ -298,10 +298,10 @@ args_description: List[Any] = [
                         action="append",
                         default=[],
                         type=Path,
-                        help=command.INCLUDE_DESC,
+                        help=ntsc.INCLUDE_DESC,
                     ),
                     Arg("--project_id", type=int, help="place this task inside this project"),
-                    Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
+                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
                     Arg(
                         "-f",
                         "--follow",

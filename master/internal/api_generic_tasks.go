@@ -275,11 +275,6 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
 
-		configBytes, err := yaml.YAMLToJSON([]byte(req.Config))
-		if err != nil {
-			return fmt.Errorf("handling experiment config %v: %w", req.Config, err)
-		}
-
 		configBytesJSON, err := yaml.YAMLToJSON(configBytes)
 		if err != nil {
 			return err
