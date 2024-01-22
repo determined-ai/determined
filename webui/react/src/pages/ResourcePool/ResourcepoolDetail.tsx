@@ -211,14 +211,19 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const ManageNodesModal = useModal(ManageNodesModalComponent);
 
-  const menu: MenuItem[] | undefined = useMemo(() =>
-    canManageResourcePoolBindings ? [
-      {
-        disabled: false,
-        key: MenuKey.ManageNodes,
-        label: 'Manage Nodes',
-      },
-    ] : undefined, [canManageResourcePoolBindings]);
+  const menu: MenuItem[] | undefined = useMemo(
+    () =>
+      canManageResourcePoolBindings
+        ? [
+            {
+              disabled: false,
+              key: MenuKey.ManageNodes,
+              label: 'Manage Nodes',
+            },
+          ]
+        : undefined,
+    [canManageResourcePoolBindings],
+  );
 
   const handleDropdown = useCallback(
     (key: string) => {

@@ -1,6 +1,3 @@
-import { isEqual } from 'lodash';
-import React, { useCallback, useState } from 'react';
-
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
@@ -8,6 +5,9 @@ import { Modal } from 'hew/Modal';
 import Row from 'hew/Row';
 import Toggle from 'hew/Toggle';
 import { Body, Label } from 'hew/Typography';
+import { isEqual } from 'lodash';
+import React, { useCallback, useState } from 'react';
+
 import { disableAgent, enableAgent } from 'services/api';
 import { Agent } from 'types';
 import handleError from 'utils/error';
@@ -19,8 +19,8 @@ interface Props {
 }
 
 const defaultNodes: Agent[] = [
-  { id: 'ABC', enabled: true, registeredTime: 1000, resourcePools: [], resources: []},
-  { id: 'DEF', enabled: false, registeredTime: 2000, resourcePools: [], resources: [] },
+  { enabled: true, id: 'ABC', registeredTime: 1000, resourcePools: [], resources: [] },
+  { enabled: false, id: 'DEF', registeredTime: 2000, resourcePools: [], resources: [] },
 ];
 
 const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
@@ -56,13 +56,13 @@ const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
   return (
     <Modal
       cancel
+      size="small"
       submit={{
         disabled: isEqual(originalNodes, toggleStates),
-        text: "Apply Changes",
-        handler: onFormSubmit,
         handleError,
+        handler: onFormSubmit,
+        text: 'Apply Changes',
       }}
-      size="small"
       title="Manage Nodes">
       <div className={css.content}>
         <Body>Disable nodes to make them temporarily unavailable for job assignment.</Body>
@@ -76,18 +76,16 @@ const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
             onChange={onFilterChange}
           />
         )}
-        {nodes.length === 0 && (
-          <Message title="No active agents."/>
-        )}
-        {nodes.filter(node => !searchText.trim() || node.id.includes(searchText)).map((node) => (
-          <Row height={35} key={node.id}>
-            <Toggle checked={toggleStates[node.id]} onChange={() => onToggleNode(node.id)} />
-            <Label>{node.id}</Label>
-            {!toggleStates[node.id] && originalNodes[node.id] && (
-              <Label>Turned Off</Label>
-            )}
-          </Row>
-        ))}
+        {nodes.length === 0 && <Message title="No active agents." />}
+        {nodes
+          .filter((node) => !searchText.trim() || node.id.includes(searchText))
+          .map((node) => (
+            <Row height={35} key={node.id}>
+              <Toggle checked={toggleStates[node.id]} onChange={() => onToggleNode(node.id)} />
+              <Label>{node.id}</Label>
+              {!toggleStates[node.id] && originalNodes[node.id] && <Label>Turned Off</Label>}
+            </Row>
+          ))}
       </div>
     </Modal>
   );
