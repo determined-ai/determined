@@ -3,7 +3,7 @@ import {
   CustomRenderer,
   getMiddleCenterBias,
   GridCellKind,
-} from '@hpe.com/glide-data-grid';
+} from '@glideapps/glide-data-grid';
 
 import { drawTextWithEllipsis } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 

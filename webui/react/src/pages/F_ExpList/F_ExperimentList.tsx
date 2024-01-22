@@ -1,4 +1,4 @@
-import { CompactSelection, GridSelection, Rectangle } from '@hpe.com/glide-data-grid';
+import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import Message from 'hew/Message';

@@ -1,4 +1,4 @@
-import { GridCell } from '@hpe.com/glide-data-grid';
+import { GridCell } from '@glideapps/glide-data-grid';
 import { MenuProps } from 'antd';
 import { DropdownEvent } from 'hew/Dropdown';
 import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';

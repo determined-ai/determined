@@ -4,7 +4,7 @@ import {
   GridCellKind,
   Item,
   parseToRgba,
-} from '@hpe.com/glide-data-grid';
+} from '@glideapps/glide-data-grid';
 
 interface SparklineCellProps {
   readonly kind: 'sparkline-cell';

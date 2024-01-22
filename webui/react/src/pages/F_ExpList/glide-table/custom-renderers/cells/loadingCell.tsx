@@ -1,4 +1,4 @@
-import { CustomCell, CustomRenderer, GridCellKind } from '@hpe.com/glide-data-grid';
+import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';

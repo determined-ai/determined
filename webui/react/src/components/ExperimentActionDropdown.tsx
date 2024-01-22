@@ -1,4 +1,4 @@
-import { GridCell } from '@hpe.com/glide-data-grid';
+import { GridCell } from '@glideapps/glide-data-grid';
 import Button from 'hew/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';

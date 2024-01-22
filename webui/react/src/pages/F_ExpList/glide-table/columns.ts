@@ -5,7 +5,7 @@ import {
   GridCellKind,
   Theme as GTheme,
   SizedGridColumn,
-} from '@hpe.com/glide-data-grid';
+} from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
