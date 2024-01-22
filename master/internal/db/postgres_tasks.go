@@ -56,7 +56,7 @@ func AddTask(ctx context.Context, t *model.Task) error {
 // AddTaskTx UPSERT's the existence of a task in a tx.
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config", "forked_from", "parent_id").
+		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config", "forked_from", "parent_id", "task_state").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
@@ -65,6 +65,7 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 		Set("config=EXCLUDED.config").
 		Set("forked_from=EXCLUDED.forked_from").
 		Set("parent_id=EXCLUDED.parent_id").
+		Set("task_state=EXCLUDED.task_state").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }
@@ -117,6 +118,40 @@ func TaskCompleted(ctx context.Context, tID model.TaskID) (bool, error) {
 // CompleteTask persists the completion of a task.
 func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
 	return completeTask(db.sql, tID, endTime)
+}
+
+// CompleteGenericTask persists the completion of a task of type GENERIC.
+func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := completeTask(db.sql, tID, endTime)
+	if err != nil {
+		return err
+	}
+	if _, err := db.sql.Exec(`
+UPDATE tasks
+SET task_state = (
+    CASE WHEN task_state=$2 THEN $3::task_state
+    ELSE $4::task_state END)
+WHERE task_id = $1
+    `, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
+		return errors.Wrap(err, "completing task")
+	}
+	return nil
+}
+
+// KillGenericTask persists the termination of a task of type GENERIC.
+func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := completeTask(db.sql, tID, endTime)
+	if err != nil {
+		return err
+	}
+	if _, err := db.sql.Exec(`
+UPDATE tasks
+SET task_state = $2
+WHERE task_id = $1
+	`, tID, model.TaskStateCanceled); err != nil {
+		return errors.Wrap(err, "killing task")
+	}
+	return nil
 }
 
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {

@@ -50,6 +50,8 @@ const (
 	TaskTypeCheckpointGC TaskType = "CHECKPOINT_GC"
 	// TaskTypeGeneric is the "GENERIC" job type for the enum public.job_type in Postgres.
 	TaskTypeGeneric TaskType = "GENERIC"
+	// TaskTypeGeneric is the "GENERIC" job type for the enum public.job_type in Postgres.
+	TaskTypeGeneric TaskType = "GENERIC"
 )
 
 // TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
@@ -82,6 +84,8 @@ type Task struct {
 	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
 	ParentID   *TaskID `db:"parent_id"`
 	ForkedFrom *string `db:"forked_from"`
+
+	State *TaskState `db:"task_state" bun:"task_state"`
 
 	Config *string `db:"config"`
 }
@@ -143,6 +147,30 @@ type AcceleratorData struct {
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState string
+
+// TaskState represents the state of a generic task.
+type TaskState string
+
+const (
+	// TaskStateActive denotes that task is running.
+	TaskStateActive TaskState = "ACTIVE"
+	// TaskStateCanceled denotes that task is killed.
+	TaskStateCanceled TaskState = "CANCELED"
+	// TaskStateCompleted denotes that task has finished running.
+	TaskStateCompleted TaskState = "COMPLETED"
+	// TaskStateError denotes that task has exited with an error.
+	TaskStateError TaskState = "ERROR"
+	// TaskStatePaused denotes that task has been paused.
+	TaskStatePaused TaskState = "PAUSED"
+	// TaskStateStoppingPaused denotes that the task is in the process of being paused.
+	TaskStateStoppingPaused TaskState = "STOPPING_PAUSED"
+	// TaskStateStoppingCanceled denotes that the task is in the process of being canceled.
+	TaskStateStoppingCanceled TaskState = "STOPPING_CANCELED"
+	// TaskStateStoppingCompleted denotes that the task is in the process of being completed.
+	TaskStateStoppingCompleted TaskState = "STOPPING_COMPLETED"
+	// TaskStateStoppingError denotes that the task is in the process of returning an error.
+	TaskStateStoppingError TaskState = "STOPPING_ERROR"
+)
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {

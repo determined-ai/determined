@@ -3,6 +3,7 @@ SELECT
     CONCAT('TASK_TYPE_', t.task_type) AS task_type,
     t.start_time,
     t.end_time,
+    t.task_state,
     (
         SELECT
             COALESCE(
