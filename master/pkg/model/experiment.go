@@ -631,7 +631,9 @@ const (
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
-// StorageBackendID is the ID for the storage backend.
+// StorageBackendID is the ID for the storage backend. Storage backend ID isn't backfilled
+// so checkpoints older than 0.27.1 won't have this. There are also some cases where a user
+// can create a checkpoint without this so don't rely on this always being set.
 type StorageBackendID int
 
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
@@ -646,7 +648,9 @@ type CheckpointV2 struct {
 	Resources     map[string]int64       `db:"resources"`
 	Metadata      map[string]interface{} `db:"metadata"`
 	Size          int64                  `db:"size"`
-	StorageID     *StorageBackendID      `db:"storage_id"`
+	// Can be nil for checkpoints older than this feature.
+	// Also can be nil when a user creates a checkpoint without a checkpoint storage config.
+	StorageID *StorageBackendID `db:"storage_id"`
 }
 
 // RunCheckpoints represents a row from the `run_checkpoints` table.

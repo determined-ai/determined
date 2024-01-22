@@ -169,7 +169,7 @@ def test_delete_checkpoints() -> None:
     assert all(
         checkpoint.storageId is not None
         for checkpoint in list(exp_1_checkpoints) + list(exp_2_checkpoints)
-    ), "Storage ID cannot be None for all checkpoints in both experiments"
+    ), "Storage ID cannot be None for any checkpoints in both experiments"
 
     d_exp_1_checkpoint_uuids = [
         exp_1_checkpoints[d_index].uuid

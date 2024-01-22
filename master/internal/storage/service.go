@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
@@ -34,18 +35,14 @@ func AddBackend(
 			On("CONFLICT DO NOTHING").
 			Model(childTableRow).
 			Exec(ctx); err != nil {
-			json, jsonErr := cs.MarshalJSON()
-			if jsonErr != nil {
-				return fmt.Errorf("adding storage backend: %w: %w", jsonErr, err)
-			}
-			return fmt.Errorf("adding storage backend %s: %w", string(json), err)
+			return fmt.Errorf("adding storage backend %s: %w", spew.Sdump(cs), err)
 		}
 
 		// ON CONFLICT DO NOTHING returns a non zero ID only when we insert a new row.
 		// When we insert a new row also insert a new row in the parent table.
 		if childTableRow.id() != 0 {
-			unionTableRow := &storageBackendRow{}
-			if _, err := tx.NewInsert().Model(unionTableRow).
+			var unionTableRow storageBackendRow
+			if _, err := tx.NewInsert().Model(&unionTableRow).
 				Value(unionType, "?", childTableRow.id()).
 				Returning("id").
 				Exec(ctx); err != nil {

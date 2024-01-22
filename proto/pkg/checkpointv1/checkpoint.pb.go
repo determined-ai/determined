@@ -286,6 +286,9 @@ type Checkpoint struct {
 	// Training-related data for this checkpoint.
 	Training *CheckpointTrainingMetadata `protobuf:"bytes,8,opt,name=training,proto3" json:"training,omitempty"`
 	// Optional ID that describes where this checkpoint is stored.
+	// It will be null on every checkpoint pre 0.27.1. It can also be null when a
+	// user does not specify the storageID calling the report API themselves or
+	// when users don't provide a storage config to core_context.
 	StorageId *int32 `protobuf:"varint,9,opt,name=storage_id,json=storageId,proto3,oneof" json:"storage_id,omitempty"`
 }
 

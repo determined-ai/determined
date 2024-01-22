@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -21,7 +22,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -47,9 +47,9 @@ func runCheckpointGCForCheckpoints(
 		return err
 	}
 
-	wg := errgroupx.WithContext(context.Background())
+	var wg errgroup.Group
 	for _, g := range groups {
-		wg.Go(func(ctx context.Context) error {
+		wg.Go(func() error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
 			if err := runCheckpointGCTask(
 				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
