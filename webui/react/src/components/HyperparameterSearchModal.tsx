@@ -1,10 +1,10 @@
+import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import Form from 'hew/Form';
 import Icon, { IconName } from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
-import Message from 'hew/Message';
 import { Modal, ModalCloseReason } from 'hew/Modal';
 import RadioGroup from 'hew/RadioGroup';
 import Row from 'hew/Row';
@@ -355,7 +355,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Message icon="error" title={modalError} />}
+        {modalError && <Alert message={modalError} type="error" />}
         <div className={css.labelWithLink}>
           <p>Select hyperparameters and define the search space.</p>
           <Link
@@ -403,7 +403,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     // We always render the form regardless of mode to provide a reference to it.
     return (
       <div className={css.base}>
-        {modalError && <Message icon="error" title={modalError} />}
+        {modalError && <Alert message={modalError} type="error" />}
         <Form.Item
           initialValue={searcher.id}
           label={

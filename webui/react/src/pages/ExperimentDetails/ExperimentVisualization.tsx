@@ -1,3 +1,4 @@
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
@@ -336,7 +337,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     `;
     return (
       <div className={css.alert}>
-        <Message
+        <Alert
           description={
             <>
               Learn about&nbsp;
@@ -349,8 +350,8 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
               .
             </>
           }
-          icon="warning"
-          title={alertMessage}
+          message={alertMessage}
+          type="warning"
         />
       </div>
     );
@@ -365,9 +366,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
       <Message icon="warning" title="No data to plot." />
     ) : (
       <div className={css.alert}>
-        <Message
+        <Alert
           description="Please wait until the experiment is further along."
-          title="Not enough data points to plot."
+          message="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

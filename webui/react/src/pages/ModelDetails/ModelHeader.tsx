@@ -1,9 +1,9 @@
+import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Column from 'hew/Column';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
 import Icon from 'hew/Icon';
-import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Nameplate from 'hew/Nameplate';
 import Row from 'hew/Row';
@@ -146,7 +146,11 @@ const ModelHeader: React.FC<Props> = ({
     <header className={css.base}>
       <Column gap={16}>
         {model.archived && (
-          <Message icon="warning" title="This model has been archived and is now read-only." />
+          <Alert
+            message="This model has been archived and is now read-only."
+            showIcon
+            type="warning"
+          />
         )}
         <Row justifyContent="space-between" width="fill">
           <Column>

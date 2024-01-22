@@ -1,4 +1,5 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -274,9 +275,9 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
     return (
       <div className={css.waiting}>
-        <Message
+        <Alert
           description="Please wait until the experiments are further along."
-          title="Not enough data points to plot."
+          message="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

@@ -1,4 +1,5 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
@@ -378,9 +379,9 @@ const HpParallelCoordinates: React.FC<Props> = ({
       <Message description="No data to plot." />
     ) : (
       <div className={css.waiting}>
-        <Message
+        <Alert
           description="Please wait until the experiment is further along."
-          title="Not enough data points to plot."
+          message="Not enough data points to plot."
         />
         <Spinner spinning />
       </div>

@@ -1,3 +1,4 @@
+import Alert from 'hew/Alert';
 import { LineChart } from 'hew/LineChart';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
@@ -318,9 +319,9 @@ const LearningCurve: React.FC<Props> = ({
       <Message icon="warning" title="No learning curve data to show." />
     ) : (
       <div className={css.waiting}>
-        <Message
+        <Alert
           description="Please wait until the experiment is further along."
-          title="Not enough data points to plot."
+          message="Not enough data points to plot."
         />
         <Spinner center spinning />
       </div>

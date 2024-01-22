@@ -1,8 +1,8 @@
+import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Form, { FormInstance } from 'hew/Form';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
-import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
@@ -333,7 +333,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           />
         </Form.Item>
       </React.Suspense>
-      {configError && <Message icon="error" title={configError} />}
+      {configError && <Alert message={configError} type="error" />}
     </Form>
   );
 };

@@ -1,5 +1,5 @@
+import Alert from 'hew/Alert';
 import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
-import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import React, { useState } from 'react';
 
@@ -62,9 +62,9 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
         {CHECKBOX_TEXT}
       </Checkbox>
       {type !== ActionType.Cancel && (
-        <Message
-          icon="warning"
-          title={'Note: Any progress/data on incomplete workflows will be lost.'}
+        <Alert
+          message="Note: Any progress/data on incomplete workflows will be lost."
+          type="warning"
         />
       )}
     </Modal>
