@@ -1,3 +1,4 @@
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import SplitPane, { Pane } from 'hew/SplitPane';
@@ -94,10 +95,9 @@ const ComparisonView: React.FC<Props> = ({
 
   const rightPane =
     selectedExperiments.length === 0 ? (
-      <Message
+      <Alert
         description="Select experiments you would like to compare."
-        icon="warning"
-        title="No experiments selected."
+        message="No experiments selected."
       />
     ) : (
       <Pivot items={tabs} />

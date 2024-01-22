@@ -4,7 +4,7 @@ import {
   getMiddleCenterBias,
   GridCellKind,
   measureTextCached,
-} from '@hpe.com/glide-data-grid';
+} from '@glideapps/glide-data-grid';
 
 interface UserProfileCellProps {
   readonly kind: 'user-profile-cell';

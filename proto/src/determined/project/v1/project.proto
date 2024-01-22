@@ -3,7 +3,6 @@ syntax = "proto3";
 package determined.project.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/projectv1";
 
-import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/workspace/v1/workspace.proto";
 
 import "google/protobuf/timestamp.proto";

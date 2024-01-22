@@ -1,4 +1,4 @@
-import { Rectangle } from '@hpe.com/glide-data-grid';
+import { Rectangle } from '@glideapps/glide-data-grid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 

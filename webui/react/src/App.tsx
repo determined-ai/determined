@@ -39,8 +39,8 @@ import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
 
-import 'antd/dist/reset.css';
-import '@hpe.com/glide-data-grid/dist/index.css';
+import 'modern-normalize/modern-normalize.css';
+import '@glideapps/glide-data-grid/dist/index.css';
 
 const updateThemeSetting = (mode: Mode) => userSettings.set(themeSettings, STORAGE_PATH, { mode });
 const themeSetting = userSettings.get(themeSettings, STORAGE_PATH);

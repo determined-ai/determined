@@ -1,3 +1,4 @@
+import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
@@ -343,9 +344,9 @@ const HpHeatMaps: React.FC<Props> = ({
       <Message icon="warning" title="No data to plot." />
     ) : (
       <div>
-        <Message
+        <Alert
           description="Please wait until the experiment is further along."
-          title="Not enough data points to plot."
+          message="Not enough data points to plot."
         />
         <Spinner spinning />
       </div>
