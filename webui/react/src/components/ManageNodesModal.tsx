@@ -18,13 +18,13 @@ interface Props {
   nodes: Agent[];
 }
 
-const defaultNodes: Agent[] = [
-  { enabled: true, id: 'ABC', registeredTime: 1000, resourcePools: [], resources: [] },
-  { enabled: false, id: 'DEF', registeredTime: 2000, resourcePools: [], resources: [] },
-];
+// const defaultNodes: Agent[] = [
+//   { id: 'ABC', enabled: true, registeredTime: 1000, resourcePools: [], resources: []},
+//   { id: 'DEF', enabled: false, registeredTime: 2000, resourcePools: [], resources: [] },
+// ];
 
 const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
-  nodes = defaultNodes;
+  // nodes = defaultNodes;
   const originalNodes = nodes.reduce((obj: Record<string, boolean>, node: Agent) => {
     obj[node.id] = !!node.enabled;
     return obj;
@@ -83,7 +83,6 @@ const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
             <Row height={35} key={node.id}>
               <Toggle checked={toggleStates[node.id]} onChange={() => onToggleNode(node.id)} />
               <Label>{node.id}</Label>
-              {!toggleStates[node.id] && originalNodes[node.id] && <Label>Turned Off</Label>}
             </Row>
           ))}
       </div>
