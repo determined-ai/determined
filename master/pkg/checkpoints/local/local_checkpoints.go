@@ -115,12 +115,13 @@ func NewLocalDownloader(aw archive.ArchiveWriter, prefix string) (*LocalDownload
 	if !strings.HasPrefix(prefix, "/") {
 		prefix = "/" + prefix
 	}
+	prefix = filepath.Clean(prefix)
 	if !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
 	return &LocalDownloader{
 		aw:     aw,
-		prefix: filepath.Clean(prefix),
+		prefix: prefix,
 		buffer: make([]byte, DefaultDownloadPartSize),
 	}, nil
 }
