@@ -159,8 +159,7 @@ db:
   # scale.
   storageSize: 30Gi
   cpuRequest: 2
-  # memRequest: 8Gi
-  memRequest: 1Gi
+  memRequest: 8Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -196,9 +195,10 @@ checkpointStorage:
   # storage beyond initial testing as most Kubernetes cluster nodes do not have a shared file
   # system.
   type: shared_fs
-  hostPath: /checkpoints
+  hostPath: /tmp/checkpoints
   # By default, shared_fs is not mounted to the server pod. Change this to true to enable checkpoint downloads from the server.
   mountToServer: false
+
   # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
@@ -244,8 +244,7 @@ maxSlotsPerPod:
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
 masterCpuRequest: 2
-# masterMemRequest: 8Gi
-masterMemRequest: 1Gi
+masterMemRequest: 8Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -338,14 +337,14 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
+  - pool_name: a100
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
-## Configure the GenAI Deployment
+## Configure GenAI Deployment
 genai:
   ## Version of GenAI to use. If unset, GenAI will not be deployed
-  # version: "26ec909"
-  version: "0c08cb3"
+  version: "release"
   
   ## Port for GenAI to use
   port: 9011
@@ -357,7 +356,7 @@ genai:
   memRequest: 1Gi
 
   ## GenAI pod cpu request
-  cpuRequest: 2
+  cpuRequest: 100m
 
   ## GenAI pod memory limit
   # memLimit: 1Gi
@@ -367,13 +366,15 @@ genai:
 
   ## PVC Name for the shared file system for GenAI.
   ## Note: Either `sharedPVCName` or `generatedPVC.storageSize` (to
-  ## generate a new PVC) is required
+  ## generate a new PVC) is required for GenAI deployment
   # sharedPVCName:
 
   ## Spec for the generated PVC for GenAI
+  ## Note: In order to generate a shared PVC, you will need access to a
+  ## StorageClass that can provide a ReadWriteMany volume
   generatedPVC:
     ## Storage class name for the generated PVC
-    # storageClassName:
+    # storageClassName: standard-rwx
 
     ## Size of the generated PVC
-    storageSize: 30Gi
+    storageSize: 100Gi

@@ -27,9 +27,7 @@ spec:
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:lore-backend-image-{{ $tag }}
-        # TODO: Point to always in the real thing
-        # imagePullPolicy: "Always"
-        imagePullPolicy: "Never"
+        imagePullPolicy: "Always"
         env:
           - name: DET_MASTER
             value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
@@ -43,9 +41,8 @@ spec:
             value: "5432"
           - name: DB_HOST
             value: determined-db-service-{{ .Release.Name }} 
-          # TODO: Enable this in the real thing
-          # - name: LORE_DOCKER_TAG_SUFFIX
-          #   value: {{ $tag }}
+          - name: LORE_DOCKER_TAG_SUFFIX
+            value: {{ $tag }}
           - name: K8S_SHARED_PVC_NAME
             value: {{ include "genai.PVCName" . }}
         volumeMounts:

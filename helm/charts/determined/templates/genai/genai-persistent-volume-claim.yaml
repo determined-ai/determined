@@ -10,7 +10,7 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ required  "A valid .Values.genai.generatedPVC.storageSize entry is required if a .Values.sharedPVCName is not specified" (and .Values.genai.generatedPVC .Values.genai.generatedPVC.storageSize) }}
