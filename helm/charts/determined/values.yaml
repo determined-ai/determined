@@ -342,7 +342,7 @@ resourcePools:
 ## Configure GenAI Deployment
 genai:
   ## Version of GenAI to use. If unset, GenAI will not be deployed
-  # version: "release"
+  # version: "latest"
   
   ## Port for GenAI to use
   port: 9011
@@ -372,7 +372,7 @@ genai:
   ## StorageClass that can provide a ReadWriteMany volume
   generatedPVC:
     ## Storage class name for the generated PVC
-    # storageClassName: standard-rwx
+    storageClassName: standard-rwx
 
     ## Size of the generated PVC
     storageSize: 100Gi
