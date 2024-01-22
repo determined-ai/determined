@@ -261,7 +261,6 @@ taskContainerDefaults:
   # task, that pod spec will replace the default one that is defined here. See
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
-
   # gpuPodSpec:
 
   # Configure default Docker images for all GPU tasks (experiments, notebooks, commands) and
@@ -337,7 +336,6 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
-  - pool_name: a100
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
