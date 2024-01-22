@@ -514,7 +514,7 @@ func (a *apiServer) ResumeGenericTask(
 		return nil, fmt.Errorf("%s (make sure task is of type GENERIC)", err)
 	}
 	// Validate state
-	if *taskModel.State != model.TaskStatePaused || *taskModel.State != model.TaskStateStoppingPaused {
+	if *taskModel.State != model.TaskStatePaused && *taskModel.State != model.TaskStateStoppingPaused {
 		return nil, fmt.Errorf("cannot unpause task %s as it is not in paused state", req.TaskId)
 	}
 	var projectID int
