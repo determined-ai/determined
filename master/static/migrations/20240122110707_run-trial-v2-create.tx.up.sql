@@ -35,7 +35,6 @@ SELECT
   r.start_time AS start_time,
   r.end_time AS end_time,
   r.restarts AS restarts,
-  -- project_id / owner_id will be propagated from experiments.
 
   -- run_hp_search_stuff
   r.hparams AS hparams,
@@ -51,10 +50,7 @@ SELECT
   t.request_id AS request_id,
   t.seed AS seed,
 
-  -- experiment_id will eventually be in the runs to run collection MTM.
   r.experiment_id AS experiment_id,
-
-  -- warm_start_checkpoint_id will eventually be in the runs to checkpoint MTM.
   r.warm_start_checkpoint_id AS warm_start_checkpoint_id,
 
   -- eventually delete runner state.
