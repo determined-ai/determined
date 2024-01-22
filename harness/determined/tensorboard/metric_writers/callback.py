@@ -28,7 +28,7 @@ class MetricWriter(abc.ABC):
 class BatchMetricWriter:
     def __init__(self, writer: MetricWriter) -> None:
         self.writer = writer
-        self._last_flush_ts: Optional[float] = None
+        self._last_reset_ts: Optional[float] = None
 
     def _maybe_write_metric(self, metric_key: str, metric_val: Any, step: int) -> None:
         # For now, we only log scalar metrics.
@@ -46,8 +46,6 @@ class BatchMetricWriter:
         logger.debug("Write training metrics for TensorBoard")
         metrics_seen = set()
 
-        self._maybe_reset()
-
         # Log all batch metrics.
         if batch_metrics:
             for batch_idx, batch in enumerate(batch_metrics):
@@ -62,21 +60,17 @@ class BatchMetricWriter:
                 continue
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.flush()
-        self._last_flush_ts = time.time()
+        self._maybe_reset()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         logger.debug("Write validation metrics for TensorBoard")
-
-        self._maybe_reset()
 
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.flush()
-        self._last_flush_ts = time.time()
+        self._maybe_reset()
 
     def _maybe_reset(self) -> None:
         """
@@ -89,9 +83,12 @@ class BatchMetricWriter:
 
         This effectively batches event writes so each event file may contain more than one event.
         """
+        self.writer.flush()
         current_ts = time.time()
-        if not self._last_flush_ts:
+        if not self._last_reset_ts:
+            self._last_reset_ts = current_ts
             return
 
-        if int(current_ts) > int(self._last_flush_ts):
+        if int(current_ts) > int(self._last_reset_ts):
             self.writer.reset()
+            self._last_reset_ts = current_ts
