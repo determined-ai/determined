@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -357,4 +358,162 @@ func (a *apiServer) CreateGenericTask(
 		TaskId:   string(taskID),
 		Warnings: pkgCommand.LaunchWarningToProto(warnings),
 	}, nil
+}
+
+func (a *apiServer) GetTaskChildren(
+	ctx context.Context,
+	taskID model.TaskID,
+	overrideTasks []model.TaskState,
+) ([]model.Task, error) {
+	var query string
+	if len(overrideTasks) > 0 {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	`, taskID)
+		for i, overrideTask := range overrideTasks {
+			if i == 0 {
+				query += fmt.Sprintf(` WHERE t.task_state !='%s'`, overrideTask)
+			} else {
+				query += fmt.Sprintf(` AND t.task_state !='%s'`, overrideTask)
+			}
+		}
+		query += `)
+	SELECT task_id, task_state, parent_id, job_id FROM cte`
+	} else {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	SELECT task_id, task_state, parent_id, job_id FROM cte`, taskID)
+	}
+
+	var tasks []model.Task
+	rows, err := db.Bun().QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	err = db.Bun().ScanRows(ctx, rows, &tasks)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func (a *apiServer) PropagateTaskState(
+	ctx context.Context,
+	taskID model.TaskID,
+	state model.TaskState,
+	overrideStates []model.TaskState,
+) error {
+	var query string
+	if len(overrideStates) > 0 {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id`, taskID, state)
+		for _, overrideState := range overrideStates {
+			query += fmt.Sprintf(` AND cte.task_state!='%s'`, overrideState)
+		}
+		query += ";"
+	} else {
+		query = fmt.Sprintf(`
+	WITH RECURSIVE cte as (
+		SELECT * FROM tasks WHERE task_id='%s'
+		UNION ALL
+		SELECT t.* FROM tasks t INNER JOIN cte ON t.parent_id=cte.task_id
+	)
+	UPDATE tasks SET task_state='%s' FROM cte WHERE cte.task_id=tasks.task_id;`, taskID, state)
+	}
+	_, err := db.Bun().NewRaw(query).Exec(ctx)
+	return err
+}
+
+func (a *apiServer) FindRoot(ctx context.Context, taskID model.TaskID) (model.TaskID, error) {
+	out := struct {
+		Root model.TaskID
+	}{}
+	query := fmt.Sprintf(`
+	WITH RECURSIVE my_tree as (
+		SELECT task_id, parent_id, task_id as root FROM tasks WHERE parent_id IS NULL
+		UNION ALL
+		SELECT t.task_id, t.parent_id, m.root FROM tasks t JOIN my_tree m on m.task_id=t.parent_id
+	)
+	SELECT root FROM my_tree WHERE task_id='%s'`, taskID)
+	err := db.Bun().NewRaw(query).Scan(ctx, &out)
+	return out.Root, err
+}
+
+func (a *apiServer) SetTaskState(ctx context.Context, taskID model.TaskID, state model.TaskState) error {
+	_, err := db.Bun().NewUpdate().Table("tasks").
+		Set("task_state = ?", state).
+		Where("task_id = ?", taskID).
+		Exec(ctx)
+	return err
+}
+
+func (a *apiServer) KillGenericTask(
+	ctx context.Context, req *apiv1.KillGenericTaskRequest,
+) (*apiv1.KillGenericTaskResponse, error) {
+	killTaskId := model.TaskID(req.TaskId)
+	var taskModel model.Task
+	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", killTaskId).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Validate state
+	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
+	if slices.Contains(overrideStates, *taskModel.State) {
+		return nil, fmt.Errorf("cannot cancel task %s as it is in state '%s'", req.TaskId, *taskModel.State)
+	}
+	if req.KillFromRoot {
+		rootID, err := a.FindRoot(ctx, model.TaskID(req.TaskId))
+		if err != nil {
+			return nil, err
+		}
+		killTaskId = rootID
+	}
+	err = a.PropagateTaskState(ctx, killTaskId, model.TaskStateStoppingCanceled, overrideStates)
+	if err != nil {
+		return nil, err
+	}
+	tasksToDelete, err := a.GetTaskChildren(ctx, killTaskId, overrideStates)
+	if err != nil {
+		return nil, err
+	}
+	for _, childTask := range tasksToDelete {
+		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
+			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			if err != nil {
+				return nil, err
+			}
+			err = task.DefaultService.Signal(model.AllocationID(allocationID), task.KillAllocation, "user requested task kill")
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return &apiv1.KillGenericTaskResponse{}, nil
+}
+
+func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
+) (string, error) {
+	allocation := model.Allocation{}
+	err := db.Bun().NewSelect().Model(&allocation).
+		ColumnExpr("allocation_id").
+		Where("task_id = ?", taskID).Scan(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(allocation.AllocationID), nil
 }
