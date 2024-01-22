@@ -60,14 +60,12 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
     # Read event files saved and verify all metrics are written.
     event_files = list(tmp_path.iterdir())
     for file in event_files:
-        print(file)
         for event in summary_iterator.summary_iterator(str(file)):
             # TensorFlow injects an event containing metadata at the start of every tfevent
             # file; ignore these.
             if getattr(event, "file_version", None):
                 continue
             for event_data in event.summary.value:
-                print(event_data)
                 if event_data.tag == "Determined/x":
                     train_events.append(event_data.simple_value)
                 elif event_data.tag == "Determined/val_x":
