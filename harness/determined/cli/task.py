@@ -342,7 +342,8 @@ args_description: List[Any] = [
                 [
                     Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                     Arg(
-                        "context",
+                        "--context",
+                        "-c",
                         type=Path,
                         help=ntsc.CONTEXT_DESC,
                     ),

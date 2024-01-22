@@ -289,6 +289,7 @@ func (a *apiServer) CreateGenericTask(
 			ForkedFrom: req.ForkedFrom,
 			Config:     ptrs.Ptr(string(configBytesJSON)),
 			ParentID:   (*model.TaskID)(req.ParentId),
+			State:      ptrs.Ptr(model.TaskStateActive),
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
@@ -324,7 +325,7 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if err := a.m.db.CompleteTask(taskID, time.Now().UTC()); err != nil {
+		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking generic task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
@@ -472,6 +473,9 @@ func (a *apiServer) KillGenericTask(
 		return nil, err
 	}
 	// Validate state
+	if taskModel.State == nil {
+		return nil, fmt.Errorf("No task state")
+	}
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
 	if slices.Contains(overrideStates, *taskModel.State) {
 		return nil, fmt.Errorf("cannot cancel task %s as it is in state '%s'", req.TaskId, *taskModel.State)
