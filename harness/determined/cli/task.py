@@ -176,7 +176,7 @@ def pause(args: Namespace) -> None:
 @authentication.required
 def resume(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.post_ResumeGenericTask(sess, taskId=args.task_id, projectId=args.project_id)
+    bindings.post_ResumeGenericTask(sess, taskId=args.task_id)
     print(f"Resumed task: {args.task_id}")
 
 
@@ -368,7 +368,6 @@ args_description: List[Any] = [
                 "resume or unpause a task",
                 [
                     Arg("task_id", type=str, help=""),
-                    Arg("--project_id", type=int, help="place this task inside this project"),
                 ],
             ),
         ],

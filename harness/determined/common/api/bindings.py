@@ -20856,19 +20856,15 @@ def post_ResumeGenericTask(
     session: "api.Session",
     *,
     taskId: str,
-    projectId:str,
 ) -> None:
     """Resume generic task
 
     - taskId: The id of the task.
     """
-    _params = {
-        "projectId": projectId
-    }
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tasks/{taskId}/resume",
-        params=_params,
+        params=None,
         json=None,
         data=None,
         headers=None,

@@ -271,8 +271,9 @@ func (a *apiServer) CreateGenericTask(
 		}
 	}
 
+	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
-		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
+		AllocationID:      allocationID,
 		TaskID:            taskID,
 		JobID:             jobID,
 		JobSubmissionTime: startTime,
@@ -287,6 +288,11 @@ func (a *apiServer) CreateGenericTask(
 
 		Restore: false,
 	}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.PostGenericTaskSpec(ctx, taskID, *genericTaskSpec, allocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -517,12 +523,6 @@ func (a *apiServer) ResumeGenericTask(
 	if *taskModel.State != model.TaskStatePaused && *taskModel.State != model.TaskStateStoppingPaused {
 		return nil, fmt.Errorf("cannot unpause task %s as it is not in paused state", req.TaskId)
 	}
-	var projectID int
-	if req.ProjectId != nil {
-		projectID = int(*req.ProjectId)
-	} else {
-		projectID = model.DefaultProjectID
-	}
 	// Tasks (and child tasks) that are killed, completed, or exit with an error should not be resumed
 	overrideStates := []model.TaskState{model.TaskStateCanceled,
 		model.TaskStateCompleted,
@@ -535,11 +535,12 @@ func (a *apiServer) ResumeGenericTask(
 		return nil, err
 	}
 	for _, resumingTask := range tasksToResume {
-		genericTaskSpec, _, _, err := a.getGenericTaskLaunchParameters(
-			ctx, nil, *resumingTask.Config, projectID,
-		)
+		allocationString, genericTaskSpec, err := a.GetGenericTaskSpec(ctx, resumingTask.TaskID)
 		if err != nil {
 			return nil, err
+		}
+		if genericTaskSpec == nil {
+			return nil, fmt.Errorf("could not retrieve task spec for task: %s", resumingTask.TaskID)
 		}
 		// check if job still in registry
 		_, exists := tasklist.GroupPriorityChangeRegistry.Load(*resumingTask.JobID)
@@ -551,10 +552,6 @@ func (a *apiServer) ResumeGenericTask(
 			if err = tasklist.GroupPriorityChangeRegistry.Add(*resumingTask.JobID, priorityChange); err != nil {
 				return nil, err
 			}
-		}
-		allocationString, err := a.GetAllocationFromTaskID(ctx, resumingTask.TaskID)
-		if err != nil {
-			return nil, err
 		}
 		allocationID := model.AllocationID(allocationString)
 		logCtx := logger.Context{
@@ -586,9 +583,10 @@ func (a *apiServer) ResumeGenericTask(
 		if err != nil {
 			return nil, err
 		}
+		resumingAllocationID := model.AllocationID(fmt.Sprintf("%s.%d", resumingTask.TaskID, allocationSpecifier+1))
 		err = task.DefaultService.StartAllocation(
 			logCtx, sproto.AllocateRequest{
-				AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", resumingTask.TaskID, allocationSpecifier+1)),
+				AllocationID:      resumingAllocationID,
 				TaskID:            resumingTask.TaskID,
 				JobID:             *resumingTask.JobID,
 				JobSubmissionTime: time.Now().UTC(),
@@ -603,6 +601,10 @@ func (a *apiServer) ResumeGenericTask(
 				Preemptible: true,
 				Restore:     false,
 			}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
+		if err != nil {
+			return nil, err
+		}
+		err = a.PostGenericTaskSpec(ctx, resumingTask.TaskID, *genericTaskSpec, resumingAllocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -626,4 +628,34 @@ func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.Ta
 		return "", err
 	}
 	return string(allocation.AllocationID), nil
+}
+
+func (a *apiServer) PostGenericTaskSpec(ctx context.Context,
+	taskID model.TaskID,
+	generciTaskSpec tasks.GenericTaskSpec,
+	allocationID model.AllocationID) error {
+	snapshot := &command.CommandSnapshot{
+		TaskID:             taskID,
+		RegisteredTime:     time.Now().UTC(),
+		AllocationID:       allocationID,
+		GenericCommandSpec: tasks.GenericCommandSpec{},
+		GenericTaskSpec:    &generciTaskSpec,
+	}
+
+	_, err := db.Bun().NewInsert().Model(snapshot).
+		On("CONFLICT (task_id) DO UPDATE").Exec(ctx)
+	return err
+}
+
+func (a *apiServer) GetGenericTaskSpec(ctx context.Context, taskID model.TaskID,
+) (string, *tasks.GenericTaskSpec, error) {
+	snapshot := command.CommandSnapshot{}
+
+	err := db.Bun().NewSelect().Model(&snapshot).
+		ColumnExpr("allocation_id, generic_task_spec").
+		Where("task_id = ?", taskID).Scan(ctx)
+	if err != nil {
+		return "", nil, err
+	}
+	return string(snapshot.AllocationID), snapshot.GenericTaskSpec, nil
 }

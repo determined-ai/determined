@@ -329,9 +329,6 @@ message ResumeGenericTaskRequest {
   };
   // The id of the task.
   string task_id = 1;
-
-  // Project id to contain the experiment.
-  optional int32 project_id = 3;
 }
 
 // Response to ResumeGenericTaskRequest
