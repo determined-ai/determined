@@ -111,54 +111,6 @@ def logs(args: Namespace) -> None:
             )
         )
 
-
-@authentication.required
-def create(args: Namespace) -> None:
-    config = ntsc.parse_config(args.config_file, None, args.config, [])
-    config_text = util.yaml_safe_dump(config)
-    context_directory = None
-    if args.context is not None:
-        context_directory = context.read_v1_context(args.context, args.include)
-
-    sess = cli.setup_session(args)
-    req = bindings.v1CreateGenericTaskRequest(
-        config=config_text,
-        contextDirectory=context_directory,
-        projectId=args.project_id,
-        parentId=args.parent,
-        inheritContext=args.inherit_context
-    )
-    task_resp = bindings.post_CreateGenericTask(sess, body=req)
-    print(f"created task {task_resp.taskId}")
-
-    if task_resp.warnings:
-        cli.print_warnings(task_resp.warnings)
-
-    if args.follow:
-        try:
-            logs = api.task_logs(sess, task_resp.taskId, follow=True)
-            api.pprint_logs(logs)
-        finally:
-            print(
-                colored(
-                    "Task log stream ended. To reopen log stream, run: "
-                    "det task logs -f {}".format(task_resp.taskId),
-                    "green",
-                )
-            )
-
-
-@authentication.required
-def config(args: Namespace) -> None:
-    sess = cli.setup_session(args)
-    config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
-    if args.json:
-        render.print_json(config_resp.config)
-    else:
-        yaml_dict = json.loads(config_resp.config)
-        print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
-
-
 @authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
