@@ -98,7 +98,7 @@ const WorkspaceQuickSearchModalComponent: React.FC<Props> = ({
       cancel={false}
       size="large"
       submit={{
-        handleError: () => { },
+        handleError: () => {},
         handler: onHideModal,
         text: 'Close',
       }}
