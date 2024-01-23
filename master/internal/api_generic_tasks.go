@@ -475,9 +475,12 @@ func (a *apiServer) KillGenericTask(
 	if err != nil {
 		return nil, err
 	}
+	if taskModel.TaskType != model.TaskTypeGeneric {
+		return nil, fmt.Errorf("this operation is currently only supported for generic tasks")
+	}
 	// Validate state
 	if taskModel.State == nil {
-		return nil, fmt.Errorf("No task state")
+		return nil, fmt.Errorf("task state is NULL")
 	}
 	overrideStates := []model.TaskState{model.TaskStateCanceled, model.TaskStateCompleted}
 	if slices.Contains(overrideStates, *taskModel.State) {
