@@ -3,6 +3,11 @@ import router from 'router';
 export const samlUrl = (basePath: string, queries?: string): string => {
   if (queries) {
     queries = queries.replace(/r=0\.\d+[&]?/, '');
+    if (queries.includes('&redirect=')) {
+      const redirectStartIndex = queries.indexOf('&redirect=');
+      const redirectEndIndex = queries.indexOf('&', redirectStartIndex + 1);
+      queries = queries.slice(0, redirectStartIndex) + queries.slice(redirectEndIndex);
+    }
   }
   if (!queries) return basePath;
   return `${basePath}?relayState=${encodeURIComponent(queries)}`;

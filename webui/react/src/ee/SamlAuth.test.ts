@@ -16,6 +16,24 @@ describe('SamlAuth', () => {
         default: 'sortDesc=false&r=0.123&sortKey=SORT_BY_NAME&tags=mnist',
         encoded: 'sortDesc%3Dfalse%26sortKey%3DSORT_BY_NAME%26tags%3Dmnist',
       },
+      {
+        default:
+          'sortDesc=false&r=0.123&redirect=http://www.website.com&sortKey=SORT_BY_NAME&tags=mnist',
+        encoded: 'sortDesc%3Dfalse%26sortKey%3DSORT_BY_NAME%26tags%3Dmnist',
+      },
+      {
+        default:
+          'sortDesc=false&r=0.123&redirect=https://anotherwebsite.org&sortKey=SORT_BY_NAME&tags=mnist',
+        encoded: 'sortDesc%3Dfalse%26sortKey%3DSORT_BY_NAME%26tags%3Dmnist',
+      },
+      {
+        default: 'sortDesc=false&r=0.123&redirect=&sortKey=SORT_BY_NAME&tags=mnist',
+        encoded: 'sortDesc%3Dfalse%26sortKey%3DSORT_BY_NAME%26tags%3Dmnist',
+      },
+      {
+        default: 'sortDesc=false&r=0.123&redirect=nothing&sortKey=SORT_BY_NAME&tags=mnist',
+        encoded: 'sortDesc%3Dfalse%26sortKey%3DSORT_BY_NAME%26tags%3Dmnist',
+      },
     ];
 
     it('should return base path only if no queries are provided', () => {
