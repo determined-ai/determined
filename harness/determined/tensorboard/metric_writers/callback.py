@@ -83,7 +83,6 @@ class BatchMetricWriter:
 
         This effectively batches event writes so each event file may contain more than one event.
         """
-        self.writer.flush()
         current_ts = time.time()
         if not self._last_reset_ts:
             self._last_reset_ts = current_ts
@@ -92,3 +91,7 @@ class BatchMetricWriter:
         if int(current_ts) > int(self._last_reset_ts):
             self.writer.reset()
             self._last_reset_ts = current_ts
+        else:
+            # If reset didn't happen, flush, so that upstream uploads will reflect the latest
+            # metric writes. reset() flushes automatically.
+            self.writer.flush()
