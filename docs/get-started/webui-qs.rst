@@ -57,8 +57,8 @@ to see how to run your first experiment.
 
       #. To view the experiment in your browser:
 
-         -  Enter the following URL: **http://localhost:8080/**. This is the cluster address for your local training environment.
-
+         -  Enter the following URL: **http://localhost:8080/**. This is the cluster address for
+            your local training environment.
          -  Accept the default username of ``determined``, and click **Sign In**. A password is not
             required.
 
