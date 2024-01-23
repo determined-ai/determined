@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import pathlib
+import time
 import warnings
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
@@ -133,6 +134,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self._tbd_writer = None  # type: Optional[Any]
         self._enable_tensorboard_logging = enable_tensorboard_logging
+        # Timestamp for batching TensorBoard uploads
+        self._last_tb_reset_ts: Optional[float] = None
 
     def get_global_batch_size(self) -> int:
         """
@@ -1037,8 +1040,31 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         return self._tbd_writer
 
     def _maybe_reset_tbd_writer(self) -> None:
-        if self._tbd_writer is not None:
+        """
+        Reset (close current file and open a new one) the current writer if the current epoch
+        second is at least one second greater than the epoch second of the last reset.
+
+        The TensorFlow event writer names each event file by the epoch second it is created, so
+        if events are written quickly in succession (< 1 second apart), they will overwrite each
+        other.
+
+        This effectively batches event writes so each event file may contain more than one event.
+        """
+        if self._tbd_writer is None:
+            return
+
+        current_ts = time.time()
+
+        if self._last_tb_reset_ts is None:
+            self._last_tb_reset_ts = current_ts
+
+        if int(current_ts) > int(self._last_tb_reset_ts):
             self._tbd_writer.close()
+            self._last_tb_reset_ts = current_ts
+        else:
+            # If reset didn't happen, flush, so that upstream uploads will reflect the latest
+            # metric writes. reset() flushes automatically.
+            self._tbd_writer.flush()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore
