@@ -6,7 +6,7 @@ import Row from 'hew/Row';
 import Toggle from 'hew/Toggle';
 import { Body, Label } from 'hew/Typography';
 import { isEqual } from 'lodash';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { disableAgent, enableAgent } from 'services/api';
 import { Agent } from 'types';
@@ -18,17 +18,21 @@ interface Props {
   nodes: Agent[];
 }
 
-// const defaultNodes: Agent[] = [
+// const testNodes: Agent[] = [
 //   { id: 'ABC', enabled: true, registeredTime: 1000, resourcePools: [], resources: []},
 //   { id: 'DEF', enabled: false, registeredTime: 2000, resourcePools: [], resources: [] },
 // ];
 
 const ManageNodesModalComponent = ({ nodes }: Props): JSX.Element => {
-  // nodes = defaultNodes;
-  const originalNodes = nodes.reduce((obj: Record<string, boolean>, node: Agent) => {
-    obj[node.id] = !!node.enabled;
-    return obj;
-  }, {});
+  // nodes = testNodes;
+  const originalNodes = useMemo(
+    () =>
+      nodes.reduce((obj: Record<string, boolean>, node: Agent) => {
+        obj[node.id] = !!node.enabled;
+        return obj;
+      }, {}),
+    [nodes],
+  );
 
   const [searchText, setSearchText] = useState<string>('');
   const [toggleStates, setToggleStates] = useState<Record<string, boolean>>(originalNodes);
