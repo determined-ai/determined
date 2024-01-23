@@ -1061,6 +1061,10 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         if int(current_ts) > int(self._last_tb_reset_ts):
             self._tbd_writer.close()
             self._last_tb_reset_ts = current_ts
+        else:
+            # If reset didn't happen, flush, so that upstream uploads will reflect the latest
+            # metric writes. reset() flushes automatically.
+            self._tbd_writer.flush()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore
