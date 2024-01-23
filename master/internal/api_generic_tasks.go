@@ -98,6 +98,9 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
 
+	if resources.Slots < 0 {
+		return nil, nil, nil, fmt.Errorf("resource slots must be >= 0")
+	}
 	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool, resources.Slots, int(proj.WorkspaceId))
 	if err != nil {
 		return nil, nil, nil, err

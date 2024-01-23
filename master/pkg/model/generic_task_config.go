@@ -53,7 +53,7 @@ type GenericTaskConfig struct {
 func (c *GenericTaskConfig) Validate() []error {
 	return []error{
 		check.GreaterThanOrEqualTo(c.Resources.Slots(), 0,
-			"resources.slots_per_task must be >= 0"),
+			"resources.slots must be >= 0"),
 		check.GreaterThan(len(c.Entrypoint), 0, "entrypoint must be non-empty"),
 	}
 }
