@@ -13,7 +13,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 )
 
-// TODO(!!!) test and optimize the monthly version.
+// TODO(DET-10109) test and optimize the monthly version.
 func TestResourceAllocationAggregatedDaily(t *testing.T) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 
