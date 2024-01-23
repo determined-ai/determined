@@ -74,8 +74,8 @@ class BatchMetricWriter:
 
     def _maybe_reset(self) -> None:
         """
-        Reset (close current file and open a new one) the current writer if more than 1 second
-        has elapsed since the last reset.
+        Reset (close current file and open a new one) the current writer if the current epoch
+        second is at least one second greater than the epoch second of the last reset.
 
         The TensorFlow event writer names each event file by the epoch second it is created, so
         if events are written quickly in succession (< 1 second apart), they will overwrite each
