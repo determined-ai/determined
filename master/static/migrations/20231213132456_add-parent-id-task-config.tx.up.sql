@@ -1,2 +1,0 @@
-ALTER TABLE tasks
-ADD parent_id text REFERENCES tasks(task_id) ON DELETE CASCADE DEFAULT(NULL);
