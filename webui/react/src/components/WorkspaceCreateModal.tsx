@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import Divider from 'hew/Divider';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
@@ -177,8 +177,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                         } catch (err: unknown) {
                           return Promise.reject(
                             new Error(
-                              `Invalid YAML on line ${
-                                (err as { mark: { line: string } }).mark.line
+                              `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line
                               }.`,
                             ),
                           );

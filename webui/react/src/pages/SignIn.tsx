@@ -1,5 +1,5 @@
-import { Divider } from 'antd';
 import Button from 'hew/Button';
+import Divider from 'hew/Divider';
 import Form from 'hew/Form';
 import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';
@@ -78,7 +78,7 @@ const SignIn: React.FC = () => {
       if (!queries.has('redirect')) {
         routeToReactUrl(
           locationToPath(location.state) ||
-            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
+          (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
         routeAll(queries.get('redirect') || '');

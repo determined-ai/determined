@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import Divider from 'hew/Divider';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
@@ -214,9 +214,8 @@ const ResourcepoolDetailInner: React.FC = () => {
       breadcrumb={[
         { breadcrumbName: 'Cluster', path: paths.clusters() },
         {
-          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
-            usage ? `- ${floatToPercent(usage)}` : ''
-          }`,
+          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${usage ? `- ${floatToPercent(usage)}` : ''
+            }`,
           path: '',
         },
       ]}
