@@ -1,5 +1,5 @@
 import { useObservable } from 'micro-observables';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -21,6 +21,7 @@ const SignOut: React.FC = () => {
   const location = useLocation();
   const info = useObservable(determinedStore.info);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const queries = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const checkAuth = useAuthCheck();
 
   useEffect(() => {
@@ -50,12 +51,15 @@ const SignOut: React.FC = () => {
         const isAuthenticated = await checkAuth();
         if (isAuthenticated) routeAll(info.externalLogoutUri);
       } else {
-        navigate(paths.login() + '?r=' + Math.random(), { state: location.state });
+        const searchParameters = [`?r=${Math.random()}`];
+        if (queries.has('redirect'))
+          searchParameters.push(`&redirect=${queries.get('redirect') || ''}`);
+        navigate(paths.login() + searchParameters.join(''), { state: location.state });
       }
     };
 
     if (!isSigningOut) signOut();
-  }, [checkAuth, navigate, info.externalLogoutUri, location.state, isSigningOut]);
+  }, [checkAuth, navigate, info.externalLogoutUri, location.state, isSigningOut, queries]);
 
   return null;
 };
