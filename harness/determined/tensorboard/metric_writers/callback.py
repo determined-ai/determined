@@ -1,5 +1,6 @@
 import abc
 import logging
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from determined import util
@@ -19,10 +20,15 @@ class MetricWriter(abc.ABC):
     def reset(self) -> None:
         pass
 
+    @abc.abstractmethod
+    def flush(self) -> None:
+        pass
+
 
 class BatchMetricWriter:
     def __init__(self, writer: MetricWriter) -> None:
         self.writer = writer
+        self._last_reset_ts: Optional[float] = None
 
     def _maybe_write_metric(self, metric_key: str, metric_val: Any, step: int) -> None:
         # For now, we only log scalar metrics.
@@ -54,13 +60,38 @@ class BatchMetricWriter:
                 continue
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.reset()
+        self._maybe_reset()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         logger.debug("Write validation metrics for TensorBoard")
+
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
             self._maybe_write_metric(name, value, steps_completed)
 
-        self.writer.reset()
+        self._maybe_reset()
+
+    def _maybe_reset(self) -> None:
+        """
+        Reset (close current file and open a new one) the current writer if the current epoch
+        second is at least one second greater than the epoch second of the last reset.
+
+        The TensorFlow event writer names each event file by the epoch second it is created, so
+        if events are written quickly in succession (< 1 second apart), they will overwrite each
+        other.
+
+        This effectively batches event writes so each event file may contain more than one event.
+        """
+        current_ts = time.time()
+        if not self._last_reset_ts:
+            self._last_reset_ts = current_ts
+            return
+
+        if int(current_ts) > int(self._last_reset_ts):
+            self.writer.reset()
+            self._last_reset_ts = current_ts
+        else:
+            # If reset didn't happen, flush, so that upstream uploads will reflect the latest
+            # metric writes. reset() flushes automatically.
+            self.writer.flush()
