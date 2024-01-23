@@ -966,17 +966,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	// Other static files should only be cached for a short period of time
 	cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
 
-	// API endpoints
-	apiRegex := regexp.MustCompile(`^/api/.+$`)
-
-	gzipConfig := middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
-			reqPath := c.Request().URL.Path
-			return !cacheFileLongTerm.MatchString(reqPath) &&
-				!cacheFileShortTerm.MatchString(reqPath) &&
-				!apiRegex.MatchString(reqPath)
-		},
-	}
+	gzipConfig := middleware.GzipConfig{}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
 
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
