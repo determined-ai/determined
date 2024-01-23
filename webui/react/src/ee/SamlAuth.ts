@@ -6,7 +6,11 @@ export const samlUrl = (basePath: string, queries?: string): string => {
     if (queries.includes('&redirect=')) {
       const redirectStartIndex = queries.indexOf('&redirect=');
       const redirectEndIndex = queries.indexOf('&', redirectStartIndex + 1);
-      queries = queries.slice(0, redirectStartIndex) + queries.slice(redirectEndIndex);
+      if (redirectEndIndex === -1) {
+        queries = queries.slice(0, redirectStartIndex);
+      } else {
+        queries = queries.slice(0, redirectStartIndex) + queries.slice(redirectEndIndex);
+      }
     }
   }
   if (!queries) return basePath;
