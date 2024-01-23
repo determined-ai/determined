@@ -3,7 +3,7 @@ import { useModal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
-import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Key, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
@@ -63,7 +63,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
-  const [canceler] = useState(new AbortController());
+  const canceler = useRef(new AbortController());
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
@@ -125,7 +125,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             V1GetModelsRequestSortBy.LASTUPDATEDTIME,
           ),
         },
-        { signal: canceler.signal },
+        { signal: canceler.current?.signal },
       );
       setModels((prev) => {
         const loadedModels = Loaded(response.models);
@@ -139,7 +139,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         type: ErrorType.Api,
       });
     }
-  }, [canceler.signal]);
+  }, []);
 
   useEffect(() => {
     fetchModels();
@@ -283,7 +283,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
           sortBy: validateDetApiEnum(Checkpointv1SortBy, settings.sortKey),
           states: validateDetApiEnumList(Checkpointv1State, states),
         },
-        { signal: canceler.signal },
+        { signal: canceler.current?.signal },
       );
       setTotal(response.pagination.total ?? 0);
       if (!isEqual(response.checkpoints, checkpoints)) {
@@ -298,7 +298,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString, checkpoints]);
+  }, [experiment.id, settings, stateString, checkpoints]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -333,10 +333,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   useEffect(() => {
     return () => {
-      canceler.abort();
+      canceler.current?.abort();
       stopPolling();
     };
-  }, [canceler, stopPolling]);
+  }, [stopPolling]);
 
   const handleTableRowSelect = useCallback(
     (rowKeys?: Key[]) => {
