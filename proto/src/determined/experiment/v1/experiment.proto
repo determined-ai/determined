@@ -132,6 +132,7 @@ message Experiment {
   // workspace).
   bool parent_archived = 25;
   // The configuration of the experiment.
+  // Will soon not be returned in list endpoints.
   google.protobuf.Struct config = 26;
   // The original configuration that the user submitted.
   string original_config = 27;

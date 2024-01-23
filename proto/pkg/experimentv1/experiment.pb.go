@@ -245,6 +245,7 @@ type Experiment struct {
 	// workspace).
 	ParentArchived bool `protobuf:"varint,25,opt,name=parent_archived,json=parentArchived,proto3" json:"parent_archived,omitempty"`
 	// The configuration of the experiment.
+	// Will soon not be returned in list endpoints.
 	Config *_struct.Struct `protobuf:"bytes,26,opt,name=config,proto3" json:"config,omitempty"`
 	// The original configuration that the user submitted.
 	OriginalConfig string `protobuf:"bytes,27,opt,name=original_config,json=originalConfig,proto3" json:"original_config,omitempty"`
