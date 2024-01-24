@@ -73,7 +73,7 @@ pre-publish:
 check-links:
 	sphinx-build -b linkcheck . build -a
 	echo "link check complete, see build/output.txt"
-   grep -cF "[broken]" build/output.txt
+	grep -cF "[broken]" build/output.txt
 
 .PHONY: publish
 publish: pre-publish publish-check
