@@ -100,6 +100,11 @@ type SyncMsg struct {
 	SyncID string `json:"sync_id"`
 }
 
+// MarshalJSON converts a sync message into a json representation, implements PreparableMsg.
+func (sm SyncMsg) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sm)
+}
+
 // StartupMsg is the first message a streaming client sends.
 //
 // It declares initially known keys and also configures the initial subscriptions for the stream.
