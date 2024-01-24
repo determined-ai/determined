@@ -144,6 +144,20 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
+//	@Summary	Bogus route to generate parameter objects.
+//	@Tags		Cluster
+//	@ID			get-raw-resource-allocation-csv2
+//	@Accept		json
+//	@Produce	text/csv
+//	@Param		bogus_config		body	config.Config	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//	@Router		/bogus [post]
+//	@Deprecated
+//
+// nolint:lll
+func (m *Master) noOp(echo.Context) (interface{}, error) {
+	return nil, nil
+}
+
 //	@Summary	Get a detailed view of resource allocation during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-raw-resource-allocation-csv
