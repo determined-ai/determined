@@ -118,7 +118,7 @@ func ProjectCollectStartupMsgs(
 
 	q = permFilterQuery(q, accessMap, accessScopes)
 
-	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
+	// Ignore spec.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
 	if len(spec.ProjectIDs) > 0 {
 		ws.Include("p.id in (?)", bun.In(spec.ProjectIDs))
