@@ -1311,7 +1311,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
-		{"CanGetExperimenAtrtifacts", func(id int) error {
+		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetExperimentValidationHistory(ctx,
 				&apiv1.GetExperimentValidationHistoryRequest{ExperimentId: int32(id)})
 			return err
