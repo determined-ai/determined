@@ -22,16 +22,16 @@ func defaultRPConfig() ResourcePoolConfig {
 type ResourcePoolConfig struct {
 	PoolName                 string                             `json:"pool_name"`
 	Description              string                             `json:"description"`
-	Provider                 *provconfig.Config                 `json:"provider"`
+	Provider                 *provconfig.Config                 `json:"provider" swaggertype:"object"`
 	Scheduler                *SchedulerConfig                   `json:"scheduler,omitempty"`
 	MaxAuxContainersPerAgent int                                `json:"max_aux_containers_per_agent"`
-	TaskContainerDefaults    *model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	TaskContainerDefaults    *model.TaskContainerDefaultsConfig `json:"task_container_defaults" swaggertype:"object"`
 	// AgentReattachEnabled defines if master & agent try to recover
 	// running containers after a clean restart.
 	AgentReattachEnabled bool `json:"agent_reattach_enabled"`
 	// AgentReconnectWait define the time master will wait for agent
 	// before abandoning it.
-	AgentReconnectWait model.Duration `json:"agent_reconnect_wait"`
+	AgentReconnectWait model.Duration `json:"agent_reconnect_wait" swaggertype:"integer"`
 
 	// If empty, will behave as if the value is resource_manager.namespace,
 	// which in most cases will be the namespace the helm deployment is in.
