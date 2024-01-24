@@ -23,7 +23,9 @@ type Event[T Msg] struct {
 }
 
 // PreparableMessage is an intermediary message that is ready to be marshaled and broadcast.
-type PreparableMessage interface{}
+type PreparableMessage interface {
+	MarshalJSON() ([]byte, error)
+}
 
 // UpsertMsg represents an upsert in the stream.
 type UpsertMsg struct {
