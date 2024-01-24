@@ -1,6 +1,6 @@
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS seq bigint;
 
--- the sequence
+-- sequence for tracking event order
 CREATE SEQUENCE IF NOT EXISTS stream_project_seq START 1;
 
 -- trigger function to update sequence number on row modification
@@ -11,7 +11,7 @@ BEGIN
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
---
+
 DROP TRIGGER IF EXISTS stream_project_trigger_seq ON projects;
 CREATE TRIGGER stream_project_trigger_seq
     BEFORE INSERT OR UPDATE OF
@@ -56,6 +56,7 @@ BEGIN
     return NULL;
 END;
 $$ LANGUAGE plpgsql;
+
 -- INSERT and UPDATE should fire AFTER to guarantee to emit the final row value.
 DROP TRIGGER IF EXISTS stream_project_trigger_iu ON projects;
 CREATE TRIGGER stream_project_trigger_iu
@@ -63,7 +64,7 @@ CREATE TRIGGER stream_project_trigger_iu
     name, description, archived, created_at, notes, workspace_id, user_id, immutable, state
                     ON projects
                         FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
--- DELETE should fire BEFORE to guarantee the experiment still exists to grab the workspace_id.
+
 DROP TRIGGER IF EXISTS stream_project_trigger_d ON projects;
 CREATE TRIGGER stream_project_trigger_d
     BEFORE DELETE ON projects
