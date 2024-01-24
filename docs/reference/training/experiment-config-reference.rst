@@ -1199,6 +1199,10 @@ container on a single node, or in a single pod. When false, it may be split acro
 or pods. Defaults to false for experiments. This field is set to true for notebooks, tensorboards,
 shells, and commands, and cannot be modified.
 
+.. note::
+
+   This option is currently not supported by Slurm RM.
+
 .. _exp-resources-devices:
 
 ``devices``
