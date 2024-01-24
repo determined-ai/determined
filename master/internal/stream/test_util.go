@@ -31,14 +31,6 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 				typedMsg.State,
 				typedMsg.WorkspaceID,
 			)
-			// case *ExperimentMsg:
-			// 	return fmt.Sprintf(
-			// 		"%d: %s %d %d",
-			// 		typedMsg.ID,
-			// 		typedMsg.State,
-			// 		typedMsg.ProjectID,
-			// 		typedMsg.WorkspaceID,
-			// 	)
 		}
 	case stream.DeleteMsg:
 		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
@@ -148,11 +140,9 @@ func splitMsgs(
 ) {
 	upsertKeys := []string{
 		ProjectsUpsertKey,
-		// ExperimentUpsertKey,
 	}
 	deleteKeys := []string{
 		ProjectsDeleteKey,
-		// ExperimentDeleteKey,
 	}
 
 	for i := range upsertKeys {

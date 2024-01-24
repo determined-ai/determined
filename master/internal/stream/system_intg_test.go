@@ -18,6 +18,10 @@ import (
 	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
+const (
+	projects = "projects"
+)
+
 func TestMockSocket(t *testing.T) {
 	expectedMsg := StartupMsg{
 		SyncID: uuid.NewString(),
@@ -65,6 +69,21 @@ func TestMockSocket(t *testing.T) {
 	require.Equal(t, "final", msgs[1])
 }
 
+// initializeStreamDB initializes a postgres database, performs current migrations and populates it with test data.
+func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
+	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+	t.Cleanup(dbCleanup)
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+	_, err := db.Bun().NewRaw(
+		"INSERT INTO workspaces (name) VALUES ('test_workspace');" +
+			"INSERT INTO projects (name, workspace_id) VALUES ('test_project', 2);",
+	).Exec(ctx)
+	if err != nil {
+		t.Errorf("failed to generate test data for streaming integration test: %s", err)
+	}
+	return pgDB
+}
+
 type startupTestCase struct {
 	description       string
 	startupMsg        StartupMsg
@@ -97,19 +116,16 @@ func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket
 	)
 }
 
-func runStartupTest(t *testing.T, testCases []startupTestCase) {
+func runStartupTest(t *testing.T, pgDB *db.PgDB, testCases []startupTestCase) {
 	// setup test environment
 	superCtx := context.TODO()
 	ctx := context.TODO()
 	testUser := model.User{Username: uuid.New().String()}
-	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
+
+	// setup and populate DB
 	ps := NewPublisherSet(pgDB.URL)
 	socket := newMockSocket()
-
-	t.Cleanup(dbCleanup)
 	errgrp := errgroupx.WithContext(ctx)
-	trials := streamdata.GenerateStreamData()
-	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
 
 	// start publisher set and connect as testUser
 	errgrp.Go(ps.Start)
@@ -151,7 +167,7 @@ func buildStartupMsg(
 	// populate knownKeySet
 	for knownType, known := range knownsMap {
 		switch knownType {
-		case ProjectsUpsertKey:
+		case projects:
 			knownKeySet.Projects = known
 		}
 	}
@@ -159,9 +175,9 @@ func buildStartupMsg(
 	// populate subscriptionSpec
 	for subscriptionType, subscriptionIDs := range subscriptionsMap {
 		switch subscriptionType {
-		case ProjectsUpsertKey:
+		case projects:
 			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
-				ProjectIDs:   subscriptionIDs[ProjectsUpsertKey],
+				ProjectIDs:   subscriptionIDs[projects],
 				WorkspaceIDs: subscriptionIDs["workspaces"],
 				Since:        0,
 			}
@@ -222,12 +238,10 @@ func runUpdateTest(t *testing.T, pgDB *db.PgDB, testCases []updateTestCase) {
 	superCtx := context.TODO()
 	ctx := context.TODO()
 	testUser := model.User{Username: uuid.New().String()}
-	ps := NewPublisherSet(pgDB.URL)
 	socket := newMockSocket()
 
-	// run migrations
-	trials := streamdata.GenerateStreamData()
-	trials.MustMigrate(t, pgDB, "file://../../static/migrations")
+	// create a new publisher set
+	ps := NewPublisherSet(pgDB.URL)
 
 	// start publisher set and connect as testUser
 	errgrp := errgroupx.WithContext(ctx)
@@ -257,58 +271,60 @@ func runUpdateTest(t *testing.T, pgDB *db.PgDB, testCases []updateTestCase) {
 }
 
 func TestProjectStartup(t *testing.T) {
+	pgDB := initializeStreamDB(context.Background(), t)
 	testCases := []startupTestCase{
 		{
 			description: "project subscription with project id",
-			startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
-				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
+			startupMsg: buildStartupMsg(
+				"1",
+				map[string]string{projects: "1,2"},
+				map[string]map[string][]int{projects: {projects: {1, 2}}},
+			),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 		{
 			description: "project subscription with excess project id",
-			startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2,3"},
-				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
+			startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2,3"},
+				map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
 		{
 			description: "project subscription with workspaces",
-			startupMsg: buildStartupMsg("3", map[string]string{ProjectsUpsertKey: "1,2"},
-				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
+			startupMsg: buildStartupMsg("3", map[string]string{projects: "1,2"},
+				map[string]map[string][]int{projects: {projects: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 		{
-			description: "project subscription with incomplete workspaces",
-			startupMsg: buildStartupMsg("4", map[string]string{ProjectsUpsertKey: "1,2"},
-				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1}}}),
+			description: "project offline fall out",
+			startupMsg: buildStartupMsg("4", map[string]string{projects: "1,2"},
+				map[string]map[string][]int{projects: {projects: {1}}}),
 			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
 		},
 		{
-			description: "project subscription with incomplete workspaces",
-			startupMsg: buildStartupMsg("5", map[string]string{ProjectsUpsertKey: "1"},
-				map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2}}}),
+			description: "project offline fall in",
+			startupMsg: buildStartupMsg("5", map[string]string{projects: "1"},
+				map[string]map[string][]int{projects: {projects: {1, 2}}}),
 			expectedSync:      "key: sync_msg, sync_id: 5",
 			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 	}
 
-	runStartupTest(t, testCases)
+	runStartupTest(t, pgDB, testCases)
 }
 
 func TestProjectUpdate(t *testing.T) {
-	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
-	t.Cleanup(dbCleanup)
-
-	newProject3 := model.Project{
-		Name:        "test project 3",
+	pgDB := initializeStreamDB(context.Background(), t)
+	testProject := model.Project{
+		Name:        uuid.NewString(),
 		CreatedAt:   time.Now(),
 		Archived:    false,
 		WorkspaceID: 2,
@@ -316,7 +332,7 @@ func TestProjectUpdate(t *testing.T) {
 		State:       "UNSPECIFIED",
 	}
 
-	project3Mod := model.Project{
+	projectMod := model.Project{
 		ID:          3,
 		WorkspaceID: 1,
 	}
@@ -325,28 +341,28 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: create project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
-					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
+				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
+					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
 			description:       "create project 3",
-			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(newProject3)},
+			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject)},
 			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: update project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
-					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
+				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
+					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
 			description: "update project 3",
-			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(project3Mod)},
+			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(projectMod)},
 			expectedUpserts: []string{
 				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1",
 			},
@@ -355,14 +371,14 @@ func TestProjectUpdate(t *testing.T) {
 		{
 			startupCase: startupTestCase{
 				description: "startup case for: delete project 3",
-				startupMsg: buildStartupMsg("1", map[string]string{ProjectsUpsertKey: "1,2"},
-					map[string]map[string][]int{ProjectsUpsertKey: {ProjectsUpsertKey: {1, 2, 3}}}),
+				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
+					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
 			description:       "delete project 3",
-			queries:           []streamdata.ExecutableQuery{streamdata.GetDeleteProjectQuery(project3Mod)},
+			queries:           []streamdata.ExecutableQuery{streamdata.GetDeleteProjectQuery(projectMod)},
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
@@ -371,30 +387,10 @@ func TestProjectUpdate(t *testing.T) {
 	runUpdateTest(t, pgDB, testCases)
 }
 
-func TestUpdatesOutOfSpec(t *testing.T) {
-	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
-	t.Cleanup(dbCleanup)
-
-	testCases := []updateTestCase{}
-
-	runUpdateTest(t, pgDB, testCases)
-}
-
-func TestOfflineChanges(t *testing.T) {
-	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
-	t.Cleanup(dbCleanup)
-
-	testCases := []updateTestCase{}
-
-	runUpdateTest(t, pgDB, testCases)
-}
-
 func TestOnlineChanges(t *testing.T) {
-	pgDB, dbCleanup := db.MustResolveNewPostgresDatabase(t)
-	t.Cleanup(dbCleanup)
-
-	newProject3 := model.Project{
-		Name:        "test project 3",
+	pgDB := initializeStreamDB(context.Background(), t)
+	testProject := model.Project{
+		Name:        uuid.NewString(),
 		CreatedAt:   time.Now(),
 		Archived:    false,
 		WorkspaceID: 2,
@@ -408,8 +404,8 @@ func TestOnlineChanges(t *testing.T) {
 				description: "startup test case for: online create project",
 				startupMsg: buildStartupMsg(
 					"3",
-					map[string]string{ProjectsUpsertKey: "2"},
-					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
+					map[string]string{projects: "2"},
+					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 3",
 				expectedUpserts: []string{},
@@ -418,7 +414,7 @@ func TestOnlineChanges(t *testing.T) {
 				},
 			},
 			description:       "online create project",
-			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(newProject3)},
+			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject)},
 			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
@@ -427,8 +423,8 @@ func TestOnlineChanges(t *testing.T) {
 				description: "startup test case for: online fall out project",
 				startupMsg: buildStartupMsg(
 					"4",
-					map[string]string{ProjectsUpsertKey: "2,3"},
-					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
+					map[string]string{projects: "2,3"},
+					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 4",
 				expectedUpserts: []string{},
@@ -449,8 +445,8 @@ func TestOnlineChanges(t *testing.T) {
 				description: "startup test case for: online fall in project",
 				startupMsg: buildStartupMsg(
 					"5",
-					map[string]string{ProjectsUpsertKey: "2"},
-					map[string]map[string][]int{ProjectsUpsertKey: {"workspaces": {2}}},
+					map[string]string{projects: "2"},
+					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
 				expectedSync:    "key: sync_msg, sync_id: 5",
 				expectedUpserts: []string{},
