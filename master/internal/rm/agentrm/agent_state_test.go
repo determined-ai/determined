@@ -1,3 +1,5 @@
+//go:build integration
+
 package agentrm
 
 import (
@@ -46,10 +48,9 @@ func TestAgentStatePersistence(t *testing.T) {
 	require.NoError(t, err)
 
 	// Fake an agent, test adding it to the db.
-	rpName := "test"
 	state := newAgentState(agentID(uuid.NewString()), 64)
 	state.handler = &agent{}
-	state.resourcePoolName = rpName
+	state.resourcePoolName = "compute"
 	devices := []device.Device{
 		{
 			ID:    0,
@@ -64,11 +65,12 @@ func TestAgentStatePersistence(t *testing.T) {
 			Type:  "3090",
 		},
 	}
-	state.agentStarted(&aproto.AgentStarted{
+	started := &aproto.AgentStarted{
 		Version:              "",
 		Devices:              devices,
 		ContainersReattached: []aproto.ContainerReattachAck{},
-	})
+	}
+	state.agentStarted(started)
 	require.Equal(t, 2, len(state.getSlotsSummary("/myagent")))
 
 	// Run through some container states.
@@ -87,7 +89,7 @@ func TestAgentStatePersistence(t *testing.T) {
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        2,
-		ResourcePool: rpName,
+		ResourcePool: "compute",
 		StartTime:    ptrs.Ptr(time.Now()),
 		State:        ptrs.Ptr(model.AllocationStateAssigned),
 		Ports:        map[string]int{"ok": 8888},
@@ -180,4 +182,186 @@ func TestAgentStatePersistence(t *testing.T) {
 	exists, err := db.Bun().NewSelect().Model((*agentSnapshot)(nil)).Where("agent_id = ?", state.id).Exists(context.TODO())
 	require.NoError(t, err)
 	require.False(t, exists)
+}
+
+func Test_agentState_checkAgentStartedDevicesMatch(t *testing.T) {
+	stableUUID := uuid.NewString()
+	tests := []struct {
+		name            string
+		state           agentState
+		agentStarted    *aproto.AgentStarted
+		wantErrContains string
+	}{
+		{
+			name: "devices match",
+			state: agentState{
+				slotStates: map[device.ID]*slot{
+					0: {
+						device: device.Device{
+							ID:    0,
+							Brand: "nvda",
+							UUID:  stableUUID,
+							Type:  "3090",
+						},
+					},
+				},
+			},
+			agentStarted: &aproto.AgentStarted{Devices: []device.Device{
+				{
+					ID:    0,
+					Brand: "nvda",
+					UUID:  stableUUID,
+					Type:  "3090",
+				},
+			}},
+			wantErrContains: "",
+		},
+		{
+			name: "device is missing",
+			state: agentState{
+				slotStates: map[device.ID]*slot{
+					0: {
+						device: device.Device{
+							ID:    0,
+							Brand: "nvda",
+							UUID:  uuid.NewString(),
+							Type:  "3090",
+						},
+					},
+				},
+			},
+			agentStarted:    &aproto.AgentStarted{Devices: nil},
+			wantErrContains: "device count has changed",
+		},
+		{
+			name: "extra device",
+			state: agentState{
+				slotStates: map[device.ID]*slot{
+					0: {
+						device: device.Device{
+							ID:    0,
+							Brand: "nvda",
+							UUID:  uuid.NewString(),
+							Type:  "3090",
+						},
+					},
+				},
+			},
+			agentStarted: &aproto.AgentStarted{Devices: []device.Device{
+				{
+					ID:    0,
+					Brand: "nvda",
+					UUID:  uuid.NewString(),
+					Type:  "3090",
+				},
+				{
+					ID:    1,
+					Brand: "nvda",
+					UUID:  uuid.NewString(),
+					Type:  "3090",
+				},
+			}},
+			wantErrContains: "device count has changed",
+		},
+		{
+			name: "mismatched devices device",
+			state: agentState{
+				slotStates: map[device.ID]*slot{
+					0: {
+						device: device.Device{
+							ID:    0,
+							Brand: "nvda",
+							UUID:  uuid.NewString(),
+							Type:  "3090",
+						},
+					},
+				},
+			},
+			agentStarted: &aproto.AgentStarted{Devices: []device.Device{
+				{
+					ID:    0,
+					Brand: "nvda",
+					UUID:  uuid.NewString(),
+					Type:  "4090",
+				},
+			}},
+			wantErrContains: "device properties have changed",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.state.checkAgentStartedDevicesMatch(tt.agentStarted)
+			if tt.wantErrContains == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, tt.wantErrContains)
+		})
+	}
+}
+
+func TestSlotStates(t *testing.T) {
+	rpName := "test"
+	state := newAgentState(agentID(uuid.NewString()), 64)
+	state.handler = &agent{}
+	state.resourcePoolName = rpName
+	devices := []device.Device{
+		{
+			ID:    0,
+			Brand: "nvda",
+			UUID:  uuid.NewString(),
+			Type:  "3090",
+		},
+		{
+			ID:    1,
+			Brand: "nvda",
+			UUID:  uuid.NewString(),
+			Type:  "3090",
+		},
+	}
+	started := &aproto.AgentStarted{
+		Version:              "",
+		Devices:              devices,
+		ContainersReattached: []aproto.ContainerReattachAck{},
+	}
+	state.agentStarted(started)
+	slots := state.getSlotsSummary("/")
+	require.Equal(t, 2, state.numSlots())
+	for _, s := range slots {
+		require.True(t, s.Enabled)
+		require.False(t, s.Draining)
+	}
+
+	slot, err := state.patchSlotState(patchSlotState{
+		id:      0,
+		enabled: ptrs.Ptr(false),
+		drain:   ptrs.Ptr(true),
+	})
+	require.NoError(t, err)
+	require.Equal(t, true, slot.Draining)
+	require.Equal(t, false, slot.Enabled)
+	require.Equal(t, 2, state.numSlots())
+
+	slots = state.patchAllSlotsState(patchAllSlotsState{
+		enabled: ptrs.Ptr(true),
+	})
+	require.Equal(t, 2, len(slots))
+	for _, s := range slots {
+		require.True(t, s.Enabled)
+	}
+
+	// Manipulate agent states a bit and check slot counts.
+	state.Devices[devices[0]] = ptrs.Ptr(cproto.NewID())
+	state.disable(true)
+	require.Equal(t, 1, state.numSlots())
+
+	state.Devices[devices[0]] = nil
+	require.Equal(t, 0, state.numSlots())
+
+	state.disable(false)
+	require.Equal(t, 0, state.numSlots())
+
+	state.enable()
+	require.Equal(t, 2, state.numSlots())
 }
