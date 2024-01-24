@@ -121,7 +121,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
       } catch (e) {
         handleError(e, {
           publicSubject: `Unable to register ${pluralizer(checkpoints.length, 'checkpoint')}.`,
-          silent: true,
+          silent: false,
           type: ErrorType.Api,
         });
       }
