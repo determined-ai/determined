@@ -144,17 +144,16 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
-//	@Summary	Bogus route to generate parameter objects.
-//	@Tags		Cluster
-//	@ID			get-raw-resource-allocation-csv2
+//	@Summary	Bogus route to swag get to generate parameter objects.
+//	@Tags		Internal
+//	@ID			bogus
 //	@Accept		json
-//	@Produce	text/csv
-//	@Param		bogus_config		body	config.Config	true	"Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
+//	@Param		unused1		body	config.Config	true	"Unused parameter"
 //	@Router		/bogus [post]
-//	@Deprecated
 //
 // nolint:lll
-func (m *Master) noOp(echo.Context) (interface{}, error) {
+func (m *Master) noOpGenSwagApiSpec(echo.Context) (interface{}, error) {
+	// https://github.com/swaggo/swag?tab=readme-ov-file#declarative-comments-format
 	return nil, nil
 }
 
