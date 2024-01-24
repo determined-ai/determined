@@ -53,7 +53,7 @@ spec:
             readOnly: true
           {{- if and (.Values.checkpointStorage.mountToServer) (eq .Values.checkpointStorage.type "shared_fs") }}
           - name: checkpoint-storage
-            mountPath: {{ .Values.checkpointStorage.hostPath }}
+            mountPath: /determined_shared_fs
           {{ end }}
           {{- if .Values.tlsSecret }}
           - name: tls-secret
