@@ -18,9 +18,9 @@ type StartupMsg struct {
 	Subscribe SubscriptionSpecSet `json:"subscribe"`
 }
 
-// KnownKeySet allows a client to describe which primary keys it knows of as existing, so the server
-// can respond with a different KnownKeySet of deleted messages of client-known keys that don't
-// exist.
+// KnownKeySet allows a client to describe which primary keys it knows of as existing,
+// so the server can respond with which client-known keys have been deleted or disappeared,
+// and also which server-known keys are not yet known to the client (appearances).
 //
 // Each field of a KnownKeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
 type KnownKeySet struct {
