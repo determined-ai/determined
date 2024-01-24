@@ -139,6 +139,588 @@ export const Checkpointv1State = {
 } as const
 export type Checkpointv1State = ValueOf<typeof Checkpointv1State>
 /**
+ * 
+ * @export
+ * @interface ConfigAssignWorkspaceCreatorConfig
+ */
+export interface ConfigAssignWorkspaceCreatorConfig {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigAssignWorkspaceCreatorConfig
+     */
+    enabled?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigAssignWorkspaceCreatorConfig
+     */
+    role_id?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigAuthZConfig
+ */
+export interface ConfigAuthZConfig {
+    /**
+     * Removed: this option is removed and will not have any effect.
+     * @type {boolean}
+     * @memberof ConfigAuthZConfig
+     */
+    _strict_ntsc_enabled?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigAuthZConfig
+     */
+    fallback?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigAuthZConfig
+     */
+    rbac_ui_enabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigAuthZConfig
+     */
+    strict_job_queue_control?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigAuthZConfig
+     */
+    type?: string;
+    /**
+     * 
+     * @type {ConfigAssignWorkspaceCreatorConfig}
+     * @memberof ConfigAuthZConfig
+     */
+    workspace_creator_assign_role?: ConfigAssignWorkspaceCreatorConfig;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigCacheConfig
+ */
+export interface ConfigCacheConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigCacheConfig
+     */
+    cache_dir?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigConfig
+ */
+export interface ConfigConfig {
+    /**
+     * Internal contains "hidden" useful debugging configurations.
+     * @type {any}
+     * @memberof ConfigConfig
+     */
+    __internal?: any;
+    /**
+     * 
+     * @type {ConfigCacheConfig}
+     * @memberof ConfigConfig
+     */
+    cache?: ConfigCacheConfig;
+    /**
+     * 
+     * @type {ExpconfCheckpointStorageConfig}
+     * @memberof ConfigConfig
+     */
+    checkpoint_storage?: ExpconfCheckpointStorageConfig;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigConfig
+     */
+    cluster_name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigConfig
+     */
+    config_file?: string;
+    /**
+     * 
+     * @type {ConfigDBConfig}
+     * @memberof ConfigConfig
+     */
+    db?: ConfigDBConfig;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigConfig
+     */
+    enable_cors?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ConfigConfig
+     */
+    feature_switches?: Array<string>;
+    /**
+     * 
+     * @type {ConfigIntegrationsConfig}
+     * @memberof ConfigConfig
+     */
+    integrations?: ConfigIntegrationsConfig;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigConfig
+     */
+    launch_error?: boolean;
+    /**
+     * 
+     * @type {LoggerConfig}
+     * @memberof ConfigConfig
+     */
+    log?: LoggerConfig;
+    /**
+     * 
+     * @type {ModelLoggingConfig}
+     * @memberof ConfigConfig
+     */
+    logging?: ModelLoggingConfig;
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigConfig
+     */
+    notebook_timeout?: number;
+    /**
+     * 
+     * @type {ConfigObservabilityConfig}
+     * @memberof ConfigConfig
+     */
+    observability?: ConfigObservabilityConfig;
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigConfig
+     */
+    port?: number;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof ConfigConfig
+     */
+    reserved_ports?: Array<number>;
+    /**
+     * 
+     * @type {ConfigResourceManagerConfig}
+     * @memberof ConfigConfig
+     */
+    resource_manager?: ConfigResourceManagerConfig;
+    /**
+     * 
+     * @type {Array<ConfigResourcePoolConfig>}
+     * @memberof ConfigConfig
+     */
+    resource_pools?: Array<ConfigResourcePoolConfig>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigConfig
+     */
+    root?: string;
+    /**
+     * 
+     * @type {ConfigSecurityConfig}
+     * @memberof ConfigConfig
+     */
+    security?: ConfigSecurityConfig;
+    /**
+     * 
+     * @type {any}
+     * @memberof ConfigConfig
+     */
+    task_container_defaults?: any;
+    /**
+     * 
+     * @type {ConfigTelemetryConfig}
+     * @memberof ConfigConfig
+     */
+    telemetry?: ConfigTelemetryConfig;
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigConfig
+     */
+    tensorboard_timeout?: number;
+    /**
+     * 
+     * @type {ConfigWebhooksConfig}
+     * @memberof ConfigConfig
+     */
+    webhooks?: ConfigWebhooksConfig;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigDBConfig
+ */
+export interface ConfigDBConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    host?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    migrations?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    password?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    port?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    ssl_mode?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    ssl_root_cert?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigDBConfig
+     */
+    user?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigIntegrationsConfig
+ */
+export interface ConfigIntegrationsConfig {
+    /**
+     * 
+     * @type {ConfigPachydermConfig}
+     * @memberof ConfigIntegrationsConfig
+     */
+    pachyderm?: ConfigPachydermConfig;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigInternalConfig
+ */
+export interface ConfigInternalConfig {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigInternalConfig
+     */
+    audit_logging_enabled?: boolean;
+    /**
+     * 
+     * @type {ModelExternalSessions}
+     * @memberof ConfigInternalConfig
+     */
+    external_sessions?: ModelExternalSessions;
+    /**
+     * 
+     * @type {Array<ConfigProxiedServerConfig>}
+     * @memberof ConfigInternalConfig
+     */
+    proxied_servers?: Array<ConfigProxiedServerConfig>;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigObservabilityConfig
+ */
+export interface ConfigObservabilityConfig {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigObservabilityConfig
+     */
+    enable_prometheus?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigPachydermConfig
+ */
+export interface ConfigPachydermConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigPachydermConfig
+     */
+    address?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigProxiedServerConfig
+ */
+export interface ConfigProxiedServerConfig {
+    /**
+     * Destination is the URL to proxy to.
+     * @type {string}
+     * @memberof ConfigProxiedServerConfig
+     */
+    destination?: string;
+    /**
+     * Prefix is the path prefix to match for this proxy.
+     * @type {string}
+     * @memberof ConfigProxiedServerConfig
+     */
+    path_prefix?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigResourceManagerConfig
+ */
+export interface ConfigResourceManagerConfig {
+}
+/**
+ * 
+ * @export
+ * @interface ConfigResourcePoolConfig
+ */
+export interface ConfigResourcePoolConfig {
+    /**
+     * AgentReattachEnabled defines if master & agent try to recover running containers after a clean restart.
+     * @type {boolean}
+     * @memberof ConfigResourcePoolConfig
+     */
+    agent_reattach_enabled?: boolean;
+    /**
+     * AgentReconnectWait define the time master will wait for agent before abandoning it.
+     * @type {number}
+     * @memberof ConfigResourcePoolConfig
+     */
+    agent_reconnect_wait?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigResourcePoolConfig
+     */
+    description?: string;
+    /**
+     * If empty, will behave as if the value is resource_manager.namespace, which in most cases will be the namespace the helm deployment is in.
+     * @type {string}
+     * @memberof ConfigResourcePoolConfig
+     */
+    kubernetes_namespace?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigResourcePoolConfig
+     */
+    max_aux_containers_per_agent?: number;
+    /**
+     * Deprecated: Use MaxAuxContainersPerAgent instead.
+     * @type {number}
+     * @memberof ConfigResourcePoolConfig
+     */
+    max_cpu_containers_per_agent?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigResourcePoolConfig
+     */
+    pool_name?: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof ConfigResourcePoolConfig
+     */
+    provider?: any;
+    /**
+     * 
+     * @type {ConfigSchedulerConfig}
+     * @memberof ConfigResourcePoolConfig
+     */
+    scheduler?: ConfigSchedulerConfig;
+    /**
+     * 
+     * @type {any}
+     * @memberof ConfigResourcePoolConfig
+     */
+    task_container_defaults?: any;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigSchedulerConfig
+ */
+export interface ConfigSchedulerConfig {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigSchedulerConfig
+     */
+    allow_heterogeneous_fits?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigSchedulerConfig
+     */
+    fitting_policy?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigSecurityConfig
+ */
+export interface ConfigSecurityConfig {
+    /**
+     * 
+     * @type {ConfigAuthZConfig}
+     * @memberof ConfigSecurityConfig
+     */
+    authz?: ConfigAuthZConfig;
+    /**
+     * 
+     * @type {ModelAgentUserGroup}
+     * @memberof ConfigSecurityConfig
+     */
+    default_task?: ModelAgentUserGroup;
+    /**
+     * 
+     * @type {ConfigSSHConfig}
+     * @memberof ConfigSecurityConfig
+     */
+    ssh?: ConfigSSHConfig;
+    /**
+     * 
+     * @type {ConfigTLSConfig}
+     * @memberof ConfigSecurityConfig
+     */
+    tls?: ConfigTLSConfig;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigSSHConfig
+ */
+export interface ConfigSSHConfig {
+    /**
+     * 
+     * @type {number}
+     * @memberof ConfigSSHConfig
+     */
+    rsa_key_size?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigTelemetryConfig
+ */
+export interface ConfigTelemetryConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTelemetryConfig
+     */
+    cluster_id?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigTelemetryConfig
+     */
+    enabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ConfigTelemetryConfig
+     */
+    otel_enabled?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTelemetryConfig
+     */
+    otel_endpoint?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTelemetryConfig
+     */
+    segment_master_key?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTelemetryConfig
+     */
+    segment_webui_key?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigTLSConfig
+ */
+export interface ConfigTLSConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTLSConfig
+     */
+    cert?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigTLSConfig
+     */
+    key?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ConfigWebhooksConfig
+ */
+export interface ConfigWebhooksConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigWebhooksConfig
+     */
+    base_url?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ConfigWebhooksConfig
+     */
+    signing_key?: string;
+}
+/**
  * The current state of the container.   - STATE_UNSPECIFIED: The container state is unknown.  - STATE_ASSIGNED: The container has been assigned to an agent but has not started yet.  - STATE_PULLING: The container's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been built and the container is being started, but the service in the container is not ready yet.  - STATE_RUNNING: The service in the container is able to accept requests.  - STATE_TERMINATED: The container has completely exited or the container has been aborted prior to getting assigned.
  * @export
  * @enum {string}
@@ -164,6 +746,31 @@ export const Devicev1Type = {
     ROCM: 'TYPE_ROCM',
 } as const
 export type Devicev1Type = ValueOf<typeof Devicev1Type>
+/**
+ * 
+ * @export
+ * @interface ExpconfCheckpointStorageConfig
+ */
+export interface ExpconfCheckpointStorageConfig {
+    /**
+     * 
+     * @type {number}
+     * @memberof ExpconfCheckpointStorageConfig
+     */
+    save_experiment_best?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ExpconfCheckpointStorageConfig
+     */
+    save_trial_best?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ExpconfCheckpointStorageConfig
+     */
+    save_trial_latest?: number;
+}
 /**
  * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
  * @export
@@ -239,6 +846,100 @@ export const Jobv1Type = {
     EXTERNAL: 'TYPE_EXTERNAL',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
+/**
+ * 
+ * @export
+ * @interface LoggerConfig
+ */
+export interface LoggerConfig {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof LoggerConfig
+     */
+    color?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof LoggerConfig
+     */
+    level?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ModelAgentUserGroup
+ */
+export interface ModelAgentUserGroup {
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelAgentUserGroup
+     */
+    gid?: number;
+    /**
+     * The Group is the primary group of the user.
+     * @type {string}
+     * @memberof ModelAgentUserGroup
+     */
+    group?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelAgentUserGroup
+     */
+    id?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelAgentUserGroup
+     */
+    uid?: number;
+    /**
+     * The User is the username on an agent host machine. This may be different from the username of the user in the User database.
+     * @type {string}
+     * @memberof ModelAgentUserGroup
+     */
+    user?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelAgentUserGroup
+     */
+    user_id?: number;
+}
+/**
+ * 
+ * @export
+ * @interface ModelExternalSessions
+ */
+export interface ModelExternalSessions {
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelExternalSessions
+     */
+    jwt_key?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelExternalSessions
+     */
+    login_uri?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelExternalSessions
+     */
+    logout_uri?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ModelLoggingConfig
+ */
+export interface ModelLoggingConfig {
+}
 /**
  * Gets around not being able to do "Optional map<string, int64>". Not ideal but this API is marked internal for now.
  * @export

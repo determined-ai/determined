@@ -296,6 +296,920 @@ class checkpointv1State(DetEnum):
     DELETED = "STATE_DELETED"
     PARTIALLY_DELETED = "STATE_PARTIALLY_DELETED"
 
+class configAssignWorkspaceCreatorConfig(Printable):
+    enabled: "typing.Optional[bool]" = None
+    role_id: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        enabled: "typing.Union[bool, None, Unset]" = _unset,
+        role_id: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(enabled, Unset):
+            self.enabled = enabled
+        if not isinstance(role_id, Unset):
+            self.role_id = role_id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configAssignWorkspaceCreatorConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "enabled" in obj:
+            kwargs["enabled"] = obj["enabled"]
+        if "role_id" in obj:
+            kwargs["role_id"] = obj["role_id"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "enabled" in vars(self):
+            out["enabled"] = self.enabled
+        if not omit_unset or "role_id" in vars(self):
+            out["role_id"] = self.role_id
+        return out
+
+class configAuthZConfig(Printable):
+    _strict_ntsc_enabled: "typing.Optional[bool]" = None
+    fallback: "typing.Optional[str]" = None
+    rbac_ui_enabled: "typing.Optional[bool]" = None
+    strict_job_queue_control: "typing.Optional[bool]" = None
+    type: "typing.Optional[str]" = None
+    workspace_creator_assign_role: "typing.Optional[configAssignWorkspaceCreatorConfig]" = None
+
+    def __init__(
+        self,
+        *,
+        _strict_ntsc_enabled: "typing.Union[bool, None, Unset]" = _unset,
+        fallback: "typing.Union[str, None, Unset]" = _unset,
+        rbac_ui_enabled: "typing.Union[bool, None, Unset]" = _unset,
+        strict_job_queue_control: "typing.Union[bool, None, Unset]" = _unset,
+        type: "typing.Union[str, None, Unset]" = _unset,
+        workspace_creator_assign_role: "typing.Union[configAssignWorkspaceCreatorConfig, None, Unset]" = _unset,
+    ):
+        if not isinstance(_strict_ntsc_enabled, Unset):
+            self._strict_ntsc_enabled = _strict_ntsc_enabled
+        if not isinstance(fallback, Unset):
+            self.fallback = fallback
+        if not isinstance(rbac_ui_enabled, Unset):
+            self.rbac_ui_enabled = rbac_ui_enabled
+        if not isinstance(strict_job_queue_control, Unset):
+            self.strict_job_queue_control = strict_job_queue_control
+        if not isinstance(type, Unset):
+            self.type = type
+        if not isinstance(workspace_creator_assign_role, Unset):
+            self.workspace_creator_assign_role = workspace_creator_assign_role
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configAuthZConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "_strict_ntsc_enabled" in obj:
+            kwargs["_strict_ntsc_enabled"] = obj["_strict_ntsc_enabled"]
+        if "fallback" in obj:
+            kwargs["fallback"] = obj["fallback"]
+        if "rbac_ui_enabled" in obj:
+            kwargs["rbac_ui_enabled"] = obj["rbac_ui_enabled"]
+        if "strict_job_queue_control" in obj:
+            kwargs["strict_job_queue_control"] = obj["strict_job_queue_control"]
+        if "type" in obj:
+            kwargs["type"] = obj["type"]
+        if "workspace_creator_assign_role" in obj:
+            kwargs["workspace_creator_assign_role"] = configAssignWorkspaceCreatorConfig.from_json(obj["workspace_creator_assign_role"]) if obj["workspace_creator_assign_role"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "_strict_ntsc_enabled" in vars(self):
+            out["_strict_ntsc_enabled"] = self._strict_ntsc_enabled
+        if not omit_unset or "fallback" in vars(self):
+            out["fallback"] = self.fallback
+        if not omit_unset or "rbac_ui_enabled" in vars(self):
+            out["rbac_ui_enabled"] = self.rbac_ui_enabled
+        if not omit_unset or "strict_job_queue_control" in vars(self):
+            out["strict_job_queue_control"] = self.strict_job_queue_control
+        if not omit_unset or "type" in vars(self):
+            out["type"] = self.type
+        if not omit_unset or "workspace_creator_assign_role" in vars(self):
+            out["workspace_creator_assign_role"] = None if self.workspace_creator_assign_role is None else self.workspace_creator_assign_role.to_json(omit_unset)
+        return out
+
+class configCacheConfig(Printable):
+    cache_dir: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        cache_dir: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(cache_dir, Unset):
+            self.cache_dir = cache_dir
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configCacheConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "cache_dir" in obj:
+            kwargs["cache_dir"] = obj["cache_dir"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "cache_dir" in vars(self):
+            out["cache_dir"] = self.cache_dir
+        return out
+
+class configConfig(Printable):
+    __internal: "typing.Optional[typing.Any]" = None
+    cache: "typing.Optional[configCacheConfig]" = None
+    checkpoint_storage: "typing.Optional[expconfCheckpointStorageConfig]" = None
+    cluster_name: "typing.Optional[str]" = None
+    config_file: "typing.Optional[str]" = None
+    db: "typing.Optional[configDBConfig]" = None
+    enable_cors: "typing.Optional[bool]" = None
+    feature_switches: "typing.Optional[typing.Sequence[str]]" = None
+    integrations: "typing.Optional[configIntegrationsConfig]" = None
+    launch_error: "typing.Optional[bool]" = None
+    log: "typing.Optional[loggerConfig]" = None
+    logging: "typing.Optional[None]" = None
+    notebook_timeout: "typing.Optional[int]" = None
+    observability: "typing.Optional[configObservabilityConfig]" = None
+    port: "typing.Optional[int]" = None
+    reserved_ports: "typing.Optional[typing.Sequence[int]]" = None
+    resource_manager: "typing.Optional[None]" = None
+    resource_pools: "typing.Optional[typing.Sequence[configResourcePoolConfig]]" = None
+    root: "typing.Optional[str]" = None
+    security: "typing.Optional[configSecurityConfig]" = None
+    task_container_defaults: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    telemetry: "typing.Optional[configTelemetryConfig]" = None
+    tensorboard_timeout: "typing.Optional[int]" = None
+    webhooks: "typing.Optional[configWebhooksConfig]" = None
+
+    def __init__(
+        self,
+        *,
+        __internal: "typing.Union[typing.Any, None, Unset]" = _unset,
+        cache: "typing.Union[configCacheConfig, None, Unset]" = _unset,
+        checkpoint_storage: "typing.Union[expconfCheckpointStorageConfig, None, Unset]" = _unset,
+        cluster_name: "typing.Union[str, None, Unset]" = _unset,
+        config_file: "typing.Union[str, None, Unset]" = _unset,
+        db: "typing.Union[configDBConfig, None, Unset]" = _unset,
+        enable_cors: "typing.Union[bool, None, Unset]" = _unset,
+        feature_switches: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        integrations: "typing.Union[configIntegrationsConfig, None, Unset]" = _unset,
+        launch_error: "typing.Union[bool, None, Unset]" = _unset,
+        log: "typing.Union[loggerConfig, None, Unset]" = _unset,
+        logging: "typing.Union[None, None, Unset]" = _unset,
+        notebook_timeout: "typing.Union[int, None, Unset]" = _unset,
+        observability: "typing.Union[configObservabilityConfig, None, Unset]" = _unset,
+        port: "typing.Union[int, None, Unset]" = _unset,
+        reserved_ports: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        resource_manager: "typing.Union[None, None, Unset]" = _unset,
+        resource_pools: "typing.Union[typing.Sequence[configResourcePoolConfig], None, Unset]" = _unset,
+        root: "typing.Union[str, None, Unset]" = _unset,
+        security: "typing.Union[configSecurityConfig, None, Unset]" = _unset,
+        task_container_defaults: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        telemetry: "typing.Union[configTelemetryConfig, None, Unset]" = _unset,
+        tensorboard_timeout: "typing.Union[int, None, Unset]" = _unset,
+        webhooks: "typing.Union[configWebhooksConfig, None, Unset]" = _unset,
+    ):
+        if not isinstance(__internal, Unset):
+            self.__internal = __internal
+        if not isinstance(cache, Unset):
+            self.cache = cache
+        if not isinstance(checkpoint_storage, Unset):
+            self.checkpoint_storage = checkpoint_storage
+        if not isinstance(cluster_name, Unset):
+            self.cluster_name = cluster_name
+        if not isinstance(config_file, Unset):
+            self.config_file = config_file
+        if not isinstance(db, Unset):
+            self.db = db
+        if not isinstance(enable_cors, Unset):
+            self.enable_cors = enable_cors
+        if not isinstance(feature_switches, Unset):
+            self.feature_switches = feature_switches
+        if not isinstance(integrations, Unset):
+            self.integrations = integrations
+        if not isinstance(launch_error, Unset):
+            self.launch_error = launch_error
+        if not isinstance(log, Unset):
+            self.log = log
+        if not isinstance(logging, Unset):
+            self.logging = logging
+        if not isinstance(notebook_timeout, Unset):
+            self.notebook_timeout = notebook_timeout
+        if not isinstance(observability, Unset):
+            self.observability = observability
+        if not isinstance(port, Unset):
+            self.port = port
+        if not isinstance(reserved_ports, Unset):
+            self.reserved_ports = reserved_ports
+        if not isinstance(resource_manager, Unset):
+            self.resource_manager = resource_manager
+        if not isinstance(resource_pools, Unset):
+            self.resource_pools = resource_pools
+        if not isinstance(root, Unset):
+            self.root = root
+        if not isinstance(security, Unset):
+            self.security = security
+        if not isinstance(task_container_defaults, Unset):
+            self.task_container_defaults = task_container_defaults
+        if not isinstance(telemetry, Unset):
+            self.telemetry = telemetry
+        if not isinstance(tensorboard_timeout, Unset):
+            self.tensorboard_timeout = tensorboard_timeout
+        if not isinstance(webhooks, Unset):
+            self.webhooks = webhooks
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "__internal" in obj:
+            kwargs["__internal"] = obj["__internal"]
+        if "cache" in obj:
+            kwargs["cache"] = configCacheConfig.from_json(obj["cache"]) if obj["cache"] is not None else None
+        if "checkpoint_storage" in obj:
+            kwargs["checkpoint_storage"] = expconfCheckpointStorageConfig.from_json(obj["checkpoint_storage"]) if obj["checkpoint_storage"] is not None else None
+        if "cluster_name" in obj:
+            kwargs["cluster_name"] = obj["cluster_name"]
+        if "config_file" in obj:
+            kwargs["config_file"] = obj["config_file"]
+        if "db" in obj:
+            kwargs["db"] = configDBConfig.from_json(obj["db"]) if obj["db"] is not None else None
+        if "enable_cors" in obj:
+            kwargs["enable_cors"] = obj["enable_cors"]
+        if "feature_switches" in obj:
+            kwargs["feature_switches"] = obj["feature_switches"]
+        if "integrations" in obj:
+            kwargs["integrations"] = configIntegrationsConfig.from_json(obj["integrations"]) if obj["integrations"] is not None else None
+        if "launch_error" in obj:
+            kwargs["launch_error"] = obj["launch_error"]
+        if "log" in obj:
+            kwargs["log"] = loggerConfig.from_json(obj["log"]) if obj["log"] is not None else None
+        if "logging" in obj:
+            kwargs["logging"] = modelLoggingConfig.from_json(obj["logging"]) if obj["logging"] is not None else None
+        if "notebook_timeout" in obj:
+            kwargs["notebook_timeout"] = obj["notebook_timeout"]
+        if "observability" in obj:
+            kwargs["observability"] = configObservabilityConfig.from_json(obj["observability"]) if obj["observability"] is not None else None
+        if "port" in obj:
+            kwargs["port"] = obj["port"]
+        if "reserved_ports" in obj:
+            kwargs["reserved_ports"] = obj["reserved_ports"]
+        if "resource_manager" in obj:
+            kwargs["resource_manager"] = configResourceManagerConfig.from_json(obj["resource_manager"]) if obj["resource_manager"] is not None else None
+        if "resource_pools" in obj:
+            kwargs["resource_pools"] = [configResourcePoolConfig.from_json(x) for x in obj["resource_pools"]] if obj["resource_pools"] is not None else None
+        if "root" in obj:
+            kwargs["root"] = obj["root"]
+        if "security" in obj:
+            kwargs["security"] = configSecurityConfig.from_json(obj["security"]) if obj["security"] is not None else None
+        if "task_container_defaults" in obj:
+            kwargs["task_container_defaults"] = obj["task_container_defaults"]
+        if "telemetry" in obj:
+            kwargs["telemetry"] = configTelemetryConfig.from_json(obj["telemetry"]) if obj["telemetry"] is not None else None
+        if "tensorboard_timeout" in obj:
+            kwargs["tensorboard_timeout"] = obj["tensorboard_timeout"]
+        if "webhooks" in obj:
+            kwargs["webhooks"] = configWebhooksConfig.from_json(obj["webhooks"]) if obj["webhooks"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "__internal" in vars(self):
+            out["__internal"] = self.__internal
+        if not omit_unset or "cache" in vars(self):
+            out["cache"] = None if self.cache is None else self.cache.to_json(omit_unset)
+        if not omit_unset or "checkpoint_storage" in vars(self):
+            out["checkpoint_storage"] = None if self.checkpoint_storage is None else self.checkpoint_storage.to_json(omit_unset)
+        if not omit_unset or "cluster_name" in vars(self):
+            out["cluster_name"] = self.cluster_name
+        if not omit_unset or "config_file" in vars(self):
+            out["config_file"] = self.config_file
+        if not omit_unset or "db" in vars(self):
+            out["db"] = None if self.db is None else self.db.to_json(omit_unset)
+        if not omit_unset or "enable_cors" in vars(self):
+            out["enable_cors"] = self.enable_cors
+        if not omit_unset or "feature_switches" in vars(self):
+            out["feature_switches"] = self.feature_switches
+        if not omit_unset or "integrations" in vars(self):
+            out["integrations"] = None if self.integrations is None else self.integrations.to_json(omit_unset)
+        if not omit_unset or "launch_error" in vars(self):
+            out["launch_error"] = self.launch_error
+        if not omit_unset or "log" in vars(self):
+            out["log"] = None if self.log is None else self.log.to_json(omit_unset)
+        if not omit_unset or "logging" in vars(self):
+            out["logging"] = None if self.logging is None else self.logging.to_json(omit_unset)
+        if not omit_unset or "notebook_timeout" in vars(self):
+            out["notebook_timeout"] = self.notebook_timeout
+        if not omit_unset or "observability" in vars(self):
+            out["observability"] = None if self.observability is None else self.observability.to_json(omit_unset)
+        if not omit_unset or "port" in vars(self):
+            out["port"] = self.port
+        if not omit_unset or "reserved_ports" in vars(self):
+            out["reserved_ports"] = self.reserved_ports
+        if not omit_unset or "resource_manager" in vars(self):
+            out["resource_manager"] = None if self.resource_manager is None else self.resource_manager.to_json(omit_unset)
+        if not omit_unset or "resource_pools" in vars(self):
+            out["resource_pools"] = None if self.resource_pools is None else [x.to_json(omit_unset) for x in self.resource_pools]
+        if not omit_unset or "root" in vars(self):
+            out["root"] = self.root
+        if not omit_unset or "security" in vars(self):
+            out["security"] = None if self.security is None else self.security.to_json(omit_unset)
+        if not omit_unset or "task_container_defaults" in vars(self):
+            out["task_container_defaults"] = self.task_container_defaults
+        if not omit_unset or "telemetry" in vars(self):
+            out["telemetry"] = None if self.telemetry is None else self.telemetry.to_json(omit_unset)
+        if not omit_unset or "tensorboard_timeout" in vars(self):
+            out["tensorboard_timeout"] = self.tensorboard_timeout
+        if not omit_unset or "webhooks" in vars(self):
+            out["webhooks"] = None if self.webhooks is None else self.webhooks.to_json(omit_unset)
+        return out
+
+class configDBConfig(Printable):
+    host: "typing.Optional[str]" = None
+    migrations: "typing.Optional[str]" = None
+    name: "typing.Optional[str]" = None
+    password: "typing.Optional[str]" = None
+    port: "typing.Optional[str]" = None
+    ssl_mode: "typing.Optional[str]" = None
+    ssl_root_cert: "typing.Optional[str]" = None
+    user: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        host: "typing.Union[str, None, Unset]" = _unset,
+        migrations: "typing.Union[str, None, Unset]" = _unset,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        password: "typing.Union[str, None, Unset]" = _unset,
+        port: "typing.Union[str, None, Unset]" = _unset,
+        ssl_mode: "typing.Union[str, None, Unset]" = _unset,
+        ssl_root_cert: "typing.Union[str, None, Unset]" = _unset,
+        user: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(host, Unset):
+            self.host = host
+        if not isinstance(migrations, Unset):
+            self.migrations = migrations
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(password, Unset):
+            self.password = password
+        if not isinstance(port, Unset):
+            self.port = port
+        if not isinstance(ssl_mode, Unset):
+            self.ssl_mode = ssl_mode
+        if not isinstance(ssl_root_cert, Unset):
+            self.ssl_root_cert = ssl_root_cert
+        if not isinstance(user, Unset):
+            self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configDBConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "host" in obj:
+            kwargs["host"] = obj["host"]
+        if "migrations" in obj:
+            kwargs["migrations"] = obj["migrations"]
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "password" in obj:
+            kwargs["password"] = obj["password"]
+        if "port" in obj:
+            kwargs["port"] = obj["port"]
+        if "ssl_mode" in obj:
+            kwargs["ssl_mode"] = obj["ssl_mode"]
+        if "ssl_root_cert" in obj:
+            kwargs["ssl_root_cert"] = obj["ssl_root_cert"]
+        if "user" in obj:
+            kwargs["user"] = obj["user"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "host" in vars(self):
+            out["host"] = self.host
+        if not omit_unset or "migrations" in vars(self):
+            out["migrations"] = self.migrations
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "password" in vars(self):
+            out["password"] = self.password
+        if not omit_unset or "port" in vars(self):
+            out["port"] = self.port
+        if not omit_unset or "ssl_mode" in vars(self):
+            out["ssl_mode"] = self.ssl_mode
+        if not omit_unset or "ssl_root_cert" in vars(self):
+            out["ssl_root_cert"] = self.ssl_root_cert
+        if not omit_unset or "user" in vars(self):
+            out["user"] = self.user
+        return out
+
+class configIntegrationsConfig(Printable):
+    pachyderm: "typing.Optional[configPachydermConfig]" = None
+
+    def __init__(
+        self,
+        *,
+        pachyderm: "typing.Union[configPachydermConfig, None, Unset]" = _unset,
+    ):
+        if not isinstance(pachyderm, Unset):
+            self.pachyderm = pachyderm
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configIntegrationsConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "pachyderm" in obj:
+            kwargs["pachyderm"] = configPachydermConfig.from_json(obj["pachyderm"]) if obj["pachyderm"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "pachyderm" in vars(self):
+            out["pachyderm"] = None if self.pachyderm is None else self.pachyderm.to_json(omit_unset)
+        return out
+
+class configInternalConfig(Printable):
+    audit_logging_enabled: "typing.Optional[bool]" = None
+    external_sessions: "typing.Optional[modelExternalSessions]" = None
+    proxied_servers: "typing.Optional[typing.Sequence[configProxiedServerConfig]]" = None
+
+    def __init__(
+        self,
+        *,
+        audit_logging_enabled: "typing.Union[bool, None, Unset]" = _unset,
+        external_sessions: "typing.Union[modelExternalSessions, None, Unset]" = _unset,
+        proxied_servers: "typing.Union[typing.Sequence[configProxiedServerConfig], None, Unset]" = _unset,
+    ):
+        if not isinstance(audit_logging_enabled, Unset):
+            self.audit_logging_enabled = audit_logging_enabled
+        if not isinstance(external_sessions, Unset):
+            self.external_sessions = external_sessions
+        if not isinstance(proxied_servers, Unset):
+            self.proxied_servers = proxied_servers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configInternalConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "audit_logging_enabled" in obj:
+            kwargs["audit_logging_enabled"] = obj["audit_logging_enabled"]
+        if "external_sessions" in obj:
+            kwargs["external_sessions"] = modelExternalSessions.from_json(obj["external_sessions"]) if obj["external_sessions"] is not None else None
+        if "proxied_servers" in obj:
+            kwargs["proxied_servers"] = [configProxiedServerConfig.from_json(x) for x in obj["proxied_servers"]] if obj["proxied_servers"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "audit_logging_enabled" in vars(self):
+            out["audit_logging_enabled"] = self.audit_logging_enabled
+        if not omit_unset or "external_sessions" in vars(self):
+            out["external_sessions"] = None if self.external_sessions is None else self.external_sessions.to_json(omit_unset)
+        if not omit_unset or "proxied_servers" in vars(self):
+            out["proxied_servers"] = None if self.proxied_servers is None else [x.to_json(omit_unset) for x in self.proxied_servers]
+        return out
+
+class configObservabilityConfig(Printable):
+    enable_prometheus: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        enable_prometheus: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        if not isinstance(enable_prometheus, Unset):
+            self.enable_prometheus = enable_prometheus
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configObservabilityConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "enable_prometheus" in obj:
+            kwargs["enable_prometheus"] = obj["enable_prometheus"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "enable_prometheus" in vars(self):
+            out["enable_prometheus"] = self.enable_prometheus
+        return out
+
+class configPachydermConfig(Printable):
+    address: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        address: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(address, Unset):
+            self.address = address
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configPachydermConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "address" in obj:
+            kwargs["address"] = obj["address"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "address" in vars(self):
+            out["address"] = self.address
+        return out
+
+class configProxiedServerConfig(Printable):
+    destination: "typing.Optional[str]" = None
+    path_prefix: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        destination: "typing.Union[str, None, Unset]" = _unset,
+        path_prefix: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(destination, Unset):
+            self.destination = destination
+        if not isinstance(path_prefix, Unset):
+            self.path_prefix = path_prefix
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configProxiedServerConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "destination" in obj:
+            kwargs["destination"] = obj["destination"]
+        if "path_prefix" in obj:
+            kwargs["path_prefix"] = obj["path_prefix"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "destination" in vars(self):
+            out["destination"] = self.destination
+        if not omit_unset or "path_prefix" in vars(self):
+            out["path_prefix"] = self.path_prefix
+        return out
+
+class configResourcePoolConfig(Printable):
+    agent_reattach_enabled: "typing.Optional[bool]" = None
+    agent_reconnect_wait: "typing.Optional[int]" = None
+    description: "typing.Optional[str]" = None
+    kubernetes_namespace: "typing.Optional[str]" = None
+    max_aux_containers_per_agent: "typing.Optional[int]" = None
+    max_cpu_containers_per_agent: "typing.Optional[int]" = None
+    pool_name: "typing.Optional[str]" = None
+    provider: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    scheduler: "typing.Optional[configSchedulerConfig]" = None
+    task_container_defaults: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        agent_reattach_enabled: "typing.Union[bool, None, Unset]" = _unset,
+        agent_reconnect_wait: "typing.Union[int, None, Unset]" = _unset,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        kubernetes_namespace: "typing.Union[str, None, Unset]" = _unset,
+        max_aux_containers_per_agent: "typing.Union[int, None, Unset]" = _unset,
+        max_cpu_containers_per_agent: "typing.Union[int, None, Unset]" = _unset,
+        pool_name: "typing.Union[str, None, Unset]" = _unset,
+        provider: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        scheduler: "typing.Union[configSchedulerConfig, None, Unset]" = _unset,
+        task_container_defaults: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(agent_reattach_enabled, Unset):
+            self.agent_reattach_enabled = agent_reattach_enabled
+        if not isinstance(agent_reconnect_wait, Unset):
+            self.agent_reconnect_wait = agent_reconnect_wait
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(kubernetes_namespace, Unset):
+            self.kubernetes_namespace = kubernetes_namespace
+        if not isinstance(max_aux_containers_per_agent, Unset):
+            self.max_aux_containers_per_agent = max_aux_containers_per_agent
+        if not isinstance(max_cpu_containers_per_agent, Unset):
+            self.max_cpu_containers_per_agent = max_cpu_containers_per_agent
+        if not isinstance(pool_name, Unset):
+            self.pool_name = pool_name
+        if not isinstance(provider, Unset):
+            self.provider = provider
+        if not isinstance(scheduler, Unset):
+            self.scheduler = scheduler
+        if not isinstance(task_container_defaults, Unset):
+            self.task_container_defaults = task_container_defaults
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configResourcePoolConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "agent_reattach_enabled" in obj:
+            kwargs["agent_reattach_enabled"] = obj["agent_reattach_enabled"]
+        if "agent_reconnect_wait" in obj:
+            kwargs["agent_reconnect_wait"] = obj["agent_reconnect_wait"]
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "kubernetes_namespace" in obj:
+            kwargs["kubernetes_namespace"] = obj["kubernetes_namespace"]
+        if "max_aux_containers_per_agent" in obj:
+            kwargs["max_aux_containers_per_agent"] = obj["max_aux_containers_per_agent"]
+        if "max_cpu_containers_per_agent" in obj:
+            kwargs["max_cpu_containers_per_agent"] = obj["max_cpu_containers_per_agent"]
+        if "pool_name" in obj:
+            kwargs["pool_name"] = obj["pool_name"]
+        if "provider" in obj:
+            kwargs["provider"] = obj["provider"]
+        if "scheduler" in obj:
+            kwargs["scheduler"] = configSchedulerConfig.from_json(obj["scheduler"]) if obj["scheduler"] is not None else None
+        if "task_container_defaults" in obj:
+            kwargs["task_container_defaults"] = obj["task_container_defaults"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "agent_reattach_enabled" in vars(self):
+            out["agent_reattach_enabled"] = self.agent_reattach_enabled
+        if not omit_unset or "agent_reconnect_wait" in vars(self):
+            out["agent_reconnect_wait"] = self.agent_reconnect_wait
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "kubernetes_namespace" in vars(self):
+            out["kubernetes_namespace"] = self.kubernetes_namespace
+        if not omit_unset or "max_aux_containers_per_agent" in vars(self):
+            out["max_aux_containers_per_agent"] = self.max_aux_containers_per_agent
+        if not omit_unset or "max_cpu_containers_per_agent" in vars(self):
+            out["max_cpu_containers_per_agent"] = self.max_cpu_containers_per_agent
+        if not omit_unset or "pool_name" in vars(self):
+            out["pool_name"] = self.pool_name
+        if not omit_unset or "provider" in vars(self):
+            out["provider"] = self.provider
+        if not omit_unset or "scheduler" in vars(self):
+            out["scheduler"] = None if self.scheduler is None else self.scheduler.to_json(omit_unset)
+        if not omit_unset or "task_container_defaults" in vars(self):
+            out["task_container_defaults"] = self.task_container_defaults
+        return out
+
+class configSSHConfig(Printable):
+    rsa_key_size: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        rsa_key_size: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(rsa_key_size, Unset):
+            self.rsa_key_size = rsa_key_size
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configSSHConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "rsa_key_size" in obj:
+            kwargs["rsa_key_size"] = obj["rsa_key_size"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "rsa_key_size" in vars(self):
+            out["rsa_key_size"] = self.rsa_key_size
+        return out
+
+class configSchedulerConfig(Printable):
+    allow_heterogeneous_fits: "typing.Optional[bool]" = None
+    fitting_policy: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        allow_heterogeneous_fits: "typing.Union[bool, None, Unset]" = _unset,
+        fitting_policy: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(allow_heterogeneous_fits, Unset):
+            self.allow_heterogeneous_fits = allow_heterogeneous_fits
+        if not isinstance(fitting_policy, Unset):
+            self.fitting_policy = fitting_policy
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configSchedulerConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "allow_heterogeneous_fits" in obj:
+            kwargs["allow_heterogeneous_fits"] = obj["allow_heterogeneous_fits"]
+        if "fitting_policy" in obj:
+            kwargs["fitting_policy"] = obj["fitting_policy"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "allow_heterogeneous_fits" in vars(self):
+            out["allow_heterogeneous_fits"] = self.allow_heterogeneous_fits
+        if not omit_unset or "fitting_policy" in vars(self):
+            out["fitting_policy"] = self.fitting_policy
+        return out
+
+class configSecurityConfig(Printable):
+    authz: "typing.Optional[configAuthZConfig]" = None
+    default_task: "typing.Optional[modelAgentUserGroup]" = None
+    ssh: "typing.Optional[configSSHConfig]" = None
+    tls: "typing.Optional[configTLSConfig]" = None
+
+    def __init__(
+        self,
+        *,
+        authz: "typing.Union[configAuthZConfig, None, Unset]" = _unset,
+        default_task: "typing.Union[modelAgentUserGroup, None, Unset]" = _unset,
+        ssh: "typing.Union[configSSHConfig, None, Unset]" = _unset,
+        tls: "typing.Union[configTLSConfig, None, Unset]" = _unset,
+    ):
+        if not isinstance(authz, Unset):
+            self.authz = authz
+        if not isinstance(default_task, Unset):
+            self.default_task = default_task
+        if not isinstance(ssh, Unset):
+            self.ssh = ssh
+        if not isinstance(tls, Unset):
+            self.tls = tls
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configSecurityConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "authz" in obj:
+            kwargs["authz"] = configAuthZConfig.from_json(obj["authz"]) if obj["authz"] is not None else None
+        if "default_task" in obj:
+            kwargs["default_task"] = modelAgentUserGroup.from_json(obj["default_task"]) if obj["default_task"] is not None else None
+        if "ssh" in obj:
+            kwargs["ssh"] = configSSHConfig.from_json(obj["ssh"]) if obj["ssh"] is not None else None
+        if "tls" in obj:
+            kwargs["tls"] = configTLSConfig.from_json(obj["tls"]) if obj["tls"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "authz" in vars(self):
+            out["authz"] = None if self.authz is None else self.authz.to_json(omit_unset)
+        if not omit_unset or "default_task" in vars(self):
+            out["default_task"] = None if self.default_task is None else self.default_task.to_json(omit_unset)
+        if not omit_unset or "ssh" in vars(self):
+            out["ssh"] = None if self.ssh is None else self.ssh.to_json(omit_unset)
+        if not omit_unset or "tls" in vars(self):
+            out["tls"] = None if self.tls is None else self.tls.to_json(omit_unset)
+        return out
+
+class configTLSConfig(Printable):
+    cert: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        cert: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(cert, Unset):
+            self.cert = cert
+        if not isinstance(key, Unset):
+            self.key = key
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configTLSConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "cert" in obj:
+            kwargs["cert"] = obj["cert"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "cert" in vars(self):
+            out["cert"] = self.cert
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
+        return out
+
+class configTelemetryConfig(Printable):
+    cluster_id: "typing.Optional[str]" = None
+    enabled: "typing.Optional[bool]" = None
+    otel_enabled: "typing.Optional[bool]" = None
+    otel_endpoint: "typing.Optional[str]" = None
+    segment_master_key: "typing.Optional[str]" = None
+    segment_webui_key: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        cluster_id: "typing.Union[str, None, Unset]" = _unset,
+        enabled: "typing.Union[bool, None, Unset]" = _unset,
+        otel_enabled: "typing.Union[bool, None, Unset]" = _unset,
+        otel_endpoint: "typing.Union[str, None, Unset]" = _unset,
+        segment_master_key: "typing.Union[str, None, Unset]" = _unset,
+        segment_webui_key: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(cluster_id, Unset):
+            self.cluster_id = cluster_id
+        if not isinstance(enabled, Unset):
+            self.enabled = enabled
+        if not isinstance(otel_enabled, Unset):
+            self.otel_enabled = otel_enabled
+        if not isinstance(otel_endpoint, Unset):
+            self.otel_endpoint = otel_endpoint
+        if not isinstance(segment_master_key, Unset):
+            self.segment_master_key = segment_master_key
+        if not isinstance(segment_webui_key, Unset):
+            self.segment_webui_key = segment_webui_key
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configTelemetryConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "cluster_id" in obj:
+            kwargs["cluster_id"] = obj["cluster_id"]
+        if "enabled" in obj:
+            kwargs["enabled"] = obj["enabled"]
+        if "otel_enabled" in obj:
+            kwargs["otel_enabled"] = obj["otel_enabled"]
+        if "otel_endpoint" in obj:
+            kwargs["otel_endpoint"] = obj["otel_endpoint"]
+        if "segment_master_key" in obj:
+            kwargs["segment_master_key"] = obj["segment_master_key"]
+        if "segment_webui_key" in obj:
+            kwargs["segment_webui_key"] = obj["segment_webui_key"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "cluster_id" in vars(self):
+            out["cluster_id"] = self.cluster_id
+        if not omit_unset or "enabled" in vars(self):
+            out["enabled"] = self.enabled
+        if not omit_unset or "otel_enabled" in vars(self):
+            out["otel_enabled"] = self.otel_enabled
+        if not omit_unset or "otel_endpoint" in vars(self):
+            out["otel_endpoint"] = self.otel_endpoint
+        if not omit_unset or "segment_master_key" in vars(self):
+            out["segment_master_key"] = self.segment_master_key
+        if not omit_unset or "segment_webui_key" in vars(self):
+            out["segment_webui_key"] = self.segment_webui_key
+        return out
+
+class configWebhooksConfig(Printable):
+    base_url: "typing.Optional[str]" = None
+    signing_key: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        base_url: "typing.Union[str, None, Unset]" = _unset,
+        signing_key: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(base_url, Unset):
+            self.base_url = base_url
+        if not isinstance(signing_key, Unset):
+            self.signing_key = signing_key
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "configWebhooksConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "base_url" in obj:
+            kwargs["base_url"] = obj["base_url"]
+        if "signing_key" in obj:
+            kwargs["signing_key"] = obj["signing_key"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "base_url" in vars(self):
+            out["base_url"] = self.base_url
+        if not omit_unset or "signing_key" in vars(self):
+            out["signing_key"] = self.signing_key
+        return out
+
 class containerv1State(DetEnum):
     """The current state of the container.
     - STATE_UNSPECIFIED: The container state is unknown.
@@ -325,6 +1239,48 @@ class devicev1Type(DetEnum):
     CPU = "TYPE_CPU"
     CUDA = "TYPE_CUDA"
     ROCM = "TYPE_ROCM"
+
+class expconfCheckpointStorageConfig(Printable):
+    save_experiment_best: "typing.Optional[int]" = None
+    save_trial_best: "typing.Optional[int]" = None
+    save_trial_latest: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        save_experiment_best: "typing.Union[int, None, Unset]" = _unset,
+        save_trial_best: "typing.Union[int, None, Unset]" = _unset,
+        save_trial_latest: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(save_experiment_best, Unset):
+            self.save_experiment_best = save_experiment_best
+        if not isinstance(save_trial_best, Unset):
+            self.save_trial_best = save_trial_best
+        if not isinstance(save_trial_latest, Unset):
+            self.save_trial_latest = save_trial_latest
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "expconfCheckpointStorageConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "save_experiment_best" in obj:
+            kwargs["save_experiment_best"] = obj["save_experiment_best"]
+        if "save_trial_best" in obj:
+            kwargs["save_trial_best"] = obj["save_trial_best"]
+        if "save_trial_latest" in obj:
+            kwargs["save_trial_latest"] = obj["save_trial_latest"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "save_experiment_best" in vars(self):
+            out["save_experiment_best"] = self.save_experiment_best
+        if not omit_unset or "save_trial_best" in vars(self):
+            out["save_trial_best"] = self.save_trial_best
+        if not omit_unset or "save_trial_latest" in vars(self):
+            out["save_trial_latest"] = self.save_trial_latest
+        return out
 
 class experimentv1State(DetEnum):
     """The current state of the experiment.
@@ -399,6 +1355,148 @@ class jobv1Type(DetEnum):
     COMMAND = "TYPE_COMMAND"
     CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
     EXTERNAL = "TYPE_EXTERNAL"
+
+class loggerConfig(Printable):
+    color: "typing.Optional[bool]" = None
+    level: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        color: "typing.Union[bool, None, Unset]" = _unset,
+        level: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(color, Unset):
+            self.color = color
+        if not isinstance(level, Unset):
+            self.level = level
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "loggerConfig":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "color" in obj:
+            kwargs["color"] = obj["color"]
+        if "level" in obj:
+            kwargs["level"] = obj["level"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "color" in vars(self):
+            out["color"] = self.color
+        if not omit_unset or "level" in vars(self):
+            out["level"] = self.level
+        return out
+
+class modelAgentUserGroup(Printable):
+    gid: "typing.Optional[int]" = None
+    group: "typing.Optional[str]" = None
+    id: "typing.Optional[int]" = None
+    uid: "typing.Optional[int]" = None
+    user: "typing.Optional[str]" = None
+    user_id: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        gid: "typing.Union[int, None, Unset]" = _unset,
+        group: "typing.Union[str, None, Unset]" = _unset,
+        id: "typing.Union[int, None, Unset]" = _unset,
+        uid: "typing.Union[int, None, Unset]" = _unset,
+        user: "typing.Union[str, None, Unset]" = _unset,
+        user_id: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(gid, Unset):
+            self.gid = gid
+        if not isinstance(group, Unset):
+            self.group = group
+        if not isinstance(id, Unset):
+            self.id = id
+        if not isinstance(uid, Unset):
+            self.uid = uid
+        if not isinstance(user, Unset):
+            self.user = user
+        if not isinstance(user_id, Unset):
+            self.user_id = user_id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "modelAgentUserGroup":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "gid" in obj:
+            kwargs["gid"] = obj["gid"]
+        if "group" in obj:
+            kwargs["group"] = obj["group"]
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        if "uid" in obj:
+            kwargs["uid"] = obj["uid"]
+        if "user" in obj:
+            kwargs["user"] = obj["user"]
+        if "user_id" in obj:
+            kwargs["user_id"] = obj["user_id"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "gid" in vars(self):
+            out["gid"] = self.gid
+        if not omit_unset or "group" in vars(self):
+            out["group"] = self.group
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
+        if not omit_unset or "uid" in vars(self):
+            out["uid"] = self.uid
+        if not omit_unset or "user" in vars(self):
+            out["user"] = self.user
+        if not omit_unset or "user_id" in vars(self):
+            out["user_id"] = self.user_id
+        return out
+
+class modelExternalSessions(Printable):
+    jwt_key: "typing.Optional[str]" = None
+    login_uri: "typing.Optional[str]" = None
+    logout_uri: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        jwt_key: "typing.Union[str, None, Unset]" = _unset,
+        login_uri: "typing.Union[str, None, Unset]" = _unset,
+        logout_uri: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(jwt_key, Unset):
+            self.jwt_key = jwt_key
+        if not isinstance(login_uri, Unset):
+            self.login_uri = login_uri
+        if not isinstance(logout_uri, Unset):
+            self.logout_uri = logout_uri
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "modelExternalSessions":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "jwt_key" in obj:
+            kwargs["jwt_key"] = obj["jwt_key"]
+        if "login_uri" in obj:
+            kwargs["login_uri"] = obj["login_uri"]
+        if "logout_uri" in obj:
+            kwargs["logout_uri"] = obj["logout_uri"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "jwt_key" in vars(self):
+            out["jwt_key"] = self.jwt_key
+        if not omit_unset or "login_uri" in vars(self):
+            out["login_uri"] = self.login_uri
+        if not omit_unset or "logout_uri" in vars(self):
+            out["logout_uri"] = self.logout_uri
+        return out
 
 class protobufAny(Printable):
     """https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"""
