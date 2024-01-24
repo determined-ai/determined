@@ -149,6 +149,7 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 //	@ID			bogus
 //	@Accept		json
 //	@Param		unused1		body	config.Config	true	"Unused parameter"
+//	@Success	200					{}		string	"Success"
 //	@Router		/bogus [post]
 //
 // nolint:lll
