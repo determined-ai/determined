@@ -114,7 +114,7 @@ func (ps *PublisherSet) streamHandler(
 	ctx context.Context,
 	user model.User,
 	socket WebsocketLike,
-	prepareFunc func(message stream.PreparableMessage) interface{},
+	prepareFunc func(message stream.MarshallableMsg) interface{},
 ) error {
 	// get permission change channel
 	var bootemChan chan struct{}
@@ -221,7 +221,7 @@ func (ps *PublisherSet) processStream(
 	user model.User,
 	startupMsg StartupMsg,
 	startups *[]StartupMsg,
-	prepare func(message stream.PreparableMessage) interface{},
+	prepare func(message stream.MarshallableMsg) interface{},
 	socket WebsocketLike,
 ) (
 	nextStartup *StartupMsg, err error,

@@ -22,14 +22,14 @@ type Event[T Msg] struct {
 	deleteCache interface{}
 }
 
-// PreparableMessage is an intermediary message that is ready to be marshaled and broadcast.
-type PreparableMessage interface {
+// MarshallableMsg is an intermediary message that is ready to be marshaled and broadcast.
+type MarshallableMsg interface {
 	MarshalJSON() ([]byte, error)
 }
 
 // UpsertMsg represents an upsert in the stream.
 type UpsertMsg struct {
-	PreparableMessage
+	MarshallableMsg
 	JSONKey string
 	Msg     Msg
 }
@@ -44,7 +44,7 @@ func (u UpsertMsg) MarshalJSON() ([]byte, error) {
 
 // DeleteMsg represents a deletion in the stream.
 type DeleteMsg struct {
-	PreparableMessage
+	MarshallableMsg
 	Key     string
 	Deleted string
 }
@@ -59,11 +59,11 @@ func (d DeleteMsg) MarshalJSON() ([]byte, error) {
 
 // SyncMsg is the server response to a StartupMsg once it's been handled.
 type SyncMsg struct {
-	PreparableMessage
+	MarshallableMsg
 	SyncID string `json:""`
 }
 
-// MarshalJSON converts a sync message into a json representation, implements PreparableMsg.
+// MarshalJSON returns a json marshaled SyncMsg.
 func (sm SyncMsg) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{"sync_id": sm.SyncID})
 }
@@ -78,11 +78,11 @@ type Streamer struct {
 	// Closed is set externally, and noticed eventually.
 	Closed bool
 	// PrepareFn is a user defined function that prepares Msgs for broadcast
-	PrepareFn func(message PreparableMessage) interface{}
+	PrepareFn func(message MarshallableMsg) interface{}
 }
 
 // NewStreamer creates a new Steamer.
-func NewStreamer(prepareFn func(message PreparableMessage) interface{}) *Streamer {
+func NewStreamer(prepareFn func(message MarshallableMsg) interface{}) *Streamer {
 	var lock sync.Mutex
 	cond := sync.NewCond(&lock)
 	if prepareFn == nil {

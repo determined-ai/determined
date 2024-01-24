@@ -87,9 +87,9 @@ func ProjectCollectStartupMsgs(
 	known string,
 	spec ProjectSubscriptionSpec,
 ) (
-	[]stream.PreparableMessage, error,
+	[]stream.MarshallableMsg, error,
 ) {
-	var out []stream.PreparableMessage
+	var out []stream.MarshallableMsg
 
 	if len(spec.WorkspaceIDs) == 0 && len(spec.ProjectIDs) == 0 {
 		// empty subscription: everything known should be returned as deleted

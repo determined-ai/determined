@@ -27,8 +27,8 @@ type KnownKeySet struct {
 	Projects string `json:"projects"`
 }
 
-// prepareWebsocketMessage converts the PreparableMessage into a websocket.PreparedMessage.
-func prepareWebsocketMessage(obj stream.PreparableMessage) interface{} {
+// prepareWebsocketMessage converts the MarshallableMsg into a websocket.PreparedMessage.
+func prepareWebsocketMessage(obj stream.MarshallableMsg) interface{} {
 	jbytes, err := json.Marshal(obj)
 	if err != nil {
 		log.Errorf("error marshaling message for streaming: %s", err.Error())
