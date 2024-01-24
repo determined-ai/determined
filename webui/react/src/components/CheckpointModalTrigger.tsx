@@ -27,6 +27,8 @@ interface Props {
   title: string;
 }
 
+let didInit = false;
+
 const CheckpointModalTrigger: React.FC<Props> = ({
   checkpoint,
   experiment,
@@ -80,7 +82,10 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   }, [canceler.signal]);
 
   useEffect(() => {
-    fetchModels();
+    if (!didInit) {
+      didInit = true;
+      fetchModels();
+    }
   }, [fetchModels]);
 
   const handleModalCheckpointClick = useCallback(() => {
