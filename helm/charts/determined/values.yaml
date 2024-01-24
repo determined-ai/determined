@@ -196,7 +196,8 @@ checkpointStorage:
   # system.
   type: shared_fs
   hostPath: /checkpoints
-
+  # By default don't mount the shared_fs to the master pod. change this to true to enabled checkpoint downloads from master
+  mountToMaster: true
   # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
