@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sort"
 	"strconv"
 	"time"
 
@@ -91,7 +90,7 @@ func ProjectCollectStartupMsgs(
 ) {
 	var out []stream.MarshallableMsg
 
-	if len(spec.WorkspaceIDs) == 0 && len(spec.ProjectIDs) == 0 {
+	if len(spec.ProjectIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
 		// empty subscription: everything known should be returned as deleted
 		out = append(out, stream.DeleteMsg{
 			Key:     ProjectsDeleteKey,
@@ -112,29 +111,28 @@ func ProjectCollectStartupMsgs(
 	}
 
 	// step 1: calculate all ids matching this subscription
-	var data []*ProjectMsg
-	q := db.Bun().NewSelect().Model(&data).Order("id ASC")
+	q := db.Bun().NewSelect().
+		TableExpr("projects p").
+		Column("p.id").
+		OrderExpr("p.id ASC")
+
 	q = permFilterQuery(q, accessMap, accessScopes)
 
-	// Ignore spec.Since, because we want appearances, which might not be have seq > spec.Since.
+	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
-	if len(spec.WorkspaceIDs) > 0 {
-		ws.Include("workspace_id in (?)", bun.In(spec.WorkspaceIDs))
-	}
 	if len(spec.ProjectIDs) > 0 {
-		ws.Include("id in (?)", bun.In(spec.ProjectIDs))
+		ws.Include("p.id in (?)", bun.In(spec.ProjectIDs))
+	}
+	if len(spec.WorkspaceIDs) > 0 {
+		ws.Include("p.id in (?)", bun.In(spec.WorkspaceIDs))
 	}
 	q = ws.Apply(q)
 
-	err = q.Scan(ctx, &data)
+	var exist []int64
+	err = q.Scan(ctx, &exist)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		log.Errorf("error: %v\n", err)
 		return nil, err
-	}
-
-	var exist []int64
-	for _, pm := range data {
-		exist = append(exist, int64(pm.ID))
 	}
 
 	// step 2: figure out what was missing and what has appeared
@@ -143,26 +141,15 @@ func ProjectCollectStartupMsgs(
 		return nil, err
 	}
 
-	appearedMsgs := make([]*ProjectMsg, 0, len(appeared))
+	// step 3: hydrate appeared IDs into full ProjectMsgs
+	var projMsgs []*ProjectMsg
 	if len(appeared) > 0 {
-		sort.SliceStable(appeared, func(i, j int) bool {
-			return appeared[i] < appeared[j]
-		})
-		x := 0 // tracks projectMsgs
-		y := 0 // tracks appeared IDs
-
-		for x < len(appeared) {
-			if y >= len(data) {
-				log.Errorf("appeared projects are not in scanned dataset")
-				break
-			}
-			if appeared[x] == int64(data[y].ID) {
-				appearedMsgs = append(appearedMsgs, data[y])
-				x++
-				y++
-			} else {
-				y++
-			}
+		query := db.Bun().NewSelect().Model(&projMsgs).Where("project_msg.id in (?)", bun.In(appeared))
+		query = permFilterQuery(query, accessMap, accessScopes)
+		err := query.Scan(ctx, &projMsgs)
+		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+			log.Errorf("error: %v\n", err)
+			return nil, err
 		}
 	}
 
@@ -171,7 +158,7 @@ func ProjectCollectStartupMsgs(
 		Key:     ProjectsDeleteKey,
 		Deleted: missing,
 	})
-	for _, msg := range appearedMsgs {
+	for _, msg := range projMsgs {
 		out = append(out, msg.UpsertMsg())
 	}
 	return out, nil
