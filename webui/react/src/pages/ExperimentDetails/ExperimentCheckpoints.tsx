@@ -62,6 +62,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>();
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
 
@@ -145,9 +146,13 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     fetchModels();
   }, [fetchModels]);
 
-  const handleRegisterCheckpoint = useCallback(() => {
-    registerModal.open();
-  }, [registerModal]);
+  const handleRegisterCheckpoint = useCallback(
+    (checkpoints: string[]) => {
+      setSelectedCheckpoints(checkpoints);
+      registerModal.open();
+    },
+    [registerModal],
+  );
 
   const handleDelete = useCallback((checkpoints: string[]) => {
     readStream(
@@ -183,7 +188,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     (checkpoints: string | string[]) => {
       const checkpointsArr = ensureArray(checkpoints);
       return {
-        [checkpointAction.Register]: () => handleRegisterCheckpoint(),
+        [checkpointAction.Register]: () => handleRegisterCheckpoint(checkpointsArr),
         [checkpointAction.Delete]: () => handleDeleteCheckpoint(checkpointsArr),
       };
     },
@@ -405,7 +410,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       <registerModal.Component
-        checkpoints={(checkpoints ?? []).map((c) => c.uuid)}
+        checkpoints={selectedCheckpoints ?? []}
         closeModal={registerModal.close}
         modelName={selectedModelName}
         models={models}
