@@ -156,6 +156,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
     });
 
     return {
+      enabled: agent.enabled,
       id: agent.id,
       registeredTime: dayjs(agent.registeredTime).unix(),
       resourcePools: agent.resourcePools,
