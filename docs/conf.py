@@ -150,7 +150,11 @@ autodoc_mock_imports = [
 sitemap_url_scheme = "latest/{link}"
 
 # ignore internal urls when running linkcheck
-linkcheck_ignore = [r'^#']
+linkcheck_ignore = [
+    r'^#',
+    r'^http://127.0.0.1',
+    r'^..'
+]
 
 with open(".redirects/redirects.json") as f:
     redirects = json.load(f)
