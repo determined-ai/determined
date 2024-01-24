@@ -84,6 +84,14 @@ func (r *ResourcesConfigV0) SetPriority(val *int) {
 	r.RawPriority = val
 }
 
+func (r ResourcesConfigV0) IsSingleNode() *bool {
+	return r.RawIsSingleNode
+}
+
+func (r *ResourcesConfigV0) SetIsSingleNode(val *bool) {
+	r.RawIsSingleNode = val
+}
+
 func (r ResourcesConfigV0) Devices() DevicesConfigV0 {
 	return r.RawDevices
 }

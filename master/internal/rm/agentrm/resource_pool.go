@@ -596,10 +596,24 @@ func (rp *resourcePool) ValidateCommandResources(
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
-	fulfillable := true // Default to "true" when unknown.
+	var fulfillable bool
+
 	if rp.slotsPerInstance > 0 {
 		fulfillable = rp.slotsPerInstance >= msg.Slots
+	} else {
+		rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
+		defer func() {
+			rp.agentStatesCache = nil
+		}()
+
+		maxSlots := 0
+		for _, a := range rp.agentStatesCache {
+			maxSlots = max(maxSlots, len(a.slotStates))
+		}
+
+		fulfillable = maxSlots >= msg.Slots
 	}
+
 	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
 }
 
