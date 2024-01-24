@@ -153,7 +153,7 @@ sitemap_url_scheme = "latest/{link}"
 linkcheck_ignore = [
     r'^#',
     r'^http://127.0.0.1',
-    r'^..'
+    r'^\\.\\.'
 ]
 
 with open(".redirects/redirects.json") as f:
