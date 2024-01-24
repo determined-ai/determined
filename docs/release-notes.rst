@@ -10,6 +10,29 @@
  Version 0.27
 **************
 
+Version 0.27.1
+==============
+
+**Release Date:** January 24, 2024
+
+**New Features**
+
+-  CLI: Add new ``--db-snapshot`` flag for the ``det deploy aws up`` subcommand that allows starting
+   RDS DB instances with a pre-existing snapshot. This flag is currently only usable with the
+   ``simple-rds`` deployment type.
+
+**Improvements**
+
+-  Notebooks: The Jupyter notebook file browser (``ContentManager``) will no longer be locked down
+   to ``work_dir``, and it'll have the entire ``/`` filesystem visible. ``work_dir`` will stay the
+   default starting directory.
+
+-  Helm: Add support for downloading checkpoints when using ``shared_fs``. Add a ``mountToServer``
+   value under ``checkpointStorage``. By default, this parameter is set to ``false``, preserving the
+   current behavior. However, when it's set to ``true`` and the storage type is ``shared_fs``, the
+   shared directory will be mounted on the server, allowing ``checkpoint.download()`` to work with
+   ``shared_fs`` on Determined starting from version ``0.27.0`` and later.
+
 Version 0.27.0
 ==============
 
