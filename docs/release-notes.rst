@@ -24,7 +24,7 @@ Version 0.27.1
 **Improvements**
 
 -  Notebooks: The Jupyter notebook file browser (``ContentManager``) will no longer be locked down to
-   ``work_dir``, and it'll have entire ``/`` filesystem visible. ``work_dir`` will stay the default
+   ``work_dir``, and it'll have the entire ``/`` filesystem visible. ``work_dir`` will stay the default
    starting directory.
 
 -  Helm: Add support for Downloading Checkpoints when using ``shared_fs``. Adds a ``mountToServer``
