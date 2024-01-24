@@ -4,7 +4,7 @@ startup_input: "p"
 commands:
   p: make -C bindings build && make -C harness clean build  # rebuild Python
   w: make -C bindings build && make -C webui build          # rebuild Webui
-  c: make -C docs build  # rebuild doCs
+  c: make -C docs build  # rebuild docs
 
 # Three stages: db, master, and agent.
 stages:
