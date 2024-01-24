@@ -69,8 +69,8 @@ pre-publish:
 .PHONY: publish-check
 	python3 redirects.py publish-check
 
-.PHONY: checklinks
-checklinks:
+.PHONY: check-links
+check-links:
 	sphinx-build -b linkcheck . link-check -a
 	echo "link check complete, please see link-check/output.txt"
 
