@@ -366,6 +366,7 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	err := pgDB.AddExperiment(experiment, activeConfig)
 	assert.NilError(t, err, "failed to insert experiment")
 
+	ctx := context.Background()
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
 	trial := &model.Trial{
 		ExperimentID: experiment.ID,
@@ -373,7 +374,7 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 		StartTime:    time.Now(),
 	}
 
-	err = db.AddTrial(context.TODO(), trial, task.TaskID)
+	err = db.AddTrial(ctx, trial, task.TaskID)
 	assert.NilError(t, err, "failed to insert trial")
 	t.Logf("Created trial=%v", trial)
 
@@ -384,9 +385,9 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
 	}
-	err = pgDB.AddAllocation(a)
+	err = db.AddAllocation(ctx, a)
 	assert.NilError(t, err, "failed to add allocation")
-	err = pgDB.CompleteAllocation(a)
+	err = db.CompleteAllocation(ctx, a)
 	assert.NilError(t, err, "failed to complete allocation")
 
 	return experiment, trial, a

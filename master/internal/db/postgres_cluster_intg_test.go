@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -46,7 +47,8 @@ func TestClusterAPI(t *testing.T) {
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
 
-	err = db.AddTask(tIn)
+	ctx := context.Background()
+	err = AddTask(ctx, tIn)
 	require.NoError(t, err, "failed to add task")
 
 	// Add an allocation
@@ -59,7 +61,7 @@ func TestClusterAPI(t *testing.T) {
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
 
-	err = db.AddAllocation(aIn)
+	err = AddAllocation(ctx, aIn)
 	require.NoError(t, err, "failed to add allocation")
 
 	// Add a cluster heartbeat after allocation, so it is as if the master died with it open.
@@ -74,10 +76,10 @@ func TestClusterAPI(t *testing.T) {
 		"Retrieved cluster heartbeat doesn't match the correct time")
 
 	// Don't complete the above allocation and call CloseOpenAllocations
-	require.NoError(t, db.CloseOpenAllocations(nil))
+	require.NoError(t, CloseOpenAllocations(ctx, nil))
 
 	// Retrieve the open allocation and check if end time is set to cluster_heartbeat
-	aOut, err := db.AllocationByID(aIn.AllocationID)
+	aOut, err := AllocationByID(ctx, aIn.AllocationID)
 	require.NoError(t, err)
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")

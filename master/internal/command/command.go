@@ -230,10 +230,11 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+	ctx := context.Background()
+	if err := db.CompleteTask(ctx, c.taskID, time.Now().UTC()); err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
 	}
-	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
+	if err := user.DeleteSessionByToken(ctx, c.GenericCommandSpec.Base.UserSessionToken); err != nil {
 		c.syslog.WithError(err).Errorf(
 			"failure to delete user session for task: %v", c.taskID)
 	}
@@ -251,7 +252,7 @@ func (c *Command) garbageCollect() {
 	}
 
 	if c.exitStatus == nil {
-		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+		if err := db.CompleteTask(context.Background(), c.taskID, time.Now().UTC()); err != nil {
 			c.syslog.WithError(err).Error("marking task complete")
 		}
 	}

@@ -1,6 +1,7 @@
 package agentrm
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -593,6 +594,8 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	ctx := context.Background()
+
 	switch {
 	case msg.AgentStarted != nil:
 		a.syslog.Infof("agent connected ip: %v resource pool: %s slots: %d",
@@ -647,9 +650,9 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
 			var err error
 			if msg.ContainerStatsRecord.EndStats {
-				err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskEndStatsBun(ctx, msg.ContainerStatsRecord.Stats)
 			} else {
-				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskStatsBun(ctx, msg.ContainerStatsRecord.Stats)
 			}
 			if err != nil {
 				a.syslog.Errorf("error recording task stats %s", err)

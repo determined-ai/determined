@@ -137,10 +137,10 @@ func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, erro
 
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not
 // updated.  end_time is set if the trial moves to a terminal state.
-func (db *PgDB) UpdateTrial(id int, newState model.State) error {
-	trial, err := TrialByID(context.TODO(), id)
+func UpdateTrial(ctx context.Context, id int, newState model.State) error {
+	trial, err := TrialByID(ctx, id)
 	if err != nil {
-		return errors.Wrapf(err, "error finding trial %v to update", id)
+		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
 
 	if trial.State == newState {
@@ -148,8 +148,8 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 	}
 
 	if !model.TrialTransitions[trial.State][newState] {
-		return errors.Errorf("illegal transition %v -> %v for trial %v",
-			trial.State, newState, trial.ID)
+		return fmt.Errorf("illegal transition %v -> %v for trial %v: %w",
+			trial.State, newState, trial.ID, err)
 	}
 	toUpdate := []string{"state"}
 	trial.State = newState
@@ -159,21 +159,20 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 		toUpdate = append(toUpdate, "end_time")
 	}
 
-	return db.withTransaction("update_trial", func(tx *sqlx.Tx) error {
-		// Only the trial actor updates this row, and it does so in a serialized
-		// fashion already, so this transaction is more a matter of atomicity.
-		if err := namedExecOne(tx, fmt.Sprintf(`
-UPDATE runs
-%v
-WHERE id = :id`, SetClause(toUpdate)), trial); err != nil {
-			return errors.Wrapf(err, "error updating (%v) in trial %v",
-				strings.Join(toUpdate, ", "), id)
+	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		run := trial.ToRun()
+		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", trial.ID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
 		}
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
-			return completeTrialsTasks(tx, id, *trial.EndTime)
+			if _, err := tx.NewUpdate().Table("tasks", "trial_id_task_id").Set("end_time = ?", *trial.EndTime).
+				Where("trial_id_task_id.task_id = tasks.task_id AND trial_id_task_id.trial_id = ?", id).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("completing task: %w", err)
+			}
 		}
-
 		return nil
 	})
 }
