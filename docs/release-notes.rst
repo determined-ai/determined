@@ -18,7 +18,7 @@ Version 0.27.1
 **New Features**
 
 -  CLI: Add new ``--db-snapshot`` flag for the ``det deploy aws up`` subcommand that allows starting
-   RDS DB instances with a pre-existing snapshot. This flag is only currently usable with the
+   RDS DB instances with a pre-existing snapshot. This flag is currently only usable with the
    ``simple-rds`` deployment type.
 
 **Improvements**
