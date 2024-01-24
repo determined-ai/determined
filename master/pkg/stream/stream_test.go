@@ -67,8 +67,12 @@ func alwaysTrue[T Msg](msg T) bool {
 	return true
 }
 
-func trueAfterTwo[T Msg](msg T) bool {
-	return msg.SeqNum() > 2
+func trueAfterN[T Msg](n int) func(T) bool {
+	var msgCount int
+	return func(T) bool {
+		msgCount++
+		return msgCount > n
+	}
 }
 
 func alwaysFalse[T Msg](msg T) bool {
@@ -154,8 +158,20 @@ func TestBroadcastWithFilters(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 	publisher := NewPublisher[TestMsgTypeA]()
 	publisherTwo := NewPublisher[TestMsgTypeA]()
-	oneSub := NewSubscription[TestMsgTypeA](streamer, publisherTwo, alwaysTrue[TestMsgTypeA], trueAfterTwo[TestMsgTypeA])
-	falseSub := NewSubscription[TestMsgTypeA](streamer, publisher, alwaysTrue[TestMsgTypeA], alwaysFalse[TestMsgTypeA])
+	// oneSub's filter expects to return true after receiving trueAfterCount messages
+	trueAfterCount := 2
+	oneSub := NewSubscription[TestMsgTypeA](
+		streamer,
+		publisherTwo,
+		alwaysTrue[TestMsgTypeA],
+		trueAfterN[TestMsgTypeA](trueAfterCount),
+	)
+	falseSub := NewSubscription[TestMsgTypeA](
+		streamer,
+		publisher,
+		alwaysTrue[TestMsgTypeA],
+		alwaysFalse[TestMsgTypeA],
+	)
 	oneSub.Register()
 	falseSub.Register()
 
@@ -240,8 +256,20 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 	publisher := NewPublisher[TestMsgTypeA]()
 	publisherTwo := NewPublisher[TestMsgTypeA]()
-	oneSub := NewSubscription[TestMsgTypeA](streamer, publisherTwo, trueAfterTwo[TestMsgTypeA], alwaysTrue[TestMsgTypeA])
-	falseSub := NewSubscription[TestMsgTypeA](streamer, publisher, alwaysFalse[TestMsgTypeA], alwaysTrue[TestMsgTypeA])
+	// oneSub's permission filter will return true after receiving trueAfterCount messages
+	trueAfterCount := 2
+	oneSub := NewSubscription[TestMsgTypeA](
+		streamer,
+		publisherTwo,
+		trueAfterN[TestMsgTypeA](trueAfterCount),
+		alwaysTrue[TestMsgTypeA],
+	)
+	falseSub := NewSubscription[TestMsgTypeA](
+		streamer,
+		publisher,
+		alwaysFalse[TestMsgTypeA],
+		alwaysTrue[TestMsgTypeA],
+	)
 	oneSub.Register()
 	falseSub.Register()
 
