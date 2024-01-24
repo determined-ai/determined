@@ -2,6 +2,8 @@
 
 **Deprecated Features**
 
--  API: All endpoints that list experiments, ``/api/v1/experiments`` and ``/api/v1/experiments-search``, in a future version will no longer return the experiment config field.
+-  API: The experiment API object in a future version will have its ``config`` field removed to
+   improve performance of the system. A new ``config`` field is added now to the response of
+   ``/api/v1/experiments/{experiment_id}`` that can be used as a replacement.
 
    If you are not calling the APIs manually there will be no impact to you.
