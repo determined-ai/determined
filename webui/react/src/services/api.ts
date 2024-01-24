@@ -209,6 +209,14 @@ export const getAgents = generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Ty
   Config.getAgents,
 );
 
+export const enableAgent = generateDetApi<string, Api.V1EnableAgentResponse, Type.Agent | null>(
+  Config.enableAgent,
+);
+
+export const disableAgent = generateDetApi<string, Api.V1DisableAgentResponse, Type.Agent | null>(
+  Config.disableAgent,
+);
+
 export const getResourcePools = generateDetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
