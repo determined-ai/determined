@@ -69,11 +69,6 @@ pre-publish:
 .PHONY: publish-check
 	python3 redirects.py publish-check
 
-.PHONY: check-links
-check-links:
-	sphinx-build -b linkcheck . build -a
-	echo "link check complete, please see build/output.txt"
-
 .PHONY: publish
 publish: pre-publish publish-check
 	$(MAKE) -C deploy publish
@@ -95,6 +90,8 @@ fmt:
 check: attributions.rst
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
 	python3 redirects.py check
+	sphinx-build -b linkcheck . build -a
+	grep -cF "[broken]" build/output.txt
 
 .PHONY: get-deps
 get-deps:
