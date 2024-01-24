@@ -356,7 +356,7 @@ func TaskLogLevelFromLogrus(l logrus.Level) string {
 // TaskLog represents a structured log emitted by an allocation.
 type TaskLog struct {
 	// A task log should have one of these IDs after being persisted. All should be unique.
-	ID *int `db:"id" json:"id,omitempty"`
+	ID *int `db:"id" bun:"id,pk,autoincrement" json:"id,omitempty"`
 	// The body of an Elasticsearch log response will look something like
 	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
 	// StringID doesn't have serialization tags because it is not part of
