@@ -34,4 +34,4 @@ FROM
 WHERE
   ds.period_start IN (SELECT DISTINCT date FROM resource_aggregates)
 ORDER BY
-  ds.period_start;
+  ds.period_start
