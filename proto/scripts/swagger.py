@@ -7,7 +7,7 @@ usage: swagger.py GENERATED_JSON PATCH_JSON
 
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 SERVICE_NAME = "Determined"
 
@@ -43,6 +43,26 @@ def to_lower_camel_case(snake_str):
     return components[0] + "".join(x.title() for x in components[1:])
 
 
+def replace_in_refs(spec: Any, replacer: Callable[[str], str]):
+    if isinstance(spec, dict):
+        for k, v in spec.items():
+            if k == "$ref":
+                spec[k] = replacer(v)
+            else:
+                replace_in_refs(v, replacer)
+    elif isinstance(spec, list):
+        for v in spec:
+            replace_in_refs(v, replacer)
+
+
+def replace_definition_keys(spec: Any, replacer: Callable[[str], str]):
+    spec["definitions"] = {replacer(k): v for k, v in spec["definitions"].items()}
+
+
+def remove_dots(name: str) -> str:
+    return name.replace(".", "")
+
+
 def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
         spec = json.load(f)
@@ -71,21 +91,13 @@ def clean(path: str, patch: str) -> None:
     for key in keys_to_rename:
         spec["definitions"][key[len(SERVICE_NAME) :]] = spec["definitions"].pop(key)
 
-    # recursively find any objects with ref to keys_to_rename and rename them
-    def rename_refs(obj: Any):
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                if k == "$ref":
-                    for key in keys_to_rename:
-                        if v.endswith(key):
-                            obj[k] = v.replace(key, key[len(SERVICE_NAME) :])
-                else:
-                    rename_refs(v)
-        elif isinstance(obj, list):
-            for v in obj:
-                rename_refs(v)
+    def service_stripper(v: str) -> str:
+        for key in keys_to_rename:
+            if v.endswith(key):
+                return v.replace(key, key[len(SERVICE_NAME) :])
+        return v
 
-    rename_refs(spec)
+    replace_in_refs(spec, service_stripper)
 
     # remove operationId prefix from the main service.
     operationid_prefix = SERVICE_NAME + "_"
@@ -97,6 +109,9 @@ def clean(path: str, patch: str) -> None:
 
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))
+
+    replace_definition_keys(spec, remove_dots)
+    replace_in_refs(spec, remove_dots)
 
     with open(path, "w") as f:
         json.dump(spec, f)
