@@ -71,7 +71,7 @@ pre-publish:
 
 .PHONY: check-links
 check-links:
-	sphinx-build -b linkcheck . link-check -a
+	sphinx-build -b linkcheck . check-links -a
 	echo "link check complete, please see link-check/output.txt"
 
 .PHONY: publish
