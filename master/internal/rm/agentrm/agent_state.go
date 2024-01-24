@@ -556,7 +556,7 @@ func (a *agentState) clearUnlessRecovered(
 func retrieveAgentStates() (map[agentID]agentState, error) {
 	var snapshots []agentSnapshot
 	if err := db.Bun().NewSelect().Model(&snapshots).Scan(context.TODO()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("selecting agent snapshost: %w", err)
 	}
 
 	result := make(map[agentID]agentState, len(snapshots))
@@ -646,7 +646,7 @@ func (a *agentState) restoreContainersField() error {
 
 func clearAgentStates(agentIds []agentID) error {
 	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).Where("agent_id in (?)", agentIds).Exec(context.TODO())
-	return err
+	return fmt.Errorf("clearing agent states: %w", err)
 }
 
 func updateContainerState(c *cproto.Container) error {
