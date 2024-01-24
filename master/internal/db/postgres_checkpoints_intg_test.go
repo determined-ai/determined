@@ -335,43 +335,43 @@ func TestPgDB_GroupCheckpointUUIDsByExperimentID(t *testing.T) {
 	}
 
 	type testCase struct {
-		name     string
-		toDelete []uuid.UUID
-		want     map[int][]uuid.UUID
-		wantErr  bool
+		name    string
+		input   []uuid.UUID
+		want    map[int][]uuid.UUID
+		wantErr bool
 	}
 
 	tests := []testCase{
 		{
-			name:     "empty is ok",
-			toDelete: []uuid.UUID{},
-			want:     make(map[int][]uuid.UUID),
+			name:  "empty is ok",
+			input: []uuid.UUID{},
+			want:  make(map[int][]uuid.UUID),
 		},
 		{
 			// TODO: A missing checkpoint probably shouldn't be silently removed from the grouping.
-			name:     "missing checkpoint returns an error (but it doesn't, yet)",
-			toDelete: []uuid.UUID{uuid.New()},
-			want:     make(map[int][]uuid.UUID),
+			name:  "missing checkpoint returns an error (but it doesn't, yet)",
+			input: []uuid.UUID{uuid.New()},
+			want:  make(map[int][]uuid.UUID),
 		},
 	}
 
 	expID := maps.Keys(expToCkptUUIDs)[0]
 	ckptUUIDs := expToCkptUUIDs[expID]
 	tests = append(tests, testCase{
-		name:     "grouping checkpoints but they all belong to one experiment",
-		toDelete: expToCkptUUIDs[expID],
-		want:     map[int][]uuid.UUID{expID: ckptUUIDs},
+		name:  "grouping checkpoints but they all belong to one experiment",
+		input: expToCkptUUIDs[expID],
+		want:  map[int][]uuid.UUID{expID: ckptUUIDs},
 	})
 
 	tests = append(tests, testCase{
-		name:     "grouping checkpoints across many experiments",
-		toDelete: flatten(maps.Values(expToCkptUUIDs)),
-		want:     expToCkptUUIDs,
+		name:  "grouping checkpoints across many experiments",
+		input: flatten(maps.Values(expToCkptUUIDs)),
+		want:  expToCkptUUIDs,
 	})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			groupings, err := db.GroupCheckpointUUIDsByExperimentID(tt.toDelete)
+			groupings, err := db.GroupCheckpointUUIDsByExperimentID(tt.input)
 			if tt.wantErr {
 				require.Error(t, err)
 			}
