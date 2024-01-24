@@ -410,7 +410,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
       <registerModal.Component
-        checkpoints={selectedCheckpoints || []}
+        checkpoints={selectedCheckpoints ?? []}
         closeModal={registerModal.close}
         modelName={selectedModelName}
         models={models}
