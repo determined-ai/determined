@@ -2411,6 +2411,7 @@ service Determined {
       returns (KillGenericTaskResponse) {
     option (google.api.http) = {
       post: "/api/v1/tasks/{task_id}/kill"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
