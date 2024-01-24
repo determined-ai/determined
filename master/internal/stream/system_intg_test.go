@@ -25,7 +25,7 @@ const (
 func TestMockSocket(t *testing.T) {
 	expectedMsg := StartupMsg{
 		SyncID: uuid.NewString(),
-		Known:  KnownKeySet{Trials: "1,2,3"},
+		Known:  KnownKeySet{Projects: "1,2,3"},
 		Subscribe: SubscriptionSpecSet{
 			Projects: &ProjectSubscriptionSpec{
 				ProjectIDs: []int{1},
@@ -127,10 +127,10 @@ func runStartupTest(t *testing.T, pgDB *db.PgDB, testCases []startupTestCase) {
 	socket := newMockSocket()
 	errgrp := errgroupx.WithContext(ctx)
 
-	// start publisher set and connect as testUser
+	// start PublisherSet and connect as testUser
 	errgrp.Go(ps.Start)
 	errgrp.Go(func(ctx context.Context) error {
-		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
+		return ps.streamHandler(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
 
 	func() {
@@ -247,7 +247,7 @@ func runUpdateTest(t *testing.T, pgDB *db.PgDB, testCases []updateTestCase) {
 	errgrp := errgroupx.WithContext(ctx)
 	errgrp.Go(ps.Start)
 	errgrp.Go(func(ctx context.Context) error {
-		return ps.entrypoint(superCtx, ctx, testUser, socket, testPrepareFunc)
+		return ps.streamHandler(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
 
 	func() {

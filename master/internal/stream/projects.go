@@ -22,7 +22,12 @@ const (
 	ProjectsDeleteKey = "projects_deleted"
 	// ProjectsUpsertKey specifies the key for upsert projects.
 	ProjectsUpsertKey = "project"
+	// projectChannel specifies the channel to listen to project events.
+	projectChannel = "stream_project_chan"
 )
+
+// JSONB is the golang equivalent of the postgres jsonb column type.
+type JSONB map[string]interface{}
 
 // ProjectMsg is a stream.Msg.
 type ProjectMsg struct {
@@ -109,7 +114,7 @@ func ProjectCollectStartupMsgs(
 	// step 1: calculate all ids matching this subscription
 	var data []*ProjectMsg
 	q := db.Bun().NewSelect().Model(&data).Order("id ASC")
-	q = permFilter(q, accessMap, accessScopes)
+	q = permFilterQuery(q, accessMap, accessScopes)
 
 	// Ignore tmf.Since, because we want appearances, which might not be have seq > spec.Since.
 	ws := stream.WhereSince{Since: 0}
