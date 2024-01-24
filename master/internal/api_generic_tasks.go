@@ -292,7 +292,7 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
-	err = a.PostGenericTaskSpec(ctx, taskID, *genericTaskSpec, allocationID)
+	err = PersistGenericTaskSpec(ctx, taskID, *genericTaskSpec, allocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +447,7 @@ func (a *apiServer) KillGenericTask(
 	}
 	for _, childTask := range tasksToDelete {
 		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
-			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			allocationID, err := GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
@@ -497,7 +497,7 @@ func (a *apiServer) PauseGenericTask(
 		if pausingTask.TaskID != model.TaskID(req.TaskId) && (pausingTask.NoPause == nil || *pausingTask.NoPause) {
 			continue
 		}
-		allocationID, err := a.GetAllocationFromTaskID(ctx, pausingTask.TaskID)
+		allocationID, err := GetAllocationFromTaskID(ctx, pausingTask.TaskID)
 		if err != nil {
 			return nil, err
 		}
@@ -535,7 +535,7 @@ func (a *apiServer) ResumeGenericTask(
 		return nil, err
 	}
 	for _, resumingTask := range tasksToResume {
-		allocationString, genericTaskSpec, err := a.GetGenericTaskSpec(ctx, resumingTask.TaskID)
+		allocationString, genericTaskSpec, err := GetGenericTaskSpec(ctx, resumingTask.TaskID)
 		if err != nil {
 			return nil, err
 		}
@@ -604,7 +604,7 @@ func (a *apiServer) ResumeGenericTask(
 		if err != nil {
 			return nil, err
 		}
-		err = a.PostGenericTaskSpec(ctx, resumingTask.TaskID, *genericTaskSpec, resumingAllocationID)
+		err = PersistGenericTaskSpec(ctx, resumingTask.TaskID, *genericTaskSpec, resumingAllocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -616,7 +616,7 @@ func (a *apiServer) ResumeGenericTask(
 	return &apiv1.ResumeGenericTaskResponse{}, nil
 }
 
-func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
+func GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
 ) (string, error) {
 	allocation := model.Allocation{}
 	err := db.Bun().NewSelect().Model(&allocation).
@@ -630,7 +630,7 @@ func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.Ta
 	return string(allocation.AllocationID), nil
 }
 
-func (a *apiServer) PostGenericTaskSpec(ctx context.Context,
+func PersistGenericTaskSpec(ctx context.Context,
 	taskID model.TaskID,
 	generciTaskSpec tasks.GenericTaskSpec,
 	allocationID model.AllocationID) error {
@@ -647,7 +647,7 @@ func (a *apiServer) PostGenericTaskSpec(ctx context.Context,
 	return err
 }
 
-func (a *apiServer) GetGenericTaskSpec(ctx context.Context, taskID model.TaskID,
+func GetGenericTaskSpec(ctx context.Context, taskID model.TaskID,
 ) (string, *tasks.GenericTaskSpec, error) {
 	snapshot := command.CommandSnapshot{}
 
