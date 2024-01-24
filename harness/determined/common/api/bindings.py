@@ -2601,48 +2601,57 @@ class v1CreateExperimentResponse(Printable):
 
 class v1CreateGenericTaskRequest(Printable):
     """Request to create a new generic task."""
+    forkedFrom: "typing.Optional[str]" = None
+    inheritContext: "typing.Optional[bool]" = None
+    parentId: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         config: str,
-        contextDirectory: "typing.Optional[typing.Sequence[v1File]]" = None,
+        contextDirectory: "typing.Sequence[v1File]",
         projectId: int,
-        forkedFrom: "typing.Optional[int]" = None,
-        parentId: "typing.Optional[int]" = None,
-        inheritContext: bool,
+        forkedFrom: "typing.Union[str, None, Unset]" = _unset,
+        inheritContext: "typing.Union[bool, None, Unset]" = _unset,
+        parentId: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.config = config
         self.contextDirectory = contextDirectory
         self.projectId = projectId
-        self.parentId = parentId
-        self.inheritContext = inheritContext
-        self.forkedFrom = forkedFrom
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(inheritContext, Unset):
+            self.inheritContext = inheritContext
+        if not isinstance(parentId, Unset):
+            self.parentId = parentId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
+            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
             "projectId": obj["projectId"],
-            "forkedFrom": obj["forkedFrom"],
-            "parentId": obj["parentId"],
-            "inheritContext": obj["inheritContext"]
         }
-        if "contextDirectory" in obj:
-            print("here")
-            kwargs["contextDirectory"] = [v1File.from_json(x) for x in obj["contextDirectory"]]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "inheritContext" in obj:
+            kwargs["inheritContext"] = obj["inheritContext"]
+        if "parentId" in obj:
+            kwargs["parentId"] = obj["parentId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
+            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
             "projectId": self.projectId,
-            "forkedFrom": self.forkedFrom,
-            "parentId": self.parentId,
-            "inheritContext": self.inheritContext,
         }
-        if self.contextDirectory is not None:
-            out["contextDirectory"] = [x.to_json(omit_unset) for x in self.contextDirectory] 
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "inheritContext" in vars(self):
+            out["inheritContext"] = self.inheritContext
+        if not omit_unset or "parentId" in vars(self):
+            out["parentId"] = self.parentId
         return out
 
 class v1CreateGenericTaskResponse(Printable):
@@ -2675,7 +2684,6 @@ class v1CreateGenericTaskResponse(Printable):
         if not omit_unset or "warnings" in vars(self):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
-
 
 class v1CreateGroupRequest(Printable):
     """CreateGroupRequest is the body of the request for the call
@@ -3956,6 +3964,29 @@ class v1FittingPolicy(DetEnum):
     KUBERNETES = "FITTING_POLICY_KUBERNETES"
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
+
+class v1GenericTaskState(DetEnum):
+    """- GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown
+    - GENERIC_TASK_STATE_ACTIVE: The task state unknown
+    - GENERIC_TASK_STATE_CANCELED: The task state unknown
+    - GENERIC_TASK_STATE_COMPLETED: The task state unknown
+    - GENERIC_TASK_STATE_ERROR: The task state unknown
+    - GENERIC_TASK_STATE_PAUSED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
+    """
+    UNSPECIFIED = "GENERIC_TASK_STATE_UNSPECIFIED"
+    ACTIVE = "GENERIC_TASK_STATE_ACTIVE"
+    CANCELED = "GENERIC_TASK_STATE_CANCELED"
+    COMPLETED = "GENERIC_TASK_STATE_COMPLETED"
+    ERROR = "GENERIC_TASK_STATE_ERROR"
+    PAUSED = "GENERIC_TASK_STATE_PAUSED"
+    STOPPING_PAUSED = "GENERIC_TASK_STATE_STOPPING_PAUSED"
+    STOPPING_CANCELED = "GENERIC_TASK_STATE_STOPPING_CANCELED"
+    STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
 class v1GetActiveTasksCountResponse(Printable):
     """Response to GetActiveTasksCountRequest."""
@@ -5707,29 +5738,6 @@ class v1GetTaskResponse(Printable):
         }
         return out
 
-class v1GetTaskConfigResponse(Printable):
-    """Response to GetTaskConfigRequest."""
-
-    def __init__(
-        self,
-        *,
-        config: str,
-    ):
-        self.config = config
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetTaskConfigResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "config": obj["config"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "config": self.config,
-        }
-        return out
-
 class v1GetTasksResponse(Printable):
     """Response to GetTasksRequest."""
     allocationIdToSummary: "typing.Optional[typing.Dict[str, v1AllocationSummary]]" = None
@@ -6897,6 +6905,36 @@ class v1KillExperimentsResponse(Printable):
         }
         return out
 
+class v1KillGenericTaskRequest(Printable):
+    killFromRoot: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        taskId: str,
+        killFromRoot: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.taskId = taskId
+        if not isinstance(killFromRoot, Unset):
+            self.killFromRoot = killFromRoot
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        if "killFromRoot" in obj:
+            kwargs["killFromRoot"] = obj["killFromRoot"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "killFromRoot" in vars(self):
+            out["killFromRoot"] = self.killFromRoot
+        return out
+
 class v1KillNotebookResponse(Printable):
     """Response to KillNotebookRequest."""
     notebook: "typing.Optional[v1Notebook]" = None
@@ -6951,29 +6989,6 @@ class v1KillShellResponse(Printable):
             out["shell"] = None if self.shell is None else self.shell.to_json(omit_unset)
         return out
 
-class v1KillGenericTaskRequest(Printable):
-    """Kill multiple experiments."""
-
-    def __init__(
-        self,
-        *,
-        taskId: int,
-    ):
-        self.taskId = taskId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1KillGenericTaskRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "taskId": obj["taskId"],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "taskId": self.taskId,
-        }
-        return out
-    
 class v1KillTensorboardResponse(Printable):
     """Response to KillTensorboardRequest."""
     tensorboard: "typing.Optional[v1Tensorboard]" = None
@@ -13143,6 +13158,9 @@ class v1Task(Printable):
     """Task is the model for a task in the database."""
     config: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
+    forkedFrom: "typing.Optional[str]" = None
+    parentId: "typing.Optional[str]" = None
+    taskState: "typing.Optional[v1GenericTaskState]" = None
 
     def __init__(
         self,
@@ -13153,6 +13171,9 @@ class v1Task(Printable):
         taskType: "v1TaskType",
         config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[str, None, Unset]" = _unset,
+        parentId: "typing.Union[str, None, Unset]" = _unset,
+        taskState: "typing.Union[v1GenericTaskState, None, Unset]" = _unset,
     ):
         self.allocations = allocations
         self.startTime = startTime
@@ -13162,6 +13183,12 @@ class v1Task(Printable):
             self.config = config
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(parentId, Unset):
+            self.parentId = parentId
+        if not isinstance(taskState, Unset):
+            self.taskState = taskState
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
@@ -13175,6 +13202,12 @@ class v1Task(Printable):
             kwargs["config"] = obj["config"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "parentId" in obj:
+            kwargs["parentId"] = obj["parentId"]
+        if "taskState" in obj:
+            kwargs["taskState"] = v1GenericTaskState(obj["taskState"]) if obj["taskState"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -13188,6 +13221,12 @@ class v1Task(Printable):
             out["config"] = self.config
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "parentId" in vars(self):
+            out["parentId"] = self.parentId
+        if not omit_unset or "taskState" in vars(self):
+            out["taskState"] = None if self.taskState is None else self.taskState.value
         return out
 
 class v1TaskLog(Printable):
@@ -17007,6 +17046,8 @@ def get_GetGenericTaskConfig(
     - taskId: The id of the task.
     """
     _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/tasks/{taskId}/config",
@@ -18084,30 +18125,6 @@ def get_GetTask(
         return v1GetTaskResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTask", _resp)
 
-def get_GetTaskConfig(
-    session: "api.Session",
-    *,
-    taskId: str,
-) -> "v1GetTaskConfigResponse":
-    """Check the status of a requested task.
-
-    - taskId: The requested task id.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/tasks/{taskId}/config",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetTaskConfigResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetTaskConfig", _resp)
-
 def get_GetTaskAcceleratorData(
     session: "api.Session",
     *,
@@ -19155,6 +19172,33 @@ def post_KillExperiments(
         return v1KillExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_KillExperiments", _resp)
 
+def post_KillGenericTask(
+    session: "api.Session",
+    *,
+    body: "v1KillGenericTaskRequest",
+    taskId: str,
+) -> None:
+    """Kill generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/kill",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_KillGenericTask", _resp)
+
 def post_KillNotebook(
     session: "api.Session",
     *,
@@ -19206,33 +19250,6 @@ def post_KillShell(
     if _resp.status_code == 200:
         return v1KillShellResponse.from_json(_resp.json())
     raise APIHttpError("post_KillShell", _resp)
-
-def post_KillGenericTask(
-    session: "api.Session",
-    *,
-    taskId: str,
-    killFromRoot: bool,
-) -> None:
-    """Kill the requested task.
-
-    - taskId: The id of the task.
-    """
-    _params = {
-        "killFromRoot": killFromRoot
-    }
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/tasks/{taskId}/kill",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return None
-    raise APIHttpError("post_KillGenericTask", _resp)
 
 def post_KillTensorboard(
     session: "api.Session",

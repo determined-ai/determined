@@ -473,7 +473,7 @@ type Task struct {
 	EndTime *timestamp.Timestamp `protobuf:"bytes,6,opt,name=end_time,json=endTime,proto3,oneof" json:"end_time,omitempty"`
 	// The configuration of the task.
 	Config *string `protobuf:"bytes,7,opt,name=config,proto3,oneof" json:"config,omitempty"`
-	// ID of parent task (empty if root task)
+	// ID of parent task (empty if root task).
 	ParentId *string `protobuf:"bytes,8,opt,name=parent_id,json=parentId,proto3,oneof" json:"parent_id,omitempty"`
 	// State of task execution.
 	TaskState *GenericTaskState `protobuf:"varint,9,opt,name=task_state,json=taskState,proto3,enum=determined.task.v1.GenericTaskState,oneof" json:"task_state,omitempty"`

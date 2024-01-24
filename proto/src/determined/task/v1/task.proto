@@ -116,7 +116,7 @@ message Task {
   optional google.protobuf.Timestamp end_time = 6;
   // The configuration of the task.
   optional string config = 7;
-  // ID of parent task (empty if root task)
+  // ID of parent task (empty if root task).
   optional string parent_id = 8;
   // State of task execution.
   optional GenericTaskState task_state = 9;

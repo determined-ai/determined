@@ -2212,50 +2212,24 @@ export interface V1CreateGenericTaskRequest {
      * @memberof V1CreateGenericTaskRequest
      */
     projectId: number;
-}
-/**
- * Response to CreateExperimentRequest.
- * @export
- * @interface V1CreateGenericTaskResponse
- */
-export interface V1CreateGenericTaskResponse {
     /**
-     * The created generic taskID.
-     * @type {string}
-     * @memberof V1CreateGenericTaskResponse
-     */
-    taskId: string;
-    /**
-     * List of any related warnings.
-     * @type {Array<V1LaunchWarning>}
-     * @memberof V1CreateGenericTaskResponse
-     */
-    warnings?: Array<V1LaunchWarning>;
-}
-/**
- * Request to create a new generic task.
- * @export
- * @interface V1CreateGenericTaskRequest
- */
-export interface V1CreateGenericTaskRequest {
-    /**
-     * Generic task context.
-     * @type {Array<V1File>}
-     * @memberof V1CreateGenericTaskRequest
-     */
-    contextDirectory: Array<V1File>;
-    /**
-     * Generic task config (YAML).
+     * Parent ID of new task
      * @type {string}
      * @memberof V1CreateGenericTaskRequest
      */
-    config: string;
+    parentId?: string;
     /**
-     * Project id to contain the experiment.
-     * @type {number}
+     * If True inherits the context directory from the paren task (requires parent_id)
+     * @type {boolean}
      * @memberof V1CreateGenericTaskRequest
      */
-    projectId: number;
+    inheritContext?: boolean;
+    /**
+     * Id of the task that this task is forked from
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    forkedFrom?: string;
 }
 /**
  * Response to CreateExperimentRequest.
@@ -3189,6 +3163,24 @@ export const V1FittingPolicy = {
     PBS: 'FITTING_POLICY_PBS',
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
+/**
+ * - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
+ * @export
+ * @enum {string}
+ */
+export const V1GenericTaskState = {
+    UNSPECIFIED: 'GENERIC_TASK_STATE_UNSPECIFIED',
+    ACTIVE: 'GENERIC_TASK_STATE_ACTIVE',
+    CANCELED: 'GENERIC_TASK_STATE_CANCELED',
+    COMPLETED: 'GENERIC_TASK_STATE_COMPLETED',
+    ERROR: 'GENERIC_TASK_STATE_ERROR',
+    PAUSED: 'GENERIC_TASK_STATE_PAUSED',
+    STOPPINGPAUSED: 'GENERIC_TASK_STATE_STOPPING_PAUSED',
+    STOPPINGCANCELED: 'GENERIC_TASK_STATE_STOPPING_CANCELED',
+    STOPPINGCOMPLETED: 'GENERIC_TASK_STATE_STOPPING_COMPLETED',
+    STOPPINGERROR: 'GENERIC_TASK_STATE_STOPPING_ERROR',
+} as const
+export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -5068,6 +5060,32 @@ export interface V1KillExperimentsResponse {
      * @memberof V1KillExperimentsResponse
      */
     results: Array<V1ExperimentActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskRequest
+ */
+export interface V1KillGenericTaskRequest {
+    /**
+     * The id of the task.
+     * @type {string}
+     * @memberof V1KillGenericTaskRequest
+     */
+    taskId: string;
+    /**
+     * Kill entire task tree
+     * @type {boolean}
+     * @memberof V1KillGenericTaskRequest
+     */
+    killFromRoot?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskResponse
+ */
+export interface V1KillGenericTaskResponse {
 }
 /**
  * Response to KillNotebookRequest.
@@ -9610,6 +9628,24 @@ export interface V1Task {
      * @memberof V1Task
      */
     config?: string;
+    /**
+     * ID of parent task (empty if root task).
+     * @type {string}
+     * @memberof V1Task
+     */
+    parentId?: string;
+    /**
+     * State of task execution.
+     * @type {V1GenericTaskState}
+     * @memberof V1Task
+     */
+    taskState?: V1GenericTaskState;
+    /**
+     * ID of task this is forked from (If task is a forked task)
+     * @type {string}
+     * @memberof V1Task
+     */
+    forkedFrom?: string;
 }
 /**
  * 
@@ -18569,6 +18605,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling killGenericTask.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/kill`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -20652,6 +20732,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killGenericTask(taskId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -21658,6 +21758,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).killGenericTask(taskId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -22461,6 +22572,19 @@ export class InternalApi extends BaseAPI {
      */
     public idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
         return InternalApiFp(this.configuration).idleNotebook(notebookId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Kill generic task
+     * @param {string} taskId The id of the task.
+     * @param {V1KillGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).killGenericTask(taskId, body, options)(this.fetch, this.basePath)
     }
     
     /**

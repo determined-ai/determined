@@ -114,7 +114,8 @@ def logs(args: Namespace) -> None:
 @authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.post_KillGenericTask(sess, taskId=args.task_id, killFromRoot=args.root)
+    req = bindings.v1KillGenericTaskRequest(taskId=args.task_id, killFromRoot=args.root)
+    bindings.post_KillGenericTask(sess, taskId=args.task_id, body=req)
     print(f"Sucessfully killed task: {args.task_id}")
 
 
