@@ -145,7 +145,7 @@ type Config struct {
 	NotebookTimeout       *int                              `json:"notebook_timeout"`
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     expconf.CheckpointStorageConfig   `json:"checkpoint_storage"`
-	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults" swaggerignore:"true"`
 	Port                  int                               `json:"port"`
 	Root                  string                            `json:"root"`
 	Telemetry             config.TelemetryConfig            `json:"telemetry"`

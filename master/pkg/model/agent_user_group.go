@@ -11,7 +11,7 @@ import (
 // An AgentUserGroup represents a username and primary group for a user on an
 // agent host machine. There is at most one AgentUserGroup for each User.
 type AgentUserGroup struct {
-	bun.BaseModel `bun:"table:agent_user_groups"`
+	bun.BaseModel `swaggerignore:"true" bun:"table:agent_user_groups"`
 
 	ID int `db:"id" bun:"id,pk,autoincrement" json:"id"`
 
