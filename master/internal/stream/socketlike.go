@@ -17,7 +17,7 @@ type WrappedWebsocket struct {
 	*websocket.Conn
 }
 
-// Write ensures the underlying msg is a prepared msg before writing it to websocket.
+// Write ensures the underlying msg is a websocket.PreparedMessage before writing it to websocket.
 func (w *WrappedWebsocket) Write(msg interface{}) error {
 	pm, ok := msg.(*websocket.PreparedMessage)
 	if !ok {
@@ -26,6 +26,17 @@ func (w *WrappedWebsocket) Write(msg interface{}) error {
 	err := w.WritePreparedMessage(pm)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// WriteAll attempts to write all provided messages.
+func WriteAll(socketLike WebsocketLike, msgs []interface{}) error {
+	for _, msg := range msgs {
+		err := socketLike.Write(msg)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

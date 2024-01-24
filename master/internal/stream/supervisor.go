@@ -19,21 +19,21 @@ type Supervisor struct {
 
 	// this context is responsible for monitoring the life time of the
 	// the active PublisherSet, in the event that a Publisher fails, this context is canceled
-	// and all active webscockets are disconnected.
+	// and all active websockets are disconnected.
 	// nolint
 	publisherSetCtx context.Context
-	// currently active publisher set
+	// currently active PublisherSet
 	ps *PublisherSet
 }
 
 // NewSupervisor creates a new Supervisor.
 func NewSupervisor(dbAddress string) *Supervisor {
-	// initialize with a valid publisher set and canceled supervisor context,
-	// so connections prior to runOne() can at least send startup messages.
+	// initialize with a valid PublisherSet and canceled supervisor context,
+	// so connections prior to runOne() can at least send messages collected
+	// during startup.
 	ctx, cancelFn := context.WithCancel(context.Background())
-	// this context is immediately canceled to enable "limb" mode, allowing connections that come in
-	// prior to the publisher set being fully started to receive offline events.
 	cancelFn()
+
 	return &Supervisor{
 		dbAddress:       dbAddress,
 		ps:              NewPublisherSet(dbAddress),
@@ -41,6 +41,7 @@ func NewSupervisor(dbAddress string) *Supervisor {
 	}
 }
 
+// runOne attempts to start up an instance of the publishing system.
 func (ssup *Supervisor) runOne(ctx context.Context) error {
 	group := errgroupx.WithContext(ctx)
 	subctx := group.Context()
@@ -50,7 +51,7 @@ func (ssup *Supervisor) runOne(ctx context.Context) error {
 		ssup.publisherSetCtx = subctx
 		ssup.ps = NewPublisherSet(ssup.dbAddress)
 
-		// start monitoring permissions
+		// start monitoring permission scope changes
 		group.Go(
 			func(c context.Context) error {
 				return BootemLoop(c, ssup.ps)
@@ -79,9 +80,9 @@ func (ssup *Supervisor) Run(ctx context.Context) error {
 	}
 }
 
-// Websocket is the method that we pass to the Echo server, because rb doesn't know how to update
-// the backing function for an Echo.GET() call.  So we need something that will live as long as
-// the master.
+// Websocket passes incoming stream request to the active PublisherSet's websocket handler,
+// ensuring that in the event of a PublisherSet failure, stream requests can still routed
+// during recovery.
 func (ssup *Supervisor) Websocket(socket *websocket.Conn, c echo.Context) error {
 	var publisherSetCtx context.Context
 	var ps *PublisherSet
@@ -96,5 +97,5 @@ func (ssup *Supervisor) Websocket(socket *websocket.Conn, c echo.Context) error 
 		publisherSetCtx = ssup.publisherSetCtx
 		ps = ssup.ps
 	}()
-	return ps.Websocket(publisherSetCtx, socket, c)
+	return ps.StreamHandler(publisherSetCtx, socket, c)
 }

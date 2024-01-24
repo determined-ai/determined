@@ -34,7 +34,7 @@ func testPrepareFunc(i stream.PreparableMessage) interface{} {
 		}
 	case stream.DeleteMsg:
 		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
-	case SyncMsg:
+	case stream.SyncMsg:
 		return fmt.Sprintf("key: %s, sync_id: %s", syncKey, msg.SyncID)
 	}
 	return i

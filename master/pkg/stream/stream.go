@@ -57,6 +57,17 @@ func (d DeleteMsg) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
+// SyncMsg is the server response to a StartupMsg once it's been handled.
+type SyncMsg struct {
+	PreparableMessage
+	SyncID string `json:""`
+}
+
+// MarshalJSON converts a sync message into a json representation, implements PreparableMsg.
+func (sm SyncMsg) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{"sync_id": sm.SyncID})
+}
+
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.
 // One streamer may be associated with many Subscription[T]'s, but it should only have at most one
 // Subscription per type T.  One Streamer is intended to belong to one websocket connection.
