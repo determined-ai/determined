@@ -79,7 +79,7 @@ func alwaysFalse[T Msg](msg T) bool {
 	return false
 }
 
-func prepareNothing(message PreparableMessage) interface{} {
+func prepareNothing(message MarshallableMsg) interface{} {
 	return message
 }
 

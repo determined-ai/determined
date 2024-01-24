@@ -35,7 +35,7 @@ type CollectStartupMsgsFunc[S any] func(
 	known string,
 	spec S,
 ) (
-	[]stream.PreparableMessage, error,
+	[]stream.MarshallableMsg, error,
 )
 
 // NewSubscriptionSet constructor for SubscriptionSet.
@@ -96,7 +96,7 @@ func startup[T stream.Msg, S any](
 	state *subscriptionState[T, S],
 	known string,
 	spec *S,
-	prepare func(message stream.PreparableMessage) interface{},
+	prepare func(message stream.MarshallableMsg) interface{},
 ) error {
 	if err != nil {
 		return err

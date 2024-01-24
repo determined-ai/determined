@@ -18,8 +18,8 @@ const (
 )
 
 // testPrepareFunc returns a string representation of known messages;
-// otherwise, returns the preparable message that the streamer sends.
-func testPrepareFunc(i stream.PreparableMessage) interface{} {
+// otherwise, returns the MarshallableMsg that the streamer sends.
+func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 	switch msg := i.(type) {
 	case stream.UpsertMsg:
 		switch typedMsg := msg.Msg.(type) {
