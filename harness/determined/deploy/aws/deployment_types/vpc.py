@@ -48,11 +48,11 @@ class Lore(VPCBase):
 
     def before_deploy_print(self) -> None:
         super().before_deploy_print()
-        lore_tag = self.parameters[constants.cloudformation.GENAI_VERSION] or "latest"
+        genai_tag = self.parameters[constants.cloudformation.GENAI_VERSION] or "latest"
         # Lore is renamed to GenAI and we are changing the user visible text to GenAI
         # Interal references will be updated in a later stage if prioritized
-        print(f"GenAI Version: {lore_tag}")
-        print(f"GenAI Image: determinedai/environments-dev:lore-backend-image-{lore_tag}")
+        print(f"GenAI Version: {genai_tag}")
+        print(f"GenAI Image: determinedai/genai:{genai_tag}")
 
     def wait_for_genai(self, timeout: int = 60) -> None:
         self.wait_for_master()
