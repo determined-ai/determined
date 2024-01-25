@@ -1,3 +1,4 @@
+import Divider from 'hew/Divider';
 import { MenuItem } from 'hew/Dropdown';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
@@ -153,7 +154,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         <JsonGlossary alignValues="right" json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
-            <hr />
+            <Divider />
             <div className={css.subTitle}>{camelCaseToSentence(key)}</div>
             <JsonGlossary
               json={details[key as keyof V1ResourcePoolDetail] as unknown as JsonObject}
