@@ -515,10 +515,8 @@ func TestGetExperimentsShowTrialData(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	exp0 := createTestExp(t, api, curUser)
-	trial, metrics := createTestTrialWithMetrics(ctx, t, api, curUser, true)
-	fmt.Println(metrics)
+	trial, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
 
-	fmt.Println("TRIAL EXPERIMENT ID", trial.ExperimentID)
 	resp, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
 		ShowTrialData: true,
 		ExperimentIdFilter: &commonv1.Int32FieldFilter{
