@@ -175,6 +175,15 @@ type UserWebSetting struct {
 	StoragePath string
 }
 
+// Proto returns the protobuf representation.
+func (s UserWebSetting) Proto() *userv1.UserWebSetting {
+	return &userv1.UserWebSetting{
+		Key:         s.Key,
+		StoragePath: s.StoragePath,
+		Value:       s.Value,
+	}
+}
+
 // HashPassword hashes the user's password.
 func HashPassword(password string) (string, error) {
 	// truncate password to confirm the bcrypt length limit <=72bytes
