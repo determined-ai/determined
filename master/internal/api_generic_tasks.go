@@ -252,6 +252,16 @@ func (a *apiServer) CreateGenericTask(
 
 	onAllocationExit := func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
+		if ae.Err != nil {
+			err = a.m.db.SetErrorState(taskID, time.Now().UTC())
+			if err != nil {
+				syslog.WithError(err).Error("setting task to error state")
+			}
+			if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+				syslog.WithError(err).Error("deleting group priority change registry")
+			}
+			return
+		}
 		isPaused, err := a.m.db.IsPaused(ctx, taskID)
 		if err != nil {
 			syslog.WithError(err).Error("checking if a task is paused")
@@ -561,6 +571,16 @@ func (a *apiServer) ResumeGenericTask(
 		}
 		onAllocationExit := func(ae *task.AllocationExited) {
 			syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
+			if ae.Err != nil {
+				err = a.m.db.SetErrorState(resumingTask.TaskID, time.Now().UTC())
+				if err != nil {
+					syslog.WithError(err).Error("setting task to error state")
+				}
+				if err := tasklist.GroupPriorityChangeRegistry.Delete(*resumingTask.JobID); err != nil {
+					syslog.WithError(err).Error("deleting group priority change registry")
+				}
+				return
+			}
 			isPaused, err := a.m.db.IsPaused(ctx, resumingTask.TaskID)
 			if err != nil {
 				syslog.WithError(err).Error("checking if a task is paused")

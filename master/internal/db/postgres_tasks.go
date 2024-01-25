@@ -145,6 +145,16 @@ WHERE task_id = '%s' AND (task_state='%s' OR task_state='%s')
 	return count > 0, nil
 }
 
+func (db *PgDB) SetErrorState(taskID model.TaskID, endTime time.Time) error {
+	if _, err := db.sql.Exec(`
+	UPDATE tasks
+	SET task_state = $1, end_time = $2
+	WHERE task_id = $3`, model.TaskStateError, endTime, taskID); err != nil {
+		return errors.Wrap(err, "setting error task state")
+	}
+	return nil
+}
+
 func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
 	if _, err := ex.Exec(`
 UPDATE tasks
