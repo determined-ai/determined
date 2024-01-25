@@ -1,10 +1,34 @@
 import { GridCell } from '@glideapps/glide-data-grid';
 import { MenuProps } from 'antd';
 import { DropdownEvent } from 'hew/Dropdown';
-import React, { useCallback, useRef } from 'react';
+import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { ExperimentAction, ExperimentItem, ProjectExperiment } from 'types';
+
+// eslint-disable-next-line
+function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
+  useEffect(() => {
+    /**
+     * Alert if clicked on outside of element
+     */
+    function handleClickOutside(event: Event) {
+      if (
+        ref.current &&
+        !ref.current.contains(event.target) &&
+        !(event.srcElement as Element).className?.includes('ant-dropdown')
+      ) {
+        handler(event);
+      }
+    }
+    // Bind the event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      // Unbind the event listener on clean up
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [ref, handler]);
+}
 
 export interface TableContextMenuProps extends MenuProps {
   cell?: GridCell;
@@ -28,6 +52,7 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
   y,
 }) => {
   const containerRef = useRef(null);
+  useOutsideClickHandler(containerRef, onClose);
 
   const handleComplete = useCallback(
     (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => {
