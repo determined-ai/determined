@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
+import { Loaded } from 'hew/utils/loadable';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -12,12 +13,6 @@ import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 const TEST_MODAL_TITLE = 'Checkpoint Modal Test';
 const REGISTER_CHECKPOINT_TEXT = 'Register Checkpoint';
-
-vi.mock('services/api', () => ({
-  getModels: () => {
-    return Promise.resolve({ models: [] });
-  },
-}));
 
 const user = userEvent.setup();
 
@@ -32,6 +27,7 @@ const ModalTrigger: React.FC = () => {
     <CheckpointModalTrigger
       checkpoint={checkpoint}
       experiment={experiment}
+      models={Loaded([])}
       title={TEST_MODAL_TITLE}
     />
   );

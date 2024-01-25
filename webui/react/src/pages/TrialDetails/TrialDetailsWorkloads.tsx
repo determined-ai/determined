@@ -11,6 +11,7 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import {
@@ -52,6 +53,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
+  const models = useFetchModels();
+
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !_.isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
@@ -70,6 +73,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           <CheckpointModalTrigger
             checkpoint={checkpoint}
             experiment={experiment}
+            models={models}
             title={`Checkpoint for Batch ${checkpoint.totalBatches}`}
           />
         );
@@ -121,7 +125,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [metrics, settings, trial, experiment]);
+  }, [experiment, metrics, trial, models, settings.sortDesc, settings.sortKey]);
 
   const [workloads, setWorkloads] = useState<Loadable<WorkloadGroup[]>>(NotLoaded);
   const [workloadCount, setWorkloadCount] = useState<number>(0);

@@ -17,6 +17,7 @@ import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'componen
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
+import { useFetchModels } from 'hooks/useFetchModels';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -67,6 +68,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
+  const models = useFetchModels();
 
   const workspace = { id: experiment.workspaceId };
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
@@ -187,6 +189,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         <CheckpointModalTrigger
           checkpoint={checkpoint}
           experiment={experiment}
+          models={models}
           title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
         />
       );
@@ -240,7 +243,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     });
 
     return newColumns;
-  }, [experiment, settings, stateFilterDropdown, dropDownOnTrigger]);
+  }, [
+    experiment,
+    models,
+    dropDownOnTrigger,
+    settings.sortKey,
+    settings.sortDesc,
+    stateFilterDropdown,
+  ]);
 
   const handleTableChange = useCallback(
     (

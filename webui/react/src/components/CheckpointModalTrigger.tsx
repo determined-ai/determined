@@ -1,22 +1,17 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import { ModalCloseReason, useModal } from 'hew/Modal';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { isEqual } from 'lodash';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Loadable } from 'hew/utils/loadable';
+import React, { useCallback, useState } from 'react';
 
 import ModelCreateModal from 'components/ModelCreateModal';
 import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
-import { getModels } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import {
   CheckpointWorkloadExtended,
   CoreApiGenericCheckpoint,
   ExperimentBase,
   ModelItem,
 } from 'types';
-import handleError, { ErrorType } from 'utils/error';
-import { validateDetApiEnum } from 'utils/service';
 
 import CheckpointModalComponent from './CheckpointModal';
 
@@ -25,6 +20,7 @@ interface Props {
   children?: React.ReactNode;
   experiment: ExperimentBase;
   title: string;
+  models: Loadable<ModelItem[]>;
 }
 
 const CheckpointModalTrigger: React.FC<Props> = ({
@@ -32,15 +28,14 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   experiment,
   title,
   children,
+  models,
 }: Props) => {
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
 
   const registerModal = useModal(RegisterCheckpointModal);
 
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
-  const [canceler] = useState(new AbortController());
 
   const handleOnCloseCreateModel = useCallback(
     (modelName?: string) => {
@@ -51,37 +46,6 @@ const CheckpointModalTrigger: React.FC<Props> = ({
     },
     [setSelectedModelName, registerModal],
   );
-
-  const fetchModels = useCallback(async () => {
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      setModels((prev) => {
-        const loadedModels = Loaded(response.models);
-        if (isEqual(prev, loadedModels)) return prev;
-        return loadedModels;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal]);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
 
   const handleModalCheckpointClick = useCallback(() => {
     checkpointModal.open();
