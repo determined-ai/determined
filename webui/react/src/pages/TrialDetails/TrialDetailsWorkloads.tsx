@@ -1,7 +1,7 @@
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
 import Select, { Option, SelectValue } from 'hew/Select';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import _ from 'lodash';
+import _, { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -12,10 +12,12 @@ import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import usePolling from 'hooks/usePolling';
-import { getTrialWorkloads } from 'services/api';
+import { getModels, getTrialWorkloads } from 'services/api';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import {
   ExperimentBase,
   Metric,
+  ModelItem,
   Step,
   TrialDetails,
   TrialWorkloadFilter,
@@ -28,6 +30,7 @@ import {
   metricKeyToMetric,
   metricToKey,
 } from 'utils/metric';
+import { validateDetApiEnum } from 'utils/service';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
@@ -52,11 +55,45 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   trial,
   updateSettings,
 }: Props) => {
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [canceler] = useState(new AbortController());
+
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !_.isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
   }, [defaultMetrics, metrics, settings.filter]);
+
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels(
+        {
+          archived: false,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: validateDetApiEnum(
+            V1GetModelsRequestSortBy,
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+          ),
+        },
+        { signal: canceler.signal },
+      );
+      setModels((prev) => {
+        const loadedModels = Loaded(response.models);
+        if (isEqual(prev, loadedModels)) return prev;
+        return loadedModels;
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [canceler.signal]);
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -70,6 +107,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           <CheckpointModalTrigger
             checkpoint={checkpoint}
             experiment={experiment}
+            models={models}
             title={`Checkpoint for Batch ${checkpoint.totalBatches}`}
           />
         );
@@ -121,7 +159,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [metrics, settings, trial, experiment]);
+  }, [experiment, metrics, trial, models, settings.sortDesc, settings.sortKey]);
 
   const [workloads, setWorkloads] = useState<Loadable<WorkloadGroup[]>>(NotLoaded);
   const [workloadCount, setWorkloadCount] = useState<number>(0);

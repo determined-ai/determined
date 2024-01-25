@@ -2,6 +2,7 @@ import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import Dropdown from 'hew/Dropdown';
 import { useModal } from 'hew/Modal';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -21,8 +22,12 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
-import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
+import { getExpTrials, getModels, openOrCreateTensorBoard } from 'services/api';
+import {
+  Experimentv1State,
+  V1GetExperimentTrialsRequestSortBy,
+  V1GetModelsRequestSortBy,
+} from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import {
   ExperimentAction as Action,
@@ -30,6 +35,7 @@ import {
   CommandResponse,
   ExperimentBase,
   MetricsWorkload,
+  ModelItem,
   RunState,
   TrialItem,
   ValueOf,
@@ -63,6 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [trials, setTrials] = useState<TrialItem[]>();
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [canceler] = useState(new AbortController());
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
@@ -73,6 +80,37 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
 
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
+
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await getModels(
+        {
+          archived: false,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: validateDetApiEnum(
+            V1GetModelsRequestSortBy,
+            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+          ),
+        },
+        { signal: canceler.signal },
+      );
+      setModels((prev) => {
+        const loadedModels = Loaded(response.models);
+        if (isEqual(prev, loadedModels)) return prev;
+        return loadedModels;
+      });
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch models.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+    }
+  }, [canceler.signal]);
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
@@ -187,6 +225,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         <CheckpointModalTrigger
           checkpoint={checkpoint}
           experiment={experiment}
+          models={models}
           title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
         />
       );
@@ -240,7 +279,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     });
 
     return newColumns;
-  }, [experiment, settings, stateFilterDropdown, dropDownOnTrigger]);
+  }, [
+    experiment,
+    models,
+    dropDownOnTrigger,
+    settings.sortKey,
+    settings.sortDesc,
+    stateFilterDropdown,
+  ]);
 
   const handleTableChange = useCallback(
     (

@@ -239,6 +239,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         <CheckpointModalTrigger
           checkpoint={record}
           experiment={experiment}
+          models={models}
           title={`Checkpoint ${record.uuid}`}
         />
       );
@@ -270,7 +271,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     });
 
     return newColumns;
-  }, [dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown]);
+  }, [
+    dropDownOnTrigger,
+    experiment,
+    models,
+    settings.sortDesc,
+    settings.sortKey,
+    stateFilterDropdown,
+  ]);
 
   const stateString = settings.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
