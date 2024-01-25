@@ -357,8 +357,9 @@ func (a *apiServer) CreateGenericTask(
 		}
 	}
 
+	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
 	err = task.DefaultService.StartAllocation(logCtx, sproto.AllocateRequest{
-		AllocationID:      model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1)),
+		AllocationID:      allocationID,
 		TaskID:            taskID,
 		JobID:             jobID,
 		JobSubmissionTime: startTime,
@@ -373,6 +374,11 @@ func (a *apiServer) CreateGenericTask(
 
 		Restore: false,
 	}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
+	if err != nil {
+		return nil, err
+	}
+
+	err = PersistGenericTaskSpec(ctx, taskID, *genericTaskSpec, allocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +530,7 @@ func (a *apiServer) KillGenericTask(
 	}
 	for _, childTask := range tasksToDelete {
 		if childTask.State == nil || *childTask.State != model.TaskStateCanceled {
-			allocationID, err := a.GetAllocationFromTaskID(ctx, childTask.TaskID)
+			allocationID, err := GetAllocationFromTaskID(ctx, childTask.TaskID)
 			if err != nil {
 				return nil, err
 			}
@@ -614,7 +620,7 @@ func (a *apiServer) ResumeGenericTask(
 	for _, resumingTask := range tasksToResume {
 		allocationString, genericTaskSpec, err := GetGenericTaskSpec(ctx, resumingTask.TaskID)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s (retrieving generic task spec)", err)
 		}
 		if genericTaskSpec == nil {
 			return nil, fmt.Errorf("could not retrieve task spec for task: %s", resumingTask.TaskID)
@@ -683,7 +689,7 @@ func (a *apiServer) ResumeGenericTask(
 				SlotsNeeded:       *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
 				ResourcePool:      genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 				FittingRequirements: sproto.FittingRequirements{
-					SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode(),
+					SingleAgent: genericTaskSpec.GenericTaskConfig.Resources.MustFitSingleNode(),
 				},
 				Preemptible: true,
 				Restore:     false,
@@ -695,7 +701,7 @@ func (a *apiServer) ResumeGenericTask(
 		if err != nil {
 			return nil, err
 		}
-		err = a.SetResumedState(ctx, resumingTask.TaskID)
+		err = SetResumedState(ctx, resumingTask.TaskID)
 		if err != nil {
 			return nil, err
 		}
@@ -703,7 +709,16 @@ func (a *apiServer) ResumeGenericTask(
 	return &apiv1.ResumeGenericTaskResponse{}, nil
 }
 
-func (a *apiServer) GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
+func SetResumedState(ctx context.Context, taskID model.TaskID) error {
+	_, err := db.Bun().NewUpdate().Table("tasks").
+		Set("task_state = ?", model.TaskStateActive).
+		Set("end_time = NULL").
+		Where("task_id = ?", taskID).
+		Exec(ctx)
+	return err
+}
+
+func GetAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
 ) (string, error) {
 	allocation := model.Allocation{}
 	err := db.Bun().NewSelect().Model(&allocation).
