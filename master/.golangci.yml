@@ -73,6 +73,7 @@ linters-settings:
   exhaustruct:
     include:
       - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
+      - 'github.com/determined-ai/determined/proto/pkg/userv1.UserWebSetting'
   forbidigo:
     forbid:
       - 'fmt\.Print.*'

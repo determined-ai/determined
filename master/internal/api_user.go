@@ -611,7 +611,15 @@ func (a *apiServer) GetUserSetting(
 	}
 
 	settings, err := user.GetUserSetting(ctx, curUser.ID)
-	return &apiv1.GetUserSettingResponse{Settings: settings}, err
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*userv1.UserWebSetting
+	for _, s := range settings {
+		res = append(res, s.Proto())
+	}
+	return &apiv1.GetUserSettingResponse{Settings: res}, nil
 }
 
 func (a *apiServer) PostUserSetting(
