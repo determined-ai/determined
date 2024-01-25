@@ -1,5 +1,4 @@
-{{- if or (not .Values.genai.version) .Values.genai.sharedPVCName }}
-{{ else }}
+{{- if and .Values.genai.version (not .Values.genai.sharedPVCName) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -15,6 +14,6 @@ spec:
     requests:
       storage: {{ required  "A valid .Values.genai.generatedPVC.storageSize entry is required if a .Values.sharedPVCName is not specified" (and .Values.genai.generatedPVC .Values.genai.generatedPVC.storageSize) }}
   {{- if .Values.genai.generatedPVC.storageClassName }}
-  storageClassName: {{ .Values.genai.generatedPVC.storageClassName }}
+  storageClassName: {{ required  "A valid .Values.genai.generatedPVC.storageClassName entry is required if a .Values.sharedPVCName is not specified" .Values.genai.generatedPVC.storageClassName }}
   {{ end }}
 {{ end }}

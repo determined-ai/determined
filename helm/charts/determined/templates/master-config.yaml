@@ -46,11 +46,7 @@ stringData:
     db:
       user: {{ required "A valid Values.db.user entry required!" .Values.db.user | quote }}
       password: {{ required "A valid Values.db.password entry required!" .Values.db.password | quote }}
-      {{- if .Values.db.hostAddress }}
-      host: {{ .Values.db.hostAddress }}
-      {{- else }}
-      host: determined-db-service-{{ .Release.Name }}
-      {{- end  }}
+      host: {{ include "determined.dbHost" . }}
       port: {{ .Values.db.port }}
       name: {{ .Values.db.name | quote }}
       {{- if .Values.db.sslMode }}

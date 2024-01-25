@@ -1,5 +1,4 @@
-{{- if not .Values.genai.version }}
-{{ else }}
+{{- if .Values.genai.version }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,10 +22,9 @@ spec:
       serviceAccount: genai-{{ .Release.Name }}
       containers:
       - name: genai-{{ .Release.Name }}
-        {{ $image := "environments-dev" }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
-        image: {{ .Values.imageRegistry }}/{{ $image }}:lore-backend-image-{{ $tag }}
+        image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
         imagePullPolicy: "Always"
         env:
           - name: DET_MASTER
@@ -40,7 +38,7 @@ spec:
           - name: DB_PORT
             value: "5432"
           - name: DB_HOST
-            value: determined-db-service-{{ .Release.Name }} 
+            value: {{ include "determined.dbHost" . }}
           - name: LORE_DOCKER_TAG_SUFFIX
             value: {{ $tag }}
           - name: K8S_SHARED_PVC_NAME

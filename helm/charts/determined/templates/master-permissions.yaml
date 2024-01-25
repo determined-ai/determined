@@ -7,6 +7,8 @@ metadata:
      app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 
+
+{{- if .Values.genai.version }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -16,7 +18,7 @@ metadata:
   labels:
      app: genai-{{ .Release.Name }}
      release: {{ .Release.Name }}
-
+{{ end -}}
 
 
 ---
