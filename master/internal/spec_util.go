@@ -22,7 +22,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-// ResolveResources validates if the pool exists and check for resource availability.
+// ResolveResources - Validate ResoucePool and check for availability.
 func (m *Master) ResolveResources(
 	resourcePool string,
 	slots int,
@@ -91,42 +91,45 @@ func fillContextDir(
 	defaultWorkDir *string,
 	contextDirectory []*utilv1.File,
 ) (*string, []byte, error) {
-	if len(contextDirectory) == 0 {
-		return configWorkDir, nil, nil
-	}
+	var contextDirectoryBytes []byte
+	if len(contextDirectory) > 0 {
+		userFiles := filesToArchive(contextDirectory)
 
-	workdirSetInReq := configWorkDir != nil &&
-		(defaultWorkDir == nil || *defaultWorkDir != *configWorkDir)
-	if workdirSetInReq {
-		return nil, nil, status.Errorf(codes.InvalidArgument,
-			"cannot set work_dir and context directory at the same time")
-	}
+		workdirSetInReq := configWorkDir != nil &&
+			(defaultWorkDir == nil || *defaultWorkDir != *configWorkDir)
+		if workdirSetInReq {
+			return nil, nil, status.Errorf(codes.InvalidArgument,
+				"cannot set work_dir and context directory at the same time")
+		}
 
-	userFiles := filesToArchive(contextDirectory)
-	contextDirectoryBytes, err := archive.ToTarGz(userFiles)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.InvalidArgument,
-			fmt.Errorf("compressing files context files: %w", err).Error())
+		var err error
+		contextDirectoryBytes, err = archive.ToTarGz(userFiles)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.InvalidArgument,
+				fmt.Errorf("compressing files context files: %w", err).Error())
+		}
+		return nil, contextDirectoryBytes, nil
 	}
-	return nil, contextDirectoryBytes, nil
+	return configWorkDir, contextDirectoryBytes, nil
 }
 
 func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, error) {
+	var token string
+	var err error
 	if config.GetMasterConfig().InternalConfig.ExternalSessions.Enabled() {
-		token, err := grpcutil.GetUserExternalToken(ctx)
+		token, err = grpcutil.GetUserExternalToken(ctx)
 		if err != nil {
 			return "", status.Errorf(codes.Internal,
 				errors.Wrapf(err,
 					"unable to get external user token").Error())
 		}
-		return token, nil
-	}
-
-	token, err := user.StartSession(ctx, userModel)
-	if err != nil {
-		return "", status.Errorf(codes.Internal,
-			errors.Wrapf(err,
-				"unable to create user session inside task").Error())
+	} else {
+		token, err = user.StartSession(ctx, userModel)
+		if err != nil {
+			return "", status.Errorf(codes.Internal,
+				errors.Wrapf(err,
+					"unable to create user session inside task").Error())
+		}
 	}
 	return token, nil
 }

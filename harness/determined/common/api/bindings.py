@@ -20123,6 +20123,30 @@ def post_PauseExperiments(
         return v1PauseExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_PauseExperiments", _resp)
 
+def post_PauseGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Pause generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/pause",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PauseGenericTask", _resp)
+
 def post_PinWorkspace(
     session: "api.Session",
     *,
@@ -20969,6 +20993,29 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def post_ResumeGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Resume generic task
+
+    - taskId: The id of the task.
+    """
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/resume",
+        params=None,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_ResumeGenericTask", _resp)
 
 def get_SearchExperiments(
     session: "api.Session",

@@ -122,6 +122,8 @@ message Task {
   optional GenericTaskState task_state = 9;
   // ID of task this is forked from (If task is a forked task)
   optional string forked_from = 10;
+  // Flag for whether task can be paused or not.
+  optional bool no_pause = 11;
 }
 
 // Address represents an exposed port on a container.
