@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import Divider from 'hew/Divider';
 import { Modal } from 'hew/Modal';
 import React, { Fragment, useCallback } from 'react';
 

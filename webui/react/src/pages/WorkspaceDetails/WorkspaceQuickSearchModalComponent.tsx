@@ -1,10 +1,9 @@
-import { Tree } from 'antd';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
+import Tree, { TreeDataNode } from 'hew/Tree';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
@@ -54,7 +53,7 @@ const WorkspaceQuickSearchModalComponent: React.FC<Props> = ({
 
   const getNodesForProject = useCallback(
     (projects: Project[], text: string) => {
-      const treeChildren: DefaultOptionType[] = projects
+      const treeChildren: TreeDataNode[] = projects
         .filter((project) => project.name.toLocaleLowerCase().includes(text))
         .map((project) => ({
           key: `project-${project.id}`,
@@ -71,9 +70,9 @@ const WorkspaceQuickSearchModalComponent: React.FC<Props> = ({
     [onClickProject],
   );
 
-  const treeData: DefaultOptionType[] = useMemo(() => {
+  const treeData: TreeDataNode[] = useMemo(() => {
     const text = searchText.toLocaleLowerCase();
-    const data: DefaultOptionType[] = Array.from(workspaceMap)
+    const data: TreeDataNode[] = Array.from(workspaceMap)
       .map(([workspace, projects]) => {
         const isWorkspaceNameIncluded = workspace.name.toLocaleLowerCase().includes(text);
         const children = getNodesForProject(projects, text);
@@ -120,7 +119,7 @@ const WorkspaceQuickSearchModalComponent: React.FC<Props> = ({
             {treeData.length === 0 ? (
               <Message icon="warning" title="No matching workspace or projects" />
             ) : (
-              <Tree defaultExpandAll selectable={false} treeData={treeData} />
+              <Tree defaultExpandAll treeData={treeData} />
             )}
           </>
         )}

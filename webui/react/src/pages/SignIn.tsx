@@ -1,5 +1,5 @@
-import { Divider } from 'antd';
 import Button from 'hew/Button';
+import Divider from 'hew/Divider';
 import Form from 'hew/Form';
 import { notification } from 'hew/Toast';
 import { useObservable } from 'micro-observables';

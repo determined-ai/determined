@@ -1,4 +1,4 @@
-import { Divider } from 'antd';
+import Divider from 'hew/Divider';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
