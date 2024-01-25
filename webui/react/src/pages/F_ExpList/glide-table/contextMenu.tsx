@@ -16,7 +16,7 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
       if (
         ref.current &&
         !ref.current.contains(event.target) &&
-        !(event.srcElement as Element).className?.includes('ant-dropdown')
+        !(event.target as Element).className?.includes('ant-dropdown')
       ) {
         handler(event);
       }
