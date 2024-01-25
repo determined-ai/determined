@@ -1,7 +1,6 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import { useModal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
 import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -20,14 +19,11 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { getExperimentCheckpoints, getModels } from 'services/api';
-import {
-  Checkpointv1SortBy,
-  Checkpointv1State,
-  V1GetModelsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { getExperimentCheckpoints } from 'services/api';
+import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { encodeCheckpointState } from 'services/decoder';
 import { readStream } from 'services/utils';
@@ -37,7 +33,6 @@ import {
   CheckpointState,
   CoreApiGenericCheckpoint,
   ExperimentBase,
-  ModelItem,
   RecordKey,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
@@ -61,10 +56,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [checkpoints, setCheckpoints] = useState<CoreApiGenericCheckpoint[]>();
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [selectedCheckpoints, setSelectedCheckpoints] = useState<string[]>();
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
+  const models = useFetchModels();
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
@@ -114,37 +109,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     },
     [handleStateFilterApply, handleStateFilterReset, settings.state],
   );
-
-  const fetchModels = useCallback(async () => {
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      setModels((prev) => {
-        const loadedModels = Loaded(response.models);
-        if (isEqual(prev, loadedModels)) return prev;
-        return loadedModels;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal]);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
 
   const handleRegisterCheckpoint = useCallback(
     (checkpoints: string[]) => {
@@ -239,6 +203,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         <CheckpointModalTrigger
           checkpoint={record}
           experiment={experiment}
+          models={models}
           title={`Checkpoint ${record.uuid}`}
         />
       );
@@ -270,7 +235,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     });
 
     return newColumns;
-  }, [dropDownOnTrigger, experiment, settings.sortDesc, settings.sortKey, stateFilterDropdown]);
+  }, [
+    dropDownOnTrigger,
+    experiment,
+    models,
+    settings.sortDesc,
+    settings.sortKey,
+    stateFilterDropdown,
+  ]);
 
   const stateString = settings.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
