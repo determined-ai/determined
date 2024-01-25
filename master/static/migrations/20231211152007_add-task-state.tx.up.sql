@@ -4,6 +4,7 @@ CREATE TYPE public.task_state AS ENUM (
     'COMPLETED',
     'ERROR',
     'PAUSED',
+    'STOPPING_PAUSED',
     'STOPPING_CANCELED',
     'STOPPING_COMPLETED',
     'STOPPING_ERROR'

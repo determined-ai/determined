@@ -181,6 +181,19 @@ def fork(args: Namespace) -> None:
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
+@authentication.required
+def pause(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_PauseGenericTask(sess, taskId=args.task_id)
+    print(f"Paused task: {args.task_id}")
+
+
+@authentication.required
+def resume(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_ResumeGenericTask(sess, taskId=args.task_id)
+    print(f"Resumed task: {args.task_id}")
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
@@ -369,6 +382,22 @@ args_description: List[Any] = [
                         action="store_true",
                         help="",
                     )
+                ],
+            ),
+            Cmd(
+                "pause",
+                pause,
+                "pause task",
+                [
+                    Arg("task_id", type=str, help=""),
+                ],
+            ),
+            Cmd(
+                "resume unpause",
+                resume,
+                "resume or unpause a task",
+                [
+                    Arg("task_id", type=str, help=""),
                 ],
             ),
         ],
