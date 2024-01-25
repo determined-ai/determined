@@ -22,6 +22,8 @@ training, as described in :ref:`master-config-reference-dtrain-network-interface
  Configuration
 ***************
 
+.. _slots-per-trial:
+
 Slots Per Trial
 ===============
 
