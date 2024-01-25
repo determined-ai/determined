@@ -132,12 +132,13 @@ stringData:
     {{- end }}
     {{- end }}
 
-    {{- if and .Values.genai.version .Values.genai.port }}
+    {{- if and .Values.genai.version }}
+    {{- $port := (required "A valid .Values.genai.port entry required!" .Values.genai.port) }}
     __internal:
       proxied_servers:
-        - destination: "http://genai-service-{{ .Release.Name }}:{{ .Values.genai.port }}/lore"
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ $port }}/lore"
           path_prefix: /lore
-        - destination: "http://genai-service-{{ .Release.Name }}:{{ .Values.genai.port }}/genai"
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ $port }}/genai"
           path_prefix: /genai
     {{- end}}
 
