@@ -4212,15 +4212,19 @@ class v1GetExperimentLabelsResponse(Printable):
 
 class v1GetExperimentResponse(Printable):
     """Response to GetExperimentRequest."""
+    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     jobSummary: "typing.Optional[v1JobSummary]" = None
 
     def __init__(
         self,
         *,
         experiment: "v1Experiment",
+        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         jobSummary: "typing.Union[v1JobSummary, None, Unset]" = _unset,
     ):
         self.experiment = experiment
+        if not isinstance(config, Unset):
+            self.config = config
         if not isinstance(jobSummary, Unset):
             self.jobSummary = jobSummary
 
@@ -4229,6 +4233,8 @@ class v1GetExperimentResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experiment": v1Experiment.from_json(obj["experiment"]),
         }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
         if "jobSummary" in obj:
             kwargs["jobSummary"] = v1JobSummary.from_json(obj["jobSummary"]) if obj["jobSummary"] is not None else None
         return cls(**kwargs)
@@ -4237,6 +4243,8 @@ class v1GetExperimentResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "experiment": self.experiment.to_json(omit_unset),
         }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
         if not omit_unset or "jobSummary" in vars(self):
             out["jobSummary"] = None if self.jobSummary is None else self.jobSummary.to_json(omit_unset)
         return out

@@ -336,8 +336,10 @@ func (a *apiServer) GetExperiment(
 		return nil, err
 	}
 
+	// Update this when we remove the proto type.
 	resp := apiv1.GetExperimentResponse{
 		Experiment: exp,
+		Config:     exp.Config, //nolint:staticcheck
 	}
 
 	// Only continue to add a job summary if it's an active experiment.
@@ -2686,6 +2688,8 @@ func (a *apiServer) SearchExperiments(
 			// Correct trial restarts because
 			// `restart` count is incremented before `restart <= max_restarts` stop restart check,
 			// so trials in terminal state have restarts = max + 1.
+			// Update this correction to happen in the database when we do the remove.
+			//nolint:staticcheck
 			configRestarts, ok := experiment.Config.Fields["max_restarts"].AsInterface().(float64)
 			if ok && trial.Restarts > int32(configRestarts) {
 				trial.Restarts = int32(configRestarts)
