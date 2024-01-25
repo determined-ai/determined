@@ -216,12 +216,12 @@ const ResourcepoolDetailInner: React.FC = () => {
     () =>
       canManageResourcePoolBindings
         ? [
-          {
-            disabled: false,
-            key: MenuKey.ManageNodes,
-            label: 'Manage Nodes',
-          },
-        ]
+            {
+              disabled: false,
+              key: MenuKey.ManageNodes,
+              label: 'Manage Nodes',
+            },
+          ]
         : undefined,
     [canManageResourcePoolBindings],
   );
@@ -248,8 +248,9 @@ const ResourcepoolDetailInner: React.FC = () => {
       breadcrumb={[
         { breadcrumbName: 'Cluster', path: paths.clusters() },
         {
-          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${usage ? `- ${floatToPercent(usage)}` : ''
-            }`,
+          breadcrumbName: `${pool.name} (${V1SchedulerTypeToLabel[pool.schedulerType]}) ${
+            usage ? `- ${floatToPercent(usage)}` : ''
+          }`,
           path: '',
         },
       ]}
