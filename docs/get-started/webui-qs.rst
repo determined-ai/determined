@@ -84,15 +84,10 @@ You must have a running Determined cluster with the CLI installed.
          master provides centralized management of the agent resources. By default, the
          :ref:`slots-per-trial` value is set to ``1`` which disables distributed training.
 
-      #. Sign in to your instance of Determined:
-
-         -  Enter the URL of your remote instance: **http://<ipAddress>:8080/**.
-         -  Sign in using your username and password.
-
       #. Download and extract the tar file: :download:`mnist_pytorch.tgz
          <../examples/mnist_pytorch.tgz>`.
 
-      #. Open a terminal window and ``cd`` into the ``mnist_pytorch`` directory.
+      #. Open a terminal window and navigate to the directory where you extracted the tar file.
 
       #. Using your code editor, examine the ``distributed.yaml`` file. Notice the
          ``resources.slots_per_trial`` field is set to a value of ``8``:
@@ -108,6 +103,11 @@ You must have a running Determined cluster with the CLI installed.
          -  If necessary, use your code editor to change the value to match your hardware
             configuration.
 
+      #. Sign in to your remote instance of Determined:
+
+         -  Enter the URL of your remote instance: **http://<ipAddress>:8080/**.
+         -  Sign in using your username and password.
+
       #. To connect to the Determined master running on your remote instance, set the remote IP
          address and port number in the ``DET_MASTER`` environment variable:
 
@@ -115,21 +115,16 @@ You must have a running Determined cluster with the CLI installed.
 
             export DET_MASTER=<ipAddress>:8080
 
-      #. Create and run the experiment:
-
-         -  Replace ``<username>`` with your username.
-         -  The system will ask for your password.
+      #. To create and run the experiment, run the following command, replacing ``<username>`` with
+         your username.
 
          .. code:: bash
 
             det -u <username> experiment create distributed.yaml .
 
-      #. To view the experiment in your browser:
+         -  The system will ask for your password.
 
-         -  Enter the URL of your remote instance: **http://<ipAddress>:8080/**.
-         -  Sign in using your username and password.
-
-      #. Navigate to the home page and then visit **Your Recent Submissions**.
+      #. In your browser, navigate to the home page and then visit **Your Recent Submissions**.
 
          .. image:: /assets/images/qswebui-recent-remote.png
             :alt: Determined AI WebUI Dashboard showing a user's recent experiment submissions
