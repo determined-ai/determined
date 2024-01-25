@@ -13159,6 +13159,7 @@ class v1Task(Printable):
     config: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[str]" = None
+    noPause: "typing.Optional[bool]" = None
     parentId: "typing.Optional[str]" = None
     taskState: "typing.Optional[v1GenericTaskState]" = None
 
@@ -13172,6 +13173,7 @@ class v1Task(Printable):
         config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[str, None, Unset]" = _unset,
+        noPause: "typing.Union[bool, None, Unset]" = _unset,
         parentId: "typing.Union[str, None, Unset]" = _unset,
         taskState: "typing.Union[v1GenericTaskState, None, Unset]" = _unset,
     ):
@@ -13185,6 +13187,8 @@ class v1Task(Printable):
             self.endTime = endTime
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(noPause, Unset):
+            self.noPause = noPause
         if not isinstance(parentId, Unset):
             self.parentId = parentId
         if not isinstance(taskState, Unset):
@@ -13204,6 +13208,8 @@ class v1Task(Printable):
             kwargs["endTime"] = obj["endTime"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "noPause" in obj:
+            kwargs["noPause"] = obj["noPause"]
         if "parentId" in obj:
             kwargs["parentId"] = obj["parentId"]
         if "taskState" in obj:
@@ -13223,6 +13229,8 @@ class v1Task(Printable):
             out["endTime"] = self.endTime
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "noPause" in vars(self):
+            out["noPause"] = self.noPause
         if not omit_unset or "parentId" in vars(self):
             out["parentId"] = self.parentId
         if not omit_unset or "taskState" in vars(self):
@@ -20133,6 +20141,8 @@ def post_PauseGenericTask(
     - taskId: The id of the task.
     """
     _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tasks/{taskId}/pause",
@@ -21003,10 +21013,13 @@ def post_ResumeGenericTask(
 
     - taskId: The id of the task.
     """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
     _resp = session._do_request(
         method="POST",
         path=f"/api/v1/tasks/{taskId}/resume",
-        params=None,
+        params=_params,
         json=None,
         data=None,
         headers=None,

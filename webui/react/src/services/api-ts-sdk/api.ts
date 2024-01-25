@@ -9660,6 +9660,12 @@ export interface V1Task {
      * @memberof V1Task
      */
     forkedFrom?: string;
+    /**
+     * Flag for whether task can be paused or not.
+     * @type {boolean}
+     * @memberof V1Task
+     */
+    noPause?: boolean;
 }
 /**
  * 
