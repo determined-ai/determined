@@ -484,6 +484,18 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
   request: () => detApi.Cluster.getAgents(),
 };
 
+export const enableAgent: DetApi<string, Api.V1EnableAgentResponse, Type.Agent | null> = {
+  name: 'enableAgent',
+  postProcess: (response) => (response.agent ? decoder.jsonToAgents([response.agent])[0] : null),
+  request: (agentId) => detApi.Cluster.enableAgent(agentId, {}),
+};
+
+export const disableAgent: DetApi<string, Api.V1DisableAgentResponse, Type.Agent | null> = {
+  name: 'disableAgent',
+  postProcess: (response) => (response.agent ? decoder.jsonToAgents([response.agent])[0] : null),
+  request: (agentId) => detApi.Cluster.disableAgent(agentId, {}),
+};
+
 export const getResourcePools: DetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,

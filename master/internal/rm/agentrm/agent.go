@@ -120,7 +120,11 @@ func newAgent(
 	unregister func(),
 ) *agent {
 	a := &agent{
-		syslog:                logrus.WithField("component", "agent").WithField("id", id),
+		syslog: logrus.WithFields(logrus.Fields{
+			"component":     "agent",
+			"id":            id,
+			"resource-pool": resourcePoolName,
+		}),
 		id:                    id,
 		registeredTime:        time.Now(),
 		agentUpdates:          agentUpdates,

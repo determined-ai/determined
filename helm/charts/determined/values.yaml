@@ -116,6 +116,7 @@ useNodePortForMaster: false
 #   scimAuthenticationAttribute:
 #   autoProvisionUsers:
 #   groupsAttributeName:
+#   GroupsClaimName:
 #   displayNameAttributeName:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
@@ -196,7 +197,8 @@ checkpointStorage:
   # system.
   type: shared_fs
   hostPath: /checkpoints
-
+  # By default, shared_fs is not mounted to the server pod. Change this to true to enable checkpoint downloads from the server.
+  mountToServer: false
   # For storing in GCS.
   # type: gcs
   # bucket: <bucket_name>
