@@ -13,7 +13,5 @@ spec:
   resources:
     requests:
       storage: {{ required  "A valid .Values.genai.generatedPVC.storageSize entry is required if a .Values.sharedPVCName is not specified" (and .Values.genai.generatedPVC .Values.genai.generatedPVC.storageSize) }}
-  {{- if .Values.genai.generatedPVC.storageClassName }}
   storageClassName: {{ required  "A valid .Values.genai.generatedPVC.storageClassName entry is required if a .Values.sharedPVCName is not specified" .Values.genai.generatedPVC.storageClassName }}
-  {{ end }}
 {{ end }}
