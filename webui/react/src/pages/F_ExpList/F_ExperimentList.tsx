@@ -5,7 +5,7 @@ import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { useTheme } from 'hew/Theme';
-import { notification } from 'hew/Toast';
+import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -130,6 +130,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
   });
   const isMobile = useMobile();
+  const { openToast } = useToast();
 
   const [selection, setSelection] = React.useState<GridSelection>({
     columns: CompactSelection.empty(),
@@ -551,7 +552,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           break;
         case ExperimentAction.Edit:
           if (data) updateExperiment(data);
-          notification.success({ message: 'Experiment updated successfully' });
+          openToast({ severity: 'Confirm', title: 'Experiment updated successfully' });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:
@@ -570,7 +571,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       }
       handleSelectionChange('remove-all', [0, selectedExperimentIds.size]);
     },
-    [handleSelectionChange, selectedExperimentIds],
+    [handleSelectionChange, selectedExperimentIds, openToast],
   );
 
   const handleContextMenuComplete = useCallback(
