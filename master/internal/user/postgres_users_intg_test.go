@@ -424,9 +424,7 @@ func addTestSession() (model.UserID, model.SessionID, string, error) {
 	return user.ID, session.ID, token, nil
 }
 
-type opts func(*model.User)
-
-func addTestUser(aug *model.AgentUserGroup, opts ...opts) (*model.User, error) {
+func addTestUser(aug *model.AgentUserGroup, opts ...func(*model.User)) (*model.User, error) {
 	user := model.User{Username: uuid.NewString()}
 	for _, opt := range opts {
 		opt(&user)
@@ -519,11 +517,11 @@ func TestUpdateUserSettings(t *testing.T) {
 	u, err := addTestUser(nil)
 	require.NoError(t, err)
 
-	t.Log("noop reset is fine")
+	// noop reset is fine
 	err = ResetUserSetting(context.Background(), u.ID)
 	require.NoError(t, err)
 
-	t.Log("adding a few settings works")
+	// adding a few settings works
 	in := []*model.UserWebSetting{
 		{
 			UserID:      u.ID,
@@ -545,7 +543,7 @@ func TestUpdateUserSettings(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, in, out)
 
-	t.Log("and turning one off works, too")
+	// and turning one off works, too
 	update := in[0]
 	update.Value = ""
 	err = UpdateUserSetting(context.Background(), []*model.UserWebSetting{update})
@@ -556,7 +554,7 @@ func TestUpdateUserSettings(t *testing.T) {
 	expected := in[1:]
 	require.Equal(t, expected, out, "removing just one setting didn't work")
 
-	t.Log("resetting them and readding them works fine")
+	// resetting them and readding them works fine
 	err = ResetUserSetting(context.Background(), u.ID)
 	require.NoError(t, err)
 
@@ -567,7 +565,7 @@ func TestUpdateUserSettings(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, out, "removing just one setting didn't work")
 
-	t.Log("deleting all manually works")
+	// deleting all manually works
 	update = in[1]
 	update.Value = ""
 	err = UpdateUserSetting(context.Background(), []*model.UserWebSetting{update})
