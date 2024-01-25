@@ -69,6 +69,7 @@ func TestPostWorkspace(t *testing.T) {
 
 	// Valid workspace.
 	workspaceName := uuid.New().String()
+	// TODO PostWorkspace should returned pinnedAt.
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: workspaceName,
 		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
@@ -115,6 +116,8 @@ func TestPostWorkspace(t *testing.T) {
 	// Workspace persisted correctly?
 	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	require.NotNil(t, getWorkResp.Workspace.PinnedAt)
+	getWorkResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
 	proto.Equal(expected, getWorkResp.Workspace)
 	require.Equal(t, expected, getWorkResp.Workspace)
 }
@@ -409,6 +412,8 @@ func TestAuthzPostWorkspace(t *testing.T) {
 		Return(nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	require.NotNil(t, getResp.Workspace.PinnedAt)
+	getResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
 	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
 
