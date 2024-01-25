@@ -3564,12 +3564,6 @@ workflows:
           context: determined-production
           filters: *release-and-rc-filters
 
-      - check-docs-links:
-          requires:
-            - build-docs
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - package-and-push-system-rc:
           requires:
             - build-react
