@@ -371,6 +371,8 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		parentID = ptrs.Ptr(int(e.ForkedFrom.Value))
 	}
 
+	// Update this when we remove the proto type.
+	//nolint:staticcheck
 	byts, err := json.Marshal(e.Config)
 	if err != nil {
 		return nil, err

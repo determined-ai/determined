@@ -2818,7 +2818,7 @@ export interface V1Experiment {
      */
     parentArchived?: boolean;
     /**
-     * The configuration of the experiment.
+     * The configuration of the experiment. Is deprecated for performance reasons on the listing experiment route. Use GetExperimentResponse.config instead.
      * @type {any}
      * @memberof V1Experiment
      */
@@ -3341,6 +3341,12 @@ export interface V1GetExperimentResponse {
      * @memberof V1GetExperimentResponse
      */
     jobSummary?: V1JobSummary;
+    /**
+     * The experiment's config.
+     * @type {any}
+     * @memberof V1GetExperimentResponse
+     */
+    config?: any;
 }
 /**
  * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..

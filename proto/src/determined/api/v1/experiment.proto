@@ -48,6 +48,8 @@ message GetExperimentResponse {
   determined.experiment.v1.Experiment experiment = 1;
   // Associated job summary.
   determined.job.v1.JobSummary job_summary = 3;
+  // The experiment's config.
+  google.protobuf.Struct config = 4;
 }
 
 // Get a list of experiments.

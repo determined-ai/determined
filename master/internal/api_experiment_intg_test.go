@@ -189,6 +189,34 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+func TestGetExperimentConfig(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exp := createTestExp(t, api, curUser)
+	expectedBytes, err := db.SingleDB().ExperimentConfigRaw(exp.ID)
+	require.NoError(t, err)
+	expected := make(map[string]any)
+	require.NoError(t, json.Unmarshal(expectedBytes, &expected))
+
+	resp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(exp.ID),
+	})
+	require.NoError(t, err)
+
+	cases := []struct {
+		name   string
+		config *structpb.Struct
+	}{
+		{"GetExperimentResponse.Config", resp.Config},
+		{"GetExperimentResponse.Experiment.Config", resp.Experiment.Config}, //nolint:staticcheck
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.Equal(t, expected, c.config.AsMap())
+		})
+	}
+}
+
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -744,7 +772,7 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 		sort.Strings(res.Experiments[i].Labels)
 
 		// Don't compare config.
-		res.Experiments[i].Config = nil
+		res.Experiments[i].Config = nil //nolint:staticcheck
 
 		// Compare time seperatly due to millisecond precision in postgres.
 		require.WithinDuration(t,
