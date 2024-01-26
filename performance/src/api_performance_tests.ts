@@ -174,10 +174,14 @@ const getloadTests = (
       ),
       !!sD?.workspace.projectId,
     ),
-    test(
-      "get project columns",
-      getRequest(`/api/v1/projects/${sD?.workspace.projectId}/columns`),
-    ),
+    // This is a bad endpoint and we know it is bad.
+    // No sense in making other endpoints be slowed before we get the fix in
+    // https://hpe-aiatscale.atlassian.net/browse/DET-10114
+    // https://hpe-aiatscale.atlassian.net/browse/DET-10115
+    //test(
+    //  "get project columns",
+    //  getRequest(`/api/v1/projects/${sD?.workspace.projectId}/columns`),
+    //),
     test(
       "search experiments",
       getRequest(
