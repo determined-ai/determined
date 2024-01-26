@@ -2137,12 +2137,14 @@ jobs:
       wait-for-master:
         type: boolean
         default: true
+      postgres-version:
+        type: string
+        default: "10"
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
-      DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
       - attach_workspace:
