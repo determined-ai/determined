@@ -36,7 +36,7 @@ spec:
           - name: DB_PASSWORD
             value: {{ .Values.db.password | quote }}
           - name: DB_PORT
-            value: {{ .Values.db.port }}
+            value: {{ .Values.db.port | quote }}
           - name: DB_HOST
             value: {{ include "determined.dbHost" . }}
           - name: LORE_DOCKER_TAG_SUFFIX
