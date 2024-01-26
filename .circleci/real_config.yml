@@ -2154,8 +2154,10 @@ jobs:
       #    determined: True
       #    extra-requirements-file: "e2e_tests/tests/requirements.txt"
       #    executor: <<pipeline.parameters.machine-image>>
-
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
+
       - run:
           name: Port forwarding
           command: ssh-add - \<<< "${PERF_DB_BASTION_SSH_KEY}" && ssh -L 5432:$PERF_DB_HOST:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
