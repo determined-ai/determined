@@ -1191,6 +1191,18 @@ Optional. The resource pool where this experiment will be scheduled. If no resou
 specified, experiments will run in the default GPU pool. Refer to :ref:`resource-pools` for more
 information.
 
+``is_single_node``
+==================
+
+Optional. When true, all the requested slots for the tasks are forced to be scheduled in a single
+container on a single node, or in a single pod. When false, it may be split across different nodes
+or pods. Defaults to false for experiments. This field is set to true for notebooks, tensorboards,
+shells, and commands, and cannot be modified.
+
+.. note::
+
+   This option is currently not supported by Slurm RM.
+
 .. _exp-resources-devices:
 
 ``devices``

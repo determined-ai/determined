@@ -215,3 +215,4 @@
     max_slots: null
     priority: null
     resource_pool: ''
+    is_single_node: null

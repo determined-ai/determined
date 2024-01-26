@@ -68,5 +68,6 @@ func (c *CommandConfig) Validate() []error {
 			},
 			"invalid notebook idle type",
 		),
+		check.True(c.Resources.IsSingleNode == nil, "resources.is_single_node cannot be set for NTSCs"),
 	}
 }
