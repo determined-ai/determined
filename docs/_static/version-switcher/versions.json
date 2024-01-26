@@ -12,12 +12,12 @@
         "url": "https://docs.determined.ai/0.27.0/"
     },
     {
-        "version": "0.27.0",
-        "url": "https://docs.determined.ai/0.27.0/"
-    },
-    {
         "version": "0.26.7",
         "url": "https://docs.determined.ai/0.26.7/"
+    },
+    {
+        "version": "0.26.6",
+        "url": "https://docs.determined.ai/0.26.6/"
     },
     {
         "version": "0.26.4",
