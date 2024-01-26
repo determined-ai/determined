@@ -106,3 +106,22 @@ def list_free_agents() -> List[bindings.v1Agent]:
         pytest.fail(f"missing agents: {agents}")
 
     return [a for a in agents.agents or [] if len(a.containers or {}) == 0]
+
+
+@pytest.mark.e2e_cpu_2a
+@pytest.mark.timeout(600)
+def test_experiment_is_single_node() -> None:
+    slots = _wait_for_slots(2)
+    assert len(slots) == 2
+
+    with pytest.raises(AssertionError):
+        exp.create_experiment(
+            conf.fixtures_path("no_op/single.yaml"),
+            conf.fixtures_path("no_op"),
+            [
+                "--config",
+                "resources.slots_per_trial=2",
+                "--config",
+                "resources.is_single_node=true",
+            ],
+        )

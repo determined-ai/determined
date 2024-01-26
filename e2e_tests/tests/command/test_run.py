@@ -2,7 +2,6 @@ import copy
 import re
 import subprocess
 import tempfile
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -469,27 +468,23 @@ def test_image_pull_after_remove() -> None:
     )
 
 
-@pytest.mark.slow
 @pytest.mark.e2e_cpu
-def test_killed_pending_command_terminates() -> None:
+def test_outrageous_command_rejected() -> None:
     # Specify an outrageous number of slots to be sure that it can't be scheduled.
-    # NB: slot # higher than postgres smallint (i.e. 32k) is rejected outright.
-    with cmd.interactive_command(
-        "cmd", "run", "--config", "resources.slots=10485", "sleep infinity"
-    ) as command:
-        assert command.task_id is not None
-        for _ in range(10):
-            assert cmd.get_command(command.task_id)["state"] == "STATE_QUEUED"
-            time.sleep(1)
-
-    # The command is killed when the context is exited; now it should reach TERMINATED soon.
-    for _ in range(5):
-        if cmd.get_command(command.task_id)["state"] == "STATE_TERMINATED":
-            break
-        time.sleep(1)
-    else:
-        state = cmd.get_command(command.task_id)["state"]
-        raise AssertionError(f"Task was in state {state} rather than STATE_TERMINATED")
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_and_verify_failure(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--config",
+                "resources.slots=10485",
+                "sleep infinity",
+            ],
+            "request unfulfillable",
+        )
 
 
 @pytest.mark.e2e_gpu

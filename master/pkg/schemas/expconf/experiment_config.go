@@ -217,6 +217,7 @@ type ResourcesConfigV0 struct {
 	RawShmSize        *int     `json:"shm_size"`
 	RawResourcePool   *string  `json:"resource_pool"`
 	RawPriority       *int     `json:"priority"`
+	RawIsSingleNode   *bool    `json:"is_single_node"`
 
 	RawDevices DevicesConfigV0 `json:"devices"`
 }

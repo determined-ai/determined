@@ -42,36 +42,3 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
 	rm.stop()
 }
-
-func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
-	user.InitService(nil, nil)
-	// We can reliably run this check only for AWS, GCP, or Kube resource pools,
-	// but initializing either of these in the test is not viable. So let's at least
-	// check if we properly return "unknown" for on-prem-like setups.
-	conf := &config.ResourceConfig{
-		ResourceManager: &config.ResourceManagerConfig{
-			AgentRM: &config.AgentResourceManagerConfig{
-				Scheduler: &config.SchedulerConfig{
-					FairShare:     &config.FairShareSchedulerConfig{},
-					FittingPolicy: best,
-				},
-			},
-		},
-		ResourcePools: []config.ResourcePoolConfig{
-			{
-				PoolName:                 defaultResourcePoolName,
-				MaxAuxContainersPerAgent: 100,
-			},
-		},
-	}
-
-	rm := New(nil, echo.New(), conf, nil, nil)
-
-	resp, err := rm.ValidateCommandResources(sproto.ValidateCommandResourcesRequest{
-		ResourcePool: defaultResourcePoolName,
-		Slots:        1,
-	})
-	assert.Assert(t, err == nil, err)
-	assert.Assert(t, resp.Fulfillable)
-	rm.stop()
-}

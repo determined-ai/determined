@@ -90,6 +90,7 @@ type ResourcesConfig struct {
 	ShmSize        *StorageSize `json:"shm_size,omitempty"`
 	ResourcePool   string       `json:"resource_pool"`
 	Priority       *int         `json:"priority,omitempty"`
+	IsSingleNode   *bool        `json:"is_single_node"`
 
 	Devices DevicesConfig `json:"devices"`
 
