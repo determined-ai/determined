@@ -34,7 +34,7 @@ func (m *Master) ResolveResources(
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	if err = m.rm.ValidateResources(poolName, slots, true); err != nil {
-		return "nil", nil, fmt.Errorf("validating resources: %v", err)
+		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
 
 	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
