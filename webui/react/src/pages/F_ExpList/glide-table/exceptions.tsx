@@ -9,7 +9,7 @@ export const NoExperiments: React.FC = () => {
   return (
     <Message
       action={
-        <Link external path={paths.docs('/tutorials/quickstart-mdldev.html')}>
+        <Link external path={paths.docs('/get-started/webui-qs.html')}>
           Quick Start Guide
         </Link>
       }
