@@ -2159,6 +2159,9 @@ jobs:
       - install-devcluster
 
       - run:
+          command: echo $PERF_DB_HOST
+
+      - run:
           name: Port forwarding
           command: ssh-add - \<<< "${PERF_DB_BASTION_SSH_KEY}" && ssh -L 5432:$PERF_DB_HOST:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
       - start-devcluster:
