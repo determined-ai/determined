@@ -91,7 +91,7 @@ run:
 		reports/$$(date +%s).results.txt; \
 	docker cp \
 		perf-tests:/home/k6/summary.json \
-		reports/$$(date +%s).results.json; \
+		reports/latest.results.json; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 

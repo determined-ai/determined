@@ -2173,6 +2173,10 @@ jobs:
       - run:
           name: Run performance test
           command: make -C performance run
+      - run:
+          name: Upload result of performance test to Postgres result db
+          command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
+
       #- pull-task-images:
       #    tf2: <<parameters.tf2>>
 
