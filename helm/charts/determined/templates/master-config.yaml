@@ -172,9 +172,6 @@ stringData:
     {{- if .Values.resourcePools}}
     resource_pools:
       {{- toYaml .Values.resourcePools | nindent 6}}
-      {{- if .Values.genai.version }}
-      - pool_name: a100
-      {{- end }}
     {{- end }}
 
     {{ if .Values.taskContainerDefaults -}}
