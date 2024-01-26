@@ -1,7 +1,7 @@
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS seq bigint;
-
 -- sequence for tracking event order
 CREATE SEQUENCE IF NOT EXISTS stream_project_seq START 1;
+
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS seq bigint DEFAULT 0;
 
 -- trigger function to update sequence number on row modification
 -- this should fire BEFORE so that it can modify NEW directly.

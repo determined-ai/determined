@@ -76,8 +76,9 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 	t.Cleanup(dbCleanup)
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	_, err := db.Bun().NewRaw(
-		"INSERT INTO workspaces (name) VALUES ('test_workspace');" +
-			"INSERT INTO projects (name, workspace_id) VALUES ('test_project', 2);",
+		`INSERT INTO workspaces (name) VALUES ('test_workspace');
+		INSERT INTO projects (name, workspace_id) VALUES ('test_project_1', 2);
+		`,
 	).Exec(ctx)
 	if err != nil {
 		t.Errorf("failed to generate test data for streaming integration test: %s", err)
@@ -225,7 +226,6 @@ func basicUpdateTest(
 	// read until we received the expected message
 	data := []string{}
 	socket.ReadUntilFound(t, &data, append(testCase.expectedUpserts, testCase.expectedDeletions...))
-	t.Logf("Read and split")
 	deletions, upserts, _ := splitMsgs(t, data)
 
 	// validate messages collected at startup

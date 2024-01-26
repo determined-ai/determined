@@ -79,6 +79,36 @@ type ProjectSubscriptionSpec struct {
 	Since        int64 `json:"since"`
 }
 
+// createFilteredProjectIDQuery creates a select query that
+// pulls all relevant project ids based on permission scope and
+// subscription spec filters.
+func createFilteredProjectIDQuery(
+	globalAccess bool,
+	accessScopes []model.AccessScopeID,
+	spec ProjectSubscriptionSpec,
+) *bun.SelectQuery {
+	q := db.Bun().NewSelect().
+		TableExpr("projects p").
+		Column("p.id").
+		OrderExpr("p.id ASC")
+
+	// add permission scope filter in event of non-global access
+	if !globalAccess {
+		q = permFilterQuery(q, accessScopes)
+	}
+
+	q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		if len(spec.ProjectIDs) > 0 {
+			q.WhereOr("p.id in (?)", bun.In(spec.ProjectIDs))
+		}
+		if len(spec.WorkspaceIDs) > 0 {
+			q.WhereOr("p.workspace_id in (?)", bun.In(spec.WorkspaceIDs))
+		}
+		return q
+	})
+	return q
+}
+
 // ProjectCollectStartupMsgs collects ProjectMsg's that were missed prior to startup.
 func ProjectCollectStartupMsgs(
 	ctx context.Context,
@@ -103,37 +133,48 @@ func ProjectCollectStartupMsgs(
 	if err != nil {
 		return nil, err
 	}
+	_, globalAccess := accessMap[model.GlobalAccessScopeID]
 	var accessScopes []model.AccessScopeID
-	for id, isPermitted := range accessMap {
-		if isPermitted {
-			accessScopes = append(accessScopes, id)
+	// only populate accessScopes if user doesn' have global access
+	if !globalAccess {
+		for id, isPermitted := range accessMap {
+			if isPermitted {
+				accessScopes = append(accessScopes, id)
+			}
 		}
 	}
 
 	// step 1: calculate all ids matching this subscription
-	q := db.Bun().NewSelect().
-		TableExpr("projects p").
-		Column("p.id").
-		OrderExpr("p.id ASC")
+	oldEventsQuery := createFilteredProjectIDQuery(
+		globalAccess,
+		accessScopes,
+		spec,
+	)
+	newEventsQuery := createFilteredProjectIDQuery(
+		globalAccess,
+		accessScopes,
+		spec,
+	)
 
-	q = permFilterQuery(q, accessMap, accessScopes)
-
-	// Ignore spec.Since, because we want appearances, which might not be have seq > spec.Since.
-	ws := stream.WhereSince{Since: 0}
-	if len(spec.ProjectIDs) > 0 {
-		ws.Include("p.id in (?)", bun.In(spec.ProjectIDs))
-	}
-	if len(spec.WorkspaceIDs) > 0 {
-		ws.Include("p.id in (?)", bun.In(spec.WorkspaceIDs))
-	}
-	q = ws.Apply(q)
-
+	// get events that happened prior to since that a relevant (appearance)
+	oldEventsQuery.Where("p.seq <= ?", spec.Since)
 	var exist []int64
-	err = q.Scan(ctx, &exist)
+	err = oldEventsQuery.Scan(ctx, &exist)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error: %v\n", err)
+		log.Errorf("error when scanning for old offline events: %v\n", err)
 		return nil, err
 	}
+	// and events that happened since the last time this streamer checked
+	newEventsQuery.Where("p.seq > ?", spec.Since)
+	var newEntities []int64
+	err = newEventsQuery.Scan(ctx, &newEntities)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error when scanning for new offline events: %v\n", err)
+		return nil, err
+	}
+
+	// this really should be a union
+	exist = append(exist, newEntities...)
 
 	// step 2: figure out what was missing and what has appeared
 	missing, appeared, err := stream.ProcessKnown(known, exist)
@@ -145,7 +186,9 @@ func ProjectCollectStartupMsgs(
 	var projMsgs []*ProjectMsg
 	if len(appeared) > 0 {
 		query := db.Bun().NewSelect().Model(&projMsgs).Where("project_msg.id in (?)", bun.In(appeared))
-		query = permFilterQuery(query, accessMap, accessScopes)
+		if !globalAccess {
+			query = permFilterQuery(query, accessScopes)
+		}
 		err := query.Scan(ctx, &projMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
 			log.Errorf("error: %v\n", err)
