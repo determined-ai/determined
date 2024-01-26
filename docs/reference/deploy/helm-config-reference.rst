@@ -128,6 +128,12 @@
       -  ``hostPath``: The file system path on each node to use. This directory will be mounted to
          ``/determined_shared_fs`` inside the trial pod.
 
+      -  ``mountToServer``: Allows users to download checkpoints.
+
+         -  ``false``: Default.
+         -  ``true``: Mounts the shared directory on the server to allow ``checkpoint.download()``
+            to work.
+
    -  ``type: directory``: Checkpoints are written to a local directory in the task container. Users
       are responsible for mounting a persistent storage at this path, e.g., a shared PVC using
       ``pod_spec`` configuration.
