@@ -22,6 +22,7 @@ DET_FLAGS = \
 K6_FLAGS = \
 		-e DET_ADMIN_USERNAME=$(DET_ADMIN_USERNAME) \
 		-e DET_ADMIN_PASSWORD=$(DET_ADMIN_PASSWORD)
+
 PERSIST_CHECK = \
 	PERSIST_VALUE=$$(\
 		aws cloudformation describe-stacks --stack-name $(CLUSTER_ID) | \
@@ -80,7 +81,7 @@ run:
 		$(IMAGE) run \
 		-e DET_MASTER=$(DET_MASTER) \
 		$(K6_FLAGS) \
-		/test_scripts/api_performance_tests.js; \
+		/test_scripts/api_performance_tests.js --summary-export=summary.json; \
 	TEST_STATUS=$$?; \
 	docker cp \
 		perf-tests:/home/k6/junit.xml \
@@ -88,6 +89,9 @@ run:
 	docker cp \
 		perf-tests:/home/k6/results.txt \
 		reports/$$(date +%s).results.txt; \
+	docker cp \
+		perf-tests:/home/k6/summary.json \
+		reports/$$(date +%s).results.json; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 
