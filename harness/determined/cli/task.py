@@ -122,7 +122,7 @@ def kill(args: Namespace) -> None:
 def task_creation_output(
     session: api.Session, task_resp: v1CreateGenericTaskResponse, follow: bool
 ) -> None:
-    print(f"created task {task_resp.taskId}")
+    print(f"Created task {task_resp.taskId}")
 
     if task_resp.warnings:
         cli.print_launch_warnings(task_resp.warnings)
@@ -176,7 +176,7 @@ def config(args: Namespace) -> None:
 def fork(args: Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
-        config="", contextDirectory="", projectId=args.project_id, forkedFrom=args.parent_task_id, inheritContext=False
+        config="", contextDirectory=[], projectId=args.project_id, forkedFrom=args.parent_task_id, inheritContext=False
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
@@ -359,7 +359,7 @@ args_description: List[Any] = [
             Cmd(
                 "fork",
                 fork,
-                "fork",
+                "fork task",
                 [
                     Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
                     Arg(
