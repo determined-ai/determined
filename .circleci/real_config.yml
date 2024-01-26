@@ -2840,7 +2840,7 @@ workflows:
 
       - check-docs-links:
           requires:
-            -build-docs
+            - build-docs
           context: determined-production
           filters:
             branches:
