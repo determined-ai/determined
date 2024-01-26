@@ -1,2 +1,0 @@
-ALTER TABLE command_state
-DROP generic_task_spec;
