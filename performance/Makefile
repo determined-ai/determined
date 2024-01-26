@@ -75,6 +75,7 @@ unpersist:
 
 run:
 	docker run \
+		--network=host \
 		--name perf-tests \
 		$(IMAGE) run \
 		-e DET_MASTER=$(DET_MASTER) \

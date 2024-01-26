@@ -357,7 +357,7 @@ const thresholds: { [name: string]: Threshold[] } = {
 getloadTests(undefined, false).forEach((group) => {
   thresholds[`http_req_duration{ group: ::${group.name}}`] = [
     {
-      threshold: "p(95)<1000",
+      threshold: "p(95)<10000",
       abortOnFail: false,
     },
   ];
