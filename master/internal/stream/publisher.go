@@ -235,6 +235,7 @@ func (ps *PublisherSet) processStream(
 
 	// startup subscription set
 	msgs := []interface{}{}
+	msgs = append(msgs, prepare(stream.SyncMsg{SyncID: startupMsg.SyncID, Complete: false}))
 	offlineMsgs, err := ss.Startup(ctx, user, startupMsg)
 	if err != nil {
 		return nil, fmt.Errorf("gathering startup messages: %s", err.Error())
@@ -242,7 +243,7 @@ func (ps *PublisherSet) processStream(
 	msgs = append(msgs, offlineMsgs...)
 
 	// always include a sync message
-	syncMsg := stream.SyncMsg{SyncID: startupMsg.SyncID}
+	syncMsg := stream.SyncMsg{SyncID: startupMsg.SyncID, Complete: true}
 	msgs = append(msgs, prepare(syncMsg))
 
 	// write offline msgs to the websocket
