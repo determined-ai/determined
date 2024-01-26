@@ -7,15 +7,12 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/uptrace/bun"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ExecutableQuery an interface that requires queries of this type to have an exec function.
 type ExecutableQuery interface {
-	bun.Query
 	Exec(ctx context.Context, dest ...interface{}) (sql.Result, error)
 }
 
@@ -26,7 +23,8 @@ func GetAddProjectQuery(proj model.Project) ExecutableQuery {
 		"username",
 		"num_active_experiments",
 		"num_experiments",
-		"last_experiment_started_at")
+		"last_experiment_started_at",
+	)
 }
 
 // GetUpdateProjectQuery constructs a query to update a project.

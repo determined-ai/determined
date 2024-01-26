@@ -20,11 +20,8 @@ const (
 // permFilterQuery adds a filter to the provided bun query to filter for workspaces the user has
 // access to.
 func permFilterQuery(
-	q *bun.SelectQuery, accessMap model.AccessScopeSet, accessScopes []model.AccessScopeID,
+	q *bun.SelectQuery, accessScopes []model.AccessScopeID,
 ) *bun.SelectQuery {
-	if accessMap[model.GlobalAccessScopeID] {
-		return q
-	}
 	return q.Where("workspace_id in (?)", bun.In(accessScopes))
 }
 
