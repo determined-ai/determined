@@ -367,9 +367,9 @@ const scenarios: { [name: string]: Scenario } = {
   average_load: {
     executor: "ramping-vus",
     stages: [
-      { duration: "5m", target: 25 },
-      { duration: "10m", target: 25 },
-      { duration: "5m", target: 0 },
+      { duration: "30s", target: 25 },
+      { duration: "30s", target: 25 },
+      { duration: "1s", target: 0 },
     ],
   },
 };
