@@ -2159,17 +2159,20 @@ jobs:
       - install-devcluster
 
       - run:
-          command: echo $PERF_DB_HOST
-
+          name: Add SSH key
+          command: echo "${PERF_DB_BASTION_SSH_KEY}" | base64 --decode | ssh-add -
       - run:
-          name: Port forwarding
-          command: ssh-add - \<<< "${PERF_DB_BASTION_SSH_KEY}" && ssh -L 5432:$PERF_DB_HOST:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
+          name: Port forward to bastion instance
+          command: ssh -L 5432:$PERF_DB_HOST:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
       - start-devcluster:
           target-stage: master
           devcluster-config: perftest.devcluster.yaml
       - run:
-          name: Running and building performance tests
-          command: make -C performance build run
+          name: Build performance test Docker image
+          command: make -C performance build
+      - run:
+          name: Run performance test
+          command: make -C performance run
       #- pull-task-images:
       #    tf2: <<parameters.tf2>>
 
