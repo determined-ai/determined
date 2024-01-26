@@ -5,6 +5,7 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -87,7 +88,6 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 type startupTestCase struct {
 	description       string
 	startupMsg        StartupMsg
-	expectedSync      string
 	expectedUpserts   []string
 	expectedDeletions []string
 }
@@ -97,18 +97,23 @@ func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket
 	// write startup message
 	socket.WriteOutbound(t, &testCase.startupMsg)
 
-	// read messages collected during startup + sync msg
+	// read messages collected during startup + sync msg.
 	var data []string
-	socket.ReadUntilFound(t, &data, []string{testCase.expectedSync})
+
+	// constructed expected sync messages based on startup message.
+	baseSyncMsg := fmt.Sprintf("key: sync_msg, sync_id: %s", testCase.startupMsg.SyncID)
+	expectedSyncs := []string{
+		baseSyncMsg + ", complete: false",
+		baseSyncMsg + ", complete: true",
+	}
+	socket.ReadUntilFound(t, &data, expectedSyncs)
 
 	deletions, upserts, syncs := splitMsgs(t, data)
-	require.Len(t, syncs, 1)
-
 	// confirm these messages are the expected results
 	validateMsgs(
 		t,
-		syncs[0],
-		testCase.expectedSync,
+		syncs,
+		expectedSyncs,
 		upserts,
 		testCase.expectedUpserts,
 		deletions,
@@ -225,7 +230,8 @@ func basicUpdateTest(
 
 	// validate messages collected at startup
 	validateMsgs(
-		t, "", "", // no sync message expected
+		t,
+		[]string{}, []string{}, // no sync message expected
 		upserts,
 		testCase.expectedUpserts,
 		deletions,
@@ -280,7 +286,6 @@ func TestProjectStartup(t *testing.T) {
 				map[string]string{projects: "1,2"},
 				map[string]map[string][]int{projects: {projects: {1, 2}}},
 			),
-			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
@@ -288,7 +293,6 @@ func TestProjectStartup(t *testing.T) {
 			description: "project subscription with excess project id",
 			startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2,3"},
 				map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-			expectedSync:      "key: sync_msg, sync_id: 1",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
@@ -296,7 +300,6 @@ func TestProjectStartup(t *testing.T) {
 			description: "project subscription with workspaces",
 			startupMsg: buildStartupMsg("3", map[string]string{projects: "1,2"},
 				map[string]map[string][]int{projects: {projects: {1, 2}}}),
-			expectedSync:      "key: sync_msg, sync_id: 3",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
@@ -304,7 +307,6 @@ func TestProjectStartup(t *testing.T) {
 			description: "project offline fall out",
 			startupMsg: buildStartupMsg("4", map[string]string{projects: "1,2"},
 				map[string]map[string][]int{projects: {projects: {1}}}),
-			expectedSync:      "key: sync_msg, sync_id: 4",
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
 		},
@@ -312,7 +314,6 @@ func TestProjectStartup(t *testing.T) {
 			description: "project offline fall in",
 			startupMsg: buildStartupMsg("5", map[string]string{projects: "1"},
 				map[string]map[string][]int{projects: {projects: {1, 2}}}),
-			expectedSync:      "key: sync_msg, sync_id: 5",
 			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
@@ -343,7 +344,6 @@ func TestProjectUpdate(t *testing.T) {
 				description: "startup case for: create project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -357,7 +357,6 @@ func TestProjectUpdate(t *testing.T) {
 				description: "startup case for: update project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -373,7 +372,6 @@ func TestProjectUpdate(t *testing.T) {
 				description: "startup case for: delete project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-				expectedSync:      "key: sync_msg, sync_id: 1",
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -407,7 +405,6 @@ func TestOnlineChanges(t *testing.T) {
 					map[string]string{projects: "2"},
 					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
-				expectedSync:    "key: sync_msg, sync_id: 3",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
 					"key: projects_deleted, deleted: ",
@@ -426,7 +423,6 @@ func TestOnlineChanges(t *testing.T) {
 					map[string]string{projects: "2,3"},
 					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
-				expectedSync:    "key: sync_msg, sync_id: 4",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
 					"key: projects_deleted, deleted: ",
@@ -448,7 +444,6 @@ func TestOnlineChanges(t *testing.T) {
 					map[string]string{projects: "2"},
 					map[string]map[string][]int{projects: {"workspaces": {2}}},
 				),
-				expectedSync:    "key: sync_msg, sync_id: 5",
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
 					"key: projects_deleted, deleted: ",

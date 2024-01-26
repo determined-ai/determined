@@ -29,7 +29,6 @@ type MarshallableMsg interface {
 
 // UpsertMsg represents an upsert in the stream.
 type UpsertMsg struct {
-	MarshallableMsg
 	JSONKey string
 	Msg     Msg
 }
@@ -44,7 +43,6 @@ func (u UpsertMsg) MarshalJSON() ([]byte, error) {
 
 // DeleteMsg represents a deletion in the stream.
 type DeleteMsg struct {
-	MarshallableMsg
 	Key     string
 	Deleted string
 }
@@ -59,13 +57,15 @@ func (d DeleteMsg) MarshalJSON() ([]byte, error) {
 
 // SyncMsg is the server response to a StartupMsg once it's been handled.
 type SyncMsg struct {
-	MarshallableMsg
-	SyncID string `json:""`
+	SyncID   string `json:"sync_id"`
+	Complete bool   `json:"complete"`
 }
 
 // MarshalJSON returns a json marshaled SyncMsg.
 func (sm SyncMsg) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]string{"sync_id": sm.SyncID})
+	// ensures the infinite json marshaling recursion does not occur
+	type syncMsgCopy SyncMsg
+	return json.Marshal(syncMsgCopy(sm))
 }
 
 // Streamer aggregates many events and wakeups into a single slice of pre-marshaled messages.

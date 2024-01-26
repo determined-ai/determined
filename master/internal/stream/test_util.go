@@ -38,7 +38,7 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 	case stream.DeleteMsg:
 		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
 	case stream.SyncMsg:
-		return fmt.Sprintf("key: %s, sync_id: %s", syncKey, msg.SyncID)
+		return fmt.Sprintf("key: %s, sync_id: %s, complete: %t", syncKey, msg.SyncID, msg.Complete)
 	}
 	return i
 }
@@ -181,34 +181,19 @@ func splitMsgs(
 
 func validateMsgs(
 	t *testing.T,
-	sync string,
-	expectedSync string,
+	syncs []string,
+	expectedSyncs []string,
 	upserts []string,
 	expectedUpserts []string,
 	deletions []string,
 	expectedDeletions []string,
 ) {
-	// sort expected & actual messages
-	if len(upserts) > 1 {
-		sort.Slice(upserts, func(i, j int) bool {
-			return upserts[i] < upserts[j]
-		})
-	}
-	if len(expectedUpserts) > 1 {
-		sort.Slice(expectedUpserts, func(i, j int) bool {
-			return expectedUpserts[i] < expectedUpserts[j]
-		})
-	}
-	if len(expectedDeletions) > 1 {
-		sort.Slice(expectedDeletions, func(i, j int) bool {
-			return expectedDeletions[i] < expectedDeletions[j]
-		})
-	}
-	if len(deletions) > 1 {
-		sort.Slice(deletions, func(i, j int) bool {
-			return deletions[i] < deletions[j]
-		})
-	}
+	// sort expected & actual upsert/deletion messages
+	// we expect the ordering of the sync messages to be consistent
+	sort.Strings(upserts)
+	sort.Strings(expectedUpserts)
+	sort.Strings(deletions)
+	sort.Strings(expectedDeletions)
 
 	switch {
 	// check if we received the correct number of trial messages
@@ -226,19 +211,28 @@ func validateMsgs(
 			len(deletions),
 		)
 	// check if we receieved the correct SyncMsg
-	case sync != expectedSync:
+	case len(syncs) != len(expectedSyncs):
 		t.Errorf(
-			"did not receive expected sync message:\n\texpected: %#v\n\tactual: %v",
-			expectedSync,
-			sync,
+			"did not receive expected number of sync message:\n\texpected: %#v\n\tactual: %v",
+			len(expectedSyncs),
+			len(syncs),
 		)
 	// check if content of messages is correct
 	default:
+		for i := range syncs {
+			if syncs[i] != expectedSyncs[i] {
+				t.Errorf(
+					"did not receive expected sync message:\n\texpected: %#v\n\tactual: %q",
+					expectedSyncs[i],
+					syncs[i],
+				)
+			}
+		}
 		for i := range upserts {
 			if upserts[i] != expectedUpserts[i] {
 				t.Errorf(
-					"did not received expected upsert message:\n\texpected: %#v\n\tactual: %q",
-					expectedUpserts,
+					"did not receive expected upsert message:\n\texpected: %#v\n\tactual: %q",
+					expectedUpserts[i],
 					upserts[i],
 				)
 			}
@@ -246,8 +240,8 @@ func validateMsgs(
 		for i := range deletions {
 			if deletions[i] != expectedDeletions[i] {
 				t.Errorf(
-					"did not received expected deletion message:\n\texpected: %#v\n\tactual: %q",
-					expectedDeletions,
+					"did not receive expected deletion message:\n\texpected: %#v\n\tactual: %q",
+					expectedDeletions[i],
 					deletions[i],
 				)
 			}

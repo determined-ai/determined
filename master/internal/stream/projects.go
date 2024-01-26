@@ -170,7 +170,6 @@ func ProjectMakeFilter(spec *ProjectSubscriptionSpec) (func(*ProjectMsg) bool, e
 	if len(spec.WorkspaceIDs) == 0 && len(spec.ProjectIDs) == 0 {
 		return nil, errors.Errorf("invalid subscription spec arguments: %v %v", spec.WorkspaceIDs, spec.ProjectIDs)
 	}
-	since := spec.Since
 
 	// create sets based on subscription spec
 	workspaceIDs := make(map[int]struct{})
@@ -190,10 +189,6 @@ func ProjectMakeFilter(spec *ProjectSubscriptionSpec) (func(*ProjectMsg) bool, e
 
 	// return a closure around our copied maps
 	return func(msg *ProjectMsg) bool {
-		// did message come in after since?
-		if since >= msg.Seq {
-			return false
-		}
 		// subscribed to project by this project_id?
 		if _, ok := projectIDs[msg.ID]; ok {
 			return true
