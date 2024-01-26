@@ -133,6 +133,9 @@ stringData:
     {{- end }}
 
     {{- if .Values.genai.version }}
+    feature_switches:
+      - genai
+
     {{- $port := (required "A valid .Values.genai.port entry required!" .Values.genai.port) }}
     __internal:
       proxied_servers:
