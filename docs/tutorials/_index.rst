@@ -11,8 +11,9 @@
  Quickstart
 ************
 
-If you are new to Determined, visit the :ref:`Quickstart for Model Developers <qs-mdldev>` where
-you'll learn how to perform the following tasks:
+If you are new to Determined, find out how to :ref:`qs-webui`. For a deeper dive, visit the
+:ref:`Quickstart for Model Developers <qs-mdldev>` where you'll learn how to perform the following
+tasks:
 
 -  Train on a local, single CPU or GPU.
 -  Run a distributed training job on multiple GPUs.
@@ -45,7 +46,6 @@ Examples let you build off of an existing model that already runs on Determined.
    :hidden:
 
    Quickstart for Model Developers <quickstart-mdldev>
-   Running Your First Experiment <pytorch-mnist-local-qs>
    Porting Your PyTorch Model to Determined <pytorch-mnist-tutorial>
    Get Started with Detached Mode <detached-mode/_index>
    Viewing Epoch-Based Metrics in the WebUI <viewing-epoch-based-metrics>
