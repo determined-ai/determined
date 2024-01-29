@@ -15,19 +15,19 @@ import (
 
 func TestToTaskSpec(t *testing.T) {
 	tests := map[string]struct {
-		expectedType              model.TaskType
-		expectedEntrypoint        string
-		expectedSlots             int
-		expectedMustFitSingleNode bool
-		expectedDescription       string
-		taskSpec                  GenericTaskSpec
+		expectedType         model.TaskType
+		expectedEntrypoint   string
+		expectedSlots        int
+		expectedIsSingleNode bool
+		expectedDescription  string
+		taskSpec             GenericTaskSpec
 	}{
 		"basicTestCase": {
-			expectedDescription:       "generic-task",
-			expectedSlots:             1,
-			expectedMustFitSingleNode: true,
-			expectedEntrypoint:        "/run/determined/generic-task-entrypoint.sh",
-			expectedType:              model.TaskTypeGeneric,
+			expectedDescription:  "generic-task",
+			expectedSlots:        1,
+			expectedIsSingleNode: true,
+			expectedEntrypoint:   "/run/determined/generic-task-entrypoint.sh",
+			expectedType:         model.TaskTypeGeneric,
 			taskSpec: GenericTaskSpec{
 				GenericTaskConfig: model.DefaultConfigGenericTaskConfig(&model.TaskContainerDefaultsConfig{WorkDir: ptrs.Ptr("/")}),
 			},
@@ -41,7 +41,7 @@ func TestToTaskSpec(t *testing.T) {
 			res := testVars.taskSpec.ToTaskSpec()
 			require.Equal(t, testVars.expectedDescription, res.Description)
 			require.Equal(t, testVars.expectedSlots, *res.ResourcesConfig.RawSlots)
-			require.Equal(t, testVars.expectedMustFitSingleNode, *res.ResourcesConfig.RawMustFitSingleNode)
+			require.Equal(t, testVars.expectedIsSingleNode, *res.ResourcesConfig.RawIsSingleNode)
 			require.Equal(t, testVars.expectedEntrypoint, res.Entrypoint[0])
 			require.Equal(t, testVars.expectedType, res.TaskType)
 		})

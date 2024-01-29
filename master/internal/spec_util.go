@@ -27,13 +27,14 @@ func (m *Master) ResolveResources(
 	resourcePool string,
 	slots int,
 	workspaceID int,
+	isSingleNode bool,
 ) (string, []pkgCommand.LaunchWarning, error) {
 	poolName, err := m.rm.ResolveResourcePool(
 		resourcePool, workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = m.rm.ValidateResources(poolName, slots, true); err != nil {
+	if err = m.rm.ValidateResources(poolName, slots, isSingleNode); err != nil {
 		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
 
