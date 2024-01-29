@@ -1,0 +1,8 @@
+.content {
+  :global(div.ant-typography) {
+    margin-bottom: 1em;
+  }
+  :global(span.ant-typography) {
+    margin-bottom: 0;
+  }
+}

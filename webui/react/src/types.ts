@@ -236,6 +236,7 @@ export interface Resource {
 export type SlotsRecord = { [k: string]: V1Slot };
 
 export interface Agent {
+  enabled?: boolean;
   id: string;
   registeredTime: number;
   resourcePools: string[];

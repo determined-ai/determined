@@ -219,6 +219,7 @@
       is_single_node: false
       priority: null
       resource_pool: ''
+      is_single_node: null
     scheduling_unit: 100
     searcher:
       max_length:

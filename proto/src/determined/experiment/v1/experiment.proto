@@ -132,7 +132,9 @@ message Experiment {
   // workspace).
   bool parent_archived = 25;
   // The configuration of the experiment.
-  google.protobuf.Struct config = 26;
+  // Is deprecated for performance reasons on the listing experiment route.
+  // Use GetExperimentResponse.config instead.
+  google.protobuf.Struct config = 26 [deprecated = true];
   // The original configuration that the user submitted.
   string original_config = 27;
   // The id of the user who created the parent project.

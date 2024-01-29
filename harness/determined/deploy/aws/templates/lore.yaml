@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.27.1-dev0
+    Default: 0.27.2-dev0
 
   DBPassword:
     Type: String
@@ -987,7 +987,7 @@ Resources:
                 -p 9013:9013 \
                 -v /mnt/efs:/run/determined/workdir/shared_fs \
                 --network determined \
-                "determinedai/environments-dev:lore-backend-image-${GenAIVersion}"
+                "${ImageRepoPrefix}/genai:${GenAIVersion}"
               test $? -eq 0 || ( echo "Failed to launch GenAI container." && exit 1 )
             fi
 

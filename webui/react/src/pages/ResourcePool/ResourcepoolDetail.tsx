@@ -1,5 +1,7 @@
-import { Divider } from 'antd';
+import Divider from 'hew/Divider';
+import { MenuItem } from 'hew/Dropdown';
 import Message from 'hew/Message';
+import { useModal } from 'hew/Modal';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { ShirtSize } from 'hew/Theme';
@@ -8,6 +10,7 @@ import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } 
 import { useNavigate, useParams } from 'react-router-dom';
 
 import JsonGlossary from 'components/JsonGlossary';
+import ManageNodesModalComponent from 'components/ManageNodesModal';
 import Page from 'components/Page';
 import ResourcePoolBindings from 'components/ResourcePoolBindings';
 import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
@@ -47,6 +50,10 @@ const TabType = {
 type TabType = ValueOf<typeof TabType>;
 
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
+
+const MenuKey = {
+  ManageNodes: 'manage-nodes',
+} as const;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
@@ -203,6 +210,33 @@ const ResourcepoolDetailInner: React.FC = () => {
     return tabItems;
   }, [canManageResourcePoolBindings, pool, poolStats, renderPoolConfig, rpStats, rpBindingFlagOn]);
 
+  const ManageNodesModal = useModal(ManageNodesModalComponent);
+
+  const menu: MenuItem[] | undefined = useMemo(
+    () =>
+      canManageResourcePoolBindings
+        ? [
+            {
+              disabled: false,
+              key: MenuKey.ManageNodes,
+              label: 'Manage Nodes',
+            },
+          ]
+        : undefined,
+    [canManageResourcePoolBindings],
+  );
+
+  const handleDropdown = useCallback(
+    (key: string) => {
+      switch (key) {
+        case MenuKey.ManageNodes:
+          ManageNodesModal.open();
+          break;
+      }
+    },
+    [ManageNodesModal],
+  );
+
   if (!pool || Loadable.isNotLoaded(resourcePools)) {
     return <Spinner center spinning />;
   } else if (Loadable.isFailed(resourcePools)) {
@@ -220,11 +254,13 @@ const ResourcepoolDetailInner: React.FC = () => {
           path: '',
         },
       ]}
+      menuItems={menu}
       title={
         tabKey === TabType.Active || tabKey === TabType.Queued
           ? 'Job Queue by Resource Pool'
           : undefined
-      }>
+      }
+      onClickMenu={handleDropdown}>
       <div className={css.poolDetailPage}>
         <Section>
           <RenderAllocationBarResourcePool
@@ -248,6 +284,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             />
           )}
         </Section>
+        <ManageNodesModal.Component nodes={topologyAgentPool} />
       </div>
     </Page>
   );

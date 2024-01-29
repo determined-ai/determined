@@ -1813,6 +1813,13 @@ var (
             "default": [],
             "optionalRef": "http://determined.ai/schemas/expconf/v0/devices.json"
         },
+        "is_single_node": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": null
+        },
         "max_slots": {
             "type": [
                 "integer",

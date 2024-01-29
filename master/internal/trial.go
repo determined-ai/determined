@@ -383,6 +383,8 @@ func (t *trial) maybeAllocateTask() error {
 		return err
 	}
 
+	isSingleNode := t.config.Resources().IsSingleNode() != nil && *t.config.Resources().IsSingleNode()
+
 	restoredAllocation, err := t.maybeRestoreAllocation()
 	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
@@ -403,7 +405,7 @@ func (t *trial) maybeAllocateTask() error {
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
-				SingleAgent: false,
+				SingleAgent: isSingleNode,
 			},
 
 			Preemptible: true,
@@ -448,7 +450,7 @@ func (t *trial) maybeAllocateTask() error {
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
 		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
-			SingleAgent: false,
+			SingleAgent: isSingleNode,
 		},
 
 		Preemptible: true,
