@@ -2429,11 +2429,11 @@ service Determined {
     };
   }
 
-  // Resume generic task
-  rpc ResumeGenericTask(ResumeGenericTaskRequest)
-      returns (ResumeGenericTaskResponse) {
+  // Unpause generic task
+  rpc UnpauseGenericTask(UnpauseGenericTaskRequest)
+      returns (UnpauseGenericTaskResponse) {
     option (google.api.http) = {
-      post: "/api/v1/tasks/{task_id}/resume"
+      post: "/api/v1/tasks/{task_id}/unpause"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

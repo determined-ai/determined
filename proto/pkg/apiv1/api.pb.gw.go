@@ -11367,8 +11367,8 @@ func local_request_Determined_PauseGenericTask_0(ctx context.Context, marshaler 
 
 }
 
-func request_Determined_ResumeGenericTask_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResumeGenericTaskRequest
+func request_Determined_UnpauseGenericTask_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UnpauseGenericTaskRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -11389,13 +11389,13 @@ func request_Determined_ResumeGenericTask_0(ctx context.Context, marshaler runti
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
 
-	msg, err := client.ResumeGenericTask(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.UnpauseGenericTask(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Determined_ResumeGenericTask_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ResumeGenericTaskRequest
+func local_request_Determined_UnpauseGenericTask_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UnpauseGenericTaskRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -11416,7 +11416,7 @@ func local_request_Determined_ResumeGenericTask_0(ctx context.Context, marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
 
-	msg, err := server.ResumeGenericTask(ctx, &protoReq)
+	msg, err := server.UnpauseGenericTask(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -15664,7 +15664,7 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_ResumeGenericTask_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_UnpauseGenericTask_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -15673,14 +15673,14 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Determined_ResumeGenericTask_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Determined_UnpauseGenericTask_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Determined_ResumeGenericTask_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Determined_UnpauseGenericTask_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -20145,7 +20145,7 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
-	mux.Handle("POST", pattern_Determined_ResumeGenericTask_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Determined_UnpauseGenericTask_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -20154,14 +20154,14 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Determined_ResumeGenericTask_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Determined_UnpauseGenericTask_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Determined_ResumeGenericTask_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Determined_UnpauseGenericTask_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -20611,7 +20611,7 @@ var (
 
 	pattern_Determined_PauseGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "pause"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_ResumeGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "resume"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_UnpauseGenericTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "tasks", "task_id", "unpause"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
@@ -21057,5 +21057,5 @@ var (
 
 	forward_Determined_PauseGenericTask_0 = runtime.ForwardResponseMessage
 
-	forward_Determined_ResumeGenericTask_0 = runtime.ForwardResponseMessage
+	forward_Determined_UnpauseGenericTask_0 = runtime.ForwardResponseMessage
 )

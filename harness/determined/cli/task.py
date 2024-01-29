@@ -189,10 +189,10 @@ def pause(args: Namespace) -> None:
 
 
 @authentication.required
-def resume(args: Namespace) -> None:
+def unpause(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.post_ResumeGenericTask(sess, taskId=args.task_id)
-    print(f"Resumed task: {args.task_id}")
+    bindings.post_UnpauseGenericTask(sess, taskId=args.task_id)
+    print(f"Unpaused task: {args.task_id}")
 
 common_log_options: List[Any] = [
     Arg(
@@ -393,8 +393,8 @@ args_description: List[Any] = [
                 ],
             ),
             Cmd(
-                "resume unpause",
-                resume,
+                "unpause",
+                unpause,
                 SUPPRESS,
                 [
                     Arg("task_id", type=str, help=""),
