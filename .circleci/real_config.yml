@@ -1793,6 +1793,7 @@ jobs:
           determined: true
           model-hub: true
           extra-requirements-file: "requirements.txt"
+          extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness check
       - run: make -C model_hub check
