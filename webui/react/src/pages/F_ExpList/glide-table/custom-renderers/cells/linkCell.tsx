@@ -5,7 +5,7 @@ import {
   getMiddleCenterBias,
   GridCellKind,
   measureTextCached,
-} from '@hpe.com/glide-data-grid';
+} from '@glideapps/glide-data-grid';
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 

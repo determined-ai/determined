@@ -1,4 +1,4 @@
-import { Alert } from 'antd';
+import Alert from 'hew/Alert';
 import CodeEditor from 'hew/CodeEditor';
 import { Modal } from 'hew/Modal';
 import { Loadable, Loaded } from 'hew/utils/loadable';

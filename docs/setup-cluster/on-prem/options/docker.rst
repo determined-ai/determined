@@ -65,7 +65,7 @@ arguments.
 
 To start the master with a configuration file, we recommend starting from our `default master
 configuration file
-<https://raw.githubusercontent.com/determined-ai/determined/master/master/packaging/master.yaml>`_,
+<https://raw.githubusercontent.com/determined-ai/determined/main/master/packaging/master.yaml>`_,
 which contains a listing of the available options and descriptions for them. Download and edit the
 ``master.yaml`` configuration file as appropriate and start the master container with the edited
 configuration:
@@ -106,7 +106,7 @@ environment variables, or command-line arguments.
 
 To start the agent with a configuration file, we recommend starting from our `default agent
 configuration file
-<https://raw.githubusercontent.com/determined-ai/determined/master/agent/packaging/agent.yaml>`_,
+<https://raw.githubusercontent.com/determined-ai/determined/main/agent/packaging/agent.yaml>`_,
 which contains a listing of the available options and descriptions for them. Download and edit the
 ``agent.yaml`` configuration file as appropriate and start the agent container with the edited
 configuration:

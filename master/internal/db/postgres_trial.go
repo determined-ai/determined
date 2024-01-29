@@ -633,6 +633,13 @@ func calculateNewSummaryMetrics(
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
 func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+	if m.ReportTime.IsZero() {
+		m.ReportTime = time.Now().UTC()
+	}
+	if m.State == "" {
+		m.State = model.CompletedState
+	}
+
 	var size int64
 	for _, v := range m.Resources {
 		size += v

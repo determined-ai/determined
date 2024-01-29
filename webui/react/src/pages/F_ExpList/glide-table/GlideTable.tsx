@@ -12,8 +12,8 @@ import DataEditor, {
   Item,
   Rectangle,
   Theme,
-} from '@hpe.com/glide-data-grid';
-import { DrawHeaderCallback } from '@hpe.com/glide-data-grid/dist/ts/data-grid/data-grid-types';
+} from '@glideapps/glide-data-grid';
+import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/dts/internal/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useTheme } from 'hew/Theme';

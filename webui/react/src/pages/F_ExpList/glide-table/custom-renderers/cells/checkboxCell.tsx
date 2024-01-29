@@ -1,8 +1,5 @@
-import { CustomCell, GridCellKind, Theme } from '@hpe.com/glide-data-grid';
-import {
-  BaseDrawArgs,
-  CustomRenderer,
-} from '@hpe.com/glide-data-grid/dist/ts/data-grid/cells/cell-types';
+import { CustomCell, GridCellKind, Theme } from '@glideapps/glide-data-grid';
+import { BaseDrawArgs, CustomRenderer } from '@glideapps/glide-data-grid/dist/dts/cells/cell-types';
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
