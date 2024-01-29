@@ -166,13 +166,13 @@ func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
 
 // IsPaused returns true if given task is in paused/pausing state.
 func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
-	query := fmt.Sprintf(`
-SELECT count(*)
-FROM tasks
-WHERE task_id = '%s' AND (task_state='%s' OR task_state='%s')
-`, tID, model.TaskStateStoppingPaused, model.TaskStatePaused)
 	var count int
-	if err := db.sql.QueryRow(query).Scan(&count); err != nil {
+	if err := db.sql.QueryRow(`
+	SELECT count(*)
+	FROM tasks
+	WHERE task_id = $1 AND (task_state=$2 OR task_state=$3)`,
+		tID, model.TaskStateStoppingPaused, model.TaskStatePaused).
+		Scan(&count); err != nil {
 		return false, err
 	}
 	return count > 0, nil
