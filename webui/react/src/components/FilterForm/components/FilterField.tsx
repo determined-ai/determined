@@ -6,7 +6,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
-import { useObservable } from 'micro-observables';
+import { Observable, useObservable } from 'micro-observables';
 import { useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
@@ -67,12 +67,14 @@ const FilterField = ({
 
   // use this function to update field value
   const updateFieldValue = (fieldId: string, value: FormFieldValue, debounceUpdate = false) => {
-    if (debounceUpdate) {
-      debounceFunc(() => formStore.setFieldValue(fieldId, value));
-    } else {
-      formStore.setFieldValue(fieldId, value);
-    }
-    setFieldValue(value);
+    Observable.batch(() => {
+      if (debounceUpdate) {
+        debounceFunc(() => formStore.setFieldValue(fieldId, value));
+      } else {
+        formStore.setFieldValue(fieldId, value);
+      }
+      setFieldValue(value);
+    });
   };
 
   const onChangeColumnName = (value: SelectValue) => {
@@ -80,17 +82,19 @@ const FilterField = ({
     const newColName = value?.toString() ?? '';
     const newCol = columns.find((c) => c.column === newColName);
     if (newCol) {
-      formStore.setFieldColumnName(field.id, newCol);
+      Observable.batch(() => {
+        formStore.setFieldColumnName(field.id, newCol);
 
-      if ((SpecialColumnNames as ReadonlyArray<string>).includes(newColName)) {
-        formStore.setFieldOperator(field.id, Operator.Eq);
-        updateFieldValue(field.id, null);
-      } else if (prevType !== newCol?.type) {
-        const defaultOperator: Operator =
-          AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
-        formStore.setFieldOperator(field.id, defaultOperator);
-        updateFieldValue(field.id, null);
-      }
+        if ((SpecialColumnNames as ReadonlyArray<string>).includes(newColName)) {
+          formStore.setFieldOperator(field.id, Operator.Eq);
+          updateFieldValue(field.id, null);
+        } else if (prevType !== newCol?.type) {
+          const defaultOperator: Operator =
+            AvailableOperators[newCol?.type ?? V1ColumnType.UNSPECIFIED][0];
+          formStore.setFieldOperator(field.id, defaultOperator);
+          updateFieldValue(field.id, null);
+        }
+      });
     }
   };
 
@@ -207,11 +211,13 @@ const FilterField = ({
           value={field.operator}
           width={'100%'}
           onChange={(value) => {
-            const op = (value?.toString() ?? '=') as Operator;
-            formStore.setFieldOperator(field.id, op);
-            if (op === Operator.IsEmpty || op === Operator.NotEmpty) {
-              updateFieldValue(field.id, null);
-            }
+            Observable.batch(() => {
+              const op = (value?.toString() ?? '=') as Operator;
+              formStore.setFieldOperator(field.id, op);
+              if (op === Operator.IsEmpty || op === Operator.NotEmpty) {
+                updateFieldValue(field.id, null);
+              }
+            });
           }}
         />
         {isSpecialColumn ? (
