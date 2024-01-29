@@ -156,6 +156,7 @@ def create(args: Namespace) -> None:
         forkedFrom=args.fork,
         parentId=args.parent,
         inheritContext=args.inherit_context,
+        noPause=args.no_pause,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
