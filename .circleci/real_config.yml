@@ -366,7 +366,7 @@ commands:
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
               for i in <<parameters.extra-requirements-file>>; do
-                cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+                cat $i >> /tmp/cachefile
               done
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
@@ -469,7 +469,7 @@ commands:
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
               for i in <<parameters.extra-requirements-file>>; do
-                tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
+                tools/scripts/retry.sh pip install -r $i
               done
             fi
       - save_cache:
