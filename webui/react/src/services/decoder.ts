@@ -469,14 +469,6 @@ export const mapV1Experiment = (
   jobSummary?: types.JobSummary,
   config?: Sdk.V1GetExperimentResponse['config'],
 ): types.ExperimentItem => {
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
-    ioTypes.ioExperimentConfig,
-    data.config,
-  );
-  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
     checkpoints: data.checkpointCount,
@@ -489,7 +481,7 @@ export const mapV1Experiment = (
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters,
+    hyperparameters: {},
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,
