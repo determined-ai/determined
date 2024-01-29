@@ -1,5 +1,5 @@
 import json
-from argparse import FileType, Namespace
+from argparse import FileType, Namespace, SUPPRESS
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Union, cast
@@ -304,7 +304,7 @@ args_description: List[Any] = [
             Cmd(
                 "create",
                 create,
-                "create task (EXPERIMENTAL: This command should only be used in dev environments)",
+                SUPPRESS,
                 [
                     Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
                     Arg(
@@ -346,7 +346,7 @@ args_description: List[Any] = [
             Cmd(
                 "config",
                 config,
-                "get config for given task",
+                SUPPRESS,
                 [
                     Arg("task_id", type=str, help="ID of task to pull config from"),
                     Arg(
@@ -359,7 +359,7 @@ args_description: List[Any] = [
             Cmd(
                 "fork",
                 fork,
-                "fork task",
+                SUPPRESS,
                 [
                     Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
                     Arg(
@@ -374,7 +374,7 @@ args_description: List[Any] = [
             Cmd(
                 "kill",
                 kill,
-                "kill task",
+                SUPPRESS,
                 [
                     Arg("task_id", type=str, help=""),
                     Arg(
@@ -387,7 +387,7 @@ args_description: List[Any] = [
             Cmd(
                 "pause",
                 pause,
-                "pause task",
+                SUPPRESS,
                 [
                     Arg("task_id", type=str, help=""),
                 ],
@@ -395,7 +395,7 @@ args_description: List[Any] = [
             Cmd(
                 "resume unpause",
                 resume,
-                "resume or unpause a task",
+                SUPPRESS,
                 [
                     Arg("task_id", type=str, help=""),
                 ],
