@@ -522,12 +522,13 @@ func TestGetExperimentsShowTrialData(t *testing.T) {
 		ExperimentIdFilter: &commonv1.Int32FieldFilter{
 			Incl: []int32{int32(exp0.ID), int32(trial.ExperimentID)},
 		},
+		SortBy: apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL,
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.Experiments, 2)
-	require.Nil(t, resp.Experiments[0].BestTrialSearcherMetric)
-	require.NotNil(t, resp.Experiments[1].BestTrialSearcherMetric)
-	require.Equal(t, 0.0, *resp.Experiments[1].BestTrialSearcherMetric) // 0.0 is the best metric.
+	require.NotNil(t, resp.Experiments[0].BestTrialSearcherMetric)
+	require.Equal(t, 0.0, *resp.Experiments[0].BestTrialSearcherMetric) // 0.0 is the best metric.
+	require.Nil(t, resp.Experiments[1].BestTrialSearcherMetric)
 }
 
 // nolint: exhaustruct
