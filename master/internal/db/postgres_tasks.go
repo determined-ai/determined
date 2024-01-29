@@ -56,7 +56,8 @@ func AddTask(ctx context.Context, t *model.Task) error {
 // AddTaskTx UPSERT's the existence of a task in a tx.
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version", "config", "forked_from", "parent_id", "task_state", "no_pause").
+		Column("task_id", "task_type", "start_time", "job_id", "log_version",
+			"config", "forked_from", "parent_id", "task_state", "no_pause").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
@@ -155,6 +156,7 @@ WHERE task_id = $1
 	return nil
 }
 
+// SetPausedState sets given task to a PAUSED state.
 func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
 	if _, err := db.sql.Exec(`
 	UPDATE tasks
@@ -179,6 +181,7 @@ func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 	return count > 0, nil
 }
 
+// SetErrorState sets given task to a ERROR state.
 func (db *PgDB) SetErrorState(taskID model.TaskID, endTime time.Time) error {
 	if _, err := db.sql.Exec(`
 	UPDATE tasks
