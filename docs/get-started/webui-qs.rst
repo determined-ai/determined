@@ -4,6 +4,10 @@
  Create Your First Experiment
 ##############################
 
+.. meta::
+   :description: Learn how to run your first experiment in Determined.
+   :keywords: PyTorch API,MNIST,model developer,quickstart
+
 Follow these steps to see how to run your first experiment.
 
 ***************
@@ -12,8 +16,9 @@ Follow these steps to see how to run your first experiment.
 
 You must have a running Determined cluster with the CLI installed.
 
--  To set one up locally, visit :ref:`basic`.
--  To set one up remotely, choose from On Prem, AWS, GCP, Kubernetes, or Slurm.
+-  To set up a local cluster, visit :ref:`basic`.
+-  To set up a remote cluster, visit the :ref:`Installation Guide <installation-guide>` where you'll
+   find options for On Prem, AWS, GCP, Kubernetes, and Slurm.
 
 *******************
  Run an Experiment
@@ -150,3 +155,12 @@ the :ref:`CLI <cli-ug>`.
    configuration file.
 -  Visit the :ref:`api-core-ug` for a walk-through of how to adapt your existing model code to
    Determined using the PyTorch MNIST model.
+
+**Deep Dive Quick Start**
+
+To learn more about how to change your configuration settings to run a distributed training job on
+multiple GPUs, visit the :ref:`Quickstart for Model Developers <qs-mdldev>`.
+
+**More Tutorials**
+
+For more quick-start guides including API guides, visit the :ref:`tutorials-index`.
