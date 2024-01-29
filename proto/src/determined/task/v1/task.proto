@@ -49,6 +49,7 @@ enum TaskType {
   TASK_TYPE_GENERIC = 7;
 }
 
+// State of a Generic task
 enum GenericTaskState {
   // The task state unknown
   GENERIC_TASK_STATE_UNSPECIFIED = 0;

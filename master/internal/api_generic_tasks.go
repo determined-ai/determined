@@ -302,6 +302,7 @@ func (a *apiServer) CreateGenericTask(
 			Config:     ptrs.Ptr(string(configBytesJSON)),
 			ParentID:   (*model.TaskID)(req.ParentId),
 			State:      ptrs.Ptr(model.TaskStateActive),
+			NoPause:    req.NoPause,
 		}); err != nil {
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}

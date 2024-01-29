@@ -21,7 +21,7 @@ import (
 
 func getMockResourceManager(poolName string) *mocks.ResourceManager {
 	rm := &mocks.ResourceManager{}
-	rm.On("ResolveResourcePool", "/", 0, 1, true).Return(poolName, nil)
+	rm.On("ResolveResourcePool", "/", 0, 1).Return(poolName, nil)
 	rm.On("ValidateResourcePoolAvailability", &sproto.ValidateResourcePoolAvailabilityRequest{
 		Name:  poolName,
 		Slots: 1,

@@ -347,6 +347,11 @@ args_description: List[Any] = [
                         action="store_true",
                         help="inherits context directory from parent task (parent flag required)",
                     ),
+                    Arg(
+                        "--no_pause",
+                        action="store_true",
+                        help="make task unpausable",
+                    ),
                 ],
             ),
             Cmd(

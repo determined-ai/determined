@@ -49,7 +49,7 @@ ADD config jsonb DEFAULT(NULL),
 ADD forked_from text DEFAULT NULL,
 ADD parent_id text REFERENCES tasks(task_id) ON DELETE CASCADE DEFAULT(NULL),
 ADD task_state public.task_state,
-ADD no_pause boolean DEFAULT False;
+ADD no_pause boolean DEFAULT NULL;
 
 ALTER TABLE command_state
 ADD generic_task_spec jsonb DEFAULT NULL;

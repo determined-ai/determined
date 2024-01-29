@@ -169,6 +169,7 @@ func (TaskType) EnumDescriptor() ([]byte, []int) {
 	return file_determined_task_v1_task_proto_rawDescGZIP(), []int{1}
 }
 
+// State of a Generic task
 type GenericTaskState int32
 
 const (

@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 func TestPropagateTaskState(t *testing.T) {
@@ -35,9 +36,9 @@ func TestPropagateTaskState(t *testing.T) {
 	require.NoError(t, err)
 	child2, err := api.GetTask(ctx, &apiv1.GetTaskRequest{TaskId: child2ID.String()})
 	require.NoError(t, err)
-	require.Equal(t, string(model.TaskStateStoppingCanceled), *parent.Task.TaskState)
-	require.Equal(t, string(model.TaskStateStoppingCanceled), *child1.Task.TaskState)
-	require.Equal(t, string(model.TaskStateStoppingCanceled), *child2.Task.TaskState)
+	require.Equal(t, taskv1.GenericTaskState_GENERIC_TASK_STATE_STOPPING_CANCELED, *parent.Task.TaskState)
+	require.Equal(t, taskv1.GenericTaskState_GENERIC_TASK_STATE_STOPPING_CANCELED, *child1.Task.TaskState)
+	require.Equal(t, taskv1.GenericTaskState_GENERIC_TASK_STATE_STOPPING_CANCELED, *child2.Task.TaskState)
 }
 
 func TestFindRoot(t *testing.T) {

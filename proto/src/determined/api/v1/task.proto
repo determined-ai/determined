@@ -31,6 +31,8 @@ message CreateGenericTaskRequest {
   optional bool inherit_context = 5;
   // Id of the task that this task is forked from
   optional string forked_from = 6;
+  // Flag for whether task can be paused or not.
+  optional bool no_pause = 7;
 }
 
 // Response to CreateExperimentRequest.

@@ -2603,6 +2603,7 @@ class v1CreateGenericTaskRequest(Printable):
     """Request to create a new generic task."""
     forkedFrom: "typing.Optional[str]" = None
     inheritContext: "typing.Optional[bool]" = None
+    noPause: "typing.Optional[bool]" = None
     parentId: "typing.Optional[str]" = None
 
     def __init__(
@@ -2613,6 +2614,7 @@ class v1CreateGenericTaskRequest(Printable):
         projectId: int,
         forkedFrom: "typing.Union[str, None, Unset]" = _unset,
         inheritContext: "typing.Union[bool, None, Unset]" = _unset,
+        noPause: "typing.Union[bool, None, Unset]" = _unset,
         parentId: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.config = config
@@ -2622,6 +2624,8 @@ class v1CreateGenericTaskRequest(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(inheritContext, Unset):
             self.inheritContext = inheritContext
+        if not isinstance(noPause, Unset):
+            self.noPause = noPause
         if not isinstance(parentId, Unset):
             self.parentId = parentId
 
@@ -2636,6 +2640,8 @@ class v1CreateGenericTaskRequest(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "inheritContext" in obj:
             kwargs["inheritContext"] = obj["inheritContext"]
+        if "noPause" in obj:
+            kwargs["noPause"] = obj["noPause"]
         if "parentId" in obj:
             kwargs["parentId"] = obj["parentId"]
         return cls(**kwargs)
@@ -2650,6 +2656,8 @@ class v1CreateGenericTaskRequest(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "inheritContext" in vars(self):
             out["inheritContext"] = self.inheritContext
+        if not omit_unset or "noPause" in vars(self):
+            out["noPause"] = self.noPause
         if not omit_unset or "parentId" in vars(self):
             out["parentId"] = self.parentId
         return out
@@ -3966,7 +3974,8 @@ class v1FittingPolicy(DetEnum):
     PBS = "FITTING_POLICY_PBS"
 
 class v1GenericTaskState(DetEnum):
-    """- GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown
+    """State of a Generic task
+    - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown
     - GENERIC_TASK_STATE_ACTIVE: The task state unknown
     - GENERIC_TASK_STATE_CANCELED: The task state unknown
     - GENERIC_TASK_STATE_COMPLETED: The task state unknown
