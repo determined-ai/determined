@@ -1,6 +1,4 @@
 import dayjs from 'dayjs';
-import { Observable } from 'micro-observables';
-
 import Button from 'hew/Button';
 import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
@@ -8,7 +6,7 @@ import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
-import { useObservable } from 'micro-observables';
+import { Observable, useObservable } from 'micro-observables';
 import { useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
