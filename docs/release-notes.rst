@@ -2588,7 +2588,7 @@ Version 0.15.4
 
 -  Model Hub: Publish Determined's Model Hub library to make it easy to train models from supported
    third-party libraries with a Determined cluster. The first library supported in Model Hub is the
-   `HuggingFace transformers library for NLP <https://huggingface.co/transformers>`__.
+   `Hugging Face Transformers Library for NLP <https://huggingface.co/transformers>`__.
 
 **Minor Changes**
 

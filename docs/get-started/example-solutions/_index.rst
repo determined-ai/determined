@@ -70,12 +70,12 @@ For an introduction to using the training APIs, please visit :ref:`Training APIs
       -  ImageNet (Generated)
       -  :download:`torchvision.tgz </examples/torchvision.tgz>`
 
-   -  -  HuggingFace (DeepSpeed/PyTorch)
-      -  Beans (HuggingFace)
+   -  -  Hugging Face (DeepSpeed/PyTorch)
+      -  Beans (Hugging Face)
       -  :download:`hf_image_classification.tgz </examples/hf_image_classification.tgz>`
 
-   -  -  HuggingFace (DeepSpeed/PyTorch)
-      -  WikiText (HuggingFace)
+   -  -  Hugging Face (DeepSpeed/PyTorch)
+      -  WikiText (Hugging Face)
       -  :download:`hf_language_modeling.tgz </examples/hf_language_modeling.tgz>`
 
 ***********

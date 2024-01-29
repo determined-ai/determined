@@ -12,7 +12,7 @@ properties of your hardware and model. Determined AI's DeepSpeed Autotune (``dsa
 optimize these settings through an easy-to-use API with very few changes required in user-code, as
 we describe in the remainder of this user guide. ``dsat`` can be used with
 :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, :ref:`Core API <core-getting-started>`, and
-`HuggingFace Trainer <https://huggingface.co/docs/transformers/main_classes/trainer>`__.
+`Hugging Face Trainer <https://huggingface.co/docs/transformers/main_classes/trainer>`__.
 
 **************
  How it Works
@@ -74,9 +74,9 @@ results of each subsequent trial, all of whose results are fed back to the searc
  User Code Changes
 *******************
 
-To use ``dsat`` with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and
-HuggingFace Trainer, specific changes must be made to your user code. In the following sections, we
-will describe specific use cases and the changes needed for each.
+To use ``dsat`` with :class:`~determined.pytorch.deepspeed.DeepSpeedTrial`, Core API, and Hugging
+Face Trainer, specific changes must be made to your user code. In the following sections, we will
+describe specific use cases and the changes needed for each.
 
 .. _using_deepspeed_trial:
 
@@ -167,10 +167,10 @@ Repo
 <https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/core_api`` .
 
-HuggingFace Trainer
-===================
+Hugging Face Trainer
+====================
 
-You can also use Determined's DeepSpeed Autotune with the HuggingFace (HF) Trainer and Determined's
+You can also use Determined's DeepSpeed Autotune with the Hugging Face (HF) Trainer and Determined's
 :class:`~determined.transformers.DetCallback` callback object to optimize your DeepSpeed parameters.
 
 Similar to the previous case (Core API), you need to add a ``deepspeed_config`` field to the
@@ -180,12 +180,12 @@ the DS ``json`` config file.
 Reporting results back to the Determined master requires both the ``dsat.dsat_reporting_context``
 context manager and ``DetCallback``.
 
-Furthermore, since ``dsat`` performs a search over different batch sizes and HuggingFace expects
+Furthermore, since ``dsat`` performs a search over different batch sizes and Hugging Face expects
 parameters to be specified as command-line arguments, an additional helper function,
-:func:`~determined.pytorch.dsat.get_hf_args_with_overwrites`, is needed to create consistent
-HuggingFace arguments.
+:func:`~determined.pytorch.dsat.get_hf_args_with_overwrites`, is needed to create consistent Hugging
+Face arguments.
 
-Here is an example code snippet from a HuggingFace Trainer script that contains key pieces of
+Here is an example code snippet from a Hugging Face Trainer script that contains key pieces of
 relevant code:
 
 .. code:: python
@@ -211,10 +211,10 @@ relevant code:
       :class:`~determined.core.SearcherOperation` as the ``DetCallback`` instance through its
       ``op=det_callback.current_op`` argument.
 
-   -  The entire ``train`` method of the HuggingFace trainer is wrapped in the
+   -  The entire ``train`` method of the Hugging Face trainer is wrapped in the
       ``dsat_reporting_context`` context manager.
 
-To find examples that use DeepSpeed Autotune with HuggingFace Trainer, visit the `Determined GitHub
+To find examples that use DeepSpeed Autotune with Hugging Face Trainer, visit the `Determined GitHub
 Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__ and
 navigate to ``examples/hf_trainer_api``.
 
