@@ -2134,29 +2134,25 @@ jobs:
 
   test-perf:
     parameters:
-      wait-for-master:
-        type: boolean
-        default: true
       postgres-version:
         type: string
         default: "10"
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
-    environment:
-      DET_POSTGRES_VERSION: <<parameters.postgres-version>>
     steps:
       - checkout
       - attach_workspace:
           at: .
-
-      #- setup-python-venv:
-      #    determined: True
-      #    extra-requirements-file: "e2e_tests/tests/requirements.txt"
-      #    executor: <<pipeline.parameters.machine-image>>
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
+      - run:
+          name: Install psycopg2-binary
+          command: pip install psycopg2-binary
+
+      # TODO here deploy db on non main from latest commit
+      # Update PERF_DB_HOST
 
       - run:
           name: Add SSH key
@@ -2168,17 +2164,20 @@ jobs:
           target-stage: master
           devcluster-config: perftest.devcluster.yaml
       - run:
+          name: Wait and record any migrations ran
+          command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
+
+      # TODO take a snapshot on main (and wait for results or do we not care?)
+
+      - run:
           name: Build performance test Docker image
           command: make -C performance build
       - run:
           name: Run performance test
           command: make -C performance run
       - run:
-          name: Install psycopg2-binary
-          command: pip install psycopg2-binary
-      - run:
           name: Upload result of performance test to Postgres result db
-          command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
+          command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
 
       #- pull-task-images:
       #    tf2: <<parameters.tf2>>
