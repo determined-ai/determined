@@ -602,9 +602,9 @@ func (a *apiServer) PauseGenericTask(
 	return &apiv1.PauseGenericTaskResponse{}, nil
 }
 
-func (a *apiServer) ResumeGenericTask(
-	ctx context.Context, req *apiv1.ResumeGenericTaskRequest,
-) (*apiv1.ResumeGenericTaskResponse, error) {
+func (a *apiServer) UnpauseGenericTask(
+	ctx context.Context, req *apiv1.UnpauseGenericTaskRequest,
+) (*apiv1.UnpauseGenericTaskResponse, error) {
 	var taskModel model.Task
 	err := db.Bun().NewSelect().Model(&taskModel).Where("task_id = ?", req.TaskId).Where("task_type = ?", model.TaskTypeGeneric).Scan(ctx)
 	if err != nil {
@@ -709,15 +709,15 @@ func (a *apiServer) ResumeGenericTask(
 		if err != nil {
 			return nil, err
 		}
-		err = SetResumedState(ctx, resumingTask.TaskID)
+		err = SetUnpauseState(ctx, resumingTask.TaskID)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return &apiv1.ResumeGenericTaskResponse{}, nil
+	return &apiv1.UnpauseGenericTaskResponse{}, nil
 }
 
-func SetResumedState(ctx context.Context, taskID model.TaskID) error {
+func SetUnpauseState(ctx context.Context, taskID model.TaskID) error {
 	_, err := db.Bun().NewUpdate().Table("tasks").
 		Set("task_state = ?", model.TaskStateActive).
 		Set("end_time = NULL").

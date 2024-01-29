@@ -21004,32 +21004,6 @@ def get_ResourceAllocationRaw(
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
 
-def post_ResumeGenericTask(
-    session: "api.Session",
-    *,
-    taskId: str,
-) -> None:
-    """Resume generic task
-
-    - taskId: The id of the task.
-    """
-    _params = None
-    if type(taskId) == str:
-        taskId = parse.quote(taskId)
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/tasks/{taskId}/resume",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_ResumeGenericTask", _resp)
-
 def get_SearchExperiments(
     session: "api.Session",
     *,
@@ -21793,6 +21767,32 @@ def delete_UnbindRPFromWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_UnbindRPFromWorkspace", _resp)
+
+def post_UnpauseGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Unpause generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/unpause",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnpauseGenericTask", _resp)
 
 def post_UnpinWorkspace(
     session: "api.Session",

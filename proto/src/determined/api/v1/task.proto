@@ -323,8 +323,8 @@ message PauseGenericTaskRequest {
 // Response to PauseGenericTaskRequest
 message PauseGenericTaskResponse {}
 
-// Resumes generic task
-message ResumeGenericTaskRequest {
+// Unpause generic task
+message UnpauseGenericTaskRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "task_id" ] }
   };
@@ -332,5 +332,5 @@ message ResumeGenericTaskRequest {
   string task_id = 1;
 }
 
-// Response to ResumeGenericTaskRequest
-message ResumeGenericTaskResponse {}
+// Response to UnpauseGenericTaskRequest
+message UnpauseGenericTaskResponse {}
