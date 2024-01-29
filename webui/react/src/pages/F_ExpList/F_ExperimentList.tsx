@@ -402,15 +402,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
-  useEffect(() => {
-    return formStore.asJsonString.subscribe(() => {
-      resetPagination();
-      const loadableFormset = formStore.formset.get();
-      Loadable.forEach(loadableFormset, (formSet) =>
-        updateSettings({ filterset: JSON.stringify(formSet) }),
-      );
-    });
-  }, [resetPagination, updateSettings]);
+  useEffect(
+    () =>
+      formStore.asJsonString.subscribe(() => {
+        resetPagination();
+        const loadableFormset = formStore.formset.get();
+        Loadable.forEach(loadableFormset, (formSet) =>
+          updateSettings({ filterset: JSON.stringify(formSet) }),
+        );
+      }),
+    [resetPagination, updateSettings],
+  );
 
   const handleActionComplete = useCallback(async () => {
     /**
