@@ -38,7 +38,8 @@ type CreateGenericTaskRequest struct {
 	ProjectId *int32 `protobuf:"varint,3,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
 	// Parent ID of new task
 	ParentId *string `protobuf:"bytes,4,opt,name=parent_id,json=parentId,proto3,oneof" json:"parent_id,omitempty"`
-	// If True inherits the context directory from the paren task (requires parent_id)
+	// If True inherits the context directory from the paren task (requires
+	// parent_id)
 	InheritContext *bool `protobuf:"varint,5,opt,name=inherit_context,json=inheritContext,proto3,oneof" json:"inherit_context,omitempty"`
 	// Id of the task that this task is forked from
 	ForkedFrom *string `protobuf:"bytes,6,opt,name=forked_from,json=forkedFrom,proto3,oneof" json:"forked_from,omitempty"`

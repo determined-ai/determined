@@ -1,5 +1,5 @@
 import json
-from argparse import FileType, Namespace, SUPPRESS
+from argparse import SUPPRESS, FileType, Namespace
 from functools import partial
 from pathlib import Path
 from typing import Any, Dict, List, Union, cast
@@ -111,6 +111,7 @@ def logs(args: Namespace) -> None:
             )
         )
 
+
 @authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
@@ -154,11 +155,10 @@ def create(args: Namespace) -> None:
         projectId=args.project_id,
         forkedFrom=args.fork,
         parentId=args.parent,
-        inheritContext=args.inherit_context
+        inheritContext=args.inherit_context,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
-
 
 
 @authentication.required
@@ -176,10 +176,15 @@ def config(args: Namespace) -> None:
 def fork(args: Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
-        config="", contextDirectory=[], projectId=args.project_id, forkedFrom=args.parent_task_id, inheritContext=False
+        config="",
+        contextDirectory=[],
+        projectId=args.project_id,
+        forkedFrom=args.parent_task_id,
+        inheritContext=False,
     )
     task_resp = bindings.post_CreateGenericTask(sess, body=req)
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
+
 
 @authentication.required
 def pause(args: Namespace) -> None:
@@ -193,6 +198,7 @@ def unpause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_UnpauseGenericTask(sess, taskId=args.task_id)
     print(f"Unpaused task: {args.task_id}")
+
 
 common_log_options: List[Any] = [
     Arg(
@@ -339,7 +345,7 @@ args_description: List[Any] = [
                     Arg(
                         "--inherit_context",
                         action="store_true",
-                        help="inherit the context directory of the parent task (--parent flag required)",
+                        help="inherits context directory from parent task (parent flag required)",
                     ),
                 ],
             ),
@@ -381,7 +387,7 @@ args_description: List[Any] = [
                         "--root",
                         action="store_true",
                         help="",
-                    )
+                    ),
                 ],
             ),
             Cmd(
