@@ -24,7 +24,7 @@ const CLUSTER_URL = __ENV.DET_MASTER ?? DEFAULT_CLUSTER_URL;
 
 const RBAC_ENABLED = false;
 
-export const setup = (): TestConfiguration => {
+export const setup = (skipAuth: boolean = false): TestConfiguration => {
   const resourcePool = __ENV.resource_pool;
 
   const model = {
@@ -62,8 +62,9 @@ export const setup = (): TestConfiguration => {
     resourcePool,
   };
 
-  const token = authenticateVU(CLUSTER_URL);
-  const auth: Authorization = { token };
+  const auth: Authorization = { token: skipAuth ? "" : authenticateVU(CLUSTER_URL) };
+  //const token = authenticateVU(CLUSTER_URL);
+  //const auth: Authorization = { token };
   const testConfig: TestConfiguration = { auth, seededData };
   getloadTests(testConfig, true);
   return testConfig;
@@ -358,7 +359,7 @@ const thresholds: { [name: string]: Threshold[] } = {
 // we must create a unique threshold for each.
 // See https://community.grafana.com/t/show-tag-data-in-output-or-summary-json-without-threshold/99320
 // for more information
-getloadTests(undefined, false).forEach((group) => {
+getloadTests(setup(true), false).forEach((group) => {
   thresholds[`http_req_duration{ group: ::${group.name}}`] = [
     {
       threshold: "p(95)<100000", // For now let's not use the performance as a pass fail.
