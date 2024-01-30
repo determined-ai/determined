@@ -6,6 +6,7 @@ import datetime
 
 import requests
 
+import pathlib
 import subprocess
 import psycopg2 # TODO pip install psycopg2-binary
 from psycopg2 import sql # TODO pip install psycopg2-binary
@@ -57,7 +58,7 @@ def _upload_migration_length(conn) -> None:
 
         indicate_file = "/tmp/no-migrations-needed"
         print(f"creating file at {indicate_file} to indicate this")
-        Path(indicate_file).touch()
+        pathlib.Path(indicate_file).touch()
 
         assert migration_end_log is None
         return
