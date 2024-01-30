@@ -2144,6 +2144,7 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
     steps:
+      # TODO add a queue on main.
       - checkout
       - attach_workspace:
           at: .
@@ -2215,6 +2216,7 @@ jobs:
                     --db-instance-identifier "ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --query "DBInstances[0].Endpoint.Address" \
                     --output text)" >> "$BASH_ENV"
+                  source $BASH_ENV
                   echo "perf db host ${PERF_DB_HOST}"
             - run:
                 name: Setup ec2 connection to / from BASTION instance
