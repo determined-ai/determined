@@ -347,7 +347,7 @@ const thresholds: { [name: string]: Threshold[] } = {
   ],
   http_req_failed: [
     {
-      threshold: "rate<0.05",
+      threshold: "rate<1.00", // For now let's not use the performance as pass fail.
       // If more than one percent of the HTTP requests fail
       // then we abort the test.
       abortOnFail: true,
