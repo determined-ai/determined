@@ -2174,7 +2174,7 @@ jobs:
                   aws rds restore-db-instance-from-db-snapshot \
                     --region="us-west-2" \
                     --db-snapshot-identifier="${PERF_SNAPSHOT_TO_USE}" \
-                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --no-multi-az \
                     --no-publicly-accessible \
                     --no-auto-minor-version-upgrade \
@@ -2185,13 +2185,13 @@ jobs:
                 command: |
                   aws rds wait db-instance-available \
                     --region="us-west-2" \
-                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}"
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
             - run:
                 name: Get db instance host
                 command: |
                   echo "export RDS_HOST=$(aws rds describe-db-instances \
                     --region us-west-2 \
-                    --db-instance-identifier "ci-perf-db-${CIRCLE_JOB}" \
+                    --db-instance-identifier "ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --query "DBInstances[0].Endpoint.Address" \
                     --output text)" >> "$BASH_ENV"
                   echo "perf db host ${PERF_DB_HOST}"
@@ -2203,14 +2203,14 @@ jobs:
                   echo "Creating RDS-EC2 security group"
                   RDS_TO_EC2_GROUP_ID=$(aws ec2 create-security-group \
                     --region="us-west-2" \
-                    --group-name="rds-ec2-${CIRCLE_JOB}" \
+                    --group-name="rds-ec2-${CIRCLE_BUILD_NUM}" \
                     --description="Security group for rds to ec2 connect for ci perf db" \
                     --tag-specifications 'ResourceType=security-group,Tags=[{Key=ci-snapshot,Value=""}]' \
                     | jq -r '.GroupId')
                   echo "Creating EC2-RDS group"
                   EC2_TO_RDS_GROUP_ID=$(aws ec2 create-security-group \
                     --region="us-west-2" \
-                    --group-name="ec2-rds-${CIRCLE_JOB}" \
+                    --group-name="ec2-rds-${CIRCLE_BUILD_NUM}" \
                     --description="Security group for ec2 to rds connect for ci perf db" \
                     --tag-specifications 'ResourceType=security-group,Tags=[{Key=ci-snapshot,Value=""}]' \
                     | jq -r '.GroupId')
@@ -2246,20 +2246,21 @@ jobs:
                   echo "Adding RDS-EC2 to db instance"
                   aws rds modify-db-instance \
                     --region="us-west-2" \
-                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --vpc-security-group-ids="${RDS_TO_EC2_GROUP_ID}"
 
-                  GROUPS=$(aws ec2 describe-instances \
+                  echo "Getting EC2 groups"
+                  EXISTING_GROUPS=$(aws ec2 describe-instances \
                     --region="us-west-2" \
                     --instance-ids "${PERF_DB_BASTION_INSTANCE_ID}" \
                     --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupId' \
                     --output text)
-                  echo "Existing Security Groups: $GROUPS"
+                  echo "Existing Security Groups: ${EXISTING_GROUPS}"
                   echo "Adding EC2-RDS to ec2 instance"
                   aws ec2 modify-instance-attribute \
                     --region="us-west-2" \
                     --instance-id="${PERF_DB_BASTION_INSTANCE_ID}" \
-                    --groups ${GROUPS} ${EC2_TO_RDS_GROUP_ID}
+                    --groups ${EXISTING_GROUPS} ${EC2_TO_RDS_GROUP_ID}
 
       - run:
           name: Add SSH key
@@ -2315,7 +2316,7 @@ jobs:
                 name: Delete RDS instance
                 command: aws rds delete-db-instance \
                   --region="us-west-2" \
-                  --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                  --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
                   --skip-final-snapshot
                 # TODO we should delete security instances eventually.
 
