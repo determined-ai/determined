@@ -2174,13 +2174,13 @@ jobs:
                   for ((n=0; n<=1000; n++)); do
                     COMMIT=$(git log --format="%H" -n 1 --skip=$n)
 
-                    # Check if the commit is in the SNAPSHOT_COMMITS list
                     if [[ " $SNAPSHOT_COMMITS " =~ .*"$COMMIT".* ]]; then
                       echo "export PERF_SNAPSHOT_TO_USE=\"ci-snapshot-commit-${COMMIT}\"" >> "$BASH_ENV"
-                      break  # Exit the loop if a matching commit is found
+                      break
                     fi
                   done
 
+                  source $BASH_ENV
                   echo "Deciding to use $PERF_SNAPSHOT_TO_USE"
             - run:
                 name: Wait for snapshot to be available
@@ -2188,6 +2188,7 @@ jobs:
                   aws rds wait db-snapshot-available \
                     --region "us-west-2" \
                     --db-snapshot-identifier "${PERF_SNAPSHOT_TO_USE}"
+                no_output_timeout: 30m
             - run:
                 name: Deploy database
                 command: |
@@ -2339,8 +2340,8 @@ jobs:
                     --region="us-west-2" \
                     --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --skip-final-snapshot
-                # TODO we should delete security groups eventually.
-                # TODO we need a terminator type thing in case clean up fails.
+                # TODO future ticket, we need a terminator type thing in case clean up fails.
+                # Also should clean up security groups there.
 
   deploy:
     parameters:
