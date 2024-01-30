@@ -289,6 +289,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 					RawResourcePool:   new(string),
 					RawPriority:       new(int),
 					RawDevices:        devices,
+					RawIsSingleNode:   new(bool),
 				}
 			}
 
@@ -855,6 +856,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawShmSize:        new(int),
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
+				RawIsSingleNode:   new(bool),
 			},
 			registryAuth: &registry.AuthConfig{
 				ServerAddress: "addr",
@@ -885,6 +887,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawShmSize:        new(int),
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
+				RawIsSingleNode:   new(bool),
 			},
 			registryAuth:           &registry.AuthConfig{},
 			userConfiguredPriority: true,
@@ -911,6 +914,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawShmSize:        new(int),
 				RawResourcePool:   new(string),
 				RawDevices:        []expconf.DeviceV0{{}},
+				RawIsSingleNode:   new(bool),
 			},
 			registryAuth: &registry.AuthConfig{
 				ServerAddress: "addr",
@@ -939,6 +943,7 @@ func Test_WarnUnsupportedOptions(t *testing.T) {
 				RawShmSize:        nil,
 				RawResourcePool:   nil,
 				RawDevices:        nil,
+				RawIsSingleNode:   new(bool),
 			},
 			userConfiguredPriority: false,
 			registryAuth:           &registry.AuthConfig{},
