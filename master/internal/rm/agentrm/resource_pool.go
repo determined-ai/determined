@@ -220,6 +220,7 @@ func (rp *resourcePool) restoreResources(
 		ResourcePool: rp.config.PoolName,
 		Resources:    resources,
 		Recovered:    true,
+		RequestTime:  req.RequestTime,
 	}
 
 	rp.taskList.AddTask(req)
@@ -476,6 +477,7 @@ func (rp *resourcePool) allocateResources(req *sproto.AllocateRequest) bool {
 		ResourcePool:      rp.config.PoolName,
 		Resources:         sprotoResources,
 		JobSubmissionTime: req.JobSubmissionTime,
+		RequestTime:       req.RequestTime,
 	}
 	rp.taskList.AddAllocation(req.AllocationID, &allocated)
 	rmevents.Publish(req.AllocationID, allocated.Clone())

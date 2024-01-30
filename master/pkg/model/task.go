@@ -140,15 +140,17 @@ type AllocationState string
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {
-	AllocationID AllocationID
-	EventType    string
+	bun.BaseModel `bun:"table:task_stats"`
+
+	AllocationID AllocationID `db:"allocation_id" bun:"allocation_id,notnull"`
+	EventType    string       `db:"event_type" bun:"event_type,notnull"`
 	// ContainerID is sent by the agent. This won't always be present in the database
 	// This is a weird table since sometimes it is one row per allocation
 	// (like in record queued stats) and sometimes it is many per allocation like in
 	// pulled time.
-	ContainerID *cproto.ID
-	StartTime   *time.Time
-	EndTime     *time.Time
+	ContainerID *cproto.ID `db:"container_id" bun:"container_id"`
+	StartTime   *time.Time `db:"start_time" bun:"start_time,notnull"`
+	EndTime     *time.Time `db:"end_time" bun:"end_time"`
 }
 
 // ResourceAggregates is the model for resource_aggregates in the database.

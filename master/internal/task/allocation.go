@@ -625,7 +625,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	err = a.db.RecordTaskStats(&model.TaskStats{
 		AllocationID: msg.ID,
 		EventType:    "QUEUED",
-		StartTime:    &msg.JobSubmissionTime,
+		StartTime:    &msg.RequestTime,
 		EndTime:      &now,
 	})
 	if err != nil {

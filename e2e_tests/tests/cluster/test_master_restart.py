@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from determined.common import constants
-from determined.common.api import authentication, task_is_ready, task_logs
+from determined.common.api import authentication, bindings, task_is_ready, task_logs
 from determined.common.api.bindings import experimentv1State as EXP_STATE
 from tests import api_utils
 from tests import command as cmd
@@ -25,6 +25,8 @@ from .utils import (
     wait_for_command_state,
     wait_for_task_state,
 )
+
+EXPECTED_MAX_AVG_ALLOCATION_QUEUED_SECONDS = 300
 
 logger = logging.getLogger(__name__)
 
@@ -241,6 +243,41 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
     except Exception:
         managed_cluster_restarts.restart_master()
         managed_cluster_restarts.restart_agent()
+
+
+@pytest.mark.managed_devcluster
+def test_exp_restart_allocations_start_time(restartable_managed_cluster: ManagedCluster) -> None:
+    _test_exp_restart_allocations_start_time(restartable_managed_cluster)
+
+
+@pytest.mark.e2e_k8s
+def test_exp_restart_allocations_start_time_k8s(
+    k8s_managed_cluster: ManagedK8sCluster,
+) -> None:
+    _test_exp_restart_allocations_start_time(k8s_managed_cluster)
+
+
+def _test_exp_restart_allocations_start_time(managed_cluster_restarts: Cluster) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.RUNNING)
+
+    managed_cluster_restarts.kill_master()
+    managed_cluster_restarts.restart_master()
+
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.RUNNING)
+
+    sess = api_utils.determined_test_session()
+    bindings.post_KillExperiment(sess, id=exp_id)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.CANCELED, max_wait_secs=30)
+
+    resp = bindings.get_GetJobQueueStats(sess).to_json()
+    for rp in resp.get("results"):
+        for period in rp.get("aggregates"):
+            assert period["seconds"] <= EXPECTED_MAX_AVG_ALLOCATION_QUEUED_SECONDS
 
 
 @pytest.mark.managed_devcluster
