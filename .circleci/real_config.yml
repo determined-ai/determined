@@ -2161,11 +2161,31 @@ jobs:
                 name: Select snapshot to use
                 command: |
                   echo 'export PERF_SNAPSHOT_TO_USE="perf-test-base-snapshot"' >> "$BASH_ENV"
-                  # TODO list snapshots and go through commits and find most recent.
+
+
+                  echo 'export PERF_SNAPSHOT_TO_USE="perf-test-base-snapshot"' >> "$BASH_ENV"
+
+                  SNAPSHOT_COMMITS=$(aws rds describe-db-snapshots \
+                    --region="us-west-2" \
+                    --query "DBSnapshots[?TagList[?Key=='ci-snapshot']].DBSnapshotIdentifier" \
+                    --output json | jq -r '.[] | split("-")[3]')
+                  echo "Snapshot commits (${SNAPSHOT_COMMITS})"
+
+                  for ((n=0; n<=1000; n++)); do
+                    COMMIT=$(git log --format="%H" -n 1 --skip=$n)
+
+                    # Check if the commit is in the SNAPSHOT_COMMITS list
+                    if [[ " $SNAPSHOT_COMMITS " =~ .*"$COMMIT".* ]]; then
+                      echo "export PERF_SNAPSHOT_TO_USE=\"ci-snapshot-commit-${COMMIT}\"" >> "$BASH_ENV"
+                      break  # Exit the loop if a matching commit is found
+                    fi
+                  done
+
+                  echo "Deciding to use $PERF_SNAPSHOT_TO_USE"
             - run:
                 name: Wait for snapshot to be available
                 command: |
-                  aws rds wait db-snapshot-completed \
+                  aws rds wait db-snapshot-available \
                     --region "us-west-2" \
                     --db-snapshot-identifier "${PERF_SNAPSHOT_TO_USE}"
             - run:
@@ -2314,11 +2334,13 @@ jobs:
           steps:
             - run:
                 name: Delete RDS instance
-                command: aws rds delete-db-instance \
-                  --region="us-west-2" \
-                  --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
-                  --skip-final-snapshot
-                # TODO we should delete security instances eventually.
+                command: |
+                  aws rds delete-db-instance \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                    --skip-final-snapshot
+                # TODO we should delete security groups eventually.
+                # TODO we need a terminator type thing in case clean up fails.
 
   deploy:
     parameters:
