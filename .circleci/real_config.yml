@@ -2137,6 +2137,9 @@ jobs:
       take-snapshot:
         type: boolean
         default: false
+      deploy-db:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2151,15 +2154,119 @@ jobs:
           name: Install upload deps # TODO retry this
           command: pip install requests determined psycopg2-binary
 
-      # TODO here deploy db on non main from latest commit
-      # Update PERF_DB_HOST
+      - when:
+          condition: <<parameters.deploy-db>>
+          steps:
+            - run:
+                name: Select snapshot to use
+                command: |
+                  echo 'export PERF_SNAPSHOT_TO_USE=""perf-test-base-snapshot"' >> "$BASH_ENV"
+                  # TODO list snapshots and go through commits and find most recent.
+            - run:
+                name: Wait for snapshot to be available
+                command: |
+                  aws rds wait db-snapshot-completed \
+                    --region "us-west-2" \
+                    --db-snapshot-identifier "${PERF_SNAPSHOT_TO_USE}"
+            - run:
+                name: Deploy database
+                command: |
+                  aws rds restore-db-instance-from-db-snapshot \
+                    --region="us-west-2" \
+                    --db-snapshot-identifier="${PERF_SNAPSHOT_TO_USE}" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                    --no-multi-az \
+                    --no-publicly-accessible \
+                    --no-auto-minor-version-upgrade \
+                    --db-parameter-group-name="logquerieslong" \
+                    --tags "Key=ci-snapshot"
+            - run:
+                name: Wait for database to be ready
+                command: |
+                  aws rds wait db-instance-available \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}"
+            - run:
+                name: Get db instance host
+                command: |
+                  echo "export RDS_HOST=$(aws rds describe-db-instances \
+                    --region us-west-2 \
+                    --db-instance-identifier "ci-perf-db-${CIRCLE_JOB}" \
+                    --query "DBInstances[0].Endpoint.Address" \
+                    --output text)" >> "$BASH_ENV"
+                  echo "perf db host ${PERF_DB_HOST}"
+            - run:
+                name: Setup ec2 connection to / from BASTION instance
+                command: |
+                  # This is a hack or rather verbose operations for the cli not having
+                  # the "setup-ec2-connection" option that the console has.
+                  echo "Creating RDS-EC2 security group"
+                  RDS_TO_EC2_GROUP_ID=$(aws ec2 create-security-group \
+                    --region="us-west-2" \
+                    --group-name="rds-ec2-${CIRCLE_JOB}" \
+                    --description="Security group for rds to ec2 connect for ci perf db" \
+                    --tag-specifications 'ResourceType=security-group,Tags=[{Key=ci-snapshot,Value=""}]' \
+                    | jq -r '.GroupId')
+                  echo "Creating EC2-RDS group"
+                  EC2_TO_RDS_GROUP_ID=$(aws ec2 create-security-group \
+                    --region="us-west-2" \
+                    --group-name="ec2-rds-${CIRCLE_JOB}" \
+                    --description="Security group for ec2 to rds connect for ci perf db" \
+                    --tag-specifications 'ResourceType=security-group,Tags=[{Key=ci-snapshot,Value=""}]' \
+                    | jq -r '.GroupId')
+
+                  echo "Removing RDS-EC2 group default egress rule"
+                  aws ec2 revoke-security-group-egress \
+                    --region="us-west-2" \
+                    --group-id="${RDS_TO_EC2_GROUP_ID}" \
+                    --protocol="all" \
+                    --cidr "0.0.0.0/0"
+                  echo "Removing EC2-RDS group default egress rule"
+                  aws ec2 revoke-security-group-egress \
+                    --region="us-west-2" \
+                    --group-id="${EC2_TO_RDS_GROUP_ID}" \
+                    --protocol="all" \
+                    --cidr "0.0.0.0/0"
+
+                  echo "Adding RDS-EC2 inbound rule"
+                  aws ec2 authorize-security-group-ingress \
+                    --region="us-west-2" \
+                    --group-id="${RDS_TO_EC2_GROUP_ID}" \
+                    --protocol="tcp" \
+                    --port="5432" \
+                    --source-group="${EC2_TO_RDS_GROUP_ID}"
+                  echo "Adding EC2-RDS outbound rule"
+                  aws ec2 authorize-security-group-egress \
+                    --region="us-west-2" \
+                    --group-id="${EC2_TO_RDS_GROUP_ID}" \
+                    --protocol="tcp" \
+                    --port="5432" \
+                    --source-group="${RDS_TO_EC2_GROUP_ID}"
+
+                  echo "Adding RDS-EC2 to db instance"
+                  aws rds modify-db-instance \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                    --vpc-security-group-ids="${RDS_TO_EC2_GROUP_ID}"
+
+                  GROUPS=$(aws ec2 describe-instances \
+                    --region="us-west-2" \
+                    --instance-ids "${PERF_DB_BASTION_INSTANCE_ID}" \
+                    --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupId' \
+                    --output text)
+                  echo "Existing Security Groups: $GROUPS"
+                  echo "Adding EC2-RDS to ec2 instance"
+                  aws ec2 modify-instance-attribute \
+                    --region="us-west-2" \
+                    --instance-id="${PERF_DB_BASTION_INSTANCE_ID}" \
+                    --groups ${GROUPS} ${EC2_TO_RDS_GROUP_ID}
 
       - run:
           name: Add SSH key
           command: echo "${PERF_DB_BASTION_SSH_KEY}" | base64 --decode | ssh-add -
       - run:
           name: Port forward to bastion instance
-          command: ssh -L 5432:$PERF_DB_HOST:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
+          command: ssh -L 5432:${PERF_DB_HOST}:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
       - start-devcluster:
           target-stage: master
           devcluster-config: perftest.devcluster.yaml
@@ -2181,16 +2288,15 @@ jobs:
                   COMMIT=$(git log -1 --pretty=format:%H)
                   echo "Taking snapshot"
                   aws rds create-db-snapshot \
-                  --region "us-west-2" \
-                  --db-instance-identifier "$PERF_DB_AWS_NAME" \
-                  --db-snapshot-identifier "ci-snapshot-commit-$COMMIT" \
-                  --tags "Key=ci-snapshot"
+                    --region="us-west-2" \
+                    --db-instance-identifier="${PERF_DB_AWS_NAME}" \
+                    --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}" \
+                    --tags "Key=ci-snapshot"
 
                   echo "Snapshot taken now waiting for it to become completed"
                   aws rds wait db-snapshot-completed \
-                  --region "us-west-2" \
-                  --db-instance-identifier "$PERF_DB_AWS_NAME" \
-                  --db-snapshot-identifier "ci-snapshot-commit-$COMMIT"
+                    --region="us-west-2" \
+                    --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}"
                   echo "Snapshot completed"
       - run:
           name: Build performance test Docker image
@@ -2202,28 +2308,16 @@ jobs:
           name: Upload result of performance test to Postgres result db
           command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
 
-      #- pull-task-images:
-      #    tf2: <<parameters.tf2>>
-
-      #- run-e2e-tests:
-      #    mark: <<parameters.mark>>
-      #    master-host: localhost
-      #    managed-devcluster: <<parameters.managed-devcluster>>
-      #    extra-pytest-flags: <<parameters.extra-pytest-flags>>
-      #    wait-for-master: <<parameters.wait-for-master>>
-
-      #- store_test_results:
-      #    path: /tmp/test-results/
-
-      #- when:
-      #    condition: <<parameters.managed-devcluster>>
-      #    steps:
-      #      - store_artifacts:
-      #          path: /tmp/devcluster/
-      #          destination: devcluster-logs
-      #      - store_artifacts:
-      #          path: /tmp/priority_scheduler
-      #          destination: devcluster-priority_scheduler-logs
+      - when:
+          condition: <<parameters.deploy-db>>
+          steps:
+            - run:
+                name: Delete RDS instance
+                command: aws rds delete-db-instance \
+                  --region="us-west-2" \
+                  --db-instance-identifier="ci-perf-db-${CIRCLE_JOB}" \
+                  --skip-final-snapshot
+                # TODO we should delete security instances eventually.
 
   deploy:
     parameters:
@@ -2847,7 +2941,8 @@ workflows:
 
       - test-perf:
           name: test-perf
-          take-snapshot: true
+          take-snapshot: false # FLIP THESE
+          deploy-db: true
           requires:
             - build-go
           context:
