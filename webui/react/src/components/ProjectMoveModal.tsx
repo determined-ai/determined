@@ -88,7 +88,11 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
         {workspaces.map((workspace) => {
           const disabled = workspace.archived || workspace.id === project.workspaceId;
           return (
-            <Option disabled={disabled} key={workspace.id} value={workspace.id}>
+            <Option
+              disabled={disabled}
+              key={workspace.id}
+              label={workspace.name}
+              value={workspace.id}>
               <div className={disabled ? css.workspaceOptionDisabled : ''}>
                 <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
                 {workspace.archived && <Icon name="archive" title="Archived" />}
