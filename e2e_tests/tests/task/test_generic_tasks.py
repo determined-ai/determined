@@ -1,5 +1,5 @@
+import pathlib
 import subprocess
-from pathlib import Path
 
 import pytest
 
@@ -21,10 +21,11 @@ def test_create_generic_task() -> None:
         "create",
         conf.fixtures_path("generic_task/test_config.yaml"),
         "--context",
-        conf.fixtures_path("generic_task")
+        conf.fixtures_path("generic_task"),
     ]
 
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
 
 @pytest.mark.e2e_cpu
 def test_generic_task_config() -> None:
@@ -37,7 +38,9 @@ def test_generic_task_config() -> None:
         # Create task
         config = ntsc.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
-        context_directory = context.read_v1_context(Path(conf.fixtures_path("generic_task")), [])
+        context_directory = context.read_v1_context(
+            pathlib.Path(conf.fixtures_path("generic_task")), []
+        )
 
         req = bindings.v1CreateGenericTaskRequest(
             config=config_text,
@@ -47,23 +50,18 @@ def test_generic_task_config() -> None:
             parentId=None,
             inheritContext=False,
             noPause=False,
-
         )
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Get config
-        command = [
-            "det",
-            "task",
-            "config",
-            task_resp.taskId
-        ]
+        command = ["det", "task", "config", task_resp.taskId]
 
         res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
-        
+
         result_config = util.yaml_safe_load(res.stdout)
-        expected_config = {'entrypoint': ['python3', 'run.py']}
+        expected_config = {"entrypoint": ["python3", "run.py"]}
         assert expected_config == result_config
+
 
 @pytest.mark.e2e_cpu
 def test_generic_task_create_with_fork() -> None:
@@ -76,7 +74,9 @@ def test_generic_task_create_with_fork() -> None:
         # Create initial task
         config = ntsc.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
-        context_directory = context.read_v1_context(Path(conf.fixtures_path("generic_task")), [])
+        context_directory = context.read_v1_context(
+            pathlib.Path(conf.fixtures_path("generic_task")), []
+        )
 
         req = bindings.v1CreateGenericTaskRequest(
             config=config_text,
@@ -86,15 +86,18 @@ def test_generic_task_create_with_fork() -> None:
             parentId=None,
             inheritContext=False,
             noPause=False,
-
         )
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Create fork task
-        with open(conf.fixtures_path("generic_task/test_config_fork.yaml"), "r") as fork_config_file:
+        with open(
+            conf.fixtures_path("generic_task/test_config_fork.yaml"), "r"
+        ) as fork_config_file:
             config = ntsc.parse_config(fork_config_file, None, [], [])
             config_text = util.yaml_safe_dump(config)
-            context_directory = context.read_v1_context(Path(conf.fixtures_path("generic_task")), [])
+            context_directory = context.read_v1_context(
+                pathlib.Path(conf.fixtures_path("generic_task")), []
+            )
 
             req = bindings.v1CreateGenericTaskRequest(
                 config=config_text,
@@ -104,23 +107,19 @@ def test_generic_task_create_with_fork() -> None:
                 parentId=None,
                 inheritContext=False,
                 noPause=False,
-
             )
             fork_task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
-
             # Get fork task Config
-            command = [
-                "det",
-                "task",
-                "config",
-                fork_task_resp.taskId
-            ]
+            command = ["det", "task", "config", fork_task_resp.taskId]
 
-            res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+            res = subprocess.run(
+                command, universal_newlines=True, stdout=subprocess.PIPE, check=True
+            )
             result_config = util.yaml_safe_load(res.stdout)
-            expected_config = {'entrypoint': ['python3', 'run_fork.py']}
+            expected_config = {"entrypoint": ["python3", "run_fork.py"]}
             assert expected_config == result_config
+
 
 @pytest.mark.e2e_cpu
 def test_kill_generic_task() -> None:
@@ -133,7 +132,9 @@ def test_kill_generic_task() -> None:
         # Create task
         config = ntsc.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
-        context_directory = context.read_v1_context(Path(conf.fixtures_path("generic_task")), [])
+        context_directory = context.read_v1_context(
+            pathlib.Path(conf.fixtures_path("generic_task")), []
+        )
 
         req = bindings.v1CreateGenericTaskRequest(
             config=config_text,
@@ -143,17 +144,11 @@ def test_kill_generic_task() -> None:
             parentId=None,
             inheritContext=False,
             noPause=False,
-
         )
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Kill task
-        command = [
-                "det",
-                "task",
-                "kill",
-                task_resp.taskId
-            ]
+        command = ["det", "task", "kill", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
@@ -169,7 +164,9 @@ def test_pause_and_unpause_generic_task() -> None:
         # Create task
         config = ntsc.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)
-        context_directory = context.read_v1_context(Path(conf.fixtures_path("generic_task")), [])
+        context_directory = context.read_v1_context(
+            pathlib.Path(conf.fixtures_path("generic_task")), []
+        )
 
         req = bindings.v1CreateGenericTaskRequest(
             config=config_text,
@@ -179,26 +176,15 @@ def test_pause_and_unpause_generic_task() -> None:
             parentId=None,
             inheritContext=False,
             noPause=False,
-
         )
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Pause task
-        command = [
-                "det",
-                "task",
-                "pause",
-                task_resp.taskId
-            ]
+        command = ["det", "task", "pause", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
         # Pause task
-        command = [
-                "det",
-                "task",
-                "unpause",
-                task_resp.taskId
-            ]
+        command = ["det", "task", "unpause", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)

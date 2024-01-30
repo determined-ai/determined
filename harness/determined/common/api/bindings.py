@@ -2605,21 +2605,21 @@ class v1CreateGenericTaskRequest(Printable):
     inheritContext: "typing.Optional[bool]" = None
     noPause: "typing.Optional[bool]" = None
     parentId: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         config: str,
         contextDirectory: "typing.Sequence[v1File]",
-        projectId: int,
         forkedFrom: "typing.Union[str, None, Unset]" = _unset,
         inheritContext: "typing.Union[bool, None, Unset]" = _unset,
         noPause: "typing.Union[bool, None, Unset]" = _unset,
         parentId: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.config = config
         self.contextDirectory = contextDirectory
-        self.projectId = projectId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
         if not isinstance(inheritContext, Unset):
@@ -2628,13 +2628,14 @@ class v1CreateGenericTaskRequest(Printable):
             self.noPause = noPause
         if not isinstance(parentId, Unset):
             self.parentId = parentId
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "config": obj["config"],
             "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
-            "projectId": obj["projectId"],
         }
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
@@ -2644,13 +2645,14 @@ class v1CreateGenericTaskRequest(Printable):
             kwargs["noPause"] = obj["noPause"]
         if "parentId" in obj:
             kwargs["parentId"] = obj["parentId"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "config": self.config,
             "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
-            "projectId": self.projectId,
         }
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
@@ -2660,6 +2662,8 @@ class v1CreateGenericTaskRequest(Printable):
             out["noPause"] = self.noPause
         if not omit_unset or "parentId" in vars(self):
             out["parentId"] = self.parentId
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
         return out
 
 class v1CreateGenericTaskResponse(Printable):

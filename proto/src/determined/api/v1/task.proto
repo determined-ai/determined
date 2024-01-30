@@ -16,7 +16,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Request to create a new generic task.
 message CreateGenericTaskRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "context_directory", "config", "project_id" ] }
+    json_schema: { required: [ "context_directory", "config" ] }
   };
   // Generic task context.
   repeated determined.util.v1.File context_directory = 1;

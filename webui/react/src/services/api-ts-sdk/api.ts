@@ -2211,7 +2211,7 @@ export interface V1CreateGenericTaskRequest {
      * @type {number}
      * @memberof V1CreateGenericTaskRequest
      */
-    projectId: number;
+    projectId?: number;
     /**
      * Parent ID of new task
      * @type {string}
