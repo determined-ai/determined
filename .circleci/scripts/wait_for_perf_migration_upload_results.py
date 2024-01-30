@@ -54,6 +54,11 @@ def _upload_migration_length(conn) -> None:
     assert migration_start_log is not None
     if no_migration_to_apply_log is not None:
         print(f"got no migration to apply message (nothing to record) '{no_migration_to_apply_log.message}'")
+
+        indicate_file = "/tmp/no-migrations-needed"
+        print(f"creating file at {indicate_file} to indicate this")
+        Path(indicate_file).touch()
+
         assert migration_end_log is None
         return
 

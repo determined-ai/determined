@@ -2134,9 +2134,9 @@ jobs:
 
   test-perf:
     parameters:
-      postgres-version:
-        type: string
-        default: "10"
+      take-snapshot:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2167,25 +2167,31 @@ jobs:
           name: Wait and record any migrations ran
           command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
 
-      # TODO Only take a snapshot for migrations and main
-      - run:
-          name: Take and wait for RDS snapshot, only on main and when migrations were applied
-          command: |
-            COMMIT=$(git log -1 --pretty=format:%H)
-            echo "Taking snapshot"
-            aws rds create-db-snapshot \
-              --region "us-west-2" \
-              --db-instance-identifier "$PERF_DB_AWS_NAME" \
-              --db-snapshot-identifier "ci-snapshot-commit-$COMMIT" \
-              --tags "Key=ci-snapshot"
+      - when:
+          condition: <<parameters.take-snapshot>>
+          steps:
+            - run:
+                name: Take and wait for RDS snapshot, only on main and when migrations were applied
+                command: |
+                  if [ -f /tmp/no-migrations-needed ]; then
+                    echo "/tmp/no-migrations-needed exists, no need to take a snapshot"
+                    exit 0
+                  fi
 
-            echo "Snapshot taken now waiting for it to become completed"
-            aws rds wait db-snapshot-completed \
-              --region "us-west-2" \
-              --db-instance-identifier "$PERF_DB_AWS_NAME" \
-              --db-snapshot-identifier "ci-snapshot-commit-$COMMIT"
-            echo "Snapshot completed"
+                  COMMIT=$(git log -1 --pretty=format:%H)
+                  echo "Taking snapshot"
+                  aws rds create-db-snapshot \
+                  --region "us-west-2" \
+                  --db-instance-identifier "$PERF_DB_AWS_NAME" \
+                  --db-snapshot-identifier "ci-snapshot-commit-$COMMIT" \
+                  --tags "Key=ci-snapshot"
 
+                  echo "Snapshot taken now waiting for it to become completed"
+                  aws rds wait db-snapshot-completed \
+                  --region "us-west-2" \
+                  --db-instance-identifier "$PERF_DB_AWS_NAME" \
+                  --db-snapshot-identifier "ci-snapshot-commit-$COMMIT"
+                  echo "Snapshot completed"
       - run:
           name: Build performance test Docker image
           command: make -C performance build
@@ -2841,6 +2847,7 @@ workflows:
 
       - test-perf:
           name: test-perf
+          take-snapshot: true
           requires:
             - build-go
           context:
