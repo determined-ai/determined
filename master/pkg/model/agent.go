@@ -8,7 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
-	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
 
 // AgentSummary summarizes the state on an agent.
@@ -97,14 +96,11 @@ func (c *ContainerSummary) ToProto() *containerv1.Container {
 	if c == nil {
 		return nil
 	}
-	var devices []*devicev1.Device
-	for _, d := range c.Devices {
-		devices = append(devices, d.Proto())
-	}
+
 	return &containerv1.Container{
 		Id:           c.ID.String(),
 		State:        c.State.Proto(),
-		Devices:      devices,
+		Devices:      device.Devices(c.Devices).Proto(),
 		AllocationId: c.AllocationID.String(),
 		TaskId:       c.TaskID.String(),
 		JobId:        c.JobID.String(),

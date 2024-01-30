@@ -393,8 +393,6 @@ func (a *agentState) getContainerSummary(s *slot) *model.ContainerSummary {
 
 	container := a.containerState[*cid]
 
-	fmt.Printf("container: %+v\n", container)
-	fmt.Printf("container info 2: %+v\n", a.containerAllocation[*cid])
 	return &model.ContainerSummary{
 		ID:           container.ID,
 		State:        container.State,
