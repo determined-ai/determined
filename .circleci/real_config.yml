@@ -2160,7 +2160,7 @@ jobs:
             - run:
                 name: Select snapshot to use
                 command: |
-                  echo 'export PERF_SNAPSHOT_TO_USE=""perf-test-base-snapshot"' >> "$BASH_ENV"
+                  echo 'export PERF_SNAPSHOT_TO_USE="perf-test-base-snapshot"' >> "$BASH_ENV"
                   # TODO list snapshots and go through commits and find most recent.
             - run:
                 name: Wait for snapshot to be available
