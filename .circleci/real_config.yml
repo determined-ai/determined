@@ -365,7 +365,9 @@ commands:
             fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
-              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+              for i in <<parameters.extra-requirements-file>>; do
+                cat $i >> /tmp/cachefile
+              done
             fi
             echo '<<parameters.python-version>>' >> /tmp/cachefile
             echo '<<parameters.install-python>>' >> /tmp/cachefile
@@ -466,7 +468,9 @@ commands:
           name: Install <<parameters.extra-requirements-file>>
           command: |
             if [ -n "<<parameters.extra-requirements-file>>" ]; then
-              tools/scripts/retry.sh pip install -r <<parameters.extra-requirements-file>>
+              for i in <<parameters.extra-requirements-file>>; do
+                tools/scripts/retry.sh pip install -r $i
+              done
             fi
       - save_cache:
           key: det-python-deps-<<pipeline.parameters.cache-buster>>-{{ checksum "/tmp/cachefile" }}
@@ -1792,7 +1796,7 @@ jobs:
           install-python: false
           determined: true
           model-hub: true
-          extra-requirements-file: "requirements.txt"
+          extra-requirements-file: "requirements.txt model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness check
       - run: make -C model_hub check
