@@ -2170,7 +2170,7 @@ jobs:
       # TODO Only take a snapshot for migrations and main
       - run:
           name: Take and wait for RDS snapshot, only on main and when migrations were applied
-          commnad: |
+          command: |
             COMMIT=$(git log -1 --pretty=format:%H)
             echo "Taking snapshot"
             aws rds create-db-snapshot \
@@ -2185,6 +2185,7 @@ jobs:
               --db-instance-identifier "$PERF_DB_AWS_NAME" \
               --db-snapshot-identifier "ci-snapshot-commit-$COMMIT"
             echo "Snapshot completed"
+
       - run:
           name: Build performance test Docker image
           command: make -C performance build
