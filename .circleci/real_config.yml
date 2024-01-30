@@ -2168,6 +2168,21 @@ jobs:
           command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
 
       # TODO take a snapshot on main (and wait for results or do we not care?)
+      # Only take a snapshot for migrations and main
+      - run:
+          name: Take and wait for RDS snapshot, only on main and when migrations were applied
+          commnad: |
+            COMMIT=$(git log -1 --pretty=format:%h)
+            aws rds create-db-snapshot \
+              --region "us-west-2" \
+              --db-instance-identifier "$PERF_DB_AWS_NAME" \
+              --db-snapshot-identifier "ci-snapshot-commit-$COMMIT" \
+              --tags "Key=ci-snapshot"
+            aws rds wait db-snapshot-completed \
+              --region "us-west-2" \
+              --db-instance-identifier "$PERF_DB_AWS_NAME" \
+              --db-snapshot-identifier "ci-snapshot-commit-$COMMIT"
+            # TODO wait ???
 
       - run:
           name: Build performance test Docker image
