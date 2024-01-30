@@ -91,6 +91,7 @@
     ]
   },
   "devDependencies": {
+    "@hpe.com/vite-plugin-svg-to-jsx": "^1.0.4",
     "@playwright/test": "^1.40.0",
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
@@ -130,11 +131,8 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-sort-keys-fix": "^1.1.2",
-    "estree-util-to-js": "^2.0.0",
     "express": "^4.18.2",
     "fast-check": "^3.14.0",
-    "hast-util-from-html": "^2.0.1",
-    "hast-util-to-estree": "^3.1.0",
     "jsdom": "^16.7.0",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
@@ -147,7 +145,6 @@
     "stylelint-config-standard-scss": "^11.1.0",
     "stylelint-order": "^6.0.3",
     "stylelint-scss": "^5.3.1",
-    "svgo": "^3.0.4",
     "typescript": "^5.3.2",
     "unimported": "^1.31.1",
     "vite": "^5.0.11",
