@@ -57,7 +57,7 @@ type IDTokenClaims struct {
 var errNotProvisioned = echo.NewHTTPError(http.StatusNotFound, "user has not been provisioned")
 
 // New initiates an OIDC Service.
-func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
+func New(db *db.PgDB, config config.OIDCConfig, pachEnabled bool) (*Service, error) {
 	ctx := context.Background()
 
 	provider, err := oidc.NewProvider(ctx, config.IDPSSOURL)
@@ -80,6 +80,11 @@ func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
 		return nil, fmt.Errorf("client secret has not been set")
 	}
 
+	scope := []string{oidc.ScopeOpenID, "profile", "email", "groups"}
+	if pachEnabled {
+		scope = append(scope, "audience:server:client_id:pachd")
+	}
+
 	return &Service{
 		config:   config,
 		db:       db,
@@ -89,7 +94,7 @@ func New(db *db.PgDB, config config.OIDCConfig) (*Service, error) {
 			ClientSecret: secret,
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  ru.String(),
-			Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+			Scopes:       scope,
 		},
 	}, nil
 }

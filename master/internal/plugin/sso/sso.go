@@ -132,7 +132,13 @@ func RegisterAPIHandlers(config *config.Config, db *db.PgDB, echo *echo.Echo) er
 
 	if config.OIDC.Enabled {
 		log.Info("OIDC is enabled")
-		oidcService, err := oidc.New(db, config.OIDC)
+		var pachEnabled bool
+		if config.Integrations.Pachyderm.Address != "" {
+			pachEnabled = true
+		} else {
+			pachEnabled = false
+		}
+		oidcService, err := oidc.New(db, config.OIDC, pachEnabled)
 		if err != nil {
 			return errors.Wrap(err, "error creating OIDC service")
 		}
