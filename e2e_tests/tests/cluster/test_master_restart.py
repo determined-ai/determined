@@ -275,8 +275,8 @@ def _test_exp_restart_allocations_start_time(managed_cluster_restarts: Cluster) 
     exp.wait_for_experiment_state(exp_id, EXP_STATE.CANCELED, max_wait_secs=30)
 
     resp = bindings.get_GetJobQueueStats(sess).to_json()
-    for rp in resp.get("results"):
-        for period in rp.get("aggregates"):
+    for rp in resp.get("results", []):
+        for period in rp.get("aggregates", []):
             assert period["seconds"] <= EXPECTED_MAX_AVG_ALLOCATION_QUEUED_SECONDS
 
 
