@@ -118,7 +118,7 @@ commands:
   skip-if-docs-only:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: git fetch upstream
+      - run: tools/scripts/retry.sh git fetch upstream
       - run:
           name: check for docs-only changes
           command: |
@@ -134,7 +134,7 @@ commands:
   skip-if-not-docs:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: git fetch upstream
+      - run: tools/scripts/retry.sh git fetch upstream
       - run:
           name: check for any docs changes
           command: |
@@ -150,7 +150,7 @@ commands:
 
   skip-if-webui-only:
     steps:
-      - run: git fetch upstream
+      - run: tools/scripts/retry.sh git fetch upstream
       - run:
           name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
@@ -166,7 +166,7 @@ commands:
   skip-if-not-shared:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: git fetch upstream
+      - run: tools/scripts/retry.sh git fetch upstream
       - run:
           name: check for shared changes
           command: |
@@ -182,7 +182,7 @@ commands:
 
   skip-if-github-only:
     steps:
-      - run: git fetch upstream
+      - run: tools/scripts/retry.sh git fetch upstream
       - run:
           name: check for github-only changes
           command: |
