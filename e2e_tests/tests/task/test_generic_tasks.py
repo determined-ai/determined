@@ -1,14 +1,14 @@
-import pytest
 import subprocess
+from pathlib import Path
+
+import pytest
+
 from determined.cli import ntsc
 from determined.common import context, util
 from determined.common.api import bindings
-
-from pathlib import Path
-
-
-from tests import config as conf
 from tests import api_utils
+from tests import config as conf
+
 
 @pytest.mark.e2e_cpu
 def test_create_generic_task() -> None:
