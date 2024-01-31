@@ -2144,7 +2144,9 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
     steps:
-      # TODO add a queue on main.
+      - queue/until_front_of_line:
+          only-on-branch: main
+          time: "180" # Wait two hours at most. Adjust this over time.
       - checkout
       - attach_workspace:
           at: .
@@ -2152,8 +2154,8 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
       - run:
-          name: Install upload deps # TODO retry this
-          command: pip install requests determined psycopg2-binary
+          name: Install upload deps
+          command: tools/scripts/retry.sh pip install requests determined psycopg2-binary
 
       - when:
           condition: <<parameters.deploy-db>>
@@ -2274,8 +2276,15 @@ jobs:
                     --region="us-west-2" \
                     --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
                     --skip-final-snapshot
-                # TODO future ticket, we need a terminator type thing in case clean up fails.
-                # TODO run slack failure message
+
+      - slack/status:
+          fail_only: false
+          # TODO uncomment these lines.
+          #fail_only: false
+          #only_for_branches: main
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
+
   deploy:
     parameters:
       compute-agent-instance-type:
@@ -2898,14 +2907,18 @@ workflows:
 
       - test-perf:
           name: test-perf
-          take-snapshot: false # FLIP THESE
-          deploy-db: true
+          take-snapshot: true
+          deploy-db: false
           requires:
             - build-go
           context:
             - perf-tests
             - aws
-          # TODO add parameters, and add this to long running and add a brnach filter.
+          filters:
+            branches:
+              only:
+                - perf_tests_in_ci # Remove this
+                - main
 
       - deploy:
           name: deploy-latest-master-cluster
@@ -3279,6 +3292,22 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+
+      # Perf tests.
+      - request-perf-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-perf:
+          name: test-perf
+          take-snapshot: false
+          deploy-db: true
+          requires:
+            - build-go
+          context:
+            - perf-tests
+            - aws
+          filters: *upstream-feature-branch
 
       # Nightly tests
       - request-gpu-nightly:
