@@ -477,14 +477,13 @@ func (e *internalExperiment) stop() error {
 
 	// May be no checkpoints to gc, if so skip
 	if len(checkpoints) > 0 {
-		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		go func() {
-			err := runCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
-				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
+			if err := runCheckpointGCForCheckpoints(
+				e.rm, e.db, e.JobID, e.StartTime, taskSpec,
+				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints,
+				[]string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
-			)
-			if err != nil {
+			); err != nil {
 				e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
 			}
 		}()

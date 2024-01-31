@@ -98,6 +98,12 @@ def _make_v2_context(
             if tensorboard_mode == core.TensorboardMode.AUTO:
                 tbd_writer = tensorboard.get_metric_writer()
 
+        run_prepare_response = core._run_prepare(
+            distributed,
+            session,
+            info.trial.trial_id,
+            checkpoint_storage,
+        )
         train = core.TrainContext(
             session,
             info.trial.trial_id,
@@ -135,6 +141,7 @@ def _make_v2_context(
             None,  # No allocations when off-cluster.
             tensorboard_mode,
             tensorboard_manager,
+            run_prepare_response.storageId,
         )
 
         # At present, detached mode does not support preemption.

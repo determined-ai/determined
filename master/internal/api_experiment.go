@@ -487,15 +487,14 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return err
 			}
 			if len(checkpoints) > 0 {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-					true, agentUserGroup, userModel, nil,
-				)
-			}
-			if err != nil {
-				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-				return err
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+					&taskSpec, exp.ID, exp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+				); err != nil {
+					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+					return err
+				}
 			}
 
 			// delete jobs per experiment
@@ -1295,14 +1294,12 @@ func (a *apiServer) PatchExperiment(
 				Username: ownerFullUser.Username,
 			}
 
-			taskID := model.NewTaskID()
 			go func() {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
-					agentUserGroup, user, nil,
-				)
-				if err != nil {
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, modelExp.JobID, modelExp.StartTime,
+					&taskSpec, modelExp.ID, modelExp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
+				); err != nil {
 					log.WithError(err).Error("failed to GC checkpoints in patch experiment")
 				}
 			}()
@@ -3044,7 +3041,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 	var uuidList []uuid.UUID
 	err = runCheckpointGCTask(
 		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
-		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
+		exp.Config, nil, uuidList, nil, true, agentUserGroup, curUser,
 		nil,
 	)
 	if err != nil {
