@@ -27,21 +27,26 @@ func TestToRun(t *testing.T) {
 		LastActivity:          ptrs.Ptr(time.Now()),
 	}
 
-	expected := &Run{
+	expectedRun := &Run{
 		ID:                    trial.ID,
-		RequestID:             trial.RequestID,
 		ExperimentID:          trial.ExperimentID,
 		State:                 trial.State,
 		StartTime:             trial.StartTime,
 		EndTime:               trial.EndTime,
 		HParams:               trial.HParams,
 		WarmStartCheckpointID: trial.WarmStartCheckpointID,
-		Seed:                  trial.Seed,
 		TotalBatches:          trial.TotalBatches,
 		ExternalRunID:         trial.ExternalTrialID,
 		RestartID:             19,
 		LastActivity:          trial.LastActivity,
 	}
+	expectedTrial := &TrialV2{
+		RunID:     trial.ID,
+		RequestID: trial.RequestID,
+		Seed:      trial.Seed,
+	}
 
-	require.Equal(t, expected, trial.ToRun())
+	actualRun, actualTrial := trial.ToRunAndTrialV2()
+	require.Equal(t, expectedRun, actualRun)
+	require.Equal(t, expectedTrial, actualTrial)
 }

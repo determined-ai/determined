@@ -465,23 +465,37 @@ type Trial struct {
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 
-// ToRun converts a trial to a run.
-func (t *Trial) ToRun() *Run {
-	return &Run{
+// ToRunAndTrialV2 converts a trial to a run.
+func (t *Trial) ToRunAndTrialV2() (*Run, *TrialV2) {
+	r := &Run{
 		ID:                    t.ID,
-		RequestID:             t.RequestID,
 		ExperimentID:          t.ExperimentID,
 		State:                 t.State,
 		StartTime:             t.StartTime,
 		EndTime:               t.EndTime,
 		HParams:               t.HParams,
 		WarmStartCheckpointID: t.WarmStartCheckpointID,
-		Seed:                  t.Seed,
 		TotalBatches:          t.TotalBatches,
 		ExternalRunID:         t.ExternalTrialID,
 		RestartID:             t.RunID,
 		LastActivity:          t.LastActivity,
 	}
+	v2 := &TrialV2{
+		RunID:     t.ID,
+		RequestID: t.RequestID,
+		Seed:      t.Seed,
+	}
+
+	return r, v2
+}
+
+// TrialV2 represents a row from the `trials_v2` table.
+type TrialV2 struct {
+	bun.BaseModel `bun:"table:trials_v2"`
+
+	RunID     int        `bun:"run_id"`
+	RequestID *RequestID `bun:"request_id"`
+	Seed      int64      `bun:"seed"`
 }
 
 // Run represents a row from the `runs` table.
@@ -489,26 +503,24 @@ type Run struct {
 	bun.BaseModel `bun:"table:runs"`
 
 	ID                    int            `db:"id" bun:",pk,autoincrement"`
-	RequestID             *RequestID     `db:"request_id"`
 	ExperimentID          int            `db:"experiment_id"`
 	State                 State          `db:"state"`
 	StartTime             time.Time      `db:"start_time"`
 	EndTime               *time.Time     `db:"end_time"`
 	HParams               map[string]any `db:"hparams" bun:"hparams"`
 	WarmStartCheckpointID *int           `db:"warm_start_checkpoint_id"`
-	Seed                  int64          `db:"seed"`
 	TotalBatches          int            `db:"total_batches"`
 	ExternalRunID         *string        `db:"external_trial_id"`
 	RestartID             int            `db:"restart_id"`
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 
-// TrialTaskID represents a row from the `trial_id_task_id` table.
-type TrialTaskID struct {
-	bun.BaseModel `bun:"table:trial_id_task_id"`
+// RunTaskID represents a row from the `run_id_task_id` table.
+type RunTaskID struct {
+	bun.BaseModel `bun:"table:run_id_task_id"`
 
-	TrialID int
-	TaskID  TaskID
+	RunID  int
+	TaskID TaskID
 }
 
 // NewTrial creates a new trial in the specified state.  Note that the trial ID
@@ -619,6 +631,11 @@ const (
 	StepsCompletedMetadataKey = "steps_completed"
 )
 
+// StorageBackendID is the ID for the storage backend. Storage backend ID isn't backfilled
+// so checkpoints older than 0.27.1 won't have this. There are also some cases where a user
+// can create a checkpoint without this so don't rely on this always being set.
+type StorageBackendID int
+
 // CheckpointV2 represents a row from the `checkpoints_v2` table.
 type CheckpointV2 struct {
 	bun.BaseModel `bun:"table:checkpoints_v2"`
@@ -631,6 +648,16 @@ type CheckpointV2 struct {
 	Resources     map[string]int64       `db:"resources"`
 	Metadata      map[string]interface{} `db:"metadata"`
 	Size          int64                  `db:"size"`
+	// Can be nil for checkpoints older than this feature.
+	// Also can be nil when a user creates a checkpoint without a checkpoint storage config.
+	StorageID *StorageBackendID `db:"storage_id"`
+}
+
+// RunCheckpoints represents a row from the `run_checkpoints` table.
+type RunCheckpoints struct {
+	bun.BaseModel `bun:"table:run_checkpoints"`
+	RunID         int       `bun:"run_id"`
+	CheckpointID  uuid.UUID `bun:"checkpoint_id"`
 }
 
 // CheckpointTrainingMetadata is a substruct of checkpoints encapsulating training specific
@@ -651,14 +678,15 @@ type Checkpoint struct {
 	bun.BaseModel `bun:"table:checkpoints_view"`
 	ID            int `db:"id"`
 
-	UUID         *uuid.UUID    `db:"uuid"`
-	TaskID       *TaskID       `db:"task_id"`
-	AllocationID *AllocationID `db:"allocation_id"`
-	ReportTime   time.Time     `db:"report_time"`
-	State        State         `db:"state"`
-	Resources    JSONObj       `db:"resources"`
-	Metadata     JSONObj       `db:"metadata"`
-	Size         int64         `db:"size"`
+	UUID         *uuid.UUID        `db:"uuid"`
+	TaskID       *TaskID           `db:"task_id"`
+	AllocationID *AllocationID     `db:"allocation_id"`
+	ReportTime   time.Time         `db:"report_time"`
+	State        State             `db:"state"`
+	Resources    JSONObj           `db:"resources"`
+	Metadata     JSONObj           `db:"metadata"`
+	Size         int64             `db:"size"`
+	StorageID    *StorageBackendID `db:"storage_id"`
 
 	CheckpointTrainingMetadata
 }
