@@ -318,7 +318,7 @@ func TestPgDB_GroupCheckpointUUIDsByExperimentID(t *testing.T) {
 	user := RequireMockUser(t, db)
 	for i := 0; i < 3; i++ {
 		exp := RequireMockExperiment(t, db, user)
-		_, tk := RequireMockTrial(t, db, exp)
+		tr, tk := RequireMockTrial(t, db, exp)
 
 		var ids []uuid.UUID
 		for j := 0; j < 3; j++ {
@@ -326,7 +326,7 @@ func TestPgDB_GroupCheckpointUUIDsByExperimentID(t *testing.T) {
 			err := AddCheckpointMetadata(context.TODO(), &model.CheckpointV2{
 				UUID:   id,
 				TaskID: tk.TaskID,
-			})
+			}, tr.ID)
 			require.NoError(t, err)
 			ids = append(ids, id)
 		}

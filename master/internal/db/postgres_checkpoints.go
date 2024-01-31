@@ -153,13 +153,10 @@ UPDATE runs SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
 		COALESCE(SUM(size) FILTER (WHERE state != 'DELETED'), 0) AS size,
 		COUNT(*) FILTER (WHERE state != 'DELETED') AS count
 	FROM checkpoints_v2
-	JOIN run_id_task_id tt ON tt.task_id = checkpoints_v2.task_id
-	WHERE
-		run_id IN (
-			SELECT tt.run_id FROM checkpoints_v2
-			LEFT JOIN run_id_task_id tt ON tt.task_id = checkpoints_v2.task_id
-			WHERE uuid IN (?)
-		)
+    JOIN run_checkpoints rc ON rc.checkpoint_id = checkpoints_v2.uuid
+	WHERE rc.run_id IN (
+		SELECT run_id FROM run_checkpoints WHERE checkpoint_id IN (?)
+  	)
 	GROUP BY run_id
 ) sub
 WHERE runs.id = sub.run_id
