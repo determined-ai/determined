@@ -51,7 +51,7 @@ parameters:
     default: v1dev25
   gke-version:
     type: string
-    default: "1.25.10"
+    default: "1.29.0"
   master-build-resource-class:
     type: string
     default: xlarge
