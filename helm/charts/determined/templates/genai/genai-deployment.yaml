@@ -26,6 +26,8 @@ spec:
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
         image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
         imagePullPolicy: "Always"
+        # image: lore_backend:latest
+        # imagePullPolicy: "Never"
         env:
           - name: DET_MASTER
             value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
@@ -43,10 +45,14 @@ spec:
             value: {{ $tag }}
           - name: K8S_SHARED_PVC_NAME
             value: {{ include "genai.PVCName" . }}
+          - name: RESOURCE_POOL_EXTRA_METADATA_PATH
+            value: /run/determined/workdir/resource_pool_metadata.yaml
         volumeMounts:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
             readOnly: false
+          - name: genai-resource-pool-metadata
+            mountPath: /run/determined/workdir
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}
@@ -72,4 +78,7 @@ spec:
         - name: genai-pvc-storage
           persistentVolumeClaim:
             claimName: {{ include "genai.PVCName" . }}
+        - name: genai-resource-pool-metadata
+          configMap:
+            name: genai-resource-pool-metadata-{{ .Release.Name }}
 {{ end }}
