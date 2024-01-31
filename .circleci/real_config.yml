@@ -2146,7 +2146,7 @@ jobs:
     steps:
       - queue/until_front_of_line:
           only-on-branch: main
-          time: "180" # Wait two hours at most. Adjust this over time.
+          time: "120" # Wait two hours at most. Adjust this over time.
       - checkout
       - attach_workspace:
           at: .
@@ -2915,7 +2915,6 @@ workflows:
           filters:
             branches:
               only:
-                - perf_tests_in_ci # Remove this
                 - main
 
       - deploy:
