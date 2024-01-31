@@ -890,7 +890,7 @@ func (db *PgDB) DeleteExperiments(ctx context.Context, ids []int) error {
 		if _, err := tx.NewDelete().Model(&model.Experiment{}).
 			Where("id IN (?)", bun.In(ids)).
 			Exec(ctx); err != nil {
-			return fmt.Errorf("deleting experiments table: %w", err)
+			return fmt.Errorf("deleting from experiments table: %w", err)
 		}
 
 		return nil
