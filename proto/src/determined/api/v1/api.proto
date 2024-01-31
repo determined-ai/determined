@@ -760,8 +760,8 @@ service Determined {
 
   // Start syncing and prepare to be able to report to a run.
   // This should be called once per task that will report to the run.
-  rpc RunPrepareForReport(RunPrepareForReportRequest)
-      returns (RunPrepareForReportResponse) {
+  rpc RunPrepareForReporting(RunPrepareForReportingRequest)
+      returns (RunPrepareForReportingResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/start"
       body: "*"

@@ -204,13 +204,13 @@ func TestCheckpointReturned(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	reportResponse, err := api.RunPrepareForReport(ctx, &apiv1.RunPrepareForReportRequest{
+	reportResponse, err := api.RunPrepareForReporting(ctx, &apiv1.RunPrepareForReportingRequest{
 		RunId: int32(trial.ID),
 	})
 	require.NoError(t, err)
 	require.Nil(t, reportResponse.StorageId)
 
-	reportResponse, err = api.RunPrepareForReport(ctx, &apiv1.RunPrepareForReportRequest{
+	reportResponse, err = api.RunPrepareForReporting(ctx, &apiv1.RunPrepareForReportingRequest{
 		RunId:             int32(trial.ID),
 		CheckpointStorage: checkpointStorage,
 	})
@@ -244,7 +244,7 @@ func TestCheckpointReturned(t *testing.T) {
 	checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
 		TrialId:           wrapperspb.Int32(int32(trial.ID)),
 		ExperimentId:      wrapperspb.Int32(int32(trial.ExperimentID)),
-		ExperimentConfig:  getExperimentRes.Experiment.Config,
+		ExperimentConfig:  getExperimentRes.Config,
 		TrainingMetrics:   &commonv1.Metrics{},
 		ValidationMetrics: &commonv1.Metrics{},
 	}

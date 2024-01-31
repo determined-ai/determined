@@ -333,16 +333,16 @@ def _run_prepare(
     sess: api.Session,
     run_id: int,
     checkpoint_storage: Optional[Union[str, Dict[str, Any]]],
-) -> bindings.v1RunPrepareForReportResponse:
+) -> bindings.v1RunPrepareForReportingResponse:
     cs = None
     if isinstance(checkpoint_storage, str):
         cs = shared._shortcut_to_config(checkpoint_storage)
     elif isinstance(checkpoint_storage, dict):
         cs = checkpoint_storage
 
-    return bindings.post_RunPrepareForReport(
+    return bindings.post_RunPrepareForReporting(
         sess,
-        body=bindings.v1RunPrepareForReportRequest(
+        body=bindings.v1RunPrepareForReportingRequest(
             runId=run_id,
             checkpointStorage=cs,
         ),

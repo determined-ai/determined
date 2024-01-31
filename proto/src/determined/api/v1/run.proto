@@ -7,7 +7,7 @@ import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Request to prepare to start reporting to a run.
-message RunPrepareForReportRequest {
+message RunPrepareForReportingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "run_id" ] }
   };
@@ -17,7 +17,7 @@ message RunPrepareForReportRequest {
   optional google.protobuf.Struct checkpoint_storage = 2;
 }
 // Response to prepare to start reporting to a run.
-message RunPrepareForReportResponse {
+message RunPrepareForReportingResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [] }
   };

@@ -12,9 +12,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-func (a *apiServer) RunPrepareForReport(
-	ctx context.Context, req *apiv1.RunPrepareForReportRequest,
-) (*apiv1.RunPrepareForReportResponse, error) {
+func (a *apiServer) RunPrepareForReporting(
+	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
+) (*apiv1.RunPrepareForReportingResponse, error) {
 	// TODO(runs) run specific RBAC.
 	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
@@ -39,7 +39,7 @@ func (a *apiServer) RunPrepareForReport(
 		storageID = ptrs.Ptr(int32(id))
 	}
 
-	return &apiv1.RunPrepareForReportResponse{
+	return &apiv1.RunPrepareForReportingResponse{
 		StorageId: storageID,
 	}, nil
 }

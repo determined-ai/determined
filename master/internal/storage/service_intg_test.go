@@ -291,7 +291,7 @@ func TestGroupCheckpointsByStorageIDs(t *testing.T) {
 
 	user := db.RequireMockUser(t, db.SingleDB())
 	exp := db.RequireMockExperiment(t, db.SingleDB(), user)
-	_, task := db.RequireMockTrial(t, db.SingleDB(), exp)
+	tr, task := db.RequireMockTrial(t, db.SingleDB(), exp)
 	allocation := db.RequireMockAllocation(t, db.SingleDB(), task.TaskID)
 
 	storageID0, err := AddBackend(ctx, &expconf.CheckpointStorageConfig{
@@ -308,19 +308,19 @@ func TestGroupCheckpointsByStorageIDs(t *testing.T) {
 	require.NoError(t, err)
 
 	checkpoint0 := db.MockModelCheckpoint(uuid.New(), allocation)
-	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint0))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint0, tr.ID))
 
 	checkpoint1 := db.MockModelCheckpoint(uuid.New(), allocation)
 	checkpoint1.StorageID = &storageID0
-	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint1))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint1, tr.ID))
 
 	checkpoint2 := db.MockModelCheckpoint(uuid.New(), allocation)
 	checkpoint2.StorageID = &storageID1
-	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint2))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint2, tr.ID))
 
 	checkpoint3 := db.MockModelCheckpoint(uuid.New(), allocation)
 	checkpoint3.StorageID = &storageID1
-	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint3))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, &checkpoint3, tr.ID))
 
 	actual, err := GroupCheckpoints(ctx, []uuid.UUID{
 		checkpoint0.UUID, checkpoint1.UUID, checkpoint2.UUID, checkpoint3.UUID,
