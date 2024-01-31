@@ -67,6 +67,7 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 	)
 	var checkpointsJSON []map[string]any
 	for _, t := range checkpointJSONDataRow {
+		t.CheckpointData["storage_id"] = nil // View now has changed with storage_id.
 		checkpointsJSON = append(checkpointsJSON, t.CheckpointData)
 	}
 
