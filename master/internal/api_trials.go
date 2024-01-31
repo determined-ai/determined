@@ -1385,9 +1385,22 @@ func (a *apiServer) ReportCheckpoint(
 	default:
 	}
 
-	if err := db.AddCheckpointMetadata(ctx, c); err != nil {
+	task, err := db.TaskByID(ctx, model.TaskID(req.Checkpoint.TaskId))
+	if err != nil {
+		return nil, fmt.Errorf("looking up task to decide if trial: %w", err)
+	}
+	if task.TaskType != model.TaskTypeTrial {
+		return nil, fmt.Errorf("can only report checkpoints on trial's tasks")
+	}
+	trial, err := db.TrialByTaskID(ctx, task.TaskID)
+	if err != nil {
+		return nil, fmt.Errorf("getting trial by task ID: %w", err)
+	}
+
+	if err := db.AddCheckpointMetadata(ctx, c, trial.ID); err != nil {
 		return nil, err
 	}
+
 	return &apiv1.ReportCheckpointResponse{}, nil
 }
 

@@ -116,7 +116,7 @@ func testGetCheckpoint(
 					"determined_version": "1.0.0",
 				},
 			}
-			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 
 			assert.NilError(t, err, "failed to add checkpoint meta")
 
@@ -179,7 +179,7 @@ func testGetExperimentCheckpoints(
 			},
 		}
 
-		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 
 		trialMetrics := trialv1.TrialMetrics{
@@ -299,7 +299,7 @@ func testGetTrialCheckpoints(
 				"determined_version": "1.0.0",
 			},
 		}
-		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 	}
 

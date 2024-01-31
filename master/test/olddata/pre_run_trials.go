@@ -17,7 +17,8 @@ const migrationBeforeRuns = 20231031103358
 
 // PreRunTrialsData holds the migration and useful data for pre run trials test.
 type PreRunTrialsData struct {
-	PreRunTrialsTable []map[string]any
+	PreRunTrialsTable     []map[string]any
+	PreRunCheckpointsView []map[string]any
 }
 
 // MigrateToPreRunTrialsData sets the database to where trials were migrated.
@@ -33,7 +34,17 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 	SELECT to_jsonb(trials.*) AS trial_data FROM trials ORDER BY id;`,
 	}
 
-	mustMigrateWithExtras(t, pgdb, migrationsPath, addTrialData, saveTrialDataAsJSONTable)
+	saveCheckpointsViewAsJSONTable := migrationExtra{
+		When: migrationBeforeRuns,
+		SQL: `CREATE TABLE checkpoints_view_json_data AS
+	SELECT to_jsonb(checkpoints_view.*) AS checkpoint_data FROM checkpoints_view ORDER BY id;`,
+	}
+
+	mustMigrateWithExtras(t, pgdb, migrationsPath,
+		addTrialData,
+		saveTrialDataAsJSONTable,
+		saveCheckpointsViewAsJSONTable,
+	)
 
 	var trialJSONDataRow []struct {
 		TrialData map[string]any
@@ -42,13 +53,25 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 		db.Bun().NewSelect().Table("trial_json_data").Scan(context.TODO(), &trialJSONDataRow),
 		"getting trial json data",
 	)
-
 	var trialsJSON []map[string]any
 	for _, t := range trialJSONDataRow {
 		trialsJSON = append(trialsJSON, t.TrialData)
 	}
 
+	var checkpointJSONDataRow []struct {
+		CheckpointData map[string]any
+	}
+	require.NoError(t, db.Bun().NewSelect().Table("checkpoints_view_json_data").
+		Scan(context.TODO(), &checkpointJSONDataRow),
+		"getting checkpoint json data",
+	)
+	var checkpointsJSON []map[string]any
+	for _, t := range checkpointJSONDataRow {
+		checkpointsJSON = append(checkpointsJSON, t.CheckpointData)
+	}
+
 	return PreRunTrialsData{
-		PreRunTrialsTable: trialsJSON,
+		PreRunTrialsTable:     trialsJSON,
+		PreRunCheckpointsView: checkpointsJSON,
 	}
 }
