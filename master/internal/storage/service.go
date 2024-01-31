@@ -9,6 +9,7 @@ import (
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/checkpoints"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -180,7 +181,7 @@ type CheckpointsGroup struct {
 func GroupCheckpoints(
 	ctx context.Context, uuids []uuid.UUID,
 ) ([]*CheckpointsGroup, error) {
-	checkpoints, err := db.SingleDB().CheckpointByUUIDs(uuids)
+	checkpoints, err := checkpoints.CheckpointByUUIDs(ctx, uuids)
 	if err != nil {
 		return nil, err
 	}

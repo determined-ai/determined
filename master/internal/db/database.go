@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
@@ -39,10 +38,6 @@ type DB interface {
 	ExperimentTrialIDs(expID int) ([]int, error)
 	ExperimentNumSteps(id int) (int64, error)
 	ExperimentModelDefinitionRaw(id int) ([]byte, error)
-	ExperimentCheckpointsToGCRaw(
-		id int,
-		experimentBest, trialBest, trialLatest int,
-	) ([]uuid.UUID, error)
 	UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunnerMetadata, newRunID, newRestarts int) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error
@@ -51,7 +46,6 @@ type DB interface {
 	) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error)
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
-	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
 	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
 	PeriodicTelemetryInfo() ([]byte, error)
 	TrialState(trialID int) (model.State, error)

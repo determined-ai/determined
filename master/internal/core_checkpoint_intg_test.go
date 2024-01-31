@@ -36,7 +36,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -270,7 +269,7 @@ func TestGetCheckpointStorageConfig(t *testing.T) {
 	addMockCheckpointDB(t, api.m.db, checkpointID, S3TestBucket)
 
 	// Fallback to expconf when no storageID.
-	conf, err := api.m.getCheckpointStorageConfig(checkpointID)
+	conf, err := api.m.getCheckpointStorageConfig(ctx, checkpointID)
 	require.NoError(t, err)
 	require.Equal(t, schemas.WithDefaults(&expconf.CheckpointStorageConfig{
 		RawS3Config: &expconf.S3ConfigV0{
@@ -294,7 +293,7 @@ func TestGetCheckpointStorageConfig(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
-	conf, err = api.m.getCheckpointStorageConfig(checkpointID)
+	conf, err = api.m.getCheckpointStorageConfig(ctx, checkpointID)
 	require.NoError(t, err)
 	require.Equal(t, expected, conf)
 }
@@ -339,11 +338,10 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 	}
 }
 
-func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID,
+func RegisterCheckpointAsModelVersion(ctx context.Context, t *testing.T, pgDB *db.PgDB, ckptID uuid.UUID,
 ) *modelv1.ModelVersion {
 	require.NoError(t, etc.SetRootPath("../../master/static/srv"))
-	var retCkpt checkpointv1.Checkpoint
-	err := pgDB.QueryProto("get_checkpoint", &retCkpt, ckptID.String())
+	retCkpt, err := db.GetCheckpoint(ctx, ckptID.String())
 	require.NoError(t, err)
 	user := db.RequireMockUser(t, pgDB)
 	// Insert a model.
@@ -357,32 +355,27 @@ func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.U
 		UserID:          user.ID,
 		WorkspaceID:     1,
 	}
-	var pmdl modelv1.Model
 	emptyMetadata := []byte(`{}`)
 	mdlNotes := "some notes"
-	err = pgDB.QueryProto(
-		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
-	)
+	pmdl, err := db.InsertModel(ctx, mdl.Name, mdl.Description, emptyMetadata,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID)
 	require.NoError(t, err)
 
 	// Register checkpoint as a model version.
 	expected := &modelv1.ModelVersion{
-		Model:      &pmdl,
-		Checkpoint: &retCkpt,
+		Model:      pmdl,
+		Checkpoint: retCkpt,
 		Name:       "some name",
 		Comment:    "empty",
 		Username:   user.Username,
 		Labels:     []string{"some label"},
 		Notes:      "some notes",
 	}
-	var mv modelv1.ModelVersion
-	err = pgDB.QueryProto(
-		"insert_model_version", &mv, pmdl.Id, ckptID, expected.Name, expected.Comment,
+	mv, err := db.InsertModelVersion(ctx, pmdl.Id, ckptID.String(), expected.Name, expected.Comment,
 		emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
 	)
 	require.NoError(t, err)
-	return &mv
+	return mv
 }
 
 func TestAuthZCheckpointsEcho(t *testing.T) {
@@ -403,7 +396,7 @@ func TestAuthZCheckpointsEcho(t *testing.T) {
 		api.m.getCheckpoint(ctx))
 
 	addMockCheckpointDB(t, api.m.db, checkpointUUID, S3TestBucket)
-	RegisterCheckpointAsModelVersion(t, api.m.db, checkpointUUID)
+	RegisterCheckpointAsModelVersion(context.TODO(), t, api.m.db, checkpointUUID)
 
 	authZExp.On("CanGetExperiment", mock.Anything, curUser,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()

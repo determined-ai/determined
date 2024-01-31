@@ -8,9 +8,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"reflect"
-	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -27,190 +24,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
-
-func TestPgDB_ExperimentCheckpointsToGCRawModelRegistry(t *testing.T) {
-	type args struct {
-		id             int
-		experimentBest int
-		trialBest      int
-		trialLatest    int
-	}
-
-	ctx := context.Background()
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-
-	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-
-	user := RequireMockUser(t, db)
-	exp := RequireMockExperiment(t, db, user)
-	tr, task := RequireMockTrial(t, db, exp)
-	a := RequireMockAllocation(t, db, task.TaskID)
-	length := 4
-	var expectedCheckpoints []uuid.UUID
-	for i := 1; i <= length; i++ {
-		ckptUUID := uuid.New()
-		ckpt := MockModelCheckpoint(ckptUUID, a, WithSteps(i))
-		err := AddCheckpointMetadata(ctx, &ckpt, tr.ID)
-		require.NoError(t, err)
-		err = AddTrialValidationMetrics(ctx, ckptUUID, tr, int32(i), int32(i+5), db)
-		require.NoError(t, err)
-
-		if i == 2 { // add this checkpoint to the model registry
-			err = addCheckpointToModelRegistry(db, ckptUUID, user)
-			require.NoError(t, err)
-		} else {
-			expectedCheckpoints = append(expectedCheckpoints, ckptUUID)
-		}
-	}
-
-	tests := []struct {
-		name    string
-		fields  PgDB
-		args    args
-		want    []uuid.UUID
-		wantErr bool
-	}{
-		{"test-000", *db, args{exp.ID, 0, 0, 0}, expectedCheckpoints, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.fields.ExperimentCheckpointsToGCRaw(tt.args.id, tt.args.experimentBest,
-				tt.args.trialBest, tt.args.trialLatest)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PgDB.ExperimentCheckpointsToGCRaw() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			sort.Slice(got, func(i, j int) bool {
-				return got[i].String() < got[j].String()
-			})
-			sort.Slice(tt.want, func(i, j int) bool {
-				return tt.want[i].String() < tt.want[j].String()
-			})
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("%v PgDB.ExperimentCheckpointsToGCRaw() = %v, want %v", tt.args.id, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestPgDB_ExperimentCheckpointsToGCRaw(t *testing.T) {
-	type args struct {
-		id             int
-		experimentBest int
-		trialBest      int
-		trialLatest    int
-	}
-
-	ctx := context.Background()
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-
-	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-
-	user := RequireMockUser(t, db)
-	exp := RequireMockExperiment(t, db, user)
-	tr, task := RequireMockTrial(t, db, exp)
-	a := RequireMockAllocation(t, db, task.TaskID)
-	length := 4
-	allCheckpoints := make([]uuid.UUID, length)
-	for i := 1; i <= length; i++ {
-		ckptUUID := uuid.New()
-		ckpt := MockModelCheckpoint(ckptUUID, a, WithSteps(i))
-		err := AddCheckpointMetadata(ctx, &ckpt, tr.ID)
-		require.NoError(t, err)
-		err = AddTrialValidationMetrics(ctx, ckptUUID, tr, int32(i), int32(i+5), db)
-		require.NoError(t, err)
-		allCheckpoints[i-1] = ckptUUID
-	}
-
-	allCheckpointsExpFirst := append([]uuid.UUID(nil), allCheckpoints[1:]...)
-	allCheckpointsExpLast := append([]uuid.UUID(nil), allCheckpoints[:length-1]...)
-	allCheckpointsExpFirstLast := append([]uuid.UUID(nil), allCheckpoints[1:length-1]...)
-
-	tests := []struct {
-		name    string
-		fields  PgDB
-		args    args
-		want    []uuid.UUID
-		wantErr bool
-	}{
-		{"test-000", *db, args{exp.ID, 0, 0, 0}, allCheckpoints, false},
-		{"test-001", *db, args{exp.ID, 0, 0, 1}, allCheckpointsExpLast, false},
-		{"test-010", *db, args{exp.ID, 0, 1, 0}, allCheckpointsExpFirst, false},
-		{"test-011", *db, args{exp.ID, 0, 1, 1}, allCheckpointsExpFirstLast, false},
-		{"test-100", *db, args{exp.ID, 1, 0, 0}, allCheckpointsExpFirst, false},
-		{"test-101", *db, args{exp.ID, 1, 0, 1}, allCheckpointsExpFirstLast, false},
-		{"test-110", *db, args{exp.ID, 1, 1, 0}, allCheckpointsExpFirst, false},
-		{"test-111", *db, args{exp.ID, 1, 1, 1}, allCheckpointsExpFirstLast, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.fields.ExperimentCheckpointsToGCRaw(tt.args.id,
-				tt.args.experimentBest, tt.args.trialBest, tt.args.trialLatest)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PgDB.ExperimentCheckpointsToGCRaw() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			sort.Slice(got, func(i, j int) bool {
-				return got[i].String() < got[j].String()
-			})
-			sort.Slice(tt.want, func(i, j int) bool {
-				return tt.want[i].String() < tt.want[j].String()
-			})
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("%v PgDB.ExperimentCheckpointsToGCRaw() = %v, want %v", tt.args.id, got, tt.want)
-			}
-		})
-	}
-}
-
-func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model.User) error {
-	// Insert a model.
-	now := time.Now()
-	mdl := Model{
-		Name:            uuid.NewString(),
-		Description:     "some important model",
-		CreationTime:    now,
-		LastUpdatedTime: now,
-		Labels:          []string{"some other label"},
-		UserID:          user.ID,
-		WorkspaceID:     1,
-	}
-	mdlNotes := "some notes1"
-	var pmdl modelv1.Model
-	if err := db.QueryProto(
-		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
-	); err != nil {
-		return fmt.Errorf("inserting a model: %w", err)
-	}
-
-	// Register checkpoints
-	var retCkpt1 checkpointv1.Checkpoint
-	if err := db.QueryProto("get_checkpoint", &retCkpt1, checkpointUUID); err != nil {
-		return fmt.Errorf("getting checkpoint: %w", err)
-	}
-
-	addmv := modelv1.ModelVersion{
-		Model:      &pmdl,
-		Checkpoint: &retCkpt1,
-		Name:       "checkpoint exp",
-		Comment:    "empty",
-	}
-	var mv modelv1.ModelVersion
-	if err := db.QueryProto(
-		"insert_model_version", &mv, pmdl.Id, retCkpt1.Uuid, addmv.Name, addmv.Comment,
-		emptyMetadata, strings.Join(addmv.Labels, ","), addmv.Notes, user.ID,
-	); err != nil {
-		return fmt.Errorf("inserting model version: %w", err)
-	}
-
-	return nil
-}
 
 func TestCheckpointMetadata(t *testing.T) {
 	ctx := context.Background()
@@ -308,7 +123,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.State, conv.ToCheckpointState(actual.State))
 				if tt.hasValidation {
-					require.Equal(t, metricValue, actual.Training.SearcherMetric.Value)
+					require.Equal(t, metricValue, *actual.Training.SearcherMetric)
 					require.NotNil(t, actual.Training.ValidationMetrics.AvgMetrics)
 				} else {
 					require.Nil(t, actual.Training.SearcherMetric)
@@ -316,10 +131,9 @@ func TestCheckpointMetadata(t *testing.T) {
 				}
 			}
 
-			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckptUUID)
+			retCkpt, err := GetCheckpoint(ctx, ckptUUID.String())
 			require.NoError(t, err, "failed to get checkpoint")
-			requireCheckpointOk(&ckpt, &retCkpt)
+			requireCheckpointOk(&ckpt, retCkpt)
 
 			var retCkpts []*checkpointv1.Checkpoint
 			err = db.QueryProto("get_checkpoints_for_trial", &retCkpts, tr.ID)

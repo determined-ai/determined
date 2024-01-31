@@ -34,10 +34,10 @@ func CheckpointTrialIDLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if aj.Training == nil || aj.Training.TrialId == nil {
 		return false
 	}
-	if ai.Training.TrialId.Value == aj.Training.TrialId.Value {
+	if *ai.Training.TrialId == *aj.Training.TrialId {
 		return CheckpointReportTimeLess(ai, aj)
 	}
-	return ai.Training.TrialId.Value < aj.Training.TrialId.Value
+	return *ai.Training.TrialId < *aj.Training.TrialId
 }
 
 // CheckpointSearcherMetricLess compares checkpoints by their searcher metric, falling back to
@@ -49,10 +49,10 @@ func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if aj.Training == nil || aj.Training.SearcherMetric == nil {
 		return false
 	}
-	if ai.Training.SearcherMetric.Value == aj.Training.SearcherMetric.Value {
+	if *ai.Training.SearcherMetric == *aj.Training.SearcherMetric {
 		return CheckpointReportTimeLess(ai, aj)
 	}
-	return ai.Training.SearcherMetric.Value < aj.Training.SearcherMetric.Value
+	return *ai.Training.SearcherMetric < *aj.Training.SearcherMetric
 }
 
 // CheckpointMetricNameLess compares checkpoints by a metric name, falling back to

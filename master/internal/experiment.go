@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/checkpoints"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
@@ -466,7 +467,8 @@ func (e *internalExperiment) stop() error {
 		return fmt.Errorf("cloning checkpoint gc task spec: %w", err)
 	}
 
-	checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
+	checkpoints, err := experiment.ExperimentCheckpointsToGCRaw(
+		context.TODO(),
 		e.Experiment.ID,
 		e.activeConfig.CheckpointStorage().SaveExperimentBest(),
 		e.activeConfig.CheckpointStorage().SaveTrialBest(),
@@ -1009,7 +1011,7 @@ func checkpointFromTrialIDOrUUID(
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid source checkpoint UUID")
 		}
-		checkpoint, err = db.CheckpointByUUID(checkpointUUID)
+		checkpoint, err = checkpoints.CheckpointByUUID(context.TODO(), checkpointUUID)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to get source checkpoint %v", checkpointUUID)
 		}

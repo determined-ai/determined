@@ -8,17 +8,19 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -1068,86 +1070,149 @@ FROM experiments
 WHERE id = $1`, id)
 }
 
-// ExperimentCheckpointsToGCRaw returns a comma-separated string describing checkpoints
-// that should be GCed according to the given GC policy parameters. If the delete parameter is true,
-// the returned checkpoints are also marked as deleted in the database.
-func (db *PgDB) ExperimentCheckpointsToGCRaw(
-	id int,
-	experimentBest, trialBest, trialLatest int,
-) ([]uuid.UUID, error) {
-	// The string for the CTEs that we need whether or not we're not deleting the results. The
-	// "selected_checkpoints" table contains the checkpoints to return as rows, so that we can easily
-	// set the corresponding checkpoints to deleted in a separate CTE if we're deleting.
-	query := `
-WITH const AS (
-    SELECT config->'searcher'->>'metric' AS metric_name,
-           (CASE
-                WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-                THEN 1
-                ELSE -1
-            END) AS sign
-    FROM experiments WHERE id = $1
-), selected_checkpoints AS (
-	SELECT c.uuid,
-		-- The order includes the id to prevent different rows from having the same
-		-- rank, which could cause more than the desired number of checkpoints to be
-		-- left out of the result set. Also, any rows with null validation values
-		-- will sort to the end, thereby not affecting the ranks of rows with
-		-- non-null validations, and will be filtered out later.
-		rank() OVER (
-			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
-			ASC NULLS LAST, v.id ASC
-		) AS experiment_rank,
-		rank() OVER (
-			PARTITION BY v.trial_id
-			ORDER BY const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8
-			ASC NULLS LAST, v.id ASC
-		) AS trial_rank,
-		rank() OVER (
-			PARTITION BY v.trial_id
-			ORDER BY (c.metadata->>'steps_completed')::int DESC
-		) AS trial_order_rank,
-		v.metrics->'validation_metrics'->>const.metric_name as val_metric
-	FROM checkpoints_v2 c
-	JOIN const ON true
-	JOIN run_id_task_id ON c.task_id = run_id_task_id.task_id
-    JOIN trials t ON run_id_task_id.run_id = t.id
-	LEFT JOIN validations v ON v.total_batches = (c.metadata->>'steps_completed')::int AND
-		v.trial_id = t.id
-	WHERE c.report_time IS NOT NULL
-		AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
-		AND t.experiment_id = $1
-)
-SELECT sc.uuid AS ID
-FROM selected_checkpoints sc
-WHERE ((experiment_rank > $2 AND trial_rank > $3) OR (val_metric IS NULL))
-	AND trial_order_rank > $4;`
-
-	var checkpointIDRows []struct {
-		ID uuid.UUID
+// GetCheckpoint gets checkpointv1.Checkpoint from the database by UUID.
+// Can be moved to master/internal/checkpoints once db/postgres_model_intg_test is bunified.
+func GetCheckpoint(ctx context.Context, checkpointUUID string) (*checkpointv1.Checkpoint, error) {
+	var retCkpt1 checkpointv1.Checkpoint
+	err := Bun().NewSelect().
+		TableExpr("proto_checkpoints_view").
+		ColumnExpr("proto_time(report_time) as report_time").
+		Column("task_id").
+		Column("allocation_id").
+		Column("uuid").
+		Column("resources").
+		Column("metadata").
+		ColumnExpr(bunutils.ProtoStateDBCaseString(checkpointv1.State_value, "state", "state",
+			"")).
+		Column("training").
+		Column("storage_id").
+		Where("uuid = ?::uuid", checkpointUUID).Scan(ctx, &retCkpt1)
+	if err != nil {
+		return nil, fmt.Errorf("getting checkpoint: %w", err)
 	}
+	return &retCkpt1, nil
+}
 
-	if err := db.queryRows(query, &checkpointIDRows,
-		id, experimentBest, trialBest, trialLatest); err != nil {
-		return nil, fmt.Errorf(
-			"querying for checkpoints that can be deleted according to the GC policy: %w", err)
-	}
+// InsertModel inserts the model into the database.
+func InsertModel(ctx context.Context, name string, description string, metadata []byte,
+	labels string, notes string, userID model.UserID, workspaceID int,
+) (*modelv1.Model, error) {
+	mod := modelv1.Model{}
+	q := Bun().NewInsert().
+		Model(&mod).
+		ExcludeColumn("num_versions", "username", "archived", "id").
+		Value("name", "?", name).
+		Value("description", "?", description).
+		Value("metadata", "?::json", string(metadata)).
+		Value("labels", "string_to_array(?, ',')", labels).
+		Value("notes", "?", notes).
+		Value("user_id", "?", userID).
+		Value("workspace_id", "?", workspaceID).
+		Value("creation_time", "current_timestamp").
+		Value("last_updated_time", "current_timestamp").
+		Returning("*")
 
-	var checkpointIDs []uuid.UUID
-	for _, cRow := range checkpointIDRows {
-		checkpointIDs = append(checkpointIDs, cRow.ID)
-	}
-
-	registeredCheckpoints, err := db.GetRegisteredCheckpoints(checkpointIDs)
+	err := Bun().NewSelect().
+		With("m", q).
+		Table("m").
+		Column("m.name").
+		Column("m.description").
+		Column("m.workspace_id").
+		Column("m.notes").
+		Column("m.metadata").
+		ColumnExpr("array_to_json(m.labels) AS labels").
+		Column("u.username").
+		ColumnExpr("proto_time(m.creation_time) as creation_time").
+		ColumnExpr("proto_time(m.last_updated_time) as last_updated_time").
+		Column("m.id").
+		Join("JOIN users u ON u.id = m.user_id").Scan(ctx, &mod)
 	if err != nil {
 		return nil, err
 	}
-	var deleteCheckpoints []uuid.UUID
-	for _, cUUID := range checkpointIDs {
-		if _, ok := registeredCheckpoints[cUUID]; !ok { // not a model registry checkpoint
-			deleteCheckpoints = append(deleteCheckpoints, cUUID)
-		}
-	}
+	return &mod, err
+}
 
-	return deleteCheckpoints, nil
+// InsertModelVersion inserts the model version into the database.
+func InsertModelVersion(ctx context.Context, id int32, ckptID string, name string, comment string,
+	metadata []byte, labels string, notes string, userID model.UserID,
+) (*modelv1.ModelVersion, error) {
+	modVer := modelv1.ModelVersion{}
+	mv := Bun().NewInsert().
+		Model(&modVer).
+		ExcludeColumn("model", "checkpoint", "username", "id").
+		Value("model_id", "?", id).
+		Value("version", "(SELECT COALESCE(MAX(version), 0) + 1 FROM model_versions WHERE model_id = ?)", id).
+		Value("checkpoint_uuid", "?::uuid", ckptID).
+		Value("name", "?", name).
+		Value("comment", "?", comment).
+		Value("metadata", "?::json", string(metadata)).
+		Value("labels", "string_to_array(?, ',')", labels).
+		Value("notes", "?", notes).
+		Value("user_id", "?", userID).
+		Value("creation_time", "current_timestamp").
+		Value("last_updated_time", "current_timestamp").
+		Returning("*")
+	log.Print(mv)
+
+	u := Bun().NewSelect().
+		Table("users").
+		Column("username").
+		Where("id = ?", userID)
+	log.Print(u)
+
+	m := Bun().NewSelect().
+		TableExpr("models as m").
+		Column("m.id").
+		Column("m.name").
+		Column("m.description").
+		Column("m.notes").
+		Column("m.metadata").
+		ColumnExpr("proto_time(m.creation_time) as creation_time").
+		ColumnExpr("proto_time(m.last_updated_time) as last_updated_time").
+		ColumnExpr("array_to_json(m.labels) AS labels").
+		Column("u.username").
+		Column("m.archived").
+		ColumnExpr("COUNT(mv.version) AS num_versions").
+		Join("JOIN users AS u ON u.id = m.user_id").
+		Join(" LEFT JOIN model_versions AS mv ON mv.model_id = m.id").
+		Where("m.id = ?", id).
+		Group("m.id", "u.id")
+	log.Print(m)
+
+	c := Bun().NewSelect().
+		TableExpr("proto_checkpoints_view as c").
+		ColumnExpr("proto_time(c.report_time) as report_time").
+		Column("c.task_id").
+		Column("c.allocation_id").
+		Column("c.uuid").
+		Column("c.resources").
+		Column("c.metadata").
+		ColumnExpr(bunutils.ProtoStateDBCaseString(checkpointv1.State_value, "c.state", "state",
+			"")).
+		Column("c.training").
+		Column("c.storage_id").
+		Where("c.uuid IN (SELECT checkpoint_uuid FROM mv)")
+	log.Print(c)
+
+	err := Bun().NewSelect().
+		With("mv", mv).
+		With("u", u).
+		With("m", m).
+		With("c", c).
+		Table("c", "mv", "m", "u").
+		ColumnExpr("TO_JSON(c) AS checkpoint").
+		ColumnExpr("TO_JSON(m) AS model").
+		ColumnExpr("ARRAY_TO_JSON(mv.labels) AS labels").
+		Column("mv.version").
+		Column("mv.id").
+		ColumnExpr("proto_time(mv.creation_time) as creation_time").
+		Column("mv.name").
+		Column("mv.comment").
+		Column("mv.metadata").
+		Column("u.username").
+		Where("c.uuid = mv.checkpoint_uuid").Scan(ctx, &modVer)
+	if err != nil {
+		return nil, err
+	}
+	return &modVer, err
 }
