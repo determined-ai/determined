@@ -95,12 +95,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		resources.Slots = 0
 	}
-	isSingleNode := resources.IsSingleNode != nil && *resources.IsSingleNode
+
 	poolName, launchWarnings, err := a.m.ResolveResources(
 		resources.ResourcePool,
 		resources.Slots,
 		int(cmdSpec.Metadata.WorkspaceID),
-		isSingleNode,
+		true,
 	)
 	if err != nil {
 		return nil, nil, err
