@@ -76,6 +76,7 @@ class GCSStorageManager(storage.CloudStorageManager):
                 retry.if_exception_type(
                     ConnectionError,
                     exceptions.ServerError,
+                    exceptions.TooManyRequests,
                     urllib3.exceptions.ProtocolError,
                     requests.exceptions.ConnectionError,
                 )
