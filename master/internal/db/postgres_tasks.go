@@ -128,13 +128,15 @@ func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.sql.Exec(`
-UPDATE tasks
-SET task_state = (
-    CASE WHEN task_state=$2 THEN $3::task_state
-    ELSE $4::task_state END)
-WHERE task_id = $1
-    `, tID, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted); err != nil {
+	_, err = Bun().
+		NewRaw(`UPDATE tasks
+				SET task_state = (
+	    		CASE WHEN task_state = ? THEN ?::task_state
+	    		ELSE ?::task_state END)
+				WHERE task_id = ?
+	    `, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted, tID).
+		Exec(context.Background())
+	if err != nil {
 		return errors.Wrap(err, "completing task")
 	}
 	return nil
@@ -146,11 +148,12 @@ func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.sql.Exec(`
-UPDATE tasks
-SET task_state = $2
-WHERE task_id = $1
-	`, tID, model.TaskStateCanceled); err != nil {
+	_, err = Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStateCanceled).
+		Where("task_id = ?", tID).
+		Exec(context.Background())
+	if err != nil {
 		return errors.Wrap(err, "killing task")
 	}
 	return nil
@@ -158,10 +161,13 @@ WHERE task_id = $1
 
 // SetPausedState sets given task to a PAUSED state.
 func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
-	if _, err := db.sql.Exec(`
-	UPDATE tasks
-	SET task_state = $1, end_time = $2
-	WHERE task_id = $3`, model.TaskStatePaused, endTime, taskID); err != nil {
+	_, err := Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStatePaused).
+		Set("end_time = ?", endTime).
+		Where("task_id = ?", taskID).
+		Exec(context.Background())
+	if err != nil {
 		return errors.Wrap(err, "pausing task")
 	}
 	return nil
@@ -169,13 +175,13 @@ func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
 
 // IsPaused returns true if given task is in paused/pausing state.
 func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
-	var count int
-	if err := db.sql.QueryRow(`
-	SELECT count(*)
-	FROM tasks
-	WHERE task_id = $1 AND (task_state=$2 OR task_state=$3)`,
-		tID, model.TaskStateStoppingPaused, model.TaskStatePaused).
-		Scan(&count); err != nil {
+	count, err := Bun().NewSelect().Table("tasks").
+		Where("task_id = ?", tID).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("task_state = ?", model.TaskStateStoppingPaused).
+				WhereOr("task_state = ?", model.TaskStatePaused)
+		}).Count(context.Background())
+	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
@@ -183,10 +189,13 @@ func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 
 // SetErrorState sets given task to a ERROR state.
 func (db *PgDB) SetErrorState(taskID model.TaskID, endTime time.Time) error {
-	if _, err := db.sql.Exec(`
-	UPDATE tasks
-	SET task_state = $1, end_time = $2
-	WHERE task_id = $3`, model.TaskStateError, endTime, taskID); err != nil {
+	_, err := Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStateError).
+		Set("end_time = ?", endTime).
+		Where("task_id = ?", taskID).
+		Exec(context.Background())
+	if err != nil {
 		return errors.Wrap(err, "setting error task state")
 	}
 	return nil
