@@ -2279,9 +2279,7 @@ jobs:
 
       - slack/status:
           fail_only: false
-          # TODO uncomment these lines.
-          #fail_only: false
-          #only_for_branches: main
+          only_for_branches: main
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
           mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
 
@@ -3303,7 +3301,7 @@ workflows:
             - request-perf-tests
 
       - test-perf:
-          name: test-perf
+          name: test-perf-feature-branch
           take-snapshot: false
           deploy-db: true
           requires:
