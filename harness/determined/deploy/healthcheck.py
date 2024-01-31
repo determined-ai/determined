@@ -71,8 +71,6 @@ def wait_for_genai_url(
             try:
                 auth = api.Authentication(master_address=master_url, cert=cert)
                 r = api.get(master_url, check_path, authenticated=True, cert=cert, auth=auth)
-                print(r)
-                print(r.status_code)
                 if r.status_code == requests.codes.ok:
                     _ = r.json()
                     return
