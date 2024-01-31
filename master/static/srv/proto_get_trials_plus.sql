@@ -114,17 +114,17 @@ SELECT
   t.hparams,
   new_ckpt.uuid AS warm_start_checkpoint_uuid,
   (
-    SELECT tt.task_id FROM trial_id_task_id tt
+    SELECT tt.task_id FROM run_id_task_id tt
     JOIN tasks ta ON tt.task_id = ta.task_id
-    WHERE tt.trial_id = t.id
+    WHERE tt.run_id = t.id
     ORDER BY ta.start_time
     LIMIT 1
   ) AS task_id,
   (
     (SELECT json_agg(task_id) FROM (
-      SELECT tt.task_id FROM trial_id_task_id tt
+      SELECT tt.task_id FROM run_id_task_id tt
       JOIN tasks ta ON tt.task_id = ta.task_id
-      WHERE tt.trial_id = t.id
+      WHERE tt.run_id = t.id
       ORDER BY ta.start_time
   ) sub_tasks)) AS task_ids,
   t.checkpoint_size AS total_checkpoint_size,
@@ -135,7 +135,7 @@ SELECT
   (
     SELECT extract(epoch from sum(coalesce(a.end_time, now()) - a.start_time))
     FROM allocations a
-    WHERE a.task_id IN (SELECT task_id FROM trial_id_task_id WHERE trial_id = t.id)
+    WHERE a.task_id IN (SELECT task_id FROM run_id_task_id WHERE run_id = t.id)
   ) AS wall_clock_time,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
   -- so trials in terminal state have restarts = max + 1

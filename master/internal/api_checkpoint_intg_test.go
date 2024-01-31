@@ -32,7 +32,7 @@ import (
 func createVersionTwoCheckpoint(
 	ctx context.Context, t *testing.T, api *apiServer, curUser model.User, resources map[string]int64,
 ) string {
-	_, task := createTestTrial(t, api, curUser)
+	tr, task := createTestTrial(t, api, curUser)
 
 	aID := model.AllocationID(string(task.TaskID) + "-1")
 	aIn := &model.Allocation{
@@ -58,7 +58,7 @@ func createVersionTwoCheckpoint(
 			"steps_completed":    5,
 		},
 	}
-	require.NoError(t, db.AddCheckpointMetadata(ctx, checkpoint))
+	require.NoError(t, db.AddCheckpointMetadata(ctx, checkpoint, tr.ID))
 
 	return checkpoint.UUID.String()
 }

@@ -926,7 +926,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 50},
-	}))
+	}, tr.ID))
 
 	// Trial gets interrupted and starts in the future with a new trial run ID.
 	a = &model.Allocation{
@@ -968,7 +968,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		ReportTime:   time.Now(),
 		State:        model.ActiveState,
 		Metadata:     map[string]any{"steps_completed": 400},
-	}))
+	}, tr.ID))
 	checkpoints = []*checkpointv1.Checkpoint{}
 	require.NoError(t, db.QueryProto("get_checkpoints_for_experiment", &checkpoints, exp.ID))
 	require.Len(t, checkpoints, 2)
@@ -1044,7 +1044,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 				ReportTime:   time.Now(),
 				State:        model.CompletedState,
 				Metadata:     map[string]any{"steps_completed": batches},
-			}))
+			}, tr.ID))
 		default:
 			rollbacksCnts, err := db.addTrialMetrics(
 				ctx, trialMetrics, model.MetricGroup(typ),
@@ -1105,6 +1105,30 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, &metricGroup)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(returnedMetrics))
+}
+
+func TestUpdateTrialRunnerMetadata(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	user := RequireMockUser(t, db)
+	exp := RequireMockExperiment(t, db, user)
+	trialID := RequireMockTrialID(t, db, exp)
+
+	require.NoError(t, db.UpdateTrialRunnerMetadata(trialID, &trialv1.TrialRunnerMetadata{
+		State: "expectedState",
+	}))
+
+	actual := struct {
+		bun.BaseModel `bun:"table:runs"`
+		RunnerState   string
+	}{}
+	require.NoError(t, Bun().NewSelect().Model(&actual).
+		Where("id = ?", trialID).
+		Scan(ctx, &actual))
+	require.Equal(t, "expectedState", actual.RunnerState)
 }
 
 func TestGenericMetricsIO(t *testing.T) {

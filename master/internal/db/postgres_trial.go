@@ -27,14 +27,20 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run := trial.ToRun()
+		run, v2 := trial.ToRunAndTrialV2()
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
-			return fmt.Errorf("inserting trial model: %w", err)
+			return fmt.Errorf("inserting trial run model: %w", err)
 		}
+
+		v2.RunID = run.ID
+		if _, err := tx.NewInsert().Model(v2).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting trial v2 model: %w", err)
+		}
+
 		trial.ID = run.ID // We need to mutate trial.ID.
 
-		trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
-		if _, err := tx.NewInsert().Model(trialTaskID).Exec(ctx); err != nil {
+		runTaskID := &model.RunTaskID{RunID: trial.ID, TaskID: taskID}
+		if _, err := tx.NewInsert().Model(runTaskID).Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial task id relationship: %w", err)
 		}
 
@@ -55,18 +61,26 @@ func UpsertTrialByExternalIDTx(
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	run := trial.ToRun()
+	run, v2 := trial.ToRunAndTrialV2()
 	if _, err := tx.NewInsert().Model(run).
 		On("CONFLICT (experiment_id, external_run_id) DO UPDATE").
 		Set("hparams = EXCLUDED.hparams").
 		Returning("id").Exec(ctx); err != nil {
-		return fmt.Errorf("upserting trial model: %w", err)
+		return fmt.Errorf("upserting trial run model: %w", err)
 	}
+
+	v2.RunID = run.ID
+	if _, err := tx.NewInsert().Model(v2).
+		On("CONFLICT (run_id) DO NOTHING").
+		Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial v2 model: %w", err)
+	}
+
 	trial.ID = run.ID // We need to mutate trial.ID.
 
-	trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
-	if _, err := tx.NewInsert().Model(trialTaskID).
-		On("CONFLICT (trial_id, task_id) DO NOTHING").Exec(ctx); err != nil {
+	runTaskID := &model.RunTaskID{RunID: run.ID, TaskID: taskID}
+	if _, err := tx.NewInsert().Model(runTaskID).
+		On("CONFLICT (run_id, task_id) DO NOTHING").Exec(ctx); err != nil {
 		return fmt.Errorf("upserting trial task id relationship: %w", err)
 	}
 
@@ -82,12 +96,12 @@ func TrialByID(ctx context.Context, id int) (*model.Trial, error) {
 	return t, nil
 }
 
-// TrialTaskIDsByTrialID returns trial id task ids by trial ID, sorted by task run ID.
-func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.TrialTaskID, error) {
-	var ids []*model.TrialTaskID
+// TrialTaskIDsByTrialID returns trial id task ids by trial ID, sorted by start time.
+func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID, error) {
+	var ids []*model.RunTaskID
 	if err := Bun().NewSelect().Model(&ids).
-		Where("trial_id = ?", trialID).
-		Join("JOIN tasks t ON trial_task_id.task_id = t.task_id").
+		Where("run_id = ?", trialID).
+		Join("JOIN tasks t ON run_task_id.task_id = t.task_id").
 		Order("t.start_time").
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("getting tasks for trial ID %d: %w", trialID, err)
@@ -114,7 +128,7 @@ func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, erro
 	var t model.Trial
 	if err := Bun().NewSelect().Model(&t).
 		Where("tt.task_id = ?", taskID).
-		Join("JOIN trial_id_task_id tt ON trial.id = tt.trial_id").
+		Join("JOIN run_id_task_id tt ON trial.id = tt.run_id").
 		Scan(ctx, &t); err != nil {
 		return nil, fmt.Errorf("error querying for trial taskID %s: %w", taskID, err)
 	}
@@ -632,7 +646,7 @@ func calculateNewSummaryMetrics(
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
-func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2, runID int) error {
 	if m.ReportTime.IsZero() {
 		m.ReportTime = time.Now().UTC()
 	}
@@ -647,12 +661,19 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	m.Size = size
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
-			return errors.Wrap(err, "inserting checkpoint")
+		if _, err := tx.NewInsert().Model(m).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint model: %w", err)
+		}
+
+		if _, err := tx.NewInsert().Model(&model.RunCheckpoints{
+			RunID:        runID,
+			CheckpointID: m.UUID,
+		}).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint run model: %w", err)
 		}
 
 		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
-			return errors.Wrap(err, "updating checkpoint size")
+			return fmt.Errorf("updating checkpoint size: %w", err)
 		}
 
 		return nil

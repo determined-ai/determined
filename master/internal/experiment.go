@@ -886,9 +886,9 @@ var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	var experimentID int
 	err := db.Bun().NewSelect().
-		Table("trial_id_task_id").
+		Table("run_id_task_id").
 		Column("experiment_id").
-		Join("LEFT JOIN trials ON trials.id = trial_id_task_id.trial_id").
+		Join("LEFT JOIN trials ON trials.id = run_id_task_id.run_id").
 		Where("task_id = ?", taskID).
 		Scan(context.TODO(), &experimentID)
 	if errors.Is(err, sql.ErrNoRows) {

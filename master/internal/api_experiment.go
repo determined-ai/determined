@@ -1592,9 +1592,6 @@ func (a *apiServer) ContinueExperiment(
 
 		// Zero out trial restarts. We do somewhat lose information about how many times
 		// the previous failed but likely people care only about current run.
-		// TODO consider moving this to trial_id_task_id or some other level to preserve
-		// the history of what happened during the trial. We should also do this
-		// with submitted config yamls likely and display these in the webui.
 		var trialIDs []int32
 		for _, t := range trialsResp.Trials {
 			trialIDs = append(trialIDs, t.Id)
@@ -2627,17 +2624,17 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.checkpoint_count").
 		Column("trials.summary_metrics").
 		ColumnExpr(`(
-				SELECT tt.task_id FROM trial_id_task_id tt
+				SELECT tt.task_id FROM run_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id
-				WHERE tt.trial_id = trials.id
+				WHERE tt.run_id = trials.id
 				ORDER BY ta.start_time
 				LIMIT 1
 			) AS task_id`).
 		ColumnExpr(`(
 				(SELECT json_agg(task_id) FROM (
-					SELECT tt.task_id FROM trial_id_task_id tt
+					SELECT tt.task_id FROM run_id_task_id tt
 					JOIN tasks ta ON tt.task_id = ta.task_id
-					WHERE tt.trial_id = trials.id
+					WHERE tt.run_id = trials.id
 					ORDER BY ta.start_time
 				) sub_tasks)) AS task_ids`).
 		ColumnExpr("proto_time(trials.start_time) AS start_time").

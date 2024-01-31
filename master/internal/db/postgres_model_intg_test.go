@@ -87,7 +87,7 @@ func TestModels(t *testing.T) {
 					"steps_completed":    stepsCompleted,
 				},
 			}
-			err = AddCheckpointMetadata(ctx, ckpt)
+			err = AddCheckpointMetadata(ctx, ckpt, tr.ID)
 			require.NoError(t, err)
 
 			// Which maybe has some metrics.
