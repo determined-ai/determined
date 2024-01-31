@@ -35,9 +35,6 @@ import (
 
 var db *PgDB
 
-// TestMain sets up the DB for tests that *don't* use the Bun ORM.
-// All other references to `db := MustResolveTestPostgres(t)` will be removed
-// when the tasks module is completely bunified.
 func TestMain(m *testing.M) {
 	pgDB, err := ResolveTestPostgres()
 	db = pgDB
@@ -407,20 +404,6 @@ func TestAddTask(t *testing.T) {
 	task, err := TaskByID(context.Background(), tIn.TaskID)
 	require.NoError(t, err)
 	require.Equal(t, tIn, task)
-}
-
-func TestAddNonExperimentTasksContextDirectory(t *testing.T) {
-	ctx := context.Background()
-	tIn := RequireMockTask(t, db, nil)
-	b := []byte(`testing123`)
-
-	err := AddNonExperimentTasksContextDirectory(ctx, tIn.TaskID, b)
-	require.NoError(t, err)
-
-	var taskCtxDir model.TaskContextDirectory
-	err = Bun().NewSelect().Model(&taskCtxDir).Where("task_id = ?", tIn.TaskID).Scan(ctx, &taskCtxDir)
-	require.NoError(t, err)
-	require.Equal(t, b, taskCtxDir.ContextDirectory)
 }
 
 func TestTaskCompleted(t *testing.T) {
