@@ -628,9 +628,23 @@ func TestTaskLogsFlow(t *testing.T) {
 	err := db.AddTaskLogs([]*model.TaskLog{taskLog1})
 	require.NoError(t, err)
 
-	count, err := db.TaskLogsCount(t1In.TaskID, []api.Filter{})
+	// Try filtering by agentID & taskID -- only 1 exists.
+	count, err := db.TaskLogsCount(t1In.TaskID, []api.Filter{{
+		Field:     "agent_id",
+		Operation: api.FilterOperationIn,
+		Values:    []string{"testing-agent-1"},
+	}})
 	require.NoError(t, err)
 	require.Equal(t, count, 1)
+
+	// Try filtering by agentID & taskID -- none exist with this combination.
+	count, err = db.TaskLogsCount(t2In.TaskID, []api.Filter{{
+		Field:     "agent_id",
+		Operation: api.FilterOperationIn,
+		Values:    []string{"testing-agent-1"},
+	}})
+	require.NoError(t, err)
+	require.Equal(t, count, 0)
 
 	// Try adding the rest of the Task logs, and count 2 for t1In.TaskID, and 1 for t2In.TaskID
 	err = db.AddTaskLogs([]*model.TaskLog{taskLog2, taskLog3})
