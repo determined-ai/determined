@@ -3298,12 +3298,17 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
+      - build-go:
+          requires:
+            - request-perf-tests
+
       - test-perf:
           name: test-perf
           take-snapshot: false
           deploy-db: true
           requires:
             - build-go
+            - request-perf-tests
           context:
             - perf-tests
             - aws
