@@ -22,7 +22,6 @@ DET_FLAGS = \
 K6_FLAGS = \
 		-e DET_ADMIN_USERNAME=$(DET_ADMIN_USERNAME) \
 		-e DET_ADMIN_PASSWORD=$(DET_ADMIN_PASSWORD)
-
 PERSIST_CHECK = \
 	PERSIST_VALUE=$$(\
 		aws cloudformation describe-stacks --stack-name $(CLUSTER_ID) | \

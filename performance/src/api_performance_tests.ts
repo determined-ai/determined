@@ -63,8 +63,6 @@ export const setup = (skipAuth: boolean = false): TestConfiguration => {
   };
 
   const auth: Authorization = { token: skipAuth ? "" : authenticateVU(CLUSTER_URL) };
-  //const token = authenticateVU(CLUSTER_URL);
-  //const auth: Authorization = { token };
   const testConfig: TestConfiguration = { auth, seededData };
   getloadTests(testConfig, true);
   return testConfig;
@@ -341,15 +339,13 @@ const getloadTests = (
 const thresholds: { [name: string]: Threshold[] } = {
   http_req_duration: [
     {
-      threshold: "p(95)<100000", // For now let's not use the performance as a pass fail.
+      threshold: "p(95)<100000", // Get more data before we start failing tests.
       abortOnFail: false,
     },
   ],
   http_req_failed: [
     {
-      threshold: "rate<1.00", // For now let's not use the performance as pass fail.
-      // If more than one percent of the HTTP requests fail
-      // then we abort the test.
+      threshold: "rate<1.00", // Get more data before we start failing tests.
       abortOnFail: true,
     },
   ],
@@ -362,7 +358,7 @@ const thresholds: { [name: string]: Threshold[] } = {
 getloadTests(setup(true), false).forEach((group) => {
   thresholds[`http_req_duration{ group: ::${group.name}}`] = [
     {
-      threshold: "p(95)<100000", // For now let's not use the performance as a pass fail.
+      threshold: "p(95)<100000", // Get more data before we start failing tests.
       abortOnFail: false,
     },
   ];

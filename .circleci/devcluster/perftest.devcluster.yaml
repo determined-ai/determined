@@ -29,6 +29,3 @@ stages:
           default_compute_resource_pool: default
         resource_pools:
           - pool_name: default
-            task_container_defaults:  # for test_default_pool_task_container_defaults.
-              environment_variables:
-                - SOMEVAR=SOMEVAL
