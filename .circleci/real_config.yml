@@ -2899,7 +2899,7 @@ workflows:
       - test-perf:
           name: test-perf
           take-snapshot: false # FLIP THESE
-          deploy-db: false 
+          deploy-db: true
           requires:
             - build-go
           context:
