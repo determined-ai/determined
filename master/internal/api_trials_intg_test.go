@@ -574,7 +574,7 @@ func TestReportCheckpoint(t *testing.T) {
 	req.Checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
 		TrialId:           wrapperspb.Int32(int32(tr.ID)),
 		ExperimentId:      wrapperspb.Int32(int32(tr.ExperimentID)),
-		ExperimentConfig:  getExperimentResp.Experiment.Config,
+		ExperimentConfig:  getExperimentResp.Config,
 		Hparams:           nil,
 		TrainingMetrics:   &commonv1.Metrics{},
 		ValidationMetrics: &commonv1.Metrics{},
