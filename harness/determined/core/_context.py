@@ -12,7 +12,8 @@ import appdirs
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import certs
+from determined.common.api import bindings, certs
+from determined.common.storage import shared
 
 logger = logging.getLogger("determined.core")
 
@@ -285,6 +286,12 @@ def init(
                 container_path=constants.SHARED_FS_CONTAINER_PATH,
             )
 
+        storage_used = checkpoint_storage
+        if storage_used is None:
+            storage_used = info.trial._config["checkpoint_storage"]
+
+        run_prepare_response = _run_prepare(distributed, session, info.trial.trial_id, storage_used)
+
         checkpoint = core.CheckpointContext(
             distributed,
             storage_manager,
@@ -293,6 +300,7 @@ def init(
             info.allocation_id,
             tensorboard_mode,
             tensorboard_manager,
+            run_prepare_response.storageId,
         )
 
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
@@ -317,4 +325,25 @@ def init(
         searcher=searcher,
         experimental=experimental,
         _tensorboard_manager=tensorboard_manager,
+    )
+
+
+def _run_prepare(
+    distributed: Optional[core.DistributedContext],
+    sess: api.Session,
+    run_id: int,
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]],
+) -> bindings.v1RunPrepareForReportingResponse:
+    cs = None
+    if isinstance(checkpoint_storage, str):
+        cs = shared._shortcut_to_config(checkpoint_storage)
+    elif isinstance(checkpoint_storage, dict):
+        cs = checkpoint_storage
+
+    return bindings.post_RunPrepareForReporting(
+        sess,
+        body=bindings.v1RunPrepareForReportingRequest(
+            runId=run_id,
+            checkpointStorage=cs,
+        ),
     )

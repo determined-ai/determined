@@ -1420,6 +1420,11 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 		p.ReportTime = timestamppb.New(time.Now().UTC())
 	}
 
+	var storageID *model.StorageBackendID
+	if p.StorageId != nil {
+		storageID = ptrs.Ptr(model.StorageBackendID(*p.StorageId))
+	}
+
 	c := &model.CheckpointV2{
 		UUID:         conv.ToUUID(p.Uuid),
 		TaskID:       model.TaskID(p.TaskId),
@@ -1428,6 +1433,7 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 		State:        conv.ToCheckpointState(p.State),
 		Resources:    p.Resources,
 		Metadata:     p.Metadata.AsMap(),
+		StorageID:    storageID,
 	}
 	if err := conv.Error(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", err)

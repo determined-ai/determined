@@ -146,6 +146,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 				tasks.TaskSpec{},
 				0,
 				expconf.LegacyConfig{}, //nolint:exhaustruct
+				nil,
 				tt.args.toDeleteCheckpoints,
 				tt.args.checkpointGlobs,
 				tt.args.deleteTensorboards,

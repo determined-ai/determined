@@ -64,6 +64,7 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                     allocation_id="allocation-id",
                     tbd_sync_mode=core.TensorboardMode.AUTO,
                     tensorboard_manager=tensorboard_manager,
+                    storage_backend_id=None,
                 )
             else:
                 checkpoint_context = core.DummyCheckpointContext(pex.distributed, storage_manager)

@@ -1,9 +1,8 @@
 import os
 import pathlib
-import urllib
 from typing import Any, Dict, Optional, Union
 
-from determined.common.storage.shared import _full_storage_path
+from determined.common.storage.shared import _full_storage_path, _shortcut_to_config
 from determined.tensorboard import azure, base, directory, gcs, s3, shared
 
 
@@ -38,37 +37,6 @@ def get_base_path(checkpoint_config: Dict[str, Any]) -> pathlib.Path:
         base_path = pathlib.Path("/", "tmp")
 
     return base_path.joinpath(f"tensorboard-{allocation_id}-{rank}")
-
-
-def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
-    p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
-    if any((p.params, p.query, p.fragment)):
-        raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
-
-    scheme = p.scheme.lower()
-
-    if scheme in ["", "file"]:
-        return {
-            "type": "shared_fs",
-            "host_path": p.path,
-        }
-    elif scheme in ["s3", "gs"]:
-        bucket = p.netloc
-        prefix = p.path.lstrip("/")
-        storage_type = {
-            "s3": "s3",
-            "gs": "gcs",
-        }[scheme]
-
-        return {
-            "type": storage_type,
-            "bucket": bucket,
-            "prefix": prefix,
-        }
-    else:
-        raise NotImplementedError(
-            "tensorboard only supports shared_fs, s3, and gs " "shortcuts at the moment"
-        )
 
 
 def build(

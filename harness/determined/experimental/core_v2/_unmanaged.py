@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional, Tuple, TypeVar, Union
+from typing import Optional, Tuple, Union
 
 import determined as det
 from determined import core, experimental
@@ -7,25 +7,6 @@ from determined.common import api, util
 from determined.common.api import bindings
 
 logger = logging.getLogger("determined.unmanaged")
-
-
-T = TypeVar("T")
-
-
-def _run_on_rank_0_and_broadcast(
-    func: Callable[[], T],
-    distributed: Optional[core.DistributedContext] = None,
-) -> T:
-    result = None
-
-    if distributed is None or distributed.rank == 0:
-        result = func()
-    if distributed is not None:
-        result = distributed.broadcast(result)
-
-    assert result
-
-    return result
 
 
 def _create_unmanaged_experiment_inner(
@@ -47,7 +28,7 @@ def _create_unmanaged_experiment(
     config_text: str,
     distributed: Optional[core.DistributedContext] = None,
 ) -> int:
-    return _run_on_rank_0_and_broadcast(
+    return core._run_on_rank_0_and_broadcast(
         lambda: _create_unmanaged_experiment_inner(client, config_text), distributed
     )
 
@@ -74,7 +55,7 @@ def _put_unmanaged_experiment(
     external_experiment_id: str,
     distributed: Optional[core.DistributedContext] = None,
 ) -> int:
-    return _run_on_rank_0_and_broadcast(
+    return core._run_on_rank_0_and_broadcast(
         lambda: _put_unmanaged_experiment_inner(client, config_text, external_experiment_id),
         distributed,
     )
@@ -113,7 +94,7 @@ def _create_unmanaged_trial(
     hparams: Optional[dict] = None,
     distributed: Optional[core.DistributedContext] = None,
 ) -> Tuple[int, str]:
-    return _run_on_rank_0_and_broadcast(
+    return core._run_on_rank_0_and_broadcast(
         lambda: _create_unmanaged_trial_inner(client, exp_id=exp_id, hparams=hparams), distributed
     )
 
@@ -151,7 +132,7 @@ def _put_unmanaged_trial(
     hparams: Optional[dict] = None,
     distributed: Optional[core.DistributedContext] = None,
 ) -> Tuple[int, str]:
-    return _run_on_rank_0_and_broadcast(
+    return core._run_on_rank_0_and_broadcast(
         lambda: _put_unmanaged_trial_inner(client, exp_id, external_trial_id, hparams), distributed
     )
 
@@ -176,7 +157,7 @@ def _start_trial(
     resume: bool,
     distributed: Optional[core.DistributedContext] = None,
 ) -> bindings.v1StartTrialResponse:
-    return _run_on_rank_0_and_broadcast(
+    return core._run_on_rank_0_and_broadcast(
         lambda: _start_trial_inner(client, trial_id, resume), distributed
     )
 

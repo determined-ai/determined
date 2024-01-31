@@ -731,5 +731,6 @@ def create_checkpoint_context(
         allocation_id="allocation-id",
         tbd_sync_mode=core.TensorboardMode.AUTO,
         tensorboard_manager=tensorboard_manager,
+        storage_backend_id=None,
     )
     return checkpoint_context

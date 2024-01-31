@@ -30,6 +30,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/user"
 	dets3 "github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -258,6 +259,44 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 	for _, curCase := range cases {
 		require.NoError(t, curCase.IDToReqCall())
 	}
+}
+
+// nolint: exhaustruct
+func TestGetCheckpointStorageConfig(t *testing.T) {
+	api, _, _ := setupCheckpointTestEcho(t)
+	ctx := context.Background()
+
+	checkpointID := uuid.New()
+	addMockCheckpointDB(t, api.m.db, checkpointID, S3TestBucket)
+
+	// Fallback to expconf when no storageID.
+	conf, err := api.m.getCheckpointStorageConfig(checkpointID)
+	require.NoError(t, err)
+	require.Equal(t, schemas.WithDefaults(&expconf.CheckpointStorageConfig{
+		RawS3Config: &expconf.S3ConfigV0{
+			RawBucket: ptrs.Ptr(S3TestBucket),
+			RawPrefix: ptrs.Ptr(S3TestPrefix),
+		},
+	}), conf)
+
+	// Otherwise lookup storageID config.
+	expected := &expconf.CheckpointStorageConfigV0{
+		RawS3Config: &expconf.S3ConfigV0{
+			RawBucket: ptrs.Ptr(uuid.New().String()),
+		},
+	}
+	storageID, err := storage.AddBackend(ctx, expected)
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewUpdate().Table("checkpoints_v2").
+		Where("uuid = ?", checkpointID).
+		Set("storage_id = ?", storageID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	conf, err = api.m.getCheckpointStorageConfig(checkpointID)
+	require.NoError(t, err)
+	require.Equal(t, expected, conf)
 }
 
 // TestGetCheckpointEchoExpErr expects specific errors are returned for each check.

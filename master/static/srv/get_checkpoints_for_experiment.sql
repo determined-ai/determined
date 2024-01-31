@@ -8,6 +8,7 @@ SELECT
     'STATE_' || c.state AS state,
     c.resources,
     c.metadata,
+    c.storage_id,
     -- Build a training substruct for protobuf.
     jsonb_build_object(
         'trial_id', c.trial_id,

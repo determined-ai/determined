@@ -2,7 +2,7 @@ import logging
 import os
 import socket
 import tempfile
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional, TypeVar
 
 from determined import constants, ipc, util
 
@@ -417,3 +417,21 @@ class DummyDistributedContext(DistributedContext):
             cross_rank=0,
             cross_size=1,
         )
+
+
+T = TypeVar("T")
+
+
+def _run_on_rank_0_and_broadcast(
+    func: Callable[[], T],
+    distributed: Optional[DistributedContext] = None,
+) -> T:
+    result = None
+    if distributed is None or distributed.rank == 0:
+        result = func()
+    if distributed is not None:
+        result = distributed.broadcast(result)
+
+    assert result
+
+    return result

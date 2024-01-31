@@ -182,6 +182,7 @@ class CheckpointContext:
         allocation_id: Optional[str],
         tbd_sync_mode: core.TensorboardMode,
         tensorboard_manager: Optional[tensorboard.TensorboardManager],
+        storage_backend_id: Optional[int],
     ) -> None:
         self._dist = dist
         self._storage_manager = storage_manager
@@ -189,6 +190,7 @@ class CheckpointContext:
         self._task_id = task_id
         self._allocation_id = allocation_id
         self._tensorboard_mode = tbd_sync_mode
+        self._storage_backend_id = storage_backend_id
         if tbd_sync_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
             raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
         self._tensorboard_manager = tensorboard_manager
@@ -711,6 +713,7 @@ class CheckpointContext:
             uuid=storage_id,
             reportTime=datetime.datetime.now(datetime.timezone.utc).isoformat(),
             state=bindings.checkpointv1State.COMPLETED,
+            storageId=self._storage_backend_id,
         )
         bindings.post_ReportCheckpoint(self._session, body=ckpt)
         logger.info(f"Reported checkpoint to master {storage_id}")

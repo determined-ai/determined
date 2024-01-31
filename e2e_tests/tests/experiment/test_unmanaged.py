@@ -1,27 +1,72 @@
 import json
 import os
 import subprocess
-from typing import List
+import uuid
+from typing import List, Optional
 
 import pytest
 
+from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import ray_utils
 
 EXAMPLES_ROOT = conf.EXAMPLES_PATH / "features" / "unmanaged"
 
 
-def _run_unmanaged_script(cmd: List) -> None:
+def _run_unmanaged_script(cmd: List, env_to_add: Optional[dict] = None) -> None:
     master_url = conf.make_master_url()
     env = os.environ.copy()
     env["DET_MASTER"] = master_url
-    subprocess.run(cmd, env=env, check=True)
+
+    if env_to_add is not None:
+        env.update(env_to_add)
+
+    subprocess.run(cmd, env=env, check=True, text=True)
 
 
 @pytest.mark.e2e_cpu
 def test_unmanaged() -> None:
     exp_path = EXAMPLES_ROOT / "1_singleton.py"
     _run_unmanaged_script(["python", exp_path])
+
+
+@pytest.mark.e2e_cpu
+def test_unmanaged_checkpoints() -> None:
+    external_id = str(uuid.uuid4())
+
+    exp_path = conf.fixtures_path("unmanaged/checkpoint_distributed.py")
+    _run_unmanaged_script(
+        [
+            "python",
+            "-m",
+            "torch.distributed.run",
+            "--nnodes=1",
+            "--nproc_per_node=2",
+            "--master_addr",
+            "127.0.0.1",
+            "--master_port",
+            "29400",
+            "--max_restarts",
+            "0",
+            exp_path,
+        ],
+        {"DET_TEST_EXTERNAL_EXP_ID": external_id},
+    )
+
+    sess = api_utils.determined_test_session()
+    exps = bindings.get_GetExperiments(sess, limit=-1).experiments
+    exps = [exp for exp in exps if exp.externalExperimentId == external_id]
+    assert len(exps) == 1
+    exp_id = exps[0].id
+
+    checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp_id).checkpoints
+    assert len(checkpoints) > 0
+    first_id = checkpoints[0].storageId
+    assert all(
+        checkpoint.storageId is not None and first_id == checkpoint.storageId
+        for checkpoint in checkpoints
+    )
 
 
 @pytest.mark.e2e_cpu
