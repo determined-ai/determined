@@ -33,11 +33,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
-var db *PgDB
-
 func TestMain(m *testing.M) {
-	pgDB, err := ResolveTestPostgres()
-	db = pgDB
+	db, err := ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -59,6 +56,7 @@ func TestMain(m *testing.M) {
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
 	ctx := context.Background()
+	db := SingleDB()
 
 	// Add a mock user.
 	user := RequireMockUser(t, db)
@@ -150,6 +148,8 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestRecordAndEndTaskStats(t *testing.T) {
+	db := SingleDB()
+
 	tID := model.NewTaskID()
 	require.NoError(t, db.AddTask(&model.Task{
 		TaskID:    tID,
@@ -196,6 +196,7 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 
 func TestNonExperimentTasksContextDirectory(t *testing.T) {
 	ctx := context.Background()
+	db := SingleDB()
 
 	// Task doesn't exist.
 	_, err := NonExperimentTasksContextDirectory(ctx, model.TaskID(uuid.New().String()))
@@ -232,6 +233,8 @@ func TestNonExperimentTasksContextDirectory(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
+	db := SingleDB()
+
 	// Add an allocation of every possible state.
 	states := []model.AllocationState{
 		model.AllocationStatePending,
@@ -303,6 +306,8 @@ func TestExhaustiveEnums(t *testing.T) {
 		postgresMembers map[string]bool
 		ignore          map[string]bool
 	}
+	db := SingleDB()
+
 	checks := map[string]*check{}
 	addCheck := func(goType, postgresType string, ignore map[string]bool) {
 		checks[goType] = &check{
@@ -385,6 +390,8 @@ func TestExhaustiveEnums(t *testing.T) {
 }
 
 func TestAddTask(t *testing.T) {
+	db := SingleDB()
+
 	u := RequireMockUser(t, db)
 	jID := RequireMockJob(t, db, &u.ID)
 
@@ -408,6 +415,8 @@ func TestAddTask(t *testing.T) {
 
 func TestTaskCompleted(t *testing.T) {
 	ctx := context.Background()
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 
 	completed, err := TaskCompleted(ctx, tIn.TaskID)
@@ -423,6 +432,8 @@ func TestTaskCompleted(t *testing.T) {
 }
 
 func TestAddAllocation(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	a := model.Allocation{
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tIn.TaskID)),
@@ -443,6 +454,8 @@ func TestAddAllocation(t *testing.T) {
 }
 
 func TestAddAllocationExitStatus(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
@@ -465,6 +478,8 @@ func TestAddAllocationExitStatus(t *testing.T) {
 }
 
 func TestCompleteAllocation(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
@@ -479,6 +494,8 @@ func TestCompleteAllocation(t *testing.T) {
 }
 
 func TestCompleteAllocationTelemetry(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
@@ -490,6 +507,8 @@ func TestCompleteAllocationTelemetry(t *testing.T) {
 }
 
 func TestAllocationByID(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
@@ -499,6 +518,8 @@ func TestAllocationByID(t *testing.T) {
 }
 
 func TestAllocationSessionFlow(t *testing.T) {
+	db := SingleDB()
+
 	uIn := RequireMockUser(t, db)
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
@@ -529,6 +550,8 @@ func TestAllocationSessionFlow(t *testing.T) {
 }
 
 func TestUpdateAllocation(t *testing.T) {
+	db := SingleDB()
+
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
@@ -565,6 +588,8 @@ func TestUpdateAllocation(t *testing.T) {
 }
 
 func TestCloseOpenAllocations(t *testing.T) {
+	db := SingleDB()
+
 	// Create test allocations, with a NULL end time.
 	t1In := RequireMockTask(t, db, nil)
 	a1In := RequireMockAllocation(t, db, t1In.TaskID)
@@ -599,6 +624,8 @@ func TestCloseOpenAllocations(t *testing.T) {
 }
 
 func TestTaskLogsFlow(t *testing.T) {
+	db := SingleDB()
+
 	t1In := RequireMockTask(t, db, nil)
 	t2In := RequireMockTask(t, db, nil)
 
