@@ -467,7 +467,7 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 	a := model.Allocation{
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tID)),
 		TaskID:       tID,
-		StartTime:    ptrs.Ptr(time.Now().UTC()),
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 		State:        ptrs.Ptr(model.AllocationStateTerminated),
 	}
 	err := db.AddAllocation(&a)
