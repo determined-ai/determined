@@ -211,47 +211,9 @@ func (db *PgDB) Close() error {
 	return db.sql.Close()
 }
 
-// namedGet is a convenience method for a named query for a single value.
-func (db *PgDB) namedGet(dest interface{}, query string, arg interface{}) error {
-	nstmt, err := db.sql.PrepareNamed(query)
-	if err != nil {
-		return errors.Wrapf(err, "error preparing query %s", query)
-	}
-
-	defer nstmt.Close()
-
-	if sErr := nstmt.QueryRowx(arg).Scan(dest); sErr != nil {
-		err = errors.Wrapf(sErr, "error scanning query %s", query)
-	}
-	if cErr := nstmt.Close(); cErr != nil && err != nil {
-		err = errors.Wrap(cErr, "error closing named DB statement")
-	}
-
-	return err
-}
-
 // namedExecOne is a convenience method for a NamedExec that should affect only one row.
 func (db *PgDB) namedExecOne(query string, arg interface{}) error {
 	res, err := db.sql.NamedExec(query, arg)
-	if err != nil {
-		return errors.Wrapf(err, "error in query %v \narg %v", query, arg)
-	}
-	num, err := res.RowsAffected()
-	if err != nil {
-		return errors.Wrapf(
-			err,
-			"error checking rows affected for query %v\n arg %v",
-			query, arg)
-	}
-	if num != 1 {
-		return errors.Errorf("error: %v rows affected on query %v \narg %v", num, query, arg)
-	}
-	return nil
-}
-
-// namedExecOne is a convenience method for a NamedExec that should affect only one row.
-func namedExecOne(tx *sqlx.Tx, query string, arg interface{}) error {
-	res, err := tx.NamedExec(query, arg)
 	if err != nil {
 		return errors.Wrapf(err, "error in query %v \narg %v", query, arg)
 	}

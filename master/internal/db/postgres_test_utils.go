@@ -180,77 +180,9 @@ func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 		OwnerID: userID,
 		QPos:    decimal.New(0, 0),
 	}
-	err := db.AddJob(jIn)
+	err := AddJobTx(context.TODO(), Bun(), jIn)
 	require.NoError(t, err, "failed to add job")
 	return jID
-}
-
-// RequireMockCommandID creates a mock command and returns a command ID.
-func RequireMockCommandID(t *testing.T, db *PgDB, userID model.UserID) model.TaskID {
-	task := RequireMockTask(t, db, &userID)
-	alloc := RequireMockAllocation(t, db, task.TaskID)
-
-	mockCommand := struct {
-		bun.BaseModel `bun:"table:command_state"`
-
-		TaskID             model.TaskID
-		AllocationID       model.AllocationID
-		GenericCommandSpec map[string]any
-	}{
-		TaskID:       task.TaskID,
-		AllocationID: alloc.AllocationID,
-		GenericCommandSpec: map[string]any{
-			"TaskType": model.TaskTypeCommand,
-			"Metadata": map[string]any{
-				"workspace_id": 1,
-			},
-			"Base": map[string]any{
-				"Owner": map[string]any{
-					"id": userID,
-				},
-			},
-		},
-	}
-	_, err := Bun().NewInsert().Model(&mockCommand).Exec(context.TODO())
-	require.NoError(t, err)
-
-	return task.TaskID
-}
-
-// RequireMockTensorboardID creates a mock tensorboard and returns a tensorboard ID.
-func RequireMockTensorboardID(
-	t *testing.T, db *PgDB, userID model.UserID, expIDs, trialIDs []int,
-) model.TaskID {
-	task := RequireMockTask(t, db, &userID)
-	alloc := RequireMockAllocation(t, db, task.TaskID)
-
-	mockTensorboard := struct {
-		bun.BaseModel `bun:"table:command_state"`
-
-		TaskID             model.TaskID
-		AllocationID       model.AllocationID
-		GenericCommandSpec map[string]any
-	}{
-		TaskID:       task.TaskID,
-		AllocationID: alloc.AllocationID,
-		GenericCommandSpec: map[string]any{
-			"TaskType": model.TaskTypeTensorboard,
-			"Metadata": map[string]any{
-				"workspace_id":   1,
-				"experiment_ids": expIDs,
-				"trial_ids":      trialIDs,
-			},
-			"Base": map[string]any{
-				"Owner": map[string]any{
-					"id": userID,
-				},
-			},
-		},
-	}
-	_, err := Bun().NewInsert().Model(&mockTensorboard).Exec(context.TODO())
-	require.NoError(t, err)
-
-	return task.TaskID
 }
 
 // RequireMockWorkspaceID returns a mock workspace ID.
@@ -315,7 +247,7 @@ func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	err := db.AddTask(tIn)
+	err := AddTask(context.TODO(), tIn)
 	require.NoError(t, err, "failed to add task")
 	return tIn
 }
@@ -470,7 +402,7 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 		State:        ptrs.Ptr(model.AllocationStateTerminated),
 	}
-	err := db.AddAllocation(&a)
+	err := AddAllocation(context.TODO(), &a)
 	require.NoError(t, err, "failed to add allocation")
 	return &a
 }

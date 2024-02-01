@@ -75,7 +75,7 @@ func TestAgentStatePersistence(t *testing.T) {
 
 	// Run through some container states.
 	tID := model.TaskID(uuid.NewString())
-	err = db.SingleDB().AddTask(&model.Task{
+	err = db.AddTask(context.TODO(), &model.Task{
 		TaskID:     tID,
 		JobID:      nil,
 		TaskType:   model.TaskTypeCommand,
@@ -85,7 +85,7 @@ func TestAgentStatePersistence(t *testing.T) {
 	require.NoError(t, err)
 
 	aID := model.AllocationID(uuid.NewString())
-	err = db.SingleDB().AddAllocation(&model.Allocation{
+	err = db.AddAllocation(context.TODO(), &model.Allocation{
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        2,

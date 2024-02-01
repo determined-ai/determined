@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -18,25 +17,15 @@ import (
 )
 
 // initAllocationSessions purges sessions of all closed allocations.
-func (db *PgDB) initAllocationSessions() error {
-	_, err := db.sql.Exec(`
-DELETE FROM allocation_sessions WHERE allocation_id in (
-	SELECT allocation_id FROM allocations
-	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
-)`)
+func initAllocationSessions(ctx context.Context) error {
+	subq := Bun().NewSelect().Table("allocations").
+		Column("allocation_id").Where("start_time IS NOT NULL AND end_time IS NOT NULL")
+	_, err := Bun().NewDelete().Table("allocation_sessions").Where("allocation_id in (?)", subq).Exec(ctx)
 	return err
 }
 
 // AddTask UPSERT's the existence of a task.
-//
-// TODO(ilia): deprecate and use module function instead.
-func (db *PgDB) AddTask(t *model.Task) error {
-	return AddTask(context.TODO(), t)
-}
-
-// AddTask UPSERT's the existence of a task.
 func AddTask(ctx context.Context, t *model.Task) error {
-	// Since AddTaskTx is a single query, RunInTx is an overkill.
 	return AddTaskTx(ctx, Bun(), t)
 }
 
@@ -99,29 +88,9 @@ func TaskCompleted(ctx context.Context, tID model.TaskID) (bool, error) {
 }
 
 // CompleteTask persists the completion of a task.
-func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
-	return completeTask(db.sql, tID, endTime)
-}
-
-func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
-	if _, err := ex.Exec(`
-UPDATE tasks
-SET end_time = $2
-WHERE task_id = $1
-	`, tID, endTime); err != nil {
-		return errors.Wrap(err, "completing task")
-	}
-	return nil
-}
-
-func completeTrialsTasks(ex sqlx.Execer, trialID int, endTime time.Time) error {
-	if _, err := ex.Exec(`
-UPDATE tasks
-SET end_time = $2
-FROM run_id_task_id
-WHERE run_id_task_id.task_id = tasks.task_id
-  AND run_id_task_id.run_id = $1
-  AND end_time IS NULL`, trialID, endTime); err != nil {
+func CompleteTask(ctx context.Context, tID model.TaskID, endTime time.Time) error {
+	if _, err := Bun().NewUpdate().Table("tasks").Set("end_time = ?", endTime).
+		Where("task_id = ?", tID).Exec(ctx); err != nil {
 		return fmt.Errorf("completing task: %w", err)
 	}
 	return nil
@@ -130,75 +99,67 @@ WHERE run_id_task_id.task_id = tasks.task_id
 // AddAllocation upserts the existence of an allocation. Allocation IDs may conflict in the event
 // the master restarts and the trial run ID increment is not persisted, but it is the same
 // allocation so this is OK.
-func (db *PgDB) AddAllocation(a *model.Allocation) error {
-	return db.namedExecOne(`
-INSERT INTO allocations
-	(task_id, allocation_id, slots, resource_pool, start_time, state, ports)
-VALUES
-	(:task_id, :allocation_id, :slots, :resource_pool, :start_time, :state, :ports)
-ON CONFLICT
-	(allocation_id)
-DO UPDATE SET
-	task_id=EXCLUDED.task_id, slots=EXCLUDED.slots, resource_pool=EXCLUDED.resource_pool,
-	start_time=EXCLUDED.start_time, state=EXCLUDED.state, ports=EXCLUDED.ports
-`, a)
+func AddAllocation(ctx context.Context, a *model.Allocation) error {
+	_, err := Bun().NewInsert().Model(a).On("CONFLICT (allocation_id) DO UPDATE").
+		Set("task_id=EXCLUDED.task_id, slots=EXCLUDED.slots").
+		Set("resource_pool=EXCLUDED.resource_pool,start_time=EXCLUDED.start_time").
+		Set("state=EXCLUDED.state, ports=EXCLUDED.ports").Exec(ctx)
+	return err
 }
 
 // AddAllocationExitStatus adds the allocation exit status to the allocations table.
 func AddAllocationExitStatus(ctx context.Context, a *model.Allocation) error {
-	_, err := Bun().NewUpdate().
-		Model(a).
+	if _, err := Bun().NewUpdate().Model(a).
 		Column("exit_reason", "exit_error", "status_code").
-		Where("allocation_id = ?", a.AllocationID).
-		Exec(ctx)
-	if err != nil {
+		Where("allocation_id = ?", a.AllocationID).Exec(ctx); err != nil {
 		return fmt.Errorf("adding allocation exit status to db: %w", err)
 	}
 	return nil
 }
 
 // CompleteAllocation persists the end of an allocation lifetime.
-func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
+func CompleteAllocation(ctx context.Context, a *model.Allocation) error {
 	if a.StartTime == nil {
 		a.StartTime = a.EndTime
 	}
 
-	_, err := db.sql.Exec(`
-UPDATE allocations
-SET start_time = $2, end_time = $3
-WHERE allocation_id = $1`, a.AllocationID, a.StartTime, a.EndTime)
+	_, err := Bun().NewUpdate().Model(a).Set("start_time = ?, end_time = ?", a.StartTime, a.EndTime).
+		Where("allocation_id = ?", a.AllocationID).Exec(ctx)
 
 	return err
 }
 
 // CompleteAllocationTelemetry returns the analytics of an allocation for the telemetry.
-func (db *PgDB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error) {
-	return db.rawQuery(`
-SELECT json_build_object(
-	'allocation_id', a.allocation_id,
-	'job_id', t.job_id,
-	'task_type', t.task_type,
-    'duration_sec', COALESCE(EXTRACT(EPOCH FROM (a.end_time - a.start_time)), 0)
-)
-FROM allocations as a JOIN tasks as t
-ON a.task_id = t.task_id
-WHERE a.allocation_id = $1;
-`, aID)
+func CompleteAllocationTelemetry(ctx context.Context, aID model.AllocationID) ([]byte, error) {
+	var res []byte
+	err := Bun().NewRaw(`
+	SELECT json_build_object(
+		'allocation_id', a.allocation_id,
+		'job_id', t.job_id,
+		'task_type', t.task_type,
+		'duration_sec', COALESCE(EXTRACT(EPOCH FROM (a.end_time - a.start_time)), 0)
+	)
+	FROM allocations as a JOIN tasks as t
+	ON a.task_id = t.task_id
+	WHERE a.allocation_id = ?`, aID).Scan(ctx, &res)
+	return res, err
 }
 
 // AllocationByID retrieves an allocation by its ID.
-func (db *PgDB) AllocationByID(aID model.AllocationID) (*model.Allocation, error) {
+func AllocationByID(ctx context.Context, aID model.AllocationID) (*model.Allocation, error) {
 	var a model.Allocation
-	if err := Bun().NewSelect().Model(&a).Where("allocation_id = ?", aID).
-		Scan(context.TODO()); err != nil {
+	if err := Bun().NewSelect().Table("allocations").
+		Where("allocation_id = ?", aID).Scan(ctx, &a); err != nil {
 		return nil, err
 	}
 	return &a, nil
 }
 
 // StartAllocationSession creates a row in the allocation_sessions table.
-func (db *PgDB) StartAllocationSession(
-	allocationID model.AllocationID, owner *model.User,
+func StartAllocationSession(
+	ctx context.Context,
+	allocationID model.AllocationID,
+	owner *model.User,
 ) (string, error) {
 	if owner == nil {
 		return "", errors.New("owner cannot be nil for allocation session")
@@ -209,74 +170,62 @@ func (db *PgDB) StartAllocationSession(
 		OwnerID:      &owner.ID,
 	}
 
-	query := `
-INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
-	(:allocation_id, :owner_id) RETURNING id`
-	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
+	if _, err := Bun().NewInsert().Model(taskSession).
+		Returning("id").Exec(ctx, &taskSession.ID); err != nil {
 		return "", err
 	}
 
 	v2 := paseto.NewV2()
 	token, err := v2.Sign(GetTokenKeys().PrivateKey, taskSession, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to generate task authentication token")
+		return "", fmt.Errorf("failed to generate task authentication token: %w", err)
 	}
 	return token, nil
 }
 
 // DeleteAllocationSession deletes the task session with the given AllocationID.
-func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
-	_, err := db.sql.Exec(
-		"DELETE FROM allocation_sessions WHERE allocation_id=$1", allocationID)
+func DeleteAllocationSession(ctx context.Context, allocationID model.AllocationID) error {
+	_, err := Bun().NewDelete().Table("allocation_sessions").Where("allocation_id = ?", allocationID).Exec(ctx)
 	return err
 }
 
 // UpdateAllocationState stores the latest task state and readiness.
-func (db *PgDB) UpdateAllocationState(a model.Allocation) error {
-	_, err := db.sql.Exec(`
-		UPDATE allocations
-		SET state=$2, is_ready=$3
-		WHERE allocation_id=$1
-	`, a.AllocationID, a.State, a.IsReady)
+func UpdateAllocationState(ctx context.Context, a model.Allocation) error {
+	_, err := Bun().NewUpdate().Table("allocations").
+		Set("state = ?, is_ready = ?", a.State, a.IsReady).
+		Where("allocation_id = ?", a.AllocationID).Exec(ctx)
+
 	return err
 }
 
 // UpdateAllocationPorts stores the latest task state and readiness.
-func UpdateAllocationPorts(a model.Allocation) error {
+func UpdateAllocationPorts(ctx context.Context, a model.Allocation) error {
 	_, err := Bun().NewUpdate().Table("allocations").
 		Set("ports = ?", a.Ports).
 		Where("allocation_id = ?", a.AllocationID).
-		Exec(context.TODO())
+		Exec(ctx)
 	return err
 }
 
 // UpdateAllocationStartTime stores the latest start time.
-func (db *PgDB) UpdateAllocationStartTime(a model.Allocation) error {
-	_, err := db.sql.Exec(`
-		UPDATE allocations
-		SET start_time = $2
-		WHERE allocation_id = $1
-	`, a.AllocationID, a.StartTime)
+func UpdateAllocationStartTime(ctx context.Context, a model.Allocation) error {
+	_, err := Bun().NewUpdate().Table("allocations").
+		Set("start_time = ?", a.StartTime).Where("allocation_id = ?", a.AllocationID).Exec(ctx)
 	return err
 }
 
 // UpdateAllocationProxyAddress stores the proxy address.
-func (db *PgDB) UpdateAllocationProxyAddress(a model.Allocation) error {
-	_, err := db.sql.Exec(`
-		UPDATE allocations
-		SET proxy_address = $2
-		WHERE allocation_id = $1
-	`, a.AllocationID, a.ProxyAddress)
+func UpdateAllocationProxyAddress(ctx context.Context, a model.Allocation) error {
+	_, err := Bun().NewUpdate().Table("allocations").Set("proxy_address = ?", a.ProxyAddress).
+		Where("allocation_id = ?", a.AllocationID).Exec(ctx)
 	return err
 }
 
 // CloseOpenAllocations finds all allocations that were open when the master crashed
 // and adds an end time.
-func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {
-	if _, err := db.sql.Exec(`
-	UPDATE allocations
-	SET start_time = cluster_heartbeat FROM cluster_id
-	WHERE start_time is NULL`); err != nil {
+func CloseOpenAllocations(ctx context.Context, exclude []model.AllocationID) error {
+	if _, err := Bun().NewRaw(`UPDATE allocations SET start_time = cluster_heartbeat FROM cluster_id
+	WHERE start_time is NULL`).Exec(ctx); err != nil {
 		return errors.Wrap(err,
 			"setting start time to cluster heartbeat when it's assigned to zero value")
 	}
@@ -287,19 +236,67 @@ func (db *PgDB) CloseOpenAllocations(exclude []model.AllocationID) error {
 		for _, v := range exclude {
 			excludeStr = append(excludeStr, v.String())
 		}
-
 		excludedFilter = strings.Join(excludeStr, ",")
 	}
 
-	if _, err := db.sql.Exec(`
-	UPDATE allocations
-	SET end_time = greatest(cluster_heartbeat, start_time), state = 'TERMINATED'
-	FROM cluster_id
-	WHERE end_time IS NULL AND
-	($1 = '' OR allocation_id NOT IN (
-		SELECT unnest(string_to_array($1, ','))))`, excludedFilter); err != nil {
+	if _, err := Bun().NewRaw(` UPDATE allocations 
+	SET end_time = greatest(cluster_heartbeat, start_time), state = 'TERMINATED' FROM cluster_id
+	WHERE end_time IS NULL AND (? = '' OR allocation_id NOT IN (SELECT unnest(string_to_array(?, ','))))`,
+		excludedFilter, excludedFilter).Exec(ctx); err != nil {
 		return errors.Wrap(err, "closing old allocations")
 	}
+	return nil
+}
+
+// RecordTaskStats record stats for tasks.
+func RecordTaskStats(ctx context.Context, stats *model.TaskStats) error {
+	return RecordTaskStatsBun(ctx, stats)
+}
+
+// RecordTaskStatsBun record stats for tasks with bun.
+func RecordTaskStatsBun(ctx context.Context, stats *model.TaskStats) error {
+	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
+	return err
+}
+
+// RecordTaskEndStats record end stats for tasks.
+func RecordTaskEndStats(ctx context.Context, stats *model.TaskStats) error {
+	return RecordTaskEndStatsBun(ctx, stats)
+}
+
+// RecordTaskEndStatsBun record end stats for tasks with bun.
+func RecordTaskEndStatsBun(ctx context.Context, stats *model.TaskStats) error {
+	query := Bun().NewUpdate().Model(stats).Column("end_time").
+		Where("allocation_id = ?", stats.AllocationID).
+		Where("event_type = ?", stats.EventType).
+		Where("end_time IS NULL")
+	if stats.ContainerID == nil {
+		// Just doing Where("container_id = ?", stats.ContainerID) in the null case
+		// generates WHERE container_id = NULL which doesn't seem to match on null rows.
+		// We don't use this case anywhere currently but this feels like an easy bug to write
+		// without this.
+		query = query.Where("container_id IS NULL")
+	} else {
+		query = query.Where("container_id = ?", stats.ContainerID)
+	}
+
+	if _, err := query.Exec(ctx); err != nil {
+		return fmt.Errorf("recording task end stats %+v: %w", stats, err)
+	}
+
+	return nil
+}
+
+// EndAllTaskStats called at master starts, in case master previously crashed.
+func EndAllTaskStats(ctx context.Context) error {
+	_, err := Bun().NewRaw(`UPDATE task_stats 
+	SET end_time = greatest(cluster_heartbeat, task_stats.start_time) FROM cluster_id, allocations
+	WHERE allocations.allocation_id = task_stats.allocation_id AND allocations.end_time IS NOT NULL
+	AND task_stats.end_time IS NULL`).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("ending all task stats: %w", err)
+	}
+
 	return nil
 }
 
@@ -362,7 +359,7 @@ ORDER BY l.id %s LIMIT $2
 	return b, followState, nil
 }
 
-// AddTaskLogs adds a list of *model.TaskLog objects to the database with automatic IDs.
+// AddTaskLogs bulk-inserts a list of *model.TaskLog objects to the database with automatic IDs.
 func (db *PgDB) AddTaskLogs(logs []*model.TaskLog) error {
 	if len(logs) == 0 {
 		return nil
@@ -422,60 +419,6 @@ WHERE task_id = $1
 		return 0, err
 	}
 	return count, nil
-}
-
-// RecordTaskStats record stats for tasks.
-func (db *PgDB) RecordTaskStats(stats *model.TaskStats) error {
-	return RecordTaskStatsBun(stats)
-}
-
-// RecordTaskStatsBun record stats for tasks with bun.
-func RecordTaskStatsBun(stats *model.TaskStats) error {
-	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
-	return err
-}
-
-// RecordTaskEndStats record end stats for tasks.
-func (db *PgDB) RecordTaskEndStats(stats *model.TaskStats) error {
-	return RecordTaskEndStatsBun(stats)
-}
-
-// RecordTaskEndStatsBun record end stats for tasks with bun.
-func RecordTaskEndStatsBun(stats *model.TaskStats) error {
-	query := Bun().NewUpdate().Model(stats).Column("end_time").
-		Where("allocation_id = ?", stats.AllocationID).
-		Where("event_type = ?", stats.EventType).
-		Where("end_time IS NULL")
-	if stats.ContainerID == nil {
-		// Just doing Where("container_id = ?", stats.ContainerID) in the null case
-		// generates WHERE container_id = NULL which doesn't seem to match on null rows.
-		// We don't use this case anywhere currently but this feels like an easy bug to write
-		// without this.
-		query = query.Where("container_id IS NULL")
-	} else {
-		query = query.Where("container_id = ?", stats.ContainerID)
-	}
-
-	if _, err := query.Exec(context.TODO()); err != nil {
-		return fmt.Errorf("recording task end stats %+v: %w", stats, err)
-	}
-
-	return nil
-}
-
-// EndAllTaskStats called at master starts, in case master previously crashed.
-func (db *PgDB) EndAllTaskStats() error {
-	_, err := db.sql.Exec(`
-UPDATE task_stats SET end_time = greatest(cluster_heartbeat, task_stats.start_time)
-FROM cluster_id, allocations
-WHERE allocations.allocation_id = task_stats.allocation_id
-AND allocations.end_time IS NOT NULL
-AND task_stats.end_time IS NULL`)
-	if err != nil {
-		return fmt.Errorf("ending all task stats: %w", err)
-	}
-
-	return nil
 }
 
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.

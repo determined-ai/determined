@@ -44,7 +44,7 @@ func TestRestoreFailed(t *testing.T) {
 		FailureType: sproto.RestoreError,
 		ErrMsg:      "things weren't there",
 	})
-	requireTerminated(t, db, id, exitFuture)
+	requireTerminated(t, id, exitFuture)
 }
 
 func TestInvalidResourcesRequest(t *testing.T) {
@@ -55,7 +55,7 @@ func TestInvalidResourcesRequest(t *testing.T) {
 	q.Put(&sproto.InvalidResourcesRequestError{
 		Cause: fmt.Errorf("eternal gke quota error"),
 	})
-	requireTerminated(t, db, id, exitFuture)
+	requireTerminated(t, id, exitFuture)
 }
 
 type checkWriter struct {
@@ -100,7 +100,7 @@ func TestSetReady(t *testing.T) {
 	err := DefaultService.SetReady(context.TODO(), id)
 	require.NoError(t, err)
 
-	state, dbState := requireState(t, db, id, model.AllocationStateRunning)
+	state, dbState := requireState(t, id, model.AllocationStateRunning)
 	require.True(t, state.Ready)
 	require.NotNil(t, dbState.IsReady)
 	require.True(t, *dbState.IsReady)
@@ -113,7 +113,7 @@ func TestSetWaiting(t *testing.T) {
 	err := DefaultService.SetWaiting(context.TODO(), id)
 	require.NoError(t, err)
 
-	requireState(t, db, id, model.AllocationStateWaiting)
+	requireState(t, id, model.AllocationStateWaiting)
 }
 
 func TestSetProxyAddress(t *testing.T) {
@@ -130,7 +130,7 @@ func TestSetProxyAddress(t *testing.T) {
 	err := DefaultService.SetProxyAddress(context.TODO(), id, addr)
 	require.NoError(t, err)
 
-	_, dbState := requireState(t, db, id, model.AllocationStatePending)
+	_, dbState := requireState(t, id, model.AllocationStatePending)
 	require.NotNil(t, dbState.ProxyAddress)
 	require.Equal(t, addr, *dbState.ProxyAddress)
 
@@ -164,7 +164,7 @@ func TestServiceRendezvous(t *testing.T) {
 			},
 		},
 	})
-	requireState(t, db, id, model.AllocationStateRunning)
+	requireState(t, id, model.AllocationStateRunning)
 
 	info, err := DefaultService.WatchRendezvous(context.TODO(), id, rID)
 	require.NoError(t, err)
@@ -217,7 +217,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 			},
 		},
 	})
-	requireState(t, pgDB, ar.AllocationID, model.AllocationStateRunning)
+	requireState(t, ar.AllocationID, model.AllocationStateRunning)
 
 	t.Log("do rendezvous (sets ready bit)")
 	info, err := DefaultService.WatchRendezvous(context.TODO(), ar.AllocationID, rID)
@@ -302,7 +302,7 @@ func TestAllGather(t *testing.T) {
 			},
 		},
 	})
-	requireState(t, db, id, model.AllocationStateRunning)
+	requireState(t, id, model.AllocationStateRunning)
 
 	wID := uuid.New()
 	msg := "hello world"
@@ -354,14 +354,14 @@ func TestPreemption(t *testing.T) {
 				ResourcesID:    rID,
 				ResourcesState: sproto.Starting,
 			})
-			requireState(t, db, id, model.AllocationStateStarting)
+			requireState(t, id, model.AllocationStateStarting)
 
 			q.Put(&sproto.ResourcesStateChanged{
 				ResourcesID:      rID,
 				ResourcesState:   sproto.Running,
 				ResourcesStarted: &sproto.ResourcesStarted{},
 			})
-			requireState(t, db, id, model.AllocationStateRunning)
+			requireState(t, id, model.AllocationStateRunning)
 			err := DefaultService.SetReady(context.Background(), id)
 			require.NoError(t, err)
 
@@ -380,7 +380,7 @@ func TestPreemption(t *testing.T) {
 				ResourcesState:   sproto.Terminated,
 				ResourcesStopped: &sproto.ResourcesStopped{},
 			})
-			requireTerminated(t, db, id, exitFuture)
+			requireTerminated(t, id, exitFuture)
 		})
 	}
 }
@@ -410,7 +410,7 @@ func TestSignalBeforeLaunch(t *testing.T) {
 			err := DefaultService.Signal(id, tt.args.sig, "some severe reason")
 			require.NoError(t, err)
 
-			exit := requireTerminated(t, db, id, exitFuture)
+			exit := requireTerminated(t, id, exitFuture)
 			require.NoError(t, exit.Err)
 			require.True(t, rm.AssertExpectations(t), "rm didn't receive release in time")
 		})
@@ -444,7 +444,7 @@ func TestSignalBeforeReady(t *testing.T) {
 			err := DefaultService.Signal(id, tt.args.sig, "some severe reason")
 			require.NoError(t, err)
 
-			exit := requireTerminated(t, db, id, exitFuture)
+			exit := requireTerminated(t, id, exitFuture)
 			require.NoError(t, exit.Err)
 			require.True(t, rm.AssertExpectations(t), "rm didn't receive release in time")
 		})
@@ -463,7 +463,7 @@ func TestSetResourcesDaemon(t *testing.T) {
 	for _, rID := range ranked[1:] {
 		err := DefaultService.SetResourcesAsDaemon(context.TODO(), id, rID)
 		require.NoError(t, err)
-		requireState(t, db, id, model.AllocationStateAssigned) // should still be running
+		requireState(t, id, model.AllocationStateAssigned) // should still be running
 	}
 
 	t.Log("daemon exit should wait on chief")
@@ -472,7 +472,7 @@ func TestSetResourcesDaemon(t *testing.T) {
 		ResourcesState:   sproto.Terminated,
 		ResourcesStopped: &sproto.ResourcesStopped{},
 	})
-	requireState(t, db, id, model.AllocationStateTerminating)
+	requireState(t, id, model.AllocationStateTerminating)
 	require.False(t, waitForCondition(time.Second, func() bool {
 		return exitFuture.Load() != nil
 	}), "allocation exited prematurely")
@@ -484,7 +484,7 @@ func TestSetResourcesDaemon(t *testing.T) {
 		ResourcesStopped: &sproto.ResourcesStopped{},
 	})
 
-	exit := requireTerminated(t, db, id, exitFuture)
+	exit := requireTerminated(t, id, exitFuture)
 	require.NoError(t, exit.Err)
 	require.True(t, resources[ranked[2]].AssertExpectations(t), "daemon wasn't killed")
 	require.True(t, rm.AssertExpectations(t), "rm didn't receive release in time")
@@ -517,7 +517,7 @@ func TestRestore(t *testing.T) {
 	restoredAr := stubAllocateRequest(restoredTask)
 	restoredAr.Restore = true
 
-	err := pgDB.AddAllocation(&model.Allocation{
+	err := db.AddAllocation(context.TODO(), &model.Allocation{
 		AllocationID: restoredAr.AllocationID,
 		TaskID:       restoredAr.TaskID,
 		Slots:        restoredAr.SlotsNeeded,
@@ -661,7 +661,7 @@ func requireAssignedMany(
 		ResourcePool: stubResourcePoolName,
 		Resources:    assigned,
 	})
-	requireState(t, db, id, model.AllocationStateAssigned)
+	requireState(t, id, model.AllocationStateAssigned)
 	return resources
 }
 
@@ -677,12 +677,11 @@ func requireKilled(
 	}
 
 	_ = DefaultService.Signal(id, KillAllocation, "cleanup for tests")
-	return requireTerminated(t, db, id, exitFuture)
+	return requireTerminated(t, id, exitFuture)
 }
 
 func requireTerminated(
 	t *testing.T,
-	db *db.PgDB,
 	id model.AllocationID,
 	exitFuture *atomic.Pointer[AllocationExited],
 ) *AllocationExited {
@@ -691,17 +690,16 @@ func requireTerminated(
 	}), "allocation did not exit in time")
 	exit := exitFuture.Load()
 	require.True(t, exit.FinalState.State == model.AllocationStateTerminated)
-	requireDBState(t, db, id, model.AllocationStateTerminated)
+	requireDBState(t, id, model.AllocationStateTerminated)
 	return exit
 }
 
 func requireState(
 	t *testing.T,
-	db *db.PgDB,
 	id model.AllocationID,
 	state model.AllocationState,
 ) (AllocationState, *model.Allocation) {
-	return requireAllocationState(t, id, state), requireDBState(t, db, id, state)
+	return requireAllocationState(t, id, state), requireDBState(t, id, state)
 }
 
 func requireAllocationState(
@@ -735,11 +733,10 @@ func requireAllocationState(
 
 func requireDBState(
 	t *testing.T,
-	db *db.PgDB,
 	id model.AllocationID,
 	expected model.AllocationState,
 ) *model.Allocation {
-	dbState, err := db.AllocationByID(id)
+	dbState, err := db.AllocationByID(context.TODO(), id)
 	require.NoError(t, err)
 	require.NotNil(t, dbState.State)
 	require.Equal(t, expected, *dbState.State)

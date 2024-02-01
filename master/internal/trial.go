@@ -302,7 +302,7 @@ func (t *trial) create() error {
 		int64(t.searcher.Create.TrialSeed),
 	)
 
-	err := t.addTask()
+	err := t.addTask(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -349,13 +349,11 @@ func (t *trial) continueSetup(continueFromTrialID *int) error {
 
 	t.taskID = model.TaskID(fmt.Sprintf("%s-%d", t.taskID, len(trialIDTaskIDs)))
 
-	err = t.addTask()
+	err = t.addTask(context.TODO())
 	if err != nil {
 		return err
 	}
-	if _, err := db.Bun().
-		NewInsert().
-		Model(&model.RunTaskID{RunID: t.id, TaskID: t.taskID}).
+	if _, err := db.Bun().NewInsert().Model(&model.RunTaskID{RunID: t.id, TaskID: t.taskID}).
 		Exec(context.TODO()); err != nil {
 		return fmt.Errorf("adding trial ID task ID relationship: %w", err)
 	}
@@ -475,8 +473,8 @@ func (t *trial) maybeAllocateTask() error {
 	return nil
 }
 
-func (t *trial) addTask() error {
-	return t.db.AddTask(&model.Task{
+func (t *trial) addTask(ctx context.Context) error {
+	return db.AddTask(ctx, &model.Task{
 		TaskID:     t.taskID,
 		TaskType:   model.TaskTypeTrial,
 		StartTime:  t.jobSubmissionTime, // TODO: Why is this the job submission time..?
@@ -698,7 +696,7 @@ func (t *trial) transition(s model.StateWithReason) error {
 	if t.state != s.State {
 		t.syslog.Infof("trial changed from state %s to %s", t.state, s.State)
 		if t.idSet {
-			if err := t.db.UpdateTrial(t.id, s.State); err != nil {
+			if err := db.UpdateTrial(context.TODO(), t.id, s.State); err != nil {
 				return fmt.Errorf("updating trial with end state (%s, %s): %w", s.State, s.InformationalReason, err)
 			}
 		}
