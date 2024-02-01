@@ -323,7 +323,7 @@ func (a *allocation) Signal(sig AllocationSignal, reason string) {
 
 // SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
 // it provides.
-func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
+func (a *allocation) SetProxyAddress(ctx context.Context, address string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -332,7 +332,7 @@ func (a *allocation) SetProxyAddress(_ context.Context, address string) error {
 		return nil
 	}
 	a.model.ProxyAddress = &address
-	if err := a.db.UpdateAllocationProxyAddress(a.model); err != nil {
+	if err := db.UpdateAllocationProxyAddress(ctx, a.model); err != nil {
 		a.crash(err)
 		return err
 	}
@@ -347,12 +347,12 @@ func (a *allocation) SendContainerLog(log *sproto.ContainerLog) {
 }
 
 // SetWaiting moves the allocation to the waiting state if it has not progressed past it yet.
-func (a *allocation) SetWaiting(_ context.Context) error {
+func (a *allocation) SetWaiting(ctx context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	a.setMostProgressedModelState(model.AllocationStateWaiting)
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	if err := db.UpdateAllocationState(ctx, a.model); err != nil {
 		a.crash(err)
 		return err
 	}
@@ -361,7 +361,7 @@ func (a *allocation) SetWaiting(_ context.Context) error {
 
 // SetReady sets the ready bit and moves the allocation to the running state if it has not
 // progressed past it already.
-func (a *allocation) SetReady(_ context.Context) error {
+func (a *allocation) SetReady(ctx context.Context) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -371,7 +371,7 @@ func (a *allocation) SetReady(_ context.Context) error {
 	a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("Service of %s is available", a.req.Name)})
 	a.setMostProgressedModelState(model.AllocationStateRunning)
 	a.model.IsReady = ptrs.Ptr(true)
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	if err := db.UpdateAllocationState(ctx, a.model); err != nil {
 		a.crash(err)
 		return err
 	}
@@ -388,7 +388,7 @@ func (a *allocation) persistRendezvousComplete() error {
 	if a.model.IsReady == nil || (a.model.IsReady != nil && !*a.model.IsReady) {
 		a.syslog.Info("all containers are connected successfully (task container state changed)")
 		a.model.IsReady = ptrs.Ptr(true)
-		if err := a.db.UpdateAllocationState(a.model); err != nil {
+		if err := db.UpdateAllocationState(context.TODO(), a.model); err != nil {
 			return err
 		}
 	}
@@ -520,7 +520,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 	a.syslog.Debug("requestResources add allocation")
 
 	a.setModelState(model.AllocationStatePending)
-	if err := a.db.AddAllocation(&a.model); err != nil {
+	if err := db.AddAllocation(context.TODO(), &a.model); err != nil {
 		return nil, errors.Wrap(err, "saving trial allocation")
 	}
 
@@ -573,7 +573,7 @@ func (a *allocation) finalize(
 	}
 
 	a.setMostProgressedModelState(model.AllocationStateTerminated)
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	if err := db.UpdateAllocationState(context.TODO(), a.model); err != nil {
 		a.syslog.WithError(err).Error("failed to set allocation state to terminated")
 	}
 	a.purgeRestorableResources()
@@ -617,12 +617,12 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 		}
 	})
 
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	if err := db.UpdateAllocationState(context.TODO(), a.model); err != nil {
 		return errors.Wrap(err, "updating allocation state")
 	}
 
 	now := time.Now().UTC()
-	err = a.db.RecordTaskStats(&model.TaskStats{
+	err = db.RecordTaskStats(context.TODO(), &model.TaskStats{
 		AllocationID: msg.ID,
 		EventType:    "QUEUED",
 		StartTime:    &msg.JobSubmissionTime,
@@ -672,7 +672,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	} else {
 		spec := a.specifier.ToTaskSpec()
 
-		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
+		token, err := db.StartAllocationSession(context.TODO(), a.model.AllocationID, spec.Owner)
 		if err != nil {
 			return errors.Wrap(err, "starting a new allocation session")
 		}
@@ -687,7 +687,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 			}
 		})
 
-		err = db.UpdateAllocationPorts(a.model)
+		err = db.UpdateAllocationPorts(context.TODO(), a.model)
 		if err != nil {
 			return fmt.Errorf("updating allocation db")
 		}
@@ -841,7 +841,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		}
 	}
 
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	if err := db.UpdateAllocationState(context.TODO(), a.model); err != nil {
 		a.syslog.Error(err)
 	}
 }
@@ -851,7 +851,9 @@ func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
 	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
-	if err := a.db.UpdateAllocationState(a.model); err != nil {
+	ctx := context.TODO()
+
+	if err := db.UpdateAllocationState(ctx, a.model); err != nil {
 		a.syslog.Error(err)
 	}
 
@@ -869,7 +871,7 @@ func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
 		a.model.EndTime = ptrs.Ptr(time.Now().UTC())
 	}
 
-	if err := a.db.CompleteAllocation(&a.model); err != nil {
+	if err := db.CompleteAllocation(ctx, &a.model); err != nil {
 		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
@@ -1191,7 +1193,7 @@ func (a *allocation) markResourcesStarted() {
 	} else {
 		a.sendTaskLog(&model.TaskLog{Log: fmt.Sprintf("%s was assigned to an agent", a.req.Name)})
 	}
-	if err := a.db.UpdateAllocationStartTime(a.model); err != nil {
+	if err := db.UpdateAllocationStartTime(context.TODO(), a.model); err != nil {
 		a.syslog.
 			WithError(err).
 			Errorf("allocation will not be properly accounted for")
@@ -1200,18 +1202,19 @@ func (a *allocation) markResourcesStarted() {
 
 // markResourcesReleased persists completion information.
 func (a *allocation) markResourcesReleased() {
-	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
+	ctx := context.TODO()
+	if err := db.DeleteAllocationSession(ctx, a.model.AllocationID); err != nil {
 		a.syslog.WithError(err).Error("error deleting allocation session")
 	}
 	if a.model.StartTime == nil {
 		return
 	}
 	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
-	if err := a.db.CompleteAllocation(&a.model); err != nil {
+	if err := db.CompleteAllocation(ctx, &a.model); err != nil {
 		a.syslog.WithError(err).Error("failed to mark allocation completed")
 	}
 
-	telemetry.ReportAllocationTerminal(a.db, a.model, a.resources.firstDevice())
+	telemetry.ReportAllocationTerminal(a.model, a.resources.firstDevice())
 }
 
 func (a *allocation) purgeRestorableResources() {

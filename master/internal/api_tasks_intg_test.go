@@ -113,10 +113,10 @@ func mockNotebookWithWorkspaceID(
 		TaskID:   model.NewTaskID(),
 		TaskType: model.TaskTypeNotebook,
 	}
-	require.NoError(t, api.m.db.AddTask(nb))
+	require.NoError(t, db.AddTask(ctx, nb))
 
 	allocationID := model.AllocationID(string(nb.TaskID) + ".1")
-	require.NoError(t, api.m.db.AddAllocation(&model.Allocation{
+	require.NoError(t, db.AddAllocation(ctx, &model.Allocation{
 		TaskID:       nb.TaskID,
 		AllocationID: allocationID,
 	}))
@@ -324,7 +324,7 @@ func TestAddAllocationAcceleratorData(t *testing.T) {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	require.NoError(t, api.m.db.AddTask(task), "failed to add task")
+	require.NoError(t, db.AddTask(ctx, task), "failed to add task")
 
 	aID := tID + "-1"
 	a := &model.Allocation{
@@ -333,7 +333,7 @@ func TestAddAllocationAcceleratorData(t *testing.T) {
 		Slots:        1,
 		ResourcePool: "default",
 	}
-	require.NoError(t, api.m.db.AddAllocation(a), "failed to add allocation")
+	require.NoError(t, db.AddAllocation(ctx, a), "failed to add allocation")
 	accData := &model.AcceleratorData{
 		ContainerID:      uuid.NewString(),
 		AllocationID:     model.AllocationID(aID),
@@ -362,7 +362,7 @@ func TestGetAllocationAcceleratorDataWithNoData(t *testing.T) {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	require.NoError(t, api.m.db.AddTask(task), "failed to add task")
+	require.NoError(t, db.AddTask(ctx, task), "failed to add task")
 
 	aID := tID + "-1"
 	a := &model.Allocation{
@@ -371,7 +371,7 @@ func TestGetAllocationAcceleratorDataWithNoData(t *testing.T) {
 		Slots:        1,
 		ResourcePool: "default",
 	}
-	require.NoError(t, api.m.db.AddAllocation(a), "failed to add allocation")
+	require.NoError(t, db.AddAllocation(ctx, a), "failed to add allocation")
 
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
@@ -390,7 +390,7 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	require.NoError(t, api.m.db.AddTask(task), "failed to add task")
+	require.NoError(t, db.AddTask(ctx, task), "failed to add task")
 
 	aID1 := tID + "-1"
 	a1 := &model.Allocation{
@@ -399,7 +399,7 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 		Slots:        1,
 		ResourcePool: "default",
 	}
-	require.NoError(t, api.m.db.AddAllocation(a1), "failed to add allocation")
+	require.NoError(t, db.AddAllocation(ctx, a1), "failed to add allocation")
 	accData := &model.AcceleratorData{
 		ContainerID:      uuid.NewString(),
 		AllocationID:     model.AllocationID(aID1),
@@ -418,7 +418,7 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 		Slots:        1,
 		ResourcePool: "default",
 	}
-	require.NoError(t, api.m.db.AddAllocation(a2), "failed to add allocation")
+	require.NoError(t, db.AddAllocation(ctx, a2), "failed to add allocation")
 
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})

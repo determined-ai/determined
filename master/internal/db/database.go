@@ -43,13 +43,8 @@ type DB interface {
 		id int,
 		experimentBest, trialBest, trialLatest int,
 	) ([]uuid.UUID, error)
-	AddTask(t *model.Task) error
-	UpdateTrial(id int, newState model.State) error
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
-	AddAllocation(a *model.Allocation) error
-	CompleteAllocation(a *model.Allocation) error
-	CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error)
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error
@@ -89,11 +84,6 @@ type DB interface {
 		trials []*apiv1.TrialsSnapshotResponse_Trial, endTime time.Time, err error)
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
-	StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error)
-	DeleteAllocationSession(allocationID model.AllocationID) error
-	UpdateAllocationState(allocation model.Allocation) error
-	UpdateAllocationStartTime(allocation model.Allocation) error
-	UpdateAllocationProxyAddress(allocation model.Allocation) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,
@@ -114,9 +104,6 @@ type DB interface {
 	RecordInstanceStats(a *model.InstanceStats) error
 	EndInstanceStats(a *model.InstanceStats) error
 	EndAllInstanceStats() error
-	EndAllTaskStats() error
-	RecordTaskEndStats(stats *model.TaskStats) error
-	RecordTaskStats(stats *model.TaskStats) error
 	UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error
 }
 

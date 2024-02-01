@@ -384,9 +384,9 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
 	}
-	err = pgDB.AddAllocation(a)
+	err = db.AddAllocation(context.TODO(), a)
 	assert.NilError(t, err, "failed to add allocation")
-	err = pgDB.CompleteAllocation(a)
+	err = db.CompleteAllocation(context.TODO(), a)
 	assert.NilError(t, err, "failed to complete allocation")
 
 	return experiment, trial, a

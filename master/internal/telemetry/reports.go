@@ -1,6 +1,7 @@
 package telemetry
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"math/big"
@@ -131,9 +132,9 @@ func ReportExperimentCreated(id int, config expconf.ExperimentConfig) {
 }
 
 // ReportAllocationTerminal reports that an allocation ends.
-func ReportAllocationTerminal(db db.DB, a model.Allocation, d *device.Device,
+func ReportAllocationTerminal(a model.Allocation, d *device.Device,
 ) {
-	res, err := db.CompleteAllocationTelemetry(a.AllocationID)
+	res, err := db.CompleteAllocationTelemetry(context.TODO(), a.AllocationID)
 	if err != nil {
 		syslog.WithError(err).Warn("failed to fetch allocation telemetry")
 		return
