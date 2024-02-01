@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -20,7 +21,7 @@ func TestGetGenericTaskConfig(t *testing.T) {
 	taskID := model.NewTaskID()
 
 	task := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: taskID, Config: &expectedConfig}
-	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, db.AddTask(ctx, task))
 
 	resp, err := api.GetGenericTaskConfig(ctx, &apiv1.GetGenericTaskConfigRequest{
 		TaskId: string(taskID),
@@ -37,7 +38,7 @@ func TestGetTask(t *testing.T) {
 	state := model.TaskStateCompleted
 
 	task := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: taskID, State: &state}
-	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, db.AddTask(ctx, task))
 
 	resp, err := api.GetTask(ctx, &apiv1.GetTaskRequest{TaskId: taskID.String()})
 

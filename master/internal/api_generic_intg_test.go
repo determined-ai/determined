@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -23,9 +24,9 @@ func TestPropagateTaskState(t *testing.T) {
 	parentModel := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: parentID}
 	child1Model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child1ID, ParentID: &parentID}
 	child2Model := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child2ID, ParentID: &parentID}
-	require.NoError(t, api.m.db.AddTask(parentModel))
-	require.NoError(t, api.m.db.AddTask(child1Model))
-	require.NoError(t, api.m.db.AddTask(child2Model))
+	require.NoError(t, db.AddTask(ctx, parentModel))
+	require.NoError(t, db.AddTask(ctx, child1Model))
+	require.NoError(t, db.AddTask(ctx, child2Model))
 
 	overrideTasks := []model.TaskState{}
 	require.NoError(t, api.PropagateTaskState(ctx, parentID, model.TaskStateStoppingCanceled, overrideTasks))
@@ -51,9 +52,9 @@ func TestFindRoot(t *testing.T) {
 	parent := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: parentID}
 	child1 := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child1ID, ParentID: &parentID}
 	child2 := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child2ID, ParentID: &parentID}
-	require.NoError(t, api.m.db.AddTask(parent))
-	require.NoError(t, api.m.db.AddTask(child1))
-	require.NoError(t, api.m.db.AddTask(child2))
+	require.NoError(t, db.AddTask(ctx, parent))
+	require.NoError(t, db.AddTask(ctx, child1))
+	require.NoError(t, db.AddTask(ctx, child2))
 
 	taskID, err := api.FindRoot(ctx, child1ID)
 	require.NoError(t, err)
@@ -70,9 +71,9 @@ func TestGetTaskChildren(t *testing.T) {
 	parent := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: parentID}
 	child1 := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child1ID, ParentID: &parentID}
 	child2 := &model.Task{TaskType: model.TaskTypeGeneric, TaskID: child2ID, ParentID: &parentID}
-	require.NoError(t, api.m.db.AddTask(parent))
-	require.NoError(t, api.m.db.AddTask(child1))
-	require.NoError(t, api.m.db.AddTask(child2))
+	require.NoError(t, db.AddTask(ctx, parent))
+	require.NoError(t, db.AddTask(ctx, child1))
+	require.NoError(t, db.AddTask(ctx, child2))
 
 	taskSet := map[model.TaskID]bool{parentID: true, child1ID: true, child2ID: true}
 
