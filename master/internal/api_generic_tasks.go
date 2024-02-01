@@ -750,7 +750,9 @@ func getAllocationFromTaskID(ctx context.Context, taskID model.TaskID,
 	allocation := model.Allocation{}
 	err := db.Bun().NewSelect().Model(&allocation).
 		ColumnExpr("allocation_id").
-		Where("task_id = ?", taskID).Scan(ctx)
+		Where("task_id = ?", taskID).
+		OrderExpr("start_time DESC").
+		Scan(ctx)
 	if err != nil {
 		return "", err
 	}
