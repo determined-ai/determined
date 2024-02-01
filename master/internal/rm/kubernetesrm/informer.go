@@ -138,7 +138,11 @@ func (i *informer) run(ctx context.Context) {
 	i.syslog.Debugf("%s informer is starting", i.name)
 	for {
 		select {
-		case event := <-i.resultChan:
+		case event, ok := <-i.resultChan:
+			if !ok {
+				i.syslog.Error("retry watcher stopped unexpectedly")
+				panic(fmt.Errorf("retry watcher on %s stopped unexpectedly", i.name))
+			}
 			if event.Type == watch.Error {
 				i.syslog.Warnf("%s informer emitted error %+v", i.name, event)
 				continue
