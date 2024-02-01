@@ -791,9 +791,9 @@ func (m *Master) restoreNonTerminalExperiments() error {
 	return nil
 }
 
-func (m *Master) closeOpenAllocations() error {
+func (m *Master) closeOpenAllocations(ctx context.Context) error {
 	allocationIds := task.DefaultService.GetAllAllocationIDs()
-	if err := m.db.CloseOpenAllocations(allocationIds); err != nil {
+	if err := db.CloseOpenAllocations(ctx, allocationIds); err != nil {
 		return err
 	}
 	return nil
@@ -1081,11 +1081,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return err
 	}
 
-	if err = m.closeOpenAllocations(); err != nil {
+	if err = m.closeOpenAllocations(ctx); err != nil {
 		return err
 	}
 
-	if err = m.db.EndAllTaskStats(); err != nil {
+	if err = db.EndAllTaskStats(ctx); err != nil {
 		return err
 	}
 

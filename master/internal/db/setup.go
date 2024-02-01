@@ -98,7 +98,7 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 		return nil, err
 	}
 
-	if err = db.initAllocationSessions(); err != nil {
+	if err = initAllocationSessions(context.TODO()); err != nil {
 		return nil, err
 	}
 	return db, nil

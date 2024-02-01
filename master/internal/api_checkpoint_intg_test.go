@@ -45,7 +45,7 @@ func createVersionTwoCheckpoint(
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}
-	require.NoError(t, api.m.db.AddAllocation(aIn))
+	require.NoError(t, db.AddAllocation(ctx, aIn))
 
 	checkpoint := &model.CheckpointV2{
 		ID:           0,
