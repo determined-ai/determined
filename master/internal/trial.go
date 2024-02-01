@@ -301,14 +301,13 @@ func (t *trial) create() error {
 		t.warmStartCheckpoint,
 		int64(t.searcher.Create.TrialSeed),
 	)
-	ctx := context.TODO()
 
-	err := t.addTask(ctx)
+	err := t.addTask(context.TODO())
 	if err != nil {
 		return err
 	}
 
-	err = db.AddTrial(ctx, m, t.taskID)
+	err = db.AddTrial(context.TODO(), m, t.taskID)
 	if err != nil {
 		return errors.Wrap(err, "failed to save trial to database")
 	}

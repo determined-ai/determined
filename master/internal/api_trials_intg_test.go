@@ -41,7 +41,6 @@ var inferenceMetricGroup = "inference"
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
 ) (*model.Trial, *model.Task) {
-	ctx := context.TODO()
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
 	task := &model.Task{
@@ -50,17 +49,17 @@ func createTestTrial(
 		StartTime:  time.Now(),
 		TaskID:     trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTask(context.TODO(), task))
 
 	trial := &model.Trial{
 		StartTime:    time.Now(),
 		State:        model.PausedState,
 		ExperimentID: exp.ID,
 	}
-	require.NoError(t, db.AddTrial(ctx, trial, task.TaskID))
+	require.NoError(t, db.AddTrial(context.TODO(), trial, task.TaskID))
 
 	// Return trial exactly the way the API will generally get it.
-	outTrial, err := db.TrialByID(ctx, trial.ID)
+	outTrial, err := db.TrialByID(context.TODO(), trial.ID)
 	require.NoError(t, err)
 	return outTrial, task
 }
@@ -918,7 +917,7 @@ func TestExperimentIDFromTrialTaskID(t *testing.T) {
 		StartTime:  time.Now(),
 		TaskID:     model.TaskID(uuid.New().String()),
 	}
-	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTask(context.TODO(), task))
 	_, err = experimentIDFromTrialTaskID(notTrialTask.TaskID)
 	require.ErrorIs(t, err, errIsNotTrialTaskID)
 

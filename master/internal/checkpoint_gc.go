@@ -140,8 +140,7 @@ func runCheckpointGCTask(
 	})
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
-	ctx := context.TODO()
-	if err := db.AddTask(ctx, &model.Task{
+	if err := db.AddTask(context.TODO(), &model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeCheckpointGC,
 		StartTime:  time.Now().UTC(),
@@ -156,7 +155,7 @@ func runCheckpointGCTask(
 
 	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {
-		if err := db.CompleteTask(ctx, taskID, time.Now().UTC()); err != nil {
+		if err := db.CompleteTask(context.TODO(), taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking GC task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(gcJobID); err != nil {
