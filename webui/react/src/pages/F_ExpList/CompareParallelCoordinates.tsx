@@ -54,6 +54,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 }: Props) => {
   const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
+  const [isFetching, setIsFetching] = useState<boolean>(true);
 
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
@@ -138,6 +139,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const experimentHyperparameters = useAsync(
     async (canceler) => {
       try {
+        setIsFetching(true);
         const getExperimentRequests = selectedExperiments.map((exp) => {
           return getExperiment({ id: exp.experiment.id }, { signal: canceler.signal });
         });
@@ -158,6 +160,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
           publicSubject: 'Unable to fetch selected experiments.',
         });
         return NotLoaded;
+      } finally {
+        setIsFetching(false);
       }
     },
     [selectedExperiments],
@@ -287,7 +291,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     });
   }, [selectedExperiments, selectedMetric, fullHParams, metricData, selectedScale, trials, data]);
 
-  if (!isLoaded) {
+  if (!isLoaded || isFetching) {
     return <Spinner center spinning />;
   }
 
