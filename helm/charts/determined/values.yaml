@@ -342,7 +342,7 @@ resourcePools:
 ## Configure GenAI Deployment
 genai:
   ## Version of GenAI to use. If unset, GenAI will not be deployed
-  # version: "latest"
+  version: "latest"
   
   ## Port for GenAI to use
   port: 9011
@@ -376,3 +376,11 @@ genai:
 
     ## Size of the generated PVC
     storageSize: 100Gi
+
+  extra_resource_pool_metadata:
+    a100:
+      gpu_type: A100
+      max_agents: 3
+    v100:
+      gpu_type: V100
+      max_agents: 2
