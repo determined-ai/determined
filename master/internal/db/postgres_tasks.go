@@ -27,19 +27,6 @@ DELETE FROM allocation_sessions WHERE allocation_id in (
 	return err
 }
 
-// CheckTaskExists checks if the task exists.
-func (db *PgDB) CheckTaskExists(id model.TaskID) (bool, error) {
-	var exists bool
-	err := db.sql.QueryRow(`
-SELECT
-EXISTS(
-  SELECT task_id
-  FROM tasks
-  WHERE task_id = $1
-)`, id).Scan(&exists)
-	return exists, err
-}
-
 // AddTask UPSERT's the existence of a task.
 //
 // TODO(ilia): deprecate and use module function instead.
