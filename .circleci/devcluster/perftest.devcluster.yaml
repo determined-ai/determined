@@ -1,0 +1,31 @@
+stages:
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        db:
+          host: localhost # Host is localhost since we connect through ssh forwarding.
+          port: 5432
+          user: $PERF_DB_USER
+          password: $PERF_DB_PASS
+          name: postgres
+          ssl_mode: require
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        cache:
+          cache_dir: /tmp/determined-cache
+        launch_error: false
+        security:
+          authz:
+            rbac_ui_enabled: true
+        resource_manager:
+          type: agent
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+        resource_pools:
+          - pool_name: default

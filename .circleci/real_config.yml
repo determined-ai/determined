@@ -2132,6 +2132,172 @@ jobs:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
 
+  test-perf:
+    parameters:
+      snapshot-after-migrations:
+        type: boolean
+        default: false
+      deploy-db:
+        type: boolean
+        default: false
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: xlarge
+    steps:
+      - queue/until_front_of_line:
+          only-on-branch: main
+          time: "120" # Wait two hours at most. Adjust this over time.
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          executor: <<pipeline.parameters.machine-image>>
+      - install-devcluster
+      - run:
+          name: Install upload deps
+          command: tools/scripts/retry.sh pip install requests determined psycopg2-binary
+
+      - when:
+          condition: <<parameters.deploy-db>>
+          steps:
+            - run:
+                name: Select snapshot to use
+                command: |
+                  echo 'export PERF_SNAPSHOT_TO_USE="perf-test-base-snapshot"' >> "$BASH_ENV"
+
+                  SNAPSHOT_COMMITS=$(aws rds describe-db-snapshots \
+                    --region="us-west-2" \
+                    --query "DBSnapshots[?TagList[?Key=='ci-snapshot']].DBSnapshotIdentifier" \
+                    --output json | jq -r '.[] | split("-")[3]')
+                  echo "Snapshot commits (${SNAPSHOT_COMMITS})"
+
+                  for ((n=0; n<=1000; n++)); do
+                    COMMIT=$(git log --format="%H" -n 1 --skip=$n)
+
+                    if [[ " $SNAPSHOT_COMMITS " =~ .*"$COMMIT".* ]]; then
+                      echo "export PERF_SNAPSHOT_TO_USE=\"ci-snapshot-commit-${COMMIT}\"" >> "$BASH_ENV"
+                      break
+                    fi
+                  done
+
+                  source $BASH_ENV
+                  echo "Deciding to use $PERF_SNAPSHOT_TO_USE"
+            - run:
+                name: Wait for snapshot to be available
+                command: |
+                  aws rds wait db-snapshot-available \
+                    --region "us-west-2" \
+                    --db-snapshot-identifier "${PERF_SNAPSHOT_TO_USE}"
+            - run:
+                name: Deploy database
+                command: |
+                  aws rds restore-db-instance-from-db-snapshot \
+                    --region="us-west-2" \
+                    --db-snapshot-identifier="${PERF_SNAPSHOT_TO_USE}" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                    --no-multi-az \
+                    --no-publicly-accessible \
+                    --no-auto-minor-version-upgrade \
+                    --db-parameter-group-name="logquerieslong" \
+                    --tags "Key=ci-snapshot" \
+                    --vpc-security-group-ids="${PERF_DB_SECURITY_GROUP_ID}" \
+                no_output_timeout: 30m
+            - run:
+                name: Get db instance host
+                command: |
+                  echo "export RDS_HOST=$(aws rds describe-db-instances \
+                    --region us-west-2 \
+                    --db-instance-identifier "ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                    --query "DBInstances[0].Endpoint.Address" \
+                    --output text)" >> "$BASH_ENV"
+                  source $BASH_ENV
+                  echo "perf db host ${PERF_DB_HOST}"
+            - run:
+                name: Wait for database to be ready
+                command: |
+                  aws rds wait db-instance-available \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
+
+      - run:
+          name: Add SSH key
+          command: echo "${PERF_DB_BASTION_SSH_KEY}" | base64 --decode | ssh-add -
+      - run:
+          name: Port forward to bastion instance
+          command: ssh -L 5432:${PERF_DB_HOST}:5432 -N -f ubuntu@$PERF_DB_BASTION_HOST
+      - start-devcluster:
+          target-stage: master
+          devcluster-config: perftest.devcluster.yaml
+      - run:
+          name: Wait and record any migrations ran
+          command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
+
+      - when:
+          condition: <<parameters.snapshot-after-migrations>>
+          steps:
+            - run:
+                name: Take and wait for RDS snapshot, only on main and when migrations were applied
+                command: |
+                  if [ -f /tmp/no-migrations-needed ]; then
+                    echo "/tmp/no-migrations-needed exists, no need to take a snapshot"
+                    exit 0
+                  fi
+
+                  COMMIT=$(git log -1 --pretty=format:%H)
+                  echo "Taking snapshot"
+                  aws rds create-db-snapshot \
+                    --region="us-west-2" \
+                    --db-instance-identifier="${PERF_DB_AWS_NAME}" \
+                    --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}" \
+                    --tags "Key=ci-snapshot"
+
+                  echo "Snapshot taken now waiting for it to become completed"
+                  aws rds wait db-snapshot-completed \
+                    --region="us-west-2" \
+                    --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}"
+                  echo "Snapshot completed"
+      - run:
+          name: Build performance test Docker image
+          command: make -C performance build
+      - run:
+          name: Run performance test
+          command: |
+            export PERF_DOCKER_FLAGS="--network=host"
+            export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
+              -e DET_ADMIN_PASSWORD="" \
+              -e model_name="tnjpuojqzbluqiyyqilftulsw" \
+              -e model_version_number="1" \
+              -e trial_id="8282" \
+              -e experiment_id="100" \
+              -e task_id="backported.8282" \
+              -e metric_name="85c9" \
+              -e metric_type="METRIC_TYPE_TRAINING" \
+              -e batches="1800" \
+              -e batches_margin="99" \
+              -e resource_pool="default"'
+            make -C performance run
+      - run:
+          name: Upload result of performance test to Postgres result db
+          command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
+
+      - when:
+          condition: <<parameters.deploy-db>>
+          when: always
+          steps:
+            - run:
+                name: Delete RDS instance
+                command: |
+                  aws rds delete-db-instance \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                    --skip-final-snapshot
+
+      - slack/status:
+          fail_only: false
+          only_for_branches: main
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
+
   deploy:
     parameters:
       compute-agent-instance-type:
@@ -2752,6 +2918,20 @@ workflows:
           target-stage: agent
           wait-for-master: false
 
+      - test-perf:
+          name: test-perf
+          snapshot-after-migrations: true
+          deploy-db: false
+          requires:
+            - build-go
+          context:
+            - perf-tests
+            - aws
+          filters:
+            branches:
+              only:
+                - main
+
       - deploy:
           name: deploy-latest-master-cluster
           enable-cors: true
@@ -3124,6 +3304,27 @@ workflows:
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+
+      # Perf tests.
+      - request-perf-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - build-go:
+          requires:
+            - request-perf-tests
+
+      - test-perf:
+          name: test-perf-feature-branch
+          snapshot-after-migrations: false
+          deploy-db: true
+          requires:
+            - build-go
+            - request-perf-tests
+          context:
+            - perf-tests
+            - aws
+          filters: *upstream-feature-branch
 
       # Nightly tests
       - request-gpu-nightly:
