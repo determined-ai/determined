@@ -2931,7 +2931,6 @@ workflows:
             branches:
               only:
                 - main
-                - perf_tests_in_ci
 
       - deploy:
           name: deploy-latest-master-cluster
