@@ -161,18 +161,19 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		run, _ := trial.ToRunAndTrialV2()
-		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", trial).
+		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
 		}
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
-			if _, err := tx.NewUpdate().Table("tasks", "trial_id_task_id").Set("end_time = ?", *trial.EndTime).
-				Where("trial_id_task_id.task_id = tasks.task_id AND trial_id_task_id.trial_id = ?", id).
-				Exec(ctx); err != nil {
+			if _, err := tx.NewRaw(`UPDATE tasks SET end_time = ? FROM run_id_task_id 
+			WHERE run_id_task_id.task_id = tasks.task_id AND run_id_task_id.run_id = ? AND end_time IS NULL`,
+				*trial.EndTime, id).Exec(ctx); err != nil {
 				return fmt.Errorf("completing task: %w", err)
 			}
 		}
+
 		return nil
 	})
 }

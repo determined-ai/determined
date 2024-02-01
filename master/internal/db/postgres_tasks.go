@@ -224,9 +224,8 @@ func UpdateAllocationProxyAddress(ctx context.Context, a model.Allocation) error
 // CloseOpenAllocations finds all allocations that were open when the master crashed
 // and adds an end time.
 func CloseOpenAllocations(ctx context.Context, exclude []model.AllocationID) error {
-	if _, err := Bun().NewUpdate().Table("allocations", "cluster_id").
-		Set("start_time = cluster_id.cluster_heartbeat").
-		Where("start_time is NULL").Exec(ctx); err != nil {
+	if _, err := Bun().NewRaw(`UPDATE allocations SET start_time = cluster_heartbeat FROM cluster_id
+	WHERE start_time is NULL`).Exec(ctx); err != nil {
 		return errors.Wrap(err,
 			"setting start time to cluster heartbeat when it's assigned to zero value")
 	}
@@ -240,11 +239,10 @@ func CloseOpenAllocations(ctx context.Context, exclude []model.AllocationID) err
 		excludedFilter = strings.Join(excludeStr, ",")
 	}
 
-	if _, err := Bun().NewUpdate().Table("allocations", "cluster_id").
-		Set("end_time = greatest(cluster_id.cluster_heartbeat, allocations.start_time)").
-		Set("state = 'TERMINATED'").
-		Where("end_time IS NULL AND (? = '' OR allocation_id NOT IN (SELECT unnest(string_to_array(?, ','))))",
-			excludedFilter, excludedFilter).Exec(ctx); err != nil {
+	if _, err := Bun().NewRaw(` UPDATE allocations 
+	SET end_time = greatest(cluster_heartbeat, start_time), state = 'TERMINATED' FROM cluster_id
+	WHERE end_time IS NULL AND (? = '' OR allocation_id NOT IN (SELECT unnest(string_to_array(?, ','))))`,
+		excludedFilter, excludedFilter).Exec(ctx); err != nil {
 		return errors.Wrap(err, "closing old allocations")
 	}
 	return nil
@@ -291,10 +289,10 @@ func RecordTaskEndStatsBun(ctx context.Context, stats *model.TaskStats) error {
 
 // EndAllTaskStats called at master starts, in case master previously crashed.
 func EndAllTaskStats(ctx context.Context) error {
-	_, err := Bun().NewUpdate().Table("task_stats", "cluster_id", "allocations").
-		Set("end_time = greatest(cluster_id.cluster_heartbeat, task_stats.start_time)").
-		Where("allocations.allocation_id = task_stats.allocation_id").
-		Where("task_stats.end_time IS NULL").Exec(ctx)
+	_, err := Bun().NewRaw(`UPDATE task_stats 
+	SET end_time = greatest(cluster_heartbeat, task_stats.start_time) FROM cluster_id, allocations
+	WHERE allocations.allocation_id = task_stats.allocation_id AND allocations.end_time IS NOT NULL
+	AND task_stats.end_time IS NULL`).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("ending all task stats: %w", err)
 	}
