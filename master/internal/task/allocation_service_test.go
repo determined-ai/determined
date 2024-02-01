@@ -517,7 +517,7 @@ func TestRestore(t *testing.T) {
 	restoredAr := stubAllocateRequest(restoredTask)
 	restoredAr.Restore = true
 
-	err := db.AddAllocation(context.Background(), &model.Allocation{
+	err := db.AddAllocation(context.TODO(), &model.Allocation{
 		AllocationID: restoredAr.AllocationID,
 		TaskID:       restoredAr.TaskID,
 		Slots:        restoredAr.SlotsNeeded,
@@ -736,7 +736,7 @@ func requireDBState(
 	id model.AllocationID,
 	expected model.AllocationState,
 ) *model.Allocation {
-	dbState, err := db.AllocationByID(context.Background(), id)
+	dbState, err := db.AllocationByID(context.TODO(), id)
 	require.NoError(t, err)
 	require.NotNil(t, dbState.State)
 	require.Equal(t, expected, *dbState.State)

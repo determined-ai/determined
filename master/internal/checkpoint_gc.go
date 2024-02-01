@@ -140,7 +140,7 @@ func runCheckpointGCTask(
 	})
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	if err := db.AddTask(ctx, &model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeCheckpointGC,

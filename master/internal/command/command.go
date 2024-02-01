@@ -230,7 +230,7 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	if err := db.CompleteTask(ctx, c.taskID, time.Now().UTC()); err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
 	}

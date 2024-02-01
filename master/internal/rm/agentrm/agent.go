@@ -594,7 +594,7 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	switch {
 	case msg.AgentStarted != nil:

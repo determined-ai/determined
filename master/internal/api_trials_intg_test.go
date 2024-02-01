@@ -41,7 +41,7 @@ var inferenceMetricGroup = "inference"
 func createTestTrial(
 	t *testing.T, api *apiServer, curUser model.User,
 ) (*model.Trial, *model.Task) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
 	task := &model.Task{

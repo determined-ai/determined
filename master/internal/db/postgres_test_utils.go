@@ -247,7 +247,7 @@ func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 		TaskType:  model.TaskTypeTrial,
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
-	err := AddTask(context.Background(), tIn)
+	err := AddTask(context.TODO(), tIn)
 	require.NoError(t, err, "failed to add task")
 	return tIn
 }
@@ -402,7 +402,7 @@ func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allo
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 		State:        ptrs.Ptr(model.AllocationStateTerminated),
 	}
-	err := AddAllocation(context.Background(), &a)
+	err := AddAllocation(context.TODO(), &a)
 	require.NoError(t, err, "failed to add allocation")
 	return &a
 }

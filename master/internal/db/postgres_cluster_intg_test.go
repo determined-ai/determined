@@ -47,7 +47,7 @@ func TestClusterAPI(t *testing.T) {
 		StartTime: time.Now().UTC().Truncate(time.Millisecond),
 	}
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	err = AddTask(ctx, tIn)
 	require.NoError(t, err, "failed to add task")
 

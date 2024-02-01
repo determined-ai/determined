@@ -55,7 +55,7 @@ func TestMain(m *testing.M) {
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	// Add a mock user.
@@ -148,7 +148,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestRecordAndEndTaskStats(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	tID := model.NewTaskID()
 	require.NoError(t, AddTask(ctx, &model.Task{
@@ -195,7 +195,7 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 }
 
 func TestNonExperimentTasksContextDirectory(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 
 	// Task doesn't exist.
 	_, err := NonExperimentTasksContextDirectory(ctx, model.TaskID(uuid.New().String()))
@@ -232,7 +232,7 @@ func TestNonExperimentTasksContextDirectory(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	// Add an allocation of every possible state.
@@ -390,6 +390,7 @@ func TestExhaustiveEnums(t *testing.T) {
 }
 
 func TestAddTask(t *testing.T) {
+	ctx := context.TODO()
 	db := SingleDB()
 
 	u := RequireMockUser(t, db)
@@ -404,17 +405,17 @@ func TestAddTask(t *testing.T) {
 		StartTime:  time.Now().UTC().Truncate(time.Millisecond),
 		LogVersion: model.TaskLogVersion0,
 	}
-	err := AddTask(context.Background(), tIn)
+	err := AddTask(ctx, tIn)
 	require.NoError(t, err, "failed to add task")
 
 	// Check that task is added to the db & test TaskByID.
-	task, err := TaskByID(context.Background(), tIn.TaskID)
+	task, err := TaskByID(ctx, tIn.TaskID)
 	require.NoError(t, err)
 	require.Equal(t, tIn, task)
 }
 
 func TestTaskCompleted(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -432,7 +433,7 @@ func TestTaskCompleted(t *testing.T) {
 }
 
 func TestAddAllocation(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -455,7 +456,7 @@ func TestAddAllocation(t *testing.T) {
 }
 
 func TestAddAllocationExitStatus(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -480,7 +481,7 @@ func TestAddAllocationExitStatus(t *testing.T) {
 }
 
 func TestCompleteAllocation(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -502,7 +503,7 @@ func TestCompleteAllocationTelemetry(t *testing.T) {
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
-	bytes, err := CompleteAllocationTelemetry(context.Background(), aIn.AllocationID)
+	bytes, err := CompleteAllocationTelemetry(context.TODO(), aIn.AllocationID)
 	require.NoError(t, err)
 	require.Contains(t, string(bytes), string(aIn.AllocationID))
 	require.Contains(t, string(bytes), string(*tIn.JobID))
@@ -515,13 +516,13 @@ func TestAllocationByID(t *testing.T) {
 	tIn := RequireMockTask(t, db, nil)
 	aIn := RequireMockAllocation(t, db, tIn.TaskID)
 
-	a, err := AllocationByID(context.Background(), aIn.AllocationID)
+	a, err := AllocationByID(context.TODO(), aIn.AllocationID)
 	require.NoError(t, err)
 	require.Equal(t, aIn, a)
 }
 
 func TestAllocationSessionFlow(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	uIn := RequireMockUser(t, db)
@@ -554,7 +555,7 @@ func TestAllocationSessionFlow(t *testing.T) {
 }
 
 func TestUpdateAllocation(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -593,7 +594,7 @@ func TestUpdateAllocation(t *testing.T) {
 }
 
 func TestCloseOpenAllocations(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	db := SingleDB()
 
 	// Create test allocations, with a NULL end time.
@@ -719,7 +720,7 @@ func RequireMockTaskLog(t *testing.T, db *PgDB, tID model.TaskID, suffix string)
 func allocationSessionByID(t *testing.T, aID model.AllocationID) (*model.AllocationSession, error) {
 	var res model.AllocationSession
 	if err := Bun().NewSelect().Table("allocation_sessions").
-		Where("allocation_id = ?", aID).Scan(context.Background(), &res); err != nil {
+		Where("allocation_id = ?", aID).Scan(context.TODO(), &res); err != nil {
 		return nil, err
 	}
 
