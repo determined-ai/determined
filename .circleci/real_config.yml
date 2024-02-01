@@ -2262,7 +2262,6 @@ jobs:
       - run:
           name: Run performance test
           command: |
-            mkdir /tmp/determined-cache
             export PERF_DOCKER_FLAGS="--network=host"
             export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
               -e DET_ADMIN_PASSWORD="" \
