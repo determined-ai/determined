@@ -148,8 +148,8 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	}
 
 	if !model.TrialTransitions[trial.State][newState] {
-		return fmt.Errorf("illegal transition %v -> %v for trial %v: %w",
-			trial.State, newState, trial.ID, err)
+		return fmt.Errorf("illegal transition %v -> %v for trial %v",
+			trial.State, newState, trial.ID)
 	}
 	toUpdate := []string{"state"}
 	trial.State = newState
@@ -160,8 +160,8 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	}
 
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run := trial.ToRun()
-		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", trial.ID).
+		run, _ := trial.ToRunAndTrialV2()
+		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", trial).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
 		}
