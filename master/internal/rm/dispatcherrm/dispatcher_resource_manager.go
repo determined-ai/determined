@@ -1930,7 +1930,7 @@ func (m *DispatcherResourceManager) killAllInactiveDispatches() {
 		for _, dispatch := range dispatches {
 			dispatchID := dispatch.DispatchID
 			impersonatedUser := dispatch.ImpersonatedUser
-			allocation, err := m.db.AllocationByID(dispatch.AllocationID)
+			allocation, err := db.AllocationByID(context.TODO(), dispatch.AllocationID)
 			if err != nil {
 				m.syslog.WithField("dispatch-id", dispatchID).
 					WithError(err).Errorf("unexpected DB lookup error")
