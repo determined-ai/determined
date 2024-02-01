@@ -75,11 +75,10 @@ unpersist:
 
 run:
 	docker run \
-		--network=host \
-		--name perf-tests \
+		--name perf-tests ${PERF_DOCKER_FLAGS} \
 		$(IMAGE) run \
 		-e DET_MASTER=$(DET_MASTER) \
-		$(K6_FLAGS) \
+		$(K6_FLAGS) ${PERF_K6_FLAGS} \
 		/test_scripts/api_performance_tests.js --summary-export=summary.json; \
 	TEST_STATUS=$$?; \
 	docker cp \
