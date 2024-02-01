@@ -169,7 +169,7 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.Retry]: (experiment, _, erroredTrialCount) =>
     (erroredRunStates.has(experiment.state) ||
       (experiment.state === RunState.Completed && (erroredTrialCount ?? 0) > 0)) &&
-    resumableSearcherTypes.includes(experiment.config.searcher.name),
+    resumableSearcherTypes.includes(experiment.searcherType as ExperimentSearcherName),
 
   [ExperimentAction.Kill]: (experiment) => killableRunStates.includes(experiment.state),
 

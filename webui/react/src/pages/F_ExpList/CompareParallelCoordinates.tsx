@@ -2,10 +2,12 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import Section from 'components/Section';
+import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
@@ -13,6 +15,7 @@ import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { getExperiment } from 'services/api';
 import {
   ExperimentWithTrial,
   HpTrialData,
@@ -26,6 +29,7 @@ import {
 } from 'types';
 import { defaultNumericRange, getNumericRange, updateRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';
+import handleError from 'utils/error';
 import { metricToKey, metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 
@@ -131,14 +135,33 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const selectedMetric = settings.metric;
   const selectedHParams = settings.hParams;
 
-  const experimentHyperparameters = useMemo(() => {
-    const hpMap: Record<string, Hyperparameter> = {};
-    selectedExperiments.forEach((exp) => {
-      const hps = Object.keys(exp.experiment.hyperparameters);
-      hps.forEach((hp) => (hpMap[hp] = exp.experiment.hyperparameters[hp]));
-    });
-    return hpMap;
-  }, [selectedExperiments]);
+  const experimentHyperparameters = useAsync(
+    async (canceler) => {
+      try {
+        const getExperimentRequests = selectedExperiments.map((exp) => {
+          return getExperiment({ id: exp.experiment.id }, { signal: canceler.signal });
+        });
+        const responses = await Promise.all(getExperimentRequests);
+        const hyperparameters = responses.map(
+          (exp) => exp.config?.hyperparameters as Record<string, Hyperparameter>,
+        );
+        const hpMap: Record<string, Hyperparameter> = {};
+        hyperparameters.forEach((hyperparameter) => {
+          const hps = Object.keys(hyperparameter);
+          hps.forEach((hp) => {
+            hpMap[hp] = hyperparameter[hp];
+          });
+        });
+        return hpMap;
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to fetch selected experiments.',
+        });
+        return NotLoaded;
+      }
+    },
+    [selectedExperiments],
+  );
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(
     () => ({
@@ -167,7 +190,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   const dimensions = useMemo(() => {
     const newDimensions: Hermes.Dimension[] = selectedHParams.map((key) => {
-      const hp = experimentHyperparameters[key] || {};
+      const hp = experimentHyperparameters.getOrElse({})[key] || {};
 
       if (hp.type === HyperparameterType.Categorical || hp.vals) {
         return {
@@ -264,7 +287,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     });
   }, [selectedExperiments, selectedMetric, fullHParams, metricData, selectedScale, trials, data]);
 
-  if (!isLoaded) {
+  if (!isLoaded || Loadable.isNotLoaded(experimentHyperparameters)) {
     return <Spinner center spinning />;
   }
 

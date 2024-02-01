@@ -265,11 +265,11 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   );
 
   const [maxLengthUnit, maxLength] = useMemo(() => {
-    return (Object.entries(experiment.config.searcher.max_length ?? { batches: 1 })[0] ?? [
+    return (Object.entries(experiment?.config?.searcher.max_length ?? { batches: 1 })[0] ?? [
       'batches',
       1,
     ]) as ['batches' | 'records' | 'epochs', number];
-  }, [experiment.config.searcher.max_length]);
+  }, [experiment?.config?.searcher.max_length]);
 
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
@@ -523,7 +523,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <div className={css.inputRow}>
           <Form.Item
             hidden={searcher === SEARCH_METHODS.Grid}
-            initialValue={experiment.config.searcher.max_trials ?? 1}
+            initialValue={experiment?.config?.searcher.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
             rules={[{ min: 1, required: true, type: 'number' }]}>
@@ -545,7 +545,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       </div>
     );
   }, [
-    experiment.config.searcher.max_trials,
+    experiment?.config?.searcher.max_trials,
     experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
     experiment.configRaw.searcher.max_concurrent_trials,

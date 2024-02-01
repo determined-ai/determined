@@ -10,7 +10,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import authStore from 'stores/auth';
 import userStore from 'stores/users';
-import { DetailedUser } from 'types';
+import { DetailedUser, ExperimentBase } from 'types';
 import { generateExperiment } from 'utils/task';
 
 import CodeViewer, { Props } from './ExperimentCodeViewer';
@@ -105,7 +105,7 @@ const experimentMock = {
   projectOwnerId: 1,
   workspaceId: 1,
   workspaceName: 'b',
-};
+} as ExperimentBase;
 const user = userEvent.setup();
 
 const Container: React.FC<Pick<Props, 'experiment'>> = (props) => {
