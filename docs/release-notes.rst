@@ -105,8 +105,8 @@ Version 0.26.5
    environment variable called ``DEX_TOKEN`` in task containers.
 
 -  Authentication: In the enterprise edition, add synchronization of OIDC user group memberships
-   with existing groups. Configure by setting ``oidc.groups_attribute_name`` in the master config to
-   the string value of the authenticator's claim name for groups.
+   with existing groups. Configure by setting ``oidc.groups_claim_name`` in the master config to the
+   string value of the authenticator's claim name for groups.
 
 Version 0.26.4
 ==============
