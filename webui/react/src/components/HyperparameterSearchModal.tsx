@@ -9,14 +9,16 @@ import { Modal, ModalCloseReason } from 'hew/Modal';
 import RadioGroup from 'hew/RadioGroup';
 import Row from 'hew/Row';
 import Select, { Option, RefSelectProps, SelectValue } from 'hew/Select';
+import Spinner from 'hew/Spinner';
 import { Label, TypographySize } from 'hew/Typography';
-import { Loadable } from 'hew/utils/loadable';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
+import { useAsync } from 'hooks/useAsync';
 import { paths } from 'routes/utils';
-import { createExperiment } from 'services/api';
+import { createExperiment, getExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import {
@@ -31,7 +33,13 @@ import {
   TrialItem,
 } from 'types';
 import { flattenObject, isBoolean, unflattenObject } from 'utils/data';
-import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'utils/error';
+import handleError, {
+  DetError,
+  ErrorLevel,
+  ErrorType,
+  handleWarning,
+  isDetError,
+} from 'utils/error';
 import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
@@ -99,6 +107,23 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
 
+  // this is required when experiment does not contain `config`.
+  // since we removed config. See #8765 on GitHub
+  const fetchedExperiment: Loadable<ExperimentItem> = useAsync(
+    async (canceler) => {
+      try {
+        const response = await getExperiment({ id: experiment.id }, { signal: canceler.signal });
+        return response;
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+        return NotLoaded;
+      }
+    },
+    [experiment.id],
+  );
+
+  const exp: ExperimentItem = fetchedExperiment.getOrElse(experiment);
+
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
     const continueFn = (value: unknown) => value === 'object';
@@ -108,20 +133,20 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   }, [trial]);
 
   const hyperparameters = useMemo(() => {
-    return Object.entries(experiment.hyperparameters).map((hp) => {
+    return Object.entries(exp.hyperparameters).map((hp) => {
       const hpObject = { hyperparameter: hp[1], name: hp[0] };
       if (trialHyperparameters?.[hp[0]]) {
         hpObject.hyperparameter.val = trialHyperparameters[hp[0]];
       }
       return hpObject;
     });
-  }, [experiment.hyperparameters, trialHyperparameters]);
+  }, [exp.hyperparameters, trialHyperparameters]);
 
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
     // Deep cloning parent experiment's config
-    const baseConfig = structuredClone(experiment.configRaw);
+    const baseConfig = structuredClone(exp.configRaw);
 
     // Replacing fields from orginial config with user-selected values
     baseConfig.name = (fields.name as string).trim();
@@ -201,8 +226,8 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         {
           activate: true,
           experimentConfig: newConfig,
-          parentId: experiment.id,
-          projectId: experiment.projectId,
+          parentId: exp.id,
+          projectId: exp.projectId,
         },
         { signal: canceler.current?.signal },
       );
@@ -234,7 +259,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
+  }, [exp.configRaw, exp.id, exp.projectId, form]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -265,11 +290,11 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   );
 
   const [maxLengthUnit, maxLength] = useMemo(() => {
-    return (Object.entries(experiment?.config?.searcher.max_length ?? { batches: 1 })[0] ?? [
+    return (Object.entries(experiment?.config?.searcher?.max_length ?? { batches: 1 })[0] ?? [
       'batches',
       1,
     ]) as ['batches' | 'records' | 'epochs', number];
-  }, [experiment?.config?.searcher.max_length]);
+  }, [experiment?.config?.searcher?.max_length]);
 
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
@@ -428,7 +453,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           />
         </Form.Item>
         <Form.Item
-          initialValue={experiment.name}
+          initialValue={exp.name}
           label="New experiment name"
           name="name"
           rules={[{ required: true }]}>
@@ -467,13 +492,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
             <Select>
               <Option value="records">records</Option>
               <Option value="batches">batches</Option>
-              {(experiment.configRaw?.records_per_epoch ?? 0) > 0 && (
+              {(exp.configRaw?.records_per_epoch ?? 0) > 0 && (
                 <Option value="epochs">epochs</Option>
               )}
             </Select>
           </Form.Item>
           <Form.Item
-            initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
+            initialValue={exp.configRaw?.resources?.slots_per_trial || 1}
             label="Slots per trial"
             name="slots_per_trial"
             rules={[{ max: maxSlots, min: 0, required: true, type: 'number' }]}
@@ -487,7 +512,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         </div>
         {searcher.id === 'adaptive_asha' && (
           <Form.Item
-            initialValue={experiment.configRaw.searcher?.mode ?? 'standard'}
+            initialValue={exp.configRaw?.searcher?.mode ?? 'standard'}
             label={
               <div className={css.labelWithTooltip}>
                 Early stopping mode
@@ -509,7 +534,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         )}
         {searcher.id === 'adaptive_asha' && (
           <Form.Item
-            initialValue={experiment.configRaw.searcher?.stop_once ?? true}
+            initialValue={exp.configRaw?.searcher?.stop_once ?? true}
             name="stop_once"
             rules={[{ required: true }]}
             valuePropName="checked">
@@ -523,14 +548,14 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <div className={css.inputRow}>
           <Form.Item
             hidden={searcher === SEARCH_METHODS.Grid}
-            initialValue={experiment?.config?.searcher.max_trials ?? 1}
+            initialValue={experiment?.config?.searcher?.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
             rules={[{ min: 1, required: true, type: 'number' }]}>
             <InputNumber min={1} precision={0} />
           </Form.Item>
           <Form.Item
-            initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 16}
+            initialValue={exp.configRaw?.searcher.max_concurrent_trials ?? 16}
             label={
               <div className={css.labelWithTooltip}>
                 Max concurrent trials
@@ -545,13 +570,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       </div>
     );
   }, [
-    experiment?.config?.searcher.max_trials,
-    experiment.configRaw?.records_per_epoch,
-    experiment.configRaw?.resources?.slots_per_trial,
-    experiment.configRaw.searcher.max_concurrent_trials,
-    experiment.configRaw.searcher?.mode,
-    experiment.configRaw.searcher?.stop_once,
-    experiment.name,
+    exp.configRaw?.records_per_epoch,
+    exp.configRaw?.resources?.slots_per_trial,
+    exp.configRaw?.searcher.max_concurrent_trials,
+    exp.configRaw?.searcher?.mode,
+    exp.configRaw?.searcher?.stop_once,
+    exp.name,
+    experiment?.config?.searcher?.max_trials,
     formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,
@@ -583,6 +608,10 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       </>
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
+
+  if (Loadable.isNotLoaded(fetchedExperiment)) {
+    return <Spinner center spinning />;
+  }
 
   return (
     <Modal footer={footer} title="Hyperparameter Search">
