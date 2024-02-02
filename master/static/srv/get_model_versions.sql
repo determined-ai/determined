@@ -54,4 +54,4 @@ SELECT
     mv.metadata,
     mv.last_updated_time
 FROM proto_checkpoints_view c, mv, m
-WHERE c.uuid = mv.checkpoint_uuid::text;
+WHERE c.uuid = mv.checkpoint_uuid;
