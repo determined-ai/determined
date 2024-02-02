@@ -1,3 +1,5 @@
+DROP VIEW proto_checkpoints_view;
+
 CREATE OR REPLACE VIEW proto_checkpoints_view AS
     SELECT
         c.uuid::text AS uuid,
