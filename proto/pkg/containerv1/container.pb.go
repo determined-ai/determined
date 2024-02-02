@@ -107,10 +107,13 @@ type Container struct {
 	// (1) parent
 	// (2) id
 	// (4) devices
-	PermissionDenied bool   `protobuf:"varint,5,opt,name=permission_denied,json=permissionDenied,proto3" json:"permission_denied,omitempty"`
-	AllocationId     string `protobuf:"bytes,6,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
-	TaskId           string `protobuf:"bytes,7,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	JobId            string `protobuf:"bytes,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	PermissionDenied bool `protobuf:"varint,5,opt,name=permission_denied,json=permissionDenied,proto3" json:"permission_denied,omitempty"`
+	// The id of the allocation.
+	AllocationId string `protobuf:"bytes,6,opt,name=allocation_id,json=allocationId,proto3" json:"allocation_id,omitempty"`
+	// The id of the task.
+	TaskId string `protobuf:"bytes,7,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// The id of the job.
+	JobId string `protobuf:"bytes,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 }
 
 func (x *Container) Reset() {
