@@ -33,7 +33,11 @@ SELECT
     (
         SELECT COUNT(*) > 0 FROM workspace_pins
         WHERE workspace_id = $1 AND user_id = $2
-    ) AS pinned
+    ) AS pinned,
+    (
+        SELECT created_at FROM workspace_pins
+        WHERE workspace_id = $1 AND user_id = $2
+    ) AS pinned_at
 FROM workspaces AS w
 LEFT JOIN users AS u ON u.id = w.user_id
 WHERE w.id = $1;

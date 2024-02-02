@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -67,6 +69,7 @@ func TestPostWorkspace(t *testing.T) {
 
 	// Valid workspace.
 	workspaceName := uuid.New().String()
+	// TODO PostWorkspace should returned pinnedAt.
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: workspaceName,
 		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
@@ -113,8 +116,111 @@ func TestPostWorkspace(t *testing.T) {
 	// Workspace persisted correctly?
 	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	require.NotNil(t, getWorkResp.Workspace.PinnedAt)
+	getWorkResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
 	proto.Equal(expected, getWorkResp.Workspace)
 	require.Equal(t, expected, getWorkResp.Workspace)
+}
+
+func TestGetWorkspaces(t *testing.T) {
+	require.NoError(t, etc.SetRootPath("../static/srv"))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
+
+	api, curUser, ctx := setupAPITest(t, pgDB)
+
+	w0Resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: "w0name"})
+	require.NoError(t, err)
+	w0 := int(w0Resp.Workspace.Id)
+
+	w1, p0 := createProjectAndWorkspace(ctx, t, api)
+
+	w2, p1 := createProjectAndWorkspace(ctx, t, api)
+	_, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name:        uuid.New().String(),
+		WorkspaceId: int32(w2),
+	})
+	require.NoError(t, err)
+
+	createTestExpWithProjectID(t, api, curUser, p0)
+	createTestExpWithProjectID(t, api, curUser, p0)
+	createTestExpWithProjectID(t, api, curUser, p1)
+	createTestExpWithProjectID(t, api, curUser, p1)
+
+	cases := []struct {
+		name     string
+		req      *apiv1.GetWorkspacesRequest
+		expected []int
+	}{
+		{"empty request", &apiv1.GetWorkspacesRequest{}, []int{1, w0, w1, w2}},
+		{"id desc request", &apiv1.GetWorkspacesRequest{
+			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
+		}, []int{w2, w1, w0, 1}},
+		{"w0 name", &apiv1.GetWorkspacesRequest{
+			Name: "w0name",
+		}, []int{w0}},
+		{"w0 name subset doesn't match", &apiv1.GetWorkspacesRequest{
+			Name: "0nam",
+		}, []int{}},
+		{"w0 name case insensitive", &apiv1.GetWorkspacesRequest{
+			Name: "w0nAMe",
+		}, []int{w0}},
+		{"archive false", &apiv1.GetWorkspacesRequest{
+			Archived: wrapperspb.Bool(false),
+		}, []int{1, w0, w1, w2}},
+		{"archive true", &apiv1.GetWorkspacesRequest{
+			Archived: wrapperspb.Bool(true),
+		}, []int{}},
+		{"users determined", &apiv1.GetWorkspacesRequest{
+			Users: []string{"determined"},
+		}, []int{}},
+		{"users admin", &apiv1.GetWorkspacesRequest{
+			Users: []string{"admin"},
+		}, []int{1}},
+		{"users determined", &apiv1.GetWorkspacesRequest{
+			Users: []string{curUser.Username},
+		}, []int{w0, w1, w2}},
+		{"userID determined", &apiv1.GetWorkspacesRequest{
+			UserIds: []int32{2},
+		}, []int{}},
+		{"userID admin", &apiv1.GetWorkspacesRequest{
+			UserIds: []int32{1},
+		}, []int{1}},
+		{"userID determined", &apiv1.GetWorkspacesRequest{
+			UserIds: []int32{int32(curUser.ID)},
+		}, []int{w0, w1, w2}},
+		{"w0 name case sensitive", &apiv1.GetWorkspacesRequest{
+			NameCaseSensitive: "w0name",
+		}, []int{w0}},
+		{"w0 name case sensitive subset doesn't match", &apiv1.GetWorkspacesRequest{
+			NameCaseSensitive: "0nam",
+		}, []int{}},
+		{"w0 name case sensative doesn't match", &apiv1.GetWorkspacesRequest{
+			NameCaseSensitive: "w0nAMe",
+		}, []int{}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Make expected workspaces from GetWorkspace endpoint.
+			expectedWorkspaces := []*workspacev1.Workspace{} // Do empty and not null.
+			for _, w := range c.expected {
+				getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: int32(w)})
+				require.NoError(t, err)
+				getResp.Workspace.CheckpointStorageConfig = nil // Not returned in list endpoint.
+				expectedWorkspaces = append(expectedWorkspaces, getResp.Workspace)
+			}
+			expectedJSON, err := json.MarshalIndent(expectedWorkspaces, "", "  ")
+			require.NoError(t, err)
+
+			actual, err := api.GetWorkspaces(ctx, c.req)
+			require.NoError(t, err)
+			actualJSON, err := json.MarshalIndent(actual.Workspaces, "", "  ")
+			require.NoError(t, err)
+
+			require.Equal(t, string(expectedJSON), string(actualJSON))
+		})
+	}
 }
 
 // This should eventually be in internal/workspaces.
@@ -306,6 +412,8 @@ func TestAuthzPostWorkspace(t *testing.T) {
 		Return(nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	require.NotNil(t, getResp.Workspace.PinnedAt)
+	getResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
 	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
 
