@@ -257,6 +257,18 @@ func TestGetTaskContextDirectoryTask(t *testing.T) {
 	require.Equal(t, string(expectedContextDirectory), string(actualString))
 }
 
+func TestMoveExperimentRunID(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	_, err := api.MoveExperiment(t, &apiv1.MoveExperimentRequest{
+		ExperimentId:         exp.ID,
+		DestinationProjectId: projectID,
+	})
+	require.NoError(t, err)
+}
+
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
