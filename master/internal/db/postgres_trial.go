@@ -29,7 +29,12 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run, v2 := trial.ToRunAndTrialV2()
+		projectID, err := experimentsProjectID(ctx, trial.ExperimentID, tx)
+		if err != nil {
+			return err
+		}
+
+		run, v2 := trial.ToRunAndTrialV2(projectID)
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial run model: %w", err)
 		}
@@ -63,7 +68,12 @@ func UpsertTrialByExternalIDTx(
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	run, v2 := trial.ToRunAndTrialV2()
+	projectID, err := experimentsProjectID(ctx, trial.ExperimentID, tx)
+	if err != nil {
+		return err
+	}
+
+	run, v2 := trial.ToRunAndTrialV2(projectID)
 	if _, err := tx.NewInsert().Model(run).
 		On("CONFLICT (experiment_id, external_run_id) DO UPDATE").
 		Set("hparams = EXCLUDED.hparams").
@@ -163,7 +173,12 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	}
 
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run, _ := trial.ToRunAndTrialV2()
+		projectID, err := experimentsProjectID(ctx, trial.ExperimentID, tx)
+		if err != nil {
+			return err
+		}
+
+		run, _ := trial.ToRunAndTrialV2(projectID)
 		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
@@ -685,6 +700,17 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2, runID int
 	}
 
 	return nil
+}
+
+func experimentsProjectID(ctx context.Context, experimentID int, tx bun.IDB) (int, error) {
+	var e model.Experiment
+	if err := tx.NewSelect().Model(&e).Column("project_id").
+		Where("id = ?", experimentID).
+		Scan(ctx, &e); err != nil {
+		return 0, fmt.Errorf("getting experiment's project ID %d: %w", experimentID, err)
+	}
+
+	return e.ProjectID, nil
 }
 
 // checkTrialRunID checks that the trial is currently on the given run.

@@ -717,7 +717,7 @@ func MoveExperiments(ctx context.Context,
 
 		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", destinationProjectID).
-			Where("e.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id IN (?)", bun.In(validIDs)).
 			Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating run's project IDs: %w", err)
 		}
