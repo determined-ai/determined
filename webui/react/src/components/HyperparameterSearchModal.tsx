@@ -115,7 +115,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         const response = await getExperiment({ id: experiment.id }, { signal: canceler.signal });
         return response;
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+        handleError(e, { publicSubject: 'Unable to fetch experiment.' });
         return NotLoaded;
       }
     },
@@ -290,11 +290,11 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   );
 
   const [maxLengthUnit, maxLength] = useMemo(() => {
-    return (Object.entries(experiment?.config?.searcher?.max_length ?? { batches: 1 })[0] ?? [
+    return (Object.entries(exp?.config?.searcher?.max_length ?? { batches: 1 })[0] ?? [
       'batches',
       1,
     ]) as ['batches' | 'records' | 'epochs', number];
-  }, [experiment?.config?.searcher?.max_length]);
+  }, [exp?.config?.searcher?.max_length]);
 
   useEffect(() => {
     if (resourcePool || resourcePools.length === 0) return;
@@ -548,7 +548,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <div className={css.inputRow}>
           <Form.Item
             hidden={searcher === SEARCH_METHODS.Grid}
-            initialValue={experiment?.config?.searcher?.max_trials ?? 1}
+            initialValue={exp?.config?.searcher?.max_trials ?? 1}
             label="Max trials"
             name="max_trials"
             rules={[{ min: 1, required: true, type: 'number' }]}>
@@ -570,13 +570,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       </div>
     );
   }, [
+    exp?.config?.searcher?.max_trials,
     exp.configRaw?.records_per_epoch,
     exp.configRaw?.resources?.slots_per_trial,
     exp.configRaw?.searcher.max_concurrent_trials,
     exp.configRaw?.searcher?.mode,
     exp.configRaw?.searcher?.stop_once,
     exp.name,
-    experiment?.config?.searcher?.max_trials,
     formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,

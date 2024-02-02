@@ -13,6 +13,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import {} from 'stores/cluster';
+import { ExperimentItem } from 'types';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -31,17 +32,24 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useParams: vi.fn(),
 }));
 
-vi.mock('services/api', () => ({
-  getExperimentDetails: vi.fn(),
-  getExpTrials: vi.fn(),
-  getExpValidationHistory: vi.fn(),
-  getProject: vi.fn(),
-  getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
-  getTrialDetails: vi.fn(),
-  getWorkspace: vi.fn(),
-  getWorkspaceProjects: vi.fn().mockReturnValue({ projects: [] }),
-  getWorkspaces: vi.fn().mockResolvedValue({ workspaces: [] }),
-}));
+vi.mock('services/api', async () => {
+  const experimentResponse: ExperimentItem = await vi.importActual(
+    'fixtures/responses/experiment-details/experiment-item.json',
+  );
+
+  return {
+    getExperiment: vi.fn().mockReturnValue(Promise.resolve(experimentResponse)),
+    getExperimentDetails: vi.fn(),
+    getExpTrials: vi.fn(),
+    getExpValidationHistory: vi.fn(),
+    getProject: vi.fn(),
+    getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
+    getTrialDetails: vi.fn(),
+    getWorkspace: vi.fn(),
+    getWorkspaceProjects: vi.fn().mockReturnValue({ projects: [] }),
+    getWorkspaces: vi.fn().mockResolvedValue({ workspaces: [] }),
+  };
+});
 
 /**
  * TODO: Temporarily mock ExperimentVisualization module.

@@ -1,0 +1,225 @@
+{
+  "archived": false,
+  "checkpoints": 1,
+  "checkpointSize": 14431393,
+  "config": {
+    "bind_mounts": [],
+    "checkpoint_policy": "best",
+    "checkpoint_storage": {
+      "access_key": null,
+      "bucket": "det-determined-master-us-west-2-573932760021",
+      "endpoint_url": null,
+      "prefix": null,
+      "save_experiment_best": 0,
+      "save_trial_best": 1,
+      "save_trial_latest": 1,
+      "secret_key": null,
+      "type": "s3"
+    },
+    "data": {
+      "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+    },
+    "data_layer": {
+      "container_storage_path": null,
+      "host_storage_path": null,
+      "type": "shared_fs"
+    },
+    "debug": false,
+    "description": "",
+    "entrypoint": "model_def:MNistTrial",
+    "environment": {
+      "add_capabilities": [],
+      "drop_capabilities": [],
+      "environment_variables": { "cpu": [], "cuda": [], "rocm": [] },
+      "force_pull_image": false,
+      "image": {
+        "cpu": "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c",
+        "cuda": "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c",
+        "rocm": "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-55a3e1c"
+      },
+      "pod_spec": null,
+      "ports": {},
+      "registry_auth": null
+    },
+    "hyperparameters": {
+      "dropout1": { "type": "const", "val": 0.25 },
+      "dropout2": { "type": "const", "val": 0.5 },
+      "global_batch_size": { "type": "const", "val": 64 },
+      "learning_rate": { "type": "const", "val": 1 },
+      "n_filters1": { "type": "const", "val": 32 },
+      "n_filters2": { "type": "const", "val": 64 }
+    },
+    "labels": null,
+    "max_restarts": 5,
+    "min_checkpoint_period": { "batches": 0 },
+    "min_validation_period": { "batches": 0 },
+    "name": "mnist_pytorch_const",
+    "optimizations": {
+      "aggregation_frequency": 1,
+      "auto_tune_tensor_fusion": false,
+      "average_aggregated_gradients": true,
+      "average_training_metrics": false,
+      "grad_updates_size_file": null,
+      "gradient_compression": false,
+      "mixed_precision": "O0",
+      "tensor_fusion_cycle_time": 5,
+      "tensor_fusion_threshold": 64
+    },
+    "perform_initial_validation": false,
+    "profiling": {
+      "begin_on_batch": 0,
+      "enabled": false,
+      "end_after_batch": null,
+      "sync_timings": true
+    },
+    "project": "",
+    "records_per_epoch": 0,
+    "reproducibility": { "experiment_seed": 1658776683 },
+    "resources": {
+      "agent_label": "",
+      "devices": [],
+      "max_slots": null,
+      "native_parallel": false,
+      "priority": null,
+      "resource_pool": "compute-pool",
+      "shm_size": null,
+      "slots_per_trial": 1,
+      "weight": 1
+    },
+    "scheduling_unit": 100,
+    "searcher": {
+      "max_length": { "batches": 937 },
+      "metric": "validation_loss",
+      "name": "single",
+      "smaller_is_better": true,
+      "source_checkpoint_uuid": null,
+      "source_trial_id": null
+    },
+    "workspace": ""
+  },
+  "configRaw": {
+    "bind_mounts": [],
+    "checkpoint_policy": "best",
+    "checkpoint_storage": {
+      "access_key": null,
+      "bucket": "det-determined-master-us-west-2-573932760021",
+      "endpoint_url": null,
+      "prefix": null,
+      "save_experiment_best": 0,
+      "save_trial_best": 1,
+      "save_trial_latest": 1,
+      "secret_key": null,
+      "type": "s3"
+    },
+    "data": {
+      "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
+    },
+    "data_layer": {
+      "container_storage_path": null,
+      "host_storage_path": null,
+      "type": "shared_fs"
+    },
+    "debug": false,
+    "description": "",
+    "entrypoint": "model_def:MNistTrial",
+    "environment": {
+      "add_capabilities": [],
+      "drop_capabilities": [],
+      "environment_variables": { "cpu": [], "cuda": [], "rocm": [] },
+      "force_pull_image": false,
+      "image": {
+        "cpu": "determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c",
+        "cuda": "determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c",
+        "rocm": "determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-55a3e1c"
+      },
+      "pod_spec": null,
+      "ports": {},
+      "registry_auth": null
+    },
+    "hyperparameters": {
+      "dropout1": { "type": "const", "val": 0.25 },
+      "dropout2": { "type": "const", "val": 0.5 },
+      "global_batch_size": { "type": "const", "val": 64 },
+      "learning_rate": { "type": "const", "val": 1 },
+      "n_filters1": { "type": "const", "val": 32 },
+      "n_filters2": { "type": "const", "val": 64 }
+    },
+    "labels": null,
+    "max_restarts": 5,
+    "min_checkpoint_period": { "batches": 0 },
+    "min_validation_period": { "batches": 0 },
+    "name": "mnist_pytorch_const",
+    "optimizations": {
+      "aggregation_frequency": 1,
+      "auto_tune_tensor_fusion": false,
+      "average_aggregated_gradients": true,
+      "average_training_metrics": false,
+      "grad_updates_size_file": null,
+      "gradient_compression": false,
+      "mixed_precision": "O0",
+      "tensor_fusion_cycle_time": 5,
+      "tensor_fusion_threshold": 64
+    },
+    "perform_initial_validation": false,
+    "profiling": {
+      "begin_on_batch": 0,
+      "enabled": false,
+      "end_after_batch": null,
+      "sync_timings": true
+    },
+    "project": "",
+    "records_per_epoch": 0,
+    "reproducibility": { "experiment_seed": 1658776683 },
+    "resources": {
+      "agent_label": "",
+      "devices": [],
+      "max_slots": null,
+      "native_parallel": false,
+      "priority": null,
+      "resource_pool": "compute-pool",
+      "shm_size": null,
+      "slots_per_trial": 1,
+      "weight": 1
+    },
+    "scheduling_unit": 100,
+    "searcher": {
+      "max_length": { "batches": 937 },
+      "metric": "validation_loss",
+      "name": "single",
+      "smaller_is_better": true,
+      "source_checkpoint_uuid": null,
+      "source_trial_id": null
+    },
+    "workspace": ""
+  },
+  "description": "",
+  "endTime": "2022-07-25T19:28:46.978489Z",
+  "forkedFrom": null,
+  "hyperparameters": {
+    "dropout1": { "type": "const", "val": 0.25 },
+    "dropout2": { "type": "const", "val": 0.5 },
+    "global_batch_size": { "type": "const", "val": 64 },
+    "learning_rate": { "type": "const", "val": 1 },
+    "n_filters1": { "type": "const", "val": 32 },
+    "n_filters2": { "type": "const", "val": 64 }
+  },
+  "id": 1226,
+  "jobId": "fdd1880c-c386-4bc4-bb19-0a3f64500f63",
+  "labels": [],
+  "modelDefinitionSize": 3112,
+  "name": "mnist_pytorch_const",
+  "notes": "",
+  "numTrials": 1,
+  "progress": 1,
+  "projectId": 1,
+  "projectName": "Uncategorized",
+  "resourcePool": "compute-pool",
+  "searcherType": "\"single\"",
+  "startTime": "2022-07-25T19:18:03.091973Z",
+  "state": "COMPLETED",
+  "trialIds": [3486],
+  "unmanaged": false,
+  "userId": 2,
+  "workspaceId": 1,
+  "workspaceName": "Uncategorized"
+}

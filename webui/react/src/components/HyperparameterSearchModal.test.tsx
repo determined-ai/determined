@@ -7,6 +7,7 @@ import React from 'react';
 
 import { ThemeProvider } from 'components/ThemeProvider';
 import { createExperiment as mockCreateExperiment } from 'services/api';
+import { ExperimentItem } from 'types';
 import { generateTestExperimentData } from 'utils/tests/generateTestData';
 
 import HyperparameterSearchModalComponent from './HyperparameterSearchModal';
@@ -65,15 +66,22 @@ vi.mock('stores/cluster', async (importOriginal) => {
   };
 });
 
-vi.mock('services/api', () => ({
-  createExperiment: vi.fn().mockReturnValue(
-    Promise.resolve({
-      experiment: { id: 1 },
-      maxSlotsExceeded: false,
-    }),
-  ),
-  getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
-}));
+vi.mock('services/api', async () => {
+  const experimentResponse: ExperimentItem = await vi.importActual(
+    'fixtures/responses/experiment-details/experiment-item.json',
+  );
+
+  return {
+    createExperiment: vi.fn().mockReturnValue(
+      Promise.resolve({
+        experiment: { id: 1 },
+        maxSlotsExceeded: false,
+      }),
+    ),
+    getExperiment: vi.fn().mockReturnValue(Promise.resolve(experimentResponse)),
+    getResourcePools: vi.fn().mockReturnValue(Promise.resolve([])),
+  };
+});
 
 const { experiment } = generateTestExperimentData();
 
