@@ -946,17 +946,17 @@ commands:
         default: ""
       region:
         type: string
-        default: "us-west1"
+        default: ${SHARED_CLUSTER_REGION}
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
         type: env_var_name
       google-compute-zone:
-        default: GOOGLE_COMPUTE_ZONE
+        default: SHARED_CLUSTER_ZONE
         description: The Google compute zone to connect with via the gcloud CLI
         type: env_var_name
       google-project-id:
-        default: GOOGLE_PROJECT_ID
+        default: SHARED_CLUSTER_PROJECT_ID
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
     steps:
@@ -985,7 +985,7 @@ commands:
           name: Install GKE auth plugin
       - run:
           name: Get Kubeconfig
-          command: gcloud container clusters get-credentials ${SHARED_CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>}
       - run:
           name: Install Determined Helm chart
           command: |
@@ -2624,15 +2624,9 @@ jobs:
 
   test-shared-cluster:
     parameters:
-      cluster-id:
-        type: string
-        default: ${SHARED_CLUSTER_ID}
       labels:
         type: string
         default: ""
-      region:
-        type: string
-        default: "us-west1"
       mark:
         type: string
       parallelism:
