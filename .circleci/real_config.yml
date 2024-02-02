@@ -2293,7 +2293,7 @@ jobs:
                     --skip-final-snapshot
 
       - slack/status:
-          fail_only: false
+          fail_only: true
           only_for_branches: main
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
           mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
