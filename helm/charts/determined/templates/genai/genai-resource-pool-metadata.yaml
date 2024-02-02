@@ -1,0 +1,18 @@
+{{- if .Values.genai.version }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genai-resource-pool-metadata-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: genai-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+data:
+  resource_pool_metadata.yaml: |
+    a100:
+      gpu_type: A100
+      max_agents: 3
+    v100:
+      gpu_type: V100
+      max_agents: 2
+{{- end }}
