@@ -70,6 +70,32 @@ Version 0.26.7
 -  CLI: Modify ``det user ls`` to show only active users. Add a new flag ``--all`` to show all
    users.
 
+**New Features**
+
+-  Authentication: *(Enterprise edition only)* SAML users can be auto-provisioned upon their first
+   login. To configure, set the ``saml.auto_provision_users`` option to True. If SCIM is enabled as
+   well, ``auto_provision_users`` must be False.
+
+-  Authentication: *(Enterprise edition only)* In the enterprise edition, add synchronization of
+   SAML user group memberships with existing groups and SAML user display name with the Determined
+   user display name. Configure by setting ``saml.groups_attribute_name`` to the string value of the
+   authenticator's attribute name for groups and ``saml.display_name_attribute_name`` with the
+   authenticator's attribute name for display name.
+
+**Improvement**
+
+-  Security: *(Enterprise edition only)* In the enterprise edition, expand the SAML user group
+   memberships feature to provision groups upon each login. This can be done by setting
+   ``saml.groups_attribute_name`` to the string value of the authenticator's attribute name for
+   groups. Prior releases only matched group memberships between the authenticator and local
+   Determined user groups, meaning that, if not found, local groups would not be created.
+
+-  Security: *(Enterprise edition only)* In the enterprise edition, expand the OIDC user group
+   memberships feature to provision groups upon each login. This can be done by setting
+   ``oidc.groups_claim_name`` to the string value of the authenticator's claim name for groups.
+   Prior releases only matched group memberships between the authenticator and local Determined user
+   groups, meaning that, if not found, local groups would not be created.
+
 **Bug Fixes**
 
 -  Master: Fix an issue where master was unable to download checkpoints from S3 buckets in the
@@ -99,12 +125,12 @@ Version 0.26.5
 
 **New Features**
 
--  Authentication: Users can now provide a Pachyderm address in the master config under
-   ``integrations.pachyderm.address``. This address will be added as an environment variable called
-   ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also be available as an
-   environment variable called ``DEX_TOKEN`` in task containers.
+-  Authentication: *(Enterprise edition only)* Users can now provide a Pachyderm address in the
+   master config under ``integrations.pachyderm.address``. This address will be added as an
+   environment variable called ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also
+   be available as an environment variable called ``DEX_TOKEN`` in task containers.
 
--  Authentication: In the enterprise edition, add synchronization of OIDC user group memberships
+-  Authentication: *(Enterprise edition only)* Add synchronization of OIDC user group memberships
    with existing groups. Configure by setting ``oidc.groups_claim_name`` in the master config to the
    string value of the authenticator's claim name for groups.
 
