@@ -308,7 +308,7 @@ export const getColumnDefs = ({
     id: 'searcherMetric',
     isNumerical: false,
     renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.config.searcher.metric;
+      const sMetric = record.experiment.searcherMetric ?? '';
       return {
         allowOverlay: false,
         copyData: sMetric,

@@ -48,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -510,6 +511,26 @@ checkpoint_storage:
 	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
 }
 
+func TestGetExperimentsShowTrialData(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exp0 := createTestExp(t, api, curUser)
+	trial, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+
+	resp, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
+		ShowTrialData: true,
+		ExperimentIdFilter: &commonv1.Int32FieldFilter{
+			Incl: []int32{int32(exp0.ID), int32(trial.ExperimentID)},
+		},
+		SortBy: apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 2)
+	require.NotNil(t, resp.Experiments[0].BestTrialSearcherMetric)
+	require.Equal(t, 0.0, *resp.Experiments[0].BestTrialSearcherMetric) // 0.0 is the best metric.
+	require.Nil(t, resp.Experiments[1].BestTrialSearcherMetric)
+}
+
 // nolint: exhaustruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
@@ -553,18 +574,17 @@ func TestGetExperiments(t *testing.T) {
 	})
 	activeConfig0 = schemas.WithDefaults(activeConfig0)
 	exp0 := &model.Experiment{
-		StartTime:            startTime,
-		EndTime:              &endTime,
-		ModelDefinitionBytes: []byte{1, 2, 3},
-		JobID:                model.JobID(job0ID),
-		Archived:             false,
-		State:                model.PausedState,
-		Notes:                "notes",
-		Config:               activeConfig0.AsLegacy(),
-		OwnerID:              ptrs.Ptr(model.UserID(1)),
-		ProjectID:            int(pid),
+		StartTime: startTime,
+		EndTime:   &endTime,
+		JobID:     model.JobID(job0ID),
+		Archived:  false,
+		State:     model.PausedState,
+		Notes:     "notes",
+		Config:    activeConfig0.AsLegacy(),
+		OwnerID:   ptrs.Ptr(model.UserID(1)),
+		ProjectID: int(pid),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp0, activeConfig0))
+	require.NoError(t, api.m.db.AddExperiment(exp0, []byte{1, 2, 3}, activeConfig0))
 	for i := 0; i < 3; i++ {
 		task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 		require.NoError(t, db.AddTask(ctx, task))
@@ -610,17 +630,16 @@ func TestGetExperiments(t *testing.T) {
 	})
 	activeConfig1 = schemas.WithDefaults(activeConfig1)
 	exp1 := &model.Experiment{
-		StartTime:            secondStartTime,
-		ModelDefinitionBytes: []byte{1, 2, 3},
-		JobID:                model.JobID(job1ID),
-		Archived:             true,
-		State:                model.ErrorState,
-		ParentID:             ptrs.Ptr(exp0.ID),
-		Config:               activeConfig1.AsLegacy(),
-		OwnerID:              ptrs.Ptr(model.UserID(userResp.User.Id)),
-		ProjectID:            int(pid),
+		StartTime: secondStartTime,
+		JobID:     model.JobID(job1ID),
+		Archived:  true,
+		State:     model.ErrorState,
+		ParentID:  ptrs.Ptr(exp0.ID),
+		Config:    activeConfig1.AsLegacy(),
+		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
+		ProjectID: int(pid),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp1, activeConfig1))
+	require.NoError(t, api.m.db.AddExperiment(exp1, []byte{1, 2, 3}, activeConfig1))
 	exp1Expected := &experimentv1.Experiment{
 		StartTime:      timestamppb.New(secondStartTime),
 		Duration:       ptrs.Ptr(int32(0)),
@@ -1007,18 +1026,17 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	})
 	activeConfig = schemas.WithDefaults(activeConfig)
 	exp := &model.Experiment{
-		ModelDefinitionBytes: []byte{1, 2, 3},
-		State:                model.PausedState,
-		Config:               activeConfig.AsLegacy(),
-		OwnerID:              ptrs.Ptr(model.UserID(userResp.User.Id)),
-		ProjectID:            1,
+		State:     model.PausedState,
+		Config:    activeConfig.AsLegacy(),
+		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
+		ProjectID: 1,
 	}
 	for i := 0; i < n; i++ {
 		jobID := uuid.New().String()
 		exp.ID = 0
 		exp.JobID = model.JobID(jobID)
 
-		if err := api.m.db.AddExperiment(exp, activeConfig); err != nil {
+		if err := api.m.db.AddExperiment(exp, []byte{1, 2, 3}, activeConfig); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -1060,15 +1078,14 @@ func createTestExpWithProjectID(
 	})
 	activeConfig = schemas.WithDefaults(activeConfig)
 	exp := &model.Experiment{
-		JobID:                model.JobID(uuid.New().String()),
-		State:                model.PausedState,
-		OwnerID:              &curUser.ID,
-		ProjectID:            projectID,
-		StartTime:            time.Now(),
-		ModelDefinitionBytes: []byte{10, 11, 12},
-		Config:               activeConfig.AsLegacy(),
+		JobID:     model.JobID(uuid.New().String()),
+		State:     model.PausedState,
+		OwnerID:   &curUser.ID,
+		ProjectID: projectID,
+		StartTime: time.Now(),
+		Config:    activeConfig.AsLegacy(),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp, activeConfig))
+	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
 
 	// Get experiment as our API mostly will to make it easier to mock.
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)

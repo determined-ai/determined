@@ -725,6 +725,7 @@ export const ExperimentItem = t.intersection([
   t.partial({
     checkpoints: t.number,
     checkpointSize: t.number,
+    config: ExperimentConfig,
     description: t.string,
     duration: t.number,
     endTime: t.string,
@@ -736,6 +737,7 @@ export const ExperimentItem = t.intersection([
     notes: t.string,
     progress: t.number,
     projectName: t.string,
+    searcherMetric: t.string,
     searcherMetricValue: t.number,
     trialIds: t.array(t.number),
     unmanaged: t.boolean,
@@ -744,7 +746,6 @@ export const ExperimentItem = t.intersection([
   }),
   t.type({
     archived: t.boolean,
-    config: ExperimentConfig,
     configRaw: JsonObject,
     hyperparameters: t.record(t.string, Hyperparameter),
     id: t.number,
