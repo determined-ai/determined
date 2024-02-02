@@ -54,7 +54,7 @@ func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, er
 // ProjectExperiments returns a list of experiments within a project.
 func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err error) {
 	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived, owner_id, notes,
+SELECT e.id, state, config, start_time, end_time, archived, owner_id, notes,
 		 job_id, u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
@@ -450,24 +450,29 @@ WHERE id = $1`, id)
 //
 // TODO(ilia): deprecate and use module function instead.
 func (db *PgDB) AddExperiment(
-	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+	experiment *model.Experiment, modelDef []byte, activeConfig expconf.ExperimentConfig,
 ) (err error) {
-	return AddExperiment(context.TODO(), experiment, activeConfig)
+	return AddExperiment(context.TODO(), experiment, modelDef, activeConfig)
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
 func AddExperiment(
-	ctx context.Context, experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+	ctx context.Context,
+	experiment *model.Experiment,
+	modelDef []byte,
+	activeConfig expconf.ExperimentConfig,
 ) (err error) {
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return AddExperimentTx(ctx, tx, experiment, activeConfig, false)
+		return AddExperimentTx(ctx, tx, experiment, modelDef, activeConfig, false)
 	})
 }
 
 // AddExperimentTx adds the experiment to the database and sets its ID.
 func AddExperimentTx(
 	ctx context.Context, idb bun.IDB,
-	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+	experiment *model.Experiment,
+	modelDef []byte,
+	activeConfig expconf.ExperimentConfig,
 	upsert bool,
 ) (err error) {
 	if experiment.ID != 0 {
@@ -492,6 +497,7 @@ func AddExperimentTx(
 		ExcludeColumn("id", "username").
 		Value("progress", "?", 0).
 		Value("config", "?", string(activeConfigStr)).
+		Value("model_definition", "?", modelDef).
 		Returning("id")
 
 	if upsert {
@@ -597,7 +603,7 @@ func ExperimentByID(ctx context.Context, expID int) (*model.Experiment, error) {
 	var experiment model.Experiment
 
 	if err := Bun().NewRaw(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived,
+SELECT e.id, state, config, start_time, end_time, archived,
 	   owner_id, notes, job_id, u.username as username, project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
@@ -614,7 +620,7 @@ func ExperimentByTrialID(ctx context.Context, trialID int) (*model.Experiment, e
 	var experiment model.Experiment
 
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
+SELECT e.id, e.state, e.config, e.start_time, e.end_time, e.archived,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
@@ -633,7 +639,7 @@ func ExperimentByTaskID(
 ) (*model.Experiment, error) {
 	var experiment model.Experiment
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
+SELECT e.id, e.state, e.config, e.start_time, e.end_time, e.archived,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, e.unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
@@ -653,7 +659,7 @@ func ExperimentByExternalIDTx(ctx context.Context, idb bun.IDB, externalExperime
 	var experiment model.Experiment
 
 	if err := idb.NewRaw(`
-	SELECT e.id, state, config, model_definition, start_time, end_time, archived,owner_id, notes,
+	SELECT e.id, state, config, start_time, end_time, archived,owner_id, notes,
 		job_id, u.username as username, project_id, unmanaged, external_experiment_id
 	FROM experiments e
 	JOIN users u ON (e.owner_id = u.id)
@@ -697,7 +703,7 @@ SELECT experiment_id FROM trials where id = $1
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, model_definition, start_time, end_time, archived, owner_id, job_id,
+SELECT e.id, state, config, start_time, end_time, archived, owner_id, job_id,
        u.username as username, project_id, unmanaged
 FROM experiments e
 JOIN users u ON e.owner_id = u.id

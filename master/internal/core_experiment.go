@@ -262,13 +262,13 @@ func getCreateExperimentsProject(
 }
 
 func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
-	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
+	*model.Experiment, []byte, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
 	ctx := context.TODO()
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Apply the template that the user specified.
@@ -276,7 +276,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		var tc expconf.ExperimentConfig
 		err := templates.UnmarshalTemplateConfig(ctx, *req.Template, owner, &tc, true)
 		if err != nil {
-			return nil, config, nil, nil, err
+			return nil, nil, config, nil, nil, err
 		}
 		config = schemas.Merge(config, tc)
 	}
@@ -286,34 +286,34 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 
 	p, err := getCreateExperimentsProject(m, req, owner, defaulted)
 	if err != nil {
-		return nil, config, nil, nil, err
+		return nil, nil, config, nil, nil, err
 	}
 	workspaceModel, err := workspace.WorkspaceByProjectID(ctx, int(p.Id))
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		return nil, config, nil, nil, err
+		return nil, nil, config, nil, nil, err
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
 		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial())
 	if err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
 	if err = m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), isSingleNode); err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
+		return nil, nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
-		return nil, config, nil, nil, errors.New("managed experiments require entrypoint")
+		return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
 	}
 
 	// Merge in workspace's checkpoint storage into the conifg.
@@ -322,7 +322,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		Where("id = ?", p.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(ctx); err != nil {
-		return nil, config, nil, nil, err
+		return nil, nil, config, nil, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, w.CheckpointStorageConfig)
@@ -337,12 +337,12 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	modelBytes := []byte{}
@@ -352,7 +352,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(int(req.ParentId))
 		if dbErr != nil {
-			return nil, config, nil, nil, errors.Wrapf(
+			return nil, nil, config, nil, nil, errors.Wrapf(
 				dbErr, "unable to find parent experiment %v", req.ParentId)
 		}
 	} else {
@@ -360,7 +360,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		if req.ModelDefinition != nil {
 			modelBytes, compressErr = archive.ToTarGz(filesToArchive(req.ModelDefinition))
 			if compressErr != nil {
-				return nil, config, nil, nil, errors.Wrapf(
+				return nil, nil, config, nil, nil, errors.Wrapf(
 					compressErr, "unable to find compress model definition")
 			}
 		}
@@ -368,18 +368,18 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 
 	token, createSessionErr := user.StartSession(ctx, owner)
 	if createSessionErr != nil {
-		return nil, config, nil, nil, errors.Wrapf(
+		return nil, nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
 	}
 	taskSpec.UserSessionToken = token
 	taskSpec.Owner = owner
 
 	dbExp, err := model.NewExperiment(
-		config, req.Config, modelBytes, parentID, false,
+		config, req.Config, parentID, false,
 		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
 	)
 	if err != nil {
-		return nil, config, nil, nil, err
+		return nil, nil, config, nil, nil, err
 	}
 
 	if owner != nil {
@@ -393,5 +393,5 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		taskSpec.Labels = append(taskSpec.Labels, label)
 	}
 
-	return dbExp, config, p, &taskSpec, err
+	return dbExp, modelBytes, config, p, &taskSpec, err
 }

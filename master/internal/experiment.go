@@ -92,9 +92,14 @@ func resolveWorkspaceID(workspace *model.Workspace) int {
 func newExperiment(
 	m *Master,
 	expModel *model.Experiment,
+	modelDef []byte,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*internalExperiment, []command.LaunchWarning, error) {
+	if len(modelDef) > 0 && expModel.ID != 0 {
+		return nil, nil, fmt.Errorf("experiments restoring should not provide a model def")
+	}
+
 	resources := activeConfig.Resources()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -144,7 +149,7 @@ func newExperiment(
 	}
 
 	if expModel.ID == 0 {
-		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
+		if err = m.db.AddExperiment(expModel, modelDef, activeConfig); err != nil {
 			return nil, launchWarnings, err
 		}
 		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
@@ -199,13 +204,14 @@ func newUnmanagedExperiment(
 	idb bun.IDB,
 	m *Master,
 	expModel *model.Experiment,
+	modelDef []byte,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*internalExperiment, []command.LaunchWarning, error) {
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
+	if err := db.AddExperimentTx(ctx, idb, expModel, modelDef, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)

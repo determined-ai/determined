@@ -23,7 +23,7 @@ type DB interface {
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
-	AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfig) error
+	AddExperiment(experiment *model.Experiment, modelDef []byte, activeConfig expconf.ExperimentConfig) error
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
