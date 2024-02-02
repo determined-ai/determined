@@ -598,13 +598,7 @@ func (a *apiServer) GetExperiments(
 		(
 			SELECT searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) AS best_trial_searcher_metric`)
 	}
 
@@ -629,13 +623,7 @@ func (a *apiServer) GetExperiments(
 			SELECT
 				searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
