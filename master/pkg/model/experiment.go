@@ -8,18 +8,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-
-	"github.com/jackc/pgtype"
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -355,7 +353,7 @@ type Experiment struct {
 }
 
 // ExperimentFromProto converts a experimentv1.Experiment to a model.Experiment.
-func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
+func ExperimentFromProto(e *experimentv1.Experiment, conf *structpb.Struct) (*Experiment, error) {
 	var uid *UserID
 	if e.UserId != 0 {
 		uid = ptrs.Ptr(UserID(e.UserId))
@@ -369,13 +367,10 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		parentID = ptrs.Ptr(int(e.ForkedFrom.Value))
 	}
 
-	// Update this when we remove the proto type.
-	//nolint:staticcheck
-	byts, err := json.Marshal(e.Config)
+	byts, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
 	}
-
 	config, err := expconf.ParseLegacyConfigJSON(byts)
 	if err != nil {
 		return nil, err
