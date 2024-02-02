@@ -17,6 +17,8 @@ def test_create_generic_task() -> None:
     """
     command = [
         "det",
+        "-m",
+        conf.make_master_url(),
         "task",
         "create",
         conf.fixtures_path("generic_task/test_config.yaml"),
@@ -36,8 +38,7 @@ def test_generic_task_config() -> None:
 
     with open(conf.fixtures_path("generic_task/test_config.yaml"), "r") as config_file:
         # Create task
-        config = ntsc.parse_config(config_file, None, [], [])
-        config_text = util.yaml_safe_dump(config)
+        config_text = config_file.read()
         context_directory = context.read_v1_context(
             pathlib.Path(conf.fixtures_path("generic_task")), []
         )
@@ -54,7 +55,7 @@ def test_generic_task_config() -> None:
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Get config
-        command = ["det", "task", "config", task_resp.taskId]
+        command = ["det", "-m", conf.make_master_url(), "task", "config", task_resp.taskId]
 
         res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
@@ -184,7 +185,7 @@ def test_pause_and_unpause_generic_task() -> None:
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
-        # Pause task
+        # Unpause task
         command = ["det", "task", "unpause", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)

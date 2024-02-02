@@ -103,7 +103,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		true,
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, launchWarnings, err
 	}
 
 	// Get the base TaskSpec.
