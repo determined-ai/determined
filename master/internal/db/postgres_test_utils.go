@@ -329,7 +329,6 @@ func RequireMockExperimentParams(
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
 		Config:               cfg.AsLegacy(),
-		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
 		StartTime:            time.Now().Add(-time.Hour).Truncate(time.Millisecond),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
@@ -343,7 +342,7 @@ func RequireMockExperimentParams(
 		exp.State = *p.State
 	}
 
-	err := db.AddExperiment(&exp, cfg)
+	err := db.AddExperiment(&exp, ReadTestModelDefiniton(t, DefaultTestSrcPath), cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }

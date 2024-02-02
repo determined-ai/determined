@@ -386,7 +386,7 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (
 	*model.Experiment, expconf.ExperimentConfig, *model.Trial,
 ) {
 	experiment, activeConfig := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment, activeConfig)
+	err := pgDB.AddExperiment(experiment, []byte{}, activeConfig)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)

@@ -230,15 +230,14 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	var defaultDeterminedUID model.UserID = 2
 	jID := model.NewJobID()
 	exp := &model.Experiment{
-		JobID:                jID,
-		State:                model.CompletedState,
-		Config:               activeConfig.AsLegacy(),
-		StartTime:            time.Now(),
-		OwnerID:              &defaultDeterminedUID,
-		ModelDefinitionBytes: []byte{},
-		ProjectID:            1,
+		JobID:     jID,
+		State:     model.CompletedState,
+		Config:    activeConfig.AsLegacy(),
+		StartTime: time.Now(),
+		OwnerID:   &defaultDeterminedUID,
+		ProjectID: 1,
 	}
-	err = pgdb.AddExperiment(exp, activeConfig)
+	err = pgdb.AddExperiment(exp, []byte{}, activeConfig)
 	if err != nil {
 		return err
 	}

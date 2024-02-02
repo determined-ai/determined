@@ -48,13 +48,12 @@ func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.Experi
 	DefaultTaskContainerDefaults().MergeIntoExpConfig(&activeConfig)
 
 	e := &Experiment{
-		JobID:                NewJobID(),
-		State:                ActiveState,
-		Config:               activeConfig.AsLegacy(),
-		StartTime:            time.Now(),
-		OwnerID:              &defaultDeterminedUID,
-		ModelDefinitionBytes: []byte{},
-		ProjectID:            1,
+		JobID:     NewJobID(),
+		State:     ActiveState,
+		Config:    activeConfig.AsLegacy(),
+		StartTime: time.Now(),
+		OwnerID:   &defaultDeterminedUID,
+		ProjectID: 1,
 	}
 
 	for _, o := range opts {

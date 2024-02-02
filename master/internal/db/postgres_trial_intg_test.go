@@ -839,7 +839,7 @@ func TestProtoGetTrial(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
-	err := db.AddExperiment(exp, activeConfig)
+	err := db.AddExperiment(exp, []byte{}, activeConfig)
 	require.NoError(t, err, "failed to add experiment")
 
 	task := RequireMockTask(t, db, exp.OwnerID)
@@ -889,7 +889,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
-	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		ExperimentID: exp.ID,
@@ -990,7 +990,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
-	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		ExperimentID: exp.ID,
@@ -1137,7 +1137,7 @@ func TestGenericMetricsIO(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	exp, activeConfig := model.ExperimentModel()
-	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		ExperimentID: exp.ID,
@@ -1263,10 +1263,10 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	exp, activeConfig := model.ExperimentModel()
-	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
 	createTrial := func() *model.Trial {
 		exp, activeConfig := model.ExperimentModel()
-		require.NoError(t, db.AddExperiment(exp, activeConfig))
+		require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
 		task := RequireMockTask(t, db, exp.OwnerID)
 		tr := model.Trial{
 			ExperimentID: exp.ID,
