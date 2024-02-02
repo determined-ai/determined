@@ -25,6 +25,20 @@ export interface Props {
 
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
+const mergeAbortControllers = (...controllers: AbortController[]) => {
+  const mergedController = new AbortController();
+
+  controllers.forEach((c) => {
+    const abort = () => {
+      mergedController.abort();
+      c.signal.removeEventListener('abort', abort);
+    };
+    c.signal.addEventListener('abort', abort);
+  });
+
+  return mergedController;
+};
+
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
@@ -47,6 +61,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const handleFilterChange = useCallback(
     (filters: Filters) => {
+      // request should have already been canceled when resetSettings updated
+      // the settings hash
+      if (Object.keys(filters).length === 0) return;
+
       canceler.current.abort();
       const newCanceler = new AbortController();
       canceler.current = newCanceler;
@@ -104,6 +122,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const handleFetch = useCallback(
     (config: FetchConfig, type: FetchType) => {
+      const { signal } = mergeAbortControllers(config.canceler, canceler.current);
+
       const options = {
         follow: false,
         limit: config.limit,
@@ -142,7 +162,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
-        { signal: canceler.current.signal },
+        { signal },
       );
     },
     [settings, trial?.id],
