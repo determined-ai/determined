@@ -342,8 +342,6 @@ type Experiment struct {
 	Config         expconf.LegacyConfig `db:"config"`
 	OriginalConfig string               `db:"original_config"`
 
-	// The model definition is stored as a .tar.gz file (raw bytes).
-	ModelDefinitionBytes []byte     `db:"model_definition" bun:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
 	EndTime              *time.Time `db:"end_time"`
 	ParentID             *int       `db:"parent_id"`
@@ -409,22 +407,20 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 func NewExperiment(
 	config expconf.ExperimentConfig,
 	originalConfig string,
-	modelDefinitionBytes []byte,
 	parentID *int,
 	archived bool,
 	projectID int,
 	unmanaged bool,
 ) (*Experiment, error) {
 	return &Experiment{
-		State:                PausedState,
-		JobID:                NewJobID(),
-		Config:               config.AsLegacy(),
-		OriginalConfig:       originalConfig,
-		ModelDefinitionBytes: modelDefinitionBytes,
-		StartTime:            time.Now().UTC(),
-		ParentID:             parentID,
-		Archived:             archived,
-		ProjectID:            projectID,
+		State:          PausedState,
+		JobID:          NewJobID(),
+		Config:         config.AsLegacy(),
+		OriginalConfig: originalConfig,
+		StartTime:      time.Now().UTC(),
+		ParentID:       parentID,
+		Archived:       archived,
+		ProjectID:      projectID,
 	}, nil
 }
 
