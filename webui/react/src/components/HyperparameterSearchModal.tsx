@@ -609,15 +609,15 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     );
   }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
-  if (Loadable.isNotLoaded(fetchedExperiment)) {
-    return <Spinner center spinning />;
-  }
-
   return (
     <Modal footer={footer} title="Hyperparameter Search">
-      <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
-        {pages[currentPage]}
-      </Form>
+      {Loadable.isNotLoaded(fetchedExperiment) ? (
+        <Spinner center spinning />
+      ) : (
+        <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
+          {pages[currentPage]}
+        </Form>
+      )}
     </Modal>
   );
 };
