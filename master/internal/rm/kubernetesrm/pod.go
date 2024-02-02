@@ -334,7 +334,7 @@ func (p *pod) getPodNodeInfo() podNodeInfo {
 			Devices:      slices.Clone(p.container.Devices),
 			AllocationID: p.allocationID,
 			TaskID:       p.allocationID.ToTaskID(),
-			JobID:        p.req.JobID,
+			JobID:        p.jobID,
 		},
 	}
 }
