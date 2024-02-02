@@ -112,7 +112,7 @@ def test_generic_task_create_with_fork() -> None:
             fork_task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
             # Get fork task Config
-            command = ["det", "task", "config", fork_task_resp.taskId]
+            command = ["det", "-m", conf.make_master_url(), "task", "config", fork_task_resp.taskId]
 
             res = subprocess.run(
                 command, universal_newlines=True, stdout=subprocess.PIPE, check=True
@@ -149,9 +149,12 @@ def test_kill_generic_task() -> None:
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Kill task
-        command = ["det", "task", "kill", task_resp.taskId]
+        command = ["det", "-m", conf.make_master_url(), "task", "kill", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
+        kill_resp = bindings.get_GetTask(test_session, taskId=task_resp.taskId)
+        assert bindings.v1GenericTaskState.CANCELED == kill_resp.task.taskState
 
 
 @pytest.mark.e2e_cpu
@@ -181,11 +184,17 @@ def test_pause_and_unpause_generic_task() -> None:
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
         # Pause task
-        command = ["det", "task", "pause", task_resp.taskId]
+        command = ["det", "-m", conf.make_master_url(), "task", "pause", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
+        pause_resp = bindings.get_GetTask(test_session, taskId=task_resp.taskId)
+        assert bindings.v1GenericTaskState.PAUSED == pause_resp.task.taskState
 
         # Unpause task
-        command = ["det", "task", "unpause", task_resp.taskId]
+        command = ["det", "-m", conf.make_master_url(), "task", "unpause", task_resp.taskId]
 
         subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
+        unpause_resp = bindings.get_GetTask(test_session, taskId=task_resp.taskId)
+        assert bindings.v1GenericTaskState.ACTIVE == unpause_resp.task.taskState
