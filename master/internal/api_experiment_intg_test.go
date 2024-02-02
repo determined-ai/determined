@@ -48,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/test/olddata"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
@@ -508,6 +509,26 @@ checkpoint_storage:
 	expected["bucket"] = "expconfbucket"
 	expected["secret_key"] = workspaceLevelKey
 	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+}
+
+func TestGetExperimentsShowTrialData(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	exp0 := createTestExp(t, api, curUser)
+	trial, _ := createTestTrialWithMetrics(ctx, t, api, curUser, true)
+
+	resp, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
+		ShowTrialData: true,
+		ExperimentIdFilter: &commonv1.Int32FieldFilter{
+			Incl: []int32{int32(exp0.ID), int32(trial.ExperimentID)},
+		},
+		SortBy: apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 2)
+	require.NotNil(t, resp.Experiments[0].BestTrialSearcherMetric)
+	require.Equal(t, 0.0, *resp.Experiments[0].BestTrialSearcherMetric) // 0.0 is the best metric.
+	require.Nil(t, resp.Experiments[1].BestTrialSearcherMetric)
 }
 
 // nolint: exhaustruct
