@@ -9,10 +9,20 @@ metadata:
     release: {{ .Release.Name }}
 data:
   resource_pool_metadata.yaml: |
-    a100:
-      gpu_type: A100
-      max_agents: 3
-    v100:
-      gpu_type: V100
-      max_agents: 2
+    # FOUND ELEMS
+    {{- $orig_resource_pool_data := (required "A valid .Values.resourcePools entry required!" .Values.resourcePools) }}
+    {{- $resource_pools := dict -}}
+    {{- range $v := $orig_resource_pool_data }}
+      {{ $resource_pools := mustAppend $resource_pools $v.pool_name }}
+    {{- end }}
+    # WOW
+    {{ $resource_pools }}
+    {{- $metadata := (required "A valid .Values.genai.extra_resource_pool_metadata entry required!" .Values.genai.extra_resource_pool_metadata) }}
+    {{- range $k, $v := $metadata }}
+      {{- if has $k $resource_pools }}
+        {{- $k }}
+      {{- end }}
+    {{- end }}
+    # ORIG
+    {{- toYaml .Values.genai.extra_resource_pool_metadata | nindent 4 }}
 {{- end }}
