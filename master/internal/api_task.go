@@ -21,7 +21,7 @@ func (a *apiServer) GetTask(
 		return nil, err
 	}
 
-	t := new(taskv1.Task)
+	t := &taskv1.Task{}
 	switch err := a.m.db.QueryProto("get_task", t, req.TaskId); {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, api.NotFoundErrs("task", req.TaskId, true)
