@@ -66,7 +66,7 @@ m AS (
 c AS (
     SELECT *
     FROM proto_checkpoints_view c
-    WHERE c.uuid IN (SELECT checkpoint_uuid::text FROM mv)
+    WHERE c.uuid IN (SELECT checkpoint_uuid FROM mv)
 )
 
 SELECT
@@ -81,4 +81,4 @@ SELECT
     mv.metadata,
     u.username
 FROM c, mv, m, u
-WHERE c.uuid = mv.checkpoint_uuid::text;
+WHERE c.uuid = mv.checkpoint_uuid;

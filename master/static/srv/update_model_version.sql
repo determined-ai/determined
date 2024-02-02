@@ -41,7 +41,7 @@ m AS (
 c AS (
     SELECT *
     FROM proto_checkpoints_view c
-    WHERE c.uuid = (SELECT checkpoint_uuid::text FROM mv)
+    WHERE c.uuid = (SELECT checkpoint_uuid FROM mv)
 )
 
 SELECT
