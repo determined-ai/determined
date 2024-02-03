@@ -2841,6 +2841,7 @@ workflows:
       - check-docs-links:
           requires:
             - build-docs
+          no_output_timeout: 20m
           #context: determined-production
           #filters:
           #  branches:
