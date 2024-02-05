@@ -1082,6 +1082,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return err
 	}
 
+	// Restore generic tasks
+
 	if err = m.closeOpenAllocations(ctx); err != nil {
 		return err
 	}

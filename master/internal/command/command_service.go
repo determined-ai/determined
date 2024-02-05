@@ -73,14 +73,18 @@ func (cs *CommandService) RestoreAllCommands(
 	}
 
 	for i := range snapshots {
-		cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
-		if err != nil {
-			cs.syslog.Errorf("failed to restore from snapshot: %s", err)
-			continue
+		if snapshots[i].GenericTaskSpec != nil {
+			//
+		} else {
+			cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
+			if err != nil {
+				cs.syslog.Errorf("failed to restore from snapshot: %s", err)
+				continue
+			}
+			// Restore to the command service registry.
+			cs.commands[cmd.taskID] = cmd
+			cs.syslog.Debugf("restored & started generic command %s", cmd.taskID)
 		}
-		// Restore to the command service registry.
-		cs.commands[cmd.taskID] = cmd
-		cs.syslog.Debugf("restored & started generic command %s", cmd.taskID)
 	}
 	return nil
 }
