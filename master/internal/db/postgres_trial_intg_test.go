@@ -838,16 +838,24 @@ func TestExperimentsProjectID(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	_, err := experimentsProjectID(ctx, -1, Bun())
+	trial := &model.Trial{
+		State:     model.ActiveState,
+		StartTime: time.Now(),
+	}
+	_, _, err := trialToRunAndTrialV2(ctx, Bun(), trial)
 	require.ErrorIs(t, err, sql.ErrNoRows)
 
 	exp, activeConfig := model.ExperimentModel()
 	err = db.AddExperiment(exp, []byte{}, activeConfig)
 	require.NoError(t, err, "failed to add experiment")
+	trial.ExperimentID = exp.ID
 
-	projectID, err := experimentsProjectID(ctx, exp.ID, Bun())
+	actualRun, actualV2, err := trialToRunAndTrialV2(ctx, Bun(), trial)
 	require.NoError(t, err)
-	require.Equal(t, 1, projectID)
+
+	expectedRun, expectedV2 := trial.ToRunAndTrialV2(exp.ProjectID)
+	require.Equal(t, expectedRun, actualRun)
+	require.Equal(t, expectedV2, actualV2)
 }
 
 func TestProtoGetTrial(t *testing.T) {
