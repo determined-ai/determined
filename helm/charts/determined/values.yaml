@@ -116,7 +116,6 @@ useNodePortForMaster: false
 #   scimAuthenticationAttribute:
 #   autoProvisionUsers:
 #   groupsAttributeName:
-#   GroupsClaimName:
 #   displayNameAttributeName:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
