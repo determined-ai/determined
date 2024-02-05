@@ -1219,7 +1219,9 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
-      - run: make -C docs check-links
+      - run:
+          no_output_timeout: 30m
+          command: make -C docs check-links
 
   publish-docs:
     docker:
@@ -2841,7 +2843,6 @@ workflows:
       - check-docs-links:
           requires:
             - build-docs
-          no_output_timeout: 20m
           #context: determined-production
           #filters:
           #  branches:
