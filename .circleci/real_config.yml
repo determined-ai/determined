@@ -1220,7 +1220,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          no_output_timeout: 30m
+          no_output_timeout: 1h
           command: make -C docs check-links
 
   publish-docs:
