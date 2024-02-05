@@ -203,7 +203,7 @@ func assertExpLabels(
 func TestPutExperimentLabels(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
-	t.Run("'null'::jsonb experiment config", func(t *testing.T) {
+	t.Run("labels 'null'::jsonb", func(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		_, err := db.Bun().NewUpdate().
 			Table("experiments").
@@ -219,6 +219,129 @@ func TestPutExperimentLabels(t *testing.T) {
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{"test"}, resp.Labels)
 		assertExpLabels(ctx, t, api, exp.ID, []string{"test"})
+	})
+
+	t.Run("labels unset", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().
+			Table("experiments").
+			Set(`config = config - 'labels'`).
+			Where("id = ?", exp.ID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		resp, err := api.PutExperimentLabel(ctx, &apiv1.PutExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test2",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"test2"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"test2"})
+	})
+
+	t.Run("labels workflow", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser, "a")
+		resp, err := api.PutExperimentLabel(ctx, &apiv1.PutExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test3",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"a", "test3"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"a", "test3"})
+
+		resp, err = api.PutExperimentLabel(ctx, &apiv1.PutExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test4",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"a", "test3", "test4"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"a", "test3", "test4"})
+
+		// Adding a label that already exists should not add it again.
+		resp, err = api.PutExperimentLabel(ctx, &apiv1.PutExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test4",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"a", "test3", "test4"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"a", "test3", "test4"})
+	})
+}
+
+func TestDeleteExperimentLabel(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	t.Run("labels 'null'::jsonb", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().
+			Table("experiments").
+			Set(`config = config || '{"labels": null}'::jsonb`).
+			Where("id = ?", exp.ID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		resp, err := api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{})
+	})
+
+	t.Run("labels unset", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().
+			Table("experiments").
+			Set(`config = config - 'labels'`).
+			Where("id = ?", exp.ID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		resp, err := api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{})
+	})
+
+	t.Run("labels workflow", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser, "a", "b", "c")
+
+		resp, err := api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "a",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"b", "c"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"b", "c"})
+
+		// Deleting again is fine.
+		resp, err = api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "a",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"b", "c"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"b", "c"})
+
+		resp, err = api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "c",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"b"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"b"})
+
+		resp, err = api.DeleteExperimentLabel(ctx, &apiv1.DeleteExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "b",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{})
 	})
 }
 
