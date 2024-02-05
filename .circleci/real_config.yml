@@ -2218,7 +2218,6 @@ jobs:
                   aws rds wait db-instance-available \
                     --region="us-west-2" \
                     --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
-                no_output_timeout: 30m
 
       - run:
           name: Add SSH key
