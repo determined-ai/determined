@@ -310,7 +310,7 @@ func (a *apiServer) CreateGenericTask(
 			return fmt.Errorf("persisting task %v: %w", taskID, err)
 		}
 
-		// TODO persist context directory
+		// Persist context directory
 		if contextDirectoryBytes == nil {
 			contextDirectoryBytes = []byte{}
 		}
