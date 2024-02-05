@@ -214,7 +214,9 @@ func (a *apiServer) getExperimentTx(
 		return nil, nil, fmt.Errorf("expected string config type")
 	}
 	config := &structpb.Struct{}
-	config.UnmarshalJSON([]byte(configString))
+	if err := config.UnmarshalJSON([]byte(configString)); err != nil {
+		return nil, nil, fmt.Errorf("unmarshaling json config string %s: %w", configString, err)
+	}
 	delete(expMap, "config")
 
 	// Cast string -> []byte `ParseMapToProto` magic.
@@ -2653,7 +2655,7 @@ func (a *apiServer) SearchExperiments(
 		ColumnExpr("null::jsonb AS wall_clock_time").
 		Column("searcher_metric_value").
 		Column("trials.external_trial_id").
-		Join("JOIN experiments e ON trials.experiment_id = trials.id").
+		Join("JOIN experiments e ON trials.experiment_id = e.id").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

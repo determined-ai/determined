@@ -415,8 +415,8 @@ def experiment_first_trial(exp_id: int) -> int:
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
     r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
-    assert r.experiment and r.experiment.config
-    return r.experiment.config
+    assert r.experiment and r.config
+    return r.config
 
 
 def experiment_state(

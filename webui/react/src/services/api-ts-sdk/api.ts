@@ -2817,12 +2817,6 @@ export interface V1Experiment {
      */
     parentArchived?: boolean;
     /**
-     * The configuration of the experiment. Is deprecated for performance reasons on the listing experiment route. Use GetExperimentResponse.config instead.
-     * @type {any}
-     * @memberof V1Experiment
-     */
-    config: any;
-    /**
      * The original configuration that the user submitted.
      * @type {string}
      * @memberof V1Experiment

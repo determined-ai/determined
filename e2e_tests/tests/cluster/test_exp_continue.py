@@ -73,7 +73,8 @@ def test_continue_config_file_and_args_cli() -> None:
     # Name is also still applied.
     sess = api_utils.determined_test_session()
     resp = bindings.get_GetExperiment(sess, experimentId=exp_id)
-    assert resp.experiment.config["name"] == expected_name
+
+    assert exp.experiment_config_json(exp_id)["name"] == expected_name
     assert (
         resp.experiment.state == bindings.experimentv1State.COMPLETED
     )  # Follow goes till completion.

@@ -3388,7 +3388,6 @@ class v1Experiment(Printable):
         self,
         *,
         archived: bool,
-        config: "typing.Dict[str, typing.Any]",
         id: int,
         jobId: str,
         name: str,
@@ -3426,7 +3425,6 @@ class v1Experiment(Printable):
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.archived = archived
-        self.config = config
         self.id = id
         self.jobId = jobId
         self.name = name
@@ -3491,7 +3489,6 @@ class v1Experiment(Printable):
     def from_json(cls, obj: Json) -> "v1Experiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "archived": obj["archived"],
-            "config": obj["config"],
             "id": obj["id"],
             "jobId": obj["jobId"],
             "name": obj["name"],
@@ -3557,7 +3554,6 @@ class v1Experiment(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "archived": self.archived,
-            "config": self.config,
             "id": self.id,
             "jobId": self.jobId,
             "name": self.name,
