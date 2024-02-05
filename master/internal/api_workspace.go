@@ -120,7 +120,6 @@ func (a *apiServer) getWorkspaceAndCheckCanDoActions(
 }
 
 func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (bool, error) {
-
 	exists, err := db.Bun().NewSelect().Model((*model.Model)(nil)).
 		Where("workspace_id=?", workspaceID).
 		Exists(ctx)
@@ -559,14 +558,14 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, err
 	}
 
-	models_exist, _ := a.workspaceHasModels(ctx, req.Id)
-	if models_exist {
+	modelsExist, _ := a.workspaceHasModels(ctx, req.Id)
+	if modelsExist {
 		return nil, fmt.Errorf("workspace (%d) contains models; move or delete models first", req.Id)
 	}
 
 	holder := &workspacev1.Workspace{}
 	// TODO(kristine): update workspace state in transaction with template delete
-	a.m.db.QueryProto("deletable_workspace", holder, req.Id)
+	_ = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
 	if holder.Id == 0 {
 		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user", req.Id)
 	}

@@ -190,7 +190,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 		CreationTime:    now,
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
-		Username:        user.Username,
+		UserID:          int(user.ID),
 		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes2"
