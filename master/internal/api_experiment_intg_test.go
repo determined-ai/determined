@@ -871,6 +871,14 @@ func TestSearchExperiments(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
+	// Sort by external trial ID.
+	resp, err = api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
+		ProjectId: req.ProjectId,
+		Sort:      ptrs.Ptr("externalTrialId=asc"),
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 3)
+
 	resp, err = api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Experiments, 3)
