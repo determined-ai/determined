@@ -122,7 +122,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 			LIMIT 1
 		) `,
 		"externalExperimentId": "e.external_experiment_id",
-		"externalTrialId":      "trials.external_trial_id",
+		"externalTrialId":      "r.external_run_id",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
@@ -394,7 +394,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			var col string
 			var queryArgs []interface{}
 			var queryString string
-			col = `trials.summary_metrics->?->?->>?`
+			col = `r.summary_metrics->?->?->>?`
 			queryArgs = append(queryArgs, metricGroup, metricName, metricQualifier)
 			if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 				col = fmt.Sprintf(`(%v)::float8`, col)
