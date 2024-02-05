@@ -69,6 +69,7 @@
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^6.9.0",
     "react-transition-group": "^4.4.5",
+    "react-virtuoso": "^4.6.3",
     "react-window": "^1.8.9",
     "screenfull": "^6.0.2",
     "smoothscroll-polyfill": "^0.4.4",

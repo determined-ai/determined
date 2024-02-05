@@ -10,7 +10,7 @@ interface Props {
   index: number;
   onClick: (event: React.MouseEvent) => void;
   onDrop: (column: string, newNeighborColumnName: string) => void;
-  style: CSSProperties;
+  style?: CSSProperties;
 }
 interface DroppableItemProps {
   columnName: string;
@@ -58,8 +58,8 @@ const DraggableListItem: React.FC<Props> = ({
   }));
 
   return (
-    <span ref={drop}>
-      <li
+    <div ref={drop}>
+      <div
         className={
           isOver
             ? dropDirection === 'above'
@@ -73,8 +73,8 @@ const DraggableListItem: React.FC<Props> = ({
         style={style}
         onClick={onClick}>
         {children}
-      </li>
-    </span>
+      </div>
+    </div>
   );
 };
 export default withDragAndDropProvider(DraggableListItem);
