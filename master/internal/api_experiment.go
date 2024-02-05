@@ -598,13 +598,7 @@ func (a *apiServer) GetExperiments(
 		(
 			SELECT searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) AS best_trial_searcher_metric`)
 	}
 
@@ -629,13 +623,7 @@ func (a *apiServer) GetExperiments(
 			SELECT
 				searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
@@ -1404,10 +1392,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(
-	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, activeConfig expconf.ExperimentConfigV0,
-	taskSpec *tasks.TaskSpec, user *model.User,
+	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, modelDef []byte,
+	activeConfig expconf.ExperimentConfigV0, taskSpec *tasks.TaskSpec, user *model.User,
 ) (*apiv1.CreateExperimentResponse, error) {
-	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, activeConfig, taskSpec)
+	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make new unmanaged experiment: %w", err)
 	}
@@ -1506,20 +1494,18 @@ func (a *apiServer) ContinueExperiment(
 		return nil, err
 	}
 
-	dbExp, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
 		&apiv1.CreateExperimentRequest{
-			Config:   string(configBytes),
-			ParentId: req.Id, // Use parent logic.
+			Config: string(configBytes),
 		}, user,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("parsing continue experiment request: %w", err)
 	}
-	dbExp.ParentID = nil // Not actually a parent though.
 	dbExp.ID = int(req.Id)
 	dbExp.JobID = origExperiment.JobID // Revive job.
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1665,7 +1651,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
 		req, user,
 	)
 	if err != nil {
@@ -1693,7 +1679,7 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if req.Unmanaged != nil && *req.Unmanaged {
-		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
+		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user)
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
@@ -1703,10 +1689,11 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
+	modelDef = nil //nolint:ineffassign
 
 	if err = e.Start(); err != nil {
 		return nil, errors.Wrapf(err, "failed to start experiment %d", e.ID)
@@ -1746,7 +1733,7 @@ func (a *apiServer) PutExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
 		req.CreateExperimentRequest, user,
 	)
 	if err != nil {
@@ -1760,8 +1747,9 @@ func (a *apiServer) PutExperiment(
 
 	dbExp.ExternalExperimentID = &req.ExternalExperimentId
 
-	innerResp, err = a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
-
+	innerResp, err = a.createUnmanagedExperimentTx(
+		ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create unmanaged experiment: %w", err)
 	}

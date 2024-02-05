@@ -1747,7 +1747,7 @@ Determines if users should be automatically created in Determined upon successfu
 ``groups_attribute_name``
 =========================
 
-The name of the attribute passed in through the SAML assertion.
+The claim name that specifies group memberships in SAML.
 
 ``display_name_attribute_name``
 ===============================
