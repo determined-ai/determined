@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -151,11 +150,9 @@ func (a *apiServer) getExperiment(
 	return a.getExperimentTx(ctx, db.Bun(), curUser, experimentID)
 }
 
-// TODO make this a for update. like optional then make this all use trancations proeprly.
-
 // Return a single experiment with enriched state, if the user can access it.
 func (a *apiServer) getExperimentTx(
-	ctx context.Context, idb bun.IDB, curUser model.User, experimentID int, shouldLock bool,
+	ctx context.Context, idb bun.IDB, curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, *structpb.Struct, error) {
 	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(experimentID), true)
 	exp := &experimentv1.Experiment{}
@@ -2889,120 +2886,146 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 func (a *apiServer) PutExperimentLabel(ctx context.Context,
 	req *apiv1.PutExperimentLabelRequest,
 ) (*apiv1.PutExperimentLabelResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
-	tx, err := db.Bun().BeginTx(ctx, nil)
+	_, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+		experiment.AuthZProvider.Get().CanEditExperimentsMetadata)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.WithError(err).Error("error rolling back transaction in create workspace")
+
+	var labels []string
+	if err := db.Bun().NewRaw(`
+		UPDATE experiments
+		SET config = jsonb_set(config, '{labels}',
+			CASE
+				WHEN config->'labels' = 'null'::JSONB THEN json_build_array(?)::jsonb
+				ELSE COALESCE(config->'labels', '[]'::JSONB) || json_build_array(?)::jsonb
+			END)
+		WHERE id = ?
+		RETURNING config->'labels' AS labels`, req.Label, req.Label, req.ExperimentId).
+		Scan(ctx, &labels); err != nil {
+		return nil, fmt.Errorf("adding label %s to experiment %d: %w",
+			req.Label, req.ExperimentId, err)
+	}
+
+	fmt.Println("LABELS", labels, labels[0])
+
+	return &apiv1.PutExperimentLabelResponse{Labels: labels}, nil
+
+	/*
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
 		}
-	}()
+		defer func() {
+			if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				log.WithError(err).Error("error rolling back transaction in create workspace")
+			}
+		}()
 
-	// TODO just rewrite this code.
+		// TODO just rewrite this code.
 
-	exp := &experimentv1.Experiment{}
-	query := db.Bun().NewSelect().
-		ModelTableExpr("experiments as e").
-		Model(exp).
-		Apply(getExperimentColumns).
-		Where("e.id = ?", req.ExperimentId)
-	if err = query.Scan(ctx); err != nil {
-		return nil, err
-	}
-	modelExp, err := model.ExperimentFromProto(exp)
-	if err != nil {
-		return nil, err
-	}
+		exp := &experimentv1.Experiment{}
+		query := db.Bun().NewSelect().
+			ModelTableExpr("experiments as e").
+			Model(exp).
+			Apply(getExperimentColumns).
+			Where("e.id = ?", req.ExperimentId)
+		if err = query.Scan(ctx); err != nil {
+			return nil, err
+		}
+		modelExp, err := model.ExperimentFromProto(exp)
+		if err != nil {
+			return nil, err
+		}
 
-	if err = experiment.AuthZProvider.Get().CanEditExperimentsMetadata(
-		ctx, *curUser, modelExp); err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, err.Error())
-	}
+		if err = experiment.AuthZProvider.Get().CanEditExperimentsMetadata(
+			ctx, *curUser, modelExp); err != nil {
+			return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		}
 
-	if slices.Contains(exp.Labels, req.Label) {
-		return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
-	}
-	exp.Labels = append(exp.Labels, req.Label)
+		if slices.Contains(exp.Labels, req.Label) {
+			return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+		}
+		exp.Labels = append(exp.Labels, req.Label)
 
-	_, err = tx.NewUpdate().Model(modelExp).
-		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
-		Where("id = ?", exp.Id).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error updating experiment %v in database %w", exp.Id, err)
-	}
+		_, err = tx.NewUpdate().Model(modelExp).
+			Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+			Where("id = ?", exp.Id).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error updating experiment %v in database %w", exp.Id, err)
+		}
 
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
-	}
+		if err = tx.Commit(); err != nil {
+			return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
+		}
 
-	return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
+	*/
+
+	// return &apiv1.PutExperimentLabelResponse{Labels: exp.Labels}, nil
 }
 
 func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 	req *apiv1.DeleteExperimentLabelRequest,
 ) (*apiv1.DeleteExperimentLabelResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
-
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.WithError(err).Error("error rolling back transaction in create workspace")
+	return nil, nil
+	/*
+		curUser, _, err := grpcutil.GetUser(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 		}
-	}()
 
-	exp := &experimentv1.Experiment{}
-	query := db.Bun().NewSelect().
-		ModelTableExpr("experiments as e").
-		Model(exp).
-		Apply(getExperimentColumns).
-		Where("e.id = ?", req.ExperimentId).
-		For("UPDATE")
-	if err = query.Scan(ctx); err != nil {
-		return nil, err
-	}
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+				log.WithError(err).Error("error rolling back transaction in create workspace")
+			}
+		}()
 
-	modelExp, err := model.ExperimentFromProto(exp)
-	if err != nil {
-		return nil, err
-	}
+		exp := &experimentv1.Experiment{}
+		query := db.Bun().NewSelect().
+			ModelTableExpr("experiments as e").
+			Model(exp).
+			Apply(getExperimentColumns).
+			Where("e.id = ?", req.ExperimentId).
+			For("UPDATE")
+		if err = query.Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	if err = experiment.AuthZProvider.Get().CanEditExperimentsMetadata(
-		ctx, *curUser, modelExp); err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, err.Error())
-	}
+		modelExp, err := model.ExperimentFromProto(exp)
+		if err != nil {
+			return nil, err
+		}
 
-	i := slices.Index(exp.Labels, req.Label)
-	if i == -1 {
+		if err = experiment.AuthZProvider.Get().CanEditExperimentsMetadata(
+			ctx, *curUser, modelExp); err != nil {
+			return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		}
+
+		i := slices.Index(exp.Labels, req.Label)
+		if i == -1 {
+			return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
+		}
+		exp.Labels = slices.Delete(exp.Labels, i, i+1)
+
+		_, err = tx.NewUpdate().Model(modelExp).
+			Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+			Where("id = ?", exp.Id).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
+		}
+
+		if err = tx.Commit(); err != nil {
+			return nil, fmt.Errorf("could not commit delete experiment labels transaction: %w", err)
+		}
+
 		return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
-	}
-	exp.Labels = slices.Delete(exp.Labels, i, i+1)
-
-	_, err = tx.NewUpdate().Model(modelExp).
-		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
-		Where("id = ?", exp.Id).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not commit delete experiment labels transaction: %w", err)
-	}
-
-	return &apiv1.DeleteExperimentLabelResponse{Labels: exp.Labels}, nil
+	*/
 }
 
 func (a *apiServer) DeleteTensorboardFiles(

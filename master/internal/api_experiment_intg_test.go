@@ -190,6 +190,38 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+func assertExpLabels(
+	ctx context.Context, t *testing.T, api *apiServer, expID int, expectedLabels []string,
+) {
+	resp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(expID),
+	})
+	require.NoError(t, err)
+	require.ElementsMatch(t, expectedLabels, resp.Experiment.Labels)
+}
+
+func TestPutExperimentLabels(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	t.Run("'null'::jsonb experiment config", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().
+			Table("experiments").
+			Set(`config = config || '{"labels": null}'::jsonb`).
+			Where("id = ?", exp.ID).
+			Exec(ctx)
+		require.NoError(t, err)
+
+		resp, err := api.PutExperimentLabel(ctx, &apiv1.PutExperimentLabelRequest{
+			ExperimentId: int32(exp.ID),
+			Label:        "test",
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"test"}, resp.Labels)
+		assertExpLabels(ctx, t, api, exp.ID, []string{"test"})
+	})
+}
+
 func TestGetExperimentConfig(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -203,19 +235,7 @@ func TestGetExperimentConfig(t *testing.T) {
 		ExperimentId: int32(exp.ID),
 	})
 	require.NoError(t, err)
-
-	cases := []struct {
-		name   string
-		config *structpb.Struct
-	}{
-		{"GetExperimentResponse.Config", resp.Config},
-		{"GetExperimentResponse.Experiment.Config", resp.Experiment.Config}, //nolint:staticcheck
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			require.Equal(t, expected, c.config.AsMap())
-		})
-	}
+	require.Equal(t, expected, resp.Config.AsMap())
 }
 
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
@@ -789,9 +809,6 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 	for i := range expected {
 		sort.Strings(expected[i].Labels)
 		sort.Strings(res.Experiments[i].Labels)
-
-		// Don't compare config.
-		res.Experiments[i].Config = nil //nolint:staticcheck
 
 		// Compare time seperatly due to millisecond precision in postgres.
 		require.WithinDuration(t,
