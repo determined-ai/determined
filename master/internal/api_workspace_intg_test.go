@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -520,4 +521,29 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 			Return(fmt.Errorf("%sDeny", curCase.DenyFuncName)).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())
 	}
+}
+
+func TestWorkspaceHasModels(t *testing.T) {
+	// set up a dB and api server to use for integration testing
+	require.NoError(t, etc.SetRootPath("../static/srv"))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
+	api, _, ctx := setupAPITest(t, pgDB)
+
+	// create workspace for test
+	workspaceName := "test-workspace"
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	require.NoError(t, err)
+
+	// confirm workspace does not have any models
+	exists, err := api.workspaceHasModels(ctx, resp.Workspace.Id)
+	assert.False(t, exists)
+	require.NoError(t, err)
+
+	// add model to workspace
+	api.PostModel(ctx, &apiv1.PostModelRequest{Name: "test-model", WorkspaceName: &workspaceName})
+	exists, err = api.workspaceHasModels(ctx, resp.Workspace.Id)
+	assert.True(t, exists)
+	require.NoError(t, err)
 }

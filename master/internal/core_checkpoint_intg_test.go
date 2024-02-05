@@ -354,7 +354,7 @@ func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.U
 		CreationTime:    now,
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
-		Username:        user.Username,
+		UserID:          int(user.ID),
 		WorkspaceID:     1,
 	}
 	var pmdl modelv1.Model
