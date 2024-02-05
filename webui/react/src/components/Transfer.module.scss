@@ -26,15 +26,16 @@
         border: solid var(--theme-stroke-width) var(--theme-surface-border);
         border-radius: var(--theme-border-radius);
 
-        > div {
+        ul {
           height: 200px;
           list-style-type: none;
+          margin: 0;
           margin-bottom: 0;
           overflow-y: auto;
           padding-left: 0;
           padding-top: 6px;
 
-          .transferRow {
+          li {
             cursor: pointer;
             height: 24px;
             padding-left: 6px;

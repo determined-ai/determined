@@ -59,7 +59,7 @@ const DraggableListItem: React.FC<Props> = ({
 
   return (
     <div ref={drop}>
-      <div
+      <li
         className={
           isOver
             ? dropDirection === 'above'
@@ -73,7 +73,7 @@ const DraggableListItem: React.FC<Props> = ({
         style={style}
         onClick={onClick}>
         {children}
-      </div>
+      </li>
     </div>
   );
 };
