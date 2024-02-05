@@ -542,7 +542,8 @@ func TestWorkspaceHasModels(t *testing.T) {
 	require.NoError(t, err)
 
 	// add model to workspace
-	api.PostModel(ctx, &apiv1.PostModelRequest{Name: "test-model", WorkspaceName: &workspaceName})
+	_, err = api.PostModel(ctx, &apiv1.PostModelRequest{Name: "test-model", WorkspaceName: &workspaceName})
+	assert.Nil(t, err) // no error creating model
 	exists, err = api.workspaceHasModels(ctx, resp.Workspace.Id)
 	assert.True(t, exists)
 	require.NoError(t, err)
