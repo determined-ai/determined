@@ -53,6 +53,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
@@ -792,6 +794,95 @@ func (m *Master) restoreNonTerminalExperiments() error {
 	return nil
 }
 
+func (m *Master) restoreGenericTasks(ctx context.Context) error {
+	snapshots := []command.CommandSnapshot{}
+	err := db.Bun().NewSelect().Model(&snapshots).
+		Relation("Allocation").
+		Relation("Task").
+		Relation("Task.Job").
+		Where("allocation.end_time IS NULL").
+		Where("allocation.state != ?", model.AllocationStateTerminated).
+		Where("task.task_id = command_snapshot.task_id").
+		Where("command_snapshot.generic_task_spec IS NOT NULL").
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	for i := range snapshots {
+		taskID := snapshots[i].TaskID
+		jobID := snapshots[i].Task.JobID
+
+		logCtx := logger.Context{
+			"job-id":    jobID,
+			"task-id":   taskID,
+			"task-type": snapshots[i].Task.TaskType,
+		}
+
+		priorityChange := func(priority int) error {
+			return nil
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Add(*jobID, priorityChange); err != nil {
+			return err
+		}
+
+		onAllocationExit := func(ae *task.AllocationExited) {
+			syslog := log.WithField("component", "genericTask").WithFields(logCtx.Fields())
+			if ae.Err != nil {
+				err = m.db.SetErrorState(taskID, time.Now().UTC())
+				if err != nil {
+					syslog.WithError(err).Error("setting task to error state")
+				}
+				if err := tasklist.GroupPriorityChangeRegistry.Delete(*jobID); err != nil {
+					syslog.WithError(err).Error("deleting group priority change registry")
+				}
+				return
+			}
+			isPaused, err := m.db.IsPaused(ctx, taskID)
+			if err != nil {
+				syslog.WithError(err).Error("checking if a task is paused")
+			}
+			if isPaused {
+				err = m.db.SetPausedState(taskID, time.Now().UTC())
+				if err != nil {
+					syslog.WithError(err).Error("setting task to paused state")
+				}
+				return
+			}
+			if err := m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
+				syslog.WithError(err).Error("marking generic task complete")
+			}
+			if err := tasklist.GroupPriorityChangeRegistry.Delete(*jobID); err != nil {
+				syslog.WithError(err).Error("deleting group priority change registry")
+			}
+		}
+
+		isSingleNode := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
+			*snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode()
+
+		err := task.DefaultService.StartAllocation(logCtx,
+			sproto.AllocateRequest{
+				AllocationID:      snapshots[i].AllocationID,
+				TaskID:            taskID,
+				JobID:             *jobID,
+				JobSubmissionTime: snapshots[i].RegisteredTime,
+				IsUserVisible:     true,
+				Name:              fmt.Sprintf("Generic Task %s", taskID),
+				SlotsNeeded:       *snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawSlots,
+				ResourcePool:      *snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawResourcePool,
+				FittingRequirements: sproto.FittingRequirements{
+					SingleAgent: isSingleNode,
+				},
+
+				Restore: true,
+			}, m.db, m.rm, snapshots[i].GenericTaskSpec, onAllocationExit)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Master) closeOpenAllocations(ctx context.Context) error {
 	allocationIds := task.DefaultService.GetAllAllocationIDs()
 	if err := db.CloseOpenAllocations(ctx, allocationIds); err != nil {
@@ -1083,6 +1174,9 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Restore generic tasks
+	if err = m.restoreGenericTasks(ctx); err != nil {
+		return err
+	}
 
 	if err = m.closeOpenAllocations(ctx); err != nil {
 		return err

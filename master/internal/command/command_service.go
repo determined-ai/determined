@@ -66,6 +66,7 @@ func (cs *CommandService) RestoreAllCommands(
 		Where("allocation.end_time IS NULL").
 		Where("allocation.state != ?", model.AllocationStateTerminated).
 		Where("task.task_id = command_snapshot.task_id").
+		Where("command_snapshot.generic_task_spec IS NULL").
 		Scan(ctx)
 	if err != nil {
 		cs.syslog.Errorf("failed to remake commands: %s", err)
@@ -73,18 +74,14 @@ func (cs *CommandService) RestoreAllCommands(
 	}
 
 	for i := range snapshots {
-		if snapshots[i].GenericTaskSpec != nil {
-			//
-		} else {
-			cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
-			if err != nil {
-				cs.syslog.Errorf("failed to restore from snapshot: %s", err)
-				continue
-			}
-			// Restore to the command service registry.
-			cs.commands[cmd.taskID] = cmd
-			cs.syslog.Debugf("restored & started generic command %s", cmd.taskID)
+		cmd, err := commandFromSnapshot(cs.db, cs.rm, &snapshots[i])
+		if err != nil {
+			cs.syslog.Errorf("failed to restore from snapshot: %s", err)
+			continue
 		}
+		// Restore to the command service registry.
+		cs.commands[cmd.taskID] = cmd
+		cs.syslog.Debugf("restored & started generic command %s", cmd.taskID)
 	}
 	return nil
 }
