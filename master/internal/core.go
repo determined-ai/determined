@@ -803,6 +803,7 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 		Where("allocation.end_time IS NULL").
 		Where("allocation.state != ?", model.AllocationStateTerminated).
 		Where("task.task_id = command_snapshot.task_id").
+		Where("task.task_type = ?", model.TaskTypeGeneric).
 		Where("command_snapshot.generic_task_spec IS NOT NULL").
 		Scan(ctx)
 	if err != nil {
@@ -826,36 +827,7 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 			return err
 		}
 
-		onAllocationExit := func(ae *task.AllocationExited) {
-			syslog := log.WithField("component", "genericTask").WithFields(logCtx.Fields())
-			if ae.Err != nil {
-				err = m.db.SetErrorState(taskID, time.Now().UTC())
-				if err != nil {
-					syslog.WithError(err).Error("setting task to error state")
-				}
-				if err := tasklist.GroupPriorityChangeRegistry.Delete(*jobID); err != nil {
-					syslog.WithError(err).Error("deleting group priority change registry")
-				}
-				return
-			}
-			isPaused, err := m.db.IsPaused(ctx, taskID)
-			if err != nil {
-				syslog.WithError(err).Error("checking if a task is paused")
-			}
-			if isPaused {
-				err = m.db.SetPausedState(taskID, time.Now().UTC())
-				if err != nil {
-					syslog.WithError(err).Error("setting task to paused state")
-				}
-				return
-			}
-			if err := m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task complete")
-			}
-			if err := tasklist.GroupPriorityChangeRegistry.Delete(*jobID); err != nil {
-				syslog.WithError(err).Error("deleting group priority change registry")
-			}
-		}
+		onAllocationExit := m.getGenericTaskOnAllocationExit(ctx, taskID, *jobID, logCtx)
 
 		isSingleNode := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
 			*snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode()
