@@ -13,7 +13,7 @@
 Version 0.28.0
 ==============
 
-**Release Date:** February 05, 2024
+**Release Date:** February 06, 2024
 
 **Breaking Changes**
 
@@ -36,7 +36,7 @@ Version 0.28.0
    provisioning), when a ``slots`` request for a notebook, shell, or command cannot be fulfilled,
    it'll be rejected.
 
--  API: The checkpoint download endpoint will now allow the use of `application/x-tar`` as an
+-  API: The checkpoint download endpoint will now allow the use of ``application/x-tar`` as an
    accepted content type in the request. It will provide a response in the form of an uncompressed
    tar file, complete with content-length information included in the headers.
 
@@ -44,9 +44,8 @@ Version 0.28.0
 
 -  API: The experiment API object in a future version will have its ``config`` field removed to
    improve performance of the system. A new ``config`` field is added now to the response of
-   ``/api/v1/experiments/{experiment_id}`` that can be used as a replacement.
-
-   If you are not calling the APIs manually there will be no impact to you.
+   ``/api/v1/experiments/{experiment_id}`` that can be used as a replacement. If you are not calling
+   the APIs manually there will be no impact to you.
 
 **************
  Version 0.27
