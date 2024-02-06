@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { ColumnType } from 'antd/es/table';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { VirtuosoMockContext } from 'react-virtuoso';
 
 import { getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { Pagination, RecordKey, UnknownRecord, ValueOf } from 'types';
@@ -152,6 +153,13 @@ const setup = (options?: { pagination?: Pagination }) => {
         onChange={onChange}
       />
     </UIProvider>,
+    {
+      wrapper: ({ children }) => (
+        <VirtuosoMockContext.Provider value={{ itemHeight: 200, viewportHeight: 300 }}>
+          {children}
+        </VirtuosoMockContext.Provider>
+      ),
+    },
   );
 
   const rerender = () =>
