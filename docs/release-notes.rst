@@ -30,6 +30,11 @@ Version 0.28.0
    ``slots_per_trial`` count is impossible to fulfill in the cluster, the experiment submission will
    be rejected.
 
+-  Experiments: Add ``resources.is_single_node`` option, which forces trials to be scheduled within
+      single containers rather than across multiple nodes or pods. If the requested
+      ``slots_per_trial`` count is impossible to fulfill in the cluster, the experiment submission
+      will be rejected.
+
 **Improvements**
 
 -  Notebooks, Shells, and Commands: On static agent-based clusters (not using dynamic cloud
@@ -43,9 +48,9 @@ Version 0.28.0
 **Deprecated Features**
 
 -  API: The experiment API object in a future version will have its ``config`` field removed to
-   improve performance of the system. A new ``config`` field is added now to the response of
-   ``/api/v1/experiments/{experiment_id}`` that can be used as a replacement. If you are not calling
-   the APIs manually there will be no impact to you.
+   improve performance of the system.The response of ``/api/v1/experiments/{experiment_id}`` now
+   contains a new ``config`` field that can be used as a replacement. If you are not calling the
+   APIs manually, there will be no impact to you.
 
 **************
  Version 0.27
