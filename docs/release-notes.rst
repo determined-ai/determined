@@ -7,6 +7,51 @@
 ###############
 
 **************
+ Version 0.28
+**************
+
+Version 0.28.0
+==============
+
+**Release Date:** February 06, 2024
+
+**Breaking Changes**
+
+-  Authentication: In the enterprise edition, in the master configuration, the
+   ``oidc.groups_claim_name`` setting that is used to set the string value of the authenticator's
+   claim name for groups has been changed to ``oidc.groups_attribute_name``. Similarly, the
+   ``oidc.display_name_claim_name`` setting that is used to set the user's display name in
+   Determined has been changed to ``oidc.display_name_attribute_name``.
+
+**New Features**
+
+-  Experiments: Add ``resources.is_single_node`` option which disallows scheduling the trial across
+   multiple nodes or pods, and forces it to be scheduled within a single container. If the requested
+   ``slots_per_trial`` count is impossible to fulfill in the cluster, the experiment submission will
+   be rejected.
+
+-  Experiments: Add ``resources.is_single_node`` option, which forces trials to be scheduled within
+   single containers rather than across multiple nodes or pods. If the requested ``slots_per_trial``
+   count is impossible to fulfill in the cluster, the experiment submission will be rejected.
+
+**Improvements**
+
+-  Notebooks, Shells, and Commands: On static agent-based clusters (not using dynamic cloud
+   provisioning), when a ``slots`` request for a notebook, shell, or command cannot be fulfilled,
+   it'll be rejected.
+
+-  API: The checkpoint download endpoint will now allow the use of ``application/x-tar`` as an
+   accepted content type in the request. It will provide a response in the form of an uncompressed
+   tar file, complete with content-length information included in the headers.
+
+**Deprecated Features**
+
+-  API: The experiment API object in a future version will have its ``config`` field removed to
+   improve performance of the system.The response of ``/api/v1/experiments/{experiment_id}`` now
+   contains a new ``config`` field that can be used as a replacement. If you are not calling the
+   APIs manually, there will be no impact to you.
+
+**************
  Version 0.27
 **************
 
