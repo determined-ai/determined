@@ -6,7 +6,11 @@ package internal
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -146,6 +150,81 @@ func fetchUserIds(ctx context.Context, t *testing.T, api *apiServer, req *apiv1.
 		ids = append(ids, model.UserID(u.Id))
 	}
 	return ids
+}
+
+func TestProcessAuth(t *testing.T) {
+	api, _, _ := setupAPITest(t, nil)
+	extConfig := model.ExternalSessions{}
+	user.InitService(api.m.db, &extConfig)
+
+	e := echo.New()
+	handler := user.GetService().ProcessAuthentication(
+		func(c echo.Context) error {
+			require.Fail(t, "Should not have reached this point")
+			return nil
+		},
+	)
+	req := httptest.NewRequest(http.MethodGet, "/authed-route", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err := handler(c)
+	require.Error(t, err)
+	httpError, ok := err.(*echo.HTTPError)
+	require.True(t, ok)
+	require.Equal(t, http.StatusUnauthorized, httpError.Code)
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	proxies := []string{"/proxied-path-a"}
+	api, _, _ := setupAPITest(t, nil)
+	extConfig := model.ExternalSessions{}
+	user.InitService(api.m.db, &extConfig)
+
+	tests := []struct {
+		path         string
+		acceptHeader string
+		expectedCode int
+		expectedLoc  string // Expected location header, empty if no redirect expected
+	}{
+		{"/proxied-path-a/anysubroute", "", http.StatusSeeOther, "/det/login?redirect=/proxied-path-a/anysubroute"},
+		{"/proxied-path-a", "application/json", http.StatusUnauthorized, ""},
+		{"/non-proxied-path", "", http.StatusUnauthorized, ""},
+		{"/non-proxied-path", "application/json", http.StatusUnauthorized, ""},
+	}
+
+	e := echo.New()
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("Path: %s, Accept: %s", tc.path, tc.acceptHeader), func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			if tc.acceptHeader != "" {
+				req.Header.Set("Accept", tc.acceptHeader)
+			}
+
+			middleware := processAuthWithRedirect(proxies)
+			fn := middleware(func(c echo.Context) error { return c.NoContent(http.StatusUnauthorized) })
+
+			err := fn(c)
+
+			if tc.expectedCode == http.StatusUnauthorized {
+				require.Error(t, err, "Expected an error but got none")
+				httpError, ok := err.(*echo.HTTPError) // Cast error to *echo.HTTPError to check code
+				if ok && httpError != nil {
+					require.Equal(t, tc.expectedCode, httpError.Code, "HTTP status code does not match expected")
+				} else {
+					require.Fail(t, "Error is not an HTTPError as expected")
+				}
+			} else {
+				require.Equal(t, tc.expectedCode, http.StatusSeeOther)
+				require.Equal(t, tc.expectedCode, rec.Code, "HTTP status code does not match expected")
+				require.NoError(t, err, "Did not expect an error but got one")
+				require.Contains(t, rec.Header().Get("Location"), tc.expectedLoc,
+					"Location header does not match expected redirect")
+			}
+		})
+	}
 }
 
 func TestLoginRemote(t *testing.T) {
