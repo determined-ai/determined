@@ -140,7 +140,12 @@ func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, er
 	return token, nil
 }
 
-func (m *Master) getGenericTaskOnAllocationExit(ctx context.Context, taskID model.TaskID, jobID model.JobID, logCtx logger.Context) func(ae *task.AllocationExited) {
+func (m *Master) getGenericTaskOnAllocationExit(
+	ctx context.Context,
+	taskID model.TaskID,
+	jobID model.JobID,
+	logCtx logger.Context,
+) func(ae *task.AllocationExited) {
 	return func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
 		if ae.Err != nil {
@@ -171,5 +176,4 @@ func (m *Master) getGenericTaskOnAllocationExit(ctx context.Context, taskID mode
 			syslog.WithError(err).Error("deleting group priority change registry")
 		}
 	}
-
 }
