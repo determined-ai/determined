@@ -49,7 +49,7 @@ func newRunCmd() *cobra.Command {
 			return err
 		}
 
-		opts, err = opts.ResolveHostname()
+		err = opts.SetAgentID()
 		if err != nil {
 			return err
 		}

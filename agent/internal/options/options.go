@@ -29,36 +29,10 @@ func DefaultOptions() *Options {
 			Level: "trace",
 			Color: true,
 		},
-		MasterHost:          "",
-		MasterPort:          0,
-		AgentID:             "",
-		Label:               "",
-		ResourcePool:        "",
-		ContainerMasterHost: "",
-		ContainerMasterPort: 0,
-		SlotType:            "auto",
-		VisibleGPUs:         VisibleGPUsFromEnvironment(),
-		Security: SecurityOptions{
-			TLS: TLSOptions{
-				Enabled:        false,
-				SkipVerify:     false,
-				MasterCert:     "",
-				MasterCertName: "",
-			},
-		},
-		Debug:                  false,
-		ArtificialSlots:        0,
-		ImageRoot:              "",
-		TLS:                    false,
-		TLSCertFile:            "",
-		TLSKeyFile:             "",
-		APIEnabled:             false,
+		SlotType:               "auto",
+		VisibleGPUs:            VisibleGPUsFromEnvironment(),
 		BindIP:                 "0.0.0.0",
 		BindPort:               9090,
-		HTTPProxy:              "",
-		HTTPSProxy:             "",
-		FTPProxy:               "",
-		NoProxy:                "",
 		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 		AgentReconnectBackoff:  int(aproto.AgentReconnectBackoff / time.Second),
 		ContainerRuntime:       DockerContainerRuntime,
@@ -179,16 +153,16 @@ func (o *Options) Resolve() {
 	}
 }
 
-// ResolveHostname resolves the name (or ID) of the agent.
-func (o *Options) ResolveHostname() (*Options, error) {
+// SetAgentID resolves the name (or ID) of the agent.
+func (o *Options) SetAgentID() error {
 	if o.AgentID == "" {
 		hostname, hErr := os.Hostname()
 		if hErr != nil {
-			return nil, hErr
+			return hErr
 		}
 		o.AgentID = hostname
 	}
-	return o, nil
+	return nil
 }
 
 // SecurityOptions stores configurable security-related options.
