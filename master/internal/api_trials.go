@@ -1470,7 +1470,7 @@ func (a *apiServer) PostTrialRunnerMetadata(
 		return nil, err
 	}
 
-	if err := a.m.db.UpdateTrialRunnerMetadata(int(req.TrialId), req.Metadata); err != nil {
+	if err := a.m.db.UpdateTrialFields(int(req.TrialId), req.Metadata, 0, 0); err != nil {
 		return nil, err
 	}
 
