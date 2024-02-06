@@ -1,10 +1,10 @@
-import { FilterDropdownProps } from 'antd/es/table/interface';
+import { ColumnFilterItem, FilterDropdownProps } from 'antd/es/table/interface';
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Input, { InputRef } from 'hew/Input';
 import { useTheme } from 'hew/Theme';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FixedSizeList, ListChildComponentProps } from 'react-window';
+import { Virtuoso } from 'react-virtuoso';
 
 import usePrevious from 'hooks/usePrevious';
 
@@ -104,26 +104,6 @@ const TableFilterDropdown: React.FC<Props> = ({
     confirm();
   }, [confirm, onFilter, selectedMap]);
 
-  const OptionRow: React.FC<ListChildComponentProps> = useCallback(
-    ({ data, index, style }) => {
-      const classes = [css.option];
-      const isSelected = selectedMap[data[index].value];
-      const isJSX = typeof data[index].text !== 'string';
-      if (isSelected) classes.push(css.selected);
-      return (
-        <div
-          className={classes.join(' ')}
-          data-value={data[index].value}
-          style={style}
-          onClick={handleOptionClick}>
-          {isJSX ? data[index].text : <span>{data[index].text}</span>}
-          <Icon name="checkmark" title="Selected" />
-        </div>
-      );
-    },
-    [handleOptionClick, selectedMap],
-  );
-
   /*
    * Detect when filter dropdown is being shown and
    * proceed to initialize the selected map of which
@@ -167,14 +147,29 @@ const TableFilterDropdown: React.FC<Props> = ({
           />
         </div>
       )}
-      <FixedSizeList
-        height={listHeight}
-        itemCount={filteredOptions.length}
-        itemData={filteredOptions}
-        itemSize={ITEM_HEIGHT}
-        width="100%">
-        {OptionRow}
-      </FixedSizeList>
+      <Virtuoso
+        data={filteredOptions}
+        initialItemCount={filteredOptions.length}
+        itemContent={(_index: number, data: ColumnFilterItem) => {
+          const classes = [css.option];
+          const isSelected =
+            typeof data.value !== 'boolean' ? selectedMap[data.value.toString()] : false;
+          const isJSX = typeof data.text !== 'string';
+          if (isSelected) classes.push(css.selected);
+          return (
+            <div
+              className={classes.join(' ')}
+              data-value={data.value}
+              style={{ height: ITEM_HEIGHT }}
+              onClick={handleOptionClick}>
+              {isJSX ? data.text : <span>{data.text}</span>}
+              <Icon name="checkmark" title="Selected" />
+            </div>
+          );
+        }}
+        style={{ height: listHeight, width: '100%' }}
+        totalCount={filteredOptions.length}
+      />
       <div className={css.footer}>
         <Button
           aria-label={ARIA_LABEL_RESET}
