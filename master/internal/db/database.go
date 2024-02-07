@@ -43,11 +43,8 @@ type DB interface {
 		id int,
 		experimentBest, trialBest, trialLatest int,
 	) ([]uuid.UUID, error)
-	UpdateTrialRunnerState(id int, state string) error
-	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
+	UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunnerMetadata, newRunID, newRestarts int) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
-	UpdateTrialRunID(id, runID int) error
-	UpdateTrialRestarts(id, restarts int) error
 	AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error
 	AddValidationMetrics(
 		ctx context.Context, m *trialv1.TrialMetrics,

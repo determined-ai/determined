@@ -458,6 +458,8 @@ type Trial struct {
 	TotalBatches          int            `db:"total_batches"`
 	ExternalTrialID       *string        `db:"external_trial_id"`
 	RunID                 int            `db:"run_id"` // run_id as in restart_id not "runs" id.
+	Restarts              int            `db:"restarts"`
+	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 
@@ -474,6 +476,8 @@ func (t *Trial) ToRunAndTrialV2() (*Run, *TrialV2) {
 		TotalBatches:          t.TotalBatches,
 		ExternalRunID:         t.ExternalTrialID,
 		RestartID:             t.RunID,
+		Restarts:              t.Restarts,
+		RunnerState:           t.RunnerState,
 		LastActivity:          t.LastActivity,
 	}
 	v2 := &TrialV2{
@@ -508,6 +512,8 @@ type Run struct {
 	TotalBatches          int            `db:"total_batches"`
 	ExternalRunID         *string        `db:"external_trial_id"`
 	RestartID             int            `db:"restart_id"`
+	Restarts              int            `db:"restarts"`
+	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
 }
 

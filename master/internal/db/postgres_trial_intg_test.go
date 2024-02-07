@@ -55,7 +55,7 @@ func addMetrics(ctx context.Context,
 				},
 			}))
 			trialRunID++
-			require.NoError(t, db.UpdateTrialRunID(trialID, trialRunID))
+			require.NoError(t, db.UpdateTrialFields(trialID, nil, trialRunID, 0))
 		}
 
 		metrics, err := structpb.NewStruct(m)
@@ -86,7 +86,7 @@ func addMetrics(ctx context.Context,
 				},
 			}))
 			trialRunID++
-			require.NoError(t, db.UpdateTrialRunID(trialID, trialRunID))
+			require.NoError(t, db.UpdateTrialFields(trialID, nil, trialRunID, 0))
 		}
 
 		metrics, err := structpb.NewStruct(m)
@@ -935,7 +935,7 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		StartTime:    ptrs.Ptr(time.Now()),
 	}
 	require.NoError(t, AddAllocation(ctx, a))
-	require.NoError(t, db.UpdateTrialRunID(tr.ID, 1))
+	require.NoError(t, db.UpdateTrialFields(tr.ID, nil, 1, 0))
 
 	// Now trial runs validation.
 	require.NoError(t, db.AddValidationMetrics(ctx, &trialv1.TrialMetrics{
@@ -1019,7 +1019,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	testMetricReporting := func(typ string, trialRunId, batches, expectedTotalBatches int,
 		expectedRollbacks Rollbacks,
 	) error {
-		require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunId))
+		require.NoError(t, db.UpdateTrialFields(tr.ID, nil, trialRunId, 0))
 		trialMetrics := &trialv1.TrialMetrics{
 			TrialId:        int32(tr.ID),
 			TrialRunId:     int32(trialRunId),
@@ -1117,9 +1117,9 @@ func TestUpdateTrialRunnerMetadata(t *testing.T) {
 	exp := RequireMockExperiment(t, db, user)
 	trialID := RequireMockTrialID(t, db, exp)
 
-	require.NoError(t, db.UpdateTrialRunnerMetadata(trialID, &trialv1.TrialRunnerMetadata{
+	require.NoError(t, db.UpdateTrialFields(trialID, &trialv1.TrialRunnerMetadata{
 		State: "expectedState",
-	}))
+	}, 0, 0))
 
 	actual := struct {
 		bun.BaseModel `bun:"table:runs"`
@@ -1168,7 +1168,7 @@ func TestGenericMetricsIO(t *testing.T) {
 
 	trialRunID := 1
 	batches := 10
-	require.NoError(t, db.UpdateTrialRunID(tr.ID, trialRunID))
+	require.NoError(t, db.UpdateTrialFields(tr.ID, nil, trialRunID, 0))
 	trialMetrics := &trialv1.TrialMetrics{
 		TrialId:        int32(tr.ID),
 		TrialRunId:     int32(trialRunID),

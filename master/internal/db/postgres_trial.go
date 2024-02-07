@@ -135,14 +135,15 @@ func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, erro
 	return &t, nil
 }
 
-// UpdateTrial updates an existing trial. Fields that are nil or zero are not
-// updated.  end_time is set if the trial moves to a terminal state.
+// UpdateTrial updates the state of an existing trial.
+// end_time is set if the trial moves to a terminal state.
 func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	trial, err := TrialByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
 
+	// Update trial state if necessary.
 	if trial.State == newState {
 		return nil
 	}
@@ -168,7 +169,7 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
 			if _, err := tx.NewRaw(`UPDATE tasks SET end_time = ? FROM run_id_task_id 
-			WHERE run_id_task_id.task_id = tasks.task_id AND run_id_task_id.run_id = ? AND end_time IS NULL`,
+				WHERE run_id_task_id.task_id = tasks.task_id AND run_id_task_id.run_id = ? AND end_time IS NULL`,
 				*trial.EndTime, id).Exec(ctx); err != nil {
 				return fmt.Errorf("completing task: %w", err)
 			}
@@ -178,20 +179,41 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	})
 }
 
-// UpdateTrialRunnerState updates a trial runner's state.
-func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
-	return db.UpdateTrialRunnerMetadata(id, &trialv1.TrialRunnerMetadata{State: state})
-}
-
-// UpdateTrialRunnerMetadata updates a trial's metadata about its runner.
-func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET runner_state = $2
-WHERE id = $1`, id, md.State); err != nil {
-		return errors.Wrap(err, "saving trial runner state")
+// UpdateTrialFields updates the specified fields of trial with ID id. Fields that are nil or zero
+// are not updated.
+func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunnerMetadata, newRunID,
+	newRestarts int,
+) error {
+	ctx := context.TODO()
+	trial, err := TrialByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
-	return nil
+
+	var toUpdate []string
+
+	// Update trial runner's state if necessary.
+	if newRunnerMetadata != nil {
+		trial.RunnerState = newRunnerMetadata.State
+		toUpdate = append(toUpdate, "runner_state")
+	}
+
+	// Update trial's run id if necessary.
+	if newRunID > 0 {
+		trial.RunID = newRunID
+		toUpdate = append(toUpdate, "restart_id")
+	}
+
+	// Update trial's restart count if necessary.
+	if newRestarts > 0 {
+		trial.Restarts = newRestarts
+		toUpdate = append(toUpdate, "restarts")
+	}
+
+	run, _ := trial.ToRunAndTrialV2()
+	_, err = Bun().NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).Exec(ctx)
+
+	return err
 }
 
 // TrialRunIDAndRestarts returns the run id and restart count for a trial.
@@ -204,28 +226,6 @@ WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
 		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
 	}
 	return runID, restart, nil
-}
-
-// UpdateTrialRunID sets the trial's run ID.
-func (db *PgDB) UpdateTrialRunID(id, runID int) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET restart_id = $2
-WHERE id = $1`, id, runID); err != nil {
-		return errors.Wrap(err, "updating trial run id")
-	}
-	return nil
-}
-
-// UpdateTrialRestarts sets the trial's restart count.
-func (db *PgDB) UpdateTrialRestarts(id, restartCount int) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET restarts = $2
-WHERE id = $1`, id, restartCount); err != nil {
-		return errors.Wrap(err, "updating trial restarts")
-	}
-	return nil
 }
 
 // fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.

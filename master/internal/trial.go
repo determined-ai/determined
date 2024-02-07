@@ -484,7 +484,7 @@ func (t *trial) addTask(ctx context.Context) error {
 }
 
 func (t *trial) buildTaskSpecifier() (*tasks.TrialSpec, error) {
-	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
+	if err := t.db.UpdateTrialFields(t.id, nil, t.runID, 0); err != nil {
 		return nil, errors.Wrap(err, "failed to save trial run ID")
 	}
 
@@ -616,7 +616,7 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
 		t.restarts++
-		if err := t.db.UpdateTrialRestarts(t.id, t.restarts); err != nil {
+		if err := t.db.UpdateTrialFields(t.id, nil, 0, t.restarts); err != nil {
 			return t.transition(model.StateWithReason{
 				State:               model.ErrorState,
 				InformationalReason: err.Error(),
