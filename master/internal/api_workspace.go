@@ -567,7 +567,8 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, fmt.Errorf("unable to check workspace for models: %w", err)
 	}
 	if modelsExist {
-		return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first", req.Id)
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first",
+			req.Id)
 	}
 
 	holder := &workspacev1.Workspace{}
