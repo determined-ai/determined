@@ -123,7 +123,7 @@ func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (
 	exists, err := db.Bun().NewSelect().Model((*model.Model)(nil)).
 		Where("workspace_id=?", workspaceID).
 		Exists(ctx)
-	return exists, err
+	return exists, fmt.Errorf("error while checking workspace for models: %w", err)
 }
 
 func (a *apiServer) GetWorkspace(
@@ -558,14 +558,20 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, err
 	}
 
-	modelsExist, _ := a.workspaceHasModels(ctx, req.Id)
+	modelsExist, err := a.workspaceHasModels(ctx, req.Id)
+	if err != nil {
+		return nil, fmt.Errorf("unable to check workspace for models: %w", err)
+	}
 	if modelsExist {
-		return nil, fmt.Errorf("workspace (%d) contains models; move or delete models first", req.Id)
+		return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first", req.Id)
 	}
 
 	holder := &workspacev1.Workspace{}
 	// TODO(kristine): update workspace state in transaction with template delete
-	_ = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
+	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error while updating workspace: %w", err)
+	}
 	if holder.Id == 0 {
 		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user", req.Id)
 	}
@@ -582,7 +588,7 @@ func (a *apiServer) DeleteWorkspace(
 		"",
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while getting workspace projects: %w", err)
 	}
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)
@@ -591,13 +597,13 @@ func (a *apiServer) DeleteWorkspace(
 	log.Debugf("deleting workspace %d templates", req.Id)
 	err = templates.DeleteWorkspaceTemplates(ctx, int(req.Id))
 	if err != nil {
-		return nil, fmt.Errorf("error deleting workspace (%d) templates", req.Id)
+		return nil, fmt.Errorf("error deleting workspace (%d) templates: %w", req.Id, err)
 	}
 
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
 		if err != nil {
-			return nil, fmt.Errorf("error deleting workspace (%d)", req.Id)
+			return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
 		}
 		return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
 	}
@@ -605,7 +611,7 @@ func (a *apiServer) DeleteWorkspace(
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("error deleting workspace (%d)", req.Id)
+		return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
 	}
 	return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
 }
