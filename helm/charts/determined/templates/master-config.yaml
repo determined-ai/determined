@@ -46,11 +46,7 @@ stringData:
     db:
       user: {{ required "A valid Values.db.user entry required!" .Values.db.user | quote }}
       password: {{ required "A valid Values.db.password entry required!" .Values.db.password | quote }}
-      {{- if .Values.db.hostAddress }}
-      host: {{ .Values.db.hostAddress }}
-      {{- else }}
-      host: determined-db-service-{{ .Release.Name }}
-      {{- end  }}
+      host: {{ include "determined.dbHost" . }}
       port: {{ .Values.db.port }}
       name: {{ .Values.db.name | quote }}
       {{- if .Values.db.sslMode }}
@@ -135,6 +131,19 @@ stringData:
       {{- end }}
     {{- end }}
     {{- end }}
+
+    {{- if .Values.genai.version }}
+    feature_switches:
+      - genai
+
+    {{- $port := (required "A valid .Values.genai.port entry required!" .Values.genai.port) }}
+    __internal:
+      proxied_servers:
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ $port }}/lore"
+          path_prefix: /lore
+        - destination: "http://genai-service-{{ .Release.Name }}:{{ $port }}/genai"
+          path_prefix: /genai
+    {{- end}}
 
     resource_manager:
       type: "kubernetes"

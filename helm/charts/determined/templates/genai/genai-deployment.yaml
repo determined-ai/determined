@@ -1,0 +1,82 @@
+{{- if .Values.genai.version }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: genai-deployment-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: genai-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: genai-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: genai-{{ .Release.Name }}
+        determined-system: master
+    spec:
+      priorityClassName: determined-system-priority
+      serviceAccount: genai-{{ .Release.Name }}
+      containers:
+      - name: genai-{{ .Release.Name }}
+        {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
+        {{- /* genai.version is used for CI to override the appVersion. */ -}}
+        image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
+        imagePullPolicy: "Always"
+        env:
+          - name: DET_MASTER
+            value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
+          - name: DB_NAME
+            value: lore
+          - name: DB_USER
+            value: {{ .Values.db.user | quote }}
+          - name: DB_PASSWORD
+            value: {{ .Values.db.password | quote }}
+          - name: DB_PORT
+            value: {{ .Values.db.port | quote }}
+          - name: DB_HOST
+            value: {{ include "determined.dbHost" . }}
+          - name: LORE_DOCKER_TAG_SUFFIX
+            value: {{ $tag }}
+          - name: K8S_SHARED_PVC_NAME
+            value: {{ include "genai.PVCName" . }}
+          - name: RESOURCE_POOL_EXTRA_METADATA_PATH
+            value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
+        volumeMounts:
+          - name: genai-pvc-storage
+            mountPath: /run/determined/workdir/shared_fs
+            readOnly: false
+          - name: genai-resource-pool-metadata
+            mountPath: /run/determined/workdir/rp_config
+        resources:
+          requests:
+            {{- if .Values.genai.cpuRequest }}
+            cpu: {{ .Values.genai.cpuRequest  | quote }}
+            {{- end }}
+            {{- if .Values.genai.memRequest }}
+            memory: {{ .Values.genai.memRequest  | quote }}
+            {{- end}}
+          {{- if or .Values.genai.cpuLimit .Values.genai.memLimit }}
+          limits:
+            {{- if .Values.genai.cpuLimit }}
+            cpu: {{ .Values.genai.cpuLimit  | quote }}
+            {{- end }}
+            {{- if .Values.genai.memLimit }}
+            memory: {{ .Values.genai.memLimit  | quote }}
+            {{- end}}
+          {{- end}}
+      {{- if .Values.imagePullSecretName}}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecretName }}
+      {{- end}}
+      volumes:
+        - name: genai-pvc-storage
+          persistentVolumeClaim:
+            claimName: {{ include "genai.PVCName" . }}
+        - name: genai-resource-pool-metadata
+          configMap:
+            name: genai-resource-pool-metadata-{{ .Release.Name }}
+{{ end }}
