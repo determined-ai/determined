@@ -123,7 +123,6 @@ func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (
 	exists, err := db.Bun().NewSelect().Model((*model.Model)(nil)).
 		Where("workspace_id=?", workspaceID).
 		Exists(ctx)
-
 	if err != nil {
 		return exists, fmt.Errorf("error while checking workspace for models: %w", err)
 	}
