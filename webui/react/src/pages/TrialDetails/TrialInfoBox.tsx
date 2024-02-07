@@ -139,12 +139,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const fetchTaskAllocation = useCallback(async () => {
     if (!trial) return;
 
-    // const taskId = trial.taskIds !== undefined ? trial.taskIds[trial.taskIds.length - 1] : '';
+    // one big issue is that taskIds is an optional property
+    const taskId = trial.taskIds !== undefined ? trial.taskIds[trial.taskIds.length - 1] : '';
 
-    // if (!taskId) return;
+    if (!taskId) return;
 
     try {
-      const response = await getTaskAllocation('5748.56e69098-a398-4edf-b9e5-da0dec8d7911', {
+      const response = await getTaskAllocation(taskId, {
         signal: canceler.signal,
       });
 
@@ -220,7 +221,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <>
             <OverviewStats title="Resource Alocation" onClick={handleModalAllocationClick}>
               <span className={experimentRPInfo.isRPFull ? css.fullRP : ''}>
-                {`${experimentRPInfo.slotsUsed}/${experimentRPInfo.maxAgents} Slots`}
+                {`${experimentRPInfo.slotsUsed}/${experimentRPInfo.slotsAvailable} Slots`}
               </span>
             </OverviewStats>
             <allocationModal.Component
