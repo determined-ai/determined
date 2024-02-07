@@ -25,11 +25,6 @@ Version 0.28.0
 
 **New Features**
 
--  Experiments: Add ``resources.is_single_node`` option which disallows scheduling the trial across
-   multiple nodes or pods, and forces it to be scheduled within a single container. If the requested
-   ``slots_per_trial`` count is impossible to fulfill in the cluster, the experiment submission will
-   be rejected.
-
 -  Experiments: Add ``resources.is_single_node`` option, which forces trials to be scheduled within
    single containers rather than across multiple nodes or pods. If the requested ``slots_per_trial``
    count is impossible to fulfill in the cluster, the experiment submission will be rejected.
