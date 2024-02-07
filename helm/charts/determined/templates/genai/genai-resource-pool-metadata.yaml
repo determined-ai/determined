@@ -1,0 +1,20 @@
+{{- if .Values.genai.version }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genai-resource-pool-metadata-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: genai-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+data:
+  resource_pool_metadata.yaml: |
+    {{- $resource_pools := include "genai.allResourcePoolNames" . | fromJsonArray }}
+    {{- $metadata := (required "A valid .Values.genai.extra_resource_pool_metadata entry required!" .Values.genai.extra_resource_pool_metadata) }}
+    {{- range $k, $v := $metadata }}
+      {{- if not (has $k $resource_pools) }}
+        {{- $k | printf ".Values.genai.extra_resource_pool_metadata defines a resource_pool '%s' which is not present in the .Values.resourcePools" | fail }}
+      {{- end }}
+    {{- end }}
+    {{- toYaml .Values.genai.extra_resource_pool_metadata | nindent 4 }}
+{{- end }}
