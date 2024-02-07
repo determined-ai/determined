@@ -1,9 +1,12 @@
 import Button from 'hew/Button';
+import Link from 'hew/Link';
 import { Modal } from 'hew/Modal';
 import React from 'react';
 
 import NodeElement from 'pages/ResourcePool/NodeElement';
+import { handlePath, paths } from 'routes/utils';
 import { Resource } from 'types';
+import { AnyMouseEvent } from 'utils/routes';
 
 import css from './ResourceAllocationModal.module.scss';
 
@@ -49,7 +52,12 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
         <div className={css.infoContainer}>
           <span>Resource Pool</span>
           <span className={css.dots} />
-          <span>{rpName}</span>
+          <span>
+            <Link
+              onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(rpName) })}>
+              {rpName}
+            </Link>
+          </span>
         </div>
         <div className={css.infoContainer}>
           <span>Accelerator</span>
