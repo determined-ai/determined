@@ -5,7 +5,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -67,8 +66,7 @@ func TestIdentifyTask(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, TaskMetadata{
 		WorkspaceID: 1,
-		// TODO(DET-10004) remove these double quotes.
-		TaskType: model.TaskType(fmt.Sprintf(`"%s"`, model.TaskTypeCommand)),
+		TaskType:    model.TaskTypeCommand,
 	}, meta)
 
 	// Tensorboard.
@@ -84,9 +82,8 @@ func TestIdentifyTask(t *testing.T) {
 	meta, err = IdentifyTask(ctx, tensorboardID)
 	require.NoError(t, err)
 	require.Equal(t, TaskMetadata{
-		WorkspaceID: 1,
-		// TODO(DET-10004) remove these double quotes.
-		TaskType:      model.TaskType(fmt.Sprintf(`"%s"`, model.TaskTypeTensorboard)),
+		WorkspaceID:   1,
+		TaskType:      model.TaskTypeTensorboard,
 		ExperimentIDs: []int32{int32(expIDs[0]), int32(expIDs[1])},
 		TrialIDs:      []int32{int32(trialIDs[0]), int32(trialIDs[1])},
 	}, meta)
