@@ -2,7 +2,14 @@ import * as t from 'io-ts';
 import { RouteProps } from 'react-router-dom';
 
 import * as Api from 'services/api-ts-sdk';
-import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Slot, V1Trigger } from 'services/api-ts-sdk';
+import {
+  V1AcceleratorData,
+  V1AgentUserGroup,
+  V1Group,
+  V1LaunchWarning,
+  V1Slot,
+  V1Trigger,
+} from 'services/api-ts-sdk';
 import { valueof, ValueOf } from 'utils/valueof';
 
 export type { ValueOf } from 'utils/valueof';
@@ -669,6 +676,7 @@ export interface TrialItem extends StartEndTimes {
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
   searcherMetricsVal?: number;
+  taskIds?: string[];
 }
 
 export interface TrialDetails extends TrialItem {
@@ -804,6 +812,10 @@ export interface TaskCounts {
   notebooks: number;
   shells: number;
   tensorboards: number;
+}
+
+export interface AllocationData {
+  acceleratorData: V1AcceleratorData[];
 }
 
 export interface ModelItem {

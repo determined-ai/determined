@@ -1,0 +1,37 @@
+.base {
+  display: flex;
+  flex-direction: column;
+  min-height: 460px;
+  padding: 0 16px;
+
+  .nodesContainer {
+    margin: 16px 0;
+  }
+  .infoContainer {
+    align-items: baseline;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+
+    span {
+      flex-grow: 0;
+      width: fit-content;
+    }
+    .dots {
+      border-bottom: 2px dotted;
+      flex-basis: auto;
+      flex-grow: 1;
+      height: 0;
+      line-height: 0;
+      margin: 0 2px;
+    }
+  }
+  .slotsContainer {
+    margin-top: 32px;
+  }
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}

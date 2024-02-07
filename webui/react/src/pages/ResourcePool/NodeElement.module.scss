@@ -1,0 +1,47 @@
+.node {
+  align-items: flex-start;
+  color: var(--theme-status-active-strong);
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+  margin-right: 30px;
+
+  .nodeName {
+    display: inline-block;
+    font-size: var(--single-line-size-l);
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+  .nodeCluster {
+    align-items: center;
+    border: 2px solid var(--theme-status-active-strong);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-around;
+    padding: 6px;
+
+    .nodeSlot {
+      background-color: var(--theme-status-inactive-weak);
+      height: 20px;
+      margin-right: 6px;
+      width: 6px;
+
+      &:last-of-type {
+        margin-right: 0;
+      }
+    }
+    .singleSlot {
+      width: 90px;
+    }
+    .coupleSlot {
+      width: 42px;
+    }
+    .active {
+      background-color: var(--theme-status-active-strong);
+    }
+  }
+}
