@@ -1,5 +1,5 @@
 import Tooltip from 'hew/Tooltip';
-import React, { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Resource, SlotsRecord } from 'types';
 
@@ -9,9 +9,15 @@ interface NodeElementProps {
   name: string;
   resources: Resource[];
   slots?: SlotsRecord;
+  isRunning?: boolean;
 }
 
-const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slots, resources }) => {
+const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
+  name,
+  slots,
+  resources,
+  isRunning = true,
+}) => {
   const [containerWidth, setContainerWidth] = useState(0);
   const shouldTruncate = useMemo(() => name.length > 5, [name]);
   const slotsContainer = useRef<HTMLSpanElement>(null);
@@ -21,17 +27,35 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
   );
   const singleSlot = slotsData.length === 1;
   const coupleSlot = slotsData.length === 2;
-  const styles = [css.nodeSlot];
+  const slotStyles = [css.nodeSlot];
+  const nodeStyles = [css.node];
+  const nodeClusterStyles = [css.nodeCluster];
 
-  if (singleSlot) styles.push(css.singleSlot);
-  if (coupleSlot) styles.push(css.coupleSlot);
+  if (!isRunning) {
+    nodeStyles.push(css.notRunning);
+    nodeClusterStyles.push(css.notRunning);
+  }
+
+  const getSlotStyles = useCallback(
+    (isActive: boolean) => {
+      if (singleSlot) slotStyles.push(css.singleSlot);
+      if (coupleSlot) slotStyles.push(css.coupleSlot);
+      if (isActive) slotStyles.push(css.active);
+      if (!isRunning) slotStyles.push(css.notRunning);
+
+      return slotStyles.join(' ');
+    },
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isRunning, singleSlot, coupleSlot],
+  );
 
   useEffect(() => {
     setContainerWidth(slotsContainer.current?.getBoundingClientRect().width || 0);
   }, []);
 
   return (
-    <div className={css.node}>
+    <div className={nodeStyles.join(' ')}>
       {shouldTruncate ? (
         <Tooltip content={name}>
           <span className={css.nodeName} style={{ maxWidth: containerWidth }}>
@@ -41,12 +65,9 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
       ) : (
         <span className={css.nodeName}>{name}</span>
       )}
-      <span className={css.nodeCluster} ref={slotsContainer}>
+      <span className={nodeClusterStyles.join(' ')} ref={slotsContainer}>
         {slotsData.map(({ container }, idx) => (
-          <span
-            className={`${styles.join(' ')} ${container ? css.active : ''}`}
-            key={`slot${idx}`}
-          />
+          <span className={getSlotStyles(container !== undefined)} key={`slot${idx}`} />
         ))}
       </span>
     </div>

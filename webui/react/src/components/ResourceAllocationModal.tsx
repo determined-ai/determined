@@ -17,12 +17,14 @@ export interface Props {
   accelerator: string;
   nodes: Node[];
   onClose: () => void;
+  isRunning: boolean;
 }
 
 const ResourceAllocationModalComponent: React.FC<Props> = ({
   rpName,
   nodes,
   accelerator,
+  isRunning,
   onClose,
 }: Props) => {
   const footer = (
@@ -36,7 +38,12 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
       <div className={css.base}>
         <div className={css.nodesContainer}>
           {nodes.map(({ nodeName, slotsIds }, idx) => (
-            <NodeElement key={`${idx}${nodeName}`} name={nodeName} resources={slotsIds} />
+            <NodeElement
+              isRunning={isRunning}
+              key={`${idx}${nodeName}`}
+              name={nodeName}
+              resources={slotsIds}
+            />
           ))}
         </div>
         <div className={css.infoContainer}>

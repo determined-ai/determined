@@ -6,6 +6,9 @@
   margin-bottom: 20px;
   margin-right: 30px;
 
+  &.notRunning {
+    color: var(--theme-background-weak);
+  }
   .nodeName {
     display: inline-block;
     font-size: var(--single-line-size-l);
@@ -24,6 +27,9 @@
     justify-content: space-around;
     padding: 6px;
 
+    &.notRunning {
+      border-color: var(--theme-background-weak);
+    }
     .nodeSlot {
       background-color: var(--theme-status-inactive-weak);
       height: 20px;
@@ -42,6 +48,10 @@
     }
     .active {
       background-color: var(--theme-status-active-strong);
+
+      &.notRunning {
+        background-color: var(--theme-background-weak);
+      }
     }
   }
 }

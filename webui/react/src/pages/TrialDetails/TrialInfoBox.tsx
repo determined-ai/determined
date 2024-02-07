@@ -22,6 +22,7 @@ import {
   ModelItem,
   Resource,
   ResourcePool,
+  RunState,
   TrialDetails,
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
@@ -37,6 +38,7 @@ interface Props {
 
 interface RpData extends ResourcePool {
   isRPFull: boolean;
+  isRunning: boolean;
   name: string;
   nodes: Array<{ nodeName: string; slotsIds: Resource[] }>;
 }
@@ -84,6 +86,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return {
       ...rpData,
       isRPFull: rpUsedSlots === (rpData?.slotsAvailable || 0),
+      isRunning: trial.state === RunState.Active,
       name: rpData.name || experiment.resourcePool,
       nodes: allocation.acceleratorData.map((node) => ({
         nodeName: node.nodeName || '',
@@ -226,6 +229,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             </OverviewStats>
             <allocationModal.Component
               accelerator={experimentRPInfo.accelerator || ''}
+              isRunning={experimentRPInfo.isRunning}
               nodes={experimentRPInfo.nodes}
               rpName={experimentRPInfo.name}
               onClose={handleAllocationModalClose}
