@@ -155,6 +155,7 @@ linkcheck_ignore = [
     r'^http://127.0.0.1',
     r'^\.\./'
 ]
+linkcheck_timeout = 10
 
 with open(".redirects/redirects.json") as f:
     redirects = json.load(f)
