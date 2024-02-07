@@ -795,7 +795,7 @@ func (m *Master) restoreNonTerminalExperiments() error {
 }
 
 func (m *Master) restoreGenericTasks(ctx context.Context) error {
-	snapshots := []command.CommandSnapshot{}
+	var snapshots []command.CommandSnapshot
 	err := db.Bun().NewSelect().Model(&snapshots).
 		Relation("Allocation").
 		Relation("Task").
@@ -813,6 +813,11 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 	for i := range snapshots {
 		taskID := snapshots[i].TaskID
 		jobID := snapshots[i].Task.JobID
+
+		if jobID == nil {
+			log.Errorf("Could not restore task %s, no job id found", taskID)
+			continue
+		}
 
 		logCtx := logger.Context{
 			"job-id":    jobID,
@@ -832,6 +837,17 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 		isSingleNode := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
 			*snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode()
 
+		slots := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawSlots
+		if slots == nil {
+			log.Errorf("Could not restore task %s, no slots found in resources", taskID)
+			continue
+		}
+		resourcePool := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawResourcePool
+		if resourcePool == nil {
+			log.Errorf("Could not restore task %s, no resource pool name found in resources", taskID)
+			continue
+		}
+
 		err := task.DefaultService.StartAllocation(logCtx,
 			sproto.AllocateRequest{
 				AllocationID:      snapshots[i].AllocationID,
@@ -840,8 +856,8 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 				JobSubmissionTime: snapshots[i].RegisteredTime,
 				IsUserVisible:     true,
 				Name:              fmt.Sprintf("Generic Task %s", taskID),
-				SlotsNeeded:       *snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawSlots,
-				ResourcePool:      *snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawResourcePool,
+				SlotsNeeded:       *slots,
+				ResourcePool:      *resourcePool,
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: isSingleNode,
 				},
