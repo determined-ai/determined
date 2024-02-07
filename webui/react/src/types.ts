@@ -676,6 +676,7 @@ export interface TrialItem extends StartEndTimes {
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
   searcherMetricsVal?: number;
+  taskId?: string;
   taskIds?: string[];
 }
 
