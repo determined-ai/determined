@@ -944,6 +944,8 @@ commands:
       labels:
         type: string
         default: ""
+      det-version:
+        type: string
       region:
         type: string
         default: ${SHARED_CLUSTER_REGION}
@@ -1026,12 +1028,12 @@ commands:
           command: |
             # Extract the commit hash from Git metadata
             COMMIT_HASH=$(git rev-parse --short HEAD)
-            TIMESTAMP= $(date +"%Y%m%d%H%M%S")
-            GENERATED_NAMESPACE="test-${TIMESTAMP}-${COMMIT_HASH}"
+            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+            echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
       - helm/install-helm-chart:
           chart: helm/charts/determined
           helm-version: v3.2.4
-          namespace: "{GENERATED_NAMESPACE}"
+          namespace: ${GENERATED_NAMESPACE}
           wait: true
           release-name: "ci"
           tls: true 
@@ -1039,9 +1041,16 @@ commands:
           tls-key: <<parameters.master-tls-key>>
           tls-hostname: <<parameters.master-cert-name>>
           values-to-override: ${HELM_VALUES}
+      - run:
+          name: Enable Firewall
+          command: |
+            kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
+            SERVICE_IP=$(kubectl get services -o=json | jq '.["items"][1]["status"]["loadBalancer"]["ingress"][0]["ip"]')
+            SERVICE_FW=$(gcloud compute firewall-rules list --filter="k8s-fw circleci $SERVICE_IP" --format="table(name)" | grep "k8s")
+            gcloud compute firewall-rules update $SERVICE_FW --source-ranges="${CI_RANGES}"
       - set-master-address-gke:
           release-name: "ci"
-          namespace: "{GENERATED_NAMESPACE}"
+          namespace: ${GENERATED_NAMESPACE}
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
 
@@ -2698,6 +2707,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - generate-tls-cert
       - setup-shared-cluster:
+          det-version: ${CIRCLE_SHA1}
           labels: test-mark=<<parameters.mark>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
