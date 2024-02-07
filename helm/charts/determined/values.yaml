@@ -382,10 +382,10 @@ genai:
   ## is not provided in k8s so we provide it directly.
   ## Note: All resource pools defined here need to also be reflected in
   ## the .Values.resourcePools.
-  extra_resource_pool_metadata:
-    a100:
-      gpu_type: A100
-      max_agents: 3
-    v100:
-      gpu_type: V100
-      max_agents: 2
+  # extra_resource_pool_metadata:
+  #   a100:
+  #     gpu_type: A100
+  #     max_agents: 3
+  #   v100:
+  #     gpu_type: V100
+  #     max_agents: 2
