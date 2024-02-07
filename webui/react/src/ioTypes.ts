@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
@@ -70,6 +71,18 @@ class Float extends io.Type<number, number | string, unknown> {
 }
 
 export const float = new Float();
+
+interface DateStringBrand {
+  readonly DateString: unique symbol;
+}
+
+export const DateString = io.brand(
+  io.string,
+  (n): n is io.Branded<string, DateStringBrand> => dayjs(n).isValid(),
+  'DateString',
+);
+
+export type DateString = io.TypeOf<typeof DateString>;
 
 /* Slot */
 
