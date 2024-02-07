@@ -449,6 +449,31 @@ class TestShipLogs:
         finally:
             shutil.rmtree(tmp)
 
+    @pytest.mark.e2e_cpu
+    def test_exit_without_stdio_finishing(self) -> None:
+        # For some reason, sys.executable doesn't seem to reliably be available through too many
+        # layers of Popen.
+        python = sys.executable
+        # Create a main subprocess which starts a grandchild subprocess that does not exit for 100
+        # seconds, but exits immediately without waiting on the grandchild.
+        cmd = mkcmd(
+            f"""
+            import subprocess
+
+            nonexiting_cmd = [{repr(python)}, "-c", "import time; time.sleep(100)"]
+            subprocess.Popen(nonexiting_cmd)
+            """
+        )
+        with ShipLogServer() as srv:
+            # The test should wait only 1 second after the main process exits before giving up on
+            # the Collectors (which will be alive for 100 seconds).  DET_LOG_WAIT_TIME should not
+            # matter, since our ShipLogServer will be responsive.
+            log_wait_time = 30
+            start = time.time()
+            self.run_ship_logs(srv.master_url(), cmd, log_wait_time=log_wait_time)
+            duration = time.time() - start
+            assert duration < 2, duration
+
 
 class TestReadNewlinesOrCarriageReturns:
     # read_newlines_or_carriage_returns is designed to read from filedescriptors resulting from

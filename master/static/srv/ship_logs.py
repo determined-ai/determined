@@ -170,8 +170,9 @@ class Collector(threading.Thread):
         metadata: Dict[str, Any],
         logq: queue.Queue,
         doneq: queue.Queue,
+        daemon: bool,
     ) -> None:
-        super().__init__()
+        super().__init__(daemon=daemon)
         self.fd = fd
         self.stdtype = stdtype
         self.metadata = {"stdtype": self.stdtype, **metadata}
@@ -182,8 +183,6 @@ class Collector(threading.Thread):
             self.dup_io = None
         else:
             self.dup_io = sys.stdout if stdtype == "stdout" else sys.stderr
-
-        self.shipper_died = False
 
     def run(self) -> None:
         try:
@@ -202,11 +201,6 @@ class Collector(threading.Thread):
 
             if self.dup_io:
                 print(line, file=self.dup_io, flush=True, end="")
-
-            if self.shipper_died:
-                # Keep draining logs so process doesn't block on stdout or stderr, but don't bother
-                # queuing the logs we capture.
-                continue
 
             log: Dict[str, Any] = {"timestamp": now, **self.metadata}
 
@@ -275,7 +269,7 @@ class Shipper(threading.Thread):
                 with open(cert_file, "r") as f:
                     self.cert_content = f.read()
             except Exception:
-                logging.error("failed to read DET_MASTER_CERT_FILE ({cert_file})", with_exc=True)
+                logging.error("failed to read DET_MASTER_CERT_FILE ({cert_file})", exc_info=True)
 
         self.base_url = master_url.rstrip("/")
         self.logs_url = f"{self.base_url}/api/v1/task/logs"
@@ -362,7 +356,7 @@ class Shipper(threading.Thread):
                         ) from None
                     elif isinstance(e.reason, ConnectionRefusedError):
                         raise RuntimeError(
-                            "The connection to {self.master_url} was refused, is master down?"
+                            f"The connection to {self.master_url} was refused, is master down?"
                         )
                     raise
 
@@ -517,8 +511,6 @@ def main(
     doneq: queue.Queue = queue.Queue()
 
     waiter_started = False
-    stdout_started = False
-    stderr_started = False
     shipper_started = False
 
     # Normally we like structured concurrency; i.e. a function that owns a thread must not exit
@@ -581,42 +573,83 @@ def main(
         ]:
             signal.signal(sig, signal_passthru)
 
-        stdout = Collector(p.stdout, "stdout", emit_stdout_logs, metadata, logq, doneq)
-        stderr = Collector(p.stderr, "stderr", emit_stdout_logs, metadata, logq, doneq)
+        # Note: run Collectors with daemon=True, due to the Orphaned Grandchild problem (see below).
+        stdout = Collector(p.stdout, "stdout", emit_stdout_logs, metadata, logq, doneq, daemon=True)
+        stderr = Collector(p.stderr, "stderr", emit_stdout_logs, metadata, logq, doneq, daemon=True)
 
         stdout.start()
-        stdout_started = True
 
         stderr.start()
-        stderr_started = True
 
         shipper.start()
         shipper_started = True
 
-        exit_code = None
-        deadline: Optional[float] = None
         # Expect 4 messages on the doneq, one for each thread we started.
-        for _ in range(4):
+        #
+        # Ideally, we expect all four threads (two Collectors, one Shipper, and one Waiter) to
+        # finish nicely around the same time.  But there are two problems we must deal with:
+        #
+        #   - The Orphaned Grandchild Problem
+        #
+        #     If the user code starts and orphans a child process with access to our stdout and
+        #     stderr, then our Collectors can potentially be held open an indefinite amount of time
+        #     after the main subprocess exits (and the Waiter thread finishes).  The way docker
+        #     normally treats this case is that when the main process exits, every process in the
+        #     container namespace is killed immediately.  Our analog of that behavior is: after the
+        #     main process exits, we do not care about any logs from any orphaned grandchildren.
+        #
+        #     Therefore, after the main process exits, we wait up to 1 second for the Collector
+        #     threads to finish before we decide to ignore them completely.  The only reason we even
+        #     wait 1 second is to be sure not to drop logs from a well-behaved main subprocess.
+        #
+        #   - The Unreachable Master Problem
+        #
+        #     It is possible the master is temporarily not receiving logs for some reason.  This
+        #     would cause the Shipper thread to not finish promptly.  This is not the fault of user
+        #     code, and we want to try hard to preserve all logs from user code, so we wait a
+        #     total of DET_LOG_WAIT_TIME after the Waiter finishes for the shipper to keep trying.
+        exit_code = None
+        stdout_done = False
+        stderr_done = False
+        shipper_done = False
+        collector_deadline: Optional[float] = None
+        shipper_deadline: Optional[float] = None
+        while exit_code is None or not stdout_done or not stderr_done or not shipper_done:
             # Wait for an event, possibly with a deadline (if the child process already exited).
             try:
-                timeout = None if deadline is None else deadline - time.time()
-                if timeout is not None and timeout <= 0:
-                    raise queue.Empty()
+                if exit_code is None:
+                    timeout = None
+                else:
+                    # Pick the shortest deadline and calculate a timeout.
+                    assert shipper_deadline
+                    deadline = shipper_deadline
+                    if collector_deadline is not None:
+                        deadline = min(collector_deadline, shipper_deadline)
+                    timeout = deadline - time.time()
+                    if timeout <= 0:
+                        raise queue.Empty()
                 donemsg = doneq.get(timeout=timeout)
                 assert isinstance(donemsg, DoneMsg)
             except queue.Empty:
-                # Deadline is done, just abandon the shipper.
-                shipper_timed_out = True
-                logging.error(
-                    f"waited {log_wait_time} seconds for shipper to finish after child exit; "
-                    "giving up now"
-                )
-                break
-
-            if donemsg.who == "shipper":
-                # There's no point in collecting logs after the shipper is gone.
-                stdout.shipper_died = True
-                stderr.shipper_died = True
+                # We hit a deadline.
+                if shipper_deadline and shipper_deadline < time.time():
+                    # Abandon Ship(per)!
+                    shipper_timed_out = True
+                    logging.error(
+                        f"waited {log_wait_time} seconds for shipper to finish after child exit; "
+                        "giving up now"
+                    )
+                    break
+                if collector_deadline and collector_deadline < time.time():
+                    # Make the Shipper stop waiting on the Collectors.
+                    stdout.logq.put(None)
+                    stderr.logq.put(None)
+                    # Also we won't wait for them either.
+                    stdout_done = True
+                    stderr_done = True
+                    # Keep going without collector_deadline.
+                    collector_deadline = None
+                    continue
 
             if donemsg.error is not None:
                 # Something in our shipping machinery broke.
@@ -624,22 +657,27 @@ def main(
                     f"failure in log shipper; {donemsg.who} thread died"
                 ) from donemsg.error
 
-            if donemsg.who == "waiter":
-                # After the log shipper exits, the shipping code is on a deadline.
+            if donemsg.who == "stdout":
+                stdout_done = True
+            elif donemsg.who == "stderr":
+                stderr_done = True
+            elif donemsg.who == "shipper":
+                shipper_done = True
+            elif donemsg.who == "waiter":
+                # After the main subprocess exits, the shipping code is on a deadline.
                 #
                 # Note: we could almost just return exit_code here and let the cleanup and shipping
                 # timeout happen in the finally block, but the finally block can't easily detect
-                # exceptions that arrive on the doneq, so we stay in this for...range(4) loop until
-                # we're confident all threads shut down without error.
-                deadline = time.time() + log_wait_time
+                # exceptions that arrive on the doneq, so we stay in this while loop until we're
+                # confident that either all threads shut down without error, or at least that the
+                # only threads left alive are the Collectors, in an Orphaned Granchild case.
+                collector_deadline = time.time() + 1
+                shipper_deadline = time.time() + log_wait_time
                 exit_code = donemsg.exit_code
 
         # Mypy doesn't know that we're guaranteed to have an exit_code by now.
         #
-        # It's guaranteed because the only scenario where we exit the loop without waiting on all
-        # the threads is if the Waiter exited but the Shipper didn't.  And the only case where the
-        # Waiter doesn't set the exit_code is in the case that p.wait() threw an error, in which
-        # case we would have raised an exception due to a non-None donemsg.error.
+        # It's guaranteed because the only time deadlines are set is after the exit_code is set.
         assert exit_code is not None
 
         # Convert signal exits to standard bash-style exits.
@@ -652,13 +690,11 @@ def main(
         p.kill()
         if waiter_started:
             waiter.join()
-        # After p is dead, the Collectors should run out of input and exit quickly.
-        if stdout_started:
-            stdout.join()
-        if stderr_started:
-            stderr.join()
-        # After everyone else is dead, the shipper could still be in a retry loop for a long time,
-        # so we wait up to DET_LOG_WAIT_TIME seconds for it to exit, then we give up on it.
+
+        # Note: We never join on the Collector threads, because of the Orphaned Grandchild problem.
+
+        # Even after there are no new logs to ship, the shipper could still be in a retry loop for a
+        # long time, so we wait up to DET_LOG_WAIT_TIME seconds for it to exit, then we give up.
         if shipper_started and not shipper_timed_out:
             shipper.join(timeout=log_wait_time)
             if shipper.is_alive():
