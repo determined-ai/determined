@@ -525,26 +525,23 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 
 func TestWorkspaceHasModels(t *testing.T) {
 	// set up a dB and api server to use for integration testing
-	require.NoError(t, etc.SetRootPath("../static/srv"))
-	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
-	defer cleanup()
-	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
-	api, _, ctx := setupAPITest(t, pgDB)
+	api, _, ctx := setupAPITest(t, nil)
 
 	// create workspace for test
-	workspaceName := "test-workspace"
+	workspaceName := uuid.New().String()
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
 	require.NoError(t, err)
 
 	// confirm workspace does not have any models
 	exists, err := api.workspaceHasModels(ctx, resp.Workspace.Id)
-	assert.False(t, exists)
 	require.NoError(t, err)
+	assert.False(t, exists)
 
 	// add model to workspace
-	_, err = api.PostModel(ctx, &apiv1.PostModelRequest{Name: "test-model", WorkspaceName: &workspaceName})
-	assert.Nil(t, err) // no error creating model
+	modelName := uuid.New().String()
+	_, err = api.PostModel(ctx, &apiv1.PostModelRequest{Name: modelName, WorkspaceName: &workspaceName})
+	require.NoError(t, err) // no error creating model
 	exists, err = api.workspaceHasModels(ctx, resp.Workspace.Id)
-	assert.True(t, exists)
 	require.NoError(t, err)
+	assert.True(t, exists)
 }
