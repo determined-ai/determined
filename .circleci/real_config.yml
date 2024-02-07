@@ -1085,8 +1085,10 @@ commands:
         type: string
       master-tls-cert:
         type: string
+        default: "" 
       master-tls-key:
         type: string
+        default: ""
     steps:
       - run:
           name: Set Master Address
