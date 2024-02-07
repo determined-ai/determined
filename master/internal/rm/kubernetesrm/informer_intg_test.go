@@ -8,7 +8,9 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -300,6 +302,22 @@ func TestEventListener(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestInformerPanic tests that we panic on unexpected retryWatcher channel close.
+func TestInformerPanic(t *testing.T) {
+	ctx := context.TODO()
+	eventChan := make(chan watch.Event)
+
+	i := informer{
+		syslog:     logrus.WithField("component", "panicInformer"),
+		resultChan: eventChan,
+	}
+
+	close(eventChan)
+	require.Panics(t, func() {
+		i.run(ctx)
+	})
 }
 
 // Methods for mockWatcher.
