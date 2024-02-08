@@ -1,5 +1,6 @@
 import pathlib
 import subprocess
+import time
 
 import pytest
 
@@ -8,8 +9,6 @@ from determined.common import context, util
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
-
-import time
 
 
 def wait_for_task_state(test_session, task_id, expected_state, timeout) -> bool:
