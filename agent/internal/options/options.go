@@ -24,7 +24,6 @@ const (
 // DefaultOptions returns the default configurable options for the Determined agent.
 func DefaultOptions() *Options {
 	return &Options{
-		ConfigFile: "",
 		Log: logger.Config{
 			Level: "trace",
 			Color: true,

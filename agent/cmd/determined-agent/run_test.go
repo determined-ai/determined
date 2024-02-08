@@ -288,7 +288,7 @@ func createViperWithDefaults() *viper.Viper {
 	v.SetDefault("agent_reconnect_attempts", 8)
 
 	// Create default values that are not defined in agent config and should therefore
-	// should be present in opts after viper merge.
+	// be present in opts after viper merge.
 	v.SetDefault("security"+viperKeyDelimiter+"tls"+viperKeyDelimiter+"master_cert",
 		masterCert)
 
