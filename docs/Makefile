@@ -71,6 +71,7 @@ pre-publish:
 
 .PHONY: check-links
 check-links:
+   ../tools/scripts/gen-attributions.py sphinx $@
 	sphinx-build -b linkcheck . build -a
 	echo "link check complete, see build/output.txt"
 	cat build/output.txt | grep -n broken
