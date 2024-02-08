@@ -164,7 +164,7 @@ def test_pause_and_unpause_generic_task() -> None:
     """
     test_session = api_utils.determined_test_session()
 
-    with open(conf.fixtures_path("generic_task/test_config.yaml"), "r") as config_file:
+    with open(conf.fixtures_path("generic_task/test_config_pause.yaml"), "r") as config_file:
         # Create task
         config = ntsc.parse_config(config_file, None, [], [])
         config_text = util.yaml_safe_dump(config)

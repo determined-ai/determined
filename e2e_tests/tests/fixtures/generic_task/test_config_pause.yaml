@@ -1,0 +1,1 @@
+entrypoint: ["sleep", "5"]
