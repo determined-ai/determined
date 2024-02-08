@@ -5,13 +5,18 @@ import time
 import pytest
 
 from determined.cli import ntsc
-from determined.common import context, util
+from determined.common import api, context, util
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 
 
-def wait_for_task_state(test_session, task_id, expected_state, timeout) -> bool:
+def wait_for_task_state(
+    test_session: api.Session,
+    task_id: str,
+    expected_state: bindings.v1GenericTaskState,
+    timeout: int,
+) -> bool:
     t = 0
     found = False
     while t < timeout and not found:
