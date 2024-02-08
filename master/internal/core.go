@@ -832,7 +832,7 @@ func (m *Master) restoreGenericTasks(ctx context.Context) error {
 			return err
 		}
 
-		onAllocationExit := m.getGenericTaskOnAllocationExit(ctx, taskID, *jobID, logCtx)
+		onAllocationExit := getGenericTaskOnAllocationExit(ctx, taskID, *jobID, logCtx)
 
 		isSingleNode := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
 			*snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode()
