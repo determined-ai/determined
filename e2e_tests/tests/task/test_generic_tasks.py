@@ -60,7 +60,7 @@ def test_generic_task_config() -> None:
         res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
         result_config = util.yaml_safe_load(res.stdout)
-        expected_config = {"entrypoint": ["python3", "run.py"]}
+        expected_config = {"entrypoint": ["echo", "task ran"]}
         assert expected_config == result_config
 
 

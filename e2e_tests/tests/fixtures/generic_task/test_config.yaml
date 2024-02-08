@@ -1,1 +1,1 @@
-entrypoint: ["python3", "run.py"]
+entrypoint: ["echo", "task ran"]
