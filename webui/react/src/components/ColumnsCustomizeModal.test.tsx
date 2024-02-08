@@ -232,8 +232,12 @@ describe('Columns Customize Modal', () => {
     await user.click(await view.findByText('Add All'));
 
     await waitFor(() => {
-      expect(lists[0].children[0].children[0].children[0].childElementCount).toEqual(0);
-      expect(lists[1].children[0].children[0].children[0].childElementCount).toBeGreaterThan(0);
+      expect(
+        lists[0].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
+      ).toEqual(0);
+      expect(
+        lists[1].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
+      ).toBeGreaterThan(0);
     });
   });
 

@@ -1,6 +1,6 @@
 import Input from 'hew/Input';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import Link from 'components/Link';
@@ -35,9 +35,6 @@ const Transfer: React.FC<Props> = ({
     initialTargetEntries ?? defaultTargetEntries ?? [],
   );
   const [searchTerm, setSearchTerm] = useState('');
-
-  const leftRef = useRef(null);
-  const rightRef = useRef(null);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -139,7 +136,6 @@ const Transfer: React.FC<Props> = ({
         return updatedVisibleEntries;
       });
     }
-    return;
   }, []);
 
   const renderDraggableRow = useCallback(
@@ -159,7 +155,7 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderHiddenRow = useCallback(
-    ({ index }: { index: number }) => {
+    (index: number) => {
       const row = filteredHiddenEntries[index];
       return renderRow(row, () => moveToRight(row));
     },
@@ -167,7 +163,7 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderVisibleRow = useCallback(
-    ({ index }: { index: number }) => {
+    (index: number) => {
       const row = filteredVisibleEntries[index];
       return reorder
         ? renderDraggableRow(row, index, () => moveToLeft(row), switchRowOrder)
@@ -182,16 +178,13 @@ const Transfer: React.FC<Props> = ({
       <div className={css.entries}>
         <div className={css.column}>
           <h2>{sourceListTitle}</h2>
-          <div className={css.listContainer} ref={rightRef}>
-            <ul>
-              <Virtuoso
-                customScrollParent={rightRef.current ?? undefined}
-                itemContent={(index) => renderHiddenRow({ index })}
-                style={{ height: '200px' }}
-                totalCount={filteredHiddenEntries.length}
-              />
-            </ul>
-          </div>
+          <ul className={css.listContainer}>
+            <Virtuoso
+              itemContent={(index) => renderHiddenRow(index)}
+              style={{ height: '200px' }}
+              totalCount={filteredHiddenEntries.length}
+            />
+          </ul>
           <Link onClick={() => moveToRight(filteredHiddenEntries)}>Add All</Link>
         </div>
         <div className={css.column}>
@@ -201,16 +194,13 @@ const Transfer: React.FC<Props> = ({
               <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>
-          <div className={css.listContainer} ref={leftRef}>
-            <ul>
-              <Virtuoso
-                customScrollParent={leftRef.current ?? undefined}
-                itemContent={(index) => renderVisibleRow({ index })}
-                style={{ height: '200px' }}
-                totalCount={filteredVisibleEntries.length}
-              />
-            </ul>
-          </div>
+          <ul className={css.listContainer}>
+            <Virtuoso
+              itemContent={(index) => renderVisibleRow(index)}
+              style={{ height: '200px' }}
+              totalCount={filteredVisibleEntries.length}
+            />
+          </ul>
           <Link
             onClick={() => {
               moveToLeft(filteredVisibleEntries);
