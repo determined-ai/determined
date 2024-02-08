@@ -48,7 +48,6 @@ interface Props {
   user?: DetailedUser;
   viewOnly?: boolean;
   userRoles?: Loadable<UserRole[]>;
-  fetchUserRoles?: () => Promise<void>;
   onClose?: () => void;
 }
 
@@ -65,7 +64,6 @@ const CreateUserModalComponent: React.FC<Props> = ({
   onClose,
   user,
   userRoles,
-  fetchUserRoles,
   viewOnly,
 }: Props) => {
   const { openToast } = useToast();
@@ -101,7 +99,6 @@ const CreateUserModalComponent: React.FC<Props> = ({
           rolesToRemove.size > 0 &&
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
-        await fetchUserRoles?.();
         if (currentUser?.id === user.id) checkAuth();
         openToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {

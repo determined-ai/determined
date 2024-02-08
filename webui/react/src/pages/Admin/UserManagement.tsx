@@ -173,19 +173,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <ViewUserModal.Component
-        fetchUserRoles={fetchUserRoles}
-        user={user}
-        userRoles={userRoles}
-        viewOnly
-        onClose={fetchUsers}
-      />
-      <EditUserModal.Component
-        fetchUserRoles={fetchUserRoles}
-        user={user}
-        userRoles={userRoles}
-        onClose={fetchUsers}
-      />
+      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onClose={fetchUsers} />
+      <EditUserModal.Component user={user} userRoles={userRoles} onClose={fetchUsers} />
       <ManageGroupsModal.Component
         groupOptions={groups}
         user={user}
