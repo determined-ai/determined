@@ -23,6 +23,21 @@ export interface Props {
   isRunning: boolean;
 }
 
+interface InfoContainerProps {
+  label: string;
+  info?: JSX.Element | string;
+}
+
+const InfoContainer: React.FC<InfoContainerProps> = ({ label, info }) => {
+  return (
+    <div className={css.infoContainer}>
+      <span>{label}</span>
+      <span className={css.dots} />
+      <span>{info}</span>
+    </div>
+  );
+};
+
 const ResourceAllocationModalComponent: React.FC<Props> = ({
   rpName,
   nodes,
@@ -49,34 +64,25 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
             />
           ))}
         </div>
-        <div className={css.infoContainer}>
-          <span>Resource Pool</span>
-          <span className={css.dots} />
-          <span>
+        <InfoContainer
+          info={
             <Link
               onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(rpName) })}>
               {rpName}
             </Link>
-          </span>
-        </div>
-        <div className={css.infoContainer}>
-          <span>Accelerator</span>
-          <span className={css.dots} />
-          <span>{accelerator}</span>
-        </div>
+          }
+          label="Resource Pool"
+        />
+        <InfoContainer info={accelerator} label="Accelerator" />
         {nodes.map(({ nodeName, slotsIds }) => (
           <div className={css.slotsContainer} key={`info_${nodeName}`}>
-            <div className={css.infoContainer}>
-              <span>Node ID</span>
-              <span className={css.dots} />
-              <span>{nodeName}</span>
-            </div>
+            <InfoContainer info={nodeName} label="Node ID" />
             {slotsIds.map((id, idx) => (
-              <div className={css.infoContainer} key={`slot_${id}`}>
-                <span>Slot {idx + 1} ID</span>
-                <span className={css.dots} />
-                <span>{id.container?.id}</span>
-              </div>
+              <InfoContainer
+                info={id.container?.id}
+                key={`slot_${id}`}
+                label={`Slot ${idx + 1} ID`}
+              />
             ))}
           </div>
         ))}

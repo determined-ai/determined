@@ -67,7 +67,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [taskAllocation, setTaskAllocation] =
     useState<Loadable<AllocationData | undefined>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
-  const shouldRenderAllocationCard = useMemo(() => trial !== undefined, [trial]); // as per ticket requirements, we're only rendering it on single trial experiments and trial details pages
+  const shouldRenderAllocationCard = useMemo(
+    () => trial !== undefined && experiment.numTrials === 1,
+    [trial, experiment],
+  ); // as per ticket requirements, we're only rendering it on single trial experiments and trial details pages
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const experimentRPInfo = useMemo(() => {
@@ -222,7 +225,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         )}
         {shouldRenderAllocationCard && experimentRPInfo !== undefined && (
           <>
-            <OverviewStats title="Resource Alocation" onClick={handleModalAllocationClick}>
+            <OverviewStats title="Resource Allocation" onClick={handleModalAllocationClick}>
               <span className={experimentRPInfo.isRPFull ? css.fullRP : ''}>
                 {`${experimentRPInfo.slotsUsed}/${experimentRPInfo.slotsAvailable} Slots`}
               </span>
