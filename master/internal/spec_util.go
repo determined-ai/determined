@@ -12,6 +12,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -140,7 +141,7 @@ func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, er
 	return token, nil
 }
 
-func (m *Master) getGenericTaskOnAllocationExit(
+func getGenericTaskOnAllocationExit(
 	ctx context.Context,
 	taskID model.TaskID,
 	jobID model.JobID,
@@ -149,7 +150,7 @@ func (m *Master) getGenericTaskOnAllocationExit(
 	return func(ae *task.AllocationExited) {
 		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
 		if ae.Err != nil {
-			err := m.db.SetErrorState(taskID, time.Now().UTC())
+			err := db.SetErrorState(taskID, time.Now().UTC())
 			if err != nil {
 				syslog.WithError(err).Error("setting task to error state")
 			}
@@ -158,18 +159,18 @@ func (m *Master) getGenericTaskOnAllocationExit(
 			}
 			return
 		}
-		isPaused, err := m.db.IsPaused(ctx, taskID)
+		isPaused, err := db.IsPaused(ctx, taskID)
 		if err != nil {
 			syslog.WithError(err).Error("checking if a task is paused")
 		}
 		if isPaused {
-			err = m.db.SetPausedState(taskID, time.Now().UTC())
+			err = db.SetPausedState(taskID, time.Now().UTC())
 			if err != nil {
 				syslog.WithError(err).Error("setting task to paused state")
 			}
 			return
 		}
-		if err := m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
+		if err := db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking generic task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {

@@ -343,7 +343,7 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
-	onAllocationExit := a.m.getGenericTaskOnAllocationExit(ctx, taskID, jobID, logCtx)
+	onAllocationExit := getGenericTaskOnAllocationExit(ctx, taskID, jobID, logCtx)
 
 	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
 	isSingleNode := genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
@@ -642,7 +642,7 @@ func (a *apiServer) UnpauseGenericTask(
 			"task-id":   resumingTask.TaskID,
 			"task-type": model.TaskTypeGeneric,
 		}
-		onAllocationExit := a.m.getGenericTaskOnAllocationExit(ctx, resumingTask.TaskID, *resumingTask.JobID, logCtx)
+		onAllocationExit := getGenericTaskOnAllocationExit(ctx, resumingTask.TaskID, *resumingTask.JobID, logCtx)
 		allocationSpecifier, err := allocationID.GetAllocationSpecifier()
 		if err != nil {
 			return nil, err
