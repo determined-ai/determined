@@ -26,7 +26,7 @@ const (
 )
 
 // JSONB is the golang equivalent of the postgres jsonb column type.
-type JSONB map[string]interface{}
+type JSONB interface{}
 
 // ProjectMsg is a stream.Msg.
 type ProjectMsg struct {
