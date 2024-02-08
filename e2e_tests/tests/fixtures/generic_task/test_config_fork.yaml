@@ -1,1 +1,1 @@
-entrypoint: ["python3", "run_fork.py"]
+entrypoint: ["echo", "forked"]

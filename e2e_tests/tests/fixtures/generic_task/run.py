@@ -1,6 +1,6 @@
 import time
 
-t = 5
+t = 1
 print("start")
 for i in range(t):
     if i % 10 == 0:

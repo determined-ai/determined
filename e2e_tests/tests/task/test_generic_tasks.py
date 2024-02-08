@@ -90,36 +90,36 @@ def test_generic_task_create_with_fork() -> None:
         )
         task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
-        # Create fork task
-        with open(
-            conf.fixtures_path("generic_task/test_config_fork.yaml"), "r"
-        ) as fork_config_file:
-            config = ntsc.parse_config(fork_config_file, None, [], [])
-            config_text = util.yaml_safe_dump(config)
-            context_directory = context.read_v1_context(
-                pathlib.Path(conf.fixtures_path("generic_task")), []
-            )
+    # Create fork task
+    with open(
+        conf.fixtures_path("generic_task/test_config_fork.yaml"), "r"
+    ) as fork_config_file:
+        config = ntsc.parse_config(fork_config_file, None, [], [])
+        config_text = util.yaml_safe_dump(config)
+        context_directory = context.read_v1_context(
+            pathlib.Path(conf.fixtures_path("generic_task")), []
+        )
 
-            req = bindings.v1CreateGenericTaskRequest(
-                config=config_text,
-                contextDirectory=context_directory,
-                projectId=None,
-                forkedFrom=task_resp.taskId,
-                parentId=None,
-                inheritContext=False,
-                noPause=False,
-            )
-            fork_task_resp = bindings.post_CreateGenericTask(test_session, body=req)
+        req = bindings.v1CreateGenericTaskRequest(
+            config=config_text,
+            contextDirectory=context_directory,
+            projectId=None,
+            forkedFrom=task_resp.taskId,
+            parentId=None,
+            inheritContext=False,
+            noPause=False,
+        )
+        fork_task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
-            # Get fork task Config
-            command = ["det", "-m", conf.make_master_url(), "task", "config", fork_task_resp.taskId]
+        # Get fork task Config
+        command = ["det", "-m", conf.make_master_url(), "task", "config", fork_task_resp.taskId]
 
-            res = subprocess.run(
-                command, universal_newlines=True, stdout=subprocess.PIPE, check=True
-            )
-            result_config = util.yaml_safe_load(res.stdout)
-            expected_config = {"entrypoint": ["python3", "run_fork.py"]}
-            assert expected_config == result_config
+        res = subprocess.run(
+            command, universal_newlines=True, stdout=subprocess.PIPE, check=True
+        )
+        result_config = util.yaml_safe_load(res.stdout)
+        expected_config = {"entrypoint": ["echo", "forked"]}
+        assert expected_config == result_config
 
 
 @pytest.mark.e2e_cpu
