@@ -389,3 +389,7 @@ genai:
   #   v100:
   #     gpu_type: V100
   #     max_agents: 2
+
+## Configure the set of IP ranges allowed to connect to the Determined master service on a public
+## GKE cluster.
+loadBalancerSourceRanges:
