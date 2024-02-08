@@ -47,7 +47,7 @@ func (a *agentAPIServer) serve() error {
 	bindAddr := fmt.Sprintf("%s:%d", a.opts.BindIP, a.opts.BindPort)
 	logrus.Infof("starting agent server on [%s]", bindAddr)
 	if a.opts.TLS {
-		return a.server.StartTLS(bindAddr, a.opts.CertFile, a.opts.KeyFile)
+		return a.server.StartTLS(bindAddr, a.opts.TLSCertFile, a.opts.TLSKeyFile)
 	}
 	return a.server.Start(bindAddr)
 }

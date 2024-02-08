@@ -3,64 +3,94 @@ package options
 import (
 	"crypto/tls"
 	"encoding/json"
+	"os"
 	"reflect"
+	"time"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/logger"
 
 	"github.com/pkg/errors"
 )
 
+const (
+	// RocrVisibleDevices define the ROCm resources allocated by Slurm.
+	RocrVisibleDevices = "ROCR_VISIBLE_DEVICES"
+	// CudaVisibleDevices define the CUDA resources allocated by Slurm.
+	CudaVisibleDevices = "CUDA_VISIBLE_DEVICES"
+)
+
+// DefaultOptions returns the default configurable options for the Determined agent.
+func DefaultOptions() *Options {
+	return &Options{
+		Log: logger.Config{
+			Level: "trace",
+			Color: true,
+		},
+		SlotType:               "auto",
+		VisibleGPUs:            VisibleGPUsFromEnvironment(),
+		BindIP:                 "0.0.0.0",
+		BindPort:               9090,
+		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
+		AgentReconnectBackoff:  int(aproto.AgentReconnectBackoff / time.Second),
+		ContainerRuntime:       DockerContainerRuntime,
+	}
+}
+
 // Options stores all the configurable options for the Determined agent.
 type Options struct {
-	ConfigFile string `json:"config_file"`
+	ConfigFile string        `json:"config_file"`
+	Log        logger.Config `json:"log"`
 
-	MasterHost      string `json:"master_host"`
-	MasterPort      int    `json:"master_port"`
-	AgentID         string `json:"agent_id"`
-	ArtificialSlots int    `json:"artificial_slots"`
-	SlotType        string `json:"slot_type"`
+	MasterHost string `json:"master_host"`
+	MasterPort int    `json:"master_port"`
+	AgentID    string `json:"agent_id"`
+
+	// Label has been deprecated; we now use ResourcePool to classify the agent.
+	Label        string `json:"label"`
+	ResourcePool string `json:"resource_pool"`
 
 	ContainerMasterHost string `json:"container_master_host"`
 	ContainerMasterPort int    `json:"container_master_port"`
 
-	Label        string `json:"label"`
-	ResourcePool string `json:"resource_pool"`
+	SlotType    string `json:"slot_type"`
+	VisibleGPUs string `json:"visible_gpus"`
+
+	Security SecurityOptions `json:"security"`
+
+	Debug           bool   `json:"debug"`
+	ArtificialSlots int    `json:"artificial_slots"`
+	ImageRoot       string `json:"image_root"`
+
+	TLS         bool   `json:"tls"`
+	TLSCertFile string `json:"tls_cert"`
+	TLSKeyFile  string `json:"tls_key"`
 
 	APIEnabled bool   `json:"api_enabled"`
 	BindIP     string `json:"bind_ip"`
 	BindPort   int    `json:"bind_port"`
-
-	VisibleGPUs string `json:"visible_gpus"`
-
-	TLS      bool   `json:"tls"`
-	CertFile string `json:"cert_file"`
-	KeyFile  string `json:"key_file"`
 
 	HTTPProxy  string `json:"http_proxy"`
 	HTTPSProxy string `json:"https_proxy"`
 	FTPProxy   string `json:"ftp_proxy"`
 	NoProxy    string `json:"no_proxy"`
 
-	Security SecurityOptions `json:"security"`
-
-	// The Fluent docker image to use, deprecated.
-	Fluent FluentOptions `json:"fluent"`
-
-	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
-
 	AgentReconnectAttempts int `json:"agent_reconnect_attempts"`
 	// TODO(ilia): switch this to better parsing with `model.Duration` similar to
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
-	Hooks HooksOptions `json:"hooks"`
-
 	ContainerRuntime   string             `json:"container_runtime"`
-	ImageRoot          string             `json:"image_root"`
 	SingularityOptions SingularityOptions `json:"singularity_options"`
 	PodmanOptions      PodmanOptions      `json:"podman_options"`
 
-	Debug bool `json:"debug"`
+	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
+
+	Hooks HooksOptions `json:"hooks"`
+
+	// The Fluent docker image to use, deprecated.
+	Fluent FluentOptions `json:"fluent"`
 }
 
 // DefaultFluentOptions stores defaults for Agent FluentBit options, deprecated.
@@ -93,10 +123,10 @@ func (o Options) validateTLS() error {
 	if !o.TLS || !o.APIEnabled {
 		return nil
 	}
-	if o.CertFile == "" {
+	if o.TLSCertFile == "" {
 		return errors.New("TLS cert file not specified")
 	}
-	if o.KeyFile == "" {
+	if o.TLSKeyFile == "" {
 		return errors.New("TLS key file not specified")
 	}
 	return nil
@@ -120,6 +150,18 @@ func (o *Options) Resolve() {
 			o.MasterPort = 80
 		}
 	}
+}
+
+// SetAgentID resolves the name (or ID) of the agent.
+func (o *Options) SetAgentID() error {
+	if o.AgentID == "" {
+		hostname, hErr := os.Hostname()
+		if hErr != nil {
+			return hErr
+		}
+		o.AgentID = hostname
+	}
+	return nil
 }
 
 // SecurityOptions stores configurable security-related options.
@@ -190,4 +232,14 @@ type SingularityOptions struct {
 // PodmanOptions configures how we interact with podman.
 type PodmanOptions struct {
 	AllowNetworkCreation bool `json:"allow_network_creation"` // review
+}
+
+// VisibleGPUsFromEnvironment returns GPU visibility information from the environment
+// if any, else "".
+func VisibleGPUsFromEnvironment() (visDevices string) {
+	visDevices, defined := os.LookupEnv(RocrVisibleDevices)
+	if !defined {
+		visDevices, _ = os.LookupEnv(CudaVisibleDevices)
+	}
+	return
 }
