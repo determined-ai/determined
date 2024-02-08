@@ -120,7 +120,7 @@ func (a *apiServer) getWorkspaceAndCheckCanDoActions(
 }
 
 func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (bool, error) {
-	exists, err := db.Bun().NewSelect().Model((*model.Model)(nil)).
+	exists, err := db.Bun().NewSelect().Table("models").
 		Where("workspace_id=?", workspaceID).
 		Exists(ctx)
 	if err != nil {
@@ -573,11 +573,8 @@ func (a *apiServer) DeleteWorkspace(
 	holder := &workspacev1.Workspace{}
 	// TODO(kristine): update workspace state in transaction with template delete
 	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
-	if err != nil {
-		return nil, fmt.Errorf("error while updating workspace: %w", err)
-	}
-	if holder.Id == 0 {
-		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user", req.Id)
+	if err != nil || holder.Id == 0 {
+		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user: %w", req.Id, err)
 	}
 
 	projects := []*projectv1.Project{}
@@ -617,7 +614,7 @@ func (a *apiServer) DeleteWorkspace(
 	if err != nil {
 		return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
 	}
-	return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
+	return &apiv1.DeleteWorkspaceResponse{Completed: false}, nil
 }
 
 func (a *apiServer) ArchiveWorkspace(

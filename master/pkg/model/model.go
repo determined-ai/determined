@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-// Model represents a row from the `models` table.
+// Model represents a row from the `models` table. Unused except for tests.
 type Model struct {
 	Name            string    `db:"name" json:"name"`
 	Description     string    `db:"description" json:"description"`
@@ -21,22 +19,6 @@ type Model struct {
 	Archived        bool      `db:"archived" json:"archived"`
 	Notes           string    `db:"notes" json:"notes"`
 	WorkspaceID     int       `db:"workspace_id" json:"workspace_id"`
-}
-
-// ModelVersion represents a row from the `model_versions` table.
-type ModelVersion struct {
-	Version         int       `db:"version" json:"version"`
-	CheckpointUUID  uuid.UUID `db:"checkpoint_uuid" json:"checkpoint_uuid"`
-	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
-	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
-	Metadata        JSONObj   `db:"metadata" json:"metadata"`
-	ModelID         int       `db:"model_id" json:"model_id"`
-	ID              int       `db:"id" json:"id"`
-	Name            string    `db:"name" json:"name"`
-	Comment         string    `db:"comment" json:"comment"`
-	UserID          int       `db:"user_id" json:"user_id"`
-	Labels          []string  `db:"labels" json:"labels"`
-	Notes           string    `db:"readme" json:"notes"`
 }
 
 // InstanceState is an enum type that describes an instance state.
