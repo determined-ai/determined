@@ -8,7 +8,7 @@ import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
 import Select, { SelectValue } from 'hew/Select';
 import { useToast } from 'hew/Toast';
-import { Loadable, NotLoaded } from 'hew/utils/loadable';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -30,13 +30,13 @@ import {
 import UserBadge from 'components/UserBadge';
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
-import { getGroups, getUsers, patchUsers } from 'services/api';
+import { getGroups, getUserRoles, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser } from 'types';
+import { DetailedUser, UserRole as UserRoleType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { validateDetApiEnum } from 'utils/service';
@@ -83,8 +83,21 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   const ConfigureAgentModal = useModal(ConfigureAgentModalComponent);
   const [selectedUserGroups, setSelectedUserGroups] = useState<V1GroupSearchResult[]>();
   const { openToast } = useToast();
-  const { canModifyUsers } = usePermissions();
+  const { canModifyUsers, canAssignRoles } = usePermissions();
+  const [userRoles, setUserRoles] = useState<Loadable<UserRoleType[]>>(NotLoaded);
+  const canAssignRolesFlag: boolean = canAssignRoles({});
   const { rbacEnabled } = useObservable(determinedStore.info);
+
+  const fetchUserRoles = useCallback(async () => {
+    if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
+      try {
+        const roles = await getUserRoles({ userId: user.id });
+        setUserRoles(Loaded(roles?.filter((r) => r.fromUser ?? false)));
+      } catch (e) {
+        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
+      }
+    }
+  }, [user, canAssignRolesFlag, rbacEnabled]);
 
   const onToggleActive = useCallback(async () => {
     try {
@@ -127,6 +140,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           ConfigureAgentModal.open();
           break;
         case MenuKey.Edit:
+          await fetchUserRoles();
           EditUserModal.open();
           break;
         case MenuKey.Groups: {
@@ -143,7 +157,15 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
           break;
       }
     },
-    [ConfigureAgentModal, EditUserModal, ManageGroupsModal, onToggleActive, user, ViewUserModal],
+    [
+      ConfigureAgentModal,
+      fetchUserRoles,
+      EditUserModal,
+      onToggleActive,
+      ViewUserModal,
+      user.id,
+      ManageGroupsModal,
+    ],
   );
 
   return (
@@ -151,8 +173,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <ViewUserModal.Component user={user} viewOnly onClose={fetchUsers} />
-      <EditUserModal.Component user={user} onClose={fetchUsers} />
+      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onClose={fetchUsers} />
+      <EditUserModal.Component user={user} userRoles={userRoles} onClose={fetchUsers} />
       <ManageGroupsModal.Component
         groupOptions={groups}
         user={user}

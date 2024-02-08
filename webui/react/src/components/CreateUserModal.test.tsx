@@ -17,7 +17,6 @@ import CreateUserModalComponent, {
 } from './CreateUserModal';
 
 vi.mock('services/api', () => ({
-  getUserRoles: () => Promise.resolve([]),
   postUser: vi.fn().mockReturnValue({ user: { id: 1 } }),
 }));
 
