@@ -231,18 +231,18 @@ func TestGetAgentsAllocationInfo(t *testing.T) {
 			for _, agent := range agentsResp.Agents {
 				for _, slot := range agent.Slots {
 					if slot.Container != nil {
-						_, ok := wantedJobInfo[slot.Container.AllocationId]
+						job, ok := wantedJobInfo[slot.Container.AllocationId]
 						require.True(t, ok,
 							fmt.Sprintf("allocation id %s is unexpected", slot.Container.AllocationId))
 
-						wantedJobID := wantedJobInfo[slot.Container.AllocationId].jobID
+						wantedJobID := job.jobID
 						wantedTaskID := model.AllocationID(slot.Container.AllocationId).ToTaskID()
 						jobID := model.JobID(slot.Container.JobId)
 						taskID := model.TaskID(slot.Container.TaskId)
 						require.Equal(t, wantedJobID, jobID,
 							fmt.Sprintf("expected: %v, got %v", wantedJobID, jobID))
 						require.Equal(t, wantedTaskID, taskID,
-							fmt.Sprintf("expected: %v, got %v", wantedJobID, jobID))
+							fmt.Sprintf("expected: %v, got %v", wantedTaskID, taskID))
 
 						jobInfo[slot.Container.AllocationId] = slot.Container
 					}
