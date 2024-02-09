@@ -172,7 +172,7 @@ func PaginateBunUnsafe(
 type PgDB struct {
 	sql     *sqlx.DB
 	queries *StaticQueryMap
-	url     string
+	URL     string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -181,7 +181,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
-			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, url: url}
+			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, URL: url}
 			initTheOneBun(db)
 			return db, nil
 		}
