@@ -571,7 +571,7 @@ func (a *apiServer) DeleteWorkspace(
 	}
 
 	holder := &workspacev1.Workspace{}
-	// TODO(kristine): update workspace state in transaction with template delete
+	// TODO(kristine): DET-10138 update workspace state in transaction with template delete
 	err = a.m.db.QueryProto("deletable_workspace", holder, req.Id)
 	if err != nil || holder.Id == 0 {
 		return nil, fmt.Errorf("workspace (%d) does not exist or not deletable by this user: %w", req.Id, err)
@@ -589,7 +589,7 @@ func (a *apiServer) DeleteWorkspace(
 		"",
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error while getting workspace projects: %w", err)
+		return nil, fmt.Errorf("getting workspace projects: %w", err)
 	}
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)

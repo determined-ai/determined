@@ -22,6 +22,7 @@ import (
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -524,7 +525,7 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 }
 
 func TestWorkspaceHasModels(t *testing.T) {
-	// set up a dB and api server to use for integration testing
+	// set up api server to use for integration testing
 	api, _, ctx := setupAPITest(t, nil)
 
 	// create workspace for test
@@ -544,4 +545,37 @@ func TestWorkspaceHasModels(t *testing.T) {
 	exists, err = api.workspaceHasModels(ctx, resp.Workspace.Id)
 	require.NoError(t, err)
 	assert.True(t, exists)
+}
+
+func TestDeleteWorkspace(t *testing.T) {
+	// set up api server
+	api, _, ctx := setupAPITest(t, nil)
+
+	// set up command service - required for successful DeleteWorkspaceRequest calls
+	cs, err := command.NewService(api.m.db, api.m.rm)
+	command.SetDefaultService(cs)
+
+	// create workspace
+	workspaceName := uuid.New().String()
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	require.NoError(t, err)
+
+	// delete workspace without models
+	_, err = api.DeleteWorkspace(ctx, &apiv1.DeleteWorkspaceRequest{
+		Id: resp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	// create another workspace, and add a model
+	workspaceName = uuid.New().String()
+	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	require.NoError(t, err)
+	_, err = api.PostModel(ctx, &apiv1.PostModelRequest{Name: uuid.New().String(), WorkspaceName: &workspaceName})
+	require.NoError(t, err)
+
+	// delete should fail because workspace has models
+	_, err = api.DeleteWorkspace(ctx, &apiv1.DeleteWorkspaceRequest{
+		Id: resp.Workspace.Id,
+	})
+	require.Error(t, err)
 }
