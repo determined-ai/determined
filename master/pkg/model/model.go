@@ -6,21 +6,6 @@ import (
 	"time"
 )
 
-// Model represents a row from the `models` table. Unused except for tests.
-type Model struct {
-	Name            string    `db:"name" json:"name"`
-	Description     string    `db:"description" json:"description"`
-	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
-	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
-	Metadata        JSONObj   `db:"metadata" json:"metadata"`
-	ID              int       `db:"id" json:"id"`
-	Labels          []string  `db:"labels" json:"labels"`
-	UserID          int       `db:"user_id" json:"user_id"`
-	Archived        bool      `db:"archived" json:"archived"`
-	Notes           string    `db:"notes" json:"notes"`
-	WorkspaceID     int       `db:"workspace_id" json:"workspace_id"`
-}
-
 // InstanceState is an enum type that describes an instance state.
 type InstanceState string
 
