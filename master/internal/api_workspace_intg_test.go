@@ -553,6 +553,7 @@ func TestDeleteWorkspace(t *testing.T) {
 
 	// set up command service - required for successful DeleteWorkspaceRequest calls
 	cs, err := command.NewService(api.m.db, api.m.rm)
+	require.NoError(t, err)
 	command.SetDefaultService(cs)
 
 	// create workspace
