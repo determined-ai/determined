@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -173,8 +174,8 @@ func ProjectCollectStartupMsgs(
 		return nil, err
 	}
 
-	// this really should be a union
 	exist = append(exist, newEntities...)
+	slices.Sort(exist)
 
 	// step 2: figure out what was missing and what has appeared
 	missing, appeared, err := stream.ProcessKnown(known, exist)

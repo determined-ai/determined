@@ -126,8 +126,8 @@ func (ksb *keySetBuilder) Finish() string {
 // not yet aware of, which should be hydrated by querying the database.
 //
 // Parameters:
-// - `known` is a range-encoded string, directly from the REST API.
-// - `exist` is a list of ints, likely from the database or some in-memory cache.
+// - `known` is a sorted range-encoded string, directly from the REST API.
+// - `exist` is a sorted list of ints, likely from the database or some in-memory cache.
 //
 // Return Values:
 // - `gone` is a range-encoded string, suitable for returning over the REST API.
