@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useUI from 'components/ThemeProvider';
 import { useSettings } from 'hooks/useSettings';
+import { DateString, decode, optional } from 'ioTypes';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -128,8 +129,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         follow: false,
         limit: config.limit,
         orderBy: 'ORDER_BY_UNSPECIFIED',
-        timestampAfter: '',
-        timestampBefore: '',
+        timestampAfter: undefined as Date | string | undefined,
+        timestampBefore: undefined as Date | string | undefined,
       };
 
       if (type === FetchType.Initial) {
@@ -158,8 +159,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         settings.level,
         undefined,
         undefined,
-        options.timestampBefore ? new Date(options.timestampBefore) : undefined,
-        options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+        decode(optional(DateString), options.timestampBefore),
+        decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         settings.searchText,
         { signal },
