@@ -82,13 +82,7 @@ def _upload_migration_length(conn: extensions.connection) -> None:
     duration = (end_ts - start_ts) / datetime.timedelta(microseconds=1)
     print(f"migrating {from_version} to {to_version} took {duration}ms")
 
-    try:
-        commit = subprocess.check_output(
-            ["git", "log", "-1", "--pretty=format:%H"], universal_newlines=True
-        ).strip()
-    except subprocess.CalledProcessError:
-        commit = "unknown"
-
+    commit = os.environ.get("COMMIT", "unknown")
     run_sql_query = sql.SQL(
         """
         INSERT INTO migration_runs (commit, branch, duration_ms, from_version, to_version)

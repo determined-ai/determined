@@ -55,13 +55,7 @@ CREATE INDEX migration_time_ix ON migration_runs(time);
 
 
 def get_perf_run_info() -> Dict[str, Any]:
-    try:
-        commit = subprocess.check_output(
-            ["git", "log", "-1", "--pretty=format:%H"], universal_newlines=True
-        ).strip()
-    except subprocess.CalledProcessError:
-        commit = "unknown"
-
+    commit = os.environ.get("COMMIT", "unknown")
     branch = os.environ.get("CIRCLE_BRANCH", "unknown")
 
     out = {"commit": commit, "branch": branch}
@@ -126,6 +120,8 @@ def parse_test_run_results(file_name: str) -> Dict[str, Any]:
                 "max": summary["metrics"][m].get("max", None),
                 "p90": summary["metrics"][m].get("p(90)", None),
                 "p95": summary["metrics"][m].get("p(95)", None),
+                "passes": 0,
+                "fails": 0,
             }
 
     groups = summary.get("root_group", {}).get("groups", {})
@@ -137,8 +133,8 @@ def parse_test_run_results(file_name: str) -> Dict[str, Any]:
             out[g] = {
                 "test_name": g,
             }
-        out[g]["passes"] = groups[g].get("checks", {}).get("200 response", {}).get("passes", None)
-        out[g]["fails"] = groups[g].get("checks", {}).get("200 response", {}).get("fails", None)
+        out[g]["passes"] = groups[g].get("checks", {}).get("200 response", {}).get("passes", 0)
+        out[g]["fails"] = groups[g].get("checks", {}).get("200 response", {}).get("fails", 0)
 
     print("Debug adding")
     for o in out:

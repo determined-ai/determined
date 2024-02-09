@@ -38,6 +38,12 @@ PERSIST_CHECK = \
 build: Dockerfile src/* package-lock.json package.json tsconfig.json webpack.config.js
 	docker build . -t $(IMAGE)
 
+.PHONY: build-runner
+build-runner:
+	cp ../master/build/determined-master master-binary
+	mkdir -p master-root && cp -r ../master/static ./master-root/static
+	docker build . -t perf-runner -f lambda-runner/Dockerfile
+
 up:
 	$(PERSIST_CHECK)
 	det deploy aws up \
