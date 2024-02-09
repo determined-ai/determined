@@ -46,6 +46,21 @@ const (
 	DefaultTestSrcPath = "../../../examples/tutorials/mnist_pytorch"
 )
 
+// Model represents a row from the `models` table. Unused except for tests.
+type Model struct {
+	Name            string        `db:"name" json:"name"`
+	Description     string        `db:"description" json:"description"`
+	CreationTime    time.Time     `db:"creation_time" json:"creation_time"`
+	LastUpdatedTime time.Time     `db:"last_updated_time" json:"last_updated_time"`
+	Metadata        model.JSONObj `db:"metadata" json:"metadata"`
+	ID              int           `db:"id" json:"id"`
+	Labels          []string      `db:"labels" json:"labels"`
+	UserID          model.UserID  `db:"user_id" json:"user_id"`
+	Archived        bool          `db:"archived" json:"archived"`
+	Notes           string        `db:"notes" json:"notes"`
+	WorkspaceID     int           `db:"workspace_id" json:"workspace_id"`
+}
+
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
 // (or otherwise run the tests outside of the Makefile), make sure to set
 // DET_INTEGRATION_POSTGRES_URL.

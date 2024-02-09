@@ -52,13 +52,13 @@ func TestModels(t *testing.T) {
 
 			// Insert a model.
 			now := time.Now()
-			mdl := model.Model{
+			mdl := Model{
 				Name:            uuid.NewString(),
 				Description:     "some important model",
 				CreationTime:    now,
 				LastUpdatedTime: now,
 				Labels:          []string{"some other label"},
-				Username:        user.Username,
+				UserID:          user.ID,
 				WorkspaceID:     1,
 			}
 			mdlNotes := "some notes"
