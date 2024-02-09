@@ -1,0 +1,5 @@
+db:
+  ssl_mode: require
+cache:
+  cache_dir: /tmp/determined-cache
+root: "/test_scripts"
