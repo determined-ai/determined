@@ -1220,7 +1220,6 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          no_output_timeout: 1h
           command: make -C docs check-links
 
   publish-docs:
@@ -2843,11 +2842,10 @@ workflows:
       - check-docs-links:
           requires:
             - build-docs
-          #context: determined-production
-          #filters:
-          #  branches:
-          #    only:
-          #      - main
+          filters:
+            branches:
+              only:
+                - main
 
       - test-debian-packaging:
           requires:
