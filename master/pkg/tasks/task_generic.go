@@ -82,6 +82,9 @@ func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
 	}
 
 	j.Priority = 0
+	if s.Base.ResourcesConfig.RawWeight != nil {
+		j.Weight = *s.Base.ResourcesConfig.RawWeight
+	}
 
 	j.ResourcePool = s.ResourcePool()
 	return &j, nil
@@ -91,7 +94,10 @@ func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
 func (s GenericTaskSpec) SetJobPriority(priority int) error { return nil }
 
 // SetWeight todo.
-func (s GenericTaskSpec) SetWeight(weight float64) error { return nil }
+func (s GenericTaskSpec) SetWeight(weight float64) error {
+	s.Base.ResourcesConfig.SetWeight(weight)
+	return nil
+}
 
 // SetResourcePool todo.
 func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }
