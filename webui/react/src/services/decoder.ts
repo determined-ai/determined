@@ -642,7 +642,7 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
       data: m.data.map((pt) => ({
         batches: pt.batches,
         epoch: pt.epoch,
-        time: pt.time,
+        time: typeof pt.time === 'string' ? new Date(pt.time) : pt.time,
         values: pt.values,
       })),
       group: m.group,
@@ -799,6 +799,10 @@ export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceS
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
     ...data,
+    lastExperimentStartedAt:
+      typeof data.lastExperimentStartedAt === 'string'
+        ? new Date(data.lastExperimentStartedAt)
+        : data.lastExperimentStartedAt,
     state: mapWorkspaceState(data.state),
     workspaceName: data.workspaceName ?? '',
   };

@@ -7,6 +7,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
+import { DateString, decode, optional } from 'ioTypes';
 import { paths, serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -76,8 +77,8 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         follow: false,
         limit: config.limit,
         orderBy: 'ORDER_BY_UNSPECIFIED',
-        timestampAfter: '',
-        timestampBefore: '',
+        timestampAfter: undefined as Date | string | undefined,
+        timestampBefore: undefined as Date | string | undefined,
       };
 
       if (type === FetchType.Initial) {
@@ -107,8 +108,8 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         settings.level,
         undefined,
         undefined,
-        options.timestampBefore ? new Date(options.timestampBefore) : undefined,
-        options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+        decode(optional(DateString), options.timestampBefore),
+        decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         settings.searchText,
         { signal: config.canceler.signal },

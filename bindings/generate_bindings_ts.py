@@ -86,7 +86,7 @@ def annotation(anno: swagger_parser.TypeAnno) -> Code:
     if isinstance(anno, swagger_parser.Bool):
         return "boolean"
     if isinstance(anno, swagger_parser.DateTime):
-        return "Date"
+        return "Date | DateString"
     if isinstance(anno, swagger_parser.Ref):
         if not anno.defn:
             return "void"
@@ -265,7 +265,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
             code += f"if ({param.name}{null_check}) {{"
             code.indent()
             if isinstance(param.type, swagger_parser.DateTime):
-                code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}.toISOString()"
+                code += f"localVarQueryParameter['{param.serialized_name}'] = typeof {param.name} === \"string\" ? {param.name} : {param.name}.toISOString()"
             else:
                 code += f"localVarQueryParameter['{param.serialized_name}'] = {param.name}"
             code.dedent()
@@ -459,7 +459,7 @@ def tsbindings(swagger: swagger_parser.ParseResult) -> str:
  * NOTE: Do not edit the class manually.
  */
 
-
+import {{ DateString }} from "ioTypes";
 import {{ Configuration }} from "./configuration";
 
 type ValueOf<T> = T[keyof T];

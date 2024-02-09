@@ -132,7 +132,12 @@ export const columns: ColumnDef<Job>[] = [
     render: createOmitableRenderer<Job, FullJob>(
       'entityId',
       (_, record): ReactNode =>
-        record.submissionTime && relativeTimeRenderer(record.submissionTime),
+        record.submissionTime &&
+        relativeTimeRenderer(
+          typeof record.submissionTime === 'string'
+            ? new Date(record.submissionTime)
+            : record.submissionTime,
+        ),
     ),
     title: 'Submitted',
   },
