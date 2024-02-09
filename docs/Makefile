@@ -70,11 +70,10 @@ pre-publish:
 	python3 redirects.py publish-check
 
 .PHONY: check-links
-check-links:
-	make attributions.rst
+check-links: attributions.rst
 	# any warnings will dump to stderr, continue regardless to parse output.txt
 	sphinx-build -b linkcheck . build -a || true
-	! (cat build/output.txt | grep -n broken)
+	! grep -n broken build/output.txt
 
 .PHONY: publish
 publish: pre-publish publish-check
