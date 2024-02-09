@@ -1032,7 +1032,7 @@ commands:
             echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
           name: Install GKE auth plugin
       - run:
-          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>}
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
           name: Get Kubeconfig
       - run: 
           command: kubectl create namespace ${GENERATED_NAMESPACE}
