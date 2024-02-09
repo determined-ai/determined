@@ -1046,9 +1046,6 @@ commands:
           namespace: ${GENERATED_NAMESPACE}
           wait: true
           release-name: "ci"
-          tls-cert: <<parameters.master-tls-cert>>
-          tls-key: <<parameters.master-tls-key>>
-          tls-hostname: <<parameters.master-cert-name>>
           values-to-override: ${HELM_VALUES}
       - set-master-address-gke:
           release-name: "ci"
