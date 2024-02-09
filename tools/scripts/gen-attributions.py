@@ -26,6 +26,7 @@ known_licenses = {
     "isc": "ISC License",
     "mit": "MIT",
     "mozilla": "Mozilla Public License",
+    "nvidia-container": "NVIDIA Deep Learning Container License",
     "sil": "SIL Open Font License 1.1",
     "unlicense": "Unlicense",
 }

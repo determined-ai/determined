@@ -1,0 +1,11 @@
+Name: developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+Type: nvidia-container
+Agent: true
+Master: false
+Webui: false
+
+Various files include modifications (c) NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+
+This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+By pulling and using the container, you accept the terms and conditions of this license:
+https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
