@@ -3,8 +3,7 @@ package tasks
 import (
 	"archive/tar"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -70,7 +69,22 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 
 // ToV1Job todo.
 func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
-	return nil, status.Error(codes.Unimplemented, "ToV1Job not implemented for Generic Tasks")
+	j := jobv1.Job{
+		JobId:          "GENERIC TASK",
+		EntityId:       s.Base.TaskID,
+		Type:           jobv1.Type_TYPE_UNSPECIFIED,
+		SubmissionTime: timestamppb.Now(),
+		Username:       s.Base.Owner.Username,
+		UserId:         0,
+		Weight:         0,
+		Name:           "ToV1Job not implemented for Generic Task",
+		WorkspaceId:    0,
+	}
+
+	j.Priority = 0
+
+	j.ResourcePool = s.ResourcePool()
+	return &j, nil
 }
 
 // SetJobPriority todo.
