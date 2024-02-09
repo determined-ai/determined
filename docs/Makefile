@@ -74,7 +74,6 @@ check-links:
 	make attributions.rst
 	# any warnings will dump to stderr, continue regardless to parse output.txt
 	sphinx-build -b linkcheck . build -a || true
-	echo "link check complete, see build/output.txt"
 	! (cat build/output.txt | grep -n broken)
 
 .PHONY: publish
