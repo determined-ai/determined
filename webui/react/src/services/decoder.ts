@@ -481,7 +481,7 @@ export const mapV1Experiment = (
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters: {},
+    hyperparameters: config?.hyperparameters ?? {},
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,

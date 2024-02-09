@@ -174,28 +174,27 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	return err != nil, authz.SubIfUnauthorized(err, serviceNotFoundErr)
 }
 
-// processAuthWithRedirect is an auth middleware that redirects the requests
+// processAuthWithRedirect is an auth middleware that redirects browser requests
 // to login page for a set of given paths in case of authentication errors.
 func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			path := c.Request().RequestURI
-			shouldRedirect := false
-
-			for _, p := range redirectPaths {
-				if strings.HasPrefix(path, p) {
-					shouldRedirect = true
-					break
+			err := user.GetService().ProcessAuthentication(next)(c)
+			if err == nil {
+				return nil
+			}
+			// No web page redirects for programmatic requests.
+			for _, accept := range c.Request().Header["Accept"] {
+				if strings.Contains(accept, "application/json") {
+					return err
 				}
 			}
-
-			err := user.GetService().ProcessAuthentication(next)(c)
-
-			// If there's an authentication error and we should redirect, then do so
-			if err != nil && shouldRedirect {
-				return redirectToLogin(c)
+			path := c.Request().RequestURI
+			for _, p := range redirectPaths {
+				if strings.HasPrefix(path, p) {
+					return redirectToLogin(c)
+				}
 			}
-
 			return err
 		}
 	}

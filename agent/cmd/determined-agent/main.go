@@ -5,6 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 func maybeInjectRootAlias(rootCmd *cobra.Command, inject string) {
@@ -31,10 +33,10 @@ func nonRootSubCmds(rootCmd *cobra.Command) []string {
 }
 
 func main() {
-	rootCmd := newRootCmd()
+	logger.SetLogrus(*logger.DefaultConfig())
 	maybeInjectRootAlias(rootCmd, "run")
 
-	if err := newRootCmd().Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		log.WithError(err).Fatal("fatal error running Determined agent")
 	}
 }

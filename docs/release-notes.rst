@@ -7,6 +7,46 @@
 ###############
 
 **************
+ Version 0.28
+**************
+
+Version 0.28.0
+==============
+
+**Release Date:** February 06, 2024
+
+**Breaking Changes**
+
+-  Authentication: In the enterprise edition, in the master configuration, the
+   ``oidc.groups_claim_name`` setting that is used to set the string value of the authenticator's
+   claim name for groups has been changed to ``oidc.groups_attribute_name``. Similarly, the
+   ``oidc.display_name_claim_name`` setting that is used to set the user's display name in
+   Determined has been changed to ``oidc.display_name_attribute_name``.
+
+**New Features**
+
+-  Experiments: Add ``resources.is_single_node`` option, which forces trials to be scheduled within
+   single containers rather than across multiple nodes or pods. If the requested ``slots_per_trial``
+   count is impossible to fulfill in the cluster, the experiment submission will be rejected.
+
+**Improvements**
+
+-  Notebooks, Shells, and Commands: On static agent-based clusters (not using dynamic cloud
+   provisioning), when a ``slots`` request for a notebook, shell, or command cannot be fulfilled,
+   it'll be rejected.
+
+-  API: The checkpoint download endpoint will now allow the use of ``application/x-tar`` as an
+   accepted content type in the request. It will provide a response in the form of an uncompressed
+   tar file, complete with content-length information included in the headers.
+
+**Deprecated Features**
+
+-  API: The experiment API object in a future version will have its ``config`` field removed to
+   improve performance of the system.The response of ``/api/v1/experiments/{experiment_id}`` now
+   contains a new ``config`` field that can be used as a replacement. If you are not calling the
+   APIs manually, there will be no impact to you.
+
+**************
  Version 0.27
 **************
 
@@ -70,6 +110,32 @@ Version 0.26.7
 -  CLI: Modify ``det user ls`` to show only active users. Add a new flag ``--all`` to show all
    users.
 
+**New Features**
+
+-  Authentication: *(Enterprise edition only)* SAML users can be auto-provisioned upon their first
+   login. To configure, set the ``saml.auto_provision_users`` option to True. If SCIM is enabled as
+   well, ``auto_provision_users`` must be False.
+
+-  Authentication: *(Enterprise edition only)* In the enterprise edition, add synchronization of
+   SAML user group memberships with existing groups and SAML user display name with the Determined
+   user display name. Configure by setting ``saml.groups_attribute_name`` to the string value of the
+   authenticator's attribute name for groups and ``saml.display_name_attribute_name`` with the
+   authenticator's attribute name for display name.
+
+**Improvement**
+
+-  Security: *(Enterprise edition only)* In the enterprise edition, expand the SAML user group
+   memberships feature to provision groups upon each login. This can be done by setting
+   ``saml.groups_attribute_name`` to the string value of the authenticator's attribute name for
+   groups. Prior releases only matched group memberships between the authenticator and local
+   Determined user groups, meaning that, if not found, local groups would not be created.
+
+-  Security: *(Enterprise edition only)* In the enterprise edition, expand the OIDC user group
+   memberships feature to provision groups upon each login. This can be done by setting
+   ``oidc.groups_claim_name`` to the string value of the authenticator's claim name for groups.
+   Prior releases only matched group memberships between the authenticator and local Determined user
+   groups, meaning that, if not found, local groups would not be created.
+
 **Bug Fixes**
 
 -  Master: Fix an issue where master was unable to download checkpoints from S3 buckets in the
@@ -99,14 +165,14 @@ Version 0.26.5
 
 **New Features**
 
--  Authentication: Users can now provide a Pachyderm address in the master config under
-   ``integrations.pachyderm.address``. This address will be added as an environment variable called
-   ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also be available as an
-   environment variable called ``DEX_TOKEN`` in task containers.
+-  Authentication: *(Enterprise edition only)* Users can now provide a Pachyderm address in the
+   master config under ``integrations.pachyderm.address``. This address will be added as an
+   environment variable called ``PACHD_ADDRESS`` in task containers. The OIDC raw ID token will also
+   be available as an environment variable called ``DEX_TOKEN`` in task containers.
 
--  Authentication: In the enterprise edition, add synchronization of OIDC user group memberships
-   with existing groups. Configure by setting ``oidc.groups_attribute_name`` in the master config to
-   the string value of the authenticator's claim name for groups.
+-  Authentication: *(Enterprise edition only)* Add synchronization of OIDC user group memberships
+   with existing groups. Configure by setting ``oidc.groups_claim_name`` in the master config to the
+   string value of the authenticator's claim name for groups.
 
 Version 0.26.4
 ==============
