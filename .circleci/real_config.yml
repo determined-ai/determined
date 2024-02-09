@@ -985,6 +985,13 @@ commands:
       - set-cluster-labels:
           labels: <<parameters.labels>>
       - run:
+          name: Install Determined Helm chart
+          command: |
+            # Extract the commit hash from Git metadata
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+            echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
+      - run:
           command: |
             echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
           name: Prepare helm overrides
@@ -1025,15 +1032,14 @@ commands:
             echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
           name: Install GKE auth plugin
       - run:
-          name: Get Kubeconfig
           command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>}
+          name: Get Kubeconfig
+      - run: 
+          command: kubectl create namespace ${GENERATED_NAMESPACE}
+          name: Create namespace
       - run:
-          name: Install Determined Helm chart
-          command: |
-            # Extract the commit hash from Git metadata
-            COMMIT_HASH=$(git rev-parse --short HEAD)
-            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-            echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
+          command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
+          name: Set context to the created namespace
       - helm/install-helm-chart:
           chart: helm/charts/determined
           helm-version: v3.2.4
