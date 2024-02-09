@@ -124,7 +124,7 @@ func (a *apiServer) workspaceHasModels(ctx context.Context, workspaceID int32) (
 		Where("workspace_id=?", workspaceID).
 		Exists(ctx)
 	if err != nil {
-		return exists, fmt.Errorf("error while checking workspace for models: %w", err)
+		return false, fmt.Errorf("checking workspace for models: %w", err)
 	}
 	return exists, nil
 }
@@ -563,7 +563,7 @@ func (a *apiServer) DeleteWorkspace(
 
 	modelsExist, err := a.workspaceHasModels(ctx, req.Id)
 	if err != nil {
-		return nil, fmt.Errorf("unable to check workspace for models: %w", err)
+		return nil, err
 	}
 	if modelsExist {
 		return nil, status.Errorf(codes.FailedPrecondition, "workspace (%d) contains models; move or delete models first",
@@ -611,9 +611,6 @@ func (a *apiServer) DeleteWorkspace(
 	go func() {
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
-	if err != nil {
-		return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
-	}
 	return &apiv1.DeleteWorkspaceResponse{Completed: false}, nil
 }
 
