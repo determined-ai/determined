@@ -3035,7 +3035,7 @@ workflows:
     
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
-          context: gcp-ci
+          context: gcp
           requires:
             - build-go
           parallelism: 6
