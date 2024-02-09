@@ -2932,6 +2932,7 @@ workflows:
             branches:
               only:
                 - main
+                - perf_test_run_in_ecs # TODO remove this.
 
       - deploy:
           name: deploy-latest-master-cluster
