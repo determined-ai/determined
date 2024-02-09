@@ -940,7 +940,7 @@ commands:
     parameters:
       cluster-id:
         type: string
-        default: ${SHARED_CLUSTER_ID}
+        default: ${GKE_CLUSTER_NAME}
       labels:
         type: string
         default: ""
@@ -948,17 +948,17 @@ commands:
         type: string
       region:
         type: string
-        default: ${SHARED_CLUSTER_REGION}
+        default: ${GKE_REGION}
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
         type: env_var_name
       google-compute-zone:
-        default: SHARED_CLUSTER_ZONE
+        default: GOOGLE_COMPUTE_ZONE
         description: The Google compute zone to connect with via the gcloud CLI
         type: env_var_name
       google-project-id:
-        default: SHARED_CLUSTER_PROJECT_ID
+        default: GOOGLE_PROJECT_ID
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       gpus-per-machine:
@@ -3035,7 +3035,7 @@ workflows:
     
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
-          context: gcp
+          context: gcp-shared-cluster
           requires:
             - build-go
           parallelism: 6
