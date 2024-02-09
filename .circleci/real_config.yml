@@ -1001,6 +1001,10 @@ commands:
                 command: |
                   echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>,resourcePools[0].agent_reattach_enabled=true,resourcePools[0].pool_name=default,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].effect=NoSchedule,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].effect=NoSchedule"' >> "$BASH_ENV"
                 name: CPU setup helm overrides
+      - run:
+          command: |
+            echo 'export HELM_VALUES:"${HELM_VALUES},loadBalancerSourceRanges=\"${CI_RANGES}\""'
+          name: Setup Firewall Config
       - gcloud/install:
           version: "412.0.0"
       - kubernetes/install-kubectl
@@ -1041,13 +1045,6 @@ commands:
           tls-key: <<parameters.master-tls-key>>
           tls-hostname: <<parameters.master-cert-name>>
           values-to-override: ${HELM_VALUES}
-      - run:
-          name: Enable Firewall
-          command: |
-            kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
-            SERVICE_IP=$(kubectl get services -o=json | jq '.["items"][1]["status"]["loadBalancer"]["ingress"][0]["ip"]')
-            SERVICE_FW=$(gcloud compute firewall-rules list --filter="k8s-fw circleci $SERVICE_IP" --format="table(name)" | grep "k8s")
-            gcloud compute firewall-rules update $SERVICE_FW --source-ranges="${CI_RANGES}"
       - set-master-address-gke:
           release-name: "ci"
           namespace: ${GENERATED_NAMESPACE}
