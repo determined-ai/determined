@@ -132,7 +132,7 @@ stringData:
     {{- end }}
     {{- end }}
 
-    {{- if .Values.genai.version }}
+    {{- if (and .Values.genai .Values.genai.version) }}
     feature_switches:
       - genai
 

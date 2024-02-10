@@ -1,4 +1,4 @@
-{{- if .Values.genai.version }}
+{{- if (and .Values.genai .Values.genai.version) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,11 +10,11 @@ metadata:
 data:
   resource_pool_metadata.yaml: |
     {{- $resource_pools := include "genai.allResourcePoolNames" . | fromJsonArray }}
-    {{- $metadata := (required "A valid .Values.genai.extra_resource_pool_metadata entry required!" .Values.genai.extra_resource_pool_metadata) }}
+    {{- $metadata := (required "A valid .Values.genai.extraResourcePoolMetadata entry required!" .Values.genai.extraResourcePoolMetadata) }}
     {{- range $k, $v := $metadata }}
       {{- if not (has $k $resource_pools) }}
-        {{- $k | printf ".Values.genai.extra_resource_pool_metadata defines a resource_pool '%s' which is not present in the .Values.resourcePools" | fail }}
+        {{- $k | printf ".Values.genai.extraResourcePoolMetadata defines a resource_pool '%s' which is not present in the .Values.resourcePools" | fail }}
       {{- end }}
     {{- end }}
-    {{- toYaml .Values.genai.extra_resource_pool_metadata | nindent 4 }}
+    {{- toYaml .Values.genai.extraResourcePoolMetadata | nindent 4 }}
 {{- end }}

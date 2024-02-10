@@ -1,4 +1,4 @@
-{{- if and .Values.genai.version (not .Values.genai.sharedPVCName) }}
+{{- if (and .Values.genai .Values.genai.version (not .Values.genai.sharedPVCName)) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

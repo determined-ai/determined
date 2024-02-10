@@ -1,4 +1,4 @@
-{{- if .Values.genai.version }}
+{{- if (and .Values.genai .Values.genai.version) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
