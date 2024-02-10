@@ -1,4 +1,4 @@
-{{- if .Values.genai.version }}
+{{- if (and .Values.genai .Values.genai.version) }}
 apiVersion: v1
 kind: Service
 metadata:
