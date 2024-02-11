@@ -39,7 +39,7 @@ You may also want to increase the `EC2 instance limits
 on GPU instances are zero. The default configuration for ``det deploy`` can result in launching up
 to 5 ``g4dn.metal`` instances (which have 94 vCPUs each), which would exceed the default quota. AWS
 instance limits can be increased by submitting a request to the `AWS Support Center
-<https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
+<http://aws.amazon.com/support>`__.
 
 Installation
 ============

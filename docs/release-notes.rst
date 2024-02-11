@@ -1000,8 +1000,8 @@ Version 0.20.0
 
 -  RBAC: Following on the initial RBAC support added in 0.19.7, the enterprise edition of Determined
    (`HPE Machine Learning Development Environment
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-   has added support for role-based access control (RBAC) over new entities:
+   <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_) has added
+   support for role-based access control (RBAC) over new entities:
 
    -  Notebooks, TensorBoards, shells, and commands are now housed under workspaces. Access to these
       tasks can now be restricted by role.
@@ -1090,17 +1090,17 @@ Version 0.19.10
 -  Cluster: Add support for experiment tag propagation.
 
    -  The enterprise edition of Determined (`HPE Machine Learning Development
-      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-      now allows for experiment tags to be propagated as labels to the associated jobs on the HPC
-      cluster. A number of labeling schemes are supported, controlled by the configuration item
+      <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_) now allows
+      for experiment tags to be propagated as labels to the associated jobs on the HPC cluster. A
+      number of labeling schemes are supported, controlled by the configuration item
       ``resource_manager.job_project_source``.
 
 -  Cluster: Add support for launcher-provided resource pools.
 
    -  The enterprise edition of Determined (`HPE Machine Learning Development
-      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-      now allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
-      partition on an HPC cluster with different submission options.
+      <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_) now allows
+      for custom resource pools to be defined that submit work to an underlying Slurm/PBS partition
+      on an HPC cluster with different submission options.
 
 -  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
    <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
@@ -1134,9 +1134,10 @@ Version 0.19.10
 **Removed Features**
 
 -  The data layer feature, which was deprecated in 0.18.0 (May 2022), has been removed. A migration
-   guide to use the underlying `yogadl library <https://yogadl.readthedocs.io/en/latest/>`_ directly
-   may be found `here <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
-   Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
+   guide to use the underlying `yogadl library
+   <https://yogadl.readthedocs.io/en/latest//en/latest/>`_ directly may be found `here
+   <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_. Affected users are
+   encouraged to follow the migration guide before upgrading to avoid downtime.
 
 Version 0.19.9
 ==============
@@ -1218,11 +1219,10 @@ Version 0.19.7
    ``.logs()``.
 
 -  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
-   has added preliminary support for Role-Based Access Control. Administrators can now configure
-   which users or user groups can administer users, create or configure workspaces, run or view
-   experiments in particular workspaces, or perform other actions. See :ref:`rbac` for more
-   information.
+   <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_) has added
+   preliminary support for Role-Based Access Control. Administrators can now configure which users
+   or user groups can administer users, create or configure workspaces, run or view experiments in
+   particular workspaces, or perform other actions. See :ref:`rbac` for more information.
 
 **Bug Fixes**
 
@@ -1288,12 +1288,12 @@ Version 0.19.6
    :ref:`topic-guides_hp-tuning-det_custom` for more information.
 
 -  Cluster: The enterprise edition of `HPE Machine Learning Development Environment
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_
-   can now be deployed on a PBS cluster. When using PBS scheduler, HPE Machine Learning Development
-   Environment delegates all job scheduling and prioritization to the PBS workload manager. This
-   integration enables existing PBS workloads and HPE Machine Learning Development Environment
-   workloads to coexist and access all of the advanced capabilities of the PBS workload manager. You
-   can use either Singularity or Podman for the container runtime.
+   <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_ can now be
+   deployed on a PBS cluster. When using PBS scheduler, HPE Machine Learning Development Environment
+   delegates all job scheduling and prioritization to the PBS workload manager. This integration
+   enables existing PBS workloads and HPE Machine Learning Development Environment workloads to
+   coexist and access all of the advanced capabilities of the PBS workload manager. You can use
+   either Singularity or Podman for the container runtime.
 
 Version 0.19.5
 ==============
@@ -1408,12 +1408,12 @@ Version 0.19.2
 **New Features**
 
 -  Cluster: The enterprise edition of Determined (`HPE Machine Learning Development
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_),
-   can now be deployed on a Slurm cluster. When using Slurm, Determined delegates all job scheduling
-   and prioritization to the Slurm workload manager. This integration enables existing Slurm
-   workloads and Determined workloads to coexist and access all of the advanced capabilities of the
-   Slurm workload manager. The Determined Slurm integration can use either Singularity or Podman for
-   the container runtime.
+   <https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html>`_), can now be
+   deployed on a Slurm cluster. When using Slurm, Determined delegates all job scheduling and
+   prioritization to the Slurm workload manager. This integration enables existing Slurm workloads
+   and Determined workloads to coexist and access all of the advanced capabilities of the Slurm
+   workload manager. The Determined Slurm integration can use either Singularity or Podman for the
+   container runtime.
 
 Version 0.19.1
 ==============
@@ -1554,7 +1554,7 @@ Version 0.18.3
 **New Features**
 
 -  Workspaces & Projects: Teams can now organize related experiments into projects and workspaces.
-   See `video <https://youtu.be/zJP7p0CWubw>`_ for a walkthrough.
+   See `video <https://www.youtube.com/watch?v=zJP7p0CWubw&feature=youtu.be>`_ for a walkthrough.
 
 -  Logging: Master configuration now supports ``logging.additional_fluent_outputs`` allowing
    advanced users to specify custom integrations for task logs.
@@ -1763,7 +1763,7 @@ Version 0.18.0
 
 -  The Determined Data Layer has been deprecated and will be removed in a future version. New code
    should not begin using it, but we will assist existing users to migrate to using `YogaDL
-   <https://yogadl.readthedocs.io>`__ directly before removing the feature.
+   <https://yogadl.readthedocs.io/en/latest/>`__ directly before removing the feature.
 
 **Removed Features**
 
@@ -2625,7 +2625,7 @@ Version 0.15.6
 **New Features**
 
 -  Add PyTorch's `word-level language modeling RNN example
-   <https://github.com/pytorch/examples/tree/master/word_language_model>`__ as a `Determined example
+   <https://github.com/pytorch/examples/tree/main/word_language_model>`__ as a `Determined example
    <https://github.com/RehanSD/determined/blob/master/examples/nlp/word_language_model/README.md>`__.
 
 -  Support using the Determined shell as a remote host inside Visual Studio Code and PyCharm IDEs.
@@ -2674,7 +2674,7 @@ Version 0.15.4
 
 -  Model Hub: Publish Determined's Model Hub library to make it easy to train models from supported
    third-party libraries with a Determined cluster. The first library supported in Model Hub is the
-   `Hugging Face Transformers Library for NLP <https://huggingface.co/transformers>`__.
+   `Hugging Face Transformers Library for NLP <https://huggingface.co/docs/transformers/index>`__.
 
 **Minor Changes**
 
@@ -2883,7 +2883,7 @@ Version 0.14.3
 
 -  Examples: Add the `Deformable DETR <https://openreview.net/forum?id=gZ9hCDWe6ke>`__ model for
    object detection in Determined. Check out `our example
-   <https://github.com/determined-ai/determined/tree/master/examples/computer_vision/deformabledetr_coco_pytorch>`__
+   <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/deformabledetr_coco_pytorch>`__
    in the Determined repository.
 
 -  Searcher: Support programmatic rejection of certain hyperparameters to further optimize your
@@ -2979,8 +2979,7 @@ Version 0.14.0
 **Improvements**
 
 -  **Breaking Change** REST API: The trial and checkpoint API endpoints can now return non-scalar
-   metric values, which are represented as JSON objects or `protobuf structs
-   <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Struct>`__.
+   metric values, which are represented as JSON objects or protobuf structs.
 
 -  Documentation: Add a topic guide on :ref:`debugging models <model-debug>`. The new guide will
    walk you step-by-step through solving problems with a model in Determined, with a focus on
@@ -3292,7 +3291,7 @@ Version 0.13.7
    detection models; with Determined, users can take things one step further with cutting-edge
    distributed training and hyperparameter tuning to further boost performance. See the `Determined
    implementation of MMDetection
-   <https://github.com/determined-ai/determined/tree/master/examples/computer_vision/mmdetection_pytorch>`__
+   <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/mmdetection_pytorch>`__
    for more information on how to get started.
 
 -  WebUI: Allow the experiments list page to be filtered by labels. Selecting more than one label
@@ -3906,7 +3905,7 @@ Version 0.12.11
 -  Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
 
 -  Add `an example
-   <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__
+   <https://github.com/determined-ai/determined/tree/main/examples/experimental/trial/unets_tf_keras>`__
    using TensorFlow's *Image Segmentation via UNet* tutorial.
 
 -  WebUI: Improve trial log rendering performance.
@@ -3979,10 +3978,8 @@ Version 0.12.7
    checkpoint, and terminate the trial.
 
 -  Add support for Estimator callbacks that stop training early, including the official
-   `stop_if_no_decrease_hook
-   <https://www.tensorflow.org/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook>`__.
-   When a stop is requested, Determined will finish the training (or validation) step we are in,
-   checkpoint, and terminate the trial.
+   ``stop_if_no_decrease_hook``. When a stop is requested, Determined will finish the training (or
+   validation) step we are in, checkpoint, and terminate the trial.
 
 -  Add support for model code that stops training of a trial programmatically.
 
@@ -4237,8 +4234,9 @@ Version 0.12.2
    #. A `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__ returning a
       tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
-   #. A `keras.utils.Sequence <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
-      returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+   #. A `keras.utils.Sequence
+      <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple of
+      either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
    #. A ``det.keras.SequenceAdapter`` returning a tuple of either ``(inputs, targets)`` or
       ``(inputs, targets, sample weights)``.

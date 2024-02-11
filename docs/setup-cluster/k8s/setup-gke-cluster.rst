@@ -19,8 +19,8 @@ Determined requires GPU-enabled nodes and the Kubernetes cluster to be running v
 ***************
 
 Before setting up a GKE cluster, the user should have `Google Cloud SDK
-<https://cloud.google.com/sdk/docs/quickstarts/>`_ and `kubectl
-<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
+<https://cloud.google.com/sdk/docs/install-sdk>`_ and `kubectl
+<https://kubernetes.io/docs/tasks/tools/>`_ installed on their local machine.
 
 ********************
  Set up the Cluster

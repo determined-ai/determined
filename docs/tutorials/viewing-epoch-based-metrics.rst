@@ -51,7 +51,7 @@ To follow along, you'll need the tutorial files.
 
 -  Access the tutorial files via the :download:`core_api_pytorch_mnist.tgz
    </examples/core_api_pytorch_mnist.tgz>` download link or directly from the `Github repository
-   <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_pytorch_mnist>`_.
+   <https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api_pytorch_mnist>`_.
 
 For this step, we'll use our ``model_def.py`` script and its accompanying ``const.yaml`` experiment
 configuration file.

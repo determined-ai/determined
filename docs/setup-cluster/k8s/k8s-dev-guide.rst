@@ -49,10 +49,10 @@ Next apply the Determined Helm chart and exec into the pod containing the master
 *********************************
 
 Before installing Determined, install the dependencies specified in the `contributing guide
-<https://github.com/determined-ai/determined/blob/master/CONTRIBUTING.md>`__.
+<https://github.com/determined-ai/determined/blob/main/CONTRIBUTING.md>`__.
 
 You can use ``apt`` and ``pip`` to install most of the dependencies, but you will need to download
-and manually install `Go <https://golang.org/dl/>`__, `Node <https://deb.nodesource.com/>`__, `the
+and manually install `Go <https://go.dev/dl/>`__, `Node <https://deb.nodesource.com/>`__, `the
 protobuf compiler <https://github.com/protocolbuffers/protobuf/releases>`__, and `Helm
 <https://helm.sh/docs/intro/install/>`__. Here is an example of installing all the necessary
 dependencies:

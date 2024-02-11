@@ -6,7 +6,7 @@
 
 Start with an example machine learning model converted to Determined's APIs. Code examples are in
 the ``examples/`` subdirectory of the `Determined GitHub repo
-<https://github.com/determined-ai/determined/tree/master/examples>`__. Download links are below.
+<https://github.com/determined-ai/determined/tree/main/examples>`__. Download links are below.
 
 For more examples, visit the `determined-examples repo
 <https://github.com/determined-ai/determined-examples/>`__.

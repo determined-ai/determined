@@ -10,10 +10,10 @@
 | :ref:`helm-config-reference`                                    |
 +-----------------------------------------------------------------+
 
-`kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ is a command-line tool for
-interacting with a Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to
-install and upgrade Determined on Kubernetes. This section covers some of the useful kubectl and
-helm commands when :ref:`running Determined on Kubernetes <install-on-kubernetes>`.
+`kubectl <https://kubernetes.io/docs/tasks/tools/>`_ is a command-line tool for interacting with a
+Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to install and upgrade
+Determined on Kubernetes. This section covers some of the useful kubectl and helm commands when
+:ref:`running Determined on Kubernetes <install-on-kubernetes>`.
 
 For all the commands listed below, include ``-n <kubernetes namespace name>`` if running Determined
 in a non-default `namespace

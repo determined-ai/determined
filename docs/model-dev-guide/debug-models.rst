@@ -117,9 +117,10 @@ This step assumes you have a working local environment for training. If you do n
    If your per-method checks in :ref:`Step 2 <step2>` passed but local test mode fails, your
    ``Trial`` subclass might not be implemented correctly. Double-check the documentation. It is also
    possible that you have found a bug or an invalid assumption in the Determined software and should
-   `file a GitHub issue <https://github.com/determined-ai/determined/issues/new>`__ or contact
-   Determined on `Slack
-   <https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
+   `file a GitHub issue
+   <https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fdetermined-ai%2Fdetermined%2Fissues%2Fnew>`__
+   or contact Determined on `Slack
+   <https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
 
 .. _step4:
 
@@ -298,7 +299,7 @@ interactive environment, it is submitted to the cluster and managed by Determine
       has errors. Review the :ref:`experiment configuration <experiment-config-reference>`.
 
 If you are unable to identify the cause of the problem, contact Determined `community support
-<https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
+<https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
 
 .. _step8:
 

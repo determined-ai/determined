@@ -859,5 +859,5 @@ Reference
 ---------
 
 -  YAML: https://learnxinyminutes.com/docs/yaml/
--  Validate YAML: http://www.yamllint.com/
+-  Validate YAML: https://www.yamllint.com/
 -  Convert YAML to JSON: https://www.json2yaml.com/convert-yaml-to-json

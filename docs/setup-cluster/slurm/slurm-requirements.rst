@@ -88,7 +88,7 @@ interacts with Slurm, we recommend the following steps:
 
 -  Enable Slurm for GPU Scheduling.
 
-   Configure Slurm with `SelectType=select/cons_tres <https://slurm.schedmd.com/cons_res.html>`__.
+   Configure Slurm with `SelectType=select/cons_tres <https://slurm.schedmd.com/cons_tres.html>`__.
    This enables Slurm to track GPU allocation instead of tracking only CPUs. When enabled,
    Determined submits batch jobs by specifying ``--gpus={slots_per_trial}``. If this is not
    available, you must change the :ref:`slurm section <cluster-configuration-slurm>`
@@ -418,10 +418,10 @@ on the compute nodes of the cluster.
 *********************
 
 When Determined is configured to use Podman, the containers are launched in `rootless mode
-<https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC cluster
-administrator should have completed most of the configuration for you, but there may be additional
-per-user configuration that is required. Before attempting to launch Determined jobs, verify that
-you can run simple Podman containers on a compute node. For example:
+<https://docs.podman.io/en/latest//en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC
+cluster administrator should have completed most of the configuration for you, but there may be
+additional per-user configuration that is required. Before attempting to launch Determined jobs,
+verify that you can run simple Podman containers on a compute node. For example:
 
 .. code:: bash
 

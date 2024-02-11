@@ -10,7 +10,7 @@
 
 In this tutorial, you'll learn how to port an existing PyTorch model to Determined. We will port a
 simple image classification model for the MNIST dataset. This tutorial is based on the official
-`PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
+`PyTorch MNIST example <https://github.com/PyTorch/examples/blob/main/mnist/main.py>`_.
 
 *********************
  About Model Porting

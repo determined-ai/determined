@@ -8,10 +8,11 @@
  How Determined Distributed Training Works
 *******************************************
 
-Determined employs data parallelism in its approach to distributed training. Data parallelism for
-deep learning consists of a set of workers, where each worker is assigned to a unique compute
-accelerator such as a GPU or a TPU. Each worker maintains a copy of the model parameters (weights
-that are being trained), which is synchronized across all the workers at the start of training.
+Determined employs data or model parallelism in its approach to distributed training. Data
+parallelism for deep learning consists of a set of workers, where each worker is assigned to a
+unique compute accelerator such as a GPU or a TPU. Each worker maintains a copy of the model
+parameters (weights that are being trained), which is synchronized across all the workers at the
+start of training.
 
 .. image:: /assets/images/_dtrain-loop-dark.png
    :class: only-dark

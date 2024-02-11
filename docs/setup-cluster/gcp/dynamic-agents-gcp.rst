@@ -179,8 +179,8 @@ using the base instance configuration and preparing commands. The following is a
 configuration. See `REST Resource: instances
 <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__ for the full list of
 configuration options supported by GCP. See `Formatting and mounting a zonal persistent disk
-<https://cloud.google.com/compute/docs/disks/add-persistent-disk#formatting>`__ for more examples of
-formatting or mounting disks in GCP.
+<https://cloud.google.com/compute/docs/disks/add-persistent-disk>`__ for more examples of formatting
+or mounting disks in GCP.
 
 Here is an example master configuration to attach and mount a second disk to each dynamic agent.
 

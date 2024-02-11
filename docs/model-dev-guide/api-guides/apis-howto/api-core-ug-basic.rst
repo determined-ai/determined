@@ -36,7 +36,7 @@ This user guide shows you how to get started using the Core API.
 
 Access the tutorial files via the :download:`core_api.tgz </examples/core_api.tgz>` download or
 directly from the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api>`_.
 
 *****************
  Getting Started
@@ -132,7 +132,7 @@ with only a few new lines of code.
 
 The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
 the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api>`_.
 
 .. _core-checkpoints:
 
@@ -212,7 +212,7 @@ trial ID in the checkpoint and use it to distinguish the two types of continues.
 
 The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in this example can be
 found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api>`_.
 
 .. _core-hpsearch:
 
@@ -292,7 +292,7 @@ runs a train-validate-report loop:
 
 The complete ``3_hpsearch.py`` and ``3_hpsearch.yaml`` listings used in this example can be found in
 the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api>`_.
 
 .. _core-distributed:
 
@@ -420,4 +420,4 @@ considerations are:
 
 The complete ``4_distributed.py`` and ``3_hpsearch.yaml`` listings used in this example can be found
 in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api>`_.

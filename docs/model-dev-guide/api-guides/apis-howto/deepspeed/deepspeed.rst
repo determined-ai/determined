@@ -67,7 +67,7 @@ DeepSpeed training initialization consists of two steps:
 #. Create the DeepSpeed model engine.
 
 Refer to the `DeepSpeed Getting Started guide
-<https://www.deepspeed.ai/getting-started/#writing-deepspeed-models/>`_ for more information.
+<https://www.deepspeed.ai/getting-started/#writing-deepspeed-models>`_ for more information.
 
 Outside of Determined, this is typically done in the following way:
 
@@ -200,7 +200,7 @@ returned data loaders, which differs because the DeepSpeed model engines automat
 gradient aggregation.
 
 Automatic gradient aggregation in DeepSpeed is specified in `configuration fields
-<https://www.deepspeed.ai/docs/config-json/#batch-size-related-parameters/>`_:
+<https://www.deepspeed.ai/docs/config-json/>`_:
 
 -  ``train_batch_size``
 -  ``train_micro_batch_size``
@@ -318,7 +318,7 @@ method.
 passed directly into ``torch.profiler.profile``. Stepping the profiler will be handled automatically
 during the training loop.
 
-See the `PyTorch profiler plugin <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ for
+See the `PyTorch profiler plugin <https://github.com/pytorch/kineto/tree/main/tb_plugin>`_ for
 details.
 
 The snippet below will profile GPU and CPU usage, skipping batch 1, warming up on batch 2, and
