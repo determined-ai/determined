@@ -41,6 +41,7 @@ import css from './App.module.scss';
 
 import 'modern-normalize/modern-normalize.css';
 import '@glideapps/glide-data-grid/dist/index.css';
+import { StreamingProvider } from 'hooks/useStreamingProvider';
 
 const updateThemeSetting = (mode: Mode) => userSettings.set(themeSettings, STORAGE_PATH, { mode });
 const themeSetting = userSettings.get(themeSettings, STORAGE_PATH);
@@ -206,7 +207,9 @@ const App: React.FC = () => {
       <ThemeProvider>
         <SettingsProvider>
           <DndProvider backend={HTML5Backend}>
+            <StreamingProvider>
             <AppView />
+            </StreamingProvider>
           </DndProvider>
         </SettingsProvider>
       </ThemeProvider>
