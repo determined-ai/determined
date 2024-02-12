@@ -1,0 +1,21 @@
+{
+  "family": "ci-perf-test",
+  "containerDefinitions": [
+    {
+      "name": "performance-runner",
+      "image": "placeholder",
+      "cpu": 2048,
+      "memory": 4096,
+      "environment": [
+        {
+          "name": "ENV_VAR_NAME",
+          "value": "updated-example"
+        }
+      ]
+    }
+  ],
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096"
+}
