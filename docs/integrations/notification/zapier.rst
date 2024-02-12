@@ -2,7 +2,7 @@
  Zapier
 ########
 
-This section will walk through the steps needed to set up Zapier webhook to to receive updates from
+This section will walk through the steps needed to set up Zapier webhook to receive updates from
 Determined.
 
 The steps to set up Zapier webhook are:
