@@ -1041,20 +1041,16 @@ commands:
           release-name: ${GENERATED_NAMESPACE}
           values-to-override: ${HELM_VALUES}
       - set-master-address-gke:
-          release-name: "ci"
+          release-name: ${GENERATED_NAMESPACE}
           namespace: ${GENERATED_NAMESPACE}
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
 
   generate-tls-cert:
-    parameters:
-      master-cert-name: 
-        type: string
-        default: "determined-master-ci"
     steps:
       - run: |
           .circleci/scripts/generate_cert.sh /tmp/master
-          echo 'export MASTER_TLS_CERT=/tmp/master.crt MASTER_TLS_KEY=/tmp/master.key MASTER_CERT_NAME=<<parameters.master-cert-name>>' >> $BASH_ENV
+          echo 'export MASTER_TLS_CERT=/tmp/master.crt MASTER_TLS_KEY=/tmp/master.key MASTER_CERT_NAME=determined-master-ci' >> $BASH_ENV
 
   set-master-address-aws:
     parameters:
@@ -2711,8 +2707,7 @@ jobs:
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
             echo "GENERATED_CERT_NAME=\"${GENERATED_NAMESPACE}-cert"\" >> $BASH_ENV
-      - generate-tls-cert:
-          master-cert-name: ${GENERATED_CERT_NAME}
+      - generate-tls-cert
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}
           labels: test-mark=<<parameters.mark>>
