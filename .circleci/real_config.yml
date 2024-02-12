@@ -2704,14 +2704,15 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run:
-          name: Install Determined Helm chart
+          name: Create Namespace & Cert Name
           command: |
             # Extract the commit hash from Git metadata
             COMMIT_HASH=$(git rev-parse --short HEAD)
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
+            echo "GENERATED_CERT_NAME=\"${GENERATED_NAMESPACE}-cert"\" >> $BASH_ENV
       - generate-tls-cert
-          master-cert-name: "${GENERATED_NAMESPACE}-cert"
+          master-cert-name: ${GENERATED_CERT_NAME}
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}
           labels: test-mark=<<parameters.mark>>
