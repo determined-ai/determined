@@ -13,7 +13,6 @@ To deploy the Determined HPC Launcher on Slurm/PBS, the following requirements m
 -  The login node, admin node, and compute nodes must be installed and configured with one of the
    following Linux distributions:
 
-   -  Red Hat® Enterprise Linux (RHEL) or CentOS 7.9
    -  RHEL or Rocky Linux® 8.5, 8.6
    -  RHEL 9
    -  SUSE® Linux Enterprise Server (SLES) 12 SP3 , 15 SP3, 15 SP4
