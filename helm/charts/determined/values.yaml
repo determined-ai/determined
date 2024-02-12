@@ -234,7 +234,7 @@ checkpointStorage:
 maxSlotsPerPod:
 
 
-// TODO( POPULATE THIS COMMENT)
+# TODO( POPULATE THIS COMMENT)
 createNamespaceObjects:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
