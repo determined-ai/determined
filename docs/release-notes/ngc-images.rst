@@ -8,5 +8,5 @@
 
 **Improvements**
 
--  Remove TF 2.8 images from our offerings. Our default TF 2.11 images are still available for
-   Tensorflow users.
+-  Remove TF 2.8 images from our offerings. Default TF 2.11 images are still available for
+   TensorFlow users.
