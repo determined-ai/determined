@@ -87,6 +87,13 @@ useNodePortForMaster: false
 # the same namespace in which Determined is being installed.
 # tlsSecret:
 
+
+# TLS Security setting (TODO populate this comment)
+security:
+  tls:
+    cert:
+    key:
+
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
   # environments contain an unprivileged user named det-nobody, which does have a writable HOME
@@ -319,18 +326,18 @@ telemetry:
 
   ## Authentication and TLS options for making the connection to Elasticsearch.
   # security:
-    # username: <username>
-    # password: <password>
-    # tls:
-      # enabled: true
-      # skipVerify: false
+  #   # username: <username>
+  #   # password: <password>
+  #   tls:
+  #     enabled: true
+  #     skipVerify: false
 
-      ## The name to use when verifying the certificate, if different from the name used to connect.
-      # certificateName: <name>
+  #     # The name to use when verifying the certificate, if different from the name used to connect.
+  #     certificateName: <name>
 
-      ## This value must contain the contents of the certificate file, not a path. It may be set
-      ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
-      # certificate: <certificate contents>
+  #     # This value must contain the contents of the certificate file, not a path. It may be set
+  #     # directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
+  #     certificate: <certificate contents>
 
 ## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
