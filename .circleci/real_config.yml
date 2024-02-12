@@ -1004,7 +1004,7 @@ commands:
       - run:
           command: |
             echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert="\${MASTER_TLS_CERT}"\,security.tls.key=\"${MASTER_TLS_KEY}"\,masterPort=8443"' >> "$BASH_ENV"
-            name: Setup TLS Helm Values
+          name: Setup TLS Helm Values
       - run:
           command: |
             echo 'export HELM_VALUES="${HELM_VALUES},loadBalancerSourceRanges=\"${CI_RANGES}\""' >> "$BASH_ENV"
@@ -2710,7 +2710,6 @@ jobs:
             COMMIT_HASH=$(git rev-parse --short HEAD)
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
-            echo "GENERATED_CERT_NAME=\"${GENERATED_NAMESPACE}-cert"\" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}
