@@ -235,7 +235,7 @@ maxSlotsPerPod:
 
 
 # TODO( POPULATE THIS COMMENT)
-createNamespaceObjects:
+createNamespacedObjects:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
