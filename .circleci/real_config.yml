@@ -1003,7 +1003,7 @@ commands:
                 name: CPU setup helm overrides
       - run:
           command: |
-            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=${MASTER_TLS_CERT},security.tls.key=${MASTER_TLS_KEY},masterPort=8443"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert="\${MASTER_TLS_CERT}"\,security.tls.key=\"${MASTER_TLS_KEY}"\,masterPort=8443"' >> "$BASH_ENV"
             name: Setup TLS Helm Values
       - run:
           command: |
