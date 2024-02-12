@@ -1,28 +1,13 @@
 import subprocess
-import time
 
 import pytest
 
 from determined.cli import ntsc
-from determined.common import api, util
+from determined.common import util
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
-
-
-def wait_for_task_state(
-    test_session: api.Session,
-    task_id: str,
-    expected_state: bindings.v1GenericTaskState,
-    timeout: int,
-) -> bool:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        resp = bindings.get_GetTask(test_session, taskId=task_id)
-        if expected_state == resp.task.taskState:
-            return True
-        time.sleep(0.1)
-    return False
+from tests.task import task
 
 
 @pytest.mark.e2e_cpu
@@ -67,7 +52,7 @@ def test_generic_task_completion() -> None:
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Check for complete state
-    is_valid_state = wait_for_task_state(
+    is_valid_state = task.wait_for_task_state(
         test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
     )
     if not is_valid_state:
@@ -97,7 +82,7 @@ def test_create_generic_task_error() -> None:
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Check for error state
-    is_valid_state = wait_for_task_state(
+    is_valid_state = task.wait_for_task_state(
         test_session, task_resp.taskId, bindings.v1GenericTaskState.ERROR, timeout=30
     )
     if not is_valid_state:
