@@ -233,6 +233,10 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
+
+// TODO( POPULATE THIS COMMENT)
+createNamespaceObjects:
+
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
 # slotResourceRequests:
