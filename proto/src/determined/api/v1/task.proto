@@ -5,12 +5,46 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/timestamp.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/task/v1/task.proto";
 import "determined/api/v1/trial.proto";
 import "determined/log/v1/log.proto";
+import "determined/util/v1/util.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+// Request to create a new generic task.
+message CreateGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "context_directory", "config" ] }
+  };
+  // Generic task context.
+  repeated determined.util.v1.File context_directory = 1;
+  // Generic task config (YAML).
+  string config = 2;
+  // Project id to contain the experiment.
+  optional int32 project_id = 3;
+  // Parent ID of new task
+  optional string parent_id = 4;
+  // If True inherits the context directory from the paren task (requires
+  // parent_id)
+  optional bool inherit_context = 5;
+  // Id of the task that this task is forked from
+  optional string forked_from = 6;
+  // Flag for whether task can be paused or not.
+  optional bool no_pause = 7;
+}
+
+// Response to CreateExperimentRequest.
+message CreateGenericTaskResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The created generic taskID.
+  string task_id = 1;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 2;
+}
 // Get the requested task.
 message GetTaskRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -246,3 +280,60 @@ message GetAllocationResponse {
   // The id of the allocation.
   determined.task.v1.Allocation allocation = 1;
 }
+
+// Gets task configuration JSON
+message GetGenericTaskConfigRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to GetTaskConfigRequest
+message GetGenericTaskConfigResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config" ] }
+  };
+  // The config of the task
+  string config = 1;
+}
+
+// Kills generic task
+message KillGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+
+  // Kill entire task tree
+  bool kill_from_root = 2;
+}
+
+// Response to KillGenericTaskRequest
+message KillGenericTaskResponse {}
+
+// Pauses generic task
+message PauseGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to PauseGenericTaskRequest
+message PauseGenericTaskResponse {}
+
+// Unpause generic task
+message UnpauseGenericTaskRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+}
+
+// Response to UnpauseGenericTaskRequest
+message UnpauseGenericTaskResponse {}

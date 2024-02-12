@@ -12,8 +12,6 @@ import (
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 
-	k8sV1 "k8s.io/api/core/v1"
-
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,11 +21,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
-	mconfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -36,7 +32,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -100,41 +95,22 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		resources.Slots = 0
 	}
-	poolName, err := a.m.rm.ResolveResourcePool(
-		resources.ResourcePool, int(cmdSpec.Metadata.WorkspaceID), resources.Slots)
+
+	poolName, launchWarnings, err := a.m.ResolveResources(
+		resources.ResourcePool,
+		resources.Slots,
+		int(cmdSpec.Metadata.WorkspaceID),
+		true,
+	)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-	if err = a.m.rm.ValidateResources(poolName, resources.Slots, true); err != nil {
-		return nil, nil, fmt.Errorf("validating resources: %v", err)
+		return nil, launchWarnings, err
 	}
 
-	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
-		&sproto.ValidateResourcePoolAvailabilityRequest{
-			Name:  poolName,
-			Slots: resources.Slots,
-		},
-	)
-	if err != nil {
-		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
-	}
-	if a.m.config.ResourceManager.AgentRM != nil &&
-		a.m.config.LaunchError &&
-		len(launchWarnings) > 0 {
-		return nil, nil, errors.New("slots requested exceeds cluster capacity")
-	}
 	// Get the base TaskSpec.
-	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
-		poolName,
-		a.m.config.TaskContainerDefaults,
-	)
+	taskSpec, err := a.m.fillTaskSpec(poolName, agentUserGroup, userModel)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting TaskContainerDefaults: %v", err)
+		return nil, nil, err
 	}
-	taskSpec := *a.m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	taskSpec.AgentUserGroup = agentUserGroup
-	taskSpec.Owner = userModel
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
@@ -156,58 +132,19 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		}
 	}
 	// Copy discovered (default) resource pool name and slot count.
+	fillTaskConfig(resources.Slots, taskSpec, &config.Environment)
 	config.Resources.ResourcePool = poolName
 	config.Resources.Slots = resources.Slots
 
-	if req.MustZeroSlot {
-		config.Resources.Slots = 0
-	}
-
-	taskContainerPodSpec := taskSpec.TaskContainerDefaults.GPUPodSpec
-	if config.Resources.Slots == 0 {
-		taskContainerPodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
-	}
-	config.Environment.PodSpec = (*k8sV1.Pod)(schemas.Merge(
-		(*expconf.PodSpec)(config.Environment.PodSpec),
-		(*expconf.PodSpec)(taskContainerPodSpec),
-	))
-
 	var contextDirectory []byte
-	if len(req.Files) > 0 {
-		userFiles := filesToArchive(req.Files)
-
-		workdirSetInReq := config.WorkDir != nil &&
-			(workDirInDefaults == nil || *workDirInDefaults != *config.WorkDir)
-		if workdirSetInReq {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				"cannot set work_dir and context directory at the same time")
-		}
-		config.WorkDir = nil
-
-		contextDirectory, err = archive.ToTarGz(userFiles)
-		if err != nil {
-			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
-				fmt.Errorf("compressing files context files: %w", err).Error())
-		}
+	config.WorkDir, contextDirectory, err = fillContextDir(config.WorkDir, workDirInDefaults, req.Files)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
-	var token string
-	if extConfig.Enabled() {
-		token, err = grpcutil.GetUserExternalToken(ctx)
-		if err != nil {
-			return nil, launchWarnings, status.Errorf(codes.Internal,
-				errors.Wrapf(err,
-					"unable to get external user token").Error())
-		}
-		err = nil
-	} else {
-		token, err = user.StartSession(ctx, userModel)
-		if err != nil {
-			return nil, launchWarnings, status.Errorf(codes.Internal,
-				errors.Wrapf(err,
-					"unable to create user session inside task").Error())
-		}
+	token, err := getTaskSessionToken(ctx, userModel)
+	if err != nil {
+		return nil, nil, err
 	}
 	taskSpec.UserSessionToken = token
 

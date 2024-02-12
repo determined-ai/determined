@@ -32,12 +32,18 @@ func AddTask(ctx context.Context, t *model.Task) error {
 // AddTaskTx UPSERT's the existence of a task in a tx.
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
-		Column("task_id", "task_type", "start_time", "job_id", "log_version").
+		Column("task_id", "task_type", "start_time", "job_id", "log_version",
+			"config", "forked_from", "parent_id", "task_state", "no_pause").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
 		Set("job_id=EXCLUDED.job_id").
 		Set("log_version=EXCLUDED.log_version").
+		Set("config=EXCLUDED.config").
+		Set("forked_from=EXCLUDED.forked_from").
+		Set("parent_id=EXCLUDED.parent_id").
+		Set("task_state=EXCLUDED.task_state").
+		Set("no_pause=EXCLUDED.no_pause").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }
@@ -92,6 +98,85 @@ func CompleteTask(ctx context.Context, tID model.TaskID, endTime time.Time) erro
 	if _, err := Bun().NewUpdate().Table("tasks").Set("end_time = ?", endTime).
 		Where("task_id = ?", tID).Exec(ctx); err != nil {
 		return fmt.Errorf("completing task: %w", err)
+	}
+	return nil
+}
+
+// CompleteGenericTask persists the completion of a task of type GENERIC.
+func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := CompleteTask(context.Background(), tID, endTime)
+	if err != nil {
+		return err
+	}
+	_, err = Bun().
+		NewRaw(`UPDATE tasks
+				SET task_state = (
+	    		CASE WHEN task_state = ? THEN ?::task_state
+	    		ELSE ?::task_state END)
+				WHERE task_id = ?
+	    `, model.TaskStateStoppingCanceled, model.TaskStateCanceled, model.TaskStateCompleted, tID).
+		Exec(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "completing task")
+	}
+	return nil
+}
+
+// KillGenericTask persists the termination of a task of type GENERIC.
+func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
+	err := CompleteTask(context.Background(), tID, endTime)
+	if err != nil {
+		return err
+	}
+	_, err = Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStateCanceled).
+		Where("task_id = ?", tID).
+		Exec(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "killing task")
+	}
+	return nil
+}
+
+// SetPausedState sets given task to a PAUSED state.
+func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
+	_, err := Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStatePaused).
+		Set("end_time = ?", endTime).
+		Where("task_id = ?", taskID).
+		Exec(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "pausing task")
+	}
+	return nil
+}
+
+// IsPaused returns true if given task is in paused/pausing state.
+func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
+	count, err := Bun().NewSelect().Table("tasks").
+		Where("task_id = ?", tID).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("task_state = ?", model.TaskStateStoppingPaused).
+				WhereOr("task_state = ?", model.TaskStatePaused)
+		}).Count(context.Background())
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// SetErrorState sets given task to a ERROR state.
+func (db *PgDB) SetErrorState(taskID model.TaskID, endTime time.Time) error {
+	_, err := Bun().NewUpdate().
+		Table("tasks").
+		Set("task_state = ?", model.TaskStateError).
+		Set("end_time = ?", endTime).
+		Where("task_id = ?", taskID).
+		Exec(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "setting error task state")
 	}
 	return nil
 }
