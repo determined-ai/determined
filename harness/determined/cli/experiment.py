@@ -7,7 +7,7 @@ import time
 from argparse import ArgumentError, FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
 
 import tabulate
 import termcolor
@@ -18,7 +18,6 @@ import determined.experimental
 import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
-from determined.cli.errors import CliError
 from determined.cli.ntsc import CONFIG_DESC, parse_config_overrides
 from determined.common import api, context, set_logger, util
 from determined.common.api import authentication, bindings, logs
@@ -52,63 +51,6 @@ def archive(args: Namespace) -> None:
 def cancel(args: Namespace) -> None:
     bindings.post_CancelExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Canceled experiment {args.experiment_id}")
-
-
-def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]:
-    """
-    Attempt to read the git metadata from the model definition directory. If
-    unsuccessful, print a descriptive error statement and exit.
-    """
-    try:
-        from git import Repo
-    except ImportError as e:  # pragma: no cover
-        raise CliError(f"Error: Please verify that git is installed correctly: {e}")
-
-    if model_def_path.is_dir():
-        repo_path = model_def_path.resolve()
-    else:
-        repo_path = model_def_path.parent.resolve()
-
-    if not repo_path.joinpath(".git").is_dir():
-        raise CliError(
-            f"Error: No git directory found at {repo_path}. Please "
-            "initialize a git repository or refrain from "
-            "using the --git feature."
-        )
-
-    try:
-        repo = Repo(str(repo_path))
-    except Exception as e:
-        raise CliError(f"Failed to initialize git repository at {repo_path}: {e}")
-
-    if repo.is_dirty():
-        raise CliError(
-            "Git working directory is dirty. Please commit the "
-            "following changes before creating an experiment "
-            "with the --git feature:\n"
-            f"\n{repo.git.status()}"
-        )
-
-    commit = repo.commit()
-    commit_hash = commit.hexsha
-    committer = f"{commit.committer.name} <{commit.committer.email}>"
-    commit_date = commit.committed_datetime.isoformat()
-
-    # To get the upstream remote URL:
-    #
-    # (1) Get the current upstream branch name
-    #     (https://stackoverflow.com/a/9753364/2596715)
-    # (2) Parse the git remote name from the upstream branch name.
-    # (3) Retrieve the URL of the remote from the git configuration.
-    try:
-        upstream_branch = repo.git.rev_parse("@{u}", abbrev_ref=True, symbolic_full_name=True)
-        remote_name = upstream_branch.split("/", 1)[0]
-        remote_url = repo.git.config(f"remote.{remote_name}.url", get=True)
-        print(f"Using remote URL '{remote_url}' from upstream branch '{upstream_branch}'")
-    except Exception as e:
-        raise CliError(f"Failed to find the upstream branch: {e}")
-
-    return (remote_url, commit_hash, committer, commit_date)
 
 
 def _parse_config_text_or_exit(
@@ -259,11 +201,6 @@ def submit_experiment(args: Namespace) -> None:
         template=args.template,
         validateOnly=bool(args.test_mode),
     )
-
-    if args.git:
-        req.gitRemote, req.gitCommit, req.gitCommitter, req.gitCommitDate = read_git_metadata(
-            args.model_def
-        )
 
     if args.test_mode:
         print(termcolor.colored("Validating experiment configuration...", "yellow"), end="\r")
@@ -1127,15 +1064,6 @@ main_cmd = Cmd(
                     default=[],
                     type=Path,
                     help="additional files to copy into the task container",
-                ),
-                Arg(
-                    "-g",
-                    "--git",
-                    action="store_true",
-                    help="Associate git metadata with this experiment. This "
-                    "flag assumes that git is installed, a .git repository "
-                    "exists in the model definition directory, and that the "
-                    "git working tree of that repository is empty.",
                 ),
                 Arg(
                     "--local",
