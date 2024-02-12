@@ -1048,13 +1048,13 @@ commands:
 
   generate-tls-cert:
     parameters:
-      master_cert_name: 
+      master-cert-name: 
         type: string
         default: "determined-master-ci"
     steps:
       - run: |
           .circleci/scripts/generate_cert.sh /tmp/master
-          echo 'export MASTER_TLS_CERT=/tmp/master.crt MASTER_TLS_KEY=/tmp/master.key MASTER_CERT_NAME=<<parameters.master_cert_name>>' >> $BASH_ENV
+          echo 'export MASTER_TLS_CERT=/tmp/master.crt MASTER_TLS_KEY=/tmp/master.key MASTER_CERT_NAME=<<parameters.master-cert-name>>' >> $BASH_ENV
 
   set-master-address-aws:
     parameters:
