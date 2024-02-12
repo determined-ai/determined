@@ -189,6 +189,7 @@ args_description = [
                         "-p",
                         "--resource-pool",
                         type=str,
+                        required=True,
                         help="The target resource pool, if any.",
                     ),
                     *cli.make_pagination_args(limit=100, supports_reverse=True),
