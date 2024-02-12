@@ -2711,7 +2711,7 @@ jobs:
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
             echo "GENERATED_CERT_NAME=\"${GENERATED_NAMESPACE}-cert"\" >> $BASH_ENV
-      - generate-tls-cert
+      - generate-tls-cert:
           master-cert-name: ${GENERATED_CERT_NAME}
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}
