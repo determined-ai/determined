@@ -972,7 +972,7 @@ commands:
         default: "cpu"
       slot-resource-requests-cpu:
         type: integer
-        default: 7
+        default: 1
       master-tls-cert:
         type: string
       master-tls-key:
