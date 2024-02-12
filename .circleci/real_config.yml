@@ -2807,10 +2807,10 @@ workflows:
           requires:
             - build-react
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
 
       - upload-docs-search-index:
           requires:
