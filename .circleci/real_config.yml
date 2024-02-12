@@ -3035,6 +3035,7 @@ workflows:
           context: gcp-shared-cluster
           requires:
             - build-go
+            - package-and-push-system-dev
           parallelism: 1
           mark: e2e_cpu
 
