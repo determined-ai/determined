@@ -224,7 +224,7 @@ export const Jobv1State = {
 } as const
 export type Jobv1State = ValueOf<typeof Jobv1State>
 /**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.  - TYPE_EXTERNAL: External Job.
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.  - TYPE_EXTERNAL: External Job.  - TYPE_GENERIC: Generic Job.
  * @export
  * @enum {string}
  */
@@ -237,6 +237,7 @@ export const Jobv1Type = {
     COMMAND: 'TYPE_COMMAND',
     CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
     EXTERNAL: 'TYPE_EXTERNAL',
+    GENERIC: 'TYPE_GENERIC',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
@@ -2195,6 +2196,74 @@ export interface V1CreateExperimentResponse {
     warnings?: Array<V1LaunchWarning>;
 }
 /**
+ * Request to create a new generic task.
+ * @export
+ * @interface V1CreateGenericTaskRequest
+ */
+export interface V1CreateGenericTaskRequest {
+    /**
+     * Generic task context.
+     * @type {Array<V1File>}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    contextDirectory: Array<V1File>;
+    /**
+     * Generic task config (YAML).
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    config: string;
+    /**
+     * Project id to contain the experiment.
+     * @type {number}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    projectId?: number;
+    /**
+     * Parent ID of new task
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    parentId?: string;
+    /**
+     * If True inherits the context directory from the paren task (requires parent_id)
+     * @type {boolean}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    inheritContext?: boolean;
+    /**
+     * Id of the task that this task is forked from
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    forkedFrom?: string;
+    /**
+     * Flag for whether task can be paused or not.
+     * @type {boolean}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    noPause?: boolean;
+}
+/**
+ * Response to CreateExperimentRequest.
+ * @export
+ * @interface V1CreateGenericTaskResponse
+ */
+export interface V1CreateGenericTaskResponse {
+    /**
+     * The created generic taskID.
+     * @type {string}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    taskId: string;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
  * CreateGroupRequest is the body of the request for the call to create a group.
  * @export
  * @interface V1CreateGroupRequest
@@ -3115,6 +3184,24 @@ export const V1FittingPolicy = {
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
 /**
+ * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
+ * @export
+ * @enum {string}
+ */
+export const V1GenericTaskState = {
+    UNSPECIFIED: 'GENERIC_TASK_STATE_UNSPECIFIED',
+    ACTIVE: 'GENERIC_TASK_STATE_ACTIVE',
+    CANCELED: 'GENERIC_TASK_STATE_CANCELED',
+    COMPLETED: 'GENERIC_TASK_STATE_COMPLETED',
+    ERROR: 'GENERIC_TASK_STATE_ERROR',
+    PAUSED: 'GENERIC_TASK_STATE_PAUSED',
+    STOPPINGPAUSED: 'GENERIC_TASK_STATE_STOPPING_PAUSED',
+    STOPPINGCANCELED: 'GENERIC_TASK_STATE_STOPPING_CANCELED',
+    STOPPINGCOMPLETED: 'GENERIC_TASK_STATE_STOPPING_COMPLETED',
+    STOPPINGERROR: 'GENERIC_TASK_STATE_STOPPING_ERROR',
+} as const
+export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
+/**
  * Response to GetActiveTasksCountRequest.
  * @export
  * @interface V1GetActiveTasksCountResponse
@@ -3447,6 +3534,19 @@ export interface V1GetExperimentValidationHistoryResponse {
      * @memberof V1GetExperimentValidationHistoryResponse
      */
     validationHistory?: Array<V1ValidationHistoryEntry>;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetGenericTaskConfigResponse
+ */
+export interface V1GetGenericTaskConfigResponse {
+    /**
+     * The config of the task
+     * @type {string}
+     * @memberof V1GetGenericTaskConfigResponse
+     */
+    config: string;
 }
 /**
  * GetGroupResponse is the body of the response for the call to get a group by id.
@@ -4992,6 +5092,32 @@ export interface V1KillExperimentsResponse {
      * @memberof V1KillExperimentsResponse
      */
     results: Array<V1ExperimentActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskRequest
+ */
+export interface V1KillGenericTaskRequest {
+    /**
+     * The id of the task.
+     * @type {string}
+     * @memberof V1KillGenericTaskRequest
+     */
+    taskId: string;
+    /**
+     * Kill entire task tree
+     * @type {boolean}
+     * @memberof V1KillGenericTaskRequest
+     */
+    killFromRoot?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskResponse
+ */
+export interface V1KillGenericTaskResponse {
 }
 /**
  * Response to KillNotebookRequest.
@@ -6885,6 +7011,13 @@ export interface V1PauseExperimentsResponse {
      * @memberof V1PauseExperimentsResponse
      */
     results: Array<V1ExperimentActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1PauseGenericTaskResponse
+ */
+export interface V1PauseGenericTaskResponse {
 }
 /**
  * 
@@ -9629,6 +9762,36 @@ export interface V1Task {
      * @memberof V1Task
      */
     endTime?: Date | DateString;
+    /**
+     * The configuration of the task.
+     * @type {string}
+     * @memberof V1Task
+     */
+    config?: string;
+    /**
+     * ID of parent task (empty if root task).
+     * @type {string}
+     * @memberof V1Task
+     */
+    parentId?: string;
+    /**
+     * State of task execution.
+     * @type {V1GenericTaskState}
+     * @memberof V1Task
+     */
+    taskState?: V1GenericTaskState;
+    /**
+     * ID of task this is forked from (If task is a forked task)
+     * @type {string}
+     * @memberof V1Task
+     */
+    forkedFrom?: string;
+    /**
+     * Flag for whether task can be paused or not.
+     * @type {boolean}
+     * @memberof V1Task
+     */
+    noPause?: boolean;
 }
 /**
  * 
@@ -9826,7 +9989,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.  - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */
@@ -9838,6 +10001,7 @@ export const V1TaskType = {
     COMMAND: 'TASK_TYPE_COMMAND',
     TENSORBOARD: 'TASK_TYPE_TENSORBOARD',
     CHECKPOINTGC: 'TASK_TYPE_CHECKPOINT_GC',
+    GENERIC: 'TASK_TYPE_GENERIC',
 } as const
 export type V1TaskType = ValueOf<typeof V1TaskType>
 /**
@@ -10636,6 +10800,13 @@ export interface V1UnbindRPFromWorkspaceRequest {
  * @interface V1UnbindRPFromWorkspaceResponse
  */
 export interface V1UnbindRPFromWorkspaceResponse {
+}
+/**
+ * 
+ * @export
+ * @interface V1UnpauseGenericTaskResponse
+ */
+export interface V1UnpauseGenericTaskResponse {
 }
 /**
  * Response to UnpinWorkspaceRequest.
@@ -17779,6 +17950,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createGenericTask.');
+            }
+            const localVarPath = `/api/v1/generic-tasks`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -18019,6 +18228,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getGenericTaskConfig.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/config`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -18660,6 +18905,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling killGenericTask.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/kill`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -19062,6 +19351,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling pauseGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/pause`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -19991,6 +20316,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling unpauseGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/unpause`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -20319,6 +20680,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGenericTask(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -20441,6 +20821,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGenericTaskConfigResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGenericTaskConfig(taskId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20743,6 +21142,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killGenericTask(taskId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -20915,6 +21334,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchUsers(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseGenericTask(taskId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21336,6 +21774,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpauseGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unpauseGenericTask(taskId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -21513,6 +21970,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).createGenericTask(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -21581,6 +22048,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any) {
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options?: any) {
+            return InternalApiFp(configuration).getGenericTaskConfig(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -21748,6 +22225,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).killGenericTask(taskId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -21848,6 +22336,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         patchUsers(body: V1PatchUsersRequest, options?: any) {
             return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options?: any) {
+            return InternalApiFp(configuration).pauseGenericTask(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22080,6 +22578,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options?: any) {
+            return InternalApiFp(configuration).unpauseGenericTask(taskId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Update group info.
          * @param {number} groupId The id of the group
          * @param {V1UpdateGroupRequest} body
@@ -22264,6 +22772,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Create an experiment.
+     * @param {V1CreateGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).createGenericTask(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Create a group with optional members on creation.
      * @param {V1CreateGroupRequest} body
      * @param {*} [options] Override http request option.
@@ -22345,6 +22865,18 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get task config
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getGenericTaskConfig(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).getGenericTaskConfig(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22541,6 +23073,19 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Kill generic task
+     * @param {string} taskId The id of the task.
+     * @param {V1KillGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).killGenericTask(taskId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
@@ -22658,6 +23203,18 @@ export class InternalApi extends BaseAPI {
      */
     public patchUsers(body: V1PatchUsersRequest, options?: any) {
         return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Pause generic task
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public pauseGenericTask(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).pauseGenericTask(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22927,6 +23484,18 @@ export class InternalApi extends BaseAPI {
      */
     public unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any) {
         return InternalApiFp(this.configuration).unbindRPFromWorkspace(resourcePoolName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unpause generic task
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unpauseGenericTask(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).unpauseGenericTask(taskId, options)(this.fetch, this.basePath)
     }
     
     /**

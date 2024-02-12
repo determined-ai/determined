@@ -45,6 +45,32 @@ enum TaskType {
   TASK_TYPE_TENSORBOARD = 5;
   // "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
   TASK_TYPE_CHECKPOINT_GC = 6;
+  // "GENERIC" task type for the enum public.task_type in Postgres.
+  TASK_TYPE_GENERIC = 7;
+}
+
+// State of a Generic task
+enum GenericTaskState {
+  // The task state unknown
+  GENERIC_TASK_STATE_UNSPECIFIED = 0;
+  // The task state unknown
+  GENERIC_TASK_STATE_ACTIVE = 1;
+  // The task state unknown
+  GENERIC_TASK_STATE_CANCELED = 2;
+  // The task state unknown
+  GENERIC_TASK_STATE_COMPLETED = 3;
+  // The task state unknown
+  GENERIC_TASK_STATE_ERROR = 4;
+  // The task state unknown
+  GENERIC_TASK_STATE_PAUSED = 5;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_PAUSED = 6;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_CANCELED = 7;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_COMPLETED = 8;
+  // The task state unknown
+  GENERIC_TASK_STATE_STOPPING_ERROR = 9;
 }
 
 // Allocation tracks a specific instance of a Task.
@@ -89,6 +115,16 @@ message Task {
   google.protobuf.Timestamp start_time = 5;
   // End timestamp if completed.
   optional google.protobuf.Timestamp end_time = 6;
+  // The configuration of the task.
+  optional string config = 7;
+  // ID of parent task (empty if root task).
+  optional string parent_id = 8;
+  // State of task execution.
+  optional GenericTaskState task_state = 9;
+  // ID of task this is forked from (If task is a forked task)
+  optional string forked_from = 10;
+  // Flag for whether task can be paused or not.
+  optional bool no_pause = 11;
 }
 
 // Address represents an exposed port on a container.

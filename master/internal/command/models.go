@@ -23,6 +23,9 @@ type CommandSnapshot struct {
 	// GenericCommandSpec
 	GenericCommandSpec tasks.GenericCommandSpec `bun:"generic_command_spec"`
 
+	// GenericTaskSpec
+	GenericTaskSpec *tasks.GenericTaskSpec `bun:"generic_task_spec"`
+
 	// Relations
 	Task       model.Task       `bun:"rel:belongs-to,join:task_id=task_id"`
 	Allocation model.Allocation `bun:"rel:belongs-to,join:allocation_id=allocation_id"`

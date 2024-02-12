@@ -58,6 +58,10 @@ type NSCAuthZ interface {
 	CanTerminateTensorboard(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
+
+	CanCreateGenericTask(
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	) error
 }
 
 // AuthZProvider is the authz registry for Notebooks, Shells, and Commands.

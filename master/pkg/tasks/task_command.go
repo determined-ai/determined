@@ -47,11 +47,13 @@ type GenericCommandSpec struct {
 	CommandID string
 
 	Config model.CommandConfig
+
 	// Deprecated: kept so we can still marshal to this.
 	// Please use command.CreateGeneric.modelDef instead.
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
-	Metadata        genericCommandSpecMetadata
+
+	Metadata genericCommandSpecMetadata
 
 	Keys *ssh.PrivateAndPublicKeys
 

@@ -92,6 +92,13 @@ func (a *NSCAuthZBasic) CanTerminateTensorboard(
 	return nil
 }
 
+// CanCreateGenericTask always returns nil.
+func (a *NSCAuthZBasic) CanCreateGenericTask(
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+) error {
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &NSCAuthZBasic{})
 }

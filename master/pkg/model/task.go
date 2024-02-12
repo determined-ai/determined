@@ -48,6 +48,8 @@ const (
 	TaskTypeTensorboard TaskType = "TENSORBOARD"
 	// TaskTypeCheckpointGC is the "CHECKPOINT_GC" job type for the enum public.job_type in Postgres.
 	TaskTypeCheckpointGC TaskType = "CHECKPOINT_GC"
+	// TaskTypeGeneric is the "GENERIC" job type for the enum public.job_type in Postgres.
+	TaskTypeGeneric TaskType = "GENERIC"
 	// GlobalAccessScopeID represents global permission access.
 	GlobalAccessScopeID AccessScopeID = 0
 )
@@ -79,7 +81,15 @@ type Task struct {
 	LogVersion TaskLogVersion `db:"log_version"`
 
 	// Relations.
-	Job *Job `bun:"rel:belongs-to,join:job_id=job_id"`
+	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
+	ParentID   *TaskID `db:"parent_id"`
+	ForkedFrom *string `db:"forked_from"`
+
+	State *TaskState `db:"task_state" bun:"task_state"`
+
+	Config *string `db:"config"`
+
+	NoPause *bool `db:"no_pause"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form
@@ -102,6 +112,15 @@ func (a AllocationID) String() string {
 // ToTaskID converts an AllocationID to its taskID.
 func (a AllocationID) ToTaskID() TaskID {
 	return TaskID(a[:strings.LastIndex(string(a), ".")])
+}
+
+// GetAllocationSpecifier retrieves number at the end of the allocation's id.
+func (a AllocationID) GetAllocationSpecifier() (int, error) {
+	i, err := strconv.Atoi(a[strings.LastIndex(string(a), ".")+1:].String())
+	if err != nil {
+		return 0, err
+	}
+	return i, nil
 }
 
 // Allocation is the model for an allocation in the database.
@@ -139,6 +158,30 @@ type AcceleratorData struct {
 
 // AllocationState represents the current state of the task. Value indicates a partial ordering.
 type AllocationState string
+
+// TaskState represents the state of a generic task.
+type TaskState string
+
+const (
+	// TaskStateActive denotes that task is running.
+	TaskStateActive TaskState = "ACTIVE"
+	// TaskStateCanceled denotes that task is killed.
+	TaskStateCanceled TaskState = "CANCELED"
+	// TaskStateCompleted denotes that task has finished running.
+	TaskStateCompleted TaskState = "COMPLETED"
+	// TaskStateError denotes that task has exited with an error.
+	TaskStateError TaskState = "ERROR"
+	// TaskStatePaused denotes that task has been paused.
+	TaskStatePaused TaskState = "PAUSED"
+	// TaskStateStoppingPaused denotes that the task is in the process of being paused.
+	TaskStateStoppingPaused TaskState = "STOPPING_PAUSED"
+	// TaskStateStoppingCanceled denotes that the task is in the process of being canceled.
+	TaskStateStoppingCanceled TaskState = "STOPPING_CANCELED"
+	// TaskStateStoppingCompleted denotes that the task is in the process of being completed.
+	TaskStateStoppingCompleted TaskState = "STOPPING_COMPLETED"
+	// TaskStateStoppingError denotes that the task is in the process of returning an error.
+	TaskStateStoppingError TaskState = "STOPPING_ERROR"
+)
 
 // TaskStats is the model for task stats in the database.
 type TaskStats struct {

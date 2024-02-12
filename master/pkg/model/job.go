@@ -37,6 +37,8 @@ const (
 	JobTypeExperiment JobType = "EXPERIMENT"
 	// JobTypeCheckpointGC is the "CheckpointGC" job type for enum.job_type in Postgres.
 	JobTypeCheckpointGC JobType = "CHECKPOINT_GC"
+	// JobTypeGeneric is the "GENERIC" job type for enum.job_type in Postgres.
+	JobTypeGeneric JobType = "GENERIC"
 )
 
 // Proto returns the proto representation of the job type.
@@ -54,6 +56,8 @@ func (jt JobType) Proto() jobv1.Type {
 		return jobv1.Type_TYPE_TENSORBOARD
 	case JobTypeCheckpointGC:
 		return jobv1.Type_TYPE_CHECKPOINT_GC
+	case JobTypeGeneric:
+		return jobv1.Type_TYPE_GENERIC
 	default:
 		panic("unknown job type")
 	}

@@ -390,6 +390,7 @@ class jobv1Type(DetEnum):
     - TYPE_COMMAND: Command Job.
     - TYPE_CHECKPOINT_GC: CheckpointGC Job.
     - TYPE_EXTERNAL: External Job.
+    - TYPE_GENERIC: Generic Job.
     """
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     EXPERIMENT = "TYPE_EXPERIMENT"
@@ -399,6 +400,7 @@ class jobv1Type(DetEnum):
     COMMAND = "TYPE_COMMAND"
     CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
     EXTERNAL = "TYPE_EXTERNAL"
+    GENERIC = "TYPE_GENERIC"
 
 class protobufAny(Printable):
     """https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"""
@@ -2607,6 +2609,104 @@ class v1CreateExperimentResponse(Printable):
             out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
+class v1CreateGenericTaskRequest(Printable):
+    """Request to create a new generic task."""
+    forkedFrom: "typing.Optional[str]" = None
+    inheritContext: "typing.Optional[bool]" = None
+    noPause: "typing.Optional[bool]" = None
+    parentId: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        config: str,
+        contextDirectory: "typing.Sequence[v1File]",
+        forkedFrom: "typing.Union[str, None, Unset]" = _unset,
+        inheritContext: "typing.Union[bool, None, Unset]" = _unset,
+        noPause: "typing.Union[bool, None, Unset]" = _unset,
+        parentId: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.config = config
+        self.contextDirectory = contextDirectory
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(inheritContext, Unset):
+            self.inheritContext = inheritContext
+        if not isinstance(noPause, Unset):
+            self.noPause = noPause
+        if not isinstance(parentId, Unset):
+            self.parentId = parentId
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+            "contextDirectory": [v1File.from_json(x) for x in obj["contextDirectory"]],
+        }
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "inheritContext" in obj:
+            kwargs["inheritContext"] = obj["inheritContext"]
+        if "noPause" in obj:
+            kwargs["noPause"] = obj["noPause"]
+        if "parentId" in obj:
+            kwargs["parentId"] = obj["parentId"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
+            "contextDirectory": [x.to_json(omit_unset) for x in self.contextDirectory],
+        }
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "inheritContext" in vars(self):
+            out["inheritContext"] = self.inheritContext
+        if not omit_unset or "noPause" in vars(self):
+            out["noPause"] = self.noPause
+        if not omit_unset or "parentId" in vars(self):
+            out["parentId"] = self.parentId
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        return out
+
+class v1CreateGenericTaskResponse(Printable):
+    """Response to CreateExperimentRequest."""
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
+
+    def __init__(
+        self,
+        *,
+        taskId: str,
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
+    ):
+        self.taskId = taskId
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CreateGenericTaskResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
+        return out
+
 class v1CreateGroupRequest(Printable):
     """CreateGroupRequest is the body of the request for the call
     to create a group.
@@ -3887,6 +3987,30 @@ class v1FittingPolicy(DetEnum):
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
 
+class v1GenericTaskState(DetEnum):
+    """State of a Generic task
+    - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown
+    - GENERIC_TASK_STATE_ACTIVE: The task state unknown
+    - GENERIC_TASK_STATE_CANCELED: The task state unknown
+    - GENERIC_TASK_STATE_COMPLETED: The task state unknown
+    - GENERIC_TASK_STATE_ERROR: The task state unknown
+    - GENERIC_TASK_STATE_PAUSED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown
+    - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
+    """
+    UNSPECIFIED = "GENERIC_TASK_STATE_UNSPECIFIED"
+    ACTIVE = "GENERIC_TASK_STATE_ACTIVE"
+    CANCELED = "GENERIC_TASK_STATE_CANCELED"
+    COMPLETED = "GENERIC_TASK_STATE_COMPLETED"
+    ERROR = "GENERIC_TASK_STATE_ERROR"
+    PAUSED = "GENERIC_TASK_STATE_PAUSED"
+    STOPPING_PAUSED = "GENERIC_TASK_STATE_STOPPING_PAUSED"
+    STOPPING_CANCELED = "GENERIC_TASK_STATE_STOPPING_CANCELED"
+    STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
+    STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
+
 class v1GetActiveTasksCountResponse(Printable):
     """Response to GetActiveTasksCountRequest."""
 
@@ -4401,6 +4525,28 @@ class v1GetExperimentsResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "experiments": [x.to_json(omit_unset) for x in self.experiments],
             "pagination": self.pagination.to_json(omit_unset),
+        }
+        return out
+
+class v1GetGenericTaskConfigResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        config: str,
+    ):
+        self.config = config
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGenericTaskConfigResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
         }
         return out
 
@@ -6796,6 +6942,36 @@ class v1KillExperimentsResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "results": [x.to_json(omit_unset) for x in self.results],
         }
+        return out
+
+class v1KillGenericTaskRequest(Printable):
+    killFromRoot: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        taskId: str,
+        killFromRoot: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.taskId = taskId
+        if not isinstance(killFromRoot, Unset):
+            self.killFromRoot = killFromRoot
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillGenericTaskRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "taskId": obj["taskId"],
+        }
+        if "killFromRoot" in obj:
+            kwargs["killFromRoot"] = obj["killFromRoot"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "taskId": self.taskId,
+        }
+        if not omit_unset or "killFromRoot" in vars(self):
+            out["killFromRoot"] = self.killFromRoot
         return out
 
 class v1KillNotebookResponse(Printable):
@@ -13178,7 +13354,12 @@ class v1StartTrialResponse(Printable):
 
 class v1Task(Printable):
     """Task is the model for a task in the database."""
+    config: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
+    forkedFrom: "typing.Optional[str]" = None
+    noPause: "typing.Optional[bool]" = None
+    parentId: "typing.Optional[str]" = None
+    taskState: "typing.Optional[v1GenericTaskState]" = None
 
     def __init__(
         self,
@@ -13187,14 +13368,29 @@ class v1Task(Printable):
         startTime: str,
         taskId: str,
         taskType: "v1TaskType",
+        config: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[str, None, Unset]" = _unset,
+        noPause: "typing.Union[bool, None, Unset]" = _unset,
+        parentId: "typing.Union[str, None, Unset]" = _unset,
+        taskState: "typing.Union[v1GenericTaskState, None, Unset]" = _unset,
     ):
         self.allocations = allocations
         self.startTime = startTime
         self.taskId = taskId
         self.taskType = taskType
+        if not isinstance(config, Unset):
+            self.config = config
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(noPause, Unset):
+            self.noPause = noPause
+        if not isinstance(parentId, Unset):
+            self.parentId = parentId
+        if not isinstance(taskState, Unset):
+            self.taskState = taskState
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Task":
@@ -13204,8 +13400,18 @@ class v1Task(Printable):
             "taskId": obj["taskId"],
             "taskType": v1TaskType(obj["taskType"]),
         }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "noPause" in obj:
+            kwargs["noPause"] = obj["noPause"]
+        if "parentId" in obj:
+            kwargs["parentId"] = obj["parentId"]
+        if "taskState" in obj:
+            kwargs["taskState"] = v1GenericTaskState(obj["taskState"]) if obj["taskState"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -13215,8 +13421,18 @@ class v1Task(Printable):
             "taskId": self.taskId,
             "taskType": self.taskType.value,
         }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "noPause" in vars(self):
+            out["noPause"] = self.noPause
+        if not omit_unset or "parentId" in vars(self):
+            out["parentId"] = self.parentId
+        if not omit_unset or "taskState" in vars(self):
+            out["taskState"] = None if self.taskState is None else self.taskState.value
         return out
 
 class v1TaskLog(Printable):
@@ -13484,6 +13700,7 @@ class v1TaskType(DetEnum):
     - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.
     - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.
     - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+    - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
     """
     UNSPECIFIED = "TASK_TYPE_UNSPECIFIED"
     TRIAL = "TASK_TYPE_TRIAL"
@@ -13492,6 +13709,7 @@ class v1TaskType(DetEnum):
     COMMAND = "TASK_TYPE_COMMAND"
     TENSORBOARD = "TASK_TYPE_TENSORBOARD"
     CHECKPOINT_GC = "TASK_TYPE_CHECKPOINT_GC"
+    GENERIC = "TASK_TYPE_GENERIC"
 
 class v1Template(Printable):
     """Templates move settings that are shared by many experiments into a single
@@ -15868,6 +16086,27 @@ def post_CreateExperiment(
         return v1CreateExperimentResponse.from_json(_resp.json())
     raise APIHttpError("post_CreateExperiment", _resp)
 
+def post_CreateGenericTask(
+    session: "api.Session",
+    *,
+    body: "v1CreateGenericTaskRequest",
+) -> "v1CreateGenericTaskResponse":
+    """Create an experiment."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/generic-tasks",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CreateGenericTaskResponse.from_json(_resp.json())
+    raise APIHttpError("post_CreateGenericTask", _resp)
+
 def post_CreateGroup(
     session: "api.Session",
     *,
@@ -17021,6 +17260,32 @@ usernames.
     if _resp.status_code == 200:
         return v1GetExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetExperiments", _resp)
+
+def get_GetGenericTaskConfig(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> "v1GetGenericTaskConfigResponse":
+    """Get task config
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/tasks/{taskId}/config",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGenericTaskConfigResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGenericTaskConfig", _resp)
 
 def get_GetGroup(
     session: "api.Session",
@@ -19132,6 +19397,33 @@ def post_KillExperiments(
         return v1KillExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_KillExperiments", _resp)
 
+def post_KillGenericTask(
+    session: "api.Session",
+    *,
+    body: "v1KillGenericTaskRequest",
+    taskId: str,
+) -> None:
+    """Kill generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/kill",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_KillGenericTask", _resp)
+
 def post_KillNotebook(
     session: "api.Session",
     *,
@@ -20055,6 +20347,32 @@ def post_PauseExperiments(
     if _resp.status_code == 200:
         return v1PauseExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("post_PauseExperiments", _resp)
+
+def post_PauseGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Pause generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/pause",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PauseGenericTask", _resp)
 
 def post_PinWorkspace(
     session: "api.Session",
@@ -21710,6 +22028,32 @@ def delete_UnbindRPFromWorkspace(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_UnbindRPFromWorkspace", _resp)
+
+def post_UnpauseGenericTask(
+    session: "api.Session",
+    *,
+    taskId: str,
+) -> None:
+    """Unpause generic task
+
+    - taskId: The id of the task.
+    """
+    _params = None
+    if type(taskId) == str:
+        taskId = parse.quote(taskId)
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/tasks/{taskId}/unpause",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_UnpauseGenericTask", _resp)
 
 def post_UnpinWorkspace(
     session: "api.Session",
