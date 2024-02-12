@@ -3207,14 +3207,6 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context: gcp-shared-cluster
-          requires:
-            - package-and-push-system-dev
-          parallelism: 1
-          mark: e2e_cpu
-
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
           context: gcp-ci
@@ -3406,6 +3398,14 @@ workflows:
               mark: ["e2e_gpu"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-shared-cluster:
+          name: test-e2e-shared-cluster-cpu
+          context: gcp-shared-cluster
+          requires:
+            - package-and-push-system-dev
+          parallelism: 1
+          mark: e2e_cpu
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
