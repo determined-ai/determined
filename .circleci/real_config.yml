@@ -3067,9 +3067,9 @@ workflows:
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
           context: gcp-ci
-          filters:
-            branches:
-              only: main
+          # filters:
+          #   branches:
+          #     only: main
           requires:
             - package-and-push-system-dev
           matrix:
