@@ -1,4 +1,5 @@
-{{- if (and .Values.genai .Values.genai.version) }}
+{{- if .Values.genai }}
+{{- if .Values.genai.version }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -79,4 +80,5 @@ spec:
         - name: genai-resource-pool-metadata
           configMap:
             name: genai-resource-pool-metadata-{{ .Release.Name }}
+{{ end }}
 {{ end }}
