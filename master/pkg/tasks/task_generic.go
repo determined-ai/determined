@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -14,8 +15,11 @@ import (
 
 // GenericTaskSpec is the generic task spec.
 type GenericTaskSpec struct {
-	Base      TaskSpec
-	ProjectID int
+	Base           TaskSpec
+	ProjectID      int
+	WorkspaceID    int
+	RegisteredTime time.Time
+	JobID          model.JobID
 
 	GenericTaskConfig model.GenericTaskConfig
 }
@@ -70,15 +74,15 @@ func (s GenericTaskSpec) ToTaskSpec() TaskSpec {
 // ToV1Job todo.
 func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
 	j := jobv1.Job{
-		JobId:          "GENERIC TASK",
+		JobId:          s.JobID.String(),
 		EntityId:       s.Base.TaskID,
-		Type:           jobv1.Type_TYPE_UNSPECIFIED,
-		SubmissionTime: timestamppb.Now(),
+		Type:           model.JobTypeGeneric.Proto(),
+		SubmissionTime: timestamppb.New(s.RegisteredTime),
 		Username:       s.Base.Owner.Username,
-		UserId:         0,
+		UserId:         int32(s.Base.Owner.ID),
 		Weight:         0,
-		Name:           "ToV1Job not implemented for Generic Task",
-		WorkspaceId:    0,
+		Name:           "generic-task",
+		WorkspaceId:    int32(s.WorkspaceID),
 	}
 
 	j.Priority = 0

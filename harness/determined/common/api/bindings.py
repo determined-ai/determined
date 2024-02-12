@@ -390,6 +390,7 @@ class jobv1Type(DetEnum):
     - TYPE_COMMAND: Command Job.
     - TYPE_CHECKPOINT_GC: CheckpointGC Job.
     - TYPE_EXTERNAL: External Job.
+    - TYPE_GENERIC: Generic Job.
     """
     UNSPECIFIED = "TYPE_UNSPECIFIED"
     EXPERIMENT = "TYPE_EXPERIMENT"
@@ -399,6 +400,7 @@ class jobv1Type(DetEnum):
     COMMAND = "TYPE_COMMAND"
     CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
     EXTERNAL = "TYPE_EXTERNAL"
+    GENERIC = "TYPE_GENERIC"
 
 class protobufAny(Printable):
     """https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"""

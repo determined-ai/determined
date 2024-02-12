@@ -95,6 +95,8 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 
+	genericTaskSpec.WorkspaceID = int(proj.WorkspaceId)
+
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
 
@@ -290,6 +292,9 @@ func (a *apiServer) CreateGenericTask(
 		}); err != nil {
 			return fmt.Errorf("persisting job %v: %w", taskID, err)
 		}
+
+		genericTaskSpec.RegisteredTime = startTime
+		genericTaskSpec.JobID = jobID
 
 		configBytesJSON, err := yaml.YAMLToJSON(configBytes)
 		if err != nil {

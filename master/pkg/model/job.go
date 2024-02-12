@@ -56,6 +56,8 @@ func (jt JobType) Proto() jobv1.Type {
 		return jobv1.Type_TYPE_TENSORBOARD
 	case JobTypeCheckpointGC:
 		return jobv1.Type_TYPE_CHECKPOINT_GC
+	case JobTypeGeneric:
+		return jobv1.Type_TYPE_GENERIC
 	default:
 		panic("unknown job type")
 	}
