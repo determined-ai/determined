@@ -1038,7 +1038,7 @@ commands:
           helm-version: v3.2.4
           namespace: ${GENERATED_NAMESPACE}
           wait: true
-          release-name: "ci"
+          release-name: ${GENERATED_NAMESPACE}
           values-to-override: ${HELM_VALUES}
       - set-master-address-gke:
           release-name: "ci"
