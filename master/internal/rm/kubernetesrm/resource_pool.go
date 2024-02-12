@@ -90,14 +90,6 @@ func (k *kubernetesResourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	k.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 }
 
-func (k *kubernetesResourcePool) SetAllocationName(msg sproto.SetAllocationName) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	k.reschedule = true
-
-	k.receiveSetAllocationName(msg)
-}
-
 func (k *kubernetesResourcePool) AllocateRequest(msg sproto.AllocateRequest) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -462,14 +454,6 @@ func (k *kubernetesResourcePool) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
 	jobQInfo := tasklist.ReduceToJobQInfo(reqs)
 	correctedJobQInfo := k.correctJobQInfo(reqs, jobQInfo)
 	return correctedJobQInfo
-}
-
-func (k *kubernetesResourcePool) receiveSetAllocationName(
-	msg sproto.SetAllocationName,
-) {
-	if task, found := k.reqList.TaskByID(msg.AllocationID); found {
-		task.Name = msg.Name
-	}
 }
 
 func (k *kubernetesResourcePool) assignResources(
