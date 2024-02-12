@@ -132,7 +132,8 @@ stringData:
     {{- end }}
     {{- end }}
 
-    {{- if (and .Values.genai .Values.genai.version) }}
+    {{- if .Values.genai }}
+    {{- if .Values.genai.version }}
     feature_switches:
       - genai
 
@@ -143,7 +144,8 @@ stringData:
           path_prefix: /lore
         - destination: "http://genai-service-{{ .Release.Name }}:{{ $port }}/genai"
           path_prefix: /genai
-    {{- end}}
+    {{- end }}
+    {{- end }}
 
     resource_manager:
       type: "kubernetes"
