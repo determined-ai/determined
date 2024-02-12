@@ -3029,15 +3029,6 @@ workflows:
           parallelism: 6
           tf2: true
           mark: e2e_cpu
-    
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context: gcp-shared-cluster
-          requires:
-            - build-go
-            - package-and-push-system-dev
-          parallelism: 1
-          mark: e2e_cpu
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -3215,6 +3206,14 @@ workflows:
               enable-tls: [true]
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-shared-cluster:
+          name: test-e2e-shared-cluster-cpu
+          context: gcp-shared-cluster
+          requires:
+            - package-and-push-system-dev
+          parallelism: 1
+          mark: e2e_cpu
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
