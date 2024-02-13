@@ -15,18 +15,18 @@ import (
 )
 
 func TestAddJob(t *testing.T) {
-	db := setupDbForTest(t)
+	db := setupDBForTest(t)
 
 	t.Run("add job", func(t *testing.T) {
-		jobId := model.NewJobID()
-		j := model.Job{JobID: jobId, JobType: model.JobTypeCommand}
+		jobID := model.NewJobID()
+		j := model.Job{JobID: jobID, JobType: model.JobTypeCommand}
 		err := db.AddJob(&j)
 		require.NoError(t, err)
 	})
 
 	t.Run("add job with duplicate id", func(t *testing.T) {
-		jobId := model.NewJobID()
-		j := model.Job{JobID: jobId, JobType: model.JobTypeCommand}
+		jobID := model.NewJobID()
+		j := model.Job{JobID: jobID, JobType: model.JobTypeCommand}
 		err := db.AddJob(&j)
 		require.NoError(t, err)
 
@@ -43,9 +43,9 @@ func TestAddJob(t *testing.T) {
 }
 
 func TestJobByID(t *testing.T) {
-	db := setupDbForTest(t)
+	db := setupDBForTest(t)
 
-	t.Run("add and retrive job", func(t *testing.T) {
+	t.Run("add and retrieve job", func(t *testing.T) {
 		// create and send job
 		sendJob := model.Job{
 			JobID:   model.NewJobID(),
@@ -73,7 +73,7 @@ func TestJobByID(t *testing.T) {
 }
 
 func TestUpdateJobPosition(t *testing.T) {
-	db := setupDbForTest(t)
+	db := setupDBForTest(t)
 
 	t.Run("update position", func(t *testing.T) {
 		// create and send job
@@ -159,7 +159,7 @@ func TestUpdateJobPosition(t *testing.T) {
 	})
 }
 
-func setupDbForTest(t *testing.T) *PgDB {
+func setupDBForTest(t *testing.T) *PgDB {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
 	db := MustResolveTestPostgres(t)
