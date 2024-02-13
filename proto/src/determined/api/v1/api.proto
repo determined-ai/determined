@@ -18,6 +18,7 @@ import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/project.proto";
 import "determined/api/v1/rbac.proto";
+import "determined/api/v1/run.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
@@ -351,6 +352,18 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
+    };
+  }
+
+  // Create an experiment.
+  rpc CreateGenericTask(CreateGenericTaskRequest)
+      returns (CreateGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/generic-tasks"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
 
@@ -750,6 +763,19 @@ service Determined {
   rpc StartTrial(StartTrialRequest) returns (StartTrialResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/{trial_id}/start"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
+  // Start syncing and prepare to be able to report to a run.
+  // This should be called once per task that will report to the run.
+  rpc RunPrepareForReporting(RunPrepareForReportingRequest)
+      returns (RunPrepareForReportingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/start"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2377,6 +2403,51 @@ service Determined {
       returns (ListWorkspacesBoundToRPResponse) {
     option (google.api.http) = {
       get: "/api/v1/resource-pools/{resource_pool_name}/workspace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get task config
+  rpc GetGenericTaskConfig(GetGenericTaskConfigRequest)
+      returns (GetGenericTaskConfigResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/tasks/{task_id}/config"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Kill generic task
+  rpc KillGenericTask(KillGenericTaskRequest)
+      returns (KillGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tasks/{task_id}/kill"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Pause generic task
+  rpc PauseGenericTask(PauseGenericTaskRequest)
+      returns (PauseGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tasks/{task_id}/pause"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unpause generic task
+  rpc UnpauseGenericTask(UnpauseGenericTaskRequest)
+      returns (UnpauseGenericTaskResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tasks/{task_id}/unpause"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

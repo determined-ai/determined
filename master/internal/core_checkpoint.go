@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/pkg/checkpoints"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
@@ -80,6 +81,15 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 	checkpoint, err := m.db.CheckpointByUUID(id)
 	if err != nil || checkpoint == nil {
 		return nil, err
+	}
+
+	if checkpoint.StorageID != nil {
+		storage, err := storage.Backend(context.TODO(), *checkpoint.StorageID)
+		if err != nil {
+			return nil, fmt.Errorf("getting storage config using id for download: %w", err)
+		}
+
+		return &storage, nil
 	}
 
 	bytes, err := json.Marshal(checkpoint.CheckpointTrainingMetadata.ExperimentConfig)

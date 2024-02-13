@@ -1385,9 +1385,22 @@ func (a *apiServer) ReportCheckpoint(
 	default:
 	}
 
-	if err := db.AddCheckpointMetadata(ctx, c); err != nil {
+	task, err := db.TaskByID(ctx, model.TaskID(req.Checkpoint.TaskId))
+	if err != nil {
+		return nil, fmt.Errorf("looking up task to decide if trial: %w", err)
+	}
+	if task.TaskType != model.TaskTypeTrial {
+		return nil, fmt.Errorf("can only report checkpoints on trial's tasks")
+	}
+	trial, err := db.TrialByTaskID(ctx, task.TaskID)
+	if err != nil {
+		return nil, fmt.Errorf("getting trial by task ID: %w", err)
+	}
+
+	if err := db.AddCheckpointMetadata(ctx, c, trial.ID); err != nil {
 		return nil, err
 	}
+
 	return &apiv1.ReportCheckpointResponse{}, nil
 }
 
@@ -1407,6 +1420,11 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 		p.ReportTime = timestamppb.New(time.Now().UTC())
 	}
 
+	var storageID *model.StorageBackendID
+	if p.StorageId != nil {
+		storageID = ptrs.Ptr(model.StorageBackendID(*p.StorageId))
+	}
+
 	c := &model.CheckpointV2{
 		UUID:         conv.ToUUID(p.Uuid),
 		TaskID:       model.TaskID(p.TaskId),
@@ -1415,6 +1433,7 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 		State:        conv.ToCheckpointState(p.State),
 		Resources:    p.Resources,
 		Metadata:     p.Metadata.AsMap(),
+		StorageID:    storageID,
 	}
 	if err := conv.Error(); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "converting checkpoint: %s", err)
@@ -1451,7 +1470,7 @@ func (a *apiServer) PostTrialRunnerMetadata(
 		return nil, err
 	}
 
-	if err := a.m.db.UpdateTrialRunnerMetadata(int(req.TrialId), req.Metadata); err != nil {
+	if err := a.m.db.UpdateTrialFields(int(req.TrialId), req.Metadata, 0, 0); err != nil {
 		return nil, err
 	}
 

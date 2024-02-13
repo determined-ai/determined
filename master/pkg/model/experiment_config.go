@@ -80,7 +80,8 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse device")
 }
 
-// ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
+// ResourcesConfig configures resource usage for an experiment, command, notebook, tensorboard
+// or generic task.
 type ResourcesConfig struct {
 	Slots int `json:"slots"`
 
@@ -90,6 +91,7 @@ type ResourcesConfig struct {
 	ShmSize        *StorageSize `json:"shm_size,omitempty"`
 	ResourcePool   string       `json:"resource_pool"`
 	Priority       *int         `json:"priority,omitempty"`
+	IsSingleNode   *bool        `json:"is_single_node"`
 
 	Devices DevicesConfig `json:"devices"`
 

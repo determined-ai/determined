@@ -8,19 +8,13 @@ import { useToast } from 'hew/Toast';
 import Toggle from 'hew/Toggle';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useEffect, useId } from 'react';
 
 import Link from 'components/Link';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import {
-  assignRolesToUser,
-  getUserRoles,
-  patchUser,
-  postUser,
-  removeRolesFromUser,
-} from 'services/api';
+import { assignRolesToUser, patchUser, postUser, removeRolesFromUser } from 'services/api';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
@@ -53,6 +47,7 @@ const FORM_ID = 'create-user-form';
 interface Props {
   user?: DetailedUser;
   viewOnly?: boolean;
+  userRoles?: Loadable<UserRole[]>;
   onClose?: () => void;
 }
 
@@ -65,33 +60,22 @@ interface FormInputs {
   [ACTIVE_NAME]: boolean;
 }
 
-const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: Props) => {
+const CreateUserModalComponent: React.FC<Props> = ({
+  onClose,
+  user,
+  userRoles,
+  viewOnly,
+}: Props) => {
   const { openToast } = useToast();
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
-  const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const canAssignRolesFlag: boolean = canAssignRoles({});
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const checkAuth = useAuthCheck();
 
   const knownRoles = useObservable(roleStore.roles);
-  const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined && rbacEnabled && canAssignRolesFlag) {
-      try {
-        const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles?.filter((r) => r.fromUser));
-      } catch (e) {
-        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
-      }
-    }
-  }, [user, canAssignRolesFlag, rbacEnabled]);
-
-  useEffect(() => {
-    fetchUserRoles();
-  }, [fetchUserRoles]);
 
   const handleSubmit = async () => {
     if (viewOnly) {
@@ -102,7 +86,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     const formData = await form.validateFields();
 
     const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
-    const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+    const oldRoles = new Set((userRoles?.getOrElse([]) ?? []).map((r) => r.id));
     const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
     const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
@@ -115,7 +99,6 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
           rolesToRemove.size > 0 &&
             (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
         }
-        fetchUserRoles();
         if (currentUser?.id === user.id) checkAuth();
         openToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
@@ -148,7 +131,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
-      [ROLE_NAME]: userRoles?.map((r) => r.id),
+      [ROLE_NAME]: userRoles?.getOrElse([]).map((r) => r.id),
     });
   }, [form, user, userRoles]);
 
@@ -172,7 +155,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
       }
       onClose={form.resetFields}>
       <Spinner
-        spinning={user !== undefined && userRoles === null && rbacEnabled && canAssignRoles({})}
+        spinning={user !== undefined && userRoles?.isNotLoaded && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
         <Form form={form} id={idPrefix + FORM_ID}>
           <Form.Item
@@ -204,7 +187,7 @@ const CreateUserModalComponent: React.FC<Props> = ({ onClose, user, viewOnly }: 
             <>
               <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
                 <Select
-                  disabled={(user !== undefined && userRoles === null) || viewOnly}
+                  disabled={(user !== undefined && userRoles?.isNotLoaded) || viewOnly}
                   loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
                   placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}>

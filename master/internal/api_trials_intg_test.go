@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 
@@ -29,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -46,7 +49,7 @@ func createTestTrial(
 		StartTime:  time.Now(),
 		TaskID:     trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, db.AddTask(context.TODO(), task))
 
 	trial := &model.Trial{
 		StartTime:    time.Now(),
@@ -530,6 +533,86 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	})
 }
 
+func TestReportCheckpoint(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	tr, task := createTestTrial(t, api, curUser)
+
+	checkpointMeta, err := structpb.NewStruct(map[string]any{
+		"steps_completed": 1,
+	})
+	require.NoError(t, err)
+
+	checkpointID := uuid.New().String()
+	req := &apiv1.ReportCheckpointRequest{
+		Checkpoint: &checkpointv1.Checkpoint{
+			TaskId:       string(task.TaskID),
+			AllocationId: nil,
+			Uuid:         checkpointID,
+			ReportTime:   timestamppb.New(time.Now().Truncate(time.Millisecond)),
+			Resources:    nil,
+			Metadata:     checkpointMeta,
+			State:        checkpointv1.State_STATE_COMPLETED,
+		},
+	}
+	_, err = api.ReportCheckpoint(ctx, req)
+	require.NoError(t, err)
+
+	c, err := api.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{
+		CheckpointUuid: checkpointID,
+	})
+	require.NoError(t, err)
+
+	jsonActual, err := json.MarshalIndent(c.Checkpoint, "", "\t")
+	require.NoError(t, err)
+
+	getExperimentResp, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+		ExperimentId: int32(tr.ExperimentID),
+	})
+	require.NoError(t, err)
+
+	req.Checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
+		TrialId:           wrapperspb.Int32(int32(tr.ID)),
+		ExperimentId:      wrapperspb.Int32(int32(tr.ExperimentID)),
+		ExperimentConfig:  getExperimentResp.Config,
+		Hparams:           nil,
+		TrainingMetrics:   &commonv1.Metrics{},
+		ValidationMetrics: &commonv1.Metrics{},
+	}
+	jsonExpected, err := json.MarshalIndent(req.Checkpoint, "", "\t")
+	require.NoError(t, err)
+
+	require.Equal(t, string(jsonExpected), string(jsonActual))
+}
+
+// This may have worked at some point but this definitely doesn't work after
+// trial one to many tasks since we switched the fk reference for some reason.
+func TestReportCheckpointNonTrialErrors(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	notebookTask := mockNotebookWithWorkspaceID(ctx, api, t, 1)
+
+	checkpointMeta, err := structpb.NewStruct(map[string]any{
+		"steps_completed": 1,
+	})
+	require.NoError(t, err)
+
+	checkpointID := uuid.New().String()
+	req := &apiv1.ReportCheckpointRequest{
+		Checkpoint: &checkpointv1.Checkpoint{
+			TaskId:       string(notebookTask),
+			AllocationId: nil,
+			Uuid:         checkpointID,
+			ReportTime:   timestamppb.New(time.Now().Truncate(time.Millisecond)),
+			Resources:    nil,
+			Metadata:     checkpointMeta,
+			State:        checkpointv1.State_STATE_COMPLETED,
+		},
+	}
+	_, err = api.ReportCheckpoint(ctx, req)
+	require.ErrorContains(t, err, "can only report checkpoints on trial's tasks")
+}
+
 func TestUnusualMetricNames(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	expectedMetricsMap := map[string]any{
@@ -751,7 +834,7 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 		StartTime:  task0.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task1))
+	require.NoError(t, db.AddTask(ctx, task1))
 
 	task2 := &model.Task{
 		TaskType:   model.TaskTypeTrial,
@@ -759,11 +842,11 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 		StartTime:  task1.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task2))
+	require.NoError(t, db.AddTask(ctx, task2))
 
-	_, err = db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err = db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 
@@ -834,7 +917,7 @@ func TestExperimentIDFromTrialTaskID(t *testing.T) {
 		StartTime:  time.Now(),
 		TaskID:     model.TaskID(uuid.New().String()),
 	}
-	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, db.AddTask(context.TODO(), task))
 	_, err = experimentIDFromTrialTaskID(notTrialTask.TaskID)
 	require.ErrorIs(t, err, errIsNotTrialTaskID)
 
@@ -852,7 +935,7 @@ func TestTrialLogsBackported(t *testing.T) {
 		StartTime:  time.Now(),
 		TaskID:     model.TaskID(fmt.Sprintf("backported.%d", exp.ID)),
 	}
-	require.NoError(t, api.m.db.AddTask(task))
+	require.NoError(t, db.AddTask(ctx, task))
 
 	trial := &model.Trial{
 		StartTime:    time.Now(),
@@ -889,7 +972,7 @@ func TestTrialLogs(t *testing.T) {
 		StartTime:  task0.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task1))
+	require.NoError(t, db.AddTask(ctx, task1))
 
 	task2 := &model.Task{
 		TaskType:   model.TaskTypeTrial,
@@ -897,11 +980,11 @@ func TestTrialLogs(t *testing.T) {
 		StartTime:  task1.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task2))
+	require.NoError(t, db.AddTask(ctx, task2))
 
-	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err := db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 
@@ -985,7 +1068,7 @@ func TestTrialLogFields(t *testing.T) {
 		StartTime:  task0.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task1))
+	require.NoError(t, db.AddTask(ctx, task1))
 
 	task2 := &model.Task{
 		TaskType:   model.TaskTypeTrial,
@@ -993,11 +1076,11 @@ func TestTrialLogFields(t *testing.T) {
 		StartTime:  task1.StartTime.Add(time.Second),
 		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
 	}
-	require.NoError(t, api.m.db.AddTask(task2))
+	require.NoError(t, db.AddTask(ctx, task2))
 
-	_, err := db.Bun().NewInsert().Model(&[]model.TrialTaskID{
-		{TrialID: trial.ID, TaskID: task1.TaskID},
-		{TrialID: trial.ID, TaskID: task2.TaskID},
+	_, err := db.Bun().NewInsert().Model(&[]model.RunTaskID{
+		{RunID: trial.ID, TaskID: task1.TaskID},
+		{RunID: trial.ID, TaskID: task2.TaskID},
 	}).Exec(ctx)
 	require.NoError(t, err)
 

@@ -75,11 +75,11 @@ unpersist:
 
 run:
 	docker run \
-		--name perf-tests \
+		--name perf-tests ${PERF_DOCKER_FLAGS} \
 		$(IMAGE) run \
 		-e DET_MASTER=$(DET_MASTER) \
-		$(K6_FLAGS) \
-		/test_scripts/api_performance_tests.js; \
+		$(K6_FLAGS) ${PERF_K6_FLAGS} \
+		/test_scripts/api_performance_tests.js --summary-export=summary.json; \
 	TEST_STATUS=$$?; \
 	docker cp \
 		perf-tests:/home/k6/junit.xml \
@@ -87,6 +87,9 @@ run:
 	docker cp \
 		perf-tests:/home/k6/results.txt \
 		reports/$$(date +%s).results.txt; \
+	docker cp \
+		perf-tests:/home/k6/summary.json \
+		reports/latest.results.json; \
 	docker rm perf-tests; \
 	[ $$TEST_STATUS -eq 0 ] || exit $$TEST_STATUS
 

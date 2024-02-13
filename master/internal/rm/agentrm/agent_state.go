@@ -11,7 +11,6 @@ import (
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -552,43 +551,22 @@ func (a *agentState) clearUnlessRecovered(
 	return nil
 }
 
-func listResourcePoolNames() []string {
-	rpConfigList := config.GetMasterConfig().ResourcePools
-	result := make([]string, 0, len(rpConfigList))
-	for _, rpConfig := range rpConfigList {
-		result = append(result, rpConfig.PoolName)
-	}
-	return result
-}
-
 // retrieveAgentStates reconstructs AgentStates from the database for all resource pools that
 // have agent_container_reattachment enabled.
 func retrieveAgentStates() (map[agentID]agentState, error) {
-	rpNames := listResourcePoolNames()
-
-	if len(rpNames) == 0 {
-		return map[agentID]agentState{}, nil
-	}
-
-	snapshots := []agentSnapshot{}
-	err := db.Bun().NewSelect().Model(&snapshots).
-		Where("resource_pool_name IN (?)", bun.In(rpNames)).
-		Scan(context.TODO())
-	if err != nil {
-		return nil, err
+	var snapshots []agentSnapshot
+	if err := db.Bun().NewSelect().Model(&snapshots).Scan(context.TODO()); err != nil {
+		return nil, fmt.Errorf("selecting agent snapshost: %w", err)
 	}
 
 	result := make(map[agentID]agentState, len(snapshots))
-
 	for _, s := range snapshots {
 		state, err := newAgentStateFromSnapshot(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to recreate agent state %s: %w", s.AgentID, err)
 		}
-
 		result[s.AgentID] = *state
 	}
-
 	return result, nil
 }
 
@@ -667,9 +645,8 @@ func (a *agentState) restoreContainersField() error {
 }
 
 func clearAgentStates(agentIds []agentID) error {
-	_, err := db.Bun().NewDelete().Where("agent_id in (?)", agentIds).Exec(context.TODO())
-
-	return err
+	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).Where("agent_id in (?)", agentIds).Exec(context.TODO())
+	return fmt.Errorf("clearing agent states: %w", err)
 }
 
 func updateContainerState(c *cproto.Container) error {

@@ -116,7 +116,7 @@ func testGetCheckpoint(
 					"determined_version": "1.0.0",
 				},
 			}
-			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+			err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 
 			assert.NilError(t, err, "failed to add checkpoint meta")
 
@@ -179,7 +179,7 @@ func testGetExperimentCheckpoints(
 			},
 		}
 
-		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 
 		trialMetrics := trialv1.TrialMetrics{
@@ -299,7 +299,7 @@ func testGetTrialCheckpoints(
 				"determined_version": "1.0.0",
 			},
 		}
-		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta)
+		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 	}
 
@@ -363,7 +363,7 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	*model.Experiment, *model.Trial, *model.Allocation,
 ) {
 	experiment, activeConfig := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment, activeConfig)
+	err := pgDB.AddExperiment(experiment, []byte{}, activeConfig)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
@@ -384,9 +384,9 @@ func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 		StartTime:    ptrs.Ptr(startTime),
 		EndTime:      ptrs.Ptr(startTime.Add(time.Duration(1) * time.Second)),
 	}
-	err = pgDB.AddAllocation(a)
+	err = db.AddAllocation(context.TODO(), a)
 	assert.NilError(t, err, "failed to add allocation")
-	err = pgDB.CompleteAllocation(a)
+	err = db.CompleteAllocation(context.TODO(), a)
 	assert.NilError(t, err, "failed to complete allocation")
 
 	return experiment, trial, a

@@ -1,17 +1,17 @@
 .. _model-hub-transformers:
 
-##############
- Transformers
-##############
+###########################
+ Hugging Face Transformers
+###########################
 
-`The Huggingface transformers library <https://github.com/huggingface/transformers>`_ is the de
+`The Hugging Face Transformers Library <https://github.com/huggingface/transformers>`_ is the de
 facto library for natural language processing (NLP) models. It provides pretrained weights for
 leading NLP models and lets you easily use these pretrained models for the most common NLP tasks,
 such as language modeling, text classification, and question answering.
 
 **model-hub** makes it easy to train transformer models in Determined while keeping the developer
 experience as close as possible to working directly with **transformers**. The Determined library
-serves as an alternative to the HuggingFace `Trainer Class
+serves as an alternative to the Hugging Face `Trainer Class
 <https://huggingface.co/transformers/main_classes/trainer.html>`_ and provides access to the
 benefits of using Determined, including:
 
@@ -39,7 +39,7 @@ Given the above benefits, this library can be particularly useful if any of the 
  Limitations
 *************
 
-The following HuggingFace **transformers** features are currently not supported:
+The following Hugging Face **transformers** features are currently not supported:
 
 -  TensorFlow version of transformers
 -  Support for fairscale

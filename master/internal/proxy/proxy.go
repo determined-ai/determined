@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
+
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
@@ -197,15 +199,14 @@ func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(masterCaBytes)
 
-	//nolint:gosec
-	proxy.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:            caCertPool,
-			Certificates:       []tls.Certificate{cert},
-			InsecureSkipVerify: true,
-			VerifyConnection:   VerifyMasterSigned,
-		},
+	transport := cleanhttp.DefaultTransport()
+	transport.TLSClientConfig = &tls.Config{
+		RootCAs:            caCertPool,
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true, //nolint:gosec
+		VerifyConnection:   VerifyMasterSigned,
 	}
+	proxy.Transport = transport
 
 	director := proxy.Director
 	proxy.Director = func(req *http.Request) {

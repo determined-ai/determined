@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -61,7 +62,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
 				checkpoint.Resources = resources[resourcesIndex]
-				err := AddCheckpointMetadata(ctx, &checkpoint)
+				err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 				require.NoError(t, err)
 
 				resourcesIndex++
@@ -164,32 +165,32 @@ func TestDeleteCheckpoints(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
-	_, task := RequireMockTrial(t, db, exp)
+	tr, task := RequireMockTrial(t, db, exp)
 	allocation := RequireMockAllocation(t, db, task.TaskID)
 
 	// Create checkpoints
 	ckpt1 := uuid.New()
 	checkpoint1 := MockModelCheckpoint(ckpt1, allocation)
-	err := AddCheckpointMetadata(ctx, &checkpoint1)
+	err := AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
 	require.NoError(t, err)
 	ckpt2 := uuid.New()
 	checkpoint2 := MockModelCheckpoint(ckpt2, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint2)
+	err = AddCheckpointMetadata(ctx, &checkpoint2, tr.ID)
 	require.NoError(t, err)
 	ckpt3 := uuid.New()
 	checkpoint3 := MockModelCheckpoint(ckpt3, allocation)
-	err = AddCheckpointMetadata(ctx, &checkpoint3)
+	err = AddCheckpointMetadata(ctx, &checkpoint3, tr.ID)
 	require.NoError(t, err)
 
 	// Insert a model.
 	now := time.Now()
-	mdl := model.Model{
+	mdl := Model{
 		Name:            uuid.NewString(),
 		Description:     "some important model",
 		CreationTime:    now,
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
-		Username:        user.Username,
+		UserID:          user.ID,
 		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes2"
@@ -285,7 +286,7 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 	exp := RequireMockExperiment(t, db, user)
 	for j := 0; j < 10; j++ {
 		t.Logf("Adding trial #%d", j)
-		_, task := RequireMockTrial(t, db, exp)
+		tr, task := RequireMockTrial(t, db, exp)
 		allocation := RequireMockAllocation(t, db, task.TaskID)
 		for k := 0; k < 10; k++ {
 			ckpt := uuid.New()
@@ -299,10 +300,110 @@ func BenchmarkUpdateCheckpointSize(b *testing.B) {
 			checkpoint := MockModelCheckpoint(ckpt, allocation)
 			checkpoint.Resources = resources
 
-			err := AddCheckpointMetadata(ctx, &checkpoint)
+			err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 			require.NoError(t, err)
 		}
 	}
 
 	require.NoError(t, MarkCheckpointsDeleted(ctx, checkpoints))
+}
+
+func TestPgDB_GroupCheckpointUUIDsByExperimentID(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	// Setup some fake data for us to work with.
+	expToCkptUUIDs := make(map[int][]uuid.UUID)
+	user := RequireMockUser(t, db)
+	for i := 0; i < 3; i++ {
+		exp := RequireMockExperiment(t, db, user)
+		tr, tk := RequireMockTrial(t, db, exp)
+
+		var ids []uuid.UUID
+		for j := 0; j < 3; j++ {
+			id := uuid.New()
+			err := AddCheckpointMetadata(context.TODO(), &model.CheckpointV2{
+				UUID:   id,
+				TaskID: tk.TaskID,
+			}, tr.ID)
+			require.NoError(t, err)
+			ids = append(ids, id)
+		}
+
+		expToCkptUUIDs[exp.ID] = ids
+	}
+
+	type testCase struct {
+		name    string
+		input   []uuid.UUID
+		want    map[int][]uuid.UUID
+		wantErr bool
+	}
+
+	tests := []testCase{
+		{
+			name:  "empty is ok",
+			input: []uuid.UUID{},
+			want:  make(map[int][]uuid.UUID),
+		},
+		{
+			// TODO: A missing checkpoint probably shouldn't be silently removed from the grouping.
+			name:  "missing checkpoint returns an error (but it doesn't, yet)",
+			input: []uuid.UUID{uuid.New()},
+			want:  make(map[int][]uuid.UUID),
+		},
+	}
+
+	expID := maps.Keys(expToCkptUUIDs)[0]
+	ckptUUIDs := expToCkptUUIDs[expID]
+	tests = append(tests, testCase{
+		name:  "grouping checkpoints but they all belong to one experiment",
+		input: expToCkptUUIDs[expID],
+		want:  map[int][]uuid.UUID{expID: ckptUUIDs},
+	})
+
+	tests = append(tests, testCase{
+		name:  "grouping checkpoints across many experiments",
+		input: flatten(maps.Values(expToCkptUUIDs)),
+		want:  expToCkptUUIDs,
+	})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			groupings, err := db.GroupCheckpointUUIDsByExperimentID(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+			}
+			require.NoError(t, err)
+
+			// Unpack the response into a sane format---this API just isn't very usable.
+			got := make(map[int][]uuid.UUID)
+			for _, g := range groupings {
+				ckptStrs := strings.Split(g.CheckpointUUIDSStr, ",")
+				var ckpts []uuid.UUID
+				for _, ckptStr := range ckptStrs {
+					ckpt, err := uuid.Parse(ckptStr)
+					if err != nil {
+						require.NoError(t, err)
+					}
+					ckpts = append(ckpts, ckpt)
+				}
+				got[g.ExperimentID] = append(got[g.ExperimentID], ckpts...)
+			}
+
+			require.ElementsMatch(t, maps.Keys(tt.want), maps.Keys(got))
+			for wantID, wantCkpts := range tt.want {
+				require.ElementsMatch(t, wantCkpts, got[wantID])
+			}
+		})
+	}
+}
+
+func flatten[T any](in [][]T) []T {
+	var out []T
+	for _, i := range in {
+		out = append(out, i...)
+	}
+	return out
 }

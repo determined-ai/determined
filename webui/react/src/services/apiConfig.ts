@@ -484,6 +484,18 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
   request: () => detApi.Cluster.getAgents(),
 };
 
+export const enableAgent: DetApi<string, Api.V1EnableAgentResponse, Type.Agent | null> = {
+  name: 'enableAgent',
+  postProcess: (response) => (response.agent ? decoder.jsonToAgents([response.agent])[0] : null),
+  request: (agentId) => detApi.Cluster.enableAgent(agentId, {}),
+};
+
+export const disableAgent: DetApi<string, Api.V1DisableAgentResponse, Type.Agent | null> = {
+  name: 'disableAgent',
+  postProcess: (response) => (response.agent ? decoder.jsonToAgents([response.agent])[0] : null),
+  request: (agentId) => detApi.Cluster.disableAgent(agentId, {}),
+};
+
 export const getResourcePools: DetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
@@ -633,8 +645,7 @@ export const getExperiment: DetApi<
 > = {
   name: 'getExperiment',
   postProcess: (response: Api.V1GetExperimentResponse) => {
-    const exp = decoder.mapV1Experiment(response.experiment);
-    exp.jobSummary = response.jobSummary;
+    const exp = decoder.mapV1Experiment(response.experiment, undefined, response.config);
     return exp;
   },
   request: (params: Service.GetExperimentParams) => {

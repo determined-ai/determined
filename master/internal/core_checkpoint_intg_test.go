@@ -30,6 +30,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/user"
 	dets3 "github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -159,11 +160,11 @@ func addMockCheckpointDB(t *testing.T, pgDB *db.PgDB, id uuid.UUID, bucket strin
 	user := db.RequireMockUser(t, pgDB)
 	// Using a different path than DefaultTestSrcPath since we are one level up than most db tests
 	exp := mockExperimentS3(t, pgDB, user, "../../examples/tutorials/mnist_pytorch", bucket)
-	_, task := db.RequireMockTrial(t, pgDB, exp)
+	tr, task := db.RequireMockTrial(t, pgDB, exp)
 	allocation := db.RequireMockAllocation(t, pgDB, task.TaskID)
 	// Create checkpoints
 	checkpoint := db.MockModelCheckpoint(id, allocation)
-	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint)
+	err := db.AddCheckpointMetadata(context.TODO(), &checkpoint, tr.ID)
 	require.NoError(t, err)
 }
 
@@ -260,6 +261,44 @@ func testGetCheckpointEcho(t *testing.T, bucket string) {
 	}
 }
 
+// nolint: exhaustruct
+func TestGetCheckpointStorageConfig(t *testing.T) {
+	api, _, _ := setupCheckpointTestEcho(t)
+	ctx := context.Background()
+
+	checkpointID := uuid.New()
+	addMockCheckpointDB(t, api.m.db, checkpointID, S3TestBucket)
+
+	// Fallback to expconf when no storageID.
+	conf, err := api.m.getCheckpointStorageConfig(checkpointID)
+	require.NoError(t, err)
+	require.Equal(t, schemas.WithDefaults(&expconf.CheckpointStorageConfig{
+		RawS3Config: &expconf.S3ConfigV0{
+			RawBucket: ptrs.Ptr(S3TestBucket),
+			RawPrefix: ptrs.Ptr(S3TestPrefix),
+		},
+	}), conf)
+
+	// Otherwise lookup storageID config.
+	expected := &expconf.CheckpointStorageConfigV0{
+		RawS3Config: &expconf.S3ConfigV0{
+			RawBucket: ptrs.Ptr(uuid.New().String()),
+		},
+	}
+	storageID, err := storage.AddBackend(ctx, expected)
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewUpdate().Table("checkpoints_v2").
+		Where("uuid = ?", checkpointID).
+		Set("storage_id = ?", storageID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	conf, err = api.m.getCheckpointStorageConfig(checkpointID)
+	require.NoError(t, err)
+	require.Equal(t, expected, conf)
+}
+
 // TestGetCheckpointEchoExpErr expects specific errors are returned for each check.
 func TestGetCheckpointEchoExpErr(t *testing.T) {
 	cases := []struct {
@@ -309,13 +348,13 @@ func RegisterCheckpointAsModelVersion(t *testing.T, pgDB *db.PgDB, ckptID uuid.U
 	user := db.RequireMockUser(t, pgDB)
 	// Insert a model.
 	now := time.Now()
-	mdl := model.Model{
+	mdl := db.Model{
 		Name:            uuid.NewString(),
 		Description:     "some important model",
 		CreationTime:    now,
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
-		Username:        user.Username,
+		UserID:          user.ID,
 		WorkspaceID:     1,
 	}
 	var pmdl modelv1.Model
@@ -424,16 +463,15 @@ func mockExperimentS3(
 	})
 
 	exp := model.Experiment{
-		JobID:                model.NewJobID(),
-		State:                model.ActiveState,
-		Config:               cfg.AsLegacy(),
-		ModelDefinitionBytes: db.ReadTestModelDefiniton(t, folderPath),
-		StartTime:            time.Now().Add(-time.Hour),
-		OwnerID:              &user.ID,
-		Username:             user.Username,
-		ProjectID:            1,
+		JobID:     model.NewJobID(),
+		State:     model.ActiveState,
+		Config:    cfg.AsLegacy(),
+		StartTime: time.Now().Add(-time.Hour),
+		OwnerID:   &user.ID,
+		Username:  user.Username,
+		ProjectID: 1,
 	}
-	err := pgDB.AddExperiment(&exp, cfg)
+	err := pgDB.AddExperiment(&exp, db.ReadTestModelDefiniton(t, folderPath), cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }

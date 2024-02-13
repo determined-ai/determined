@@ -1,14 +1,16 @@
-from argparse import Namespace
+import json
+from argparse import SUPPRESS, FileType, Namespace
 from functools import partial
+from pathlib import Path
 from typing import Any, Dict, List, Union, cast
 
 from termcolor import colored
 
 from determined import cli
 from determined.cli import ntsc, render
-from determined.common import api
+from determined.common import api, context, util
 from determined.common.api import authentication, bindings
-from determined.common.api.bindings import v1AllocationSummary
+from determined.common.api.bindings import v1AllocationSummary, v1CreateGenericTaskResponse
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
@@ -108,6 +110,95 @@ def logs(args: Namespace) -> None:
                 "green",
             )
         )
+
+
+@authentication.required
+def kill(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    req = bindings.v1KillGenericTaskRequest(taskId=args.task_id, killFromRoot=args.root)
+    bindings.post_KillGenericTask(sess, taskId=args.task_id, body=req)
+    print(f"Sucessfully killed task: {args.task_id}")
+
+
+def task_creation_output(
+    session: api.Session, task_resp: v1CreateGenericTaskResponse, follow: bool
+) -> None:
+    print(f"Created task {task_resp.taskId}")
+
+    if task_resp.warnings:
+        cli.print_launch_warnings(task_resp.warnings)
+
+    if follow:
+        try:
+            logs = api.task_logs(session, task_resp.taskId, follow=True)
+            api.pprint_logs(logs)
+        finally:
+            print(
+                colored(
+                    "Task log stream ended. To reopen log stream, run: "
+                    "det task logs -f {}".format(task_resp.taskId),
+                    "green",
+                )
+            )
+
+
+@authentication.required
+def create(args: Namespace) -> None:
+    config = ntsc.parse_config(args.config_file, None, args.config, [])
+    config_text = util.yaml_safe_dump(config)
+    context_directory = context.read_v1_context(args.context, args.include)
+
+    sess = cli.setup_session(args)
+    req = bindings.v1CreateGenericTaskRequest(
+        config=config_text,
+        contextDirectory=context_directory,
+        projectId=args.project_id,
+        forkedFrom=args.fork,
+        parentId=args.parent,
+        inheritContext=args.inherit_context,
+        noPause=args.no_pause,
+    )
+    task_resp = bindings.post_CreateGenericTask(sess, body=req)
+    task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
+
+
+@authentication.required
+def config(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
+    if args.json:
+        render.print_json(config_resp.config)
+    else:
+        yaml_dict = json.loads(config_resp.config)
+        print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
+
+
+@authentication.required
+def fork(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    req = bindings.v1CreateGenericTaskRequest(
+        config="",
+        contextDirectory=[],
+        projectId=args.project_id,
+        forkedFrom=args.parent_task_id,
+        inheritContext=False,
+    )
+    task_resp = bindings.post_CreateGenericTask(sess, body=req)
+    task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
+
+
+@authentication.required
+def pause(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_PauseGenericTask(sess, taskId=args.task_id)
+    print(f"Paused task: {args.task_id}")
+
+
+@authentication.required
+def unpause(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.post_UnpauseGenericTask(sess, taskId=args.task_id)
+    print(f"Unpaused task: {args.task_id}")
 
 
 common_log_options: List[Any] = [
@@ -215,6 +306,110 @@ args_description: List[Any] = [
                 [
                     Arg("task_id", help="task ID"),
                     *common_log_options,
+                ],
+            ),
+            Cmd(
+                "create",
+                create,
+                SUPPRESS,
+                [
+                    Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
+                    Arg(
+                        "--context",
+                        "-c",
+                        type=Path,
+                        help=ntsc.CONTEXT_DESC,
+                    ),
+                    Arg(
+                        "-i",
+                        "--include",
+                        action="append",
+                        default=[],
+                        type=Path,
+                        help=ntsc.INCLUDE_DESC,
+                    ),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
+                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                    Arg(
+                        "-f",
+                        "--follow",
+                        action="store_true",
+                        help="follow the logs of the task that is created",
+                    ),
+                    Arg("--fork", type=str, help="id of parent task to fork from"),
+                    Arg(
+                        "-p",
+                        "--parent",
+                        type=str,
+                        help="task id of parent task",
+                    ),
+                    Arg(
+                        "--inherit_context",
+                        action="store_true",
+                        help="inherits context directory from parent task (parent flag required)",
+                    ),
+                    Arg(
+                        "--no_pause",
+                        action="store_true",
+                        help="make task unpausable",
+                    ),
+                ],
+            ),
+            Cmd(
+                "config",
+                config,
+                SUPPRESS,
+                [
+                    Arg("task_id", type=str, help="ID of task to pull config from"),
+                    Arg(
+                        "--json",
+                        action="store_true",
+                        help="return config in JSON format",
+                    ),
+                ],
+            ),
+            Cmd(
+                "fork",
+                fork,
+                SUPPRESS,
+                [
+                    Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
+                    Arg(
+                        "-f",
+                        "--follow",
+                        action="store_true",
+                        help="follow the logs of the task that is created",
+                    ),
+                    Arg("--project_id", type=int, help="place this task inside this project"),
+                ],
+            ),
+            Cmd(
+                "kill",
+                kill,
+                SUPPRESS,
+                [
+                    Arg("task_id", type=str, help=""),
+                    Arg(
+                        "--root",
+                        action="store_true",
+                        help="",
+                    ),
+                ],
+            ),
+            Cmd(
+                "pause",
+                pause,
+                SUPPRESS,
+                [
+                    Arg("task_id", type=str, help=""),
+                ],
+            ),
+            Cmd(
+                "unpause",
+                unpause,
+                SUPPRESS,
+                [
+                    Arg("task_id", type=str, help=""),
                 ],
             ),
         ],

@@ -336,8 +336,10 @@ func (a *apiServer) GetExperiment(
 		return nil, err
 	}
 
+	// Update this when we remove the proto type.
 	resp := apiv1.GetExperimentResponse{
 		Experiment: exp,
+		Config:     exp.Config, //nolint:staticcheck
 	}
 
 	// Only continue to add a job summary if it's an active experiment.
@@ -485,15 +487,14 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return err
 			}
 			if len(checkpoints) > 0 {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime,
-					taskSpec, exp.ID, exp.Config, checkpoints, []string{fullDeleteGlob},
-					true, agentUserGroup, userModel, nil,
-				)
-			}
-			if err != nil {
-				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-				return err
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+					&taskSpec, exp.ID, exp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+				); err != nil {
+					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+					return err
+				}
 			}
 
 			// delete jobs per experiment
@@ -597,13 +598,7 @@ func (a *apiServer) GetExperiments(
 		(
 			SELECT searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) AS best_trial_searcher_metric`)
 	}
 
@@ -628,13 +623,7 @@ func (a *apiServer) GetExperiments(
 			SELECT
 				searcher_metric_value
 			FROM trials t
-			WHERE t.experiment_id = e.id
-			ORDER BY (CASE
-				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-					THEN searcher_metric_value
-					ELSE -1.0 * searcher_metric_value
-			END) ASC
-			LIMIT 1
+			WHERE t.id = e.best_trial_id
 		) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
@@ -1293,14 +1282,12 @@ func (a *apiServer) PatchExperiment(
 				Username: ownerFullUser.Username,
 			}
 
-			taskID := model.NewTaskID()
 			go func() {
-				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, modelExp.JobID, modelExp.StartTime,
-					taskSpec, modelExp.ID, modelExp.Config, checkpoints, []string{fullDeleteGlob}, true,
-					agentUserGroup, user, nil,
-				)
-				if err != nil {
+				if err := runCheckpointGCForCheckpoints(
+					a.m.rm, a.m.db, modelExp.JobID, modelExp.StartTime,
+					&taskSpec, modelExp.ID, modelExp.Config, checkpoints,
+					[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
+				); err != nil {
 					log.WithError(err).Error("failed to GC checkpoints in patch experiment")
 				}
 			}()
@@ -1405,10 +1392,10 @@ func (a *apiServer) GetExperimentCheckpoints(
 }
 
 func (a *apiServer) createUnmanagedExperimentTx(
-	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, activeConfig expconf.ExperimentConfigV0,
-	taskSpec *tasks.TaskSpec, user *model.User,
+	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, modelDef []byte,
+	activeConfig expconf.ExperimentConfigV0, taskSpec *tasks.TaskSpec, user *model.User,
 ) (*apiv1.CreateExperimentResponse, error) {
-	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, activeConfig, taskSpec)
+	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make new unmanaged experiment: %w", err)
 	}
@@ -1507,20 +1494,18 @@ func (a *apiServer) ContinueExperiment(
 		return nil, err
 	}
 
-	dbExp, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
 		&apiv1.CreateExperimentRequest{
-			Config:   string(configBytes),
-			ParentId: req.Id, // Use parent logic.
+			Config: string(configBytes),
 		}, user,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("parsing continue experiment request: %w", err)
 	}
-	dbExp.ParentID = nil // Not actually a parent though.
 	dbExp.ID = int(req.Id)
 	dbExp.JobID = origExperiment.JobID // Revive job.
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1590,9 +1575,6 @@ func (a *apiServer) ContinueExperiment(
 
 		// Zero out trial restarts. We do somewhat lose information about how many times
 		// the previous failed but likely people care only about current run.
-		// TODO consider moving this to trial_id_task_id or some other level to preserve
-		// the history of what happened during the trial. We should also do this
-		// with submitted config yamls likely and display these in the webui.
 		var trialIDs []int32
 		for _, t := range trialsResp.Trials {
 			trialIDs = append(trialIDs, t.Id)
@@ -1669,7 +1651,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
 		req, user,
 	)
 	if err != nil {
@@ -1697,7 +1679,7 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if req.Unmanaged != nil && *req.Unmanaged {
-		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
+		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user)
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
@@ -1707,10 +1689,11 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(a.m, dbExp, activeConfig, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, modelDef, activeConfig, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
+	modelDef = nil //nolint:ineffassign
 
 	if err = e.Start(); err != nil {
 		return nil, errors.Wrapf(err, "failed to start experiment %d", e.ID)
@@ -1750,7 +1733,7 @@ func (a *apiServer) PutExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	dbExp, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
 		req.CreateExperimentRequest, user,
 	)
 	if err != nil {
@@ -1764,8 +1747,9 @@ func (a *apiServer) PutExperiment(
 
 	dbExp.ExternalExperimentID = &req.ExternalExperimentId
 
-	innerResp, err = a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, activeConfig, taskSpec, user)
-
+	innerResp, err = a.createUnmanagedExperimentTx(
+		ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create unmanaged experiment: %w", err)
 	}
@@ -2625,17 +2609,17 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.checkpoint_count").
 		Column("trials.summary_metrics").
 		ColumnExpr(`(
-				SELECT tt.task_id FROM trial_id_task_id tt
+				SELECT tt.task_id FROM run_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id
-				WHERE tt.trial_id = trials.id
+				WHERE tt.run_id = trials.id
 				ORDER BY ta.start_time
 				LIMIT 1
 			) AS task_id`).
 		ColumnExpr(`(
 				(SELECT json_agg(task_id) FROM (
-					SELECT tt.task_id FROM trial_id_task_id tt
+					SELECT tt.task_id FROM run_id_task_id tt
 					JOIN tasks ta ON tt.task_id = ta.task_id
-					WHERE tt.trial_id = trials.id
+					WHERE tt.run_id = trials.id
 					ORDER BY ta.start_time
 				) sub_tasks)) AS task_ids`).
 		ColumnExpr("proto_time(trials.start_time) AS start_time").
@@ -2686,6 +2670,8 @@ func (a *apiServer) SearchExperiments(
 			// Correct trial restarts because
 			// `restart` count is incremented before `restart <= max_restarts` stop restart check,
 			// so trials in terminal state have restarts = max + 1.
+			// Update this correction to happen in the database when we do the remove.
+			//nolint:staticcheck
 			configRestarts, ok := experiment.Config.Fields["max_restarts"].AsInterface().(float64)
 			if ok && trial.Restarts > int32(configRestarts) {
 				trial.Restarts = int32(configRestarts)
@@ -2737,7 +2723,7 @@ func (a *apiServer) createTrialTx(
 		nil,
 		0)
 
-	if err := a.m.db.AddTask(&model.Task{
+	if err := db.AddTask(ctx, &model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeTrial,
 		StartTime:  time.Now(),
@@ -3043,7 +3029,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 	var uuidList []uuid.UUID
 	err = runCheckpointGCTask(
 		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
-		exp.Config, uuidList, nil, true, agentUserGroup, curUser,
+		exp.Config, nil, uuidList, nil, true, agentUserGroup, curUser,
 		nil,
 	)
 	if err != nil {

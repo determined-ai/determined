@@ -1,6 +1,7 @@
 package agentrm
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -120,7 +121,11 @@ func newAgent(
 	unregister func(),
 ) *agent {
 	a := &agent{
-		syslog:                logrus.WithField("component", "agent").WithField("id", id),
+		syslog: logrus.WithFields(logrus.Fields{
+			"component":     "agent",
+			"id":            id,
+			"resource-pool": resourcePoolName,
+		}),
 		id:                    id,
 		registeredTime:        time.Now(),
 		agentUpdates:          agentUpdates,
@@ -643,9 +648,9 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
 			var err error
 			if msg.ContainerStatsRecord.EndStats {
-				err = db.RecordTaskEndStatsBun(msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskEndStatsBun(context.TODO(), msg.ContainerStatsRecord.Stats)
 			} else {
-				err = db.RecordTaskStatsBun(msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskStatsBun(context.TODO(), msg.ContainerStatsRecord.Stats)
 			}
 			if err != nil {
 				a.syslog.Errorf("error recording task stats %s", err)

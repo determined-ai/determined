@@ -90,6 +90,11 @@ message Checkpoint {
   State state = 7;
   // Training-related data for this checkpoint.
   CheckpointTrainingMetadata training = 8;
+  // Optional ID that describes where this checkpoint is stored.
+  // It will be null on every checkpoint pre 0.27.1. It can also be null when a
+  // user does not specify the storageID calling the report API themselves or
+  // when users don't provide a storage config to core_context.
+  optional int32 storage_id = 9;
 }
 
 // Request to change checkpoint database information.

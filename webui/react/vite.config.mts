@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
+import { svgToReact } from '@hpe.com/vite-plugin-svg-to-jsx';
 import react from '@vitejs/plugin-react-swc';
 import { Plugin, UserConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -9,7 +10,6 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { cspHtml } from './vite-plugin-csp';
-import { svgToReact } from './vite-plugin-svg-to-jsx';
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
@@ -87,7 +87,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.27.1-dev0"',
+    'process.env.VERSION': '"0.28.1-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],

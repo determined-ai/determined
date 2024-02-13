@@ -262,9 +262,9 @@ func trialProfilerMetricsTests(
 		assert.Assert(t, origEqRecv, "received:\nt\t%s\noriginal:\n\t%s", bRecv, bOrig)
 	}
 
-	err = pgDB.UpdateTrial(trial.ID, model.StoppingCompletedState)
+	err = db.UpdateTrial(ctx, trial.ID, model.StoppingCompletedState)
 	assert.NilError(t, err, "failed to update trial state")
-	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
+	err = db.UpdateTrial(ctx, trial.ID, model.CompletedState)
 	assert.NilError(t, err, "failed to update trial state")
 
 	_, err = tlCl.Recv()
@@ -386,7 +386,7 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (
 	*model.Experiment, expconf.ExperimentConfig, *model.Trial,
 ) {
 	experiment, activeConfig := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment, activeConfig)
+	err := pgDB.AddExperiment(experiment, []byte{}, activeConfig)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)

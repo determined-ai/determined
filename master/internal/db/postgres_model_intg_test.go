@@ -52,13 +52,13 @@ func TestModels(t *testing.T) {
 
 			// Insert a model.
 			now := time.Now()
-			mdl := model.Model{
+			mdl := Model{
 				Name:            uuid.NewString(),
 				Description:     "some important model",
 				CreationTime:    now,
 				LastUpdatedTime: now,
 				Labels:          []string{"some other label"},
-				Username:        user.Username,
+				UserID:          user.ID,
 				WorkspaceID:     1,
 			}
 			mdlNotes := "some notes"
@@ -87,7 +87,7 @@ func TestModels(t *testing.T) {
 					"steps_completed":    stepsCompleted,
 				},
 			}
-			err = AddCheckpointMetadata(ctx, ckpt)
+			err = AddCheckpointMetadata(ctx, ckpt, tr.ID)
 			require.NoError(t, err)
 
 			// Which maybe has some metrics.

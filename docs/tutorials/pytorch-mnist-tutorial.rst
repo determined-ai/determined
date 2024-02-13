@@ -51,12 +51,6 @@ first trial class and then how to run a training job with Determined.
    connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
    hostname or IP address where Determined is running.
 
-.. note::
-
-   For basic instructions on how to start a Determined cluster locally and run an experiment using
-   the ``mnist_pytorch`` example, visit :ref:`Run Your First Experiment in Determined
-   <pytorch_mnist_quickstart>`.
-
 ****************************
  Getting the Tutorial Files
 ****************************

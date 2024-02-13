@@ -92,9 +92,14 @@ func resolveWorkspaceID(workspace *model.Workspace) int {
 func newExperiment(
 	m *Master,
 	expModel *model.Experiment,
+	modelDef []byte,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*internalExperiment, []command.LaunchWarning, error) {
+	if len(modelDef) > 0 && expModel.ID != 0 {
+		return nil, nil, fmt.Errorf("experiments restoring should not provide a model def")
+	}
+
 	resources := activeConfig.Resources()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -144,7 +149,7 @@ func newExperiment(
 	}
 
 	if expModel.ID == 0 {
-		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
+		if err = m.db.AddExperiment(expModel, modelDef, activeConfig); err != nil {
 			return nil, launchWarnings, err
 		}
 		telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
@@ -199,13 +204,14 @@ func newUnmanagedExperiment(
 	idb bun.IDB,
 	m *Master,
 	expModel *model.Experiment,
+	modelDef []byte,
 	activeConfig expconf.ExperimentConfig,
 	taskSpec *tasks.TaskSpec,
 ) (*internalExperiment, []command.LaunchWarning, error) {
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := db.AddExperimentTx(ctx, idb, expModel, activeConfig, true); err != nil {
+	if err := db.AddExperimentTx(ctx, idb, expModel, modelDef, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
@@ -477,14 +483,13 @@ func (e *internalExperiment) stop() error {
 
 	// May be no checkpoints to gc, if so skip
 	if len(checkpoints) > 0 {
-		taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 		go func() {
-			err := runCheckpointGCTask(
-				e.rm, e.db, taskID, e.JobID, e.StartTime, *taskSpec,
-				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints, []string{fullDeleteGlob},
+			if err := runCheckpointGCForCheckpoints(
+				e.rm, e.db, e.JobID, e.StartTime, taskSpec,
+				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints,
+				[]string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,
-			)
-			if err != nil {
+			); err != nil {
 				e.syslog.WithError(err).Error("failed to GC experiment checkpoints")
 			}
 		}()
@@ -886,9 +891,9 @@ var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	var experimentID int
 	err := db.Bun().NewSelect().
-		Table("trial_id_task_id").
+		Table("run_id_task_id").
 		Column("experiment_id").
-		Join("LEFT JOIN trials ON trials.id = trial_id_task_id.trial_id").
+		Join("LEFT JOIN trials ON trials.id = run_id_task_id.run_id").
 		Where("task_id = ?", taskID).
 		Scan(context.TODO(), &experimentID)
 	if errors.Is(err, sql.ErrNoRows) {

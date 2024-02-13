@@ -27,14 +27,20 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run := trial.ToRun()
+		run, v2 := trial.ToRunAndTrialV2()
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
-			return fmt.Errorf("inserting trial model: %w", err)
+			return fmt.Errorf("inserting trial run model: %w", err)
 		}
+
+		v2.RunID = run.ID
+		if _, err := tx.NewInsert().Model(v2).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting trial v2 model: %w", err)
+		}
+
 		trial.ID = run.ID // We need to mutate trial.ID.
 
-		trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
-		if _, err := tx.NewInsert().Model(trialTaskID).Exec(ctx); err != nil {
+		runTaskID := &model.RunTaskID{RunID: trial.ID, TaskID: taskID}
+		if _, err := tx.NewInsert().Model(runTaskID).Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial task id relationship: %w", err)
 		}
 
@@ -55,18 +61,26 @@ func UpsertTrialByExternalIDTx(
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	run := trial.ToRun()
+	run, v2 := trial.ToRunAndTrialV2()
 	if _, err := tx.NewInsert().Model(run).
 		On("CONFLICT (experiment_id, external_run_id) DO UPDATE").
 		Set("hparams = EXCLUDED.hparams").
 		Returning("id").Exec(ctx); err != nil {
-		return fmt.Errorf("upserting trial model: %w", err)
+		return fmt.Errorf("upserting trial run model: %w", err)
 	}
+
+	v2.RunID = run.ID
+	if _, err := tx.NewInsert().Model(v2).
+		On("CONFLICT (run_id) DO NOTHING").
+		Exec(ctx); err != nil {
+		return fmt.Errorf("upserting trial v2 model: %w", err)
+	}
+
 	trial.ID = run.ID // We need to mutate trial.ID.
 
-	trialTaskID := &model.TrialTaskID{TrialID: trial.ID, TaskID: taskID}
-	if _, err := tx.NewInsert().Model(trialTaskID).
-		On("CONFLICT (trial_id, task_id) DO NOTHING").Exec(ctx); err != nil {
+	runTaskID := &model.RunTaskID{RunID: run.ID, TaskID: taskID}
+	if _, err := tx.NewInsert().Model(runTaskID).
+		On("CONFLICT (run_id, task_id) DO NOTHING").Exec(ctx); err != nil {
 		return fmt.Errorf("upserting trial task id relationship: %w", err)
 	}
 
@@ -82,12 +96,12 @@ func TrialByID(ctx context.Context, id int) (*model.Trial, error) {
 	return t, nil
 }
 
-// TrialTaskIDsByTrialID returns trial id task ids by trial ID, sorted by task run ID.
-func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.TrialTaskID, error) {
-	var ids []*model.TrialTaskID
+// TrialTaskIDsByTrialID returns trial id task ids by trial ID, sorted by start time.
+func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID, error) {
+	var ids []*model.RunTaskID
 	if err := Bun().NewSelect().Model(&ids).
-		Where("trial_id = ?", trialID).
-		Join("JOIN tasks t ON trial_task_id.task_id = t.task_id").
+		Where("run_id = ?", trialID).
+		Join("JOIN tasks t ON run_task_id.task_id = t.task_id").
 		Order("t.start_time").
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("getting tasks for trial ID %d: %w", trialID, err)
@@ -114,27 +128,28 @@ func TrialByTaskID(ctx context.Context, taskID model.TaskID) (*model.Trial, erro
 	var t model.Trial
 	if err := Bun().NewSelect().Model(&t).
 		Where("tt.task_id = ?", taskID).
-		Join("JOIN trial_id_task_id tt ON trial.id = tt.trial_id").
+		Join("JOIN run_id_task_id tt ON trial.id = tt.run_id").
 		Scan(ctx, &t); err != nil {
 		return nil, fmt.Errorf("error querying for trial taskID %s: %w", taskID, err)
 	}
 	return &t, nil
 }
 
-// UpdateTrial updates an existing trial. Fields that are nil or zero are not
-// updated.  end_time is set if the trial moves to a terminal state.
-func (db *PgDB) UpdateTrial(id int, newState model.State) error {
-	trial, err := TrialByID(context.TODO(), id)
+// UpdateTrial updates the state of an existing trial.
+// end_time is set if the trial moves to a terminal state.
+func UpdateTrial(ctx context.Context, id int, newState model.State) error {
+	trial, err := TrialByID(ctx, id)
 	if err != nil {
-		return errors.Wrapf(err, "error finding trial %v to update", id)
+		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
 
+	// Update trial state if necessary.
 	if trial.State == newState {
 		return nil
 	}
 
 	if !model.TrialTransitions[trial.State][newState] {
-		return errors.Errorf("illegal transition %v -> %v for trial %v",
+		return fmt.Errorf("illegal transition %v -> %v for trial %v",
 			trial.State, newState, trial.ID)
 	}
 	toUpdate := []string{"state"}
@@ -145,39 +160,60 @@ func (db *PgDB) UpdateTrial(id int, newState model.State) error {
 		toUpdate = append(toUpdate, "end_time")
 	}
 
-	return db.withTransaction("update_trial", func(tx *sqlx.Tx) error {
-		// Only the trial actor updates this row, and it does so in a serialized
-		// fashion already, so this transaction is more a matter of atomicity.
-		if err := namedExecOne(tx, fmt.Sprintf(`
-UPDATE runs
-%v
-WHERE id = :id`, SetClause(toUpdate)), trial); err != nil {
-			return errors.Wrapf(err, "error updating (%v) in trial %v",
-				strings.Join(toUpdate, ", "), id)
+	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		run, _ := trial.ToRunAndTrialV2()
+		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
 		}
 
 		if model.TerminalStates[newState] && trial.EndTime != nil {
-			return completeTrialsTasks(tx, id, *trial.EndTime)
+			if _, err := tx.NewRaw(`UPDATE tasks SET end_time = ? FROM run_id_task_id 
+				WHERE run_id_task_id.task_id = tasks.task_id AND run_id_task_id.run_id = ? AND end_time IS NULL`,
+				*trial.EndTime, id).Exec(ctx); err != nil {
+				return fmt.Errorf("completing task: %w", err)
+			}
 		}
 
 		return nil
 	})
 }
 
-// UpdateTrialRunnerState updates a trial runner's state.
-func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
-	return db.UpdateTrialRunnerMetadata(id, &trialv1.TrialRunnerMetadata{State: state})
-}
-
-// UpdateTrialRunnerMetadata updates a trial's metadata about its runner.
-func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET runner_state = $2
-WHERE id = $1`, id, md.State); err != nil {
-		return errors.Wrap(err, "saving trial runner state")
+// UpdateTrialFields updates the specified fields of trial with ID id. Fields that are nil or zero
+// are not updated.
+func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunnerMetadata, newRunID,
+	newRestarts int,
+) error {
+	ctx := context.TODO()
+	trial, err := TrialByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("error finding trial %v to update: %w", id, err)
 	}
-	return nil
+
+	var toUpdate []string
+
+	// Update trial runner's state if necessary.
+	if newRunnerMetadata != nil {
+		trial.RunnerState = newRunnerMetadata.State
+		toUpdate = append(toUpdate, "runner_state")
+	}
+
+	// Update trial's run id if necessary.
+	if newRunID > 0 {
+		trial.RunID = newRunID
+		toUpdate = append(toUpdate, "restart_id")
+	}
+
+	// Update trial's restart count if necessary.
+	if newRestarts > 0 {
+		trial.Restarts = newRestarts
+		toUpdate = append(toUpdate, "restarts")
+	}
+
+	run, _ := trial.ToRunAndTrialV2()
+	_, err = Bun().NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).Exec(ctx)
+
+	return err
 }
 
 // TrialRunIDAndRestarts returns the run id and restart count for a trial.
@@ -190,28 +226,6 @@ WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
 		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
 	}
 	return runID, restart, nil
-}
-
-// UpdateTrialRunID sets the trial's run ID.
-func (db *PgDB) UpdateTrialRunID(id, runID int) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET restart_id = $2
-WHERE id = $1`, id, runID); err != nil {
-		return errors.Wrap(err, "updating trial run id")
-	}
-	return nil
-}
-
-// UpdateTrialRestarts sets the trial's restart count.
-func (db *PgDB) UpdateTrialRestarts(id, restartCount int) error {
-	if _, err := db.sql.Exec(`
-UPDATE runs
-SET restarts = $2
-WHERE id = $1`, id, restartCount); err != nil {
-		return errors.Wrap(err, "updating trial restarts")
-	}
-	return nil
 }
 
 // fullTrialSummaryMetricsRecompute recomputes all summary metrics for a given trial.
@@ -632,7 +646,14 @@ func calculateNewSummaryMetrics(
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
-func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
+func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2, runID int) error {
+	if m.ReportTime.IsZero() {
+		m.ReportTime = time.Now().UTC()
+	}
+	if m.State == "" {
+		m.State = model.CompletedState
+	}
+
 	var size int64
 	for _, v := range m.Resources {
 		size += v
@@ -640,12 +661,19 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2) error {
 	m.Size = size
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(m).Exec(context.TODO()); err != nil {
-			return errors.Wrap(err, "inserting checkpoint")
+		if _, err := tx.NewInsert().Model(m).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint model: %w", err)
+		}
+
+		if _, err := tx.NewInsert().Model(&model.RunCheckpoints{
+			RunID:        runID,
+			CheckpointID: m.UUID,
+		}).Exec(ctx); err != nil {
+			return fmt.Errorf("inserting checkpoint run model: %w", err)
 		}
 
 		if err := UpdateCheckpointSizeTx(ctx, tx, []uuid.UUID{m.UUID}); err != nil {
-			return errors.Wrap(err, "updating checkpoint size")
+			return fmt.Errorf("updating checkpoint size: %w", err)
 		}
 
 		return nil

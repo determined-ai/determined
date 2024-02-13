@@ -8,7 +8,7 @@
  * NOTE: Do not edit the class manually.
  */
 
-
+import { DateString } from "ioTypes";
 import { Configuration } from "./configuration";
 
 type ValueOf<T> = T[keyof T];
@@ -224,7 +224,7 @@ export const Jobv1State = {
 } as const
 export type Jobv1State = ValueOf<typeof Jobv1State>
 /**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.  - TYPE_EXTERNAL: External Job.
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.  - TYPE_EXTERNAL: External Job.  - TYPE_GENERIC: Generic Job.
  * @export
  * @enum {string}
  */
@@ -237,6 +237,7 @@ export const Jobv1Type = {
     COMMAND: 'TYPE_COMMAND',
     CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
     EXTERNAL: 'TYPE_EXTERNAL',
+    GENERIC: 'TYPE_GENERIC',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
@@ -760,16 +761,16 @@ export interface Trialv1Trial {
     experimentId: number;
     /**
      * The time the trial was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof Trialv1Trial
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The time the trial ended if the trial is stopped.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof Trialv1Trial
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
     /**
      * The current state of the trial.
      * @type {Trialv1State}
@@ -1037,10 +1038,10 @@ export interface V1Agent {
     id: string;
     /**
      * The time when the agent registered with the master.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Agent
      */
-    registeredTime?: Date;
+    registeredTime?: Date | DateString;
     /**
      * A map of slot id to each slot of this agent.
      * @type {{ [key: string]: V1Slot; }}
@@ -1337,10 +1338,10 @@ export interface V1AllocationSummary {
     name?: string;
     /**
      * The registered time of the task.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1AllocationSummary
      */
-    registeredTime?: Date;
+    registeredTime?: Date | DateString;
     /**
      * The name of the resource pool.
      * @type {string}
@@ -1687,10 +1688,10 @@ export interface V1Checkpoint {
     uuid: string;
     /**
      * Timestamp when the checkpoint was reported.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Checkpoint
      */
-    reportTime?: Date;
+    reportTime?: Date | DateString;
     /**
      * Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
      * @type {{ [key: string]: string; }}
@@ -1715,6 +1716,12 @@ export interface V1Checkpoint {
      * @memberof V1Checkpoint
      */
     training: V1CheckpointTrainingMetadata;
+    /**
+     * Optional ID that describes where this checkpoint is stored. It will be null on every checkpoint pre 0.27.1. It can also be null when a user does not specify the storageID calling the report API themselves or when users don't provide a storage config to core_context.
+     * @type {number}
+     * @memberof V1Checkpoint
+     */
+    storageId?: number;
 }
 /**
  * Request to delete files matching globs in checkpoints.
@@ -1805,10 +1812,10 @@ export interface V1CheckpointWorkload {
     uuid?: string;
     /**
      * The time the workload finished or was stopped.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1CheckpointWorkload
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
     /**
      * The state of the checkpoint.
      * @type {Checkpointv1State}
@@ -1885,10 +1892,10 @@ export interface V1Command {
     state: Taskv1State;
     /**
      * The time the command was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Command
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The container running the command.
      * @type {V1Container}
@@ -2152,10 +2159,10 @@ export interface V1CreateExperimentRequest {
     gitCommitter?: string;
     /**
      * Git commit date at submission time.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1CreateExperimentRequest
      */
-    gitCommitDate?: Date;
+    gitCommitDate?: Date | DateString;
     /**
      * Unmanaged experiments are detached.
      * @type {boolean}
@@ -2185,6 +2192,74 @@ export interface V1CreateExperimentResponse {
      * List of any related warnings.
      * @type {Array<V1LaunchWarning>}
      * @memberof V1CreateExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+/**
+ * Request to create a new generic task.
+ * @export
+ * @interface V1CreateGenericTaskRequest
+ */
+export interface V1CreateGenericTaskRequest {
+    /**
+     * Generic task context.
+     * @type {Array<V1File>}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    contextDirectory: Array<V1File>;
+    /**
+     * Generic task config (YAML).
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    config: string;
+    /**
+     * Project id to contain the experiment.
+     * @type {number}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    projectId?: number;
+    /**
+     * Parent ID of new task
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    parentId?: string;
+    /**
+     * If True inherits the context directory from the paren task (requires parent_id)
+     * @type {boolean}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    inheritContext?: boolean;
+    /**
+     * Id of the task that this task is forked from
+     * @type {string}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    forkedFrom?: string;
+    /**
+     * Flag for whether task can be paused or not.
+     * @type {boolean}
+     * @memberof V1CreateGenericTaskRequest
+     */
+    noPause?: boolean;
+}
+/**
+ * Response to CreateExperimentRequest.
+ * @export
+ * @interface V1CreateGenericTaskResponse
+ */
+export interface V1CreateGenericTaskResponse {
+    /**
+     * The created generic taskID.
+     * @type {string}
+     * @memberof V1CreateGenericTaskResponse
+     */
+    taskId: string;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateGenericTaskResponse
      */
     warnings?: Array<V1LaunchWarning>;
 }
@@ -2310,10 +2385,10 @@ export interface V1DataPoint {
     values?: any;
     /**
      * The time the measurement is taken.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1DataPoint
      */
-    time: Date;
+    time: Date | DateString;
     /**
      * The epoch this measurement is taken.
      * @type {number}
@@ -2680,16 +2755,16 @@ export interface V1Experiment {
     labels?: Array<string>;
     /**
      * The time the experiment was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Experiment
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The time the experiment ended if the experiment is stopped.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Experiment
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
     /**
      * The current state of the experiment.
      * @type {Experimentv1State}
@@ -2811,7 +2886,7 @@ export interface V1Experiment {
      */
     parentArchived?: boolean;
     /**
-     * The configuration of the experiment.
+     * The configuration of the experiment. Is deprecated for performance reasons on the listing experiment route. Use GetExperimentResponse.config instead.
      * @type {any}
      * @memberof V1Experiment
      */
@@ -3058,10 +3133,10 @@ export interface V1FileNode {
     name?: string;
     /**
      * Modification time of file.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1FileNode
      */
-    modifiedTime?: Date;
+    modifiedTime?: Date | DateString;
     /**
      * Number of bytes in file content.
      * @type {number}
@@ -3101,6 +3176,24 @@ export const V1FittingPolicy = {
     PBS: 'FITTING_POLICY_PBS',
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
+/**
+ * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
+ * @export
+ * @enum {string}
+ */
+export const V1GenericTaskState = {
+    UNSPECIFIED: 'GENERIC_TASK_STATE_UNSPECIFIED',
+    ACTIVE: 'GENERIC_TASK_STATE_ACTIVE',
+    CANCELED: 'GENERIC_TASK_STATE_CANCELED',
+    COMPLETED: 'GENERIC_TASK_STATE_COMPLETED',
+    ERROR: 'GENERIC_TASK_STATE_ERROR',
+    PAUSED: 'GENERIC_TASK_STATE_PAUSED',
+    STOPPINGPAUSED: 'GENERIC_TASK_STATE_STOPPING_PAUSED',
+    STOPPINGCANCELED: 'GENERIC_TASK_STATE_STOPPING_CANCELED',
+    STOPPINGCOMPLETED: 'GENERIC_TASK_STATE_STOPPING_COMPLETED',
+    STOPPINGERROR: 'GENERIC_TASK_STATE_STOPPING_ERROR',
+} as const
+export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -3334,6 +3427,12 @@ export interface V1GetExperimentResponse {
      * @memberof V1GetExperimentResponse
      */
     jobSummary?: V1JobSummary;
+    /**
+     * The experiment's config.
+     * @type {any}
+     * @memberof V1GetExperimentResponse
+     */
+    config?: any;
 }
 /**
  * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
@@ -3428,6 +3527,19 @@ export interface V1GetExperimentValidationHistoryResponse {
      * @memberof V1GetExperimentValidationHistoryResponse
      */
     validationHistory?: Array<V1ValidationHistoryEntry>;
+}
+/**
+ * 
+ * @export
+ * @interface V1GetGenericTaskConfigResponse
+ */
+export interface V1GetGenericTaskConfigResponse {
+    /**
+     * The config of the task
+     * @type {string}
+     * @memberof V1GetGenericTaskConfigResponse
+     */
+    config: string;
 }
 /**
  * GetGroupResponse is the body of the response for the call to get a group by id.
@@ -4795,10 +4907,10 @@ export interface V1Job {
     type: Jobv1Type;
     /**
      * The time when the job was submitted by the user.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Job
      */
-    submissionTime: Date;
+    submissionTime: Date | DateString;
     /**
      * The username of the user who submitted the job.
      * @type {string}
@@ -4967,6 +5079,32 @@ export interface V1KillExperimentsResponse {
      * @memberof V1KillExperimentsResponse
      */
     results: Array<V1ExperimentActionResult>;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskRequest
+ */
+export interface V1KillGenericTaskRequest {
+    /**
+     * The id of the task.
+     * @type {string}
+     * @memberof V1KillGenericTaskRequest
+     */
+    taskId: string;
+    /**
+     * Kill entire task tree
+     * @type {boolean}
+     * @memberof V1KillGenericTaskRequest
+     */
+    killFromRoot?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface V1KillGenericTaskResponse
+ */
+export interface V1KillGenericTaskResponse {
 }
 /**
  * Response to KillNotebookRequest.
@@ -5486,10 +5624,10 @@ export interface V1LogEntry {
     message: string;
     /**
      * The timestamp.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1LogEntry
      */
-    timestamp: Date;
+    timestamp: Date | DateString;
     /**
      * The log level.
      * @type {V1LogLevel}
@@ -5692,10 +5830,10 @@ export interface V1MetricsReport {
     trialId: number;
     /**
      * End time of when metric was reported.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1MetricsReport
      */
-    endTime: Date;
+    endTime: Date | DateString;
     /**
      * Struct of the reported metrics.
      * @type {any}
@@ -5741,10 +5879,10 @@ export interface V1MetricsReport {
 export interface V1MetricsWorkload {
     /**
      * The time the workload finished or was stopped.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1MetricsWorkload
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
     /**
      * Metrics.
      * @type {V1Metrics}
@@ -5801,16 +5939,16 @@ export interface V1Model {
     metadata: any;
     /**
      * The time the model was created.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Model
      */
-    creationTime: Date;
+    creationTime: Date | DateString;
     /**
      * The time the model was last updated.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Model
      */
-    lastUpdatedTime: Date;
+    lastUpdatedTime: Date | DateString;
     /**
      * The id of this model.
      * @type {number}
@@ -5886,10 +6024,10 @@ export interface V1ModelVersion {
     version: number;
     /**
      * The time the model version was created.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1ModelVersion
      */
-    creationTime: Date;
+    creationTime: Date | DateString;
     /**
      * Unique id for each model version.
      * @type {number}
@@ -5910,10 +6048,10 @@ export interface V1ModelVersion {
     metadata?: any;
     /**
      * The time this model version was last updated.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1ModelVersion
      */
-    lastUpdatedTime: Date;
+    lastUpdatedTime: Date | DateString;
     /**
      * Comment associated with this model version.
      * @type {string}
@@ -6106,10 +6244,10 @@ export interface V1Notebook {
     state: Taskv1State;
     /**
      * The time the notebook was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Notebook
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The container running the notebook.
      * @type {V1Container}
@@ -6833,6 +6971,13 @@ export interface V1PauseExperimentsResponse {
 /**
  * 
  * @export
+ * @interface V1PauseGenericTaskResponse
+ */
+export interface V1PauseGenericTaskResponse {
+}
+/**
+ * 
+ * @export
  * @interface V1Permission
  */
 export interface V1Permission {
@@ -7497,10 +7642,10 @@ export interface V1Project {
     description?: string;
     /**
      * Time of most recently started experiment within this project.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Project
      */
-    lastExperimentStartedAt?: Date;
+    lastExperimentStartedAt?: Date | DateString;
     /**
      * Notes associated with this project.
      * @type {Array<V1Note>}
@@ -8052,16 +8197,16 @@ export interface V1ResourceAllocationRawEntry {
     kind?: string;
     /**
      * The time at which the allocation began.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1ResourceAllocationRawEntry
      */
-    startTime?: Date;
+    startTime?: Date | DateString;
     /**
      * The time at which the allocation ended.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1ResourceAllocationRawEntry
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
     /**
      * The ID of the experiment the allocation is a part of.
      * @type {number}
@@ -8878,6 +9023,38 @@ export const V1RunnableType = {
 } as const
 export type V1RunnableType = ValueOf<typeof V1RunnableType>
 /**
+ * Request to prepare to start reporting to a run.
+ * @export
+ * @interface V1RunPrepareForReportingRequest
+ */
+export interface V1RunPrepareForReportingRequest {
+    /**
+     * RunID to sync to.
+     * @type {number}
+     * @memberof V1RunPrepareForReportingRequest
+     */
+    runId: number;
+    /**
+     * Checkpoint storage config.
+     * @type {any}
+     * @memberof V1RunPrepareForReportingRequest
+     */
+    checkpointStorage?: any;
+}
+/**
+ * Response to prepare to start reporting to a run.
+ * @export
+ * @interface V1RunPrepareForReportingResponse
+ */
+export interface V1RunPrepareForReportingResponse {
+    /**
+     * The storage_id to be used when creating new checkpoints. This will be returned always when checkpoint storage is set in the request.
+     * @type {number}
+     * @memberof V1RunPrepareForReportingResponse
+     */
+    storageId?: number;
+}
+/**
  * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is delegated.
  * @export
  * @enum {string}
@@ -9265,10 +9442,10 @@ export interface V1Shell {
     state: Taskv1State;
     /**
      * The time the shell was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Shell
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The container running the shell.
      * @type {V1Container}
@@ -9493,16 +9670,46 @@ export interface V1Task {
     allocations: Array<V1Allocation>;
     /**
      * Start timestamp.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Task
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * End timestamp if completed.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Task
      */
-    endTime?: Date;
+    endTime?: Date | DateString;
+    /**
+     * The configuration of the task.
+     * @type {string}
+     * @memberof V1Task
+     */
+    config?: string;
+    /**
+     * ID of parent task (empty if root task).
+     * @type {string}
+     * @memberof V1Task
+     */
+    parentId?: string;
+    /**
+     * State of task execution.
+     * @type {V1GenericTaskState}
+     * @memberof V1Task
+     */
+    taskState?: V1GenericTaskState;
+    /**
+     * ID of task this is forked from (If task is a forked task)
+     * @type {string}
+     * @memberof V1Task
+     */
+    forkedFrom?: string;
+    /**
+     * Flag for whether task can be paused or not.
+     * @type {boolean}
+     * @memberof V1Task
+     */
+    noPause?: boolean;
 }
 /**
  * 
@@ -9548,10 +9755,10 @@ export interface V1TaskLog {
     rankId?: number;
     /**
      * The timestamp of the log.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TaskLog
      */
-    timestamp?: Date;
+    timestamp?: Date | DateString;
     /**
      * The level of this log.
      * @type {V1LogLevel}
@@ -9634,10 +9841,10 @@ export interface V1TaskLogsResponse {
     id: string;
     /**
      * The timestamp of the log.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TaskLogsResponse
      */
-    timestamp: Date;
+    timestamp: Date | DateString;
     /**
      * The flat version of the log that UIs have shown historically.
      * @type {string}
@@ -9700,7 +9907,7 @@ export interface V1TaskLogsResponse {
     stdtype?: string;
 }
 /**
- * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.
+ * Type of the task - TASK_TYPE_UNSPECIFIED: The task type is unknown  - TASK_TYPE_TRIAL: "TRIAL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_NOTEBOOK: "NOTEBOOK" task type for the enum public.task_type in Postgres.  - TASK_TYPE_SHELL: "SHELL" task type for the enum public.task_type in Postgres.  - TASK_TYPE_COMMAND: "COMMAND" task type for the enum public.task_type in Postgres.  - TASK_TYPE_TENSORBOARD: "TENSORBOARD" task type for the enum public.task_type in Postgres.  - TASK_TYPE_CHECKPOINT_GC: "CHECKPOINT_GC" task type for the enum public.task_type in Postgres.  - TASK_TYPE_GENERIC: "GENERIC" task type for the enum public.task_type in Postgres.
  * @export
  * @enum {string}
  */
@@ -9712,6 +9919,7 @@ export const V1TaskType = {
     COMMAND: 'TASK_TYPE_COMMAND',
     TENSORBOARD: 'TASK_TYPE_TENSORBOARD',
     CHECKPOINTGC: 'TASK_TYPE_CHECKPOINT_GC',
+    GENERIC: 'TASK_TYPE_GENERIC',
 } as const
 export type V1TaskType = ValueOf<typeof V1TaskType>
 /**
@@ -9765,10 +9973,10 @@ export interface V1Tensorboard {
     state: Taskv1State;
     /**
      * The time the tensorboard was started.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Tensorboard
      */
-    startTime: Date;
+    startTime: Date | DateString;
     /**
      * The container running the tensorboard.
      * @type {V1Container}
@@ -9857,28 +10065,28 @@ export interface V1TestWebhookResponse {
 export interface V1TimestampFieldFilter {
     /**
      * Less than.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TimestampFieldFilter
      */
-    lt?: Date;
+    lt?: Date | DateString;
     /**
      * Less than or equal.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TimestampFieldFilter
      */
-    lte?: Date;
+    lte?: Date | DateString;
     /**
      * Greater than.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TimestampFieldFilter
      */
-    gt?: Date;
+    gt?: Date | DateString;
     /**
      * Greater than or equal.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TimestampFieldFilter
      */
-    gte?: Date;
+    gte?: Date | DateString;
 }
 /**
  * TrialClosed is a searcher event triggered when a trial has successfully finished.
@@ -10012,10 +10220,10 @@ export interface V1TrialLogsResponse {
     id: string;
     /**
      * The timestamp of the log.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1TrialLogsResponse
      */
-    timestamp: Date;
+    timestamp: Date | DateString;
     /**
      * The flat version of the log that UIs have shown historically.
      * @type {string}
@@ -10172,10 +10380,10 @@ export interface V1TrialProfilerMetricsBatch {
     batches: Array<number>;
     /**
      * The timestamp at which a reading occurred, repeated for the batch of metrics.
-     * @type {Array<Date>}
+     * @type {Array<Date | DateString>}
      * @memberof V1TrialProfilerMetricsBatch
      */
-    timestamps: Array<Date>;
+    timestamps: Array<Date | DateString>;
     /**
      * The labels for this series.
      * @type {V1TrialProfilerMetricLabels}
@@ -10512,6 +10720,13 @@ export interface V1UnbindRPFromWorkspaceRequest {
 export interface V1UnbindRPFromWorkspaceResponse {
 }
 /**
+ * 
+ * @export
+ * @interface V1UnpauseGenericTaskResponse
+ */
+export interface V1UnpauseGenericTaskResponse {
+}
+/**
  * Response to UnpinWorkspaceRequest.
  * @export
  * @interface V1UnpinWorkspaceResponse
@@ -10626,10 +10841,10 @@ export interface V1User {
     displayName?: string;
     /**
      * The version of the user object for caching purposes.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1User
      */
-    modifiedAt?: Date;
+    modifiedAt?: Date | DateString;
     /**
      * Bool denoting whether the user should be able to login with or change a password.
      * @type {boolean}
@@ -10638,10 +10853,10 @@ export interface V1User {
     remote?: boolean;
     /**
      * when the user last authenticated
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1User
      */
-    lastAuthAt?: Date;
+    lastAuthAt?: Date | DateString;
 }
 /**
  * Message for results of individual users in a multi-user action.
@@ -10783,10 +10998,10 @@ export interface V1ValidationHistoryEntry {
     trialId: number;
     /**
      * The time at which the completed validation was reported.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1ValidationHistoryEntry
      */
-    endTime: Date;
+    endTime: Date | DateString;
     /**
      * The value of the `searcher.metric`, indicated by the experiment config, for the validation.
      * @type {number}
@@ -10947,10 +11162,10 @@ export interface V1Workspace {
     checkpointStorageConfig?: any;
     /**
      * Optional date when workspace was pinned.
-     * @type {Date}
+     * @type {Date | DateString}
      * @memberof V1Workspace
      */
-    pinnedAt?: Date;
+    pinnedAt?: Date | DateString;
     /**
      * Name of the default compute pool.
      * @type {string}
@@ -12120,12 +12335,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} timestampAfter The start of the period to consider.
-         * @param {Date} timestampBefore The end of the period to consider.
+         * @param {Date | DateString} timestampAfter The start of the period to consider.
+         * @param {Date | DateString} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options: any = {}): FetchArgs {
+        resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options: any = {}): FetchArgs {
             // verify required parameter 'timestampAfter' is not null or undefined
             if (timestampAfter === null || timestampAfter === undefined) {
                 throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling resourceAllocationRaw.');
@@ -12149,11 +12364,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             
             if (timestampAfter) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
+                localVarQueryParameter['timestampAfter'] = typeof timestampAfter === "string" ? timestampAfter : timestampAfter.toISOString()
             }
             
             if (timestampBefore) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
+                localVarQueryParameter['timestampBefore'] = typeof timestampBefore === "string" ? timestampBefore : timestampBefore.toISOString()
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12435,12 +12650,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} timestampAfter The start of the period to consider.
-         * @param {Date} timestampBefore The end of the period to consider.
+         * @param {Date | DateString} timestampAfter The start of the period to consider.
+         * @param {Date | DateString} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
+        resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -12605,12 +12820,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Get a detailed view of resource allocation during the given time period.
-         * @param {Date} timestampAfter The start of the period to consider.
-         * @param {Date} timestampBefore The end of the period to consider.
+         * @param {Date | DateString} timestampAfter The start of the period to consider.
+         * @param {Date | DateString} timestampBefore The end of the period to consider.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
+        resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
     }
@@ -12793,13 +13008,13 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Get a detailed view of resource allocation during the given time period.
-     * @param {Date} timestampAfter The start of the period to consider.
-     * @param {Date} timestampBefore The end of the period to consider.
+     * @param {Date | DateString} timestampAfter The start of the period to consider.
+     * @param {Date | DateString} timestampBefore The end of the period to consider.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationRaw(timestampAfter: Date, timestampBefore: Date, options?: any) {
+    public resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath)
     }
     
@@ -13536,14 +13751,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/time-series`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -13635,19 +13850,19 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             
             if (timeSeriesFilterTimeRangeLt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = timeSeriesFilterTimeRangeLt.toISOString()
+                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = typeof timeSeriesFilterTimeRangeLt === "string" ? timeSeriesFilterTimeRangeLt : timeSeriesFilterTimeRangeLt.toISOString()
             }
             
             if (timeSeriesFilterTimeRangeLte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = timeSeriesFilterTimeRangeLte.toISOString()
+                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = typeof timeSeriesFilterTimeRangeLte === "string" ? timeSeriesFilterTimeRangeLte : timeSeriesFilterTimeRangeLte.toISOString()
             }
             
             if (timeSeriesFilterTimeRangeGt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = timeSeriesFilterTimeRangeGt.toISOString()
+                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = typeof timeSeriesFilterTimeRangeGt === "string" ? timeSeriesFilterTimeRangeGt : timeSeriesFilterTimeRangeGt.toISOString()
             }
             
             if (timeSeriesFilterTimeRangeGte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = timeSeriesFilterTimeRangeGte.toISOString()
+                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = typeof timeSeriesFilterTimeRangeGte === "string" ? timeSeriesFilterTimeRangeGte : timeSeriesFilterTimeRangeGte.toISOString()
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -14925,14 +15140,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -14985,11 +15200,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             }
             
             if (timestampBefore) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
+                localVarQueryParameter['timestampBefore'] = typeof timestampBefore === "string" ? timestampBefore : timestampBefore.toISOString()
             }
             
             if (timestampAfter) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
+                localVarQueryParameter['timestampAfter'] = typeof timestampAfter === "string" ? timestampAfter : timestampAfter.toISOString()
             }
             
             if (orderBy !== undefined) {
@@ -15269,14 +15484,14 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -15877,14 +16092,14 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -16045,14 +16260,14 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
          * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
             return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
@@ -16392,14 +16607,14 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
@@ -16537,15 +16752,15 @@ export class ExperimentsApi extends BaseAPI {
      * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
      * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
      * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-     * @param {Date} [timeSeriesFilterTimeRangeLt] Less than.
-     * @param {Date} [timeSeriesFilterTimeRangeLte] Less than or equal.
-     * @param {Date} [timeSeriesFilterTimeRangeGt] Greater than.
-     * @param {Date} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date, timeSeriesFilterTimeRangeLte?: Date, timeSeriesFilterTimeRangeGt?: Date, timeSeriesFilterTimeRangeGte?: Date, options?: any) {
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
         return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
@@ -16942,15 +17157,15 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-     * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-     * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+     * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+     * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
@@ -17506,6 +17721,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createGenericTask.');
+            }
+            const localVarPath = `/api/v1/generic-tasks`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -17746,6 +17999,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getGenericTaskConfig.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/config`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -18387,6 +18676,50 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling killGenericTask.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/kill`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -18789,6 +19122,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling pauseGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/pause`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -19383,6 +19752,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
+         * @param {V1RunPrepareForReportingRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        runPrepareForReporting(body: V1RunPrepareForReportingRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling runPrepareForReporting.');
+            }
+            const localVarPath = `/api/v1/runs/start`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -19672,6 +20079,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'taskId' is not null or undefined
+            if (taskId === null || taskId === undefined) {
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling unpauseGenericTask.');
+            }
+            const localVarPath = `/api/v1/tasks/{taskId}/unpause`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -20008,6 +20451,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGenericTask(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -20130,6 +20592,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGenericTaskConfigResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGenericTaskConfig(taskId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20432,6 +20913,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killGenericTask(taskId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -20604,6 +21105,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         patchUsers(body: V1PatchUsersRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUsersResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).patchUsers(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseGenericTask(taskId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20891,6 +21411,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
+         * @param {V1RunPrepareForReportingRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        runPrepareForReporting(body: V1RunPrepareForReportingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RunPrepareForReportingResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).runPrepareForReporting(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -20994,6 +21533,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnbindRPFromWorkspaceResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unbindRPFromWorkspace(resourcePoolName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpauseGenericTaskResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unpauseGenericTask(taskId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21183,6 +21741,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Create an experiment.
+         * @param {V1CreateGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).createGenericTask(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a group with optional members on creation.
          * @param {V1CreateGroupRequest} body
          * @param {*} [options] Override http request option.
@@ -21251,6 +21819,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getCurrentTrialSearcherOperation(trialId: number, options?: any) {
             return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get task config
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGenericTaskConfig(taskId: string, options?: any) {
+            return InternalApiFp(configuration).getGenericTaskConfig(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -21418,6 +21996,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Kill generic task
+         * @param {string} taskId The id of the task.
+         * @param {V1KillGenericTaskRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+            return InternalApiFp(configuration).killGenericTask(taskId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -21518,6 +22107,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         patchUsers(body: V1PatchUsersRequest, options?: any) {
             return InternalApiFp(configuration).patchUsers(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Pause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseGenericTask(taskId: string, options?: any) {
+            return InternalApiFp(configuration).pauseGenericTask(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -21670,6 +22269,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
+         * @param {V1RunPrepareForReportingRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        runPrepareForReporting(body: V1RunPrepareForReportingRequest, options?: any) {
+            return InternalApiFp(configuration).runPrepareForReporting(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -21737,6 +22346,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         unbindRPFromWorkspace(resourcePoolName: string, body: V1UnbindRPFromWorkspaceRequest, options?: any) {
             return InternalApiFp(configuration).unbindRPFromWorkspace(resourcePoolName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unpause generic task
+         * @param {string} taskId The id of the task.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unpauseGenericTask(taskId: string, options?: any) {
+            return InternalApiFp(configuration).unpauseGenericTask(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -21924,6 +22543,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Create an experiment.
+     * @param {V1CreateGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public createGenericTask(body: V1CreateGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).createGenericTask(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Create a group with optional members on creation.
      * @param {V1CreateGroupRequest} body
      * @param {*} [options] Override http request option.
@@ -22005,6 +22636,18 @@ export class InternalApi extends BaseAPI {
      */
     public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
         return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get task config
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getGenericTaskConfig(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).getGenericTaskConfig(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22201,6 +22844,19 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Kill generic task
+     * @param {string} taskId The id of the task.
+     * @param {V1KillGenericTaskRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
+        return InternalApiFp(this.configuration).killGenericTask(taskId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
@@ -22318,6 +22974,18 @@ export class InternalApi extends BaseAPI {
      */
     public patchUsers(body: V1PatchUsersRequest, options?: any) {
         return InternalApiFp(this.configuration).patchUsers(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Pause generic task
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public pauseGenericTask(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).pauseGenericTask(taskId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22499,6 +23167,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
+     * @param {V1RunPrepareForReportingRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public runPrepareForReporting(body: V1RunPrepareForReportingRequest, options?: any) {
+        return InternalApiFp(this.configuration).runPrepareForReporting(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get experiments with grouping and search syntax
      * @param {number} [projectId] ID of the project to look at.
      * @param {number} [offset] How many experiments to skip before including in the results.
@@ -22579,6 +23259,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Unpause generic task
+     * @param {string} taskId The id of the task.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unpauseGenericTask(taskId: string, options?: any) {
+        return InternalApiFp(this.configuration).unpauseGenericTask(taskId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Update group info.
      * @param {number} groupId The id of the group
      * @param {V1UpdateGroupRequest} body
@@ -22623,14 +23315,14 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -22687,11 +23379,11 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
             }
             
             if (timestampBefore) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
+                localVarQueryParameter['timestampBefore'] = typeof timestampBefore === "string" ? timestampBefore : timestampBefore.toISOString()
             }
             
             if (timestampAfter) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
+                localVarQueryParameter['timestampAfter'] = typeof timestampAfter === "string" ? timestampAfter : timestampAfter.toISOString()
             }
             
             if (orderBy !== undefined) {
@@ -22774,14 +23466,14 @@ export const JobsApiFp = function (configuration?: Configuration) {
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
             const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -22835,14 +23527,14 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
@@ -22879,15 +23571,15 @@ export class JobsApi extends BaseAPI {
      * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-     * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-     * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+     * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+     * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
@@ -27322,14 +28014,14 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -27386,11 +28078,11 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
             }
             
             if (timestampBefore) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
+                localVarQueryParameter['timestampBefore'] = typeof timestampBefore === "string" ? timestampBefore : timestampBefore.toISOString()
             }
             
             if (timestampAfter) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
+                localVarQueryParameter['timestampAfter'] = typeof timestampAfter === "string" ? timestampAfter : timestampAfter.toISOString()
             }
             
             if (orderBy !== undefined) {
@@ -27547,14 +28239,14 @@ export const TasksApiFp = function (configuration?: Configuration) {
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
             const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -27646,14 +28338,14 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
@@ -27736,15 +28428,15 @@ export class TasksApi extends BaseAPI {
      * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-     * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-     * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+     * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+     * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     
@@ -29156,14 +29848,14 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -29216,11 +29908,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             }
             
             if (timestampBefore) {
-                localVarQueryParameter['timestampBefore'] = timestampBefore.toISOString()
+                localVarQueryParameter['timestampBefore'] = typeof timestampBefore === "string" ? timestampBefore : timestampBefore.toISOString()
             }
             
             if (timestampAfter) {
-                localVarQueryParameter['timestampAfter'] = timestampAfter.toISOString()
+                localVarQueryParameter['timestampAfter'] = typeof timestampAfter === "string" ? timestampAfter : timestampAfter.toISOString()
             }
             
             if (orderBy !== undefined) {
@@ -29450,14 +30142,14 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -29595,14 +30287,14 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-         * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-         * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+         * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+         * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
@@ -29737,15 +30429,15 @@ export class TrialsApi extends BaseAPI {
      * @param {Array<V1LogLevel>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
-     * @param {Date} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
-     * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
+     * @param {Date | DateString} [timestampBefore] Limit the trial logs to ones with a timestamp before a given time.
+     * @param {Date | DateString} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {V1OrderBy} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: V1OrderBy, searchText?: string, options?: any) {
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
     }
     

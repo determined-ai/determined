@@ -1,11 +1,15 @@
 [
     {
-        "version": "0.27.1-dev0",
+        "version": "0.28.1-dev0",
         "url": "https://docs.determined.ai/latest/"
     },
     {
-        "version": "0.27.0",
-        "url": "https://docs.determined.ai/0.27.0/"
+        "version": "0.28.0",
+        "url": "https://docs.determined.ai/0.28.0/"
+    },
+    {
+        "version": "0.27.1",
+        "url": "https://docs.determined.ai/0.27.1/"
     },
     {
         "version": "0.27.0",
@@ -14,6 +18,10 @@
     {
         "version": "0.26.7",
         "url": "https://docs.determined.ai/0.26.7/"
+    },
+    {
+        "version": "0.26.6",
+        "url": "https://docs.determined.ai/0.26.6/"
     },
     {
         "version": "0.26.4",

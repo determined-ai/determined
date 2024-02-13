@@ -24,6 +24,8 @@ enum Type {
   TYPE_CHECKPOINT_GC = 6;
   // External Job.
   TYPE_EXTERNAL = 7;
+  // Generic Job.
+  TYPE_GENERIC = 8;
 }
 
 // Job state.

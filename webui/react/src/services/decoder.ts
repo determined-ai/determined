@@ -156,6 +156,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
     });
 
     return {
+      enabled: agent.enabled,
       id: agent.id,
       registeredTime: dayjs(agent.registeredTime).unix(),
       resourcePools: agent.resourcePools,
@@ -429,10 +430,11 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Experimentv1St
 export const mapV1GetExperimentDetailsResponse = ({
   experiment: exp,
   jobSummary,
+  config,
 }: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    exp.config,
+    config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
@@ -442,7 +444,7 @@ export const mapV1GetExperimentDetailsResponse = ({
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: exp.config,
+    configRaw: config,
     hyperparameters,
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
@@ -465,28 +467,21 @@ export const mapSearchExperiment = (
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
+  config?: Sdk.V1GetExperimentResponse['config'],
 ): types.ExperimentItem => {
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
-    ioTypes.ioExperimentConfig,
-    data.config,
-  );
-  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
-    config: ioToExperimentConfig(ioConfig),
-    configRaw: data.config,
+    config: config ?? {},
+    configRaw: config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters,
+    hyperparameters: config?.hyperparameters ?? {},
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,
@@ -647,7 +642,7 @@ const decodeDownsampledMetrics = (data: Sdk.V1DownsampledMetrics[]): types.Metri
       data: m.data.map((pt) => ({
         batches: pt.batches,
         epoch: pt.epoch,
-        time: pt.time,
+        time: typeof pt.time === 'string' ? new Date(pt.time) : pt.time,
         values: pt.values,
       })),
       group: m.group,
@@ -804,6 +799,10 @@ export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceS
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
     ...data,
+    lastExperimentStartedAt:
+      typeof data.lastExperimentStartedAt === 'string'
+        ? new Date(data.lastExperimentStartedAt)
+        : data.lastExperimentStartedAt,
     state: mapWorkspaceState(data.state),
     workspaceName: data.workspaceName ?? '',
   };

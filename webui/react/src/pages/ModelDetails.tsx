@@ -270,7 +270,7 @@ const ModelDetails: React.FC = () => {
       _tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
     ) => {
-      if (Array.isArray(tableSorter) || !settings.tableOffset) return;
+      if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -283,7 +283,7 @@ const ModelDetails: React.FC = () => {
       };
       updateSettings(newSettings);
     },
-    [columns, settings.tableOffset, updateSettings],
+    [columns, updateSettings],
   );
 
   const saveMetadata = useCallback(

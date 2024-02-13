@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -8,12 +9,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -24,15 +27,61 @@ import (
 
 const fullDeleteGlob = "**/*"
 
-func runCheckpointGCTask(
+func runCheckpointGCForCheckpoints(
 	rm rm.ResourceManager,
 	db *db.PgDB,
+	jobID model.JobID,
+	jobSubmissionTime time.Time,
+	taskSpec *tasks.TaskSpec,
+	expID int,
+	legacyConfig expconf.LegacyConfig,
+	toDeleteCheckpoints []uuid.UUID,
+	checkpointGlobs []string,
+	deleteTensorboards bool,
+	agentUserGroup *model.AgentUserGroup,
+	owner *model.User,
+	logCtx logger.Context,
+) error {
+	groups, err := storage.GroupCheckpoints(context.TODO(), toDeleteCheckpoints)
+	if err != nil {
+		return err
+	}
+
+	var wg errgroup.Group
+	for _, g := range groups {
+		g := g
+		wg.Go(func() error {
+			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
+			if err := runCheckpointGCTask(
+				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
+				expID, legacyConfig, g.StorageID, g.Checkpoints,
+				checkpointGlobs, deleteTensorboards,
+				agentUserGroup, owner, logCtx,
+			); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		return fmt.Errorf("one or more checkpoint GC jobs failed: %w", err)
+	}
+
+	return nil
+}
+
+func runCheckpointGCTask(
+	rm rm.ResourceManager,
+	pgDB *db.PgDB,
 	taskID model.TaskID,
 	jobID model.JobID,
 	jobSubmissionTime time.Time,
 	taskSpec tasks.TaskSpec,
 	expID int,
 	legacyConfig expconf.LegacyConfig,
+	storageID *model.StorageBackendID,
 	toDeleteCheckpoints []uuid.UUID,
 	checkpointGlobs []string,
 	deleteTensorboards bool,
@@ -76,13 +125,22 @@ func runCheckpointGCTask(
 		DeleteTensorboards: deleteTensorboards,
 	}
 
+	// Update checkpoint storage with storageID.
+	if storageID != nil {
+		checkpointStorage, err := storage.Backend(context.TODO(), *storageID)
+		if err != nil {
+			return fmt.Errorf("getting storage id %d in create gc task: %w", *storageID, err)
+		}
+		gcSpec.LegacyConfig.CheckpointStorage = checkpointStorage
+	}
+
 	logCtx = logger.MergeContexts(logCtx, logger.Context{
 		"task-id":   taskID,
 		"task-type": model.TaskTypeCheckpointGC,
 	})
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
-	if err := db.AddTask(&model.Task{
+	if err := db.AddTask(context.TODO(), &model.Task{
 		TaskID:     taskID,
 		TaskType:   model.TaskTypeCheckpointGC,
 		StartTime:  time.Now().UTC(),
@@ -97,7 +155,7 @@ func runCheckpointGCTask(
 
 	resultChan := make(chan error, 1)
 	onExit := func(ae *task.AllocationExited) {
-		if err := db.CompleteTask(taskID, time.Now().UTC()); err != nil {
+		if err := db.CompleteTask(context.TODO(), taskID, time.Now().UTC()); err != nil {
 			syslog.WithError(err).Error("marking GC task complete")
 		}
 		if err := tasklist.GroupPriorityChangeRegistry.Delete(gcJobID); err != nil {
@@ -119,7 +177,7 @@ func runCheckpointGCTask(
 			SingleAgent: true,
 		},
 		ResourcePool: rp,
-	}, db, rm, gcSpec, onExit)
+	}, pgDB, rm, gcSpec, onExit)
 	if err != nil {
 		return err
 	}
