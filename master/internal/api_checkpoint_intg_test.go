@@ -241,9 +241,11 @@ func TestCheckpointReturned(t *testing.T) {
 		ExperimentId: int32(trial.ExperimentID),
 	})
 	require.NoError(t, err)
+	int32TrialID := int32(trial.ID)
+	int32ExperimentID := int32(trial.ExperimentID)
 	checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
-		TrialId:           wrapperspb.Int32(int32(trial.ID)),
-		ExperimentId:      wrapperspb.Int32(int32(trial.ExperimentID)),
+		TrialId:           &int32TrialID,
+		ExperimentId:      &int32ExperimentID,
 		ExperimentConfig:  getExperimentRes.Config,
 		TrainingMetrics:   &commonv1.Metrics{},
 		ValidationMetrics: &commonv1.Metrics{},

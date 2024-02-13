@@ -1,24 +1,27 @@
-package db
+package checkpoints
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // CheckpointByUUID looks up a checkpoint by UUID, returning nil if none exists.
-func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
+func CheckpointByUUID(ctx context.Context, id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
-	if err := db.query(`
-	SELECT * FROM checkpoints_view c
-	WHERE c.uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
+
+	if err := db.Bun().NewSelect().
+		Model(&checkpoint).Where("uuid = ?", id.String()).Scan(ctx); errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", id.String())
@@ -27,11 +30,11 @@ func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 }
 
 // CheckpointByUUIDs looks up a checkpoint by list of UUIDS, returning nil if error.
-func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
+func CheckpointByUUIDs(ctx context.Context, ckptUUIDs []uuid.UUID) ([]model.Checkpoint, error) {
 	var checkpoints []model.Checkpoint
-	if err := db.queryRows(`
-	SELECT * FROM checkpoints_view c WHERE c.uuid
-	IN (SELECT UNNEST($1::uuid[]));`, &checkpoints, ckptUUIDs); err != nil {
+
+	if err := db.Bun().NewSelect().Model(&checkpoints).
+		Where("checkpoint.uuid IN (SELECT UNNEST(?::uuid[]))", pgdialect.Array(ckptUUIDs)).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("getting the checkpoints with a uuid in the set of given uuids: %w", err)
 	}
 	return checkpoints, nil
@@ -41,7 +44,7 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 // returning nil if error.
 func GetModelIDsAssociatedWithCheckpoint(ctx context.Context, ckptUUID uuid.UUID) ([]int32, error) {
 	var modelIDs []int32
-	if err := Bun().NewRaw(`
+	if err := db.Bun().NewRaw(`
 	SELECT DISTINCT(model_id) as ID FROM model_versions m INNER JOIN checkpoints_view c
 	ON m.checkpoint_uuid = c.uuid WHERE c.uuid = ?`,
 		ckptUUID.String()).Scan(ctx, &modelIDs); err != nil {
@@ -53,15 +56,15 @@ func GetModelIDsAssociatedWithCheckpoint(ctx context.Context, ckptUUID uuid.UUID
 
 // GetRegisteredCheckpoints gets the checkpoints in
 // the model registrys from the list of checkpoints provided.
-func (db *PgDB) GetRegisteredCheckpoints(checkpoints []uuid.UUID) (map[uuid.UUID]bool, error) {
+func GetRegisteredCheckpoints(ctx context.Context, checkpoints []uuid.UUID) (map[uuid.UUID]bool, error) {
 	var checkpointIDRows []struct {
 		ID uuid.UUID
 	}
 
-	if err := db.queryRows(`
+	if err := db.Bun().NewRaw(`
 	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv
-	WHERE mv.checkpoint_uuid IN (SELECT UNNEST($1::uuid[]));
-`, &checkpointIDRows, checkpoints); err != nil {
+	WHERE mv.checkpoint_uuid IN (SELECT UNNEST(?::uuid[]));`,
+		pgdialect.Array(checkpoints)).Scan(ctx, &checkpointIDRows); err != nil {
 		return nil, fmt.Errorf(
 			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
@@ -81,7 +84,7 @@ func MarkCheckpointsDeleted(ctx context.Context, deleteCheckpoints []uuid.UUID) 
 		return nil
 	}
 
-	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewUpdate().Model(&model.CheckpointV2{}).
 			Set("state = ?", model.DeletedState).
 			Where("uuid IN (?)", bun.In(deleteCheckpoints)).
@@ -104,36 +107,26 @@ func MarkCheckpointsDeleted(ctx context.Context, deleteCheckpoints []uuid.UUID) 
 
 // ExperimentCheckpointGrouping represents a mapping of checkpoint uuids to experiment id.
 type ExperimentCheckpointGrouping struct {
-	ExperimentID       int
-	CheckpointUUIDSStr string
+	ExperimentID       int    `bun:"experimentid"`
+	CheckpointUUIDSStr string `bun:"checkpointuuidsstr"`
 }
 
 // GroupCheckpointUUIDsByExperimentID creates the mapping of checkpoint uuids to experiment id.
 // The checkpount uuids grouped together are comma separated.
-func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
+func GroupCheckpointUUIDsByExperimentID(ctx context.Context, checkpoints []uuid.UUID) (
 	[]*ExperimentCheckpointGrouping, error,
 ) {
 	var groupeIDcUUIDS []*ExperimentCheckpointGrouping
 
-	rows, err := db.sql.Queryx(
-		`SELECT c.experiment_id AS ExperimentID, string_agg(c.uuid::text, ',') AS CheckpointUUIDSStr
-	FROM checkpoints_view c
-	WHERE c.uuid IN (SELECT UNNEST($1::uuid[]))
-	GROUP BY c.experiment_id`, checkpoints)
+	err := db.Bun().NewSelect().Model(&groupeIDcUUIDS).
+		ModelTableExpr("checkpoints_view as c").
+		ColumnExpr("c.experiment_id AS ExperimentID").
+		ColumnExpr("string_agg(c.uuid::text, ',') AS CheckpointUUIDSStr").
+		Where("c.uuid IN (SELECT UNNEST(?::uuid[]))", pgdialect.Array(checkpoints)).
+		Group("c.experiment_id").
+		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("grouping checkpoint UUIDs by experiment ids: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var eIDcUUIDs ExperimentCheckpointGrouping
-		err = rows.StructScan(&eIDcUUIDs)
-		if err != nil {
-			return nil,
-				fmt.Errorf(
-					"reading rows into a slice of struct that stores checkpoint ids grouped by exp ID:  %w", err)
-		}
-		groupeIDcUUIDS = append(groupeIDcUUIDS, &eIDcUUIDs)
 	}
 
 	return groupeIDcUUIDS, nil
@@ -142,7 +135,7 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 // UpdateCheckpointSizeTx updates checkpoint size and count to experiment and trial.
 func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
 	if idb == nil {
-		idb = Bun()
+		idb = db.Bun()
 	}
 
 	var experimentIDs []int

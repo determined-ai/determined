@@ -31,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -481,7 +482,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				return err
 			}
 
-			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(exp.ID, 0, 0, 0)
+			checkpoints, err := experiment.ExperimentCheckpointsToGCRaw(context.TODO(), exp.ID, 0, 0, 0)
 			if err != nil {
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return err
@@ -546,7 +547,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("proto_time(e.start_time) AS start_time").
 		ColumnExpr("proto_time(e.end_time) AS end_time").
 		ColumnExpr("extract(epoch FROM coalesce(e.end_time, now()) - e.start_time)::int AS duration").
-		ColumnExpr(experiment.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
+		ColumnExpr(bunutils.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state",
 			"STATE_")).
 		Column("e.archived").
 		ColumnExpr(
@@ -1252,7 +1253,8 @@ func (a *apiServer) PatchExperiment(
 		}
 
 		if newCheckpointStorage != nil {
-			checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+			checkpoints, err := experiment.ExperimentCheckpointsToGCRaw(
+				ctx,
 				modelExp.ID,
 				modelExp.Config.CheckpointStorage.SaveExperimentBest(),
 				modelExp.Config.CheckpointStorage.SaveTrialBest(),
@@ -2626,7 +2628,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.restarts").
 		ColumnExpr("new_ckpt.uuid AS warm_start_checkpoint_uuid").
 		ColumnExpr("trials.checkpoint_size AS total_checkpoint_size").
-		ColumnExpr(experiment.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
+		ColumnExpr(bunutils.ProtoStateDBCaseString(trialv1.State_value, "trials.state", "state",
 			"STATE_")).
 		ColumnExpr(`(CASE WHEN trials.hparams = 'null'::jsonb
 				THEN null ELSE trials.hparams END) AS hparams`).

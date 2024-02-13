@@ -18,6 +18,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/checkpoints"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -51,7 +52,7 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	checkpoint, err := m.db.CheckpointByUUID(uuid)
+	checkpoint, err := checkpoints.CheckpointByUUID(ctx, uuid)
 	if err != nil {
 		return err
 	} else if checkpoint == nil {
@@ -82,7 +83,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(
 		return err
 	}
 
-	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
+	modelIDs, err := checkpoints.GetModelIDsAssociatedWithCheckpoint(ctx, ckptUUID)
 	if err != nil {
 		return err
 	}
@@ -128,26 +129,24 @@ func (a *apiServer) GetCheckpoint(
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}
-	resp.Checkpoint = &checkpointv1.Checkpoint{}
 
-	if err := a.m.db.QueryProto(
-		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
-		return resp,
-			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
+	ckpt, err := db.GetCheckpoint(ctx, req.CheckpointUuid)
+	if err != nil {
+		return resp, errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
 	}
-
+	resp.Checkpoint = ckpt
 	return resp, nil
 }
 
 func (a *apiServer) checkpointsRBACEditCheck(
 	ctx context.Context, uuids []uuid.UUID,
-) ([]*model.Experiment, []*db.ExperimentCheckpointGrouping, error) {
+) ([]*model.Experiment, []*checkpoints.ExperimentCheckpointGrouping, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	groupCUUIDsByEIDs, err := a.m.db.GroupCheckpointUUIDsByExperimentID(uuids)
+	groupCUUIDsByEIDs, err := checkpoints.GroupCheckpointUUIDsByExperimentID(ctx, uuids)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -218,7 +217,7 @@ func (a *apiServer) PatchCheckpoints(
 		return nil, err
 	}
 
-	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(uuids)
+	registeredCheckpointUUIDs, err := checkpoints.GetRegisteredCheckpoints(ctx, uuids)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +278,7 @@ func (a *apiServer) PatchCheckpoints(
 		}
 
 		if len(updatedCheckpointSizes) > 0 {
-			if err := db.UpdateCheckpointSizeTx(ctx, tx, updatedCheckpointSizes); err != nil {
+			if err := checkpoints.UpdateCheckpointSizeTx(ctx, tx, updatedCheckpointSizes); err != nil {
 				return fmt.Errorf("updating checkpoint size: %w", err)
 			}
 		}
@@ -323,7 +322,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		return nil, err
 	}
 
-	registeredCheckpointUUIDs, err := a.m.db.GetRegisteredCheckpoints(checkpointsToDelete)
+	registeredCheckpointUUIDs, err := checkpoints.GetRegisteredCheckpoints(ctx, checkpointsToDelete)
 	if err != nil {
 		return nil, err
 	}
@@ -416,8 +415,8 @@ func (a *apiServer) PostCheckpointMetadata(
 		return nil, err
 	}
 
-	currCheckpoint := &checkpointv1.Checkpoint{}
-	if err := a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
+	currCheckpoint, err := db.GetCheckpoint(ctx, req.Checkpoint.Uuid)
+	if err != nil {
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
 	}

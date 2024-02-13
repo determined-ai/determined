@@ -15,6 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -38,17 +39,6 @@ type deleteExperimentOKResult struct {
 	ID       int32
 	Versions int
 	State    experimentv1.State
-}
-
-// ProtoStateDBCaseString helps bun extract the experiment state.
-func ProtoStateDBCaseString(
-	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
-) string {
-	query := fmt.Sprintf("CASE %s::text ", colName)
-	for enum, v := range enumToValue {
-		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
-	}
-	return query + fmt.Sprintf("END AS %s", serializedName)
 }
 
 // For each experiment, try to retrieve an actor or append an error message.
@@ -366,7 +356,7 @@ func DeleteExperiments(ctx context.Context,
 		ModelTableExpr("experiments as e").
 		Model(&expChecks).
 		Column("e.id").
-		ColumnExpr(ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
+		ColumnExpr(bunutils.ProtoStateDBCaseString(experimentv1.State_value, "e.state", "state", "STATE_")).
 		ColumnExpr("COUNT(model_versions.id) AS versions").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN checkpoints_view c ON c.experiment_id = e.id").

@@ -15,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
@@ -62,11 +61,8 @@ func TestModels(t *testing.T) {
 				WorkspaceID:     1,
 			}
 			mdlNotes := "some notes"
-			var pmdl modelv1.Model
-			err := db.QueryProto(
-				"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-				strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
-			)
+			pmdl, err := InsertModel(ctx, mdl.Name, mdl.Description, emptyMetadata,
+				strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID)
 			require.NoError(t, err)
 
 			// Insert a checkpoint.
@@ -114,8 +110,7 @@ func TestModels(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			var retCkpt checkpointv1.Checkpoint
-			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.UUID.String())
+			retCkpt, err := GetCheckpoint(ctx, ckpt.UUID.String())
 			require.NoError(t, err)
 
 			requireModelVersionOK := func(expected, actual *modelv1.ModelVersion) {
@@ -124,8 +119,8 @@ func TestModels(t *testing.T) {
 				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
 				if tt.hasValidation {
 					require.Equal(t,
-						expected.Checkpoint.Training.SearcherMetric.Value,
-						actual.Checkpoint.Training.SearcherMetric.Value)
+						*expected.Checkpoint.Training.SearcherMetric,
+						*actual.Checkpoint.Training.SearcherMetric)
 					require.NotNil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				} else {
 					require.Nil(t, actual.Checkpoint.Training.SearcherMetric)
@@ -135,26 +130,24 @@ func TestModels(t *testing.T) {
 
 			// Register checkpoint as a model version.
 			expected := &modelv1.ModelVersion{
-				Model:      &pmdl,
-				Checkpoint: &retCkpt,
+				Model:      pmdl,
+				Checkpoint: retCkpt,
 				Name:       "some name",
 				Comment:    "empty",
 				Username:   user.Username,
 				Labels:     []string{"some label"},
 				Notes:      "some notes",
 			}
-			var mv modelv1.ModelVersion
-			err = db.QueryProto(
-				"insert_model_version", &mv, pmdl.Id, ckpt.UUID, expected.Name, expected.Comment,
+			mv, err := InsertModelVersion(ctx, pmdl.Id, ckpt.UUID.String(), expected.Name, expected.Comment,
 				emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
 			)
 			require.NoError(t, err)
-			requireModelVersionOK(expected, &mv)
+			requireModelVersionOK(expected, mv)
 
 			var retMv modelv1.ModelVersion
 			err = db.QueryProto("get_model_version", &retMv, pmdl.Id, mv.Version)
 			require.NoError(t, err)
-			requireModelVersionOK(expected, &mv)
+			requireModelVersionOK(expected, mv)
 
 			var retMvs []*modelv1.ModelVersion
 			err = db.QueryProto("get_model_versions", &retMvs, pmdl.Id)
