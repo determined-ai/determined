@@ -149,4 +149,4 @@ are only able to run CPU-based workloads.
 Install on Windows Subsystem for Linux (WSL)
 ============================================
 
-Follow the steps for :ref:installing Docker on Linux <install-docker-on-linux>.
+Follow the steps for :ref:`installing Docker on Linux <install-docker-on-linux>`.
