@@ -70,7 +70,6 @@ func TestJobByID(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, recvJob)
 	})
-
 }
 
 // UpdateJobPosition propagates the new queue position to the job.
