@@ -1,9 +1,4 @@
-import LogViewer, {
-  FetchConfig,
-  FetchDirection,
-  FetchType,
-  LogViewerVirtuoso,
-} from 'hew/LogViewer/LogViewer';
+import { FetchConfig, FetchDirection, FetchType, LogViewerVirtuoso } from 'hew/LogViewer/LogViewer';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTask } from 'hew/LogViewer/LogViewerSelect.settings';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';

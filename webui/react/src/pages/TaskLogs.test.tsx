@@ -73,7 +73,7 @@ const generateLogs = (
   });
 };
 
-const setup = (props: src.Props) => {
+const setup = (props: src.Props<TestLog>) => {
   return render(
     <UIProvider theme={DefaultTheme.Light}>
       <src.default {...props} />

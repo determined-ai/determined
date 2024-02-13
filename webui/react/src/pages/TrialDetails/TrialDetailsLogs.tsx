@@ -1,10 +1,5 @@
 import CodeSample from 'hew/CodeSample';
-import LogViewer, {
-  FetchConfig,
-  FetchDirection,
-  FetchType,
-  LogViewerVirtuoso,
-} from 'hew/LogViewer/LogViewer';
+import { FetchConfig, FetchDirection, FetchType, LogViewerVirtuoso } from 'hew/LogViewer/LogViewer';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
 import Spinner from 'hew/Spinner';
@@ -195,15 +190,13 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [trial?.id, ui.isPageHidden]);
 
   const logFilters = (
-    <div className={css.filters}>
-      <LogViewerSelect
-        options={filterOptions}
-        showSearch={true}
-        values={filterValues}
-        onChange={handleFilterChange}
-        onReset={handleFilterReset}
-      />
-    </div>
+    <LogViewerSelect
+      options={filterOptions}
+      showSearch={true}
+      values={filterValues}
+      onChange={handleFilterChange}
+      onReset={handleFilterReset}
+    />
   );
 
   return (

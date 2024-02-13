@@ -46,7 +46,7 @@
     "fp-ts": "^2.16.1",
     "fuse.js": "^7.0.0",
     "hermes-parallel-coordinates": "^0.6.17",
-    "hew": "github:determined-ai/hew.git#b0280f62842c82c6d8c494bb1723116031a42929",
+    "hew": "github:determined-ai/hew.git#05714df32d6133390290304bf6530af5a568c009",
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",
