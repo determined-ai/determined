@@ -2463,10 +2463,6 @@ class v1CreateExperimentRequest(Printable):
     """Request to create a new experiment."""
     activate: "typing.Optional[bool]" = None
     config: "typing.Optional[str]" = None
-    gitCommit: "typing.Optional[str]" = None
-    gitCommitDate: "typing.Optional[str]" = None
-    gitCommitter: "typing.Optional[str]" = None
-    gitRemote: "typing.Optional[str]" = None
     modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None
     parentId: "typing.Optional[int]" = None
     projectId: "typing.Optional[int]" = None
@@ -2479,10 +2475,6 @@ class v1CreateExperimentRequest(Printable):
         *,
         activate: "typing.Union[bool, None, Unset]" = _unset,
         config: "typing.Union[str, None, Unset]" = _unset,
-        gitCommit: "typing.Union[str, None, Unset]" = _unset,
-        gitCommitDate: "typing.Union[str, None, Unset]" = _unset,
-        gitCommitter: "typing.Union[str, None, Unset]" = _unset,
-        gitRemote: "typing.Union[str, None, Unset]" = _unset,
         modelDefinition: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         parentId: "typing.Union[int, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -2494,14 +2486,6 @@ class v1CreateExperimentRequest(Printable):
             self.activate = activate
         if not isinstance(config, Unset):
             self.config = config
-        if not isinstance(gitCommit, Unset):
-            self.gitCommit = gitCommit
-        if not isinstance(gitCommitDate, Unset):
-            self.gitCommitDate = gitCommitDate
-        if not isinstance(gitCommitter, Unset):
-            self.gitCommitter = gitCommitter
-        if not isinstance(gitRemote, Unset):
-            self.gitRemote = gitRemote
         if not isinstance(modelDefinition, Unset):
             self.modelDefinition = modelDefinition
         if not isinstance(parentId, Unset):
@@ -2523,14 +2507,6 @@ class v1CreateExperimentRequest(Printable):
             kwargs["activate"] = obj["activate"]
         if "config" in obj:
             kwargs["config"] = obj["config"]
-        if "gitCommit" in obj:
-            kwargs["gitCommit"] = obj["gitCommit"]
-        if "gitCommitDate" in obj:
-            kwargs["gitCommitDate"] = obj["gitCommitDate"]
-        if "gitCommitter" in obj:
-            kwargs["gitCommitter"] = obj["gitCommitter"]
-        if "gitRemote" in obj:
-            kwargs["gitRemote"] = obj["gitRemote"]
         if "modelDefinition" in obj:
             kwargs["modelDefinition"] = [v1File.from_json(x) for x in obj["modelDefinition"]] if obj["modelDefinition"] is not None else None
         if "parentId" in obj:
@@ -2552,14 +2528,6 @@ class v1CreateExperimentRequest(Printable):
             out["activate"] = self.activate
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
-        if not omit_unset or "gitCommit" in vars(self):
-            out["gitCommit"] = self.gitCommit
-        if not omit_unset or "gitCommitDate" in vars(self):
-            out["gitCommitDate"] = self.gitCommitDate
-        if not omit_unset or "gitCommitter" in vars(self):
-            out["gitCommitter"] = self.gitCommitter
-        if not omit_unset or "gitRemote" in vars(self):
-            out["gitRemote"] = self.gitRemote
         if not omit_unset or "modelDefinition" in vars(self):
             out["modelDefinition"] = None if self.modelDefinition is None else [x.to_json(omit_unset) for x in self.modelDefinition]
         if not omit_unset or "parentId" in vars(self):

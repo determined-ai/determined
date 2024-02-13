@@ -393,8 +393,6 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		EndTime:   endTime,
 		ParentID:  parentID,
 		Archived:  e.Archived,
-		// GitRemote:
-		// GitCommitDate
 		OwnerID:   uid,
 		Username:  e.Username,
 		ProjectID: int(e.ProjectId),
