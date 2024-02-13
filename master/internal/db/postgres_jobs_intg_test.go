@@ -41,7 +41,6 @@ func TestAddJob(t *testing.T) {
 	})
 }
 
-// JobByID retrieves a job by ID.
 func TestJobByID(t *testing.T) {
 	db := setupDbForTest(t)
 
@@ -72,7 +71,6 @@ func TestJobByID(t *testing.T) {
 	})
 }
 
-// UpdateJobPosition propagates the new queue position to the job.
 func TestUpdateJobPosition(t *testing.T) {
 	db := setupDbForTest(t)
 
