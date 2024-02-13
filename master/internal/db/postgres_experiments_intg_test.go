@@ -452,6 +452,34 @@ func TestExperimentByIDs(t *testing.T) {
 	}
 }
 
+func TestTerminateExperimentInRestart(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	exp := RequireMockExperiment(t, db, user)
+	trial0, _ := RequireMockTrial(t, db, exp)
+	trial1, _ := RequireMockTrial(t, db, exp)
+
+	require.NoError(t, db.TerminateExperimentInRestart(exp.ID, model.ErrorState))
+
+	actualExp, err := ExperimentByID(ctx, exp.ID)
+	require.NoError(t, err)
+	require.Equal(t, actualExp.State, model.ErrorState)
+	require.NotNil(t, actualExp.EndTime)
+	require.Nil(t, actualExp.Progress)
+
+	for _, trialID := range []int{trial0.ID, trial1.ID} {
+		actualTrial, err := TrialByID(ctx, trialID)
+		require.NoError(t, err)
+		require.Equal(t, actualTrial.State, model.ErrorState)
+		require.NotNil(t, actualTrial.EndTime)
+	}
+}
+
 func TestExperimentsTrialAndTaskIDs(t *testing.T) {
 	ctx := context.Background()
 
