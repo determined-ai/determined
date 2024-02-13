@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
@@ -281,11 +282,10 @@ func (a *apiServer) PostModel(
 		int32(workspaceID)); err != nil {
 		return nil, err
 	}
-	m := &modelv1.Model{}
 	reqLabels := strings.Join(req.Labels, ",")
-	err = a.m.db.QueryProto(
-		"insert_model", m, req.Name, req.Description, b,
-		reqLabels, req.Notes, user.User.Id, workspaceID,
+	m, err := db.InsertModel(
+		ctx, req.Name, req.Description, b,
+		reqLabels, req.Notes, model.UserID(user.User.Id), workspaceID,
 	)
 
 	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
@@ -632,12 +632,10 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	// make sure the checkpoint exists
-	c := &checkpointv1.Checkpoint{}
-
-	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
-	case getCheckpointErr == db.ErrNotFound:
+	c, getCheckpointErr := db.GetCheckpoint(ctx, req.CheckpointUuid)
+	if getCheckpointErr == db.ErrNotFound {
 		return nil, api.NotFoundErrs("checkpoint", req.CheckpointUuid, true)
-	case getCheckpointErr != nil:
+	} else if getCheckpointErr != nil {
 		return nil, getCheckpointErr
 	}
 
@@ -654,7 +652,6 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	respModelVersion := &apiv1.PostModelVersionResponse{}
-	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
 	mdata, err := protojson.Marshal(req.Metadata)
 	if err != nil {
@@ -663,9 +660,8 @@ func (a *apiServer) PostModelVersion(
 
 	reqLabels := strings.Join(req.Labels, ",")
 
-	err = a.m.db.QueryProto(
-		"insert_model_version",
-		respModelVersion.ModelVersion,
+	modelVersion, err := db.InsertModelVersion(
+		ctx,
 		modelResp.Id,
 		c.Uuid,
 		req.Name,
@@ -673,8 +669,10 @@ func (a *apiServer) PostModelVersion(
 		mdata,
 		reqLabels,
 		req.Notes,
-		user.User.Id,
+		model.UserID(user.User.GetId()),
 	)
+
+	respModelVersion.ModelVersion = modelVersion
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %q",
 		req.ModelName)

@@ -5,7 +5,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 import "determined/common/v1/common.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -50,9 +49,9 @@ message CheckpointTrainingMetadata {
     json_schema: { required: [] }
   };
   // The ID of the trial that created this checkpoint.
-  google.protobuf.Int32Value trial_id = 1;
+  optional int32 trial_id = 1;
   // The ID of the experiment that created this checkpoint.
-  google.protobuf.Int32Value experiment_id = 2;
+  optional int32 experiment_id = 2;
   // The configuration of the experiment that created this checkpoint.
   google.protobuf.Struct experiment_config = 3;
   // Hyperparameter values for the trial that created this checkpoint.
@@ -63,7 +62,7 @@ message CheckpointTrainingMetadata {
   determined.common.v1.Metrics validation_metrics = 6;
   // Searcher metric (as specified by the expconf) at the same steps_completed
   // of the checkpoint.
-  google.protobuf.DoubleValue searcher_metric = 17;
+  optional double searcher_metric = 17;
 }
 
 // Checkpoint a collection of files saved by a task.

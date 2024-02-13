@@ -2,6 +2,8 @@ package bunutils
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/uptrace/bun"
 
@@ -53,4 +55,15 @@ func Paginate(
 		StartIndex: int32(startIndex),
 		EndIndex:   int32(endIndex),
 	}, nil
+}
+
+// ProtoStateDBCaseString helps bun extract the state.
+func ProtoStateDBCaseString(
+	enumToValue map[string]int32, colName, serializedName, trimFromPrefix string,
+) string {
+	query := fmt.Sprintf("CASE %s::text ", colName)
+	for enum, v := range enumToValue {
+		query += fmt.Sprintf("WHEN '%s' THEN %d ", strings.TrimPrefix(enum, trimFromPrefix), v)
+	}
+	return query + fmt.Sprintf("END AS %s", serializedName)
 }

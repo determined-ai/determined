@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	ckpt "github.com/determined-ai/determined/master/internal/checkpoints"
 	detContext "github.com/determined-ai/determined/master/internal/context"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -75,10 +76,10 @@ func newDelayWriter(w io.Writer, delayBytes int) *delayWriter {
 	}
 }
 
-func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
+func (m *Master) getCheckpointStorageConfig(ctx context.Context, id uuid.UUID) (
 	*expconf.CheckpointStorageConfig, error,
 ) {
-	checkpoint, err := m.db.CheckpointByUUID(id)
+	checkpoint, err := ckpt.CheckpointByUUID(ctx, id)
 	if err != nil || checkpoint == nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (m *Master) getCheckpointImpl(
 	ctx context.Context, id uuid.UUID, mimeType string, content *echo.Response,
 ) error {
 	// Assume a checkpoint always has experiment configs
-	storageConfig, err := m.getCheckpointStorageConfig(id)
+	storageConfig, err := m.getCheckpointStorageConfig(ctx, id)
 	switch {
 	case err != nil:
 		return echo.NewHTTPError(http.StatusInternalServerError,

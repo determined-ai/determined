@@ -13,10 +13,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -820,4 +822,51 @@ searcher_metric_value_signed =
 WHERE t.id = $1;
 `, trialID, trialRunID, stepsCompleted)
 	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
+}
+
+// UpdateCheckpointSizeTx which updates checkpoint size and count to experiment and trial, is duplicated here.
+// Remove from this file when bunifying. Original is in master/internal/checkpoints/postgres_checkpoints.go.
+func UpdateCheckpointSizeTx(ctx context.Context, idb bun.IDB, checkpoints []uuid.UUID) error {
+	if idb == nil {
+		idb = Bun()
+	}
+
+	var experimentIDs []int
+	err := idb.NewRaw(`
+UPDATE runs SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT
+		run_id,
+		COALESCE(SUM(size) FILTER (WHERE state != 'DELETED'), 0) AS size,
+		COUNT(*) FILTER (WHERE state != 'DELETED') AS count
+	FROM checkpoints_v2
+	JOIN run_checkpoints rc ON rc.checkpoint_id = checkpoints_v2.uuid
+	WHERE rc.run_id IN (
+		SELECT run_id FROM run_checkpoints WHERE checkpoint_id IN (?)
+	)
+	GROUP BY run_id
+) sub
+WHERE runs.id = sub.run_id
+RETURNING experiment_id`, bun.In(checkpoints)).Scan(ctx, &experimentIDs)
+	if err != nil {
+		return errors.Wrap(err, "errors updating trial checkpoint sizes and counts")
+	}
+	if len(experimentIDs) == 0 { // Checkpoint potentially to non experiment.
+		return nil
+	}
+
+	uniqueExpIDs := maps.Keys(set.FromSlice(experimentIDs))
+	var res bool // Need this since bun.NewRaw() doesn't have a Exec(ctx) method.
+	err = idb.NewRaw(`
+UPDATE experiments SET checkpoint_size=sub.size, checkpoint_count=sub.count FROM (
+	SELECT experiment_id, SUM(checkpoint_size) AS size, SUM(checkpoint_count) as count FROM trials
+	WHERE experiment_id IN (?)
+	GROUP BY experiment_id
+) sub
+WHERE experiments.id = sub.experiment_id
+RETURNING true`, bun.In(uniqueExpIDs)).Scan(ctx, &res)
+	if err != nil {
+		return errors.Wrap(err, "errors updating experiment checkpoint sizes and counts")
+	}
+
+	return nil
 }

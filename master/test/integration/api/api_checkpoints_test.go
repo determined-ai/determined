@@ -132,8 +132,8 @@ func testGetCheckpoint(
 			entrypoint := ckptCl.Training.ExperimentConfig.GetFields()["entrypoint"].GetStringValue()
 			assert.Equal(t, entrypoint, "model_def:SomeTrialClass")
 
-			assert.Equal(t, ckptCl.Training.ExperimentId.Value, int32(experiment.ID))
-			assert.Equal(t, ckptCl.Training.TrialId.Value, int32(trial.ID))
+			assert.Equal(t, *ckptCl.Training.ExperimentId, int32(experiment.ID))
+			assert.Equal(t, *ckptCl.Training.TrialId, int32(trial.ID))
 
 			actualFramework := ckptCl.Metadata.GetFields()["framework"].GetStringValue()
 			assert.Equal(t, actualFramework, "some framework")
