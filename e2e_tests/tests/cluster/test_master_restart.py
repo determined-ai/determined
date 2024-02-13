@@ -103,7 +103,9 @@ def test_master_restart_generic_task(managed_cluster_restarts: ManagedCluster) -
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Wait for task to start
-    time.sleep(1)
+    started = task.wait_for_task_start(test_session, task_resp.taskId, timeout=30)
+    if not started:
+        pytest.fail("task failed to started")
     managed_cluster_restarts.kill_master()
     managed_cluster_restarts.restart_master()
     is_valid_state = task.wait_for_task_state(
