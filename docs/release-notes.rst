@@ -1134,8 +1134,7 @@ Version 0.19.10
 **Removed Features**
 
 -  The data layer feature, which was deprecated in 0.18.0 (May 2022), has been removed. A migration
-   guide to use the underlying `yogadl library
-   <https://yogadl.readthedocs.io/en/latest//en/latest/>`_ directly may be found `here
+   guide to use the underlying yogadl library directly may be found `here
    <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_. Affected users are
    encouraged to follow the migration guide before upgrading to avoid downtime.
 
@@ -2882,9 +2881,7 @@ Version 0.14.3
 **New Features**
 
 -  Examples: Add the `Deformable DETR <https://openreview.net/forum?id=gZ9hCDWe6ke>`__ model for
-   object detection in Determined. Check out `our example
-   <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/deformabledetr_coco_pytorch>`__
-   in the Determined repository.
+   object detection in Determined.
 
 -  Searcher: Support programmatic rejection of certain hyperparameters to further optimize your
    hyperparameter search.
@@ -3289,10 +3286,7 @@ Version 0.13.7
 -  Support `MMDetection <https://github.com/open-mmlab/mmdetection>`__, a popular library for object
    detection, in Determined. MMDetection allows users to easily train state-of-the-art object
    detection models; with Determined, users can take things one step further with cutting-edge
-   distributed training and hyperparameter tuning to further boost performance. See the `Determined
-   implementation of MMDetection
-   <https://github.com/determined-ai/determined/tree/main/examples/computer_vision/mmdetection_pytorch>`__
-   for more information on how to get started.
+   distributed training and hyperparameter tuning to further boost performance.
 
 -  WebUI: Allow the experiments list page to be filtered by labels. Selecting more than one label
    will filter experiments by the intersection of the selected labels.
@@ -3901,19 +3895,11 @@ Version 0.12.11
 
 -  Add logging to console in test mode for the Native API when using
    :class:`determined.experimental.create`.
-
 -  Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
-
--  Add `an example
-   <https://github.com/determined-ai/determined/tree/main/examples/experimental/trial/unets_tf_keras>`__
-   using TensorFlow's *Image Segmentation via UNet* tutorial.
-
+-  Add an example using TensorFlow's *Image Segmentation via UNet* tutorial.
 -  WebUI: Improve trial log rendering performance.
-
 -  WebUI: Fix an issue where cluster utilization was displayed incorrectly.
-
 -  WebUI: Fix an issue where active experiments and commands would not appear on the dashboard.
-
 -  WebUI: Fix an issue where having telemetry enabled with an invalid key would cause the WebUI to
    render incorrectly.
 

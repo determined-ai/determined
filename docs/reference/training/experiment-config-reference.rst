@@ -1325,9 +1325,8 @@ When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
 Podman container runtime. The image can be any of the supported PodMan container formats identified
 by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``, or
-``oci-archive:``). See the `Podman run
-<https://docs.podman.io/en/latest//en/latest/markdown/podman-run.1.html>`__ command documentation
-for a full description of the capabilities.
+``oci-archive:``). Visit the `Podman <https://docs.podman.io/en/latest/>`__ run command
+documentation for a full description of the capabilities.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: enroot``, images are executed using the
@@ -1351,8 +1350,8 @@ built-in cache. Defaults to ``false``.
 =================
 
 Optional. Defines the default `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
-custom base Docker image, if needed. Credentials are specified as the following nested fields:
+<https://docs.docker.com/engine/api/v1.30/>`__ to use when pulling a custom base Docker image, if
+needed. Credentials are specified as the following nested fields:
 
 -  ``username`` (required)
 -  ``password`` (required)

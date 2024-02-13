@@ -62,8 +62,8 @@ The following configuration settings are supported:
       pods that are launched by Determined for this task. See :ref:`custom-pod-specs` for details.
 
    -  ``registry_auth``: Defines the default `Docker registry credentials
-      <https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when
-      pulling a custom base Docker image, if needed.
+      <https://docs.docker.com/engine/api/v1.30/>`__ to use when pulling a custom base Docker image,
+      if needed.
 
       -  ``username`` (required)
       -  ``password`` (required)

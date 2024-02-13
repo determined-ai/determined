@@ -140,8 +140,7 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Podman Known Issues
 *********************
 
--  Determined uses Podman in `rootless mode
-   <https://docs.podman.io/en/latest//en/latest/markdown/podman.1.html#rootless-mode>`__. There are
+-  Determined uses `Podman <https://docs.podman.io/en/latest/>`__ in rootless mode. There are
    several configuration errors that may be encountered:
 
    -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment

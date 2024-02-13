@@ -59,7 +59,7 @@ Determined is not able to autoscale your cluster, but equivalent functionality i
 the `Kubernetes Cluster Autoscaler
 <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_, which is supported on
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
-<https://docs.aws.amazon.com/eks/latest/userguide/autoscaling.html#cluster-autoscaler>`_.
+<https://docs.aws.amazon.com/eks/latest/userguide/autoscaling.html>`_.
 
 Pod Security
 ============

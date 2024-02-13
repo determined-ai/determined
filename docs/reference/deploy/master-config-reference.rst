@@ -122,11 +122,10 @@ Defaults to ``false``.
 ``registry_auth``
 =================
 
-Defines the default `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
-custom base Docker image, if needed. If credentials are specified in the :ref:`experiment config
-<exp-environment-image>` this default value is overridden. Credentials are specified as the
-following nested fields:
+Defines the default `Docker registry credentials <https://docs.docker.com/engine/api/v1.30/>`__ to
+use when pulling a custom base Docker image, if needed. If credentials are specified in the
+:ref:`experiment config <exp-environment-image>` this default value is overridden. Credentials are
+specified as the following nested fields:
 
 -  ``username`` (required)
 -  ``password`` (required)
