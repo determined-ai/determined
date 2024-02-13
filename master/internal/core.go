@@ -53,6 +53,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/task/tasklogger"
@@ -792,6 +794,83 @@ func (m *Master) restoreNonTerminalExperiments() error {
 	return nil
 }
 
+func (m *Master) restoreGenericTasks(ctx context.Context) error {
+	var snapshots []command.CommandSnapshot
+	err := db.Bun().NewSelect().Model(&snapshots).
+		Relation("Allocation").
+		Relation("Task").
+		Relation("Task.Job").
+		Where("allocation.end_time IS NULL").
+		Where("allocation.state != ?", model.AllocationStateTerminated).
+		Where("task.task_id = command_snapshot.task_id").
+		Where("task.task_type = ?", model.TaskTypeGeneric).
+		Where("command_snapshot.generic_task_spec IS NOT NULL").
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	for i := range snapshots {
+		taskID := snapshots[i].TaskID
+		jobID := snapshots[i].Task.JobID
+
+		if jobID == nil {
+			log.Errorf("Could not restore task %s, no job id found", taskID)
+			continue
+		}
+
+		logCtx := logger.Context{
+			"job-id":    jobID,
+			"task-id":   taskID,
+			"task-type": snapshots[i].Task.TaskType,
+		}
+
+		priorityChange := func(priority int) error {
+			return nil
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Add(*jobID, priorityChange); err != nil {
+			return err
+		}
+
+		onAllocationExit := getGenericTaskOnAllocationExit(ctx, taskID, *jobID, logCtx)
+
+		isSingleNode := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
+			*snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.IsSingleNode()
+
+		slots := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawSlots
+		if slots == nil {
+			log.Errorf("Could not restore task %s, no slots found in resources", taskID)
+			continue
+		}
+		resourcePool := snapshots[i].GenericTaskSpec.GenericTaskConfig.Resources.RawResourcePool
+		if resourcePool == nil {
+			log.Errorf("Could not restore task %s, no resource pool name found in resources", taskID)
+			continue
+		}
+
+		err := task.DefaultService.StartAllocation(logCtx,
+			sproto.AllocateRequest{
+				AllocationID:      snapshots[i].AllocationID,
+				TaskID:            taskID,
+				JobID:             *jobID,
+				JobSubmissionTime: snapshots[i].RegisteredTime,
+				IsUserVisible:     true,
+				Name:              fmt.Sprintf("Generic Task %s", taskID),
+				SlotsNeeded:       *slots,
+				ResourcePool:      *resourcePool,
+				FittingRequirements: sproto.FittingRequirements{
+					SingleAgent: isSingleNode,
+				},
+
+				Restore: true,
+			}, m.db, m.rm, snapshots[i].GenericTaskSpec, onAllocationExit)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Master) closeOpenAllocations(ctx context.Context) error {
 	allocationIds := task.DefaultService.GetAllAllocationIDs()
 	if err := db.CloseOpenAllocations(ctx, allocationIds); err != nil {
@@ -1079,6 +1158,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	// Restore any commands.
 	if err = command.DefaultCmdService.RestoreAllCommands(ctx); err != nil {
+		return err
+	}
+
+	// Restore generic tasks
+	if err = m.restoreGenericTasks(ctx); err != nil {
 		return err
 	}
 

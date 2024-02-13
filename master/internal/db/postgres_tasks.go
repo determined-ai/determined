@@ -103,7 +103,7 @@ func CompleteTask(ctx context.Context, tID model.TaskID, endTime time.Time) erro
 }
 
 // CompleteGenericTask persists the completion of a task of type GENERIC.
-func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
+func CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 	err := CompleteTask(context.Background(), tID, endTime)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (db *PgDB) CompleteGenericTask(tID model.TaskID, endTime time.Time) error {
 }
 
 // KillGenericTask persists the termination of a task of type GENERIC.
-func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
+func KillGenericTask(tID model.TaskID, endTime time.Time) error {
 	err := CompleteTask(context.Background(), tID, endTime)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (db *PgDB) KillGenericTask(tID model.TaskID, endTime time.Time) error {
 }
 
 // SetPausedState sets given task to a PAUSED state.
-func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
+func SetPausedState(taskID model.TaskID, endTime time.Time) error {
 	_, err := Bun().NewUpdate().
 		Table("tasks").
 		Set("task_state = ?", model.TaskStatePaused).
@@ -154,7 +154,7 @@ func (db *PgDB) SetPausedState(taskID model.TaskID, endTime time.Time) error {
 }
 
 // IsPaused returns true if given task is in paused/pausing state.
-func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
+func IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 	count, err := Bun().NewSelect().Table("tasks").
 		Where("task_id = ?", tID).
 		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -168,7 +168,7 @@ func (db *PgDB) IsPaused(ctx context.Context, tID model.TaskID) (bool, error) {
 }
 
 // SetErrorState sets given task to a ERROR state.
-func (db *PgDB) SetErrorState(taskID model.TaskID, endTime time.Time) error {
+func SetErrorState(taskID model.TaskID, endTime time.Time) error {
 	_, err := Bun().NewUpdate().
 		Table("tasks").
 		Set("task_state = ?", model.TaskStateError).
