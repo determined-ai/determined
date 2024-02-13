@@ -1007,7 +1007,7 @@ commands:
           name: Setup TLS Helm Values
       - run:
           command: |
-            echo 'export HELM_VALUES="${HELM_VALUES},loadBalancerSourceRanges=\'${CI_RANGES}\'"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES},loadBalancerSourceRanges='\''${CI_RANGES}'\''"' >> "$BASH_ENV"
           name: Setup Firewall Config
       - gcloud/install:
           version: "412.0.0"
