@@ -2140,30 +2140,6 @@ export interface V1CreateExperimentRequest {
      */
     template?: string;
     /**
-     * Git remote at submission time.
-     * @type {string}
-     * @memberof V1CreateExperimentRequest
-     */
-    gitRemote?: string;
-    /**
-     * Git commit at submission time.
-     * @type {string}
-     * @memberof V1CreateExperimentRequest
-     */
-    gitCommit?: string;
-    /**
-     * Git committer at submission time.
-     * @type {string}
-     * @memberof V1CreateExperimentRequest
-     */
-    gitCommitter?: string;
-    /**
-     * Git commit date at submission time.
-     * @type {Date | DateString}
-     * @memberof V1CreateExperimentRequest
-     */
-    gitCommitDate?: Date | DateString;
-    /**
      * Unmanaged experiments are detached.
      * @type {boolean}
      * @memberof V1CreateExperimentRequest
