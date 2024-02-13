@@ -262,15 +262,15 @@ func (k *kubernetesResourcePool) getResourceSummary(msg getResourceSummary) (*re
 	}, nil
 }
 
-func (k *kubernetesResourcePool) ValidateCommandResources(
-	msg sproto.ValidateCommandResourcesRequest,
-) sproto.ValidateCommandResourcesResponse {
+func (k *kubernetesResourcePool) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) sproto.ValidateResourcesResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
+	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
 func (k *kubernetesResourcePool) Schedule() {

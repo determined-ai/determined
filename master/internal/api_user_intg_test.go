@@ -61,14 +61,16 @@ func MockRM() *mocks.ResourceManager {
 		},
 		nil,
 	)
-	mockRM.On("ValidateResources", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockRM.On("ValidateResources", mock.Anything).Return(
+		func(sproto.ValidateResourcesRequest) sproto.ValidateResourcesResponse {
+			return sproto.ValidateResourcesResponse{}
+		}, nil, nil)
 	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
 		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
 			return def
 		},
 		nil,
 	)
-	mockRM.On("ValidateResourcePoolAvailability", mock.Anything).Return(nil, nil)
 	mockRM.On("SetGroupMaxSlots", mock.Anything).Return()
 	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
 	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {

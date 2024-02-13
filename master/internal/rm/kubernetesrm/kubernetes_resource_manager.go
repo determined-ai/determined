@@ -351,15 +351,29 @@ func (k *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 	return rp.SetGroupWeight(msg)
 }
 
-// ValidateCommandResources implements rm.ResourceManager.
-func (k *ResourceManager) ValidateCommandResources(
-	msg sproto.ValidateCommandResourcesRequest,
-) (sproto.ValidateCommandResourcesResponse, error) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return sproto.ValidateCommandResourcesResponse{}, err
+// ValidateResources implements rm.ResourceManager.
+func (k *ResourceManager) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error) {
+	if msg.Slots == 0 {
+		return sproto.ValidateResourcesResponse{}, nil, nil
 	}
-	return rp.ValidateCommandResources(msg), nil
+
+	if msg.IsSingleNode {
+		rp, err := k.poolByName(msg.ResourcePool)
+		if err != nil {
+			return sproto.ValidateResourcesResponse{}, nil, fmt.Errorf(
+				"validating request for (%s, %d): %w", msg.ResourcePool, msg.Slots, err)
+		}
+		resp := rp.ValidateResources(msg)
+		if !resp.Fulfillable {
+			return resp, nil, errors.New("request unfulfillable, please try requesting less slots")
+		}
+		return sproto.ValidateResourcesResponse{}, nil, nil
+	} else if err := k.resourcePoolExists(msg.ResourcePool); err != nil {
+		return sproto.ValidateResourcesResponse{}, nil, fmt.Errorf("%s is an invalid resource pool", msg.ResourcePool)
+	}
+	return sproto.ValidateResourcesResponse{}, nil, nil
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
@@ -444,31 +458,9 @@ func (k ResourceManager) ResolveResourcePool(
 	return name, nil
 }
 
-// ValidateResources ensures enough resources are available in the resource pool.
-// This is a no-op for k8s.
-func (k ResourceManager) ValidateResources(
-	name string,
-	slots int,
-	command bool,
-) error {
-	return nil
-}
-
 // ValidateResourcePool validates that the named resource pool exists.
 func (k ResourceManager) ValidateResourcePool(name string) error {
 	return k.resourcePoolExists(name)
-}
-
-// ValidateResourcePoolAvailability checks the available resources for a given pool.
-// This is a no-op for k8s.
-func (k ResourceManager) ValidateResourcePoolAvailability(
-	v *sproto.ValidateResourcePoolAvailabilityRequest,
-) ([]command.LaunchWarning, error) {
-	if err := k.resourcePoolExists(v.Name); err != nil {
-		return nil, fmt.Errorf("%s is an invalid resource pool", v.Name)
-	}
-
-	return nil, nil
 }
 
 // NotifyContainerRunning receives a notification from the container to let

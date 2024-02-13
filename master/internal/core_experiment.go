@@ -299,9 +299,6 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
-	if err = m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), isSingleNode); err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
-	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
