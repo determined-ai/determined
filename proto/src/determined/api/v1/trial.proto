@@ -295,6 +295,23 @@ message GetTrialResponse {
   determined.trial.v1.Trial trial = 1;
 }
 
+// Get trial details by external experiment and trial ids.
+message GetTrialByExternalIDRequest {
+  // External experiment id.
+  string external_experiment_id = 1;
+  // External trial id.
+  string external_trial_id = 2;
+}
+
+// Response to GetTrialByExternalIDRequest.
+message GetTrialByExternalIDResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial" ] }
+  };
+  // The requested trial.
+  determined.trial.v1.Trial trial = 1;
+}
+
 // Get the list of workloads for a trial.
 message GetTrialWorkloadsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
