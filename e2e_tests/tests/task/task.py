@@ -26,7 +26,6 @@ def wait_for_task_start(
     deadline = time.time() + timeout
     while time.time() < deadline:
         resp = api.bindings.get_GetTask(test_session, taskId=task_id)
-        print(resp.task.allocations[0].state)
         if resp.task.allocations[0].state == api.bindings.taskv1State.RUNNING:
             return True
         time.sleep(0.1)
