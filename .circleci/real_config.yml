@@ -2203,6 +2203,13 @@ jobs:
                     --vpc-security-group-ids="${PERF_DB_SECURITY_GROUP_ID}" \
                 no_output_timeout: 30m
             - run:
+                name: Wait for database to be ready
+                command: |
+                  aws rds wait db-instance-available \
+                    --region="us-west-2" \
+                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
+                no_output_timeout: 30m
+            - run:
                 name: Get db instance host
                 command: |
                   echo "export PERF_DB_HOST=$(aws rds describe-db-instances \
@@ -2212,13 +2219,6 @@ jobs:
                     --output text)" >> "$BASH_ENV"
                   source $BASH_ENV
                   echo "perf db host ${PERF_DB_HOST}"
-            - run:
-                name: Wait for database to be ready
-                command: |
-                  aws rds wait db-instance-available \
-                    --region="us-west-2" \
-                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
-                no_output_timeout: 30m
 
       - run:
           name: Add SSH key
