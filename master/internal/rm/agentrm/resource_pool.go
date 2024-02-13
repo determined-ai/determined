@@ -229,18 +229,6 @@ func (rp *resourcePool) restoreResources(
 	return nil
 }
 
-func (rp *resourcePool) SetAllocationName(msg sproto.SetAllocationName) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-	rp.receiveSetTaskName(msg)
-}
-
-func (rp *resourcePool) receiveSetTaskName(msg sproto.SetAllocationName) {
-	if task, found := rp.taskList.TaskByID(msg.AllocationID); found {
-		task.Name = msg.Name
-	}
-}
-
 func (rp *resourcePool) ResourcesReleased(msg sproto.ResourcesReleased) {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()

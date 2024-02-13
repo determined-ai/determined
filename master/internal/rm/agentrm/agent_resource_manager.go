@@ -486,19 +486,6 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 	return name, nil
 }
 
-// SetAllocationName implements rm.ResourceManager.
-func (a *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		a.syslog.WithError(err).Warnf("set allocation name found no resource pool with name %s",
-			msg.ResourcePool)
-		return
-	}
-	// In the actor system, this was a tell before, so the `go` is to keep the same structure.  I'm not changing it
-	// out of principle during the refactor but removing it is very likely fine, just check for deadlocks.
-	go pool.SetAllocationName(msg)
-}
-
 // SetGroupMaxSlots implements rm.ResourceManager.
 func (a *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	pool, err := a.poolByName(msg.ResourcePool)

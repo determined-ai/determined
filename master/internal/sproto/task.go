@@ -93,12 +93,6 @@ type (
 		Priority       *int               `json:"priority"`
 		ProxyPorts     []*ProxyPortConfig `json:"proxy_ports,omitempty"`
 	}
-	// SetAllocationName sets the name of the task.
-	SetAllocationName struct {
-		Name         string
-		AllocationID model.AllocationID
-		ResourcePool string
-	}
 
 	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
 	// resource pool can (or, rather, if it's not impossible to) fulfill the command request

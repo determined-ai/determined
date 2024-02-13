@@ -331,17 +331,6 @@ func (k *ResourceManager) Release(msg sproto.ResourcesReleased) {
 	rp.ResourcesReleased(msg)
 }
 
-// SetAllocationName implements rm.ResourceManager.
-func (k *ResourceManager) SetAllocationName(msg sproto.SetAllocationName) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		k.syslog.WithError(err).Warnf("set allocation name found no resource pool with name %s",
-			msg.ResourcePool)
-		return
-	}
-	rp.SetAllocationName(msg)
-}
-
 // SetGroupMaxSlots implements rm.ResourceManager.
 func (k *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	rp, err := k.poolByName(msg.ResourcePool)
