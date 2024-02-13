@@ -645,8 +645,13 @@ func (a *agentState) restoreContainersField() error {
 }
 
 func clearAgentStates(agentIds []agentID) error {
-	_, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).Where("agent_id in (?)", agentIds).Exec(context.TODO())
-	return fmt.Errorf("clearing agent states: %w", err)
+	if _, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
+		Where("agent_id in (?)", bun.In(agentIds)).
+		Exec(context.TODO()); err != nil {
+		return fmt.Errorf("clearing agent states: %w", err)
+	}
+
+	return nil
 }
 
 func updateContainerState(c *cproto.Container) error {

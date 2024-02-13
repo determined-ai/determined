@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -180,6 +181,28 @@ func TestAgentStatePersistence(t *testing.T) {
 	err = state.delete()
 	require.NoError(t, err)
 	exists, err := db.Bun().NewSelect().Model((*agentSnapshot)(nil)).Where("agent_id = ?", state.id).Exists(context.TODO())
+	require.NoError(t, err)
+	require.False(t, exists)
+}
+
+func TestClearAgentStates(t *testing.T) {
+	ctx := context.Background()
+	agentIDs := []agentID{agentID(uuid.NewString()), agentID(uuid.NewString())}
+	for _, agentID := range agentIDs {
+		_, err := db.Bun().NewInsert().Model(&agentSnapshot{
+			AgentID:               agentID,
+			UUID:                  uuid.NewString(),
+			ResourcePoolName:      "rp-name",
+			Label:                 "label",
+			MaxZeroSlotContainers: 0,
+		}).Exec(ctx)
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, clearAgentStates(agentIDs))
+	exists, err := db.Bun().NewSelect().Model(&agentSnapshot{}).
+		Where("agent_id IN (?)", bun.In(agentIDs)).
+		Exists(ctx)
 	require.NoError(t, err)
 	require.False(t, exists)
 }
