@@ -13,7 +13,6 @@ type ResourceManager interface {
 	// Basic functionality
 	GetAllocationSummary(sproto.GetAllocationSummary) (*sproto.AllocationSummary, error)
 	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
-	SetAllocationName(sproto.SetAllocationName)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
 	ValidateCommandResources(sproto.ValidateCommandResourcesRequest) (sproto.ValidateCommandResourcesResponse, error)
