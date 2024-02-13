@@ -24,6 +24,7 @@ import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { StreamingProvider } from 'hooks/useStreamingProvider';
 import useTelemetry from 'hooks/useTelemetry';
 import { STORAGE_PATH, settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
@@ -41,7 +42,6 @@ import css from './App.module.scss';
 
 import 'modern-normalize/modern-normalize.css';
 import '@glideapps/glide-data-grid/dist/index.css';
-import { StreamingProvider } from 'hooks/useStreamingProvider';
 
 const updateThemeSetting = (mode: Mode) => userSettings.set(themeSettings, STORAGE_PATH, { mode });
 const themeSetting = userSettings.get(themeSettings, STORAGE_PATH);
@@ -208,7 +208,7 @@ const App: React.FC = () => {
         <SettingsProvider>
           <DndProvider backend={HTML5Backend}>
             <StreamingProvider>
-            <AppView />
+              <AppView />
             </StreamingProvider>
           </DndProvider>
         </SettingsProvider>

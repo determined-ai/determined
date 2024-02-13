@@ -9,7 +9,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-var upgrader = websocket.Upgrader{}
+func bypasscheckorigin(r *http.Request) bool {
+	return true
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: bypasscheckorigin,
+}
 
 // Route returns an echo compatible handler for JSON requests.
 func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {
