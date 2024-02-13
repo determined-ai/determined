@@ -3,18 +3,24 @@ package internal
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -133,4 +139,42 @@ func getTaskSessionToken(ctx context.Context, userModel *model.User) (string, er
 		}
 	}
 	return token, nil
+}
+
+func getGenericTaskOnAllocationExit(
+	ctx context.Context,
+	taskID model.TaskID,
+	jobID model.JobID,
+	logCtx logger.Context,
+) func(ae *task.AllocationExited) {
+	return func(ae *task.AllocationExited) {
+		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
+		if ae.Err != nil {
+			err := db.SetErrorState(taskID, time.Now().UTC())
+			if err != nil {
+				syslog.WithError(err).Error("setting task to error state")
+			}
+			if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+				syslog.WithError(err).Error("deleting group priority change registry")
+			}
+			return
+		}
+		isPaused, err := db.IsPaused(ctx, taskID)
+		if err != nil {
+			syslog.WithError(err).Error("checking if a task is paused")
+		}
+		if isPaused {
+			err = db.SetPausedState(taskID, time.Now().UTC())
+			if err != nil {
+				syslog.WithError(err).Error("setting task to paused state")
+			}
+			return
+		}
+		if err := db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
+			syslog.WithError(err).Error("marking generic task complete")
+		}
+		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
+			syslog.WithError(err).Error("deleting group priority change registry")
+		}
+	}
 }

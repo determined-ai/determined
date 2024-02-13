@@ -7,13 +7,14 @@ import pytest
 import requests
 
 from determined.common import constants
-from determined.common.api import authentication, task_is_ready, task_logs
+from determined.common.api import authentication, bindings, task_is_ready, task_logs
 from determined.common.api.bindings import experimentv1State as EXP_STATE
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import det_spawn
+from tests.task import task
 
 from .abstract_cluster import Cluster
 from .managed_cluster import ManagedCluster, get_agent_data
@@ -80,6 +81,81 @@ def test_master_restart_reattach_recover_experiment_k8s(
     downtime: int,
 ) -> None:
     _test_master_restart_reattach_recover_experiment(k8s_managed_cluster, downtime)
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_generic_task(managed_cluster_restarts: ManagedCluster) -> None:
+    test_session = api_utils.determined_test_session()
+
+    with open(conf.fixtures_path("generic_task/test_config.yaml"), "r") as config_file:
+        # Create task
+        config_text = config_file.read()
+
+    req = bindings.v1CreateGenericTaskRequest(
+        config=config_text,
+        contextDirectory=[],
+        projectId=None,
+        forkedFrom=None,
+        parentId=None,
+        inheritContext=False,
+        noPause=False,
+    )
+    task_resp = bindings.post_CreateGenericTask(test_session, body=req)
+
+    # Wait for task to start
+    started = task.wait_for_task_start(test_session, task_resp.taskId, timeout=30)
+    if not started:
+        pytest.fail("task failed to started")
+    managed_cluster_restarts.kill_master()
+    managed_cluster_restarts.restart_master()
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_generic_task_pause(managed_cluster_restarts: ManagedCluster) -> None:
+    test_session = api_utils.determined_test_session()
+
+    with open(conf.fixtures_path("generic_task/test_config.yaml"), "r") as config_file:
+        # Create task
+        config_text = config_file.read()
+
+    req = bindings.v1CreateGenericTaskRequest(
+        config=config_text,
+        contextDirectory=[],
+        projectId=None,
+        forkedFrom=None,
+        parentId=None,
+        inheritContext=False,
+        noPause=False,
+    )
+    task_resp = bindings.post_CreateGenericTask(test_session, body=req)
+
+    # Wait for task to start
+    started = task.wait_for_task_start(test_session, task_resp.taskId, timeout=30)
+    if not started:
+        pytest.fail("task failed to started")
+    # Pause task
+    bindings.post_PauseGenericTask(test_session, taskId=task_resp.taskId)
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.PAUSED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
+    managed_cluster_restarts.kill_master()
+    managed_cluster_restarts.restart_master()
+
+    # Unpause task
+    bindings.post_UnpauseGenericTask(test_session, taskId=task_resp.taskId)
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
 
 
 @pytest.mark.managed_devcluster

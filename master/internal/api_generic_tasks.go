@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 
@@ -344,36 +343,7 @@ func (a *apiServer) CreateGenericTask(
 		return nil, err
 	}
 
-	onAllocationExit := func(ae *task.AllocationExited) {
-		syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-		if ae.Err != nil {
-			err = a.m.db.SetErrorState(taskID, time.Now().UTC())
-			if err != nil {
-				syslog.WithError(err).Error("setting task to error state")
-			}
-			if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
-				syslog.WithError(err).Error("deleting group priority change registry")
-			}
-			return
-		}
-		isPaused, err := a.m.db.IsPaused(ctx, taskID)
-		if err != nil {
-			syslog.WithError(err).Error("checking if a task is paused")
-		}
-		if isPaused {
-			err = a.m.db.SetPausedState(taskID, time.Now().UTC())
-			if err != nil {
-				syslog.WithError(err).Error("setting task to paused state")
-			}
-			return
-		}
-		if err := a.m.db.CompleteGenericTask(taskID, time.Now().UTC()); err != nil {
-			syslog.WithError(err).Error("marking generic task complete")
-		}
-		if err := tasklist.GroupPriorityChangeRegistry.Delete(jobID); err != nil {
-			syslog.WithError(err).Error("deleting group priority change registry")
-		}
-	}
+	onAllocationExit := getGenericTaskOnAllocationExit(ctx, taskID, jobID, logCtx)
 
 	allocationID := model.AllocationID(fmt.Sprintf("%s.%d", taskID, 1))
 	isSingleNode := genericTaskSpec.GenericTaskConfig.Resources.IsSingleNode() != nil &&
@@ -672,36 +642,7 @@ func (a *apiServer) UnpauseGenericTask(
 			"task-id":   resumingTask.TaskID,
 			"task-type": model.TaskTypeGeneric,
 		}
-		onAllocationExit := func(ae *task.AllocationExited) {
-			syslog := logrus.WithField("component", "genericTask").WithFields(logCtx.Fields())
-			if ae.Err != nil {
-				err = a.m.db.SetErrorState(resumingTask.TaskID, time.Now().UTC())
-				if err != nil {
-					syslog.WithError(err).Error("setting task to error state")
-				}
-				if err := tasklist.GroupPriorityChangeRegistry.Delete(*resumingTask.JobID); err != nil {
-					syslog.WithError(err).Error("deleting group priority change registry")
-				}
-				return
-			}
-			isPaused, err := a.m.db.IsPaused(ctx, resumingTask.TaskID)
-			if err != nil {
-				syslog.WithError(err).Error("checking if a task is paused")
-			}
-			if isPaused {
-				err = a.m.db.SetPausedState(resumingTask.TaskID, time.Now().UTC())
-				if err != nil {
-					syslog.WithError(err).Error("setting task to paused state")
-				}
-				return
-			}
-			if err := a.m.db.CompleteGenericTask(resumingTask.TaskID, time.Now().UTC()); err != nil {
-				syslog.WithError(err).Error("marking generic task complete")
-			}
-			if err := tasklist.GroupPriorityChangeRegistry.Delete(*resumingTask.JobID); err != nil {
-				syslog.WithError(err).Error("deleting group priority change registry")
-			}
-		}
+		onAllocationExit := getGenericTaskOnAllocationExit(ctx, resumingTask.TaskID, *resumingTask.JobID, logCtx)
 		allocationSpecifier, err := allocationID.GetAllocationSpecifier()
 		if err != nil {
 			return nil, err
