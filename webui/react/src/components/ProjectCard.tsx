@@ -72,7 +72,7 @@ const ProjectCard: React.FC<Props> = ({
               <div className={css.experiments}>
                 <Tooltip
                   content={
-                    `${project.numExperiments.toLocaleString()}` +
+                    `${project.numExperiments?.toLocaleString()}` +
                     ` experiment${project.numExperiments === 1 ? '' : 's'}`
                   }>
                   <Icon name="experiment" size="small" title="Number of experiments" />

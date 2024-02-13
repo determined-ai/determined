@@ -1,40 +1,60 @@
-import React, { createContext } from "react";
-import useWebSocket from 'react-use-websocket';
+import { forEach } from 'lodash';
+import React, { createContext, useCallback, useEffect, useMemo } from 'react';
+
+// import useWebSocket from 'react-use-websocket';
+import { Streamable, StreamEntityMap } from 'services/stream';
+import { Stream } from 'services/stream/stream';
+import projectStore, { mapStreamProject } from 'stores/projects';
 
 type UserStreamingContext = {
-    sendMessage: (message: string, keep?: boolean) => void;
-    readyState: number;
-    lastMessage: WebSocketEventMap['message'] | null,
+    stream?: Stream
   };
-  
+
   export const Streaming = createContext<UserStreamingContext>({
-    sendMessage: () => {},
-    readyState: -1,
-    lastMessage: null,
+    stream: undefined,
   });
 
   export const StreamingProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
 
     const socketUrl = 'ws://localhost:8080/stream';
 
-        const {
-        sendMessage,
-        readyState,
-        lastMessage,
-        } = useWebSocket(socketUrl, {
-        onOpen: () => console.log('websocket opened!'),
-        //Will attempt to reconnect on all close events, such as server shutting down
-        shouldReconnect: () => true,
+    const onUpsert = useCallback((m: Record<string, any>) => {
+        forEach(m, (val, k) => {
+            switch (StreamEntityMap[k]) {
+                case 'projects':
+                    projectStore.upsertProject(mapStreamProject(val));
+                    break;
+                default:
+                    throw new Error(`Unknown stream entity: ${k}`);
+            }
         });
+    }, []);
+
+    const onDelete = useCallback((entity: Streamable, deleted: Array<number>) => {
+        if (deleted.length === 0) return;
+        switch (entity) {
+            case 'projects':
+                for (const d of deleted) {
+                    projectStore.deleteProject(d);
+                }
+                break;
+            default:
+                throw new Error(`Unknown stream entity: ${entity}`);
+        }
+    }, []);
+
+    const stream = useMemo(() => new Stream(socketUrl, onUpsert, onDelete), [socketUrl, onUpsert, onDelete]);
+
+    useEffect(() => {
+        return () => stream.close();
+    }, [stream]);
 
     return (
-        <Streaming.Provider
+      <Streaming.Provider
           value={{
-            sendMessage,
-            readyState,
-            lastMessage
+            stream,
           }}>
-          {children}
-        </Streaming.Provider>
-    )
-  }
+        {children}
+      </Streaming.Provider>
+    );
+  };

@@ -10,8 +10,7 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
-import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Link from 'components/Link';
@@ -33,14 +32,16 @@ import {
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
+import { Streaming } from 'hooks/useStreamingProvider';
 import { paths } from 'routes/utils';
-import { getWorkspaceProjects, patchProject } from 'services/api';
+import { patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { ProjectSpec } from 'services/stream/projects';
+import projectStore from 'stores/projects';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
-import { validateDetApiEnum } from 'utils/service';
 
 import css from './WorkspaceProjects.module.scss';
 import {
@@ -70,40 +71,28 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
-  const fetchProjects = useCallback(async () => {
-    if (!settings) return;
+  const loadableProjects: Loadable<Project[]> = useObservable(
+    projectStore.getProjectsByWorkspace(id),
+  );
 
-    try {
-      const response = await getWorkspaceProjects(
-        {
-          archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
-          id,
-          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
-          name: settings.name,
-          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
-          users: settings.user,
-        },
-        { signal: canceler.signal },
-      );
-      setTotal(response.pagination.total ?? 0);
-      setProjects((prev) => {
-        if (_.isEqual(prev, response.projects)) return prev;
-        return response.projects;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch projects.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [canceler.signal, id, workspace, settings]);
+  const { stream } = useContext(Streaming);
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchProjects().then(() => setIsLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    Loadable.match(loadableProjects, {
+      _: () => {},
+      Loaded: (data) => {
+        setProjects(data);
+        setIsLoading(false);
+        if (stream) {
+          projectStore.subscribe(stream, new ProjectSpec([id]));
+        }
+      },
+    });
+  }, [loadableProjects, stream, id]);
+
+  useEffect(() => {
+    setTotal(projects.length);
+  }, [projects]);
 
   const handleProjectCreateClick = useCallback(() => {
     ProjectCreateModal.open();
@@ -111,7 +100,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
-      setIsLoading(true);
       updateSettings({ whose: value as WhoseProjects | undefined });
     },
     [updateSettings],
@@ -182,9 +170,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const onProjectEdit = useCallback(
     (id: number, name: string, archived: boolean) => {
       setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived, name } : p)));
-      fetchProjects();
     },
-    [setProjects, fetchProjects],
+    [setProjects],
   );
 
   const columns = useMemo(() => {
@@ -396,8 +383,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   ]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    projectStore.fetch(id);
+  }, [id]);
 
   useEffect(() => {
     return () => canceler.abort();

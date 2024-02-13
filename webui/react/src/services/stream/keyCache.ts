@@ -1,84 +1,82 @@
-
-function* decode_keys(keys: string): Iterable<number>{
+export function decode_keys(keys: string): Array<number>{
+    const retval: Array<number> = [];
     if (keys.length === 0) {
-        return 
+        return retval;
     }
-    for(const key of keys.split(",")) {
-        if(key.includes("-")) {
-            const [start, end] = key.split("-")
-            for(let i = Number(start); i <= Number(end); i++) {
-                yield i
+    for (const key of keys.split(',')) {
+        if (key.includes('-')) {
+            const [start, end] = key.split('-');
+            for (let i = Number(start); i <= Number(end); i++) {
+                retval.push(i);
             }
         } else {
-            yield Number(key)
+            retval.push(Number(key));
         }
     }
+    return retval;
 }
 
-function encode_keys(set: Set<number>): string {
-    if(!set) return ""
-    const out: Array<string> = []
-    const keys = Array.from(set).sort().values()
-    let start: number = keys.next().value
-    let end = start
+export function encode_keys(set: Set<number>): string {
+    if (!set || set.size === 0) return '';
+    const out: Array<string> = [];
+    const keys = Array.from(set).sort((l, r) => l - r).values();
+    let start: number = keys.next().value;
+    let end = start;
 
     const emit = (start: number, end: number, out: Array<string>) => {
-        if(start === end) {
-            out.push(start.toString())
+        if (start === end) {
+            out.push(start.toString());
         } else {
-            out.push(`${start}-${end}`)
+            out.push(`${start}-${end}`);
         }
-    }
+    };
 
-    for (let k of keys) {
-        if(k === end + 1) {
-            end = k
-            continue
+    for (const k of keys) {
+        if (k === end + 1) {
+            end = k;
+            continue;
         }
         // end of a range
-        emit(start, end, out)
-        start = k
-        end = start
+        emit(start, end, out);
+        start = k;
+        end = start;
     }
-    emit(start, end, out)
+    emit(start, end, out);
 
-    return out.join(",")
+    return out.join(',');
 }
 
-class KeyCache {
+export class KeyCache {
 
-    #keys: Set<number>
-    #maxseq: number
+    #keys: Set<number>;
+    #maxseq: number;
 
     constructor(keys?: Set<number>) {
-        this.#keys = keys || new Set()
-        this.#maxseq = 0
+        this.#keys = keys || new Set();
+        this.#maxseq = 0;
     }
 
-    delete_one(id: number) {
-        this.#keys.delete(id)
+    #delete_one(id: number) {
+        this.#keys.delete(id);
     }
 
-    public upsert(id: number, seq: number) {
-        this.#keys.add(id)
-        this.#maxseq = Math.max(this.#maxseq, seq)
-    } 
+    public upsert(ids: Array<number>, seq?: number): void {
+        ids.forEach((id) => this.#keys.add(id));
+        this.#maxseq = Math.max(this.#maxseq, seq || 0);
+    }
 
-    public delete_msg(deleted: string) {
-        for(let id of decode_keys(deleted)) {
-            this.delete_one(id)
+    public delete_msg(deleted: Array<number>): void {
+        for (const id of deleted) {
+            this.#delete_one(id);
         }
     }
 
-    public known() {
-        return encode_keys(this.#keys)
+    public known(): string {
+        return encode_keys(this.#keys);
     }
 
-    public maxSeq() {
-        return this.#maxseq
+    public maxSeq(): number {
+        return this.#maxseq;
     }
 
-    public reset() {
-        return new KeyCache(this.#keys)
-    }
 }
