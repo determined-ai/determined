@@ -6,11 +6,12 @@ package db
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestAddJob(t *testing.T) {
