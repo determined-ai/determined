@@ -16,7 +16,7 @@ type StreamAuthZ interface {
 
 	// GetPermissionChangeListener returns a pointer listener
 	// listening for permission change notifications if applicable.
-	GetPermissionChangeListener() (*pq.Listener, error)
+	GetPermissionChangeListener(dbAddress string) (*pq.Listener, error)
 }
 
 // AuthZProvider provides StreamAuthZ implementations.

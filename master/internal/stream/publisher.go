@@ -406,7 +406,7 @@ func (ps *PublisherSet) bootStreamers() {
 // BootemLoop listens for permission changes, updates the PublisherSet
 // to signal to boot streamers, returns an error in the event of a failure to listen.
 func BootemLoop(ctx context.Context, ps *PublisherSet) error {
-	permListener, err := AuthZProvider.Get().GetPermissionChangeListener()
+	permListener, err := AuthZProvider.Get().GetPermissionChangeListener(ps.DBAddress)
 	if err != nil {
 		log.Errorf("unable to get permission change listener: %s", err.Error())
 		return err
