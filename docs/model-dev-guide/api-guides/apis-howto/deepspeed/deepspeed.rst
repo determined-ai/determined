@@ -200,7 +200,7 @@ returned data loaders, which differs because the DeepSpeed model engines automat
 gradient aggregation.
 
 Automatic gradient aggregation in DeepSpeed is specified in `configuration fields
-<https://www.deepspeed.ai/docs/config-json/>`_:
+<https://www.deepspeed.ai/docs/config-json/#batch-size-related-parameters/>`_:
 
 -  ``train_batch_size``
 -  ``train_micro_batch_size``

@@ -1553,7 +1553,7 @@ Version 0.18.3
 **New Features**
 
 -  Workspaces & Projects: Teams can now organize related experiments into projects and workspaces.
-   See `video <https://www.youtube.com/watch?v=zJP7p0CWubw&feature=youtu.be>`_ for a walkthrough.
+   See `video <https://www.youtube.com/watch?v=zJP7p0CWubw>`_ for a walkthrough.
 
 -  Logging: Master configuration now supports ``logging.additional_fluent_outputs`` allowing
    advanced users to specify custom integrations for task logs.

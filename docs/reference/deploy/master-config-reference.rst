@@ -122,10 +122,11 @@ Defaults to ``false``.
 ``registry_auth``
 =================
 
-Defines the default `Docker registry credentials <https://docs.docker.com/engine/api/v1.30/>`__ to
-use when pulling a custom base Docker image, if needed. If credentials are specified in the
-:ref:`experiment config <exp-environment-image>` this default value is overridden. Credentials are
-specified as the following nested fields:
+Defines the default `Docker registry credentials
+<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
+custom base Docker image, if needed. If credentials are specified in the :ref:`experiment config
+<exp-environment-image>` this default value is overridden. Credentials are specified as the
+following nested fields:
 
 -  ``username`` (required)
 -  ``password`` (required)
@@ -1181,10 +1182,10 @@ inside Google Compute Engine (GCE), the simplest approach is to ensure that the 
 Determined are running in a service account that has the "Storage Object Admin" role on the GCS
 bucket being used for checkpoints. As an alternative (or when running outside of GCE), you can add
 the appropriate `service account credentials
-<https://cloud.google.com/iam/docs/service-account-creds>`__ to your container (e.g., via a
-bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable to the
-container path where the credentials are located. See :ref:`environment-variables` for more
-information on how to set environment variables in trial environments.
+<https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS`` environment
+variable to the container path where the credentials are located. See :ref:`environment-variables`
+for more information on how to set environment variables in trial environments.
 
 ``bucket``
 ----------

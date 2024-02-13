@@ -12,8 +12,9 @@ Faster-RCNN and Mask-RCNN in addition to cutting edge methods from the research 
 
 **model-hub** makes it easy to use MMDetection with Determined while keeping the developer
 experience as close as possible to what it's like working directly with **MMDetection**. Our library
-serves as an alternative to the trainer used by MMDetection, and provides access to the benefits of
-using Determined, including the following:
+serves as an alternative to the trainer used by MMDetection (see `mmcv's runner
+<https://mmcv.readthedocs.io/en/v1.7.0/understand_mmcv/runner.html>`_) and provides access to the
+benefits of using Determined, including the following:
 
 -  Easy multi-node distributed training with no code modifications. Determined automatically sets up
    the distributed backend for you.
