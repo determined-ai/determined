@@ -1,6 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 
 import css from './DraggableListItem.module.scss';
 
@@ -19,16 +18,6 @@ interface DroppableItemProps {
 
 const DraggableTypes = { COLUMN: 'COLUMN' };
 
-// prettier-ignore
-/* eslint-disable-next-line @typescript-eslint/ban-types */
-const withDragAndDropProvider = <T extends {}>(Component: React.FunctionComponent<T>) =>
-  (props: T) =>
-    (
-      <DndProvider backend={HTML5Backend}>
-        <Component {...props} />
-      </DndProvider>
-    );
-
 const DraggableListItem: React.FC<Props> = ({
   columnName,
   index,
@@ -41,40 +30,48 @@ const DraggableListItem: React.FC<Props> = ({
     () => ({
       accept: DraggableTypes.COLUMN,
       collect: (monitor) => ({
-        canDrop: !!monitor.canDrop(),
+        canDrop: monitor.canDrop(),
         dropDirection: monitor.getItem()?.index > index ? 'above' : 'below',
-        isOver: !!monitor.isOver(),
+        isOver: monitor.isOver(),
       }),
       drop: (item: DroppableItemProps) => {
-        onDrop(item.columnName, columnName);
+        const dragIndex = item.index;
+        const targetIndex = index;
+
+        // source and target item should be different items
+        if (dragIndex !== targetIndex) {
+          onDrop(item.columnName, columnName);
+        }
       },
     }),
-    [],
+    [columnName, index],
   );
 
-  const [, drag] = useDrag(() => ({
-    item: { columnName, index },
-    type: DraggableTypes.COLUMN,
-  }));
+  const [, drag] = useDrag(
+    () => ({
+      item: { columnName, index },
+      type: DraggableTypes.COLUMN,
+    }),
+    [columnName, index],
+  );
 
   return (
-    <div ref={drop}>
-      <li
-        className={
-          isOver
-            ? dropDirection === 'above'
-              ? css.aboveDropTarget
-              : dropDirection === 'below'
-                ? css.belowDropTarget
-                : undefined
-            : undefined
-        }
-        ref={drag}
-        style={style}
-        onClick={onClick}>
-        {children}
-      </li>
-    </div>
+    <li
+      className={
+        isOver
+          ? dropDirection === 'above'
+            ? css.aboveDropTarget
+            : dropDirection === 'below'
+              ? css.belowDropTarget
+              : undefined
+          : undefined
+      }
+      ref={(node) => drag(drop(node))}
+      style={style}
+      onClick={onClick}>
+      {children}
+    </li>
   );
 };
-export default withDragAndDropProvider(DraggableListItem);
+
+export default DraggableListItem;

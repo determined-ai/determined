@@ -142,15 +142,18 @@ const Transfer: React.FC<Props> = ({
       row: string,
       index: number,
       handleClick: (event: React.MouseEvent<Element, MouseEvent>) => void,
-      handleDrop: (column: string, newNeighborColumnName: string) => void,
     ) => {
       return (
-        <DraggableListItem columnName={row} index={index} onClick={handleClick} onDrop={handleDrop}>
+        <DraggableListItem
+          columnName={row}
+          index={index}
+          onClick={handleClick}
+          onDrop={switchRowOrder}>
           {renderEntry(row)}
         </DraggableListItem>
       );
     },
-    [renderEntry],
+    [renderEntry, switchRowOrder],
   );
 
   const renderHiddenRow = useCallback(
@@ -163,10 +166,10 @@ const Transfer: React.FC<Props> = ({
   const renderVisibleRow = useCallback(
     (index: number, row: string) => {
       return reorder
-        ? renderDraggableRow(row, index, () => moveToLeft(row), switchRowOrder)
+        ? renderDraggableRow(row, index, () => moveToLeft(row))
         : renderRow(row, () => moveToLeft(row));
     },
-    [moveToLeft, renderDraggableRow, renderRow, reorder, switchRowOrder],
+    [moveToLeft, renderDraggableRow, renderRow, reorder],
   );
 
   return (
