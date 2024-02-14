@@ -239,16 +239,16 @@ message TrialRunnerMetadata {
 // Metrics from the trial some duration of training.
 message TrialMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "trial_run_id", "steps_completed", "metrics" ]
-    }
+    json_schema: { required: [ "trial_id", "trial_run_id", "metrics" ] }
   };
   // The trial associated with these metrics.
   int32 trial_id = 1;
   // The trial run associated with these metrics.
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
-  int32 steps_completed = 3;
+  optional int32 steps_completed = 3;
+  // The client-reported time associated with these metrics.
+  optional google.protobuf.Timestamp report_time = 4;
   // The metrics for this bit of training, including:
   // - avg_metrics: metrics reduced over the reporting period).
   // - batch_metrics: (optional) per-batch metrics.
