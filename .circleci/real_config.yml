@@ -1043,6 +1043,8 @@ commands:
       - run:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
+      - helm/install-helm-client:
+          helm-version: v3.2.4
       - run:
           command: |
             helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${NAMESPACE}" --wait
