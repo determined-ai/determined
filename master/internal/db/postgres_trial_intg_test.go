@@ -832,6 +832,32 @@ func TestUpsertTrialByExternalIDTx(t *testing.T) {
 	require.Equal(t, trial.ExternalTrialID, actualTrial.ExternalTrialID)
 }
 
+func TestExperimentsProjectID(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	trial := &model.Trial{
+		State:     model.ActiveState,
+		StartTime: time.Now(),
+	}
+	_, _, err := trialToRunAndTrialV2(ctx, Bun(), trial)
+	require.ErrorIs(t, err, sql.ErrNoRows)
+
+	exp, activeConfig := model.ExperimentModel()
+	err = db.AddExperiment(exp, []byte{}, activeConfig)
+	require.NoError(t, err, "failed to add experiment")
+	trial.ExperimentID = exp.ID
+
+	actualRun, actualV2, err := trialToRunAndTrialV2(ctx, Bun(), trial)
+	require.NoError(t, err)
+
+	expectedRun, expectedV2 := trial.ToRunAndTrialV2(exp.ProjectID)
+	require.Equal(t, expectedRun, actualRun)
+	require.Equal(t, expectedV2, actualV2)
+}
+
 func TestProtoGetTrial(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))

@@ -462,9 +462,10 @@ type Trial struct {
 }
 
 // ToRunAndTrialV2 converts a trial to a run.
-func (t *Trial) ToRunAndTrialV2() (*Run, *TrialV2) {
+func (t *Trial) ToRunAndTrialV2(experimentsProjectID int) (*Run, *TrialV2) {
 	r := &Run{
 		ID:                    t.ID,
+		ProjectID:             experimentsProjectID,
 		ExperimentID:          t.ExperimentID,
 		State:                 t.State,
 		StartTime:             t.StartTime,
@@ -501,6 +502,7 @@ type Run struct {
 	bun.BaseModel `bun:"table:runs"`
 
 	ID                    int            `db:"id" bun:",pk,autoincrement"`
+	ProjectID             int            `db:"project_id" bun:"project_id"`
 	ExperimentID          int            `db:"experiment_id"`
 	State                 State          `db:"state"`
 	StartTime             time.Time      `db:"start_time"`

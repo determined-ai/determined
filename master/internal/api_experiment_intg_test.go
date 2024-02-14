@@ -257,6 +257,41 @@ func TestGetTaskContextDirectoryTask(t *testing.T) {
 	require.Equal(t, string(expectedContextDirectory), string(actualString))
 }
 
+func TestMoveExperimentRunID(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	t.Run("trial less move", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		_, err := api.MoveExperiment(ctx, &apiv1.MoveExperimentRequest{
+			ExperimentId:         int32(exp.ID),
+			DestinationProjectId: int32(projectID),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("move with trials", func(t *testing.T) {
+		trial, _ := createTestTrial(t, api, curUser)
+		_, err := api.MoveExperiment(ctx, &apiv1.MoveExperimentRequest{
+			ExperimentId:         int32(trial.ExperimentID),
+			DestinationProjectId: int32(projectID),
+		})
+		require.NoError(t, err)
+
+		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{
+			ExperimentId: int32(trial.ExperimentID),
+		})
+		require.NoError(t, err)
+		require.Equal(t, projectID, int(e.Experiment.ProjectId))
+
+		var r model.Run
+		require.NoError(t, db.Bun().NewSelect().Model(&r).
+			Where("id = ?", trial.ID).
+			Scan(ctx, &r))
+		require.Equal(t, projectID, r.ProjectID)
+	})
+}
+
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)

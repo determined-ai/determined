@@ -29,7 +29,11 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	err := Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run, v2 := trial.ToRunAndTrialV2()
+		run, v2, err := trialToRunAndTrialV2(ctx, tx, trial)
+		if err != nil {
+			return fmt.Errorf("converting trial to run and trialv2: %w", err)
+		}
+
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial run model: %w", err)
 		}
@@ -63,7 +67,11 @@ func UpsertTrialByExternalIDTx(
 		return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 	}
 
-	run, v2 := trial.ToRunAndTrialV2()
+	run, v2, err := trialToRunAndTrialV2(ctx, tx, trial)
+	if err != nil {
+		return fmt.Errorf("upsert converting trial to run and trialv2: %w", err)
+	}
+
 	if _, err := tx.NewInsert().Model(run).
 		On("CONFLICT (experiment_id, external_run_id) DO UPDATE").
 		Set("hparams = EXCLUDED.hparams").
@@ -163,7 +171,11 @@ func UpdateTrial(ctx context.Context, id int, newState model.State) error {
 	}
 
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		run, _ := trial.ToRunAndTrialV2()
+		run, _, err := trialToRunAndTrialV2(ctx, tx, trial)
+		if err != nil {
+			return fmt.Errorf("update trial converting trial to run and trialv2: %w", err)
+		}
+
 		if _, err := tx.NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("error updating (%v) in trial %v: %w", strings.Join(toUpdate, ", "), id, err)
@@ -212,8 +224,15 @@ func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunner
 		toUpdate = append(toUpdate, "restarts")
 	}
 
-	run, _ := trial.ToRunAndTrialV2()
+	run, _, err := trialToRunAndTrialV2(ctx, Bun(), trial)
+	if err != nil {
+		return fmt.Errorf("converting trial to run for update: %w", err)
+	}
+
 	_, err = Bun().NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("updating trial fields: %w", err)
+	}
 
 	return err
 }
@@ -685,6 +704,22 @@ func AddCheckpointMetadata(ctx context.Context, m *model.CheckpointV2, runID int
 	}
 
 	return nil
+}
+
+func trialToRunAndTrialV2(
+	ctx context.Context, tx bun.IDB, trial *model.Trial,
+) (*model.Run, *model.TrialV2, error) {
+	var e model.Experiment
+	if err := tx.NewSelect().Model(&e).
+		Column("project_id").
+		Where("id = ?", trial.ExperimentID).
+		Scan(ctx, &e); err != nil {
+		return nil, nil, fmt.Errorf("getting experiment's project ID %d: %w", trial.ExperimentID, err)
+	}
+
+	run, v2 := trial.ToRunAndTrialV2(e.ProjectID)
+
+	return run, v2, nil
 }
 
 // checkTrialRunID checks that the trial is currently on the given run.
