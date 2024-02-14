@@ -157,12 +157,10 @@ export class Stream {
         }
     }
 
-    public subscribe(spec: StreamSpec, known?: Array<number>): void {
+    public subscribe(spec: StreamSpec): void {
         const curSpec = this.#curSub?.[spec.id()];
         const keyCache = curSpec && !curSpec.spec.equals(spec) ? curSpec.keyCache : new KeyCache();
-        if (known) {
-            keyCache.upsert(known);
-        }
+
         this.#subs.push({ ...this.#curSub, [spec.id()]: { keyCache, spec } });
 
         this.#advanceSubscription();

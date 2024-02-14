@@ -124,17 +124,8 @@ class ProjectStore {
     }));
   }
 
-  #keys() {
-    const retval: number[] = [];
-    this.#projects.select((map) => {
-      map.forEach((_, k) => retval.push(k));
-    }).get();
-
-    return retval;
-  }
-
   public subscribe(stream: Stream, spec: ProjectSpec) {
-    stream.subscribe(spec, this.#keys());
+    stream.subscribe(spec);
   }
 }
 
@@ -148,12 +139,11 @@ export const mapStreamProject = (p: any): Project => (
       immutable: p.immutable,
       name: p.name,
       notes: JSON.parse(p.notes),
-      // Unavailable fields
-      numActiveExperiments: 0,
-      numExperiments: 0,
+      numActiveExperiments: NaN,
+      numExperiments: NaN,
       state: p.state,
       userId: p.user_id,
       workspaceId: p.workspace_id,
-      workspaceName: '',
+      workspaceName: 'n/a',
   }
 );

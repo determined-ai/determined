@@ -47,13 +47,13 @@ describe('stream', () => {
         await server.connected;
 
         // Duplicated subscribe won't send twice
-        client.subscribe(spec1, [1, 2, 3]);
-        client.subscribe(spec1, [1, 2, 3]);
-        client.subscribe(spec2, [1, 2, 3, 4]);
+        client.subscribe(spec1);
+        client.subscribe(spec1);
+        client.subscribe(spec2);
 
         await expect(server).toReceiveMessage({
             known: {
-                projects: '1-3',
+                projects: '',
               },
               subscribe: {
                 projects: {
@@ -68,7 +68,7 @@ describe('stream', () => {
         server.send({ complete: true, sync_id: '1' });
         await expect(server).toReceiveMessage({
             known: {
-              projects: '1-4',
+              projects: '',
             },
             subscribe: {
               projects: {
@@ -86,7 +86,7 @@ describe('stream', () => {
     it('recieve message', async () => {
         const { server, client } = setup();
         await server.connected;
-        client.subscribe(spec1, [1, 2, 3, 4, 5]);
+        client.subscribe(spec1);
         server.send({ complete: false, sync_id: '1' });
         server.send({ projects_deleted: '3-5' });
         server.send({ project: { id: 6 } });
@@ -98,12 +98,12 @@ describe('stream', () => {
         const { server, client } = setup();
         await server.connected;
 
-        client.subscribe(spec1, [1, 2, 3]);
+        client.subscribe(spec1);
         server.send({ complete: false, sync_id: '1' });
         server.send({ project: { id: 4 } });
         expect(onUpsert).toHaveBeenNthCalledWith(1, { project: { id: 4 } });
         // Create a new subscription, but this subscription won't be sent before the previous sync ends
-        client.subscribe(spec2, [1, 2, 3]);
+        client.subscribe(spec2);
         // This message is kept because the initial sync has not completed
         server.send({ project: { id: 5 } });
         expect(onUpsert).toHaveBeenNthCalledWith(2, { project: { id: 5 } });
@@ -120,8 +120,8 @@ describe('stream', () => {
         const { server, client } = setup();
         await server.connected;
 
-        client.subscribe(spec1, [1, 2, 3]);
-        client.subscribe(spec2, [1, 2, 3]);
+        client.subscribe(spec1);
+        client.subscribe(spec2);
 
         // server closed right after subsciption sent
         server.close();
@@ -130,7 +130,7 @@ describe('stream', () => {
         // new server should receive previously sent subscription, with sync_id bumped
         await expect(newServer).toReceiveMessage({
             known: {
-                projects: '1-3',
+                projects: '',
               },
               subscribe: {
                 projects: {
@@ -150,7 +150,7 @@ describe('stream', () => {
         // new server should receive previously interupted subscription, with sync_id bumped
         await expect(newServer).toReceiveMessage({
             known: {
-                projects: '1-3',
+                projects: '',
               },
               subscribe: {
                 projects: {
@@ -169,7 +169,7 @@ describe('stream', () => {
         // new server should only recieve the second subscription
         await expect(newServer).toReceiveMessage({
             known: {
-                projects: '1-3',
+                projects: '',
               },
               subscribe: {
                 projects: {

@@ -69,6 +69,7 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
+              {!!project.numExperiments &&
               <div className={css.experiments}>
                 <Tooltip
                   content={
@@ -78,7 +79,7 @@ const ProjectCard: React.FC<Props> = ({
                   <Icon name="experiment" size="small" title="Number of experiments" />
                   <span>{nearestCardinalNumber(project.numExperiments)}</span>
                 </Tooltip>
-              </div>
+              </div> }
               {project.archived ? (
                 <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
               ) : (

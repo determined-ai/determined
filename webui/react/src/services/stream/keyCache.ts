@@ -60,9 +60,9 @@ export class KeyCache {
         this.#keys.delete(id);
     }
 
-    public upsert(ids: Array<number>, seq?: number): void {
+    public upsert(ids: Array<number>, seq: number): void {
         ids.forEach((id) => this.#keys.add(id));
-        this.#maxseq = Math.max(this.#maxseq, seq || 0);
+        this.#maxseq = Math.max(this.#maxseq, seq);
     }
 
     public delete_msg(deleted: Array<number>): void {
