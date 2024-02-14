@@ -10,7 +10,7 @@ export abstract class StreamSpec {
 }
 
 export class ProjectSpec extends StreamSpec {
-    readonly #id: string = 'projects';
+    readonly #id: Streamable = 'projects';
     #workspace_ids: Array<number>;
     #project_ids: Array<number>;
 
@@ -32,7 +32,7 @@ export class ProjectSpec extends StreamSpec {
     };
 
     public id = (): Streamable => {
-        return this.#id as Streamable;
+        return this.#id;
     };
 
     public toWire = (): any => {

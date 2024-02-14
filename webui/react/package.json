@@ -134,6 +134,7 @@
     "eslint-plugin-sort-keys-fix": "^1.1.2",
     "express": "^4.18.2",
     "fast-check": "^3.14.0",
+    "jest-websocket-mock": "^2.5.0",
     "jsdom": "^16.7.0",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",

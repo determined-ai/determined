@@ -68,7 +68,7 @@ class ProjectStore {
               const ws = map.get(deleted.workspaceId.toString());
               if (ws) {
                 remove(ws, (p) => p.id === id);
-                map.set(deleted.workspaceId.toString(), ws);
+                map.set(deleted.workspaceId.toString(), [...ws]);
               }
             }
             return map;
@@ -93,7 +93,7 @@ class ProjectStore {
       if (project) {
         this.#upsert(project, p);
       } else {
-        map.set(p.id, p);
+        map.set(p.id, { ...p });
       }
       return map;
     }),
@@ -102,13 +102,23 @@ class ProjectStore {
     prev.withMutations((map) => {
         projectInWs = find(map.get(p.workspaceId.toString()), (tp) => tp.id === p.id);
         if (projectInWs) {
+          // The workspaceId has not changed, just update
           this.#upsert(projectInWs, p);
         } else {
+          // The workspaceId has changed, add to the new workspace and remove from the old workspace
           const ws = map.get(p.workspaceId.toString());
           if (ws) {
             ws.push(p);
             map.set(p.workspaceId.toString(), [...ws]);
           }
+          if (project) {
+            const ows = map.get(project.workspaceId.toString());
+            if (ows) {
+              remove(ows, (op) => op.id === p.id);
+              map.set(project.workspaceId.toString(), [...ows]);
+            }
+          }
+
         }
       return map;
     }));
@@ -139,10 +149,8 @@ export const mapStreamProject = (p: any): Project => (
       name: p.name,
       notes: JSON.parse(p.notes),
       // Unavailable fields
-numActiveExperiments: 0,
-
-numExperiments: 0,
-
+      numActiveExperiments: 0,
+      numExperiments: 0,
       state: p.state,
       userId: p.user_id,
       workspaceId: p.workspace_id,
