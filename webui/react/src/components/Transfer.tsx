@@ -130,9 +130,8 @@ const Transfer: React.FC<Props> = ({
         const newNeighborEntryIndex = updatedVisibleEntries.findIndex(
           (entryName) => entryName === newNeighborEntry,
         );
-        const temp = updatedVisibleEntries[entryIndex];
-        updatedVisibleEntries[entryIndex] = updatedVisibleEntries[newNeighborEntryIndex];
-        updatedVisibleEntries[newNeighborEntryIndex] = temp;
+        updatedVisibleEntries.splice(entryIndex, 1);
+        updatedVisibleEntries.splice(newNeighborEntryIndex, 0, entry);
         return updatedVisibleEntries;
       });
     }
@@ -155,21 +154,19 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderHiddenRow = useCallback(
-    (index: number) => {
-      const row = filteredHiddenEntries[index];
+    (_index: number, row: string) => {
       return renderRow(row, () => moveToRight(row));
     },
-    [filteredHiddenEntries, moveToRight, renderRow],
+    [moveToRight, renderRow],
   );
 
   const renderVisibleRow = useCallback(
-    (index: number) => {
-      const row = filteredVisibleEntries[index];
+    (index: number, row: string) => {
       return reorder
         ? renderDraggableRow(row, index, () => moveToLeft(row), switchRowOrder)
         : renderRow(row, () => moveToLeft(row));
     },
-    [filteredVisibleEntries, moveToLeft, renderDraggableRow, renderRow, reorder, switchRowOrder],
+    [moveToLeft, renderDraggableRow, renderRow, reorder, switchRowOrder],
   );
 
   return (
@@ -180,7 +177,8 @@ const Transfer: React.FC<Props> = ({
           <h2>{sourceListTitle}</h2>
           <ul className={css.listContainer}>
             <Virtuoso
-              itemContent={(index) => renderHiddenRow(index)}
+              data={filteredHiddenEntries}
+              itemContent={(index, data) => renderHiddenRow(index, data)}
               style={{ height: '200px' }}
               totalCount={filteredHiddenEntries.length}
             />
@@ -196,7 +194,8 @@ const Transfer: React.FC<Props> = ({
           </div>
           <ul className={css.listContainer}>
             <Virtuoso
-              itemContent={(index) => renderVisibleRow(index)}
+              data={filteredVisibleEntries}
+              itemContent={(index, data) => renderVisibleRow(index, data)}
               style={{ height: '200px' }}
               totalCount={filteredVisibleEntries.length}
             />
