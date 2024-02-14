@@ -224,8 +224,15 @@ func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunner
 		toUpdate = append(toUpdate, "restarts")
 	}
 
-	run, _ := trial.ToRunAndTrialV2()
+	run, _, err := trialToRunAndTrialV2(ctx, Bun(), trial)
+	if err != nil {
+		return fmt.Errorf("converting trial to run for update: %w", err)
+	}
+
 	_, err = Bun().NewUpdate().Model(run).Column(toUpdate...).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("updating trial fields: %w", err)
+	}
 
 	return err
 }
