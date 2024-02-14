@@ -1013,7 +1013,7 @@ commands:
                     formattedRange+=",loadBalancerSourceRanges[${i}]=\"${ip_addresses[i]}\""
             done
             export FORMATTED_RANGES=${formattedRange}
-            echo 'export HELM_VALUES="${HELM_VALUES}${FORMATTED_RANGES}' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES}${FORMATTED_RANGES}"' >> "$BASH_ENV"
           name: Setup Firewall Config
       - gcloud/install:
           version: "412.0.0"
