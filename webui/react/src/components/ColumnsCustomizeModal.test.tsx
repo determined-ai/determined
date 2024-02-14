@@ -4,6 +4,8 @@ import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React, { useMemo } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { VirtuosoMockContext } from 'react-virtuoso';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
@@ -43,15 +45,17 @@ const ColumnsButton: React.FC = () => {
   const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
 
   return (
-    <UIProvider theme={DefaultTheme.Light}>
-      <ThemeProvider>
-        <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
-        <ColumnsCustomizeModal.Component
-          columns={columns}
-          defaultVisibleColumns={DEFAULT_COLUMNS}
-        />
-      </ThemeProvider>
-    </UIProvider>
+    <DndProvider backend={HTML5Backend}>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
+          <ColumnsCustomizeModal.Component
+            columns={columns}
+            defaultVisibleColumns={DEFAULT_COLUMNS}
+          />
+        </ThemeProvider>
+      </UIProvider>
+    </DndProvider>
   );
 };
 
