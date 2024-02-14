@@ -403,4 +403,4 @@ genai:
 
 ## Configure the set of IP ranges allowed to connect to the Determined master service on a public
 ## GKE cluster.
-loadBalancerSourceRanges:
+loadBalancerSourceRanges: []
