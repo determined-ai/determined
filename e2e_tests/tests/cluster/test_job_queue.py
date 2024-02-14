@@ -53,8 +53,8 @@ def get_raw_data() -> Tuple[List[Dict[str, str]], List[str]]:
         for i, field in enumerate(line.split("|")):
             if keys[i] == "ID":
                 ordered_ids.append(field.strip())
-            if keys[i] == "Type" and field == "TYPE_GENERIC":
-                del ordered_ids[-1]
+            # if keys[i] == "Type" and field == "TYPE_GENERIC":
+            #     del ordered_ids[-1]
             line_dict[keys[i]] = field.strip()
         data.append(line_dict)
 

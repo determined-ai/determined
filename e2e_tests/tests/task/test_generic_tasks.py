@@ -26,7 +26,17 @@ def test_create_generic_task() -> None:
         conf.fixtures_path("generic_task"),
     ]
 
-    subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+    res = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
+
+    id_index = res.stdout.find("Created task ")
+    task_id = res.stdout[id_index + len("Created task ") :].strip()
+
+    test_session = api_utils.determined_test_session()
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_id, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
 
 
 @pytest.mark.e2e_cpu
@@ -120,6 +130,12 @@ def test_generic_task_config() -> None:
     expected_config = {"entrypoint": ["echo", "task ran"]}
     assert result_config == expected_config
 
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
+
 
 @pytest.mark.e2e_cpu
 def test_generic_task_create_with_fork() -> None:
@@ -167,6 +183,18 @@ def test_generic_task_create_with_fork() -> None:
     result_config = util.yaml_safe_load(res.stdout)
     expected_config = {"entrypoint": ["echo", "forked"]}
     assert result_config == expected_config
+
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
+
+    is_valid_state = task.wait_for_task_state(
+        test_session, fork_task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
 
 
 @pytest.mark.e2e_cpu
@@ -239,3 +267,9 @@ def test_pause_and_unpause_generic_task() -> None:
 
     unpause_resp = bindings.get_GetTask(test_session, taskId=task_resp.taskId)
     assert unpause_resp.task.taskState == bindings.v1GenericTaskState.ACTIVE
+
+    is_valid_state = task.wait_for_task_state(
+        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+    )
+    if not is_valid_state:
+        pytest.fail("task failed to complete after 30 seconds")
