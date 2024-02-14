@@ -29,6 +29,7 @@ func TestToRun(t *testing.T) {
 
 	expectedRun := &Run{
 		ID:                    trial.ID,
+		ProjectID:             12,
 		ExperimentID:          trial.ExperimentID,
 		State:                 trial.State,
 		StartTime:             trial.StartTime,
@@ -46,7 +47,7 @@ func TestToRun(t *testing.T) {
 		Seed:      trial.Seed,
 	}
 
-	actualRun, actualTrial := trial.ToRunAndTrialV2()
+	actualRun, actualTrial := trial.ToRunAndTrialV2(expectedRun.ProjectID)
 	require.Equal(t, expectedRun, actualRun)
 	require.Equal(t, expectedTrial, actualTrial)
 }

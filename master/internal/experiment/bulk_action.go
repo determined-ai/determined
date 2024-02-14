@@ -705,15 +705,21 @@ func MoveExperiments(ctx context.Context,
 		}
 
 		var acceptedIDs []int32
-		_, err = tx.NewUpdate().
+		if _, err = tx.NewUpdate().
 			ModelTableExpr("experiments as e").
 			Set("project_id = ?", destinationProjectID).
 			Where("e.id IN (?)", bun.In(validIDs)).
 			Returning("e.id").
 			Model(&acceptedIDs).
-			Exec(ctx)
-		if err != nil {
-			return nil, err
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating experiment's project IDs: %w", err)
+		}
+
+		if _, err = tx.NewUpdate().Table("runs").
+			Set("project_id = ?", destinationProjectID).
+			Where("runs.experiment_id IN (?)", bun.In(validIDs)).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
 		}
 
 		for _, acceptID := range acceptedIDs {
