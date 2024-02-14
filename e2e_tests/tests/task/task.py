@@ -9,7 +9,7 @@ def wait_for_task_state(
     test_session: api.Session,
     task_id: str,
     expected_state: api.bindings.v1GenericTaskState,
-    timeout: int,
+    timeout: int = 30,
 ) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -23,7 +23,7 @@ def wait_for_task_state(
 def wait_for_task_start(
     test_session: api.Session,
     task_id: str,
-    timeout: int,
+    timeout: int = 30,
 ) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:

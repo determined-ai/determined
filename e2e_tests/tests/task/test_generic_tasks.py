@@ -32,9 +32,7 @@ def test_create_generic_task() -> None:
     task_id = res.stdout[id_index + len("Created task ") :].strip()
 
     test_session = api_utils.determined_test_session()
-    task.wait_for_task_state(
-        test_session, task_id, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_id, bindings.v1GenericTaskState.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -60,9 +58,7 @@ def test_generic_task_completion() -> None:
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Check for complete state
-    task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -88,9 +84,7 @@ def test_create_generic_task_error() -> None:
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Check for error state
-    task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.ERROR, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.ERROR)
 
 
 @pytest.mark.e2e_cpu
@@ -124,9 +118,7 @@ def test_generic_task_config() -> None:
     expected_config = {"entrypoint": ["echo", "task ran"]}
     assert result_config == expected_config
 
-    task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -176,11 +168,9 @@ def test_generic_task_create_with_fork() -> None:
     expected_config = {"entrypoint": ["echo", "forked"]}
     assert result_config == expected_config
 
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
     task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
-    task.wait_for_task_state(
-        test_session, fork_task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
+        test_session, fork_task_resp.taskId, bindings.v1GenericTaskState.COMPLETED
     )
 
 
@@ -213,9 +203,7 @@ def test_kill_generic_task() -> None:
     subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, check=True)
 
     bindings.get_GetTask(test_session, taskId=task_resp.taskId)
-    task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.CANCELED, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.CANCELED)
 
 
 @pytest.mark.e2e_cpu
@@ -257,6 +245,4 @@ def test_pause_and_unpause_generic_task() -> None:
     unpause_resp = bindings.get_GetTask(test_session, taskId=task_resp.taskId)
     assert unpause_resp.task.taskState == bindings.v1GenericTaskState.ACTIVE
 
-    task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
