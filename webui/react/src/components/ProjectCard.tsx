@@ -6,6 +6,7 @@ import Icon from 'hew/Icon';
 import Row from 'hew/Row';
 import Tooltip from 'hew/Tooltip';
 import { Title, TypographySize } from 'hew/Typography';
+import { isNaN } from 'lodash';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -69,7 +70,7 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              {!!project.numExperiments &&
+              {!isNaN(project.numExperiments) &&
               <div className={css.experiments}>
                 <Tooltip
                   content={
