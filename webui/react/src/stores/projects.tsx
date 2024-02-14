@@ -138,7 +138,7 @@ export const mapStreamProject = (p: any): Project => (
       id: p.id,
       immutable: p.immutable,
       name: p.name,
-      notes: JSON.parse(p.notes),
+      notes: p.notes,
       numActiveExperiments: NaN,
       numExperiments: NaN,
       state: p.state,
