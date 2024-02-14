@@ -38,9 +38,9 @@ Make sure you back up the database and temporarily shut down the master before p
 
 To fix this error message, locate the up migration with a suffix of ``.up.sql`` and a prefix
 matching the long number in the error message in `this directory
-<https://github.com/determined-ai/determined/tree/master/master/static/migrations>_` and carefully
-run the SQL within the file manually against the database used by Determined. For convenience, all
-the information needed to connect except the password can be found with:
+<https://github.com/determined-ai/determined/tree/main/master/static/migrations>_` and carefully run
+the SQL within the file manually against the database used by Determined. For convenience, all the
+information needed to connect except the password can be found with:
 
 .. code::
 

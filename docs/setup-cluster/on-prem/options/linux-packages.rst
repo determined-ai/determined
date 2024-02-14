@@ -117,8 +117,7 @@ Install PostgreSQL using ``apt`` or ``yum``
 Install the Determined Master and Agent
 =======================================
 
-#. Find the latest release of Determined by visiting the `Determined repo
-   <https://github.com/determined-ai/determined/releases/tag/0.27.0>`_.
+#. Find the latest release of Determined by visiting the `Determined repo <https://github.com/determined-ai/determined/releases/latest>`_.
 
 #. Download the appropriate Debian or RPM package file, which will have the name
    ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (where ``VERSION`` is the actual version,

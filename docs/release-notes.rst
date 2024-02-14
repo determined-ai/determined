@@ -2881,7 +2881,8 @@ Version 0.14.3
 **New Features**
 
 -  Examples: Add the `Deformable DETR <https://openreview.net/forum?id=gZ9hCDWe6ke>`__ model for
-   object detection in Determined.
+   object detection in Determined. Check out `our example
+   <https://github.com/determined-ai/determined-examples/tree/main/computer_vision/deformabledetr_coco_pytorch>`__.
 
 -  Searcher: Support programmatic rejection of certain hyperparameters to further optimize your
    hyperparameter search.
@@ -2976,7 +2977,8 @@ Version 0.14.0
 **Improvements**
 
 -  **Breaking Change** REST API: The trial and checkpoint API endpoints can now return non-scalar
-   metric values, which are represented as JSON objects or protobuf structs.
+   metric values, which are represented as JSON objects or `protobuf structs
+   <https://protobuf.dev/reference/protobuf/google.protobuf/#struct>`__.
 
 -  Documentation: Add a topic guide on :ref:`debugging models <model-debug>`. The new guide will
    walk you step-by-step through solving problems with a model in Determined, with a focus on
@@ -3286,7 +3288,9 @@ Version 0.13.7
 -  Support `MMDetection <https://github.com/open-mmlab/mmdetection>`__, a popular library for object
    detection, in Determined. MMDetection allows users to easily train state-of-the-art object
    detection models; with Determined, users can take things one step further with cutting-edge
-   distributed training and hyperparameter tuning to further boost performance.
+   distributed training and hyperparameter tuning to further boost performance. See the `Determined
+   implementation of MMDetection
+   <https://github.com/determined-ai/determined-examples/tree/main/model_hub/mmdetection>`__.
 
 -  WebUI: Allow the experiments list page to be filtered by labels. Selecting more than one label
    will filter experiments by the intersection of the selected labels.
@@ -3895,11 +3899,19 @@ Version 0.12.11
 
 -  Add logging to console in test mode for the Native API when using
    :class:`determined.experimental.create`.
+
 -  Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
--  Add an example using TensorFlow's *Image Segmentation via UNet* tutorial.
+
+-  Add `an example
+   <https://github.com/determined-ai/determined-examples/tree/main/computer_vision/unets_tf_keras>`__
+   using TensorFlow's *Image Segmentation via UNet* tutorial.
+
 -  WebUI: Improve trial log rendering performance.
+
 -  WebUI: Fix an issue where cluster utilization was displayed incorrectly.
+
 -  WebUI: Fix an issue where active experiments and commands would not appear on the dashboard.
+
 -  WebUI: Fix an issue where having telemetry enabled with an invalid key would cause the WebUI to
    render incorrectly.
 
@@ -3964,8 +3976,10 @@ Version 0.12.7
    checkpoint, and terminate the trial.
 
 -  Add support for Estimator callbacks that stop training early, including the official
-   ``stop_if_no_decrease_hook``. When a stop is requested, Determined will finish the training (or
-   validation) step we are in, checkpoint, and terminate the trial.
+   `stop_if_no_decrease_hook
+   <https://www.tensorflow.org/versions/r2.11/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook>`__.
+   When a stop is requested, Determined will finish the training (or validation) step we are in,
+   checkpoint, and terminate the trial.
 
 -  Add support for model code that stops training of a trial programmatically.
 

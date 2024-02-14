@@ -45,7 +45,7 @@ default pod spec (if any).
 ***************************
 
 This section describes which fields can and cannot be configured when specifying custom `pod
-<https://kubernetes.io/docs/concepts/workloads/pods/>`__ specs.
+<https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#pod-v1-core>`__ specs.
 
 Not Supported
 =============

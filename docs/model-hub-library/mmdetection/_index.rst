@@ -4,7 +4,7 @@
  MMDetection
 #############
 
-.. _readme: https://github.com/determined-ai/determined/tree/master/model_hub/examples/mmdetection/README.md
+.. _readme: https://github.com/determined-ai/determined/tree/main/model_hub/examples/mmdetection/README.md
 
 `The MMDetection library <https://mmdetection.readthedocs.io/en/latest>`_ is a popular library for
 object detection. It provides implementations for many popular object detection approaches like

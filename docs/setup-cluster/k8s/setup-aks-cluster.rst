@@ -78,8 +78,9 @@ command:
  Enable GPU Support
 ********************
 
-To allow the AKS cluster to recognize GPU hardware resources, refer to the `Microsoft Azure
-Kubernetes Service (AKS) documentation <https://learn.microsoft.com/en-us/azure/aks/>`_.
+To allow the AKS cluster to recognize GPU hardware resources, refer to the instructions provided by
+Azure on the `Install NVIDIA Device Plugin
+<https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
 
 With this, the cluster is fully set up, and Determined can be deployed onto it.
 
