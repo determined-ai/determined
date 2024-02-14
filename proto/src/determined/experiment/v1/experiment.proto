@@ -159,6 +159,8 @@ message Experiment {
   optional string external_trial_id = 44;
   // Size of model definition file, for unmanaged experiments this should be 0.
   optional int32 model_definition_size = 45;
+  // The resource manager the experiment was created in
+  string resource_manager = 46;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

@@ -1831,7 +1831,7 @@ func TestDeleteExperiments(t *testing.T) {
 	var mockRM mocks.ResourceManager
 	// Need _anything_ to error to check the error flow leaves things in DELETE_FAILED and that they are delete-able
 	// still after that.
-	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+	mockRM.On("DeleteJob", mock.Anything).Return(func(model.JobID) sproto.DeleteJobResponse {
 		errC := make(chan error, 1)
 		errC <- errors.New("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}
@@ -1902,7 +1902,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	var mockRM mocks.ResourceManager
 	// Need _anything_ to error to check the error flow leaves things in DELETE_FAILED and that they are delete-able
 	// still after that.
-	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+	mockRM.On("DeleteJob", mock.Anything).Return(func(model.JobID) sproto.DeleteJobResponse {
 		errC := make(chan error, 1)
 		errC <- errors.New("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}

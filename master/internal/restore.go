@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/workspace"
 
 	"github.com/pkg/errors"
@@ -99,11 +98,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
-	if _, _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
-		Slots:        activeConfig.Resources().SlotsPerTrial(),
-		IsSingleNode: false,
-	}); err != nil {
+	if err = m.rm.ValidateResources(poolName, activeConfig.Resources().SlotsPerTrial(), false); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(

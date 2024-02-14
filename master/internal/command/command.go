@@ -262,11 +262,12 @@ func (c *Command) garbageCollect() {
 
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if forward {
-		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{
-			Priority:     priority,
-			ResourcePool: c.Config.Resources.ResourcePool,
-			JobID:        c.jobID,
-		}).(type) {
+		switch err := c.rm.SetGroupPriority(c.Config.Resources.ResourceManager,
+			sproto.SetGroupPriority{
+				Priority:     priority,
+				ResourcePool: c.Config.Resources.ResourcePool,
+				JobID:        c.jobID,
+			}).(type) {
 		case nil:
 		case rmerrors.UnsupportedError:
 			c.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")

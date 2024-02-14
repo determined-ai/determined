@@ -2,7 +2,6 @@ package rm
 
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -14,14 +13,15 @@ type ResourceManager interface {
 	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
-	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
-	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
+	ValidateCommandResources(sproto.ValidateCommandResourcesRequest) (sproto.ValidateCommandResourcesResponse, error)
+	ValidateResources(name string, slots int, command bool) error
+	DeleteJob(jobID model.JobID) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
 
 	// Scheduling related stuff
 	SetGroupMaxSlots(sproto.SetGroupMaxSlots)
-	SetGroupWeight(sproto.SetGroupWeight) error
-	SetGroupPriority(sproto.SetGroupPriority) error
+	SetGroupWeight(rmName string, req sproto.SetGroupWeight) error
+	SetGroupPriority(rmName string, req sproto.SetGroupPriority) error
 	ExternalPreemptionPending(sproto.PendingPreemption) error
 	IsReattachableOnlyAfterStarted() bool
 
@@ -39,11 +39,11 @@ type ResourceManager interface {
 	) (model.TaskContainerDefaultsConfig, error)
 
 	// Job queue
-	GetJobQ(sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error)
+	GetJobQ(rmName string, rpName string) (map[model.JobID]*sproto.RMJobInfo, error)
 	GetJobQueueStatsRequest(*apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
-	MoveJob(sproto.MoveJob) error
-	RecoverJobPosition(sproto.RecoverJobPosition)
-	GetExternalJobs(sproto.GetExternalJobs) ([]*jobv1.Job, error)
+	MoveJob(rmName string, req sproto.MoveJob) error
+	RecoverJobPosition(rmName string, req sproto.RecoverJobPosition)
+	GetExternalJobs(rmName string, rpName string) ([]*jobv1.Job, error)
 
 	// Cluster Management APIs
 	GetAgents(*apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)

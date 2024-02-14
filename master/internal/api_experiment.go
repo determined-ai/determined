@@ -349,7 +349,7 @@ func (a *apiServer) GetExperiment(
 	}
 
 	jobID := model.JobID(exp.JobId)
-	jobSummary, err := jobservice.DefaultService.GetJobSummary(jobID, exp.ResourcePool)
+	jobSummary, err := jobservice.DefaultService.GetJobSummary(jobID, exp.ResourceManager, exp.ResourcePool)
 	if err != nil {
 		// An error here either is real or just that the experiment was not yet terminal in the DB
 		// when we first queried it but was by the time it got around to handling out ask. We can't
@@ -499,9 +499,9 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 
 			// delete jobs per experiment
-			resp, err := a.m.rm.DeleteJob(sproto.DeleteJob{
-				JobID: exp.JobID,
-			})
+			// TODO (multirm for dispatcherrm): since we're not passing in an RM name here
+			// you'll have to check ALL RMs and all RPs for the job.
+			resp, err := a.m.rm.DeleteJob(exp.JobID)
 			if err != nil {
 				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
 				return err
