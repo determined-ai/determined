@@ -1007,7 +1007,13 @@ commands:
           name: Setup TLS Helm Values
       - run:
           command: |
-            echo 'export HELM_VALUES="${HELM_VALUES},loadBalancerSourceRanges={$(echo \"$CI_RANGES\" | sed '\''s/,/","/g'\'')}"' >> "$BASH_ENV"
+            ip_addresses=($(echo "${CI_RANGES}" | tr -d '" ' | tr ',' ' '))
+            formattedRange=""
+            for ((i=0; i<${#ip_addresses[@]}; i++)); do
+                    formattedRange+=",loadBalancerSourceRanges[${i}]=\"${ip_addresses[i]}\""
+            done
+            export FORMATTED_RANGES=${formattedRange}
+            echo 'export HELM_VALUES="${HELM_VALUES}${FORMATTED_RANGES}' >> "$BASH_ENV"
           name: Setup Firewall Config
       - gcloud/install:
           version: "412.0.0"
@@ -1037,13 +1043,10 @@ commands:
       - run:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
-      - helm/install-helm-chart:
-          chart: helm/charts/determined
-          helm-version: v3.2.4
-          namespace: ${GENERATED_NAMESPACE}
-          wait: true
-          release-name: ${GENERATED_NAMESPACE}
-          values-to-override: ${HELM_VALUES}
+      - run:
+          command: |
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${NAMESPACE}" --wait
+          name: Helm Install
       - set-master-address-gke:
           release-name: ${GENERATED_NAMESPACE}
           namespace: ${GENERATED_NAMESPACE}
