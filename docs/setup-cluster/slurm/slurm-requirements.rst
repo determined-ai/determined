@@ -418,10 +418,10 @@ on the compute nodes of the cluster.
 *********************
 
 When Determined is configured to use Podman, the containers are launched in `rootless mode
-<https://docs.podman.io/en/latest//en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC
-cluster administrator should have completed most of the configuration for you, but there may be
-additional per-user configuration that is required. Before attempting to launch Determined jobs,
-verify that you can run simple Podman containers on a compute node. For example:
+<https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. Your HPC cluster
+administrator should have completed most of the configuration for you, but there may be additional
+per-user configuration that is required. Before attempting to launch Determined jobs, verify that
+you can run simple Podman containers on a compute node. For example:
 
 .. code:: bash
 

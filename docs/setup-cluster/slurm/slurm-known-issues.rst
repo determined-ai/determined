@@ -140,8 +140,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Podman Known Issues
 *********************
 
--  Determined uses Podman in `rootless mode <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are
-   several configuration errors that may be encountered:
+-  Determined uses Podman in `rootless mode
+   <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
+   configuration errors that may be encountered:
 
    -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment
       variable ``XDG_RUNTIME_DIR`` is referencing a directory that does not exist.
