@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	AWSEndpointURL = "https://%s.s3.amazonaws.com"
+	// awsEndpointURL is the AWS endpoint format for getting bucket regions.
+	awsEndpointURL = "https://%s.s3.amazonaws.com"
 )
 
 // S3Downloader implements downloading a checkpoint from S3
@@ -167,7 +168,7 @@ func GetS3BucketRegion(ctx context.Context, bucket string, endpointURL *string) 
 	if endpointURL != nil {
 		url = fmt.Sprintf(*endpointURL, bucket)
 	} else {
-		url = fmt.Sprintf(AWSEndpointURL, bucket)
+		url = fmt.Sprintf(awsEndpointURL, bucket)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
