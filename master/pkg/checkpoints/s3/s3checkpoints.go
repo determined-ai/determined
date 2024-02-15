@@ -156,7 +156,6 @@ func NewS3Downloader(
 // GetS3BucketRegion returns the region name of the specified bucket.
 // It does so by making an API call to AWS.
 func GetS3BucketRegion(ctx context.Context, bucket string, endpointURL string) (string, error) {
-	// TODO this won't work on non aws s3 APIs.
 	// We can't use the AWS SDK for getting bucket region
 	// because we get a 403 when the region in the client is different
 	// than the bucket (defeating the whole point of calling bucket location).
