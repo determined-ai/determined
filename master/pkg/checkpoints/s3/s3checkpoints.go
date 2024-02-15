@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	awsEndpointURL = "https://%s.s3.amazonaws.com"
+	AWSEndpointURL = "https://%s.s3.amazonaws.com"
 )
 
 // S3Downloader implements downloading a checkpoint from S3
@@ -113,9 +113,10 @@ func NewS3Downloader(
 	var region string
 	var err error
 	if endpointURL != nil {
-		region, err = GetS3BucketRegion(ctx, bucket, fmt.Sprint(endpointURL, "/%s"))
+		endpointFormat := fmt.Sprint(*endpointURL, "/%s")
+		region, err = GetS3BucketRegion(ctx, bucket, &endpointFormat)
 	} else {
-		region, err = GetS3BucketRegion(ctx, bucket, awsEndpointURL)
+		region, err = GetS3BucketRegion(ctx, bucket, nil)
 	}
 
 	if err != nil {
@@ -154,15 +155,21 @@ func NewS3Downloader(
 }
 
 // GetS3BucketRegion returns the region name of the specified bucket.
-// It does so by making an API call to AWS.
-func GetS3BucketRegion(ctx context.Context, bucket string, endpointURL string) (string, error) {
+// It does so by making an API call to either the provided endpoint or AWS.
+func GetS3BucketRegion(ctx context.Context, bucket string, endpointURL *string) (string, error) {
 	// We can't use the AWS SDK for getting bucket region
 	// because we get a 403 when the region in the client is different
 	// than the bucket (defeating the whole point of calling bucket location).
 	// Instead just use the HEAD API since this is a lot simpler and doesn't require any auth.
 	// https://github.com/aws/aws-sdk-go/issues/720
 
-	url := fmt.Sprintf(endpointURL, bucket)
+	var url string
+	if endpointURL != nil {
+		url = fmt.Sprintf(*endpointURL, bucket)
+	} else {
+		url = fmt.Sprintf(AWSEndpointURL, bucket)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
 		return "", fmt.Errorf("making request to get region of s3 bucket at url %s: %w", url, err)
