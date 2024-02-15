@@ -5,6 +5,7 @@ import { sleep, Stream } from './stream';
 
 const onUpsert = vi.fn();
 const onDelete = vi.fn();
+const isLoading = vi.fn()
 const url = 'ws://localhost:1234';
 const genServer = () => new WS(url, { jsonProtocol: true });
 
@@ -16,7 +17,7 @@ const spec2 = new ProjectSpec(spec2ws);
 const setup = () => {
 
     const server = genServer();
-    return { client: new Stream(url, onUpsert, onDelete), server };
+    return { client: new Stream(url, onUpsert, onDelete, isLoading), server };
 
 };
 
@@ -92,6 +93,9 @@ describe('stream', () => {
         server.send({ project: { id: 6 } });
         expect(onDelete).toHaveBeenCalledWith('projects', [3, 4, 5]);
         expect(onUpsert).toHaveBeenCalledWith({ project: { id: 6 } });
+        expect(isLoading).toHaveBeenCalledWith(false)
+        server.send({ complete: true, sync_id: '1' });
+        expect(isLoading).toHaveBeenCalledWith(true)
         cleanup([client, server]);
     });
     it('switch subscription', async () => {

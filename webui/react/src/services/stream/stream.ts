@@ -35,11 +35,13 @@ export class Stream {
     //callbacks
     #onUpsert: (m: Record<string, any>) => void;
     #onDelete: (s: Streamable, a: Array<number>) => void;
+    #isLoading: ((b: boolean) => void) | undefined
 
-    constructor(wsUrl: string, onUpsert: (m: Record<string, any>) => void, onDelete: (s: Streamable, a: Array<number>) => void) {
+    constructor(wsUrl: string, onUpsert: (m: Record<string, any>) => void, onDelete: (s: Streamable, a: Array<number>) => void, isLoading?: (b: boolean) => void) {
         this.#wsUrl = wsUrl;
         this.#onUpsert = onUpsert;
         this.#onDelete = onDelete;
+        this.#isLoading = isLoading
         this.#connect();
     }
 
@@ -65,16 +67,16 @@ export class Stream {
             if (msg['sync_id']) {
                 if (!msg['complete']) {
                     this.#syncStarted = msg['sync_id'];
+                    this.#isLoading?.(false)
                 } else {
                     this.#syncComplete = msg['sync_id'];
+                    this.#isLoading?.(true)
                     this.#advanceSubscription();
                 }
-            } else if (this.#syncSent !== this.#syncStarted) {
+            } else if (this.#syncSent === this.#syncStarted) {
                 // Ignore all messages between when we send a new subscription and when the
                 // sync-start message for that subscription arrives.  These are the online
                 // updates for a subscription we no longer care about.
-                return;
-            } else {
 
                 forEach(msg, (val, k) => {
                     if (k.includes('_deleted')) {
