@@ -76,17 +76,11 @@ func TestUpdateJobPosition(t *testing.T) {
 
 	t.Run("update position", func(t *testing.T) {
 		// create and send job
-		origPos := decimal.NewFromInt(10)
-		newPos := decimal.NewFromInt(5)
-		sendJob := model.Job{
-			JobID:   model.NewJobID(),
-			JobType: model.JobTypeExperiment,
-			QPos:    origPos,
-		}
-		err := db.AddJob(&sendJob)
+		sendJob, err := createAndAddJob(10, db)
 		require.NoError(t, err)
 
 		// update job position
+		newPos := decimal.NewFromInt(5)
 		err = db.UpdateJobPosition(sendJob.JobID, newPos)
 		require.NoError(t, err)
 
@@ -98,17 +92,11 @@ func TestUpdateJobPosition(t *testing.T) {
 
 	t.Run("update position - negative value", func(t *testing.T) {
 		// create and send job
-		origPos := decimal.NewFromInt(10)
-		newPos := decimal.NewFromInt(-5)
-		sendJob := model.Job{
-			JobID:   model.NewJobID(),
-			JobType: model.JobTypeExperiment,
-			QPos:    origPos,
-		}
-		err := db.AddJob(&sendJob)
+		sendJob, err := createAndAddJob(10, db)
 		require.NoError(t, err)
 
 		// update job position
+		newPos := decimal.NewFromInt(-5)
 		err = db.UpdateJobPosition(sendJob.JobID, newPos)
 		require.NoError(t, err)
 
@@ -119,41 +107,38 @@ func TestUpdateJobPosition(t *testing.T) {
 	})
 
 	t.Run("update position - empty ID", func(t *testing.T) {
-		// create and send job
-		origPos := decimal.NewFromInt(10)
-		newPos := decimal.NewFromInt(5)
-		sendJob := model.Job{
-			JobID:   model.NewJobID(),
-			JobType: model.JobTypeExperiment,
-			QPos:    origPos,
-		}
-		err := db.AddJob(&sendJob)
+		sendJob, err := createAndAddJob(10, db)
 		require.NoError(t, err)
 
 		// update job position
+		newPos := decimal.NewFromInt(5)
 		err = db.UpdateJobPosition(model.JobID(""), newPos)
 		require.Error(t, err)
 
 		// retrieve job and ensure queue pos not updated
 		recvJob, err := db.JobByID(sendJob.JobID)
 		require.NoError(t, err)
-		assert.Equal(t, origPos.Equal(recvJob.QPos), true)
+		assert.Equal(t, sendJob.QPos.Equal(recvJob.QPos), true)
 	})
 
 	t.Run("update position - ID does not exist", func(t *testing.T) {
 		// create and send job
-		origPos := decimal.NewFromInt(10)
-		newPos := decimal.NewFromInt(5)
-		sendJob := model.Job{
-			JobID:   model.NewJobID(),
-			JobType: model.JobTypeExperiment,
-			QPos:    origPos,
-		}
-		err := db.AddJob(&sendJob)
+		_, err := createAndAddJob(10, db)
 		require.NoError(t, err)
 
 		// update job position for a job that doesn't exist
+		newPos := decimal.NewFromInt(5)
 		err = db.UpdateJobPosition(model.NewJobID(), newPos)
 		require.NoError(t, err)
 	})
+}
+
+func createAndAddJob(pos int64, db *PgDB) (model.Job, error) {
+	sendJob := model.Job{
+		JobID:   model.NewJobID(),
+		JobType: model.JobTypeExperiment,
+		QPos:    decimal.NewFromInt(pos),
+	}
+	err := db.AddJob(&sendJob)
+	return sendJob, err
 }
