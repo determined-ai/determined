@@ -2725,6 +2725,11 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
+          master-scheme: ${MASTER_SCHEME:-http}
+          master-port: ${MASTER_PORT:-8080}
+          master-cert: ${MASTER_TLS_CERT}
+          master-cert-name: ${MASTER_CERT_NAME}
+          wait-for-master: false
       - store_test_results:
           path: /tmp/test-results/
 
