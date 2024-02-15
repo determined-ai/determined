@@ -155,7 +155,15 @@ linkcheck_ignore = [
     r'^http://127.0.0.1',
     r'^\.\./'
 ]
+
 linkcheck_timeout = 10
+
+# linkcheck gets confused by anchors sometimes
+linkcheck_anchors_ignore=[
+    'install-nvidia-device-plugin',
+    'tag/System/operation/SystemAuth',
+    'batch-size-related-parameters'
+]
 
 with open(".redirects/redirects.json") as f:
     redirects = json.load(f)
