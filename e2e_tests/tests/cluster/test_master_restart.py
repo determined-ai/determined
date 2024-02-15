@@ -103,17 +103,10 @@ def test_master_restart_generic_task(managed_cluster_restarts: ManagedCluster) -
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Wait for task to start
-    started = task.wait_for_task_start(test_session, task_resp.taskId, timeout=30)
-    if not started:
-        pytest.fail("task failed to started")
+    task.wait_for_task_start(test_session, task_resp.taskId)
     managed_cluster_restarts.kill_master()
     managed_cluster_restarts.restart_master()
-    is_valid_state = task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
-
-    if not is_valid_state:
-        pytest.fail("task failed to complete after 30 seconds")
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
 
 
 @pytest.mark.managed_devcluster
@@ -136,26 +129,16 @@ def test_master_restart_generic_task_pause(managed_cluster_restarts: ManagedClus
     task_resp = bindings.post_CreateGenericTask(test_session, body=req)
 
     # Wait for task to start
-    started = task.wait_for_task_start(test_session, task_resp.taskId, timeout=30)
-    if not started:
-        pytest.fail("task failed to started")
+    task.wait_for_task_start(test_session, task_resp.taskId)
     # Pause task
     bindings.post_PauseGenericTask(test_session, taskId=task_resp.taskId)
-    is_valid_state = task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.PAUSED, timeout=30
-    )
-    if not is_valid_state:
-        pytest.fail("task failed to complete after 30 seconds")
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.PAUSED)
     managed_cluster_restarts.kill_master()
     managed_cluster_restarts.restart_master()
 
     # Unpause task
     bindings.post_UnpauseGenericTask(test_session, taskId=task_resp.taskId)
-    is_valid_state = task.wait_for_task_state(
-        test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED, timeout=30
-    )
-    if not is_valid_state:
-        pytest.fail("task failed to complete after 30 seconds")
+    task.wait_for_task_state(test_session, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
 
 
 @pytest.mark.managed_devcluster
