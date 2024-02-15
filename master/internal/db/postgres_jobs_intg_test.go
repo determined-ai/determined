@@ -17,16 +17,12 @@ func TestAddJob(t *testing.T) {
 	db := SingleDB()
 
 	t.Run("add job", func(t *testing.T) {
-		jobID := model.NewJobID()
-		j := model.Job{JobID: jobID, JobType: model.JobTypeCommand}
-		err := db.AddJob(&j)
+		_, err := createAndAddJob(0, db)
 		require.NoError(t, err)
 	})
 
 	t.Run("add job with duplicate id", func(t *testing.T) {
-		jobID := model.NewJobID()
-		j := model.Job{JobID: jobID, JobType: model.JobTypeCommand}
-		err := db.AddJob(&j)
+		j, err := createAndAddJob(0, db)
 		require.NoError(t, err)
 
 		// change job type and re-add job
@@ -46,12 +42,7 @@ func TestJobByID(t *testing.T) {
 
 	t.Run("add and retrieve job", func(t *testing.T) {
 		// create and send job
-		sendJob := model.Job{
-			JobID:   model.NewJobID(),
-			JobType: model.JobTypeExperiment,
-			QPos:    decimal.NewFromInt(10),
-		}
-		err := db.AddJob(&sendJob)
+		sendJob, err := createAndAddJob(10, db)
 		require.NoError(t, err)
 
 		// retrieve job and test for equality
@@ -60,11 +51,11 @@ func TestJobByID(t *testing.T) {
 		assert.Equal(t, sendJob.JobID, recvJob.JobID)
 		assert.Equal(t, sendJob.JobType, recvJob.JobType)
 		assert.Equal(t, sendJob.OwnerID, recvJob.OwnerID)
-		assert.Equal(t, decimal.NewFromInt(10).Equal(recvJob.QPos), true)
+		assert.Equal(t, sendJob.QPos.Equal(recvJob.QPos), true)
 	})
 
 	t.Run("retrieve non-existent job", func(t *testing.T) {
-		// retrieve job and test for equality
+		// attempt to retrieve job that does not exist
 		recvJob, err := db.JobByID(model.NewJobID())
 		require.Error(t, err)
 		require.Nil(t, recvJob)
