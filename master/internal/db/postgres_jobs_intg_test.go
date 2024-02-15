@@ -10,12 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestAddJob(t *testing.T) {
-	db := setupDBForTest(t)
+	db := SingleDB()
 
 	t.Run("add job", func(t *testing.T) {
 		jobID := model.NewJobID()
@@ -43,7 +42,7 @@ func TestAddJob(t *testing.T) {
 }
 
 func TestJobByID(t *testing.T) {
-	db := setupDBForTest(t)
+	db := SingleDB()
 
 	t.Run("add and retrieve job", func(t *testing.T) {
 		// create and send job
@@ -73,7 +72,7 @@ func TestJobByID(t *testing.T) {
 }
 
 func TestUpdateJobPosition(t *testing.T) {
-	db := setupDBForTest(t)
+	db := SingleDB()
 
 	t.Run("update position", func(t *testing.T) {
 		// create and send job
@@ -157,12 +156,4 @@ func TestUpdateJobPosition(t *testing.T) {
 		err = db.UpdateJobPosition(model.NewJobID(), newPos)
 		require.NoError(t, err)
 	})
-}
-
-func setupDBForTest(t *testing.T) *PgDB {
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-
-	db := MustResolveTestPostgres(t)
-	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	return db
 }
