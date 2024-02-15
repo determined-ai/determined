@@ -41,7 +41,6 @@ const WorkspaceDeleteModalComponent: React.FC<Props> = ({
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
         publicSubject: 'Unable to delete workspace.',
         silent: false,
         type: ErrorType.Server,
