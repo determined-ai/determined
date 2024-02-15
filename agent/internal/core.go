@@ -12,6 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/agent/internal/options"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
 
@@ -29,6 +30,9 @@ func Run(parent context.Context, version string, opts options.Options) error {
 	wg := errgroupx.WithContext(ctx)
 
 	log.Trace("starting main agent process")
+
+	logger.SetLogrus(opts.Log)
+
 	wg.Go(func(ctx context.Context) error {
 		defer wg.Cancel()
 
