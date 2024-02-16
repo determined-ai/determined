@@ -78,7 +78,7 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  excludedExperimentIds?: Set<number>;
+  excludedExperimentIds?: Map<number, unknown>;
   experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
@@ -99,7 +99,7 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectAll: boolean;
-  selectedExperimentIds: Set<number>;
+  selectedExperimentIds: Map<number, unknown>;
   sorts: Sort[];
   tableViewMode: TableViewMode;
   total: Loadable<number>;
@@ -141,7 +141,10 @@ const TableActionBar: React.FC<Props> = ({
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
-  const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
+  const experimentIds = useMemo(
+    () => Array.from(selectedExperimentIds.keys()),
+    [selectedExperimentIds],
+  );
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce(
@@ -158,7 +161,7 @@ const TableActionBar: React.FC<Props> = ({
 
   const selectedExperiments = useMemo(
     () =>
-      Array.from(selectedExperimentIds).flatMap((id) =>
+      Array.from(selectedExperimentIds.keys()).flatMap((id) =>
         id in experimentMap ? [experimentMap[id]] : [],
       ),
     [experimentMap, selectedExperimentIds],
@@ -182,7 +185,10 @@ const TableActionBar: React.FC<Props> = ({
         filters: selectAll ? filters : undefined,
       };
       if (excludedExperimentIds?.size) {
-        params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+        params.filters = {
+          ...filters,
+          excludedExperimentIds: Array.from(excludedExperimentIds.keys()),
+        };
       }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {

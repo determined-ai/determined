@@ -311,7 +311,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 key: 'select-none',
                 label: 'Clear selected',
                 onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
+                  onSelectionChange?.('remove-all');
                   setMenuIsOpen(false);
                 },
               }
@@ -332,7 +332,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              onSelectionChange?.('add-all', [0, data.length]);
+              onSelectionChange?.('add-all');
               setMenuIsOpen(false);
             },
           },
@@ -466,7 +466,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     },
     [
       columnIds,
-      data.length,
       projectColumns,
       formStore,
       sorts,
