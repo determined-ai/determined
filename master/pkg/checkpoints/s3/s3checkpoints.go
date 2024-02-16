@@ -113,29 +113,25 @@ func NewS3Downloader(
 	// the existing AWS credentials.
 	var region string
 	var err error
+	var sess *session.Session
 	if endpointURL != nil {
 		endpointFormat := fmt.Sprint(*endpointURL, "/%s")
 		region, err = GetS3BucketRegion(ctx, bucket, &endpointFormat)
-	} else {
-		region, err = GetS3BucketRegion(ctx, bucket, nil)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var sess *session.Session
-	if endpointURL != nil {
+		if err != nil {
+			return nil, err
+		}
 		sess, err = session.NewSession(&aws.Config{
 			Region:           aws.String(region),
 			Endpoint:         endpointURL,
 			DisableSSL:       aws.Bool(false),
 			S3ForcePathStyle: aws.Bool(true),
 		})
+	} else {
+		region, err = GetS3BucketRegion(ctx, bucket, nil)
 		if err != nil {
 			return nil, err
 		}
-	} else {
+
 		sess, err = session.NewSession(&aws.Config{
 			Region: &region,
 		})
