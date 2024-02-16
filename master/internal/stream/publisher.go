@@ -390,7 +390,7 @@ func doPublishLoop[T stream.Msg](
 				}
 			}
 			// Broadcast all the events.
-			publisher.Broadcast(events)
+			publisher.Broadcast(ctx, events)
 		}
 	}
 }

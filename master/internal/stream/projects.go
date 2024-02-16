@@ -51,6 +51,11 @@ type ProjectMsg struct {
 	Seq int64 `bun:"seq" json:"seq"`
 }
 
+// GetID gets the primary key, id, from a ProjectMsg in string representation.
+func (pm *ProjectMsg) GetID() string {
+	return strconv.Itoa(pm.ID)
+}
+
 // SeqNum gets the SeqNum from a ProjectMsg.
 func (pm *ProjectMsg) SeqNum() int64 {
 	return pm.Seq
@@ -71,6 +76,20 @@ func (pm *ProjectMsg) DeleteMsg() stream.DeleteMsg {
 		Key:     ProjectsDeleteKey,
 		Deleted: deleted,
 	}
+}
+
+// Fetch pulls the latest state of the project this message is representing,
+// overwriting the current message with the updated fields, if an error occurs
+// the original message is left intact.
+func (pm *ProjectMsg) Fetch(ctx context.Context) error {
+	copyPm := *pm
+	query := db.Bun().NewSelect().Model(pm).Where("project_msg.id = ?", pm.ID)
+	err := query.Scan(ctx, &copyPm)
+	// only log errors that are not caused by deletions
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error while hydrating project message: %v\n", err)
+	}
+	return err
 }
 
 // ProjectSubscriptionSpec is what a user submits to define a project subscription.
@@ -186,14 +205,14 @@ func ProjectCollectStartupMsgs(
 	// step 3: hydrate appeared IDs into full ProjectMsgs
 	var projMsgs []*ProjectMsg
 	if len(appeared) > 0 {
-		query := db.Bun().NewSelect().Model(&projMsgs).Where("project_msg.id in (?)", bun.In(appeared))
-		if !globalAccess {
-			query = permFilterQuery(query, accessScopes)
-		}
-		err := query.Scan(ctx, &projMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
-			log.Errorf("error: %v\n", err)
-			return nil, err
+		for id := range appeared {
+			projMsg := &ProjectMsg{ID: id}
+			err = projMsg.Hydrate(ctx)
+			if err != nil {
+				log.Errorf("error when hydrating offline events: %v\n", err)
+				return nil, err
+			}
+			projMsgs = append(projMsgs, projMsg)
 		}
 	}
 

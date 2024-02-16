@@ -1,15 +1,21 @@
 package stream
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 // Msg is an object with a message and a sequence number and json marshal caching.
 type Msg interface {
+	GetID() string
 	SeqNum() int64
 	UpsertMsg() UpsertMsg
 	DeleteMsg() DeleteMsg
+	Fetch(context.Context) error
 }
 
 // Event contains the old and new version a Msg.  Inserts will have Before==nil, deletions will
@@ -174,7 +180,7 @@ func (p *Publisher[T]) CloseAllStreamers() {
 // Broadcast receives a list of events, determines if they are
 // applicable to the publisher's subscriptions, and sends
 // appropriate messages to corresponding streamers.
-func (p *Publisher[T]) Broadcast(events []Event[T]) {
+func (p *Publisher[T]) Broadcast(ctx context.Context, events []Event[T]) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -185,11 +191,66 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	// check each event against each subscription
 	for sub := range p.Subscriptions {
 		func() {
+			// tracks the latest state an entity has been communicated as being
+			// enables some events to be skipped if a newer state has already been reported.
+			seqCache := make(map[string]int64)
 			for _, ev := range events {
 				var msg interface{}
+
+				// // if this is an upsert, check if it needs to be hydrated or skipped
+				// if ev.After != nil {
+				// 	// hold onto in case hydrate overwrites these values
+				// 	eventEntityID := (*ev.After).GetID()
+				// 	eventEntitySeq :=  (*ev.After).SeqNum()
+				// 	// can this event skipped because it's a newer state of the entity has already been communicated
+				// 	if lastSeen, ok := seqCache[eventEntityID]; ok && lastSeen >= eventEntitySeq {
+				// 		continue EventLoop
+				// 	} else {
+				// 		err := (*ev.After).Hydrate(ctx)
+				// 		// if an error occurs during hydration drop the event
+				// 		// TODO (corban): this logic might be flawed
+				// 		// if it's a normal deletion, then we can filter it out because there will be a deletion event; however, if it's
+				// 		// fallout/disappearance case + a deletion prior the processing the fallout event
+				// 		// then we'll see the deletion here, but when we get to the deletion message, then it
+				// 		// is possible that we will drop a deletion event won't be communicated because it fails
+				// 		// the filter checks?
+				// 		// yes, so maybe reorder this...
+				// 		if err != nil {
+				// 			// did the error occur for any other reason besides deletion?
+				// 			if errors.Cause(err) != sql.ErrNoRows {
+				// 				log.Errorf("error occured while hydrating message during broadcast: %v", err)
+				// 			}
+				// 			continue EventLoop
+				// 		}
+				// 		seqCache[(*ev.After).GetID()] = (*ev.After).SeqNum()
+				// 	}
+				// // TODO (corban): determine if there's a case when a deletion message can be skipped
+				// // what is the seq value we associate with deletion messages? the seq value that was last seen?
+				// // or does it get incremented prior to the deletion? Check the migration
+				// } else if ev.Before != nil {
+				// 	//
+				// }
+
+				// determine if and how the event should be communicated with the streamer
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					// update, insert, or fallin: send the record to the client.
+
+					eventEntityID := (*ev.After).GetID()
+					eventEntitySeq := (*ev.After).SeqNum()
+					lastSeq, found := seqCache[eventEntityID]
+					// has a more recent state of this entity been reported in this loop
+					if found && lastSeq >= eventEntitySeq {
+						continue
+					}
+
+					// either this entity hasn't been reported, or is a more recent event
+					err := (*ev.After).Fetch(ctx)
+					if err != nil {
+						if errors.Cause(err) != sql.ErrNoRows {
+						}
+					}
+
 					if ev.upsertCache == nil {
 						ev.upsertCache = sub.Streamer.PrepareFn((*ev.After).UpsertMsg())
 					}
