@@ -197,6 +197,9 @@ func (c Config) Printable() ([]byte, error) {
 	}
 
 	const hiddenValue = "********"
+	if configCopy.Security.InitialUserPassword != "" {
+		configCopy.Security.InitialUserPassword = hiddenValue
+	}
 	if configCopy.DB.Password != "" {
 		configCopy.DB.Password = hiddenValue
 	}

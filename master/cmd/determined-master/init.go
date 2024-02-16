@@ -139,6 +139,6 @@ func registerConfig() {
 	registerString(flags, name("telemetry", "otel-endpoint"),
 		defaults.Telemetry.OtelExportedOtlpEndpoint, "set otel endpoint")
 
-	registerString(flags, name("security", "initial_user_password"),
+	registerString(flags, name("security", "initial-user-password"),
 		defaults.Security.InitialUserPassword, "initial password for the built-in 'determined' and 'admin' users")
 }
