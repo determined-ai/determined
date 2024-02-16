@@ -3,18 +3,15 @@ import Button from 'hew/Button';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
-import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import React, { MouseEvent, useCallback, useMemo } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
-import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 import {
@@ -22,7 +19,6 @@ import {
   archiveExperiment,
   cancelExperiment,
   deleteExperiment,
-  getExperiment,
   killExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
@@ -92,23 +88,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
   const confirm = useConfirm();
   const { openToast } = useToast();
-
-  // this is required when experiment does not contain `config`.
-  // since we removed config. See #8765 on GitHub
-  const fetchedExperimentItem: Loadable<ExperimentItem> = useAsync(
-    async (canceler) => {
-      try {
-        const response = await getExperiment({ id: experiment.id }, { signal: canceler.signal });
-        return response;
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch experiment.' });
-        return NotLoaded;
-      }
-    },
-    [experiment.id],
-  );
-
-  const experimentItem: ExperimentItem = fetchedExperimentItem.getOrElse(experiment);
 
   const handleEditComplete = useCallback(
     (data: Partial<ExperimentItem>) => {
@@ -304,40 +283,28 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       />
       <HyperparameterSearchModal.Component
         closeModal={HyperparameterSearchModal.close}
-        experiment={experimentItem}
+        experiment={experiment}
       />
     </>
   );
 
   return children ? (
     <>
-      {Loadable.isNotLoaded(fetchedExperimentItem) ? (
-        <Spinner center />
-      ) : (
-        <>
-          <Dropdown
-            isContextMenu={isContextMenu}
-            menu={dropdownMenu}
-            open={makeOpen}
-            onClick={handleDropdown}>
-            {children}
-          </Dropdown>
-          {shared}
-        </>
-      )}
+      <Dropdown
+        isContextMenu={isContextMenu}
+        menu={dropdownMenu}
+        open={makeOpen}
+        onClick={handleDropdown}>
+        {children}
+      </Dropdown>
+      {shared}
     </>
   ) : (
     <div className={css.base} title="Open actions menu">
-      {Loadable.isNotLoaded(fetchedExperimentItem) ? (
-        <Spinner center />
-      ) : (
-        <>
-          <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
-            <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
-          </Dropdown>
-          {shared}
-        </>
-      )}
+      <Dropdown menu={dropdownMenu} placement="bottomRight" onClick={handleDropdown}>
+        <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
+      </Dropdown>
+      {shared}
     </div>
   );
 };
