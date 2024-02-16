@@ -1,7 +1,7 @@
 import { forEach } from 'lodash';
 import React, { createContext, useCallback, useEffect, useMemo } from 'react';
 
-// import useWebSocket from 'react-use-websocket';
+import { serverAddress } from 'routes/utils';
 import { Streamable, StreamContent, StreamEntityMap } from 'services/stream';
 import { Stream } from 'services/stream/stream';
 import projectStore, { mapStreamProject } from 'stores/projects';
@@ -15,7 +15,7 @@ export const Streaming = createContext<UserStreamingContext>({
 });
 
 export const StreamingProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const socketUrl = 'ws://localhost:8080/stream';
+  const socketUrl = `${serverAddress().replace('http', 'ws')}/stream`;
 
   const onUpsert = useCallback((m: Record<string, StreamContent>) => {
     forEach(m, (val, k) => {

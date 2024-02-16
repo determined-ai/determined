@@ -71,10 +71,14 @@ export class Stream {
 
     this.#ws.onclose = () => {
       this.#syncSent = undefined;
-      this.#timeout = dayjs().add(backoffs[this.#retries], 'second');
+      const backoff = backoffs[this.#retries];
+      if (backoff === undefined) {
+        throw new Error('Websocket cannot reconnect!');
+      }
+      this.#timeout = dayjs().add(backoff, 'second');
       this.#retries += 1;
-      logger.info(`#${this.#retries} of retries: in ${backoffs[this.#retries]}s`);
-      setTimeout(() => this.#advance(), backoffs[this.#retries] * 1000);
+      logger.info(`#${this.#retries} of retries: in ${backoff}s`);
+      setTimeout(() => this.#advance(), backoff * 1000);
     };
 
     this.#ws.onmessage = (event) => {
