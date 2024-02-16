@@ -22,32 +22,29 @@
           padding: 0;
         }
       }
-      .listContainer {
-        border: solid var(--theme-stroke-width) var(--theme-surface-border);
+      ul.listContainer {
+        border: var(--theme-stroke-width) solid var(--theme-surface-border);
         border-radius: var(--theme-border-radius);
+        list-style-type: none;
+        margin: 0;
+        overflow-y: auto;
+        padding-left: 0;
+        padding-top: 6px;
 
-        ul {
-          height: 200px;
-          list-style-type: none;
-          margin-bottom: 0;
-          overflow-y: auto;
-          padding-left: 0;
-          padding-top: 6px;
+        li {
+          cursor: pointer;
+          height: 24px;
+          padding-left: 6px;
 
-          li {
-            cursor: pointer;
-            padding-left: 6px;
-
-            span {
-              white-space: nowrap;
-            }
-            &:hover {
-              background-color: var(--theme-surface-strong);
-            }
-            mark {
-              background-color: #faed27;
-              padding: 0;
-            }
+          span {
+            white-space: nowrap;
+          }
+          &:hover {
+            background-color: var(--theme-surface-strong);
+          }
+          mark {
+            background-color: #faed27;
+            padding: 0;
           }
         }
       }

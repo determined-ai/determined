@@ -4,6 +4,9 @@ import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React, { useMemo } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { VirtuosoMockContext } from 'react-virtuoso';
 
 import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { ThemeProvider } from 'components/ThemeProvider';
@@ -42,21 +45,29 @@ const ColumnsButton: React.FC = () => {
   const ColumnsCustomizeModal = useModal(ColumnsCustomizeModalComponent);
 
   return (
-    <UIProvider theme={DefaultTheme.Light}>
-      <ThemeProvider>
-        <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
-        <ColumnsCustomizeModal.Component
-          columns={columns}
-          defaultVisibleColumns={DEFAULT_COLUMNS}
-        />
-      </ThemeProvider>
-    </UIProvider>
+    <DndProvider backend={HTML5Backend}>
+      <UIProvider theme={DefaultTheme.Light}>
+        <ThemeProvider>
+          <Button onClick={ColumnsCustomizeModal.open}>{BUTTON_TEXT}</Button>
+          <ColumnsCustomizeModal.Component
+            columns={columns}
+            defaultVisibleColumns={DEFAULT_COLUMNS}
+          />
+        </ThemeProvider>
+      </UIProvider>
+    </DndProvider>
   );
 };
 
 const setup = async () => {
   const user = userEvent.setup();
-  const view = render(<ColumnsButton />);
+  const view = render(<ColumnsButton />, {
+    wrapper: ({ children }) => (
+      <VirtuosoMockContext.Provider value={{ itemHeight: 20, viewportHeight: 200 }}>
+        {children}
+      </VirtuosoMockContext.Provider>
+    ),
+  });
 
   await user.click(view.getByText(BUTTON_TEXT));
 
@@ -127,16 +138,16 @@ describe('Columns Customize Modal', () => {
       DEFAULT_COLUMNS.length,
     );
 
-    const initialHiddenHeight = parseInt(lists[0].style.height);
-    const initialVisibleHeight = parseInt(lists[1].style.height);
+    const initialVisibleFirstItem = within(lists[1]).getAllByRole('listitem')[0].textContent;
 
     const transferredColumn = within(lists[1]).getAllByRole('listitem')[0];
     await user.click(transferredColumn);
 
     await waitFor(() => {
-      expect(parseInt(lists[0].style.height)).toBeGreaterThan(initialHiddenHeight);
+      expect(within(lists[1]).getAllByRole('listitem')[0].textContent).not.toBe(
+        initialVisibleFirstItem,
+      );
     });
-    expect(parseInt(lists[1].style.height)).toBeLessThan(initialVisibleHeight);
   });
 
   it('should show column', async () => {
@@ -152,16 +163,16 @@ describe('Columns Customize Modal', () => {
       DEFAULT_COLUMNS.length,
     );
 
-    const initialHiddenHeight = parseInt(lists[0].style.height);
-    const initialVisibleHeight = parseInt(lists[1].style.height);
+    const initialVisibleFirstItem = within(lists[0]).getAllByRole('listitem')[0].textContent;
 
     const transferredColumn = within(lists[0]).getAllByRole('listitem')[0];
     await user.click(transferredColumn);
 
     await waitFor(() => {
-      expect(parseInt(lists[0].style.height)).toBeLessThan(initialHiddenHeight);
+      expect(within(lists[0]).getAllByRole('listitem')[0].textContent).not.toBe(
+        initialVisibleFirstItem,
+      );
     });
-    expect(parseInt(lists[1].style.height)).toBeGreaterThan(initialVisibleHeight);
   });
 
   it('should reset', async () => {
@@ -222,15 +233,15 @@ describe('Columns Customize Modal', () => {
       DEFAULT_COLUMNS.length,
     );
 
-    const lineHeight = parseInt(within(lists[0]).getAllByRole('listitem')[0].style.height);
-
     await user.click(await view.findByText('Add All'));
 
     await waitFor(() => {
-      expect(parseInt(lists[0].style.height)).toEqual(0);
-      expect(parseInt(lists[1].style.height)).toEqual(
-        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
-      );
+      expect(
+        lists[0].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
+      ).toEqual(0);
+      expect(
+        lists[1].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
+      ).toBeGreaterThan(0);
     });
   });
 

@@ -1,7 +1,7 @@
 import Input from 'hew/Input';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { Virtuoso } from 'react-virtuoso';
 
 import Link from 'components/Link';
 
@@ -116,71 +116,60 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderRow = useCallback(
-    (row: string, style: React.CSSProperties, handleClick: () => void) => {
-      return (
-        <li style={style} onClick={handleClick}>
-          {renderEntry(row)}
-        </li>
-      );
+    (row: string, handleClick: () => void) => {
+      return <li onClick={handleClick}>{renderEntry(row)}</li>;
     },
     [renderEntry],
   );
 
-  const switchRowOrder = useCallback(
-    (entry: string, newNeighborEntry: string) => {
-      if (entry !== newNeighborEntry) {
-        const updatedVisibleEntries = [...targetEntries];
+  const switchRowOrder = useCallback((entry: string, newNeighborEntry: string) => {
+    if (entry !== newNeighborEntry) {
+      setTargetEntries((prev) => {
+        const updatedVisibleEntries = [...prev];
         const entryIndex = updatedVisibleEntries.findIndex((entryName) => entryName === entry);
         const newNeighborEntryIndex = updatedVisibleEntries.findIndex(
           (entryName) => entryName === newNeighborEntry,
         );
         updatedVisibleEntries.splice(entryIndex, 1);
         updatedVisibleEntries.splice(newNeighborEntryIndex, 0, entry);
-        setTargetEntries(updatedVisibleEntries);
-      }
-      return;
-    },
-    [targetEntries],
-  );
+        return updatedVisibleEntries;
+      });
+    }
+  }, []);
 
   const renderDraggableRow = useCallback(
     (
       row: string,
       index: number,
-      style: React.CSSProperties,
       handleClick: (event: React.MouseEvent<Element, MouseEvent>) => void,
-      handleDrop: (column: string, newNeighborColumnName: string) => void,
     ) => {
       return (
         <DraggableListItem
           columnName={row}
           index={index}
-          style={style}
           onClick={handleClick}
-          onDrop={handleDrop}>
+          onDrop={switchRowOrder}>
           {renderEntry(row)}
         </DraggableListItem>
       );
     },
-    [renderEntry],
+    [renderEntry, switchRowOrder],
   );
 
   const renderHiddenRow = useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const row = filteredHiddenEntries[index];
-      return renderRow(row, style, () => moveToRight(row));
+    (_index: number, row: string) => {
+      return renderRow(row, () => moveToRight(row));
     },
-    [filteredHiddenEntries, moveToRight, renderRow],
+    [moveToRight, renderRow],
   );
 
   const renderVisibleRow = useCallback(
-    ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      const row = filteredVisibleEntries[index];
+    (index: number, row: string) => {
       return reorder
-        ? renderDraggableRow(row, index, style, () => moveToLeft(row), switchRowOrder)
-        : renderRow(row, style, () => moveToLeft(row));
+        ? renderDraggableRow(row, index, () => moveToLeft(row))
+        : renderRow(row, () => moveToLeft(row));
     },
-    [filteredVisibleEntries, moveToLeft, renderDraggableRow, renderRow, reorder, switchRowOrder],
+    [moveToLeft, renderDraggableRow, renderRow, reorder],
   );
 
   return (
@@ -189,15 +178,14 @@ const Transfer: React.FC<Props> = ({
       <div className={css.entries}>
         <div className={css.column}>
           <h2>{sourceListTitle}</h2>
-          <List
-            className={css.listContainer}
-            height={200}
-            innerElementType="ul"
-            itemCount={filteredHiddenEntries.length}
-            itemSize={24}
-            width="100%">
-            {renderHiddenRow}
-          </List>
+          <ul className={css.listContainer}>
+            <Virtuoso
+              data={filteredHiddenEntries}
+              itemContent={(index, data) => renderHiddenRow(index, data)}
+              style={{ height: '200px' }}
+              totalCount={filteredHiddenEntries.length}
+            />
+          </ul>
           <Link onClick={() => moveToRight(filteredHiddenEntries)}>Add All</Link>
         </div>
         <div className={css.column}>
@@ -207,15 +195,14 @@ const Transfer: React.FC<Props> = ({
               <Link onClick={resetEntries}>Reset</Link>
             )}
           </div>
-          <List
-            className={css.listContainer}
-            height={200}
-            innerElementType="ul"
-            itemCount={filteredVisibleEntries.length}
-            itemSize={24}
-            width="100%">
-            {renderVisibleRow}
-          </List>
+          <ul className={css.listContainer}>
+            <Virtuoso
+              data={filteredVisibleEntries}
+              itemContent={(index, data) => renderVisibleRow(index, data)}
+              style={{ height: '200px' }}
+              totalCount={filteredVisibleEntries.length}
+            />
+          </ul>
           <Link
             onClick={() => {
               moveToLeft(filteredVisibleEntries);
