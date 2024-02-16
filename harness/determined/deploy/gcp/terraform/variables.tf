@@ -227,6 +227,11 @@ variable "master_config_template" {
   default = ""
 }
 
+variable "initial_user_password" {
+  type = string
+  default = ""
+}
+
 /******************************************
 	Database
  *****************************************/

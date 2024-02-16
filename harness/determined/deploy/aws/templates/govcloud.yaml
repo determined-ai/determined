@@ -166,6 +166,11 @@ Parameters:
     Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
     Default: 0
 
+  InitialUserPassword:
+    Type: String
+    Description: Default password for the built-in 'determined' and 'admin' user.
+    Default: ""
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -259,6 +264,9 @@ Parameters:
       {{ if ne .notebook_timeout 0.0 }}
       notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
+
+      security:
+          initial_user_password: {{ .security.initial_user_password }}
   ### END INJECT CODE
 
 Conditions:
@@ -700,6 +708,9 @@ Resources:
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
             notebook_timeout: ${NotebookTimeout}
+            
+            security:
+              initial_user_password: "${InitialUserPassword}"
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

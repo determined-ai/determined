@@ -736,6 +736,7 @@ commands:
               --keypair <<parameters.keypair>> \
               --deployment-type <<parameters.deployment-type>> \
               --retain-log-group \
+              --initial-user-password ${INITIAL_USER_PASSWORD} \
               --yes
 
   terminate-aws-cluster:

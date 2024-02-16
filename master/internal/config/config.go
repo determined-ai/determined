@@ -332,6 +332,8 @@ type SecurityConfig struct {
 	TLS         TLSConfig            `json:"tls"`
 	SSH         SSHConfig            `json:"ssh"`
 	AuthZ       AuthZConfig          `json:"authz"`
+
+	InitialUserPassword string `json:"initial_user_password"`
 }
 
 // SSHConfig is the configuration setting for SSH.

@@ -221,6 +221,11 @@ Parameters:
     Description: preexisting EFS ID to mount
     Default: ""
 
+  InitialUserPassword:
+    Type: String
+    Description: Default password for the built-in 'determined' and 'admin' user.
+    Default: ""
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -314,6 +319,9 @@ Parameters:
       {{ if ne .notebook_timeout 0.0 }}
       notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
+
+      security:
+          initial_user_password: {{ .security.initial_user_password }}
 ### END INJECT CODE
 
 Conditions:
@@ -901,6 +909,9 @@ Resources:
             bind_mounts:
               - host_path: /mnt/efs
                 container_path: /run/determined/workdir/shared_fs
+
+            security:
+              initial_user_password: "${InitialUserPassword}"
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

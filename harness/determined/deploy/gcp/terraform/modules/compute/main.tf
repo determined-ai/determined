@@ -98,6 +98,9 @@ resource "google_compute_instance" "master_instance" {
         base_config:
           minCpuPlatform: ${var.min_cpu_platform_agent}
         use_cloud_logging: true
+
+      security:
+        initial_user_password: ${var.initial_user_password}
     EOF
 
     if [ -n "${var.filestore_address}" ]; then

@@ -84,22 +84,23 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 }
 
 // Setup connects to the database and run any necessary migrations.
-func Setup(opts *config.DBConfig) (*PgDB, error) {
-	db, err := Connect(opts)
+func Setup(opts *config.DBConfig) (db *PgDB, isNew bool, err error) {
+	db, err = Connect(opts)
 	if err != nil {
-		return db, err
+		return db, false, err
 	}
 
-	if err = db.Migrate(opts.Migrations, []string{"up"}); err != nil {
-		return nil, fmt.Errorf("error running migrations: %s", err)
+	isNew, err = db.Migrate(opts.Migrations, []string{"up"})
+	if err != nil {
+		return nil, false, fmt.Errorf("error running migrations: %s", err)
 	}
 
 	if err = InitAuthKeys(); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if err = initAllocationSessions(context.TODO()); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return db, nil
+	return db, isNew, nil
 }

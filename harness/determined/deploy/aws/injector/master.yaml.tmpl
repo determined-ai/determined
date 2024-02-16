@@ -85,3 +85,6 @@ task_container_defaults:
 {{ if ne .notebook_timeout 0.0 }}
 notebook_timeout: {{ .notebook_timeout }}
 {{ end }}
+
+security:
+    initial_user_password: {{ .security.initial_user_password }}

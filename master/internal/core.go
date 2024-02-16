@@ -966,7 +966,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	m.db, err = db.Setup(&m.config.DB)
+	var isBrandNewCluster bool
+	m.db, isBrandNewCluster, err = db.Setup(&m.config.DB)
 	if err != nil {
 		return err
 	}
@@ -975,6 +976,21 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+
+	if isBrandNewCluster {
+		if password := m.config.Security.InitialUserPassword; password == "" {
+			log.Warn("This cluster was deployed without a default password for the built-in `determined` " +
+				"and `admin` users. You should set one using `det user change-password`. New clusters can be " +
+				"deployed with default passwords set using the DET_SECURITY_INITIAL_USER_PASSWORD setting.")
+		} else {
+			for _, username := range user.BuiltInUsers {
+				err := user.SetUserPassword(ctx, username, password)
+				if err != nil {
+					return fmt.Errorf("could not update default user password: %w", err)
+				}
+			}
+		}
 	}
 
 	webhookManager, err := webhooks.New(ctx)
