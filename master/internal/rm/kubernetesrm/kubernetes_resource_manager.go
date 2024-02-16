@@ -193,17 +193,6 @@ func (k *ResourceManager) GetAllocationSummaries(
 	return summaries, nil
 }
 
-// GetAllocationSummary implements rm.ResourceManager.
-func (k *ResourceManager) GetAllocationSummary(msg sproto.GetAllocationSummary) (*sproto.AllocationSummary, error) {
-	for _, rp := range k.pools {
-		resp := rp.GetAllocationSummary(msg)
-		if resp != nil {
-			return resp, nil
-		}
-	}
-	return nil, fmt.Errorf("allocation not found: %s", msg.ID)
-}
-
 // GetDefaultAuxResourcePool implements rm.ResourceManager.
 func (k *ResourceManager) GetDefaultAuxResourcePool(
 	sproto.GetDefaultAuxResourcePoolRequest,
