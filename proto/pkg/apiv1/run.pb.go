@@ -24,38 +24,38 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Sorts experiments by the given field.
+// Sorts runs by the given field.
 type GetRunsRequest_SortBy int32
 
 const (
-	// Returns experiments in an unsorted list.
+	// Returns runs in an unsorted list.
 	GetRunsRequest_SORT_BY_UNSPECIFIED GetRunsRequest_SortBy = 0
-	// Returns experiments sorted by id.
+	// Returns runs sorted by id.
 	GetRunsRequest_SORT_BY_ID GetRunsRequest_SortBy = 1
-	// Returns experiments sorted by description.
+	// Returns runs sorted by description.
 	GetRunsRequest_SORT_BY_DESCRIPTION GetRunsRequest_SortBy = 2
-	// Return experiments sorted by start time.
+	// Return runs sorted by start time.
 	GetRunsRequest_SORT_BY_START_TIME GetRunsRequest_SortBy = 4
-	// Return experiments sorted by end time. Experiments without end_time are
+	// Return runs sorted by end time. Runs without end_time are
 	// returned after the ones with end_time.
 	GetRunsRequest_SORT_BY_END_TIME GetRunsRequest_SortBy = 5
-	// Return experiments sorted by state.
+	// Return runs sorted by state.
 	GetRunsRequest_SORT_BY_STATE GetRunsRequest_SortBy = 6
-	// Return experiments sorted by progress.
+	// Return runs sorted by progress.
 	GetRunsRequest_SORT_BY_PROGRESS GetRunsRequest_SortBy = 9
-	// Return experiments sorted by user.
+	// Return runs sorted by user.
 	GetRunsRequest_SORT_BY_USER GetRunsRequest_SortBy = 10
-	// Returns experiments sorted by name.
+	// Returns runs sorted by name.
 	GetRunsRequest_SORT_BY_NAME GetRunsRequest_SortBy = 11
-	// Returns experiments sorted by originating model.
+	// Returns runs sorted by originating model.
 	GetRunsRequest_SORT_BY_FORKED_FROM GetRunsRequest_SortBy = 12
-	// Returns experiments sorted by resource pool.
+	// Returns runs sorted by resource pool.
 	GetRunsRequest_SORT_BY_RESOURCE_POOL GetRunsRequest_SortBy = 13
-	// Returns experiments sorted by checkpoint size.
+	// Returns runs sorted by checkpoint size.
 	GetRunsRequest_SORT_BY_CHECKPOINT_SIZE GetRunsRequest_SortBy = 15
-	// Returns experiments sorted by checkpoint count.
+	// Returns runs sorted by checkpoint count.
 	GetRunsRequest_SORT_BY_CHECKPOINT_COUNT GetRunsRequest_SortBy = 16
-	// Returns experiments sorted by searcher metric value..
+	// Returns runs sorted by searcher metric value..
 	GetRunsRequest_SORT_BY_SEARCHER_METRIC_VAL GetRunsRequest_SortBy = 17
 )
 
@@ -236,35 +236,35 @@ type GetRunsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Sort experiments by the given field.
+	// Sort runs by the given field.
 	SortBy GetRunsRequest_SortBy `protobuf:"varint,1,opt,name=sort_by,json=sortBy,proto3,enum=determined.api.v1.GetRunsRequest_SortBy" json:"sort_by,omitempty"`
-	// Order experiments in either ascending or descending order.
+	// Order runs in either ascending or descending order.
 	OrderBy OrderBy `protobuf:"varint,2,opt,name=order_by,json=orderBy,proto3,enum=determined.api.v1.OrderBy" json:"order_by,omitempty"`
-	// Skip the number of experiments before returning results. Negative values
-	// denote number of experiments to skip from the end before returning results.
+	// Skip the number of runs before returning results. Negative values
+	// denote number of runs to skip from the end before returning results.
 	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
-	// Limit the number of experiments.
+	// Limit the number of runs.
 	// 0 or Unspecified - returns a default of 100.
 	// -1               - returns everything.
-	// -2               - returns pagination info but no experiments.
+	// -2               - returns pagination info but no runs.
 	Limit int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Limit experiments to those that match the description.
+	// Limit runs to those that match the description.
 	Description string `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
-	// Limit experiments to those that match the name.
+	// Limit runs to those that match the name.
 	Name string `protobuf:"bytes,10,opt,name=name,proto3" json:"name,omitempty"`
-	// Limit experiments to those that match the provided labels.
+	// Limit runs to those that match the provided labels.
 	Labels []string `protobuf:"bytes,6,rep,name=labels,proto3" json:"labels,omitempty"`
-	// Limit experiments to those that are archived.
+	// Limit runs to those that are archived.
 	Archived *wrappers.BoolValue `protobuf:"bytes,7,opt,name=archived,proto3" json:"archived,omitempty"`
-	// Limit experiments to those that match the provided state.
+	// Limit runs to those that match the provided state.
 	States []experimentv1.State `protobuf:"varint,8,rep,packed,name=states,proto3,enum=determined.experiment.v1.State" json:"states,omitempty"`
-	// Limit experiments to those that are owned by users with the specified
+	// Limit runs to those that are owned by users with the specified
 	// usernames.
 	Users []string `protobuf:"bytes,9,rep,name=users,proto3" json:"users,omitempty"`
-	// Limit experiments to those that are owned by users with the specified
+	// Limit runs to those that are owned by users with the specified
 	// userIds.
 	UserIds []int32 `protobuf:"varint,11,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	// Limit experiments to those within a specified project, or 0 for all
+	// Limit runs to those within a specified project, or 0 for all
 	// projects.
 	ProjectId int32 `protobuf:"varint,12,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	// filtering by experiment ids
@@ -403,13 +403,13 @@ func (x *GetRunsRequest) GetShowTrialData() bool {
 	return false
 }
 
-// Response to GetExperimentsRequest.
+// Response to GetRunsRequest.
 type GetRunsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The list of returned experiments.
+	// The list of returned runs.
 	Runs []*trialv1.Run `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
 	// Pagination information of the full dataset.
 	Pagination *Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`

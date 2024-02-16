@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/uptrace/bun"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
@@ -17,9 +21,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-	"github.com/uptrace/bun"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func (a *apiServer) RunPrepareForReporting(
