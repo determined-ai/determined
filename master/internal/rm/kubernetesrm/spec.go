@@ -481,7 +481,7 @@ func (p *pod) createPodSpec(scheduler string) error {
 
 	p.pod = p.configurePodSpec(
 		volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
-	p.insertLog(time.Now().UTC(), fmt.Sprintf("pod spec:\n%v", p.pod.Spec))
+	p.insertLog(time.Now().UTC(), fmt.Sprintf("Pod Spec Configured:\n%v\n", p.pod.Spec))
 	return nil
 }
 
