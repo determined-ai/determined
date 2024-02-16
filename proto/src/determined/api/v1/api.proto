@@ -2453,4 +2453,14 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a list of runs.
+  rpc GetRuns(GetRunsRequest) returns (GetRunsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/runs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Runs"
+    };
+  }
 }

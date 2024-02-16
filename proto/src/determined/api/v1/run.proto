@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "proto/src/determined/api/v1/pagination.proto";
 
 // Request to prepare to start reporting to a run.
 message RunPrepareForReportingRequest {
@@ -24,4 +25,89 @@ message RunPrepareForReportingResponse {
   // The storage_id to be used when creating new checkpoints. This will be
   // returned always when checkpoint storage is set in the request.
   optional int32 storage_id = 1;
+}
+
+// Get a list of runs.
+message GetRunsRequest {
+  // Sorts experiments by the given field.
+  enum SortBy {
+    // Returns experiments in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns experiments sorted by id.
+    SORT_BY_ID = 1;
+    // Returns experiments sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Return experiments sorted by start time.
+    SORT_BY_START_TIME = 4;
+    // Return experiments sorted by end time. Experiments without end_time are
+    // returned after the ones with end_time.
+    SORT_BY_END_TIME = 5;
+    // Return experiments sorted by state.
+    SORT_BY_STATE = 6;
+    // Return experiments sorted by number of trials.
+    SORT_BY_NUM_TRIALS = 8;
+    // Return experiments sorted by progress.
+    SORT_BY_PROGRESS = 9;
+    // Return experiments sorted by user.
+    SORT_BY_USER = 10;
+    // Returns experiments sorted by name.
+    SORT_BY_NAME = 11;
+    // Returns experiments sorted by originating model.
+    SORT_BY_FORKED_FROM = 12;
+    // Returns experiments sorted by resource pool.
+    SORT_BY_RESOURCE_POOL = 13;
+    // Returns experiments sorted by project.
+    SORT_BY_PROJECT_ID = 14;
+    // Returns experiments sorted by checkpoint size.
+    SORT_BY_CHECKPOINT_SIZE = 15;
+    // Returns experiments sorted by checkpoint count.
+    SORT_BY_CHECKPOINT_COUNT = 16;
+    // Returns experiments sorted by searcher metric value..
+    SORT_BY_SEARCHER_METRIC_VAL = 17;
+  }
+  // Sort experiments by the given field.
+  SortBy sort_by = 1;
+  // Order experiments in either ascending or descending order.
+  OrderBy order_by = 2;
+  // Skip the number of experiments before returning results. Negative values
+  // denote number of experiments to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of experiments.
+  // 0 or Unspecified - returns a default of 100.
+  // -1               - returns everything.
+  // -2               - returns pagination info but no experiments.
+  int32 limit = 4;
+  // Limit experiments to those that match the description.
+  string description = 5;
+  // Limit experiments to those that match the name.
+  string name = 10;
+  // Limit experiments to those that match the provided labels.
+  repeated string labels = 6;
+  // Limit experiments to those that are archived.
+  google.protobuf.BoolValue archived = 7;
+  // Limit experiments to those that match the provided state.
+  repeated determined.experiment.v1.State states = 8;
+  // Limit experiments to those that are owned by users with the specified
+  // usernames.
+  repeated string users = 9;
+  // Limit experiments to those that are owned by users with the specified
+  // userIds.
+  repeated int32 user_ids = 11;
+  // Limit experiments to those within a specified project, or 0 for all
+  // projects.
+  int32 project_id = 12;
+  // filtering by experiment ids
+  determined.common.v1.Int32FieldFilter run_id_filter = 13;
+  // whether to surface trial specific data from the best trial
+  bool show_trial_data = 14;
+}
+// Response to GetExperimentsRequest.
+message GetRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "runs", "pagination" ] }
+  };
+  // The list of returned experiments.
+  repeated determined.experiment.v1.Experiment experiments = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }

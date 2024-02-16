@@ -43,3 +43,7 @@ func (a *apiServer) RunPrepareForReporting(
 		StorageId: storageID,
 	}, nil
 }
+
+func (a *apiServer) GetRuns(ctx context.Context, req *apiv1.GetRunsRequest) (*apiv1.GetRunsRespose, error) {
+	return nil, nil
+}
