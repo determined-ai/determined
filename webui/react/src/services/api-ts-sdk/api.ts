@@ -4153,6 +4153,43 @@ export interface V1GetRolesByIDResponse {
     roles?: Array<V1RoleWithAssignments>;
 }
 /**
+ * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+ * @export
+ * @enum {string}
+ */
+export const V1GetRunsRequestSortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+    NUMTRIALS: 'SORT_BY_NUM_TRIALS',
+    PROGRESS: 'SORT_BY_PROGRESS',
+    USER: 'SORT_BY_USER',
+    NAME: 'SORT_BY_NAME',
+    FORKEDFROM: 'SORT_BY_FORKED_FROM',
+    RESOURCEPOOL: 'SORT_BY_RESOURCE_POOL',
+    PROJECTID: 'SORT_BY_PROJECT_ID',
+    CHECKPOINTSIZE: 'SORT_BY_CHECKPOINT_SIZE',
+    CHECKPOINTCOUNT: 'SORT_BY_CHECKPOINT_COUNT',
+    SEARCHERMETRICVAL: 'SORT_BY_SEARCHER_METRIC_VAL',
+} as const
+export type V1GetRunsRequestSortBy = ValueOf<typeof V1GetRunsRequestSortBy>
+/**
+ * Response to GetExperimentsRequest.
+ * @export
+ * @interface V1GetRunsResponse
+ */
+export interface V1GetRunsResponse {
+    /**
+     * The list of returned experiments.
+     * @type {Array<V1Run>}
+     * @memberof V1GetRunsResponse
+     */
+    runs: Array<V1Run>;
+}
+/**
  * Response to GetSearcherEventsRequest.
  * @export
  * @interface V1GetSearcherEventsResponse
@@ -8967,6 +9004,139 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+/**
+ * 
+ * @export
+ * @interface V1Run
+ */
+export interface V1Run {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    id?: number;
+    /**
+     * 
+     * @type {Date | DateString}
+     * @memberof V1Run
+     */
+    startTime?: Date | DateString;
+    /**
+     * 
+     * @type {Date | DateString}
+     * @memberof V1Run
+     */
+    endTime?: Date | DateString;
+    /**
+     * 
+     * @type {Trialv1State}
+     * @memberof V1Run
+     */
+    state?: Trialv1State;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    tags?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    checkpointSize?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    checkpointCount?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    searcherType?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    searcherMetric?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    searcherMetricValue?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    externalRunId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    hyperparameters?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    metrics?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    experimentId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    ownerId?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    forkedFrom?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    externalExperimentId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    resourcePool?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1Run
+     */
+    progress?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    description?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1Run
+     */
+    experimentName?: string;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
@@ -14142,7 +14312,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Get a list of experiments.
-         * @param {V1GetExperimentsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
          * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
          * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
@@ -14164,7 +14334,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
+        getExperiments(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -15622,7 +15792,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of experiments.
-         * @param {V1GetExperimentsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
          * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
          * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
@@ -15644,7 +15814,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+        getExperiments(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -16326,7 +16496,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Get a list of experiments.
-         * @param {V1GetExperimentsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
          * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
          * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
@@ -16348,7 +16518,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+        getExperiments(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
             return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(fetch, basePath);
         },
         /**
@@ -16834,7 +17004,7 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of experiments.
-     * @param {V1GetExperimentsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+     * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
      * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
      * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
@@ -16857,7 +17027,7 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiments(sortBy?: V1GetExperimentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+    public getExperiments(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
         return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(this.fetch, this.basePath)
     }
     
@@ -27354,6 +27524,262 @@ export class RBACApi extends BaseAPI {
      */
     public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
         return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath)
+    }
+    
+}
+
+/**
+ * RunsApi - fetch parameter creator
+ * @export
+ */
+export const RunsApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
+         * @param {string} [description] Limit experiments to those that match the description.
+         * @param {string} [name] Limit experiments to those that match the name.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [runIdFilterLt] Less than.
+         * @param {number} [runIdFilterLte] Less than or equal.
+         * @param {number} [runIdFilterGt] Greater than.
+         * @param {number} [runIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
+         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/runs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (description !== undefined) {
+                localVarQueryParameter['description'] = description
+            }
+            
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name
+            }
+            
+            if (labels) {
+                localVarQueryParameter['labels'] = labels
+            }
+            
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived
+            }
+            
+            if (states) {
+                localVarQueryParameter['states'] = states
+            }
+            
+            if (users) {
+                localVarQueryParameter['users'] = users
+            }
+            
+            if (userIds) {
+                localVarQueryParameter['userIds'] = userIds
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (runIdFilterLt !== undefined) {
+                localVarQueryParameter['runIdFilter.lt'] = runIdFilterLt
+            }
+            
+            if (runIdFilterLte !== undefined) {
+                localVarQueryParameter['runIdFilter.lte'] = runIdFilterLte
+            }
+            
+            if (runIdFilterGt !== undefined) {
+                localVarQueryParameter['runIdFilter.gt'] = runIdFilterGt
+            }
+            
+            if (runIdFilterGte !== undefined) {
+                localVarQueryParameter['runIdFilter.gte'] = runIdFilterGte
+            }
+            
+            if (runIdFilterIncl) {
+                localVarQueryParameter['runIdFilter.incl'] = runIdFilterIncl
+            }
+            
+            if (runIdFilterNotIn) {
+                localVarQueryParameter['runIdFilter.notIn'] = runIdFilterNotIn
+            }
+            
+            if (showTrialData !== undefined) {
+                localVarQueryParameter['showTrialData'] = showTrialData
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * RunsApi - functional programming interface
+ * @export
+ */
+export const RunsApiFp = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
+         * @param {string} [description] Limit experiments to those that match the description.
+         * @param {string} [name] Limit experiments to those that match the name.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [runIdFilterLt] Less than.
+         * @param {number} [runIdFilterLte] Less than or equal.
+         * @param {number} [runIdFilterGt] Greater than.
+         * @param {number} [runIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
+         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRunsResponse> {
+            const localVarFetchArgs = RunsApiFetchParamCreator(configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * RunsApi - factory interface
+ * @export
+ */
+export const RunsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
+         * @param {string} [description] Limit experiments to those that match the description.
+         * @param {string} [name] Limit experiments to those that match the name.
+         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+         * @param {boolean} [archived] Limit experiments to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {number} [runIdFilterLt] Less than.
+         * @param {number} [runIdFilterLte] Less than or equal.
+         * @param {number} [runIdFilterGt] Greater than.
+         * @param {number} [runIdFilterGte] Greater than or equal.
+         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
+         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+            return RunsApiFp(configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options)(fetch, basePath);
+        },
+    }
+};
+
+/**
+ * RunsApi - object-oriented interface
+ * @export
+ * @class
+ * @extends {BaseAPI}
+ */
+export class RunsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get a list of runs.
+     * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+     * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
+     * @param {string} [description] Limit experiments to those that match the description.
+     * @param {string} [name] Limit experiments to those that match the name.
+     * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
+     * @param {boolean} [archived] Limit experiments to those that are archived.
+     * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+     * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
+     * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
+     * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+     * @param {number} [runIdFilterLt] Less than.
+     * @param {number} [runIdFilterLte] Less than or equal.
+     * @param {number} [runIdFilterGt] Greater than.
+     * @param {number} [runIdFilterGte] Greater than or equal.
+     * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
+     * @param {Array<number>} [runIdFilterNotIn] Not in a set.
+     * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RunsApi
+     */
+    public getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+        return RunsApiFp(this.configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options)(this.fetch, this.basePath)
     }
     
 }

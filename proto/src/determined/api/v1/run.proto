@@ -5,7 +5,11 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
-import "proto/src/determined/api/v1/pagination.proto";
+import "determined/api/v1/pagination.proto";
+import "google/protobuf/wrappers.proto";
+import "determined/experiment/v1/experiment.proto";
+import "determined/trial/v1/trial.proto";
+import "determined/common/v1/common.proto";
 
 // Request to prepare to start reporting to a run.
 message RunPrepareForReportingRequest {
@@ -107,7 +111,7 @@ message GetRunsResponse {
     json_schema: { required: [ "runs", "pagination" ] }
   };
   // The list of returned experiments.
-  repeated determined.experiment.v1.Experiment experiments = 1;
+  repeated determined.trial.v1.Run runs = 1;
   // Pagination information of the full dataset.
-  Pagination pagination = 2;
+  // Pagination pagination = 2;
 }

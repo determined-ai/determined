@@ -5516,6 +5516,66 @@ class v1GetRolesByIDResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
+class v1GetRunsRequestSortBy(DetEnum):
+    """Sorts experiments by the given field.
+    - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
+    - SORT_BY_ID: Returns experiments sorted by id.
+    - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
+    - SORT_BY_START_TIME: Return experiments sorted by start time.
+    - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+    returned after the ones with end_time.
+    - SORT_BY_STATE: Return experiments sorted by state.
+    - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
+    - SORT_BY_PROGRESS: Return experiments sorted by progress.
+    - SORT_BY_USER: Return experiments sorted by user.
+    - SORT_BY_NAME: Returns experiments sorted by name.
+    - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
+    - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
+    - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
+    - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
+    - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
+    - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    ID = "SORT_BY_ID"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+    START_TIME = "SORT_BY_START_TIME"
+    END_TIME = "SORT_BY_END_TIME"
+    STATE = "SORT_BY_STATE"
+    NUM_TRIALS = "SORT_BY_NUM_TRIALS"
+    PROGRESS = "SORT_BY_PROGRESS"
+    USER = "SORT_BY_USER"
+    NAME = "SORT_BY_NAME"
+    FORKED_FROM = "SORT_BY_FORKED_FROM"
+    RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
+    PROJECT_ID = "SORT_BY_PROJECT_ID"
+    CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
+    SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
+
+class v1GetRunsResponse(Printable):
+    """Response to GetExperimentsRequest."""
+
+    def __init__(
+        self,
+        *,
+        runs: "typing.Sequence[v1Run]",
+    ):
+        self.runs = runs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "runs": [v1Run.from_json(x) for x in obj["runs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "runs": [x.to_json(omit_unset) for x in self.runs],
+        }
+        return out
+
 class v1GetSearcherEventsResponse(Printable):
     """Response to GetSearcherEventsRequest."""
     searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
@@ -12172,6 +12232,192 @@ class v1RoleWithAssignments(Printable):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
         return out
 
+class v1Run(Printable):
+    checkpointCount: "typing.Optional[int]" = None
+    checkpointSize: "typing.Optional[str]" = None
+    description: "typing.Optional[str]" = None
+    endTime: "typing.Optional[str]" = None
+    experimentId: "typing.Optional[int]" = None
+    experimentName: "typing.Optional[str]" = None
+    externalExperimentId: "typing.Optional[int]" = None
+    externalRunId: "typing.Optional[int]" = None
+    forkedFrom: "typing.Optional[int]" = None
+    hyperparameters: "typing.Optional[str]" = None
+    id: "typing.Optional[int]" = None
+    metrics: "typing.Optional[str]" = None
+    ownerId: "typing.Optional[int]" = None
+    progress: "typing.Optional[float]" = None
+    resourcePool: "typing.Optional[str]" = None
+    searcherMetric: "typing.Optional[str]" = None
+    searcherMetricValue: "typing.Optional[float]" = None
+    searcherType: "typing.Optional[str]" = None
+    startTime: "typing.Optional[str]" = None
+    state: "typing.Optional[trialv1State]" = None
+    tags: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
+        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+        experimentId: "typing.Union[int, None, Unset]" = _unset,
+        experimentName: "typing.Union[str, None, Unset]" = _unset,
+        externalExperimentId: "typing.Union[int, None, Unset]" = _unset,
+        externalRunId: "typing.Union[int, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        id: "typing.Union[int, None, Unset]" = _unset,
+        metrics: "typing.Union[str, None, Unset]" = _unset,
+        ownerId: "typing.Union[int, None, Unset]" = _unset,
+        progress: "typing.Union[float, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
+        searcherType: "typing.Union[str, None, Unset]" = _unset,
+        startTime: "typing.Union[str, None, Unset]" = _unset,
+        state: "typing.Union[trialv1State, None, Unset]" = _unset,
+        tags: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
+        if not isinstance(checkpointSize, Unset):
+            self.checkpointSize = checkpointSize
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+        if not isinstance(experimentId, Unset):
+            self.experimentId = experimentId
+        if not isinstance(experimentName, Unset):
+            self.experimentName = experimentName
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
+        if not isinstance(externalRunId, Unset):
+            self.externalRunId = externalRunId
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
+        if not isinstance(id, Unset):
+            self.id = id
+        if not isinstance(metrics, Unset):
+            self.metrics = metrics
+        if not isinstance(ownerId, Unset):
+            self.ownerId = ownerId
+        if not isinstance(progress, Unset):
+            self.progress = progress
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
+        if not isinstance(searcherMetric, Unset):
+            self.searcherMetric = searcherMetric
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
+        if not isinstance(searcherType, Unset):
+            self.searcherType = searcherType
+        if not isinstance(startTime, Unset):
+            self.startTime = startTime
+        if not isinstance(state, Unset):
+            self.state = state
+        if not isinstance(tags, Unset):
+            self.tags = tags
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1Run":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
+        if "checkpointSize" in obj:
+            kwargs["checkpointSize"] = obj["checkpointSize"]
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        if "experimentId" in obj:
+            kwargs["experimentId"] = obj["experimentId"]
+        if "experimentName" in obj:
+            kwargs["experimentName"] = obj["experimentName"]
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "externalRunId" in obj:
+            kwargs["externalRunId"] = obj["externalRunId"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
+        if "id" in obj:
+            kwargs["id"] = obj["id"]
+        if "metrics" in obj:
+            kwargs["metrics"] = obj["metrics"]
+        if "ownerId" in obj:
+            kwargs["ownerId"] = obj["ownerId"]
+        if "progress" in obj:
+            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
+        if "searcherMetric" in obj:
+            kwargs["searcherMetric"] = obj["searcherMetric"]
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
+        if "searcherType" in obj:
+            kwargs["searcherType"] = obj["searcherType"]
+        if "startTime" in obj:
+            kwargs["startTime"] = obj["startTime"]
+        if "state" in obj:
+            kwargs["state"] = trialv1State(obj["state"]) if obj["state"] is not None else None
+        if "tags" in obj:
+            kwargs["tags"] = obj["tags"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
+        if not omit_unset or "checkpointSize" in vars(self):
+            out["checkpointSize"] = self.checkpointSize
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        if not omit_unset or "experimentId" in vars(self):
+            out["experimentId"] = self.experimentId
+        if not omit_unset or "experimentName" in vars(self):
+            out["experimentName"] = self.experimentName
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "externalRunId" in vars(self):
+            out["externalRunId"] = self.externalRunId
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
+        if not omit_unset or "id" in vars(self):
+            out["id"] = self.id
+        if not omit_unset or "metrics" in vars(self):
+            out["metrics"] = self.metrics
+        if not omit_unset or "ownerId" in vars(self):
+            out["ownerId"] = self.ownerId
+        if not omit_unset or "progress" in vars(self):
+            out["progress"] = None if self.progress is None else dump_float(self.progress)
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
+        if not omit_unset or "searcherMetric" in vars(self):
+            out["searcherMetric"] = self.searcherMetric
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
+        if not omit_unset or "searcherType" in vars(self):
+            out["searcherType"] = self.searcherType
+        if not omit_unset or "startTime" in vars(self):
+            out["startTime"] = self.startTime
+        if not omit_unset or "state" in vars(self):
+            out["state"] = None if self.state is None else self.state.value
+        if not omit_unset or "tags" in vars(self):
+            out["tags"] = self.tags
+        return out
+
 class v1RunPrepareForReportingRequest(Printable):
     """Request to prepare to start reporting to a run."""
     checkpointStorage: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -16988,7 +17234,7 @@ def get_GetExperiments(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     projectId: "typing.Optional[int]" = None,
     showTrialData: "typing.Optional[bool]" = None,
-    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetRunsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
@@ -18001,6 +18247,137 @@ def post_GetRolesByID(
     if _resp.status_code == 200:
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
+
+def get_GetRuns(
+    session: "api.Session",
+    *,
+    archived: "typing.Optional[bool]" = None,
+    description: "typing.Optional[str]" = None,
+    labels: "typing.Optional[typing.Sequence[str]]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    projectId: "typing.Optional[int]" = None,
+    runIdFilter_gt: "typing.Optional[int]" = None,
+    runIdFilter_gte: "typing.Optional[int]" = None,
+    runIdFilter_incl: "typing.Optional[typing.Sequence[int]]" = None,
+    runIdFilter_lt: "typing.Optional[int]" = None,
+    runIdFilter_lte: "typing.Optional[int]" = None,
+    runIdFilter_notIn: "typing.Optional[typing.Sequence[int]]" = None,
+    showTrialData: "typing.Optional[bool]" = None,
+    sortBy: "typing.Optional[v1GetRunsRequestSortBy]" = None,
+    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
+    users: "typing.Optional[typing.Sequence[str]]" = None,
+) -> "v1GetRunsResponse":
+    """Get a list of runs.
+
+    - archived: Limit experiments to those that are archived.
+    - description: Limit experiments to those that match the description.
+    - labels: Limit experiments to those that match the provided labels.
+    - limit: Limit the number of experiments.
+0 or Unspecified - returns a default of 100.
+-1               - returns everything.
+-2               - returns pagination info but no experiments.
+    - name: Limit experiments to those that match the name.
+    - offset: Skip the number of experiments before returning results. Negative values
+denote number of experiments to skip from the end before returning results.
+    - orderBy: Order experiments in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - projectId: Limit experiments to those within a specified project, or 0 for all
+projects.
+    - runIdFilter_gt: Greater than.
+    - runIdFilter_gte: Greater than or equal.
+    - runIdFilter_incl: In a set. `in` is a reserved word in python.
+    - runIdFilter_lt: Less than.
+    - runIdFilter_lte: Less than or equal.
+    - runIdFilter_notIn: Not in a set.
+    - showTrialData: whether to surface trial specific data from the best trial.
+    - sortBy: Sort experiments by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
+ - SORT_BY_ID: Returns experiments sorted by id.
+ - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
+ - SORT_BY_START_TIME: Return experiments sorted by start time.
+ - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+returned after the ones with end_time.
+ - SORT_BY_STATE: Return experiments sorted by state.
+ - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
+ - SORT_BY_PROGRESS: Return experiments sorted by progress.
+ - SORT_BY_USER: Return experiments sorted by user.
+ - SORT_BY_NAME: Returns experiments sorted by name.
+ - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
+ - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
+ - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
+ - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
+ - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
+ - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+    - states: Limit experiments to those that match the provided state.
+
+ - STATE_UNSPECIFIED: The state of the experiment is unknown.
+ - STATE_ACTIVE: The experiment is in an active state.
+ - STATE_PAUSED: The experiment is in a paused state
+ - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.
+ - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.
+ - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.
+ - STATE_COMPLETED: The experiment is completed and is shut down.
+ - STATE_CANCELED: The experiment is canceled and is shut down.
+ - STATE_ERROR: The experiment is errored and is shut down.
+ - STATE_DELETED: The experiment has been deleted.
+ - STATE_DELETING: The experiment is deleting.
+ - STATE_DELETE_FAILED: The experiment failed to delete.
+ - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
+ - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued).
+Queued is a substate of the Active state.
+ - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active
+state.
+ - STATE_STARTING: The experiment is preparing the environment after finishing pulling the
+image. Starting is a substate of the Active state.
+ - STATE_RUNNING: The experiment has an allocation actively running.
+Running is a substate of the Active state.
+    - userIds: Limit experiments to those that are owned by users with the specified
+userIds.
+    - users: Limit experiments to those that are owned by users with the specified
+usernames.
+    """
+    _params = {
+        "archived": str(archived).lower() if archived is not None else None,
+        "description": description,
+        "labels": labels,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "projectId": projectId,
+        "runIdFilter.gt": runIdFilter_gt,
+        "runIdFilter.gte": runIdFilter_gte,
+        "runIdFilter.incl": runIdFilter_incl,
+        "runIdFilter.lt": runIdFilter_lt,
+        "runIdFilter.lte": runIdFilter_lte,
+        "runIdFilter.notIn": runIdFilter_notIn,
+        "showTrialData": str(showTrialData).lower() if showTrialData is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "states": [x.value for x in states] if states is not None else None,
+        "userIds": userIds,
+        "users": users,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRunsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRuns", _resp)
 
 def get_GetSearcherEvents(
     session: "api.Session",
