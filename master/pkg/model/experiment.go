@@ -510,7 +510,7 @@ type Run struct {
 	HParams               map[string]any `db:"hparams" bun:"hparams"`
 	WarmStartCheckpointID *int           `db:"warm_start_checkpoint_id"`
 	TotalBatches          int            `db:"total_batches"`
-	ExternalRunID         *string        `db:"external_trial_id"`
+	ExternalRunID         *string        `db:"external_run_id"`
 	RestartID             int            `db:"restart_id"`
 	Restarts              int            `db:"restarts"`
 	RunnerState           string         `db:"runner_state"`

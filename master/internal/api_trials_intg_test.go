@@ -1366,3 +1366,30 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	require.Equal(t, 1, len(getMVResp.Metrics))
 	require.Equal(t, int32(infTrial.ID), getMVResp.Metrics[0].TrialId)
 }
+
+func TestGetTrialByExternalID(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, _ := createTestTrial(t, api, curUser)
+	externalExpID := uuid.New().String()
+	externalTrialID := "trial"
+
+	_, err := db.Bun().NewUpdate().Model(&model.Experiment{}).
+		Where("id = ?", trial.ExperimentID).
+		Set("external_experiment_id = ?", externalExpID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewUpdate().Model(&model.Run{}).
+		Where("id = ?", trial.ID).
+		Set("external_run_id = ?", externalTrialID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	resp, err := api.GetTrialByExternalID(ctx, &apiv1.GetTrialByExternalIDRequest{
+		ExternalExperimentId: externalExpID,
+		ExternalTrialId:      externalTrialID,
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, int(resp.Trial.Id), trial.ID)
+}

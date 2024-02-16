@@ -671,6 +671,33 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
+func (a *apiServer) GetTrialByExternalID(ctx context.Context, req *apiv1.GetTrialByExternalIDRequest) (
+	*apiv1.GetTrialByExternalIDResponse, error,
+) {
+	var trialID int
+	err := db.Bun().NewRaw(`
+SELECT t.id
+FROM trials t JOIN experiments e
+ON t.experiment_id = e.id
+WHERE t.external_trial_id = ? AND e.external_experiment_id = ?`,
+		req.ExternalTrialId, req.ExternalExperimentId).Scan(ctx, &trialID)
+	if err != nil {
+		return nil, db.MatchSentinelError(err)
+	}
+
+	proxyReq := apiv1.GetTrialRequest{TrialId: int32(trialID)}
+	proxyResp, err := a.GetTrial(ctx, &proxyReq)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := apiv1.GetTrialByExternalIDResponse{
+		Trial: proxyResp.Trial,
+	}
+
+	return &resp, nil
+}
+
 func (a *apiServer) formatMetrics(
 	m *apiv1.DownsampledMetrics, metricMeasurements []db.MetricMeasurements,
 ) error {

@@ -5956,6 +5956,29 @@ class v1GetTrainingMetricsResponse(Printable):
         }
         return out
 
+class v1GetTrialByExternalIDResponse(Printable):
+    """Response to GetTrialByExternalIDRequest."""
+
+    def __init__(
+        self,
+        *,
+        trial: "trialv1Trial",
+    ):
+        self.trial = trial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialByExternalIDResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "trial": trialv1Trial.from_json(obj["trial"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "trial": self.trial.to_json(omit_unset),
+        }
+        return out
+
 class v1GetTrialCheckpointsResponse(Printable):
     """Response to GetTrialCheckpointsRequest."""
 
@@ -18626,6 +18649,36 @@ def get_GetTrial(
     if _resp.status_code == 200:
         return v1GetTrialResponse.from_json(_resp.json())
     raise APIHttpError("get_GetTrial", _resp)
+
+def get_GetTrialByExternalID(
+    session: "api.Session",
+    *,
+    externalExperimentId: str,
+    externalTrialId: str,
+) -> "v1GetTrialByExternalIDResponse":
+    """Get a single trial by external id.
+
+    - externalExperimentId: External experiment id.
+    - externalTrialId: External trial id.
+    """
+    _params = None
+    if type(externalExperimentId) == str:
+        externalExperimentId = parse.quote(externalExperimentId)
+    if type(externalTrialId) == str:
+        externalTrialId = parse.quote(externalTrialId)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/by-external-id/{externalExperimentId}/{externalTrialId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialByExternalIDResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialByExternalID", _resp)
 
 def get_GetTrialCheckpoints(
     session: "api.Session",

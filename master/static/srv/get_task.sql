@@ -4,8 +4,8 @@ SELECT
     t.start_time,
     t.end_time,
     CASE WHEN t.task_state is NULL THEN NULL
-	ELSE CONCAT('GENERIC_TASK_STATE_', t.task_state)
-	END as task_state,
+    ELSE CONCAT('GENERIC_TASK_STATE_', t.task_state)
+    END as task_state,
     (
         SELECT
             COALESCE(

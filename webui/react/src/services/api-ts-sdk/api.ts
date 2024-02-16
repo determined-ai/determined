@@ -4433,6 +4433,19 @@ export interface V1GetTrainingMetricsResponse {
     metrics: Array<V1MetricsReport>;
 }
 /**
+ * Response to GetTrialByExternalIDRequest.
+ * @export
+ * @interface V1GetTrialByExternalIDResponse
+ */
+export interface V1GetTrialByExternalIDResponse {
+    /**
+     * The requested trial.
+     * @type {Trialv1Trial}
+     * @memberof V1GetTrialByExternalIDResponse
+     */
+    trial: Trialv1Trial;
+}
+/**
  * Response to GetTrialCheckpointsRequest.
  * @export
  * @interface V1GetTrialCheckpointsResponse
@@ -18658,6 +18671,48 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a single trial by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {string} externalTrialId External trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialByExternalID(externalExperimentId: string, externalTrialId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'externalExperimentId' is not null or undefined
+            if (externalExperimentId === null || externalExperimentId === undefined) {
+                throw new RequiredError('externalExperimentId','Required parameter externalExperimentId was null or undefined when calling getTrialByExternalID.');
+            }
+            // verify required parameter 'externalTrialId' is not null or undefined
+            if (externalTrialId === null || externalTrialId === undefined) {
+                throw new RequiredError('externalTrialId','Required parameter externalTrialId was null or undefined when calling getTrialByExternalID.');
+            }
+            const localVarPath = `/api/v1/trials/by-external-id/{externalExperimentId}/{externalTrialId}`
+                .replace(`{${"externalExperimentId"}}`, encodeURIComponent(String(externalExperimentId)))
+                .replace(`{${"externalTrialId"}}`, encodeURIComponent(String(externalTrialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
@@ -21027,6 +21082,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a single trial by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {string} externalTrialId External trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialByExternalID(externalExperimentId: string, externalTrialId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialByExternalIDResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialByExternalID(externalExperimentId, externalTrialId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
@@ -22146,6 +22221,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a single trial by external id.
+         * @param {string} externalExperimentId External experiment id.
+         * @param {string} externalTrialId External trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialByExternalID(externalExperimentId: string, externalTrialId: string, options?: any) {
+            return InternalApiFp(configuration).getTrialByExternalID(externalExperimentId, externalTrialId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Gets the metrics for all trials associated with this checkpoint
          * @param {string} checkpointUuid UUID of the checkpoint.
          * @param {V1TrialSourceInfoType} [trialSourceInfoType] Type of the TrialSourceInfo.   - TRIAL_SOURCE_INFO_TYPE_UNSPECIFIED: The type is unspecified  - TRIAL_SOURCE_INFO_TYPE_INFERENCE: "Inference" Trial Source Info Type, used for batch inference  - TRIAL_SOURCE_INFO_TYPE_FINE_TUNING: "Fine Tuning" Trial Source Info Type, used in model hub
@@ -22982,6 +23068,19 @@ export class InternalApi extends BaseAPI {
      */
     public getTelemetry(options?: any) {
         return InternalApiFp(this.configuration).getTelemetry(options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a single trial by external id.
+     * @param {string} externalExperimentId External experiment id.
+     * @param {string} externalTrialId External trial id.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialByExternalID(externalExperimentId: string, externalTrialId: string, options?: any) {
+        return InternalApiFp(this.configuration).getTrialByExternalID(externalExperimentId, externalTrialId, options)(this.fetch, this.basePath)
     }
     
     /**
