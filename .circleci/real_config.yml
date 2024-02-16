@@ -2203,22 +2203,22 @@ jobs:
                     --vpc-security-group-ids="${PERF_DB_SECURITY_GROUP_ID}" \
                 no_output_timeout: 30m
             - run:
-                name: Get db instance host
-                command: |
-                  echo "export RDS_HOST=$(aws rds describe-db-instances \
-                    --region us-west-2 \
-                    --db-instance-identifier "ci-perf-db-${CIRCLE_BUILD_NUM}" \
-                    --query "DBInstances[0].Endpoint.Address" \
-                    --output text)" >> "$BASH_ENV"
-                  source $BASH_ENV
-                  echo "perf db host ${PERF_DB_HOST}"
-            - run:
                 name: Wait for database to be ready
                 command: |
                   aws rds wait db-instance-available \
                     --region="us-west-2" \
                     --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}"
                 no_output_timeout: 30m
+            - run:
+                name: Get db instance host
+                command: |
+                  echo "export PERF_DB_HOST=$(aws rds describe-db-instances \
+                    --region us-west-2 \
+                    --db-instance-identifier "ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                    --query "DBInstances[0].Endpoint.Address" \
+                    --output text)" >> "$BASH_ENV"
+                  source $BASH_ENV
+                  echo "perf db host ${PERF_DB_HOST}"
 
       - run:
           name: Add SSH key
@@ -2281,17 +2281,18 @@ jobs:
           name: Upload result of performance test to Postgres result db
           command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
 
-      - when:
-          condition: <<parameters.deploy-db>>
+      - run:
+          name: Delete RDS instance
           when: always
-          steps:
-            - run:
-                name: Delete RDS instance
-                command: |
-                  aws rds delete-db-instance \
-                    --region="us-west-2" \
-                    --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
-                    --skip-final-snapshot
+          command: |
+            if [ -n "$PERF_SNAPSHOT_TO_USE" ]; then
+              aws rds delete-db-instance \
+                --region="us-west-2" \
+                --db-instance-identifier="ci-perf-db-${CIRCLE_BUILD_NUM}" \
+                --skip-final-snapshot
+            else
+              echo "PERF_SNAPSHOT_TO_USE is not set. Skipping deletion."
+            fi
 
       - slack/status:
           fail_only: true
