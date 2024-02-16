@@ -2144,6 +2144,9 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
     steps:
+      - queue/until_front_of_line:
+          only-on-branch: main
+          time: "120" # Wait two hours at most. Adjust this over time.
       - checkout
       - attach_workspace:
           at: .
