@@ -229,17 +229,6 @@ func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPositio
 	k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
-func (k *kubernetesResourcePool) GetAllocationSummary(msg sproto.GetAllocationSummary) *sproto.AllocationSummary {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-
-	if resp := k.reqList.TaskSummary(
-		msg.ID, k.groups, kubernetesScheduler); resp != nil {
-		return resp
-	}
-	return nil
-}
-
 func (k *kubernetesResourcePool) GetAllocationSummaries(
 	msg sproto.GetAllocationSummaries,
 ) map[model.AllocationID]sproto.AllocationSummary {

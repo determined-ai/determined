@@ -559,17 +559,6 @@ func (rp *resourcePool) NotifyAgentUpdated() {
 	rp.reschedule = true
 }
 
-func (rp *resourcePool) GetAllocationSummary(msg sproto.GetAllocationSummary) (sproto.AllocationSummary, bool) {
-	rp.mu.Lock()
-	defer rp.mu.Unlock()
-
-	resp := rp.taskList.TaskSummary(msg.ID, rp.groups, rp.config.Scheduler.GetType())
-	if resp == nil {
-		return sproto.AllocationSummary{}, false
-	}
-	return *resp, true
-}
-
 func (rp *resourcePool) GetAllocationSummaries(
 	msg sproto.GetAllocationSummaries,
 ) map[model.AllocationID]sproto.AllocationSummary {
