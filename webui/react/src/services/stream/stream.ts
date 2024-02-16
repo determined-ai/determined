@@ -121,10 +121,7 @@ export class Stream {
     );
 
     this.#curSub = newSub;
-    if (this.#ws) {
-      this.#ws.send(JSON.stringify(spec));
-    }
-
+    this.#ws && this.#ws.send(JSON.stringify(spec));
     this.#syncSent = sync_id;
   }
 
