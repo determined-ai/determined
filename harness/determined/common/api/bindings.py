@@ -5525,13 +5525,11 @@ class v1GetRunsRequestSortBy(DetEnum):
     - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
     returned after the ones with end_time.
     - SORT_BY_STATE: Return experiments sorted by state.
-    - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
     - SORT_BY_PROGRESS: Return experiments sorted by progress.
     - SORT_BY_USER: Return experiments sorted by user.
     - SORT_BY_NAME: Returns experiments sorted by name.
     - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
     - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
-    - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
     - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
     - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
     - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
@@ -5542,13 +5540,11 @@ class v1GetRunsRequestSortBy(DetEnum):
     START_TIME = "SORT_BY_START_TIME"
     END_TIME = "SORT_BY_END_TIME"
     STATE = "SORT_BY_STATE"
-    NUM_TRIALS = "SORT_BY_NUM_TRIALS"
     PROGRESS = "SORT_BY_PROGRESS"
     USER = "SORT_BY_USER"
     NAME = "SORT_BY_NAME"
     FORKED_FROM = "SORT_BY_FORKED_FROM"
     RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
-    PROJECT_ID = "SORT_BY_PROJECT_ID"
     CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
     CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
     SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
@@ -5559,19 +5555,23 @@ class v1GetRunsResponse(Printable):
     def __init__(
         self,
         *,
+        pagination: "v1Pagination",
         runs: "typing.Sequence[v1Run]",
     ):
+        self.pagination = pagination
         self.runs = runs
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
             "runs": [v1Run.from_json(x) for x in obj["runs"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
             "runs": [x.to_json(omit_unset) for x in self.runs],
         }
         return out
@@ -17234,7 +17234,7 @@ def get_GetExperiments(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     projectId: "typing.Optional[int]" = None,
     showTrialData: "typing.Optional[bool]" = None,
-    sortBy: "typing.Optional[v1GetRunsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
@@ -18306,13 +18306,11 @@ projects.
  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
 returned after the ones with end_time.
  - SORT_BY_STATE: Return experiments sorted by state.
- - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.
  - SORT_BY_PROGRESS: Return experiments sorted by progress.
  - SORT_BY_USER: Return experiments sorted by user.
  - SORT_BY_NAME: Returns experiments sorted by name.
  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
- - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
@@ -22336,6 +22334,7 @@ Paginated = typing.Union[
     v1GetModelsResponse,
     v1GetNotebooksResponse,
     v1GetResourcePoolsResponse,
+    v1GetRunsResponse,
     v1GetShellsResponse,
     v1GetTemplatesResponse,
     v1GetTensorboardsResponse,

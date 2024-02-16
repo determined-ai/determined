@@ -52,12 +52,57 @@ func (a *apiServer) GetRuns(
 	ctx context.Context, req *apiv1.GetRunsRequest,
 ) (*apiv1.GetRunsResponse, error) {
 	resp := &apiv1.GetRunsResponse{Runs: []*trialv1.Run{}}
-	db.Bun().NewSelect().
+	query := db.Bun().NewSelect().
 		Model(&resp.Runs).
 		ModelTableExpr("runs AS r").
-		Apply(getRunstColumns).
-		Limit(int(req.Limit)).
-		Scan(ctx)
+		Apply(getRunstColumns)
+		// Limit(int(req.Limit)).
+		// Scan(ctx)
+	// Construct the ordering expression.
+	orderColMap := map[apiv1.GetRunsRequest_SortBy]string{
+		apiv1.GetRunsRequest_SORT_BY_UNSPECIFIED:      "id",
+		apiv1.GetRunsRequest_SORT_BY_ID:               "id",
+		apiv1.GetRunsRequest_SORT_BY_DESCRIPTION:      "description",
+		apiv1.GetRunsRequest_SORT_BY_NAME:             "name",
+		apiv1.GetRunsRequest_SORT_BY_START_TIME:       "e.start_time",
+		apiv1.GetRunsRequest_SORT_BY_END_TIME:         "e.end_time",
+		apiv1.GetRunsRequest_SORT_BY_STATE:            "r.state",
+		apiv1.GetRunsRequest_SORT_BY_PROGRESS:         "COALESCE(progress, 0)",
+		apiv1.GetRunsRequest_SORT_BY_USER:             "display_name",
+		apiv1.GetRunsRequest_SORT_BY_FORKED_FROM:      "e.parent_id",
+		apiv1.GetRunsRequest_SORT_BY_RESOURCE_POOL:    "resource_pool",
+		apiv1.GetRunsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
+		apiv1.GetRunsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
+		apiv1.GetRunsRequest_SORT_BY_SEARCHER_METRIC_VAL: `(
+			SELECT
+				searcher_metric_value
+			FROM trials t
+			WHERE t.id = e.best_trial_id
+		) `,
+	}
+	sortByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
+	}
+	orderExpr := ""
+	switch _, ok := orderColMap[req.SortBy]; {
+	case !ok:
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	case orderColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
+		orderExpr = fmt.Sprintf(
+			"%s %s, id %s",
+			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
+		)
+	default:
+		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
+	}
+	query = query.OrderExpr(orderExpr)
+	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
+	resp.Pagination = pagination
+	if err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
 
