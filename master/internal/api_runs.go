@@ -3,17 +3,23 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"github.com/uptrace/bun"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (a *apiServer) RunPrepareForReporting(
@@ -98,6 +104,73 @@ func (a *apiServer) GetRuns(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 	query = query.OrderExpr(orderExpr)
+
+	// Filtering
+	if req.Description != "" {
+		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", req.Description)
+	}
+	if req.Name != "" {
+		query = query.Where("e.config->>'name' ILIKE ('%%' || ? || '%%')", req.Name)
+	}
+	if len(req.Labels) > 0 {
+		// In the event labels were removed, if all were removed we insert null,
+		// which previously broke this query.
+		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
+				CASE WHEN e.config->'labels'::text = 'null'
+				THEN NULL
+				ELSE e.config->'labels' END
+			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
+	}
+	if req.Archived != nil {
+		query = query.Where("e.archived = ?", req.Archived.Value)
+		if req.ProjectId == 0 && !req.Archived.Value {
+			query = query.Where("w.archived= ?", req.Archived.Value)
+			query = query.Where("p.archived= ?", req.Archived.Value)
+		}
+	}
+	if len(req.States) > 0 {
+		// FIXME(DET-9567): the api state parameter and the database state column do not match.
+		var allStates []string
+		for _, state := range req.States {
+			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
+		}
+		query = query.Where("e.state IN (?)", bun.In(allStates))
+	}
+	if len(req.Users) > 0 {
+		query = query.Where("u.username IN (?)", bun.In(req.Users))
+	}
+	if len(req.UserIds) > 0 {
+		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
+	}
+
+	if req.RunIdFilter != nil {
+		var err error
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("r.id"), req.RunIdFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+	var proj *projectv1.Project
+	if req.ProjectId != 0 {
+		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
+		if err != nil {
+			return nil, err
+		}
+
+		query = query.Where("e.project_id = ?", req.ProjectId)
+	}
+	if query, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, proj, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+		); err != nil {
+		return nil, err
+	}
+
 	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	resp.Pagination = pagination
 	if err != nil {
