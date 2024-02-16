@@ -111,31 +111,28 @@ func NewS3Downloader(
 
 	// We do not pass in credentials explicitly. Instead, we reply on
 	// the existing AWS credentials.
-	var region string
-	var err error
-	var sess *session.Session
+	var endpointFormat *string
 	if endpointURL != nil {
-		endpointFormat := fmt.Sprint(*endpointURL, "/%s")
-		region, err = GetS3BucketRegion(ctx, bucket, &endpointFormat)
-		if err != nil {
-			return nil, err
-		}
-		sess, err = session.NewSession(&aws.Config{
-			Region:           aws.String(region),
-			Endpoint:         endpointURL,
-			DisableSSL:       aws.Bool(false),
-			S3ForcePathStyle: aws.Bool(true),
-		})
-	} else {
-		region, err = GetS3BucketRegion(ctx, bucket, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		sess, err = session.NewSession(&aws.Config{
-			Region: &region,
-		})
+		format := fmt.Sprint(*endpointURL, "/%s")
+		endpointFormat = &format
 	}
+
+	// if endpointFormat is nil, defaults to aws endpoint
+	region, err := GetS3BucketRegion(ctx, bucket, endpointFormat)
+	if err != nil {
+		return nil, err
+	}
+
+	awsConfig := &aws.Config{Region: &region}
+
+	// configure for non-aws S3 providers
+	if endpointURL != nil {
+		awsConfig.Endpoint = endpointURL
+		awsConfig.DisableSSL = aws.Bool(false)
+		awsConfig.S3ForcePathStyle = aws.Bool(true)
+	}
+
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return nil, err
 	}
