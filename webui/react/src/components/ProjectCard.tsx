@@ -70,17 +70,18 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              {!isNaN(project.numExperiments) &&
-              <div className={css.experiments}>
-                <Tooltip
-                  content={
-                    `${project.numExperiments?.toLocaleString()}` +
-                    ` experiment${project.numExperiments === 1 ? '' : 's'}`
-                  }>
-                  <Icon name="experiment" size="small" title="Number of experiments" />
-                  <span>{nearestCardinalNumber(project.numExperiments)}</span>
-                </Tooltip>
-              </div> }
+              {!isNaN(project.numExperiments) && (
+                <div className={css.experiments}>
+                  <Tooltip
+                    content={
+                      `${project.numExperiments?.toLocaleString()}` +
+                      ` experiment${project.numExperiments === 1 ? '' : 's'}`
+                    }>
+                    <Icon name="experiment" size="small" title="Number of experiments" />
+                    <span>{nearestCardinalNumber(project.numExperiments)}</span>
+                  </Tooltip>
+                </div>
+              )}
               {project.archived ? (
                 <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
               ) : (

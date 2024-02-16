@@ -3,6 +3,7 @@ import { Map } from 'immutable';
 import { find, remove } from 'lodash';
 
 import { getWorkspaceProjects } from 'services/api';
+import { StreamContent } from 'services/stream';
 import { ProjectSpec } from 'services/stream/projects';
 import { Stream } from 'services/stream/stream';
 import { Project } from 'types';
@@ -56,25 +57,25 @@ class ProjectStore {
   public deleteProject(id: number) {
     let deleted: Project | undefined;
     this.#projects.update((prev) =>
-            prev.withMutations((map) => {
-              deleted = map.get(id);
-              return map.delete(id);
-            }),
-      );
-      if (deleted) {
-        this.#projectsByWorkspace.update((prev) =>
-          prev.withMutations((map) => {
-            if (deleted) {
-              const ws = map.get(deleted.workspaceId.toString());
-              if (ws) {
-                remove(ws, (p) => p.id === id);
-                map.set(deleted.workspaceId.toString(), [...ws]);
-              }
+      prev.withMutations((map) => {
+        deleted = map.get(id);
+        return map.delete(id);
+      }),
+    );
+    if (deleted) {
+      this.#projectsByWorkspace.update((prev) =>
+        prev.withMutations((map) => {
+          if (deleted) {
+            const ws = map.get(deleted.workspaceId.toString());
+            if (ws) {
+              remove(ws, (p) => p.id === id);
+              map.set(deleted.workspaceId.toString(), [...ws]);
             }
-            return map;
-          }),
-        );
-      }
+          }
+          return map;
+        }),
+      );
+    }
   }
 
   #upsert(op: Project, np: Project) {
@@ -89,17 +90,17 @@ class ProjectStore {
 
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
-      project = map.get(p.id);
-      if (project) {
-        this.#upsert(project, p);
-      } else {
-        map.set(p.id, { ...p });
-      }
-      return map;
-    }),
+        project = map.get(p.id);
+        if (project) {
+          this.#upsert(project, p);
+        } else {
+          map.set(p.id, { ...p });
+        }
+        return map;
+      }),
     );
     this.#projectsByWorkspace.update((prev) =>
-    prev.withMutations((map) => {
+      prev.withMutations((map) => {
         projectInWs = find(map.get(p.workspaceId.toString()), (tp) => tp.id === p.id);
         if (projectInWs) {
           // The workspaceId has not changed, just update
@@ -118,10 +119,10 @@ class ProjectStore {
               map.set(project.workspaceId.toString(), [...ows]);
             }
           }
-
         }
-      return map;
-    }));
+        return map;
+      }),
+    );
   }
 
   public subscribe(stream: Stream, spec: ProjectSpec) {
@@ -131,19 +132,17 @@ class ProjectStore {
 
 export default new ProjectStore();
 
-export const mapStreamProject = (p: any): Project => (
-  {
-      archived: p.archived,
-      description: p.description,
-      id: p.id,
-      immutable: p.immutable,
-      name: p.name,
-      notes: p.notes,
-      numActiveExperiments: NaN,
-      numExperiments: NaN,
-      state: p.state,
-      userId: p.user_id,
-      workspaceId: p.workspace_id,
-      workspaceName: 'n/a',
-  }
-);
+export const mapStreamProject = (p: StreamContent): Project => ({
+  archived: p.archived,
+  description: p.description,
+  id: p.id,
+  immutable: p.immutable,
+  name: p.name,
+  notes: p.notes,
+  numActiveExperiments: NaN,
+  numExperiments: NaN,
+  state: p.state,
+  userId: p.user_id,
+  workspaceId: p.workspace_id,
+  workspaceName: 'n/a',
+});
