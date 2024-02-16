@@ -1351,7 +1351,7 @@ built-in cache. Defaults to ``false``.
 =================
 
 Optional. Defines the default `Docker registry credentials
-https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth`__ to use when pulling a
+<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
 custom base Docker image, if needed. Credentials are specified as the following nested fields:
 
 -  ``username`` (required)
