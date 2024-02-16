@@ -1,9 +1,13 @@
 import { forEach, reduce, trimEnd } from 'lodash';
 
+import rootLogger from 'utils/Logger';
+
 import { decode_keys, KeyCache } from './keyCache';
 import { StreamSpec } from './projects';
 
 import { Streamable, StreamEntityMap } from '.';
+
+const logger = rootLogger.extend('services', 'stream');
 
 // About 60 seconds of auto-retry.
 const backoffs = [0, 1, 2, 4, 8, 10, 10, 10, 15];
@@ -35,24 +39,24 @@ export class Stream {
     //callbacks
     #onUpsert: (m: Record<string, any>) => void;
     #onDelete: (s: Streamable, a: Array<number>) => void;
-    #isLoading: ((b: boolean) => void) | undefined
+    #isLoading: ((b: boolean) => void) | undefined;
 
     constructor(wsUrl: string, onUpsert: (m: Record<string, any>) => void, onDelete: (s: Streamable, a: Array<number>) => void, isLoading?: (b: boolean) => void) {
         this.#wsUrl = wsUrl;
         this.#onUpsert = onUpsert;
         this.#onDelete = onDelete;
-        this.#isLoading = isLoading
+        this.#isLoading = isLoading;
         this.#connect();
     }
 
     #connect() {
         this.#ws = new WebSocket(this.#wsUrl);
         this.#ws.onopen = () => {
-            console.log('Streaming websocket opened!');
+            logger.info('Streaming websocket opened!');
             this.#advanceSubscription();
         };
         this.#ws.onerror = async (err) => {
-            console.log('Streaming websocket errored: ', err);
+            logger.error('Streaming websocket errored: ', err);
             await this.#retry();
         };
 
@@ -67,10 +71,10 @@ export class Stream {
             if (msg['sync_id']) {
                 if (!msg['complete']) {
                     this.#syncStarted = msg['sync_id'];
-                    this.#isLoading?.(false)
+                    this.#isLoading?.(false);
                 } else {
                     this.#syncComplete = msg['sync_id'];
-                    this.#isLoading?.(true)
+                    this.#isLoading?.(true);
                     this.#advanceSubscription();
                 }
             } else if (this.#syncSent === this.#syncStarted) {
@@ -99,7 +103,7 @@ export class Stream {
         this.#syncSent = undefined;
         const backoff = backoffs[this.#retries];
         this.#retries += 1;
-        console.log(`#${this.#retries} of retries: in ${backoff}s`);
+        logger.info(`#${this.#retries} of retries: in ${backoff}s`);
         await sleep(backoff);
         this.#connect();
     }
