@@ -16,6 +16,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
+const (
+	// awsEndpointURL is the AWS endpoint format for getting bucket regions.
+	awsEndpointURL = "https://%s.s3.amazonaws.com"
+)
+
 // S3Downloader implements downloading a checkpoint from S3
 // and sends it to the client in an archive file.
 type S3Downloader struct {
@@ -97,6 +102,7 @@ func NewS3Downloader(
 	aw archive.ArchiveWriter,
 	bucket string,
 	prefix string,
+	endpointURL *string,
 ) (*S3Downloader, error) {
 	prefix = strings.TrimLeft(prefix, "/")
 	if !strings.HasSuffix(prefix, "/") {
@@ -105,13 +111,28 @@ func NewS3Downloader(
 
 	// We do not pass in credentials explicitly. Instead, we reply on
 	// the existing AWS credentials.
-	region, err := GetS3BucketRegion(ctx, bucket)
+	var endpointFormat *string
+	if endpointURL != nil {
+		format := fmt.Sprint(*endpointURL, "/%s")
+		endpointFormat = &format
+	}
+
+	// if endpointFormat is nil, defaults to aws endpoint
+	region, err := GetS3BucketRegion(ctx, bucket, endpointFormat)
 	if err != nil {
 		return nil, err
 	}
-	sess, err := session.NewSession(&aws.Config{
-		Region: &region,
-	})
+
+	awsConfig := &aws.Config{Region: &region}
+
+	// configure for non-aws S3 providers
+	if endpointURL != nil {
+		awsConfig.Endpoint = endpointURL
+		awsConfig.DisableSSL = aws.Bool(false)
+		awsConfig.S3ForcePathStyle = aws.Bool(true)
+	}
+
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -128,15 +149,21 @@ func NewS3Downloader(
 }
 
 // GetS3BucketRegion returns the region name of the specified bucket.
-// It does so by making an API call to AWS.
-func GetS3BucketRegion(ctx context.Context, bucket string) (string, error) {
-	// TODO this won't work on non aws s3 APIs.
+// It does so by making an API call to either the provided endpoint or AWS.
+func GetS3BucketRegion(ctx context.Context, bucket string, endpointURL *string) (string, error) {
 	// We can't use the AWS SDK for getting bucket region
 	// because we get a 403 when the region in the client is different
 	// than the bucket (defeating the whole point of calling bucket location).
 	// Instead just use the HEAD API since this is a lot simpler and doesn't require any auth.
 	// https://github.com/aws/aws-sdk-go/issues/720
-	url := fmt.Sprintf("https://%s.s3.amazonaws.com", bucket)
+
+	var url string
+	if endpointURL != nil {
+		url = fmt.Sprintf(*endpointURL, bucket)
+	} else {
+		url = fmt.Sprintf(awsEndpointURL, bucket)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, url, nil)
 	if err != nil {
 		return "", fmt.Errorf("making request to get region of s3 bucket at url %s: %w", url, err)

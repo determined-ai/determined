@@ -68,7 +68,7 @@ func genLongString(approxLength int) string {
 }
 
 func createMockCheckpointS3(bucket string, prefix string) error {
-	region, err := dets3.GetS3BucketRegion(context.TODO(), bucket)
+	region, err := dets3.GetS3BucketRegion(context.TODO(), bucket, nil)
 	if err != nil {
 		return err
 	}

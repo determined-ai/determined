@@ -49,7 +49,7 @@ func NewDownloader(
 	switch storage := storageConfig.GetUnionMember().(type) {
 	case expconf.S3Config:
 		prefix := idPrefixRef(storage.Prefix())
-		return s3.NewS3Downloader(ctx, aw, storage.Bucket(), prefix)
+		return s3.NewS3Downloader(ctx, aw, storage.Bucket(), prefix, storage.EndpointURL())
 
 	case expconf.GCSConfig:
 		prefix := idPrefixRef(storage.Prefix())
