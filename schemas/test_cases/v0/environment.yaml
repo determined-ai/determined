@@ -1,0 +1,25 @@
+# This is a regression test: the migration to expconf accidentally prevented
+# all changes to sidecar container specs, which was previously allowed.
+
+- name: podspec can configure sidecar
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/environment.json
+  case:
+    pod_spec:
+      spec:
+        containers:
+          - name: my-sidecar
+            security_context: whatever
+
+- name: podspec cannot configure determined container
+  sanity_errors:
+    http://determined.ai/schemas/expconf/v0/environment.json:
+      - "<config>.pod_spec.spec.containers\\[1\\]: .* not configurable"
+  case:
+    pod_spec:
+      spec:
+        containers:
+          - name: my-sidecar
+            security_context: whatever
+          - name: determined-container
+            security_context: this should fail
