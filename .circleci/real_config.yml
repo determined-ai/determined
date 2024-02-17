@@ -2996,7 +2996,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -3013,7 +3015,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -3188,7 +3192,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-e2e-cpu-distributed
@@ -3210,7 +3216,9 @@ workflows:
         # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-deepspeed
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-deepspeed-tests
@@ -3374,7 +3382,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-gpu-nightly
@@ -3392,7 +3402,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -3408,7 +3420,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -3428,7 +3442,9 @@ workflows:
 
       - test-e2e-aws:
           name: test-e2e-mmdetection
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-mmdetection-tests
@@ -3467,7 +3483,9 @@ workflows:
 
       - test-aws-fs:
           name: test-aws-fs-fsx
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -3478,7 +3496,9 @@ workflows:
 
       - test-aws-fs:
           name: test-aws-fs-efs
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -3492,7 +3512,9 @@ workflows:
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               parallelism: [2]
@@ -3512,7 +3534,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               cluster-id-prefix: ["mmdet"]
@@ -3522,7 +3546,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               cluster-id-prefix: ["deepspeed"]
@@ -3532,7 +3558,9 @@ workflows:
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -3543,14 +3571,18 @@ workflows:
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-mentions: "${SLACK_USER_ID}"
 
       - test-aws-fs:
           name: test-aws-fs-efs
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
