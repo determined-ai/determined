@@ -26,7 +26,11 @@ func getMockResourceManager(poolName string) *mocks.ResourceManager {
 		Name:  poolName,
 		Slots: 1,
 	}).Return(nil, nil)
-	rm.On("ValidateResources", poolName, 1, true).Return(nil)
+	rm.On("ValidateCommandResources", sproto.ValidateCommandResourcesRequest{
+		ResourcePool: poolName,
+		Slots:        1,
+		Command:      true,
+	}).Return(sproto.ValidateCommandResourcesResponse{}, nil)
 	return rm
 }
 

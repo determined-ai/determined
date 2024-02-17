@@ -528,12 +528,19 @@ func (a *ResourceManager) TaskContainerDefaults(
 func (a *ResourceManager) ValidateCommandResources(
 	msg sproto.ValidateCommandResourcesRequest,
 ) (sproto.ValidateCommandResourcesResponse, error) {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		a.syslog.WithError(err).Error("recovering job position")
-		return sproto.ValidateCommandResourcesResponse{}, err
+	if msg.Slots > 0 && msg.Command {
+		pool, err := a.poolByName(msg.ResourcePool)
+		if err != nil {
+			a.syslog.WithError(err).Error("recovering job position")
+			return sproto.ValidateCommandResourcesResponse{}, fmt.Errorf(
+				"validating request for (%s, %d): %w", msg.ResourcePool, msg.Slots, err)
+		}
+		resp := pool.ValidateCommandResources(msg)
+		if !resp.Fulfillable {
+			return resp, errors.New("request unfulfillable, please try requesting less slots")
+		}
 	}
-	return pool.ValidateCommandResources(msg), nil
+	return sproto.ValidateCommandResourcesResponse{}, nil
 }
 
 // ValidateResourcePool implements rm.ResourceManager.
@@ -571,6 +578,7 @@ func (a *ResourceManager) ValidateResources(name string, slots int, command bool
 			sproto.ValidateCommandResourcesRequest{
 				ResourcePool: name,
 				Slots:        slots,
+				Command:      command,
 			}); {
 		case err != nil:
 			return fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)

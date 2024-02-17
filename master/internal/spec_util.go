@@ -40,7 +40,11 @@ func (m *Master) ResolveResources(
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = m.rm.ValidateResources(poolName, slots, isSingleNode); err != nil {
+	if _, err = m.rm.ValidateCommandResources(sproto.ValidateCommandResourcesRequest{
+		ResourcePool: poolName,
+		Slots:        slots,
+		Command:      isSingleNode,
+	}); err != nil {
 		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
 

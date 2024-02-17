@@ -61,7 +61,10 @@ func MockRM() *mocks.ResourceManager {
 		},
 		nil,
 	)
-	mockRM.On("ValidateResources", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockRM.On("ValidateCommandResources", mock.Anything).Return(
+		func(sproto.ValidateCommandResourcesRequest) sproto.ValidateCommandResourcesResponse {
+			return sproto.ValidateCommandResourcesResponse{}
+		}, nil)
 	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
 		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
 			return def

@@ -98,6 +98,7 @@ type (
 	ValidateCommandResourcesRequest struct {
 		ResourcePool string
 		Slots        int
+		Command      bool
 	}
 
 	// ValidateCommandResourcesResponse is the response to ValidateCommandResourcesRequest.

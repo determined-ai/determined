@@ -355,11 +355,18 @@ func (k *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 func (k *ResourceManager) ValidateCommandResources(
 	msg sproto.ValidateCommandResourcesRequest,
 ) (sproto.ValidateCommandResourcesResponse, error) {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return sproto.ValidateCommandResourcesResponse{}, err
+	if msg.Slots > 0 && msg.Command {
+		rp, err := k.poolByName(msg.ResourcePool)
+		if err != nil {
+			return sproto.ValidateCommandResourcesResponse{}, fmt.Errorf(
+				"validating request for (%s, %d): %w", msg.ResourcePool, msg.Slots, err)
+		}
+		resp := rp.ValidateCommandResources(msg)
+		if !resp.Fulfillable {
+			return resp, errors.New("request unfulfillable, please try requesting less slots")
+		}
 	}
-	return rp.ValidateCommandResources(msg), nil
+	return sproto.ValidateCommandResourcesResponse{}, nil
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
