@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import { forEach, reduce, trimEnd } from 'lodash';
+import { forEach, map, reduce, trimEnd } from 'lodash';
 
 import rootLogger from 'utils/Logger';
 
@@ -12,11 +12,11 @@ const logger = rootLogger.extend('services', 'stream');
 
 // About 60 seconds of auto-retry.
 const backoffs = [0, 1, 2, 4, 8, 10, 10, 10, 15];
-export const sleep = (s: number): Promise<unknown> => new Promise((r) => setTimeout(r, 1000 * s));
 
 type Subscription = {
   keyCache: KeyCache;
   spec: StreamSpec;
+  id?: string;
 };
 
 export class Stream {
@@ -42,18 +42,18 @@ export class Stream {
   //callbacks
   #onUpsert: (m: Record<string, StreamContent>) => void;
   #onDelete: (s: Streamable, a: Array<number>) => void;
-  #isLoading?: (b: boolean) => void;
+  #isLoaded?: (ids: Array<string>) => void;
 
   constructor(
     wsUrl: string,
     onUpsert: (m: Record<string, StreamContent>) => void,
     onDelete: (s: Streamable, a: Array<number>) => void,
-    isLoading?: (b: boolean) => void,
+    isLoaded?: (ids: Array<string>) => void,
   ) {
     this.#wsUrl = wsUrl;
     this.#onUpsert = onUpsert;
     this.#onDelete = onDelete;
-    this.#isLoading = isLoading;
+    this.#isLoaded = isLoaded;
     this.#advance();
   }
 
@@ -133,10 +133,10 @@ export class Stream {
       if (msg['sync_id']) {
         if (!msg['complete']) {
           this.#syncStarted = msg['sync_id'];
-          this.#isLoading?.(false);
         } else {
+          const completedSpecId = map(this.#curSub, (spec) => spec.id || '').filter((i) => !!i);
+          this.#isLoaded?.(completedSpecId);
           this.#syncComplete = msg['sync_id'];
-          this.#isLoading?.(true);
         }
       } else if (this.#syncSent !== this.#syncStarted) {
         // Ignore all messages between when we send a new subscription and when the
@@ -211,12 +211,11 @@ export class Stream {
     this.#processSubscription();
   }
 
-  public subscribe(spec: StreamSpec): void {
+  public subscribe(spec: StreamSpec, id?: string): void {
     const curSpec = this.#curSub?.[spec.id()];
     if (curSpec && curSpec.spec.equals(spec)) return;
     const keyCache = new KeyCache();
-
-    this.#subs.push({ ...this.#curSub, [spec.id()]: { keyCache, spec } });
+    this.#subs.push({ ...this.#curSub, [spec.id()]: { id, keyCache, spec } });
     this.#advance();
   }
 

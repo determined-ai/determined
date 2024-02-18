@@ -1,11 +1,14 @@
 import WS from 'jest-websocket-mock';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ProjectSpec } from './projects';
-import { sleep, Stream } from './stream';
+import { Stream } from './stream';
+
+const sleep = (s: number): Promise<unknown> => new Promise((r) => setTimeout(r, 1000 * s));
 
 const onUpsert = vi.fn();
 const onDelete = vi.fn();
-const isLoading = vi.fn();
+const isLoaded = vi.fn();
 const url = 'ws://localhost:1234';
 const genServer = () => new WS(url, { jsonProtocol: true });
 
@@ -16,7 +19,7 @@ const spec2 = new ProjectSpec(spec2ws);
 
 const setup = () => {
   const server = genServer();
-  return { client: new Stream(url, onUpsert, onDelete, isLoading), server };
+  return { client: new Stream(url, onUpsert, onDelete, isLoaded), server };
 };
 
 const cleanup = (arr: Array<WS | Stream>) => {
@@ -84,17 +87,18 @@ describe('stream', () => {
   it('recieve message', async () => {
     const { server, client } = setup();
     await server.connected;
-    client.subscribe(spec1);
+    const id = uuidv4();
+    client.subscribe(spec1, id);
     server.send({ complete: false, sync_id: '1' });
     server.send({ projects_deleted: '3-5' });
     server.send({ project: { id: 6 } });
 
     expect(onDelete).toHaveBeenCalledWith('projects', [3, 4, 5]);
     expect(onUpsert).toHaveBeenCalledWith({ project: { id: 6 } });
-    expect(isLoading).toHaveBeenCalledWith(false);
+
     server.send({ complete: true, sync_id: '1' });
 
-    expect(isLoading).toHaveBeenCalledWith(true);
+    expect(isLoaded).toHaveBeenCalledWith([id]);
     cleanup([client, server]);
   });
   it('switch subscription', async () => {
