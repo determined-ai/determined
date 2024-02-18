@@ -6,7 +6,7 @@ import Icon from 'hew/Icon';
 import Row from 'hew/Row';
 import Tooltip from 'hew/Tooltip';
 import { Title, TypographySize } from 'hew/Typography';
-import { isNaN } from 'lodash';
+import { isUndefined } from 'lodash';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -63,14 +63,19 @@ const ProjectCard: React.FC<Props> = ({
             <div className={css.workspaceContainer}>
               {showWorkspace && (
                 <div className={css.workspaceIcon}>
-                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+                  <Avatar
+                    palette="muted"
+                    size={Size.Small}
+                    square
+                    text={project.workspaceName || ''}
+                  />
                 </div>
               )}
             </div>
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              {!isNaN(project.numExperiments) && (
+              {!isUndefined(project.numExperiments) && (
                 <div className={css.experiments}>
                   <Tooltip
                     content={

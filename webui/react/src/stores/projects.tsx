@@ -78,20 +78,23 @@ class ProjectStore {
     }
   }
 
-  #upsert(op: Project, np: Project) {
-    op.name = np.name;
-    op.description = np.description;
-    op.archived = np.archived;
+  #upsert(p: Project, np: Project): Project {
+    p.name = np.name;
+    p.description = np.description;
+    p.archived = np.archived;
+    p.workspaceId = np.workspaceId;
+    p.state = np.state;
+    return { ...p };
   }
 
   public upsertProject(p: Project) {
-    let project: Project | undefined;
-    let projectInWs: Project | undefined;
+    let prevProjectWorkspaceId: number | undefined;
 
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
-        project = map.get(p.id);
+        const project = map.get(p.id);
         if (project) {
+          prevProjectWorkspaceId = project.workspaceId;
           this.#upsert(project, p);
         } else {
           map.set(p.id, { ...p });
@@ -101,23 +104,23 @@ class ProjectStore {
     );
     this.#projectsByWorkspace.update((prev) =>
       prev.withMutations((map) => {
-        projectInWs = find(map.get(p.workspaceId.toString()), (tp) => tp.id === p.id);
+        const projectInWs = find(map.get(p.workspaceId.toString()), (tp) => tp.id === p.id);
         if (projectInWs) {
           // The workspaceId has not changed, just update
           this.#upsert(projectInWs, p);
-        } else {
-          // The workspaceId has changed, add to the new workspace and remove from the old workspace
-          const ws = map.get(p.workspaceId.toString());
-          if (ws) {
-            ws.push(p);
-            map.set(p.workspaceId.toString(), [...ws]);
-          }
-          if (project) {
-            const ows = map.get(project.workspaceId.toString());
-            if (ows) {
-              remove(ows, (op) => op.id === p.id);
-              map.set(project.workspaceId.toString(), [...ows]);
-            }
+          return map;
+        }
+        // The workspaceId has changed, add to the new workspace and remove from the old workspace
+        const ws = map.get(p.workspaceId.toString());
+        if (ws) {
+          ws.push(p);
+          map.set(p.workspaceId.toString(), [...ws]);
+        }
+        if (prevProjectWorkspaceId) {
+          const ows = map.get(prevProjectWorkspaceId.toString());
+          if (ows) {
+            remove(ows, (op) => op.id === p.id);
+            map.set(prevProjectWorkspaceId.toString(), [...ows]);
           }
         }
         return map;
@@ -139,10 +142,7 @@ export const mapStreamProject = (p: StreamContent): Project => ({
   immutable: p.immutable,
   name: p.name,
   notes: p.notes,
-  numActiveExperiments: NaN,
-  numExperiments: NaN,
   state: p.state,
   userId: p.user_id,
   workspaceId: p.workspace_id,
-  workspaceName: 'n/a',
 });

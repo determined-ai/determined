@@ -1058,12 +1058,12 @@ export interface Project {
   lastExperimentStartedAt?: Date;
   name: string;
   notes: Note[];
-  numActiveExperiments: number;
-  numExperiments: number;
+  numActiveExperiments?: number;
+  numExperiments?: number;
   state: WorkspaceState;
   userId: number;
   workspaceId: number;
-  workspaceName: string;
+  workspaceName?: string;
 }
 
 export interface ProjectPagination extends WithPagination {
