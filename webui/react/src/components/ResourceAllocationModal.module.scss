@@ -5,12 +5,16 @@
   padding: 0 16px;
 
   .nodesContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     margin: 16px 0;
   }
   .infoContainer {
     align-items: baseline;
     display: flex;
     justify-content: space-between;
+    margin: var(--spacing-xs) 0;
     position: relative;
 
     span {

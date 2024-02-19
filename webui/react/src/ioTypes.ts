@@ -177,7 +177,10 @@ export const ioCheckpointStorage = io.type({
   type: optional(ioCheckpointStorageType),
 });
 
-const ioExpResources = io.type({ max_slots: optional(io.number) });
+const ioExpResources = io.type({
+  max_slots: optional(io.number),
+  slots_per_trial: optional(io.number),
+});
 
 const hParamTypes: Record<string, null> = Object.values(HyperparameterType).reduce(
   (acc, val) => ({ ...acc, [val]: null }),

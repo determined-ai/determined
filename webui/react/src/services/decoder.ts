@@ -371,6 +371,8 @@ export const ioToExperimentConfig = (
     },
   };
   if (io.resources.max_slots != null) config.resources.maxSlots = io.resources.max_slots;
+  if (io.resources.slots_per_trial !== null)
+    config.resources.slots_per_trial = io.resources.slots_per_trial;
   return config;
 };
 

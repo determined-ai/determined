@@ -457,6 +457,7 @@ export const ExperimentConfig = t.intersection([
     name: t.string,
     resources: t.partial({
       maxSlots: t.number,
+      slots_per_trial: t.number,
     }),
     searcher: Searcher,
   }),

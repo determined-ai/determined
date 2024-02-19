@@ -10,6 +10,7 @@ interface NodeElementProps {
   resources: Resource[];
   slots?: SlotsRecord;
   isRunning?: boolean;
+  limitSlots?: number;
 }
 
 const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
@@ -17,6 +18,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   slots,
   resources,
   isRunning = true,
+  limitSlots = 0,
 }) => {
   const [containerWidth, setContainerWidth] = useState(0);
   const shouldTruncate = useMemo(() => name.length > 5, [name]);
@@ -37,17 +39,20 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   }
 
   const getSlotStyles = useCallback(
-    (isActive: boolean) => {
+    (isActive: boolean, index: number) => {
       if (singleSlot) slotStyles.push(css.singleSlot);
       if (coupleSlot) slotStyles.push(css.coupleSlot);
       if (isActive) slotStyles.push(css.active);
       if (!isRunning) slotStyles.push(css.notRunning);
+      if (limitSlots !== 0) {
+        if (index + 1 > limitSlots && isActive) slotStyles.push(css.limitedActive); // it means that there we're visualizing the node where only part of the active slots are relevant to the UI context
+      }
 
       return slotStyles.join(' ');
     },
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isRunning, singleSlot, coupleSlot],
+    [isRunning, singleSlot, coupleSlot, limitSlots],
   );
 
   useEffect(() => {
@@ -67,7 +72,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
       )}
       <span className={nodeClusterStyles.join(' ')} ref={slotsContainer}>
         {slotsData.map(({ container }, idx) => (
-          <span className={getSlotStyles(container !== undefined)} key={`slot${idx}`} />
+          <span className={getSlotStyles(container !== undefined, idx)} key={`slot${idx}`} />
         ))}
       </span>
     </div>

@@ -41,6 +41,7 @@ interface RpData extends ResourcePool {
   isRunning: boolean;
   name: string;
   nodes: Array<{ nodeName: string; slotsIds: Resource[] }>;
+  totalSlots: number;
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
@@ -81,22 +82,40 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
     if (rpData === undefined) return undefined;
 
-    const rpUsedSlots = rpData.slotsUsed || 0;
     const allocation = Loadable.getOrElse(undefined, taskAllocation);
+    const rpUsedSlots =
+      allocation?.acceleratorData.reduce((acc, nodes) => {
+        if (nodes.acceleratorUuids) acc = acc + nodes.acceleratorUuids.length;
+        return acc;
+      }, 0) || 0;
 
     if (allocation === undefined) return undefined;
 
+    const getSlots = (accelerators: string[]) => {
+      const slots = accelerators.map((slotId) => ({
+        container: { id: slotId },
+      })) as Resource[];
+
+      if (rpData.slotsPerAgent !== undefined && slots.length < rpData.slotsPerAgent) {
+        for (let i = 0; i < rpData.slotsPerAgent; i++) {
+          slots.push({ container: undefined } as Resource);
+        }
+      }
+
+      return slots;
+    };
+
     return {
       ...rpData,
-      isRPFull: rpUsedSlots === (rpData?.slotsAvailable || 0),
+      isRPFull: rpUsedSlots === (experiment.config.resources.slots_per_trial || 0),
       isRunning: trial.state === RunState.Active,
       name: rpData.name || experiment.resourcePool,
       nodes: allocation.acceleratorData.map((node) => ({
         nodeName: node.nodeName || '',
-        slotsIds: (node.acceleratorUuids || []).map((slotId) => ({
-          container: { id: slotId },
-        })) as Resource[],
+        slotsIds: getSlots(node.acceleratorUuids || []),
       })),
+      slotsUsed: rpUsedSlots,
+      totalSlots: (rpData.slotsPerAgent || 1) * rpData.maxAgents,
     } as RpData;
   }, [experiment, resourcePools, trial, taskAllocation]);
 
@@ -189,6 +208,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     [allocationModal],
   );
 
+  const appendText = (n: number) => `Slot${n > 1 ? 's' : ''}`;
+
   return (
     <Section>
       <Card.Group size="small">
@@ -206,7 +227,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         {bestCheckpoint && (
           <>
             <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
-              Batch {bestCheckpoint.totalBatches}
+              <span className={css.modalLink}>Batch {bestCheckpoint.totalBatches}</span>
             </OverviewStats>
             <registerModal.Component
               checkpoints={bestCheckpoint.uuid ? [bestCheckpoint.uuid] : []}
@@ -226,8 +247,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         {shouldRenderAllocationCard && experimentRPInfo !== undefined && (
           <>
             <OverviewStats title="Resource Allocation" onClick={handleModalAllocationClick}>
-              <span className={experimentRPInfo.isRPFull ? css.fullRP : ''}>
-                {`${experimentRPInfo.slotsUsed}/${experimentRPInfo.slotsAvailable} Slots`}
+              <span className={css.modalLink}>
+                {experimentRPInfo.isRPFull
+                  ? `${experimentRPInfo.slotsUsed} ${appendText(experimentRPInfo.slotsUsed)}`
+                  : `${experimentRPInfo.slotsUsed}/${experimentRPInfo.totalSlots} ${appendText(
+                      experimentRPInfo.totalSlots,
+                    )}`}
               </span>
             </OverviewStats>
             <allocationModal.Component

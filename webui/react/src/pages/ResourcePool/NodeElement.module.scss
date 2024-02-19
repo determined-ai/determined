@@ -7,7 +7,7 @@
   margin-right: 30px;
 
   &.notRunning {
-    color: var(--theme-background-weak);
+    color: inherit;
   }
   .nodeName {
     display: inline-block;
@@ -25,10 +25,10 @@
     box-sizing: border-box;
     display: flex;
     justify-content: space-around;
-    padding: 6px;
+    padding: var(--spacing-md);
 
     &.notRunning {
-      border-color: var(--theme-background-weak);
+      border-color: inherit;
     }
     .nodeSlot {
       background-color: var(--theme-status-inactive-weak);
@@ -49,8 +49,11 @@
     .active {
       background-color: var(--theme-status-active-strong);
 
+      &.limitedActive {
+        opacity: 0.7;
+      }
       &.notRunning {
-        background-color: var(--theme-background-weak);
+        background-color: var(--theme-strong);
       }
     }
   }
