@@ -52,9 +52,9 @@ export class KeyCache {
   #keys: Set<number>;
   #maxseq: number;
 
-  constructor(keys?: Set<number>) {
+  constructor(keys?: Set<number>, maxseq?: number) {
     this.#keys = keys || new Set();
-    this.#maxseq = 0;
+    this.#maxseq = maxseq || 0;
   }
 
   #delete_one(id: number) {
@@ -78,5 +78,9 @@ export class KeyCache {
 
   public maxSeq(): number {
     return this.#maxseq;
+  }
+
+  public copy(): KeyCache {
+    return new KeyCache(this.#keys, this.#maxseq);
   }
 }

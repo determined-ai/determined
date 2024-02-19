@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { every, isEqual } from 'lodash';
 
 import { Streamable, StreamSpec } from '.';
 
@@ -9,13 +9,9 @@ export class ProjectSpec extends StreamSpec {
 
   constructor(workspace_ids?: Array<number>, project_ids?: Array<number>) {
     super();
-    this.#workspace_ids = workspace_ids || [];
-    this.#project_ids = project_ids || [];
+    this.#workspace_ids = workspace_ids?.sort() || [];
+    this.#project_ids = project_ids?.sort() || [];
   }
-
-  public copy = (): ProjectSpec => {
-    return new ProjectSpec(this.#project_ids, this.#workspace_ids);
-  };
 
   public equals = (sp?: StreamSpec): boolean => {
     if (!sp) return false;
@@ -34,5 +30,13 @@ export class ProjectSpec extends StreamSpec {
 
   public toWire = (): Record<string, Array<number>> => {
     return { project_ids: this.#project_ids, workspace_ids: this.#workspace_ids };
+  };
+
+  public contains = (sp: StreamSpec): boolean => {
+    if (!(sp instanceof ProjectSpec)) return false;
+    return (
+      every(sp.#workspace_ids, (i) => this.#workspace_ids.includes(i)) &&
+      every(sp.#project_ids, (i) => this.#project_ids.includes(i))
+    );
   };
 }

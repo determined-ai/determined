@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { every, isEqual } from 'lodash';
 
 import { Streamable, StreamSpec } from '.';
 
@@ -29,5 +29,10 @@ export class ExperimentSpec extends StreamSpec {
 
   public toWire = (): Record<string, Array<number>> => {
     return { experiment_ids: this.#experiment_ids };
+  };
+
+  public contains = (sp: StreamSpec): boolean => {
+    if (!(sp instanceof ExperimentSpec)) return false;
+    return every(sp.#experiment_ids, (i) => this.#experiment_ids.includes(i));
   };
 }

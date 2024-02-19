@@ -15,6 +15,7 @@ const backoffs = [0, 1, 2, 4, 8, 10, 10, 10, 15];
 type Subscription = {
   keyCache: KeyCache;
   spec: StreamSpec;
+  // id is user defined, can be anything, only used to track if the subscription has been loaded.
   id?: string;
 };
 
@@ -217,7 +218,8 @@ export class Stream {
   public subscribe(spec: StreamSpec, id?: string): void {
     const curSpec = this.#curSub?.[spec.id()];
     if (curSpec && curSpec.spec.equals(spec)) return;
-    const keyCache = new KeyCache();
+    const keyCache =
+      curSpec && spec.contains(curSpec.spec) ? curSpec.keyCache.copy() : new KeyCache();
     const newSpec = { [spec.id()]: { id, keyCache, spec } };
     this.#curSub ? this.#subs.push({ ...this.#curSub, ...newSpec }) : this.#subs.push(newSpec);
     this.#advance();
