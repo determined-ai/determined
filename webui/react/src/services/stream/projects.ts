@@ -1,13 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { Streamable } from '.';
-
-export abstract class StreamSpec {
-  abstract copy: () => StreamSpec;
-  abstract equals: (sp: StreamSpec) => boolean;
-  abstract id: () => Streamable;
-  abstract toWire: () => Record<string, Array<number>>;
-}
+import { Streamable, StreamSpec } from '.';
 
 export class ProjectSpec extends StreamSpec {
   readonly #id: Streamable = 'projects';
@@ -24,7 +17,8 @@ export class ProjectSpec extends StreamSpec {
     return new ProjectSpec(this.#project_ids, this.#workspace_ids);
   };
 
-  public equals = (sp: StreamSpec): boolean => {
+  public equals = (sp?: StreamSpec): boolean => {
+    if (!sp) return false;
     if (sp instanceof ProjectSpec) {
       return (
         isEqual(sp.#project_ids, this.#project_ids) &&

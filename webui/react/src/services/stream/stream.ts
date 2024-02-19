@@ -4,9 +4,8 @@ import { forEach, map, reduce, trimEnd } from 'lodash';
 import rootLogger from 'utils/Logger';
 
 import { decode_keys, KeyCache } from './keyCache';
-import { StreamSpec } from './projects';
 
-import { Streamable, StreamContent, StreamEntityMap } from '.';
+import { Streamable, StreamContent, StreamEntityMap, StreamSpec } from '.';
 
 const logger = rootLogger.extend('services', 'stream');
 
@@ -19,6 +18,8 @@ type Subscription = {
   id?: string;
 };
 
+type SubscriptionGroup = Partial<Record<Streamable, Subscription>>;
+
 export class Stream {
   readonly #wsUrl: string;
   #ws?: WebSocket = undefined;
@@ -27,8 +28,8 @@ export class Stream {
   #numSyncs: number = 0;
   #closedByClient: boolean = false;
 
-  #subs: Array<Record<Streamable, Subscription>> = [];
-  #curSub?: Record<Streamable, Subscription>;
+  #subs: Array<SubscriptionGroup> = [];
+  #curSub?: SubscriptionGroup;
 
   // syncSent updates when msg sent to the stream
   #syncSent?: string = undefined;
@@ -90,16 +91,16 @@ export class Stream {
     return ws;
   }
 
-  #shouldSkip(newSub: Record<Streamable, Subscription>): boolean {
+  #shouldSkip(newSub: SubscriptionGroup): boolean {
     if (!this.#curSub) return false;
     let same = true;
     forEach(newSub, (val, k) => {
-      if (!this.#curSub?.[k as Streamable].spec.equals(val.spec)) same = false;
+      if (!this.#curSub?.[k as Streamable]?.spec.equals(val?.spec)) same = false;
     });
     return same;
   }
 
-  #sendSpec(newSub: Record<Streamable, Subscription>): void {
+  #sendSpec(newSub: SubscriptionGroup): void {
     // Skip current sub and move to next only if sub has already been sent
     if (this.#shouldSkip(newSub) && this.#syncSent) {
       this.#advance();
@@ -111,6 +112,7 @@ export class Stream {
     const spec = reduce(
       newSub,
       (spec, ent, k) => {
+        if (!ent) return spec;
         spec['known'][k] = ent.keyCache.known();
         spec['subscribe'][k] = {
           ...ent.spec.toWire(),
@@ -134,9 +136,10 @@ export class Stream {
         if (!msg['complete']) {
           this.#syncStarted = msg['sync_id'];
         } else {
-          const completedSpecId = map(this.#curSub, (spec) => spec.id || '').filter((i) => !!i);
+          const completedSpecId = map(this.#curSub, (spec) => spec?.id || '').filter((i) => !!i);
           this.#isLoaded?.(completedSpecId);
           this.#syncComplete = msg['sync_id'];
+          this.#advance();
         }
       } else if (this.#syncSent !== this.#syncStarted) {
         // Ignore all messages between when we send a new subscription and when the
@@ -148,10 +151,10 @@ export class Stream {
             const stream_key = trimEnd(k, '_deleted') as Streamable;
             const deleted_keys = decode_keys(val as string);
 
-            this.#curSub?.[stream_key].keyCache.delete_msg(deleted_keys);
+            this.#curSub?.[stream_key]?.keyCache.delete_msg(deleted_keys);
             this.#onDelete(stream_key, deleted_keys);
           } else {
-            this.#curSub?.[StreamEntityMap[k]].keyCache.upsert([val.id], val.seq);
+            this.#curSub?.[StreamEntityMap[k]]?.keyCache.upsert([val.id], val.seq);
             this.#onUpsert(msg);
           }
         });
@@ -162,7 +165,7 @@ export class Stream {
   #processSubscription() {
     if (!this.#curSub && this.#subs.length === 0) return;
 
-    let spec: Record<Streamable, Subscription> | undefined;
+    let spec: SubscriptionGroup | undefined;
 
     if (!this.#syncSent) {
       // The websocket just connected/reconnected
@@ -215,7 +218,8 @@ export class Stream {
     const curSpec = this.#curSub?.[spec.id()];
     if (curSpec && curSpec.spec.equals(spec)) return;
     const keyCache = new KeyCache();
-    this.#subs.push({ ...this.#curSub, [spec.id()]: { id, keyCache, spec } });
+    const newSpec = { [spec.id()]: { id, keyCache, spec } };
+    this.#curSub ? this.#subs.push({ ...this.#curSub, ...newSpec }) : this.#subs.push(newSpec);
     this.#advance();
   }
 

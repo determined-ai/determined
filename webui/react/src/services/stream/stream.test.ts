@@ -1,6 +1,7 @@
 import WS from 'jest-websocket-mock';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ExperimentSpec } from './experiments';
 import { ProjectSpec } from './projects';
 import { Stream } from './stream';
 
@@ -14,8 +15,10 @@ const genServer = () => new WS(url, { jsonProtocol: true });
 
 const spec1ws = [1];
 const spec2ws = [1, 2];
+const spec3exp = [1, 2, 3];
 const spec1 = new ProjectSpec(spec1ws);
 const spec2 = new ProjectSpec(spec2ws);
+const spec3 = new ExperimentSpec(spec3exp);
 
 const setup = () => {
   const server = genServer();
@@ -66,7 +69,7 @@ describe('stream', () => {
       },
       sync_id: '1',
     });
-
+    server.send({ complete: false, sync_id: '1' });
     server.send({ complete: true, sync_id: '1' });
     await expect(server).toReceiveMessage({
       known: {
@@ -192,5 +195,116 @@ describe('stream', () => {
     });
 
     cleanup([client, newServer]);
+  });
+  it('multiple entities', async () => {
+    const { server, client } = setup();
+    await server.connected;
+
+    const proId = uuidv4();
+    const expId = uuidv4();
+    client.subscribe(spec1, proId);
+    client.subscribe(spec3, expId);
+
+    await expect(server).toReceiveMessage({
+      known: {
+        projects: '',
+      },
+      subscribe: {
+        projects: {
+          project_ids: [],
+          since: 0,
+          workspace_ids: spec1ws,
+        },
+      },
+      sync_id: '1',
+    });
+    server.send({ complete: false, sync_id: '1' });
+    server.send({ project: { id: 1, seq: 1 } });
+    expect(onUpsert).toHaveBeenNthCalledWith(1, { project: { id: 1, seq: 1 } });
+    server.send({ complete: true, sync_id: '1' });
+
+    expect(isLoaded).toHaveBeenCalledWith([proId]);
+
+    // Second subscription sent only after first subscription loaded
+    await expect(server).toReceiveMessage({
+      known: {
+        experiments: '',
+        projects: '1',
+      },
+      subscribe: {
+        experiments: {
+          experiment_ids: spec3exp,
+          since: 0,
+        },
+        projects: {
+          project_ids: [],
+          since: 1,
+          workspace_ids: spec1ws,
+        },
+      },
+      sync_id: '2',
+    });
+    server.send({ complete: false, sync_id: '2' });
+    server.send({ complete: true, sync_id: '2' });
+    // Both subscriptions loaded
+    expect(isLoaded).toHaveBeenCalledWith([proId, expId]);
+
+    // Server sends some updates and we update the keyCache
+    server.send({ project: { id: 2, seq: 3 } });
+    expect(onUpsert).toHaveBeenNthCalledWith(2, { project: { id: 2, seq: 3 } });
+    server.send({ experiment: { id: 4, seq: 5 } });
+    server.send({ experiment: { id: 5, seq: 2 } });
+    server.send({ experiment: { id: 6, seq: 2 } });
+
+    // Change subscription for projects
+    client.subscribe(spec2);
+
+    // Subscription for experiments stay the same, subscription for projects got reset.
+    await expect(server).toReceiveMessage({
+      known: {
+        experiments: '4-6',
+        projects: '',
+      },
+      subscribe: {
+        experiments: {
+          experiment_ids: spec3exp,
+          since: 5,
+        },
+        projects: {
+          project_ids: [],
+          since: 0,
+          workspace_ids: spec2ws,
+        },
+      },
+      sync_id: '3',
+    });
+    server.send({ complete: false, sync_id: '3' });
+    server.send({ complete: true, sync_id: '3' });
+    server.send({ experiments_deleted: '5' });
+
+    client.subscribe(spec1);
+
+    // Change subscription for projects
+    // Note that KeyCache for experiments has been updated
+    await expect(server).toReceiveMessage({
+      known: {
+        experiments: '4,6',
+        projects: '',
+      },
+      subscribe: {
+        experiments: {
+          experiment_ids: spec3exp,
+          since: 5,
+        },
+        projects: {
+          project_ids: [],
+          since: 0,
+          workspace_ids: spec1ws,
+        },
+      },
+      sync_id: '4',
+    });
+
+    cleanup([client, server]);
   });
 });
