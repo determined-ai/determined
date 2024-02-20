@@ -12,12 +12,15 @@ const logger = rootLogger.extend('services', 'stream');
 // About 60 seconds of auto-retry.
 const backoffs = [0, 1, 2, 4, 8, 10, 10, 10, 15];
 
-type Subscription = {
-  keyCache: KeyCache;
+interface Subscription {
   spec: StreamSpec;
   // id is user defined, can be anything, only used to track if the subscription has been loaded.
   id?: string;
-};
+}
+
+interface SubscriptionWithCache extends Subscription {
+  keyCache: KeyCache;
+}
 
 type SubscriptionGroup = Partial<Record<Streamable, Subscription>>;
 
@@ -30,7 +33,7 @@ export class Stream {
   #closedByClient: boolean = false;
 
   #subs: Array<SubscriptionGroup> = [];
-  #curSub?: SubscriptionGroup;
+  #curSub?: Partial<Record<Streamable, SubscriptionWithCache>>;
 
   // syncSent updates when msg sent to the stream
   #syncSent?: string = undefined;
@@ -108,24 +111,33 @@ export class Stream {
       return;
     }
 
+    const newSpecWithCache: Partial<Record<Streamable, SubscriptionWithCache>> = {};
     this.#numSyncs += 1;
     const sync_id = this.#numSyncs.toString();
-    const spec = reduce(
-      newSub,
-      (spec, ent, k) => {
-        if (!ent) return spec;
-        spec['known'][k] = ent.keyCache.known();
-        spec['subscribe'][k] = {
+
+    const wholeSub = this.#curSub ? { ...this.#curSub, ...newSub } : newSub;
+
+    const payload = reduce(
+      wholeSub,
+      (payload, ent) => {
+        if (!ent) return payload;
+        const k = ent.spec.id();
+        const curSpec = this.#curSub?.[k];
+        const keyCache =
+          curSpec && ent.spec.contains(curSpec.spec) ? curSpec.keyCache.copy() : new KeyCache();
+        newSpecWithCache[k] = { ...ent, keyCache };
+        payload['known'][k] = keyCache.known();
+        payload['subscribe'][k] = {
           ...ent.spec.toWire(),
-          since: ent.keyCache.maxSeq(),
+          since: keyCache.maxSeq(),
         };
-        return spec;
+        return payload;
       },
       { known: {}, subscribe: {}, sync_id: sync_id } as Record<string, StreamContent>,
     );
 
-    this.#curSub = newSub;
-    this.#ws!.send(JSON.stringify(spec));
+    this.#curSub = newSpecWithCache;
+    this.#ws!.send(JSON.stringify(payload));
     this.#syncSent = sync_id;
   }
 
@@ -216,12 +228,7 @@ export class Stream {
   }
 
   public subscribe(spec: StreamSpec, id?: string): void {
-    const curSpec = this.#curSub?.[spec.id()];
-    if (curSpec && curSpec.spec.equals(spec)) return;
-    const keyCache =
-      curSpec && spec.contains(curSpec.spec) ? curSpec.keyCache.copy() : new KeyCache();
-    const newSpec = { [spec.id()]: { id, keyCache, spec } };
-    this.#curSub ? this.#subs.push({ ...this.#curSub, ...newSpec }) : this.#subs.push(newSpec);
+    this.#subs.push({ [spec.id()]: { id, spec } });
     this.#advance();
   }
 
