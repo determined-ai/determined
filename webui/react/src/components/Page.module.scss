@@ -10,7 +10,7 @@
     padding: 16px;
   }
   .body {
-    align-items: center;
+    flex-grow: 1;
     flex-shrink: 0;
     height: max-content;
     min-height: 0;

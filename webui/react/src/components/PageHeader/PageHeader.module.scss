@@ -25,7 +25,10 @@
   }
 }
 .sticky {
-  background-color: var(--theme-colors-monochrome-17);
-  border-bottom: solid var(--theme-stroke-width) var(--theme-colors-monochrome-12);
+  background-color: var(--theme-background);
+  border-bottom: solid var(--theme-stroke-width) var(--theme-float-border);
   padding: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10000;
 }
