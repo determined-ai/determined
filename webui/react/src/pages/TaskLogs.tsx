@@ -1,4 +1,4 @@
-import { FetchConfig, FetchDirection, FetchType, LogViewerVirtuoso } from 'hew/LogViewer/LogViewer';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTask } from 'hew/LogViewer/LogViewerSelect.settings';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -157,7 +157,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       headerComponent={headerComponent}
       id="task-logs"
       title={title}>
-      <LogViewerVirtuoso
+      <LogViewer
         decoder={mapV1LogsResponse}
         handleCloseLogs={onCloseLogs}
         serverAddress={serverAddress}

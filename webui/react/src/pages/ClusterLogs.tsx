@@ -1,4 +1,4 @@
-import { FetchConfig, FetchDirection, FetchType, LogViewerVirtuoso } from 'hew/LogViewer/LogViewer';
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
 import React, { useCallback } from 'react';
 
 import { serverAddress } from 'routes/utils';
@@ -31,7 +31,7 @@ const ClusterLogs: React.FC = () => {
 
   return (
     <div>
-      <LogViewerVirtuoso
+      <LogViewer
         decoder={jsonToClusterLog}
         serverAddress={serverAddress}
         sortKey="id"
