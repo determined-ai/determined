@@ -430,11 +430,10 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Experimentv1St
 export const mapV1GetExperimentDetailsResponse = ({
   experiment: exp,
   jobSummary,
-  config,
 }: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    config,
+    exp.config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
@@ -444,7 +443,7 @@ export const mapV1GetExperimentDetailsResponse = ({
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: config,
+    configRaw: exp.config,
     hyperparameters,
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
@@ -467,21 +466,29 @@ export const mapSearchExperiment = (
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
-  config?: Sdk.V1GetExperimentResponse['config'],
 ): types.ExperimentItem => {
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
+    data.config,
+  );
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
+    continueFn,
+  }) as types.HyperparametersFlattened;
+
   return {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
-    config: config ?? {},
-    configRaw: config,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: data.config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters: config?.hyperparameters ?? {},
+    hyperparameters,
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,

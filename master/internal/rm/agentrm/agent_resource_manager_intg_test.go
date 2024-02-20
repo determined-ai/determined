@@ -95,10 +95,6 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummary, err := agentRM.GetAllocationSummary(sproto.GetAllocationSummary{ID: cpuTask1.ID})
-	require.NoError(t, err)
-	assert.Equal(t, taskSummary.ResourcePool, cpuTask1.ResourcePool)
-
 	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(
@@ -122,10 +118,6 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummary, err = agentRM.GetAllocationSummary(sproto.GetAllocationSummary{ID: gpuTask1.ID})
-	require.NoError(t, err)
-	assert.Equal(t, taskSummary.ResourcePool, gpuTask1.ResourcePool)
-
 	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(

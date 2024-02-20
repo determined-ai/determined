@@ -793,6 +793,17 @@ service Determined {
     };
   }
 
+  // Get a single trial by external id.
+  rpc GetTrialByExternalID(GetTrialByExternalIDRequest)
+      returns (GetTrialByExternalIDResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/by-external-id/{external_experiment_id}/{external_trial_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Internal" ]
+    };
+  }
+
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
       returns (GetTrialWorkloadsResponse) {
