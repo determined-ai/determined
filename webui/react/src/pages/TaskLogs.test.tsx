@@ -1,6 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import * as src from 'hew/LogViewer/LogViewer';
+import LogViewer, {
+  ARIA_LABEL_ENABLE_TAILING,
+  ARIA_LABEL_SCROLL_TO_OLDEST,
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+  Props,
+} from 'hew/LogViewer/LogViewer';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 
 import { serverAddress } from 'routes/utils';
@@ -73,10 +80,10 @@ const generateLogs = (
   });
 };
 
-const setup = (props: src.Props<TestLog>) => {
+const setup = (props: Props<TestLog>) => {
   return render(
     <UIProvider theme={DefaultTheme.Light}>
-      <src.default {...props} />
+      <LogViewer {...props} />
       {/* increase variation in DOM */}
       <span>{Math.random()}</span>
     </UIProvider>,
@@ -99,7 +106,7 @@ const mockOnFetch =
       streamingRounds?: number;
     } = {},
   ) =>
-  (config: src.FetchConfig, type: src.FetchType): FetchArgs => {
+  (config: FetchConfig, type: FetchType): FetchArgs => {
     const options = {
       existingLogs: mockOptions.existingLogs,
       follow: false,
@@ -113,16 +120,16 @@ const mockOnFetch =
       timestampBefore: '',
     };
 
-    if (type === src.FetchType.Initial) {
+    if (type === FetchType.Initial) {
       options.orderBy =
-        config.fetchDirection === src.FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-    } else if (type === src.FetchType.Newer) {
+        config.fetchDirection === FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+    } else if (type === FetchType.Newer) {
       options.orderBy = 'ORDER_BY_ASC';
       if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-    } else if (type === src.FetchType.Older) {
+    } else if (type === FetchType.Older) {
       options.orderBy = 'ORDER_BY_DESC';
       if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-    } else if (type === src.FetchType.Stream) {
+    } else if (type === FetchType.Stream) {
       options.follow = true;
       options.limit = 0;
       options.orderBy = 'ORDER_BY_ASC';
@@ -226,7 +233,7 @@ describe('LogViewer', () => {
         expect(screen.queryByText(lastLog.message)).not.toBeInTheDocument();
       });
 
-      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING);
+      const enableTailingButton = screen.getByLabelText(ARIA_LABEL_ENABLE_TAILING);
       await user.click(enableTailingButton);
 
       expect(screen.queryByText(lastLog.message)).toBeInTheDocument();
@@ -240,12 +247,12 @@ describe('LogViewer', () => {
 
       await waitFor(() => {
         expect(
-          screen.queryByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+          screen.queryByLabelText(ARIA_LABEL_SCROLL_TO_OLDEST, {
             selector: 'button',
           }),
         ).not.toBeVisible();
         expect(
-          screen.queryByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+          screen.queryByLabelText(ARIA_LABEL_ENABLE_TAILING, {
             selector: 'button',
           }),
         ).not.toBeVisible();
@@ -278,7 +285,7 @@ describe('LogViewer', () => {
     let canceler: AbortController;
     let existingLogs: TestLog[];
     let logsReference: TestLog[];
-    let onFetch: (config: src.FetchConfig, type: src.FetchType) => FetchArgs;
+    let onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
 
     beforeEach(() => {
       canceler = new AbortController();
@@ -319,7 +326,7 @@ describe('LogViewer', () => {
         expect(screen.queryByText(lastExistingLog.message)).toBeInTheDocument();
       });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+      const scrollToOldestButton = screen.getByLabelText(ARIA_LABEL_SCROLL_TO_OLDEST, {
         selector: 'button',
       });
       await user.click(scrollToOldestButton);
@@ -333,7 +340,7 @@ describe('LogViewer', () => {
     it('should show newest logs when enabling tailing', async () => {
       setup({ decoder, onError: handleError, onFetch, serverAddress });
 
-      const scrollToOldestButton = screen.getByLabelText(src.ARIA_LABEL_SCROLL_TO_OLDEST, {
+      const scrollToOldestButton = screen.getByLabelText(ARIA_LABEL_SCROLL_TO_OLDEST, {
         selector: 'button',
       });
       await user.click(scrollToOldestButton);
@@ -343,7 +350,7 @@ describe('LogViewer', () => {
         expect(screen.queryByText(firstLog.message)).toBeInTheDocument();
       });
 
-      const enableTailingButton = screen.getByLabelText(src.ARIA_LABEL_ENABLE_TAILING, {
+      const enableTailingButton = screen.getByLabelText(ARIA_LABEL_ENABLE_TAILING, {
         selector: 'button',
       });
       await user.click(enableTailingButton);
