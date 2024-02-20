@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  GCS Storage client will now retry following the default policy on ``TooManyRequests`` rate limit
-   errors.

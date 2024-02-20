@@ -10,6 +10,26 @@
  Version 0.28
 **************
 
+Version 0.28.1
+==============
+
+**Release Date:** February 20, 2024
+
+**Improvements**
+
+-  GCS Storage client will now retry following the default policy on ``TooManyRequests`` rate limit
+   errors.
+
+**Bug Fixes**
+
+-  Since 0.26.2, it was possible to cause Determined Trials and Commands to hang after the main
+   process exited but before the container exited, by starting a non-terminating subprocess from
+   your training script or command that kept an open stdout or stderr file descriptor. Now, logs
+   from subprocesses of your main process are ignored after your main process has exited.
+
+-  TensorBoard: For TensorBoard task types, fix a bug that would allow users to view TensorBoards,
+      even if they did not have permission to view the all workspaces it included.
+
 Version 0.28.0
 ==============
 
