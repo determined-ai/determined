@@ -247,6 +247,7 @@ type (
 		ResourcePool      string
 		Resources         ResourceList
 		JobSubmissionTime time.Time
+		RequestTime       time.Time
 		Recovered         bool
 	}
 	// PendingPreemption notifies the task actor that it should release
@@ -304,6 +305,7 @@ func (ra ResourcesAllocated) Clone() *ResourcesAllocated {
 		ResourcePool:      ra.ResourcePool,
 		Resources:         maps.Clone(ra.Resources),
 		JobSubmissionTime: ra.JobSubmissionTime,
+		RequestTime:       ra.RequestTime,
 		Recovered:         ra.Recovered,
 	}
 }
