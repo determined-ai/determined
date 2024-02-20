@@ -21,7 +21,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/templates"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -366,7 +365,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		}
 	}
 
-	token, createSessionErr := user.StartSession(ctx, owner)
+	token, createSessionErr := getTaskSessionToken(ctx, owner)
 	if createSessionErr != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
