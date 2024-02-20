@@ -4153,7 +4153,7 @@ export interface V1GetRolesByIDResponse {
     roles?: Array<V1RoleWithAssignments>;
 }
 /**
- * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+ * Sorts runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
  * @export
  * @enum {string}
  */
@@ -4175,13 +4175,13 @@ export const V1GetRunsRequestSortBy = {
 } as const
 export type V1GetRunsRequestSortBy = ValueOf<typeof V1GetRunsRequestSortBy>
 /**
- * Response to GetExperimentsRequest.
+ * Response to GetRunsRequest.
  * @export
  * @interface V1GetRunsResponse
  */
 export interface V1GetRunsResponse {
     /**
-     * The list of returned experiments.
+     * The list of returned runs.
      * @type {Array<V1Run>}
      * @memberof V1GetRunsResponse
      */
@@ -9023,133 +9023,133 @@ export interface V1RPQueueStat {
     aggregates?: Array<V1AggregateQueueStats>;
 }
 /**
- * 
+ * Flat run respresentation.
  * @export
  * @interface V1Run
  */
 export interface V1Run {
     /**
-     * 
+     * The id of the run.
      * @type {number}
      * @memberof V1Run
      */
     id?: number;
     /**
-     * 
+     * The time the run was started.
      * @type {Date | DateString}
      * @memberof V1Run
      */
     startTime?: Date | DateString;
     /**
-     * 
+     * The time the run ended.
      * @type {Date | DateString}
      * @memberof V1Run
      */
     endTime?: Date | DateString;
     /**
-     * 
+     * The current state of the run(trial).
      * @type {Trialv1State}
      * @memberof V1Run
      */
     state?: Trialv1State;
     /**
-     * 
+     * The tags of the run.
      * @type {string}
      * @memberof V1Run
      */
     tags?: string;
     /**
-     * 
+     * The total size of checkpoints.
      * @type {string}
      * @memberof V1Run
      */
     checkpointSize?: string;
     /**
-     * 
+     * The count of checkpoints.
      * @type {number}
      * @memberof V1Run
      */
     checkpointCount?: number;
     /**
-     * 
+     * The type of searcher for the experiment.
      * @type {string}
      * @memberof V1Run
      */
     searcherType?: string;
     /**
-     * 
+     * The searcher metric name for the experiment.
      * @type {string}
      * @memberof V1Run
      */
     searcherMetric?: string;
     /**
-     * 
+     * Signed searcher metrics value.
      * @type {number}
      * @memberof V1Run
      */
     searcherMetricValue?: number;
     /**
-     * 
+     * The id of external run
      * @type {number}
      * @memberof V1Run
      */
     externalRunId?: number;
     /**
-     * 
+     * Trial hyperparameters.
      * @type {string}
      * @memberof V1Run
      */
     hyperparameters?: string;
     /**
-     * 
+     * summary metrics.
      * @type {string}
      * @memberof V1Run
      */
     metrics?: string;
     /**
-     * 
+     * The id of the experiment linked to the run.
      * @type {number}
      * @memberof V1Run
      */
     experimentId?: number;
     /**
-     * 
+     * The id of the user who created the parent project.
      * @type {number}
      * @memberof V1Run
      */
     ownerId?: number;
     /**
-     * 
+     * Original id of a forked or continued experiment.
      * @type {number}
      * @memberof V1Run
      */
     forkedFrom?: number;
     /**
-     * 
+     * The id of external experiment
      * @type {number}
      * @memberof V1Run
      */
     externalExperimentId?: number;
     /**
-     * 
+     * The resource pool the experiment was created in.
      * @type {string}
      * @memberof V1Run
      */
     resourcePool?: string;
     /**
-     * 
+     * The current progress of a running experiment.
      * @type {number}
      * @memberof V1Run
      */
     progress?: number;
     /**
-     * 
+     * The description of the experiment.
      * @type {string}
      * @memberof V1Run
      */
     description?: string;
     /**
-     * 
+     * The experiment name.
      * @type {string}
      * @memberof V1Run
      */
@@ -27640,18 +27640,18 @@ export const RunsApiFetchParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
-         * @param {string} [description] Limit experiments to those that match the description.
-         * @param {string} [name] Limit experiments to those that match the name.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
+         * @param {string} [description] Limit runs to those that match the description.
+         * @param {string} [name] Limit runs to those that match the name.
+         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
+         * @param {boolean} [archived] Limit runs to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
          * @param {number} [runIdFilterLt] Less than.
          * @param {number} [runIdFilterLte] Less than or equal.
          * @param {number} [runIdFilterGt] Greater than.
@@ -27774,18 +27774,18 @@ export const RunsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
-         * @param {string} [description] Limit experiments to those that match the description.
-         * @param {string} [name] Limit experiments to those that match the name.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
+         * @param {string} [description] Limit runs to those that match the description.
+         * @param {string} [name] Limit runs to those that match the name.
+         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
+         * @param {boolean} [archived] Limit runs to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
          * @param {number} [runIdFilterLt] Less than.
          * @param {number} [runIdFilterLte] Less than or equal.
          * @param {number} [runIdFilterGt] Greater than.
@@ -27820,18 +27820,18 @@ export const RunsApiFactory = function (configuration?: Configuration, fetch?: F
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
-         * @param {string} [description] Limit experiments to those that match the description.
-         * @param {string} [name] Limit experiments to those that match the name.
-         * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-         * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
+         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
+         * @param {string} [description] Limit runs to those that match the description.
+         * @param {string} [name] Limit runs to those that match the name.
+         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
+         * @param {boolean} [archived] Limit runs to those that are archived.
+         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
+         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
+         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
          * @param {number} [runIdFilterLt] Less than.
          * @param {number} [runIdFilterLte] Less than or equal.
          * @param {number} [runIdFilterGt] Greater than.
@@ -27858,18 +27858,18 @@ export class RunsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of runs.
-     * @param {V1GetRunsRequestSortBy} [sortBy] Sort experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
-     * @param {V1OrderBy} [orderBy] Order experiments in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {number} [offset] Skip the number of experiments before returning results. Negative values denote number of experiments to skip from the end before returning results.
-     * @param {number} [limit] Limit the number of experiments. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no experiments.
-     * @param {string} [description] Limit experiments to those that match the description.
-     * @param {string} [name] Limit experiments to those that match the name.
-     * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
-     * @param {boolean} [archived] Limit experiments to those that are archived.
-     * @param {Array<Experimentv1State>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-     * @param {Array<string>} [users] Limit experiments to those that are owned by users with the specified usernames.
-     * @param {Array<number>} [userIds] Limit experiments to those that are owned by users with the specified userIds.
-     * @param {number} [projectId] Limit experiments to those within a specified project, or 0 for all projects.
+     * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
+     * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
+     * @param {string} [description] Limit runs to those that match the description.
+     * @param {string} [name] Limit runs to those that match the name.
+     * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
+     * @param {boolean} [archived] Limit runs to those that are archived.
+     * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+     * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
+     * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
+     * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
      * @param {number} [runIdFilterLt] Less than.
      * @param {number} [runIdFilterLte] Less than or equal.
      * @param {number} [runIdFilterGt] Greater than.

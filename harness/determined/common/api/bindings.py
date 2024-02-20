@@ -5517,22 +5517,22 @@ class v1GetRolesByIDResponse(Printable):
         return out
 
 class v1GetRunsRequestSortBy(DetEnum):
-    """Sorts experiments by the given field.
-    - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
-    - SORT_BY_ID: Returns experiments sorted by id.
-    - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
-    - SORT_BY_START_TIME: Return experiments sorted by start time.
-    - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+    """Sorts runs by the given field.
+    - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.
+    - SORT_BY_ID: Returns runs sorted by id.
+    - SORT_BY_DESCRIPTION: Returns runs sorted by description.
+    - SORT_BY_START_TIME: Return runs sorted by start time.
+    - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are
     returned after the ones with end_time.
-    - SORT_BY_STATE: Return experiments sorted by state.
-    - SORT_BY_PROGRESS: Return experiments sorted by progress.
-    - SORT_BY_USER: Return experiments sorted by user.
-    - SORT_BY_NAME: Returns experiments sorted by name.
-    - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
-    - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
-    - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
-    - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
-    - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
+    - SORT_BY_STATE: Return runs sorted by state.
+    - SORT_BY_PROGRESS: Return runs sorted by progress.
+    - SORT_BY_USER: Return runs sorted by user.
+    - SORT_BY_NAME: Returns runs sorted by name.
+    - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.
+    - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.
+    - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.
+    - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.
+    - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
@@ -5550,7 +5550,7 @@ class v1GetRunsRequestSortBy(DetEnum):
     SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
 
 class v1GetRunsResponse(Printable):
-    """Response to GetExperimentsRequest."""
+    """Response to GetRunsRequest."""
 
     def __init__(
         self,
@@ -12256,6 +12256,7 @@ class v1RoleWithAssignments(Printable):
         return out
 
 class v1Run(Printable):
+    """Flat run respresentation."""
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
@@ -18296,22 +18297,22 @@ def get_GetRuns(
 ) -> "v1GetRunsResponse":
     """Get a list of runs.
 
-    - archived: Limit experiments to those that are archived.
-    - description: Limit experiments to those that match the description.
-    - labels: Limit experiments to those that match the provided labels.
-    - limit: Limit the number of experiments.
+    - archived: Limit runs to those that are archived.
+    - description: Limit runs to those that match the description.
+    - labels: Limit runs to those that match the provided labels.
+    - limit: Limit the number of runs.
 0 or Unspecified - returns a default of 100.
 -1               - returns everything.
--2               - returns pagination info but no experiments.
-    - name: Limit experiments to those that match the name.
-    - offset: Skip the number of experiments before returning results. Negative values
-denote number of experiments to skip from the end before returning results.
-    - orderBy: Order experiments in either ascending or descending order.
+-2               - returns pagination info but no runs.
+    - name: Limit runs to those that match the name.
+    - offset: Skip the number of runs before returning results. Negative values
+denote number of runs to skip from the end before returning results.
+    - orderBy: Order runs in either ascending or descending order.
 
  - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
  - ORDER_BY_ASC: Returns records in ascending order.
  - ORDER_BY_DESC: Returns records in descending order.
-    - projectId: Limit experiments to those within a specified project, or 0 for all
+    - projectId: Limit runs to those within a specified project, or 0 for all
 projects.
     - runIdFilter_gt: Greater than.
     - runIdFilter_gte: Greater than or equal.
@@ -18320,24 +18321,24 @@ projects.
     - runIdFilter_lte: Less than or equal.
     - runIdFilter_notIn: Not in a set.
     - showTrialData: whether to surface trial specific data from the best trial.
-    - sortBy: Sort experiments by the given field.
+    - sortBy: Sort runs by the given field.
 
- - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.
- - SORT_BY_ID: Returns experiments sorted by id.
- - SORT_BY_DESCRIPTION: Returns experiments sorted by description.
- - SORT_BY_START_TIME: Return experiments sorted by start time.
- - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are
+ - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.
+ - SORT_BY_ID: Returns runs sorted by id.
+ - SORT_BY_DESCRIPTION: Returns runs sorted by description.
+ - SORT_BY_START_TIME: Return runs sorted by start time.
+ - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are
 returned after the ones with end_time.
- - SORT_BY_STATE: Return experiments sorted by state.
- - SORT_BY_PROGRESS: Return experiments sorted by progress.
- - SORT_BY_USER: Return experiments sorted by user.
- - SORT_BY_NAME: Returns experiments sorted by name.
- - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.
- - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.
- - SORT_BY_CHECKPOINT_SIZE: Returns experiments sorted by checkpoint size.
- - SORT_BY_CHECKPOINT_COUNT: Returns experiments sorted by checkpoint count.
- - SORT_BY_SEARCHER_METRIC_VAL: Returns experiments sorted by searcher metric value..
-    - states: Limit experiments to those that match the provided state.
+ - SORT_BY_STATE: Return runs sorted by state.
+ - SORT_BY_PROGRESS: Return runs sorted by progress.
+ - SORT_BY_USER: Return runs sorted by user.
+ - SORT_BY_NAME: Returns runs sorted by name.
+ - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.
+ - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.
+ - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.
+ - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.
+ - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
+    - states: Limit runs to those that match the provided state.
 
  - STATE_UNSPECIFIED: The state of the experiment is unknown.
  - STATE_ACTIVE: The experiment is in an active state.
@@ -18360,9 +18361,9 @@ state.
 image. Starting is a substate of the Active state.
  - STATE_RUNNING: The experiment has an allocation actively running.
 Running is a substate of the Active state.
-    - userIds: Limit experiments to those that are owned by users with the specified
+    - userIds: Limit runs to those that are owned by users with the specified
 userIds.
-    - users: Limit experiments to those that are owned by users with the specified
+    - users: Limit runs to those that are owned by users with the specified
 usernames.
     """
     _params = {
