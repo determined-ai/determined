@@ -5516,66 +5516,6 @@ class v1GetRolesByIDResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
-class v1GetRunsRequestSortBy(DetEnum):
-    """Sorts runs by the given field.
-    - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.
-    - SORT_BY_ID: Returns runs sorted by id.
-    - SORT_BY_DESCRIPTION: Returns runs sorted by description.
-    - SORT_BY_START_TIME: Return runs sorted by start time.
-    - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are
-    returned after the ones with end_time.
-    - SORT_BY_STATE: Return runs sorted by state.
-    - SORT_BY_PROGRESS: Return runs sorted by progress.
-    - SORT_BY_USER: Return runs sorted by user.
-    - SORT_BY_NAME: Returns runs sorted by name.
-    - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.
-    - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.
-    - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.
-    - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.
-    - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    ID = "SORT_BY_ID"
-    DESCRIPTION = "SORT_BY_DESCRIPTION"
-    START_TIME = "SORT_BY_START_TIME"
-    END_TIME = "SORT_BY_END_TIME"
-    STATE = "SORT_BY_STATE"
-    PROGRESS = "SORT_BY_PROGRESS"
-    USER = "SORT_BY_USER"
-    NAME = "SORT_BY_NAME"
-    FORKED_FROM = "SORT_BY_FORKED_FROM"
-    RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
-    CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
-    CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
-    SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
-
-class v1GetRunsResponse(Printable):
-    """Response to GetRunsRequest."""
-
-    def __init__(
-        self,
-        *,
-        pagination: "v1Pagination",
-        runs: "typing.Sequence[v1Run]",
-    ):
-        self.pagination = pagination
-        self.runs = runs
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetRunsResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "pagination": v1Pagination.from_json(obj["pagination"]),
-            "runs": [v1Run.from_json(x) for x in obj["runs"]],
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "pagination": self.pagination.to_json(omit_unset),
-            "runs": [x.to_json(omit_unset) for x in self.runs],
-        }
-        return out
-
 class v1GetSearcherEventsResponse(Printable):
     """Response to GetSearcherEventsRequest."""
     searcherEvents: "typing.Optional[typing.Sequence[v1SearcherEvent]]" = None
@@ -12762,6 +12702,33 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
+class v1SearchRunsResponse(Printable):
+    """Response to SearchRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        pagination: "v1Pagination",
+        runs: "typing.Sequence[v1Run]",
+    ):
+        self.pagination = pagination
+        self.runs = runs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "runs": [v1Run.from_json(x) for x in obj["runs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "runs": [x.to_json(omit_unset) for x in self.runs],
+        }
+        return out
+
 class v1SearcherEvent(Printable):
     """SearcherEvent is a message from master to a client-driven custom searcher
     informing it of relevant changes in the state of an experiment.
@@ -18272,135 +18239,6 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
-def get_GetRuns(
-    session: "api.Session",
-    *,
-    archived: "typing.Optional[bool]" = None,
-    description: "typing.Optional[str]" = None,
-    labels: "typing.Optional[typing.Sequence[str]]" = None,
-    limit: "typing.Optional[int]" = None,
-    name: "typing.Optional[str]" = None,
-    offset: "typing.Optional[int]" = None,
-    orderBy: "typing.Optional[v1OrderBy]" = None,
-    projectId: "typing.Optional[int]" = None,
-    runIdFilter_gt: "typing.Optional[int]" = None,
-    runIdFilter_gte: "typing.Optional[int]" = None,
-    runIdFilter_incl: "typing.Optional[typing.Sequence[int]]" = None,
-    runIdFilter_lt: "typing.Optional[int]" = None,
-    runIdFilter_lte: "typing.Optional[int]" = None,
-    runIdFilter_notIn: "typing.Optional[typing.Sequence[int]]" = None,
-    showTrialData: "typing.Optional[bool]" = None,
-    sortBy: "typing.Optional[v1GetRunsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
-    userIds: "typing.Optional[typing.Sequence[int]]" = None,
-    users: "typing.Optional[typing.Sequence[str]]" = None,
-) -> "v1GetRunsResponse":
-    """Get a list of runs.
-
-    - archived: Limit runs to those that are archived.
-    - description: Limit runs to those that match the description.
-    - labels: Limit runs to those that match the provided labels.
-    - limit: Limit the number of runs.
-0 or Unspecified - returns a default of 100.
--1               - returns everything.
--2               - returns pagination info but no runs.
-    - name: Limit runs to those that match the name.
-    - offset: Skip the number of runs before returning results. Negative values
-denote number of runs to skip from the end before returning results.
-    - orderBy: Order runs in either ascending or descending order.
-
- - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
- - ORDER_BY_ASC: Returns records in ascending order.
- - ORDER_BY_DESC: Returns records in descending order.
-    - projectId: Limit runs to those within a specified project, or 0 for all
-projects.
-    - runIdFilter_gt: Greater than.
-    - runIdFilter_gte: Greater than or equal.
-    - runIdFilter_incl: In a set. `in` is a reserved word in python.
-    - runIdFilter_lt: Less than.
-    - runIdFilter_lte: Less than or equal.
-    - runIdFilter_notIn: Not in a set.
-    - showTrialData: whether to surface trial specific data from the best trial.
-    - sortBy: Sort runs by the given field.
-
- - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.
- - SORT_BY_ID: Returns runs sorted by id.
- - SORT_BY_DESCRIPTION: Returns runs sorted by description.
- - SORT_BY_START_TIME: Return runs sorted by start time.
- - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are
-returned after the ones with end_time.
- - SORT_BY_STATE: Return runs sorted by state.
- - SORT_BY_PROGRESS: Return runs sorted by progress.
- - SORT_BY_USER: Return runs sorted by user.
- - SORT_BY_NAME: Returns runs sorted by name.
- - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.
- - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.
- - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.
- - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.
- - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-    - states: Limit runs to those that match the provided state.
-
- - STATE_UNSPECIFIED: The state of the experiment is unknown.
- - STATE_ACTIVE: The experiment is in an active state.
- - STATE_PAUSED: The experiment is in a paused state
- - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.
- - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.
- - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.
- - STATE_COMPLETED: The experiment is completed and is shut down.
- - STATE_CANCELED: The experiment is canceled and is shut down.
- - STATE_ERROR: The experiment is errored and is shut down.
- - STATE_DELETED: The experiment has been deleted.
- - STATE_DELETING: The experiment is deleting.
- - STATE_DELETE_FAILED: The experiment failed to delete.
- - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
- - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued).
-Queued is a substate of the Active state.
- - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active
-state.
- - STATE_STARTING: The experiment is preparing the environment after finishing pulling the
-image. Starting is a substate of the Active state.
- - STATE_RUNNING: The experiment has an allocation actively running.
-Running is a substate of the Active state.
-    - userIds: Limit runs to those that are owned by users with the specified
-userIds.
-    - users: Limit runs to those that are owned by users with the specified
-usernames.
-    """
-    _params = {
-        "archived": str(archived).lower() if archived is not None else None,
-        "description": description,
-        "labels": labels,
-        "limit": limit,
-        "name": name,
-        "offset": offset,
-        "orderBy": orderBy.value if orderBy is not None else None,
-        "projectId": projectId,
-        "runIdFilter.gt": runIdFilter_gt,
-        "runIdFilter.gte": runIdFilter_gte,
-        "runIdFilter.incl": runIdFilter_incl,
-        "runIdFilter.lt": runIdFilter_lt,
-        "runIdFilter.lte": runIdFilter_lte,
-        "runIdFilter.notIn": runIdFilter_notIn,
-        "showTrialData": str(showTrialData).lower() if showTrialData is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
-        "states": [x.value for x in states] if states is not None else None,
-        "userIds": userIds,
-        "users": users,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/runs",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetRunsResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetRuns", _resp)
-
 def get_GetSearcherEvents(
     session: "api.Session",
     *,
@@ -21572,6 +21410,44 @@ def post_SearchRolesAssignableToScope(
         return v1SearchRolesAssignableToScopeResponse.from_json(_resp.json())
     raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
+def get_SearchRuns(
+    session: "api.Session",
+    *,
+    filter: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
+) -> "v1SearchRunsResponse":
+    """Get a list of runs.
+
+    - filter: Filter expression.
+    - limit: How many results to show.
+    - offset: How many experiments to skip before including in the results.
+    - projectId: ID of the project to look at.
+    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+    """
+    _params = {
+        "filter": filter,
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+        "sort": sort,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchRunsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchRuns", _resp)
+
 def post_SetCommandPriority(
     session: "api.Session",
     *,
@@ -22388,7 +22264,6 @@ Paginated = typing.Union[
     v1GetModelsResponse,
     v1GetNotebooksResponse,
     v1GetResourcePoolsResponse,
-    v1GetRunsResponse,
     v1GetShellsResponse,
     v1GetTemplatesResponse,
     v1GetTensorboardsResponse,
@@ -22402,4 +22277,5 @@ Paginated = typing.Union[
     v1ListWorkspacesBoundToRPResponse,
     v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
+    v1SearchRunsResponse,
 ]

@@ -4153,47 +4153,6 @@ export interface V1GetRolesByIDResponse {
     roles?: Array<V1RoleWithAssignments>;
 }
 /**
- * Sorts runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
- * @export
- * @enum {string}
- */
-export const V1GetRunsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
-    ID: 'SORT_BY_ID',
-    DESCRIPTION: 'SORT_BY_DESCRIPTION',
-    STARTTIME: 'SORT_BY_START_TIME',
-    ENDTIME: 'SORT_BY_END_TIME',
-    STATE: 'SORT_BY_STATE',
-    PROGRESS: 'SORT_BY_PROGRESS',
-    USER: 'SORT_BY_USER',
-    NAME: 'SORT_BY_NAME',
-    FORKEDFROM: 'SORT_BY_FORKED_FROM',
-    RESOURCEPOOL: 'SORT_BY_RESOURCE_POOL',
-    CHECKPOINTSIZE: 'SORT_BY_CHECKPOINT_SIZE',
-    CHECKPOINTCOUNT: 'SORT_BY_CHECKPOINT_COUNT',
-    SEARCHERMETRICVAL: 'SORT_BY_SEARCHER_METRIC_VAL',
-} as const
-export type V1GetRunsRequestSortBy = ValueOf<typeof V1GetRunsRequestSortBy>
-/**
- * Response to GetRunsRequest.
- * @export
- * @interface V1GetRunsResponse
- */
-export interface V1GetRunsResponse {
-    /**
-     * The list of returned runs.
-     * @type {Array<V1Run>}
-     * @memberof V1GetRunsResponse
-     */
-    runs: Array<V1Run>;
-    /**
-     * Pagination information of the full dataset.
-     * @type {V1Pagination}
-     * @memberof V1GetRunsResponse
-     */
-    pagination: V1Pagination;
-}
-/**
  * Response to GetSearcherEventsRequest.
  * @export
  * @interface V1GetSearcherEventsResponse
@@ -9424,6 +9383,25 @@ export interface V1SearchRolesAssignableToScopeResponse {
      * @memberof V1SearchRolesAssignableToScopeResponse
      */
     roles?: Array<V1Role>;
+}
+/**
+ * Response to SearchRunsResponse.
+ * @export
+ * @interface V1SearchRunsResponse
+ */
+export interface V1SearchRunsResponse {
+    /**
+     * The list of returned runs.
+     * @type {Array<V1Run>}
+     * @memberof V1SearchRunsResponse
+     */
+    runs: Array<V1Run>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1SearchRunsResponse
+     */
+    pagination: V1Pagination;
 }
 /**
  * Set the priority of the requested command.
@@ -27640,29 +27618,15 @@ export const RunsApiFetchParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
-         * @param {string} [description] Limit runs to those that match the description.
-         * @param {string} [name] Limit runs to those that match the name.
-         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
-         * @param {boolean} [archived] Limit runs to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
-         * @param {number} [runIdFilterLt] Less than.
-         * @param {number} [runIdFilterLte] Less than or equal.
-         * @param {number} [runIdFilterGt] Greater than.
-         * @param {number} [runIdFilterGte] Greater than or equal.
-         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
-         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/runs`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -27677,12 +27641,8 @@ export const RunsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy
-            }
-            
-            if (orderBy !== undefined) {
-                localVarQueryParameter['orderBy'] = orderBy
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
             }
             
             if (offset !== undefined) {
@@ -27693,64 +27653,12 @@ export const RunsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (description !== undefined) {
-                localVarQueryParameter['description'] = description
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
             }
             
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name
-            }
-            
-            if (labels) {
-                localVarQueryParameter['labels'] = labels
-            }
-            
-            if (archived !== undefined) {
-                localVarQueryParameter['archived'] = archived
-            }
-            
-            if (states) {
-                localVarQueryParameter['states'] = states
-            }
-            
-            if (users) {
-                localVarQueryParameter['users'] = users
-            }
-            
-            if (userIds) {
-                localVarQueryParameter['userIds'] = userIds
-            }
-            
-            if (projectId !== undefined) {
-                localVarQueryParameter['projectId'] = projectId
-            }
-            
-            if (runIdFilterLt !== undefined) {
-                localVarQueryParameter['runIdFilter.lt'] = runIdFilterLt
-            }
-            
-            if (runIdFilterLte !== undefined) {
-                localVarQueryParameter['runIdFilter.lte'] = runIdFilterLte
-            }
-            
-            if (runIdFilterGt !== undefined) {
-                localVarQueryParameter['runIdFilter.gt'] = runIdFilterGt
-            }
-            
-            if (runIdFilterGte !== undefined) {
-                localVarQueryParameter['runIdFilter.gte'] = runIdFilterGte
-            }
-            
-            if (runIdFilterIncl) {
-                localVarQueryParameter['runIdFilter.incl'] = runIdFilterIncl
-            }
-            
-            if (runIdFilterNotIn) {
-                localVarQueryParameter['runIdFilter.notIn'] = runIdFilterNotIn
-            }
-            
-            if (showTrialData !== undefined) {
-                localVarQueryParameter['showTrialData'] = showTrialData
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27774,30 +27682,16 @@ export const RunsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
-         * @param {string} [description] Limit runs to those that match the description.
-         * @param {string} [name] Limit runs to those that match the name.
-         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
-         * @param {boolean} [archived] Limit runs to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
-         * @param {number} [runIdFilterLt] Less than.
-         * @param {number} [runIdFilterLte] Less than or equal.
-         * @param {number} [runIdFilterGt] Greater than.
-         * @param {number} [runIdFilterGte] Greater than or equal.
-         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
-         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRunsResponse> {
-            const localVarFetchArgs = RunsApiFetchParamCreator(configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options);
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
+            const localVarFetchArgs = RunsApiFetchParamCreator(configuration).searchRuns(projectId, offset, limit, sort, filter, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27820,30 +27714,16 @@ export const RunsApiFactory = function (configuration?: Configuration, fetch?: F
         /**
          * 
          * @summary Get a list of runs.
-         * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-         * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
-         * @param {string} [description] Limit runs to those that match the description.
-         * @param {string} [name] Limit runs to those that match the name.
-         * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
-         * @param {boolean} [archived] Limit runs to those that are archived.
-         * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-         * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
-         * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
-         * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
-         * @param {number} [runIdFilterLt] Less than.
-         * @param {number} [runIdFilterLte] Less than or equal.
-         * @param {number} [runIdFilterGt] Greater than.
-         * @param {number} [runIdFilterGte] Greater than or equal.
-         * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [runIdFilterNotIn] Not in a set.
-         * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
-            return RunsApiFp(configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options)(fetch, basePath);
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+            return RunsApiFp(configuration).searchRuns(projectId, offset, limit, sort, filter, options)(fetch, basePath);
         },
     }
 };
@@ -27858,31 +27738,17 @@ export class RunsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of runs.
-     * @param {V1GetRunsRequestSortBy} [sortBy] Sort runs by the given field.   - SORT_BY_UNSPECIFIED: Returns runs in an unsorted list.  - SORT_BY_ID: Returns runs sorted by id.  - SORT_BY_DESCRIPTION: Returns runs sorted by description.  - SORT_BY_START_TIME: Return runs sorted by start time.  - SORT_BY_END_TIME: Return runs sorted by end time. Runs without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return runs sorted by state.  - SORT_BY_PROGRESS: Return runs sorted by progress.  - SORT_BY_USER: Return runs sorted by user.  - SORT_BY_NAME: Returns runs sorted by name.  - SORT_BY_FORKED_FROM: Returns runs sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns runs sorted by resource pool.  - SORT_BY_CHECKPOINT_SIZE: Returns runs sorted by checkpoint size.  - SORT_BY_CHECKPOINT_COUNT: Returns runs sorted by checkpoint count.  - SORT_BY_SEARCHER_METRIC_VAL: Returns runs sorted by searcher metric value..
-     * @param {V1OrderBy} [orderBy] Order runs in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-     * @param {number} [offset] Skip the number of runs before returning results. Negative values denote number of runs to skip from the end before returning results.
-     * @param {number} [limit] Limit the number of runs. 0 or Unspecified - returns a default of 100. -1               - returns everything. -2               - returns pagination info but no runs.
-     * @param {string} [description] Limit runs to those that match the description.
-     * @param {string} [name] Limit runs to those that match the name.
-     * @param {Array<string>} [labels] Limit runs to those that match the provided labels.
-     * @param {boolean} [archived] Limit runs to those that are archived.
-     * @param {Array<Experimentv1State>} [states] Limit runs to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
-     * @param {Array<string>} [users] Limit runs to those that are owned by users with the specified usernames.
-     * @param {Array<number>} [userIds] Limit runs to those that are owned by users with the specified userIds.
-     * @param {number} [projectId] Limit runs to those within a specified project, or 0 for all projects.
-     * @param {number} [runIdFilterLt] Less than.
-     * @param {number} [runIdFilterLte] Less than or equal.
-     * @param {number} [runIdFilterGt] Greater than.
-     * @param {number} [runIdFilterGte] Greater than or equal.
-     * @param {Array<number>} [runIdFilterIncl] In a set. `in` is a reserved word in python.
-     * @param {Array<number>} [runIdFilterNotIn] Not in a set.
-     * @param {boolean} [showTrialData] whether to surface trial specific data from the best trial.
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RunsApi
      */
-    public getRuns(sortBy?: V1GetRunsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<Experimentv1State>, users?: Array<string>, userIds?: Array<number>, projectId?: number, runIdFilterLt?: number, runIdFilterLte?: number, runIdFilterGt?: number, runIdFilterGte?: number, runIdFilterIncl?: Array<number>, runIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
-        return RunsApiFp(this.configuration).getRuns(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, runIdFilterLt, runIdFilterLte, runIdFilterGt, runIdFilterGte, runIdFilterIncl, runIdFilterNotIn, showTrialData, options)(this.fetch, this.basePath)
+    public searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+        return RunsApiFp(this.configuration).searchRuns(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
 }

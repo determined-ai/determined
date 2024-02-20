@@ -32,77 +32,20 @@ message RunPrepareForReportingResponse {
 }
 
 // Get a list of runs.
-message GetRunsRequest {
-  // Sorts runs by the given field.
-  enum SortBy {
-    // Returns runs in an unsorted list.
-    SORT_BY_UNSPECIFIED = 0;
-    // Returns runs sorted by id.
-    SORT_BY_ID = 1;
-    // Returns runs sorted by description.
-    SORT_BY_DESCRIPTION = 2;
-    // Return runs sorted by start time.
-    SORT_BY_START_TIME = 4;
-    // Return runs sorted by end time. Runs without end_time are
-    // returned after the ones with end_time.
-    SORT_BY_END_TIME = 5;
-    // Return runs sorted by state.
-    SORT_BY_STATE = 6;
-    // Return runs sorted by progress.
-    SORT_BY_PROGRESS = 9;
-    // Return runs sorted by user.
-    SORT_BY_USER = 10;
-    // Returns runs sorted by name.
-    SORT_BY_NAME = 11;
-    // Returns runs sorted by originating model.
-    SORT_BY_FORKED_FROM = 12;
-    // Returns runs sorted by resource pool.
-    SORT_BY_RESOURCE_POOL = 13;
-    // Returns runs sorted by checkpoint size.
-    SORT_BY_CHECKPOINT_SIZE = 15;
-    // Returns runs sorted by checkpoint count.
-    SORT_BY_CHECKPOINT_COUNT = 16;
-    // Returns runs sorted by searcher metric value..
-    SORT_BY_SEARCHER_METRIC_VAL = 17;
-  }
-  // Sort runs by the given field.
-  SortBy sort_by = 1;
-  // Order runs in either ascending or descending order.
-  OrderBy order_by = 2;
-  // Skip the number of runs before returning results. Negative values
-  // denote number of runs to skip from the end before returning results.
-  int32 offset = 3;
-  // Limit the number of runs.
-  // 0 or Unspecified - returns a default of 100.
-  // -1               - returns everything.
-  // -2               - returns pagination info but no runs.
-  int32 limit = 4;
-  // Limit runs to those that match the description.
-  string description = 5;
-  // Limit runs to those that match the name.
-  string name = 10;
-  // Limit runs to those that match the provided labels.
-  repeated string labels = 6;
-  // Limit runs to those that are archived.
-  google.protobuf.BoolValue archived = 7;
-  // Limit runs to those that match the provided state.
-  repeated determined.experiment.v1.State states = 8;
-  // Limit runs to those that are owned by users with the specified
-  // usernames.
-  repeated string users = 9;
-  // Limit runs to those that are owned by users with the specified
-  // userIds.
-  repeated int32 user_ids = 11;
-  // Limit runs to those within a specified project, or 0 for all
-  // projects.
-  int32 project_id = 12;
-  // filtering by experiment ids
-  determined.common.v1.Int32FieldFilter run_id_filter = 13;
-  // whether to surface trial specific data from the best trial
-  bool show_trial_data = 14;
+message SearchRunsRequest {
+    // ID of the project to look at
+    optional int32 project_id = 1;
+    // How many experiments to skip before including in the results
+    int32 offset = 2;
+    // How many results to show
+    int32 limit = 3;
+    // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+    optional string sort = 4;
+    // Filter expression
+    optional string filter = 5;
 }
-// Response to GetRunsRequest.
-message GetRunsResponse {
+// Response to SearchRunsResponse.
+message SearchRunsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "runs", "pagination" ] }
   };

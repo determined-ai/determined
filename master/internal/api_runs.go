@@ -2,8 +2,8 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
@@ -55,110 +55,24 @@ func (a *apiServer) RunPrepareForReporting(
 	}, nil
 }
 
-func (a *apiServer) GetRuns(
-	ctx context.Context, req *apiv1.GetRunsRequest,
-) (*apiv1.GetRunsResponse, error) {
-	resp := &apiv1.GetRunsResponse{Runs: []*trialv1.Run{}}
+func (a *apiServer) SearchRuns(
+	ctx context.Context, req *apiv1.SearchRunsRequest,
+) (*apiv1.SearchRunsResponse, error) {
+	resp := &apiv1.SearchRunsResponse{Runs: []*trialv1.Run{}}
 	query := db.Bun().NewSelect().
 		Model(&resp.Runs).
 		ModelTableExpr("runs AS r").
 		Apply(getRunstColumns)
 		// Limit(int(req.Limit)).
 		// Scan(ctx)
-	// Construct the ordering expression.
-	orderColMap := map[apiv1.GetRunsRequest_SortBy]string{
-		apiv1.GetRunsRequest_SORT_BY_UNSPECIFIED:      "id",
-		apiv1.GetRunsRequest_SORT_BY_ID:               "id",
-		apiv1.GetRunsRequest_SORT_BY_DESCRIPTION:      "description",
-		apiv1.GetRunsRequest_SORT_BY_NAME:             "name",
-		apiv1.GetRunsRequest_SORT_BY_START_TIME:       "e.start_time",
-		apiv1.GetRunsRequest_SORT_BY_END_TIME:         "e.end_time",
-		apiv1.GetRunsRequest_SORT_BY_STATE:            "r.state",
-		apiv1.GetRunsRequest_SORT_BY_PROGRESS:         "COALESCE(progress, 0)",
-		apiv1.GetRunsRequest_SORT_BY_USER:             "display_name",
-		apiv1.GetRunsRequest_SORT_BY_FORKED_FROM:      "e.parent_id",
-		apiv1.GetRunsRequest_SORT_BY_RESOURCE_POOL:    "resource_pool",
-		apiv1.GetRunsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
-		apiv1.GetRunsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
-		apiv1.GetRunsRequest_SORT_BY_SEARCHER_METRIC_VAL: `(
-			SELECT
-				searcher_metric_value
-			FROM trials t
-			WHERE t.id = e.best_trial_id
-		) `,
-	}
-	sortByMap := map[apiv1.OrderBy]string{
-		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
-		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
-		apiv1.OrderBy_ORDER_BY_DESC:        "DESC NULLS LAST",
-	}
-	orderExpr := ""
-	switch _, ok := orderColMap[req.SortBy]; {
-	case !ok:
-		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case orderColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
-		orderExpr = fmt.Sprintf(
-			"%s %s, id %s",
-			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
-		)
-	default:
-		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
-	}
-	query = query.OrderExpr(orderExpr)
-
-	// Filtering
-	if req.Description != "" {
-		query = query.Where("e.config->>'description' ILIKE ('%%' || ? || '%%')", req.Description)
-	}
-	if req.Name != "" {
-		query = query.Where("e.config->>'name' ILIKE ('%%' || ? || '%%')", req.Name)
-	}
-	if len(req.Labels) > 0 {
-		// In the event labels were removed, if all were removed we insert null,
-		// which previously broke this query.
-		query = query.Where(`string_to_array(?, ',') <@ ARRAY(SELECT jsonb_array_elements_text(
-				CASE WHEN e.config->'labels'::text = 'null'
-				THEN NULL
-				ELSE e.config->'labels' END
-			))`, strings.Join(req.Labels, ",")) // Trying bun.In doesn't work.
-	}
-	if req.Archived != nil {
-		query = query.Where("e.archived = ?", req.Archived.Value)
-		if req.ProjectId == 0 && !req.Archived.Value {
-			query = query.Where("w.archived= ?", req.Archived.Value)
-			query = query.Where("p.archived= ?", req.Archived.Value)
-		}
-	}
-	if len(req.States) > 0 {
-		// FIXME(DET-9567): the api state parameter and the database state column do not match.
-		var allStates []string
-		for _, state := range req.States {
-			allStates = append(allStates, strings.TrimPrefix(state.String(), "STATE_"))
-		}
-		query = query.Where("e.state IN (?)", bun.In(allStates))
-	}
-	if len(req.Users) > 0 {
-		query = query.Where("u.username IN (?)", bun.In(req.Users))
-	}
-	if len(req.UserIds) > 0 {
-		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
-	}
-
-	if req.RunIdFilter != nil {
-		var err error
-		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("r.id"), req.RunIdFilter)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 	var proj *projectv1.Project
-	if req.ProjectId != 0 {
-		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
+	if req.ProjectId != nil {
+		proj, err = a.GetProjectByID(ctx, *req.ProjectId, *curUser)
 		if err != nil {
 			return nil, err
 		}
@@ -170,6 +84,35 @@ func (a *apiServer) GetRuns(
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 		); err != nil {
 		return nil, err
+	}
+
+	if req.Filter != nil {
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(*req.Filter), &efr)
+		if err != nil {
+			return nil, err
+		}
+		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(q)
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
+			return q
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Sort != nil {
+		err = sortExperiments(req.Sort, query)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		query.OrderExpr("id ASC")
 	}
 
 	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
