@@ -1003,7 +1003,7 @@ commands:
                 name: CPU setup helm overrides
       - run:
           command: |
-            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tls-secret:<<parameters.master-cert-name>>"' >> "$BASH_ENV"
           name: Setup TLS Helm Values
       - run:
           command: |
@@ -1043,6 +1043,9 @@ commands:
       - run:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
+      - run: 
+          command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
+
       - helm/install-helm-client:
           version: v3.2.4
       - run:
