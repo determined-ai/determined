@@ -131,3 +131,5 @@ export const useTypedParams = <T extends t.HasProps>(
     updateParams,
   };
 };
+
+export default useTypedParams;
