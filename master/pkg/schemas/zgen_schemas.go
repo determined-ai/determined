@@ -690,21 +690,31 @@ var (
                             ],
                             "default": null,
                             "items": {
-                                "type": "object",
-                                "disallowProperties": {
-                                    "image": "container Image is not configurable, set it in the experiment config",
-                                    "command": "container Command is not configurable",
-                                    "args": "container Args are not configurable",
-                                    "working_dir": "container WorkingDir is not configurable",
-                                    "ports": "container Ports are not configurable",
-                                    "liveness_probe": "container LivenessProbe is not configurable",
-                                    "readiness_probe": "container ReadinessProbe is not configurable",
-                                    "startup_probe": "container StartupProbe is not configurable",
-                                    "lifecycle": "container Lifecycle is not configurable",
-                                    "termination_message_path": "container TerminationMessagePath is not configurable",
-                                    "termination_message_policy": "container TerminationMessagePolicy is not configurable",
-                                    "image_pull_policy": "container ImagePullPolicy is not configurable, set it in the experiment config",
-                                    "security_context": "container SecurityContext is not configurable, set it in the experiment config"
+                                "$comment": "if container name is 'determined-container', reject most edits to the container spec (which is ours to configure)",
+                                "if": {
+                                    "properties": {
+                                        "name": {
+                                            "const": "determined-container"
+                                        }
+                                    }
+                                },
+                                "then": {
+                                    "type": "object",
+                                    "disallowProperties": {
+                                        "image": "container Image is not configurable, set it in the experiment config",
+                                        "command": "container Command is not configurable",
+                                        "args": "container Args are not configurable",
+                                        "working_dir": "container WorkingDir is not configurable",
+                                        "ports": "container Ports are not configurable",
+                                        "liveness_probe": "container LivenessProbe is not configurable",
+                                        "readiness_probe": "container ReadinessProbe is not configurable",
+                                        "startup_probe": "container StartupProbe is not configurable",
+                                        "lifecycle": "container Lifecycle is not configurable",
+                                        "termination_message_path": "container TerminationMessagePath is not configurable",
+                                        "termination_message_policy": "container TerminationMessagePolicy is not configurable",
+                                        "image_pull_policy": "container ImagePullPolicy is not configurable, set it in the experiment config",
+                                        "security_context": "container SecurityContext is not configurable, set it in the experiment config"
+                                    }
                                 }
                             }
                         }

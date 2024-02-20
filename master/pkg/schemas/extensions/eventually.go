@@ -1,4 +1,32 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// eventually allows for two-step validation, by only enforcing the specified subschemas
+// during the completeness validation phase. This is a requirement specific to Determined.
+//
+// One use case is when it is necessary to enforce a `oneOf` on two fields that are
+// `eventuallyRequired`. If the `oneOf` is evaluated during the sanity validation phase, it will
+// always fail, if for example, the user is using cluster default values, but if validation
+// for this subschema is held off until completeness validation, it will validate correctly.
+//
+// Example: eventually require one of connection string and account url to be specified:
+//
+// "eventually": {
+//     "checks": {
+//         "Exactly one of connection_string or account_url must be set": {
+//             "oneOf": [
+//                 {
+//                     "eventuallyRequired": [
+//                         "connection_string"
+//                     ]
+//                 },
+//                 {
+//                     "eventuallyRequired": [
+//                         "account_url"
+//                     ]
+//                 }
+//             ]
+//         }
+//     }
+// }
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions

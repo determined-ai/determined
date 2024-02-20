@@ -1,4 +1,11 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// eventuallyRequred allows for two-step validation.  This is a requirement specific to Determined
+// because there are fields required (checkpoint_storage) but which may not be present in what the
+// user actually submits, since a cluster default may be present.
+//
+// eventuallyRequired behaves identically to required, only when building the validator, it is
+// possible to not include the eventuallyRequired extension; making it possible to *not* enforce
+// eventuallyRequired at specific times.
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions

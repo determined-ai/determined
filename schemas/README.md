@@ -8,7 +8,6 @@
   - See `schemas/expconf` for logics that are shared across languages.
   - See `schemas/test_cases` for test cases that are shared across languages.
   - See `master/pkg/schemas/expconf` for go struct definitions.
-  - See `harness/determined/common/schemas/expconf` for python class definitions.
 
 - We generate code that contains the definitions and utility functions of
   structs.  See `schemas/gen.py`.
@@ -24,7 +23,7 @@
 
 - Null handling:
   - Anything with a null value is treated as not present.
-  - Reason: there is no pythonic or golangic way to represent values which were
+  - Reason: there is no golangic way to represent values which were
     provided in the configuration as literal nulls, rather than values which
     were not provided at all.  In theory, you could have singleton
     "NotProvided" pointers, which you would check for every time that you
@@ -48,8 +47,12 @@
     - `union`: Excellent error messages when validating union types
     - `optionalRef`: like `$ref`, but only enforced for non-null values
     - `eventually`: Defer validation of inner clause till completeness validation phase
-  - The canonical implementations (with thorough comments) may be found in
-    `harness/determined/common/schemas/extensions.py`.
+  - The implementations of the extensions (with thorough comments) may be found
+    in `master/pkg/schemas/extensions/*.go`.
+  - The old python implementations were easier to read and understand, but
+    they were not ever used and so were removed in 5d9266a0.  Looking at
+    `harness/determined/common/schemas/extensions.py` in `5d9266a0~` may be
+    instructive.
 
 - Migration and Versioning:
   - Migration logics are implemented in the master. See `pkg/schemas/expconf/parse.go`.
@@ -73,4 +76,3 @@
       - update any uses of that object throughout the codebase to reflect
         the new structure.
       - ensure that `make gen && go test ./pkg/schemas/expconf` passes
-    - Currently, no python or JS changes are needed.

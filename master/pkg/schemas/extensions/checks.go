@@ -1,4 +1,18 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// checks is a simple extension that returns a specific error if a subschema fails to match.
+//
+// The keys of the "checks" dictionary are the user-facing messages, and the values are the
+// subschemas that must match.
+//
+// Example:
+//
+//     "checks": {
+//         "you must specify an entrypoint that references the trial class":{
+//             ... (schema which allows Native API or requires that entrypoint is set) ...
+//         },
+//         "you requested a bayesian search but hyperband is way better": {
+//             ... (schema which checks if you try searcher.name=baysian) ...
+//         }
+//     }
 
 // This file is a tutorial for implementing extensions for the santhosh-tekuri/jsonschema package.
 //
