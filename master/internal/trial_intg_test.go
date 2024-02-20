@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -59,7 +59,7 @@ func TestTrial(t *testing.T) {
 		Closed:   true,
 	}))
 
-	dbTrial, err := db.TrialByID(context.TODO(), tr.id)
+	dbTrial, err := internaldb.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
 	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
 
@@ -72,7 +72,7 @@ func TestTrial(t *testing.T) {
 	}
 	require.True(t, model.TerminalStates[tr.state])
 
-	dbTrial, err = db.TrialByID(context.TODO(), tr.id)
+	dbTrial, err = internaldb.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
 	require.Equal(t, dbTrial.State, model.CompletedState)
 }
@@ -99,7 +99,7 @@ func TestTrialRestarts(t *testing.T) {
 		tr.AllocationExitedCallback(&task.AllocationExited{Err: errors.New("bad stuff went down")})
 
 		if i == tr.config.MaxRestarts() {
-			dbTrial, err := db.TrialByID(context.TODO(), tr.id)
+			dbTrial, err := internaldb.TrialByID(context.TODO(), tr.id)
 			require.NoError(t, err)
 			require.Equal(t, dbTrial.State, model.ErrorState)
 		} else {
@@ -118,7 +118,7 @@ func TestTrialRestarts(t *testing.T) {
 }
 
 func setup(t *testing.T) (
-	*db.PgDB,
+	*internaldb.PgDB,
 	model.RequestID,
 	*trial,
 	*allocationmocks.AllocationService,
@@ -139,7 +139,7 @@ func setup(t *testing.T) (
 
 	a, _, _ := setupAPITest(t, nil)
 	j := &model.Job{JobID: model.NewJobID(), JobType: model.JobTypeExperiment}
-	require.NoError(t, a.m.db.AddJob(j))
+	require.NoError(t, internaldb.AddJob(j))
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
