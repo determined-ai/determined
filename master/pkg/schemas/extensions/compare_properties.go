@@ -1,4 +1,14 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// compareProperties allows a schema to compare values in the instance against each other.
+// Amazingly, json-schema does not have a built-in way to do this.
+//
+// Example: ensuring that hyperparmeter minval is less than maxval:
+//
+//     "compareProperties": {
+//         "type": "a<b",
+//         "a": "minval",
+//         "b": "maxval"
+//     }
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions

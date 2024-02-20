@@ -1,4 +1,16 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// disallowProperties is for restricting which properties are allowed in an object with
+// per-property, such as when we allow a k8s pod spec with some fields disallowed.
+//
+// Example: The "pod_spec" property of the environment config:
+//
+//     "pod_spec": {
+//         "type": "object",
+//         "disallowProperties": {
+//             "name": "pod Name is not a configurable option",
+//             "name_space": "pod NameSpace is not a configurable option"
+//         }
+//     }
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions
