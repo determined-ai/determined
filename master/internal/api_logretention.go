@@ -26,7 +26,9 @@ func (a *apiServer) CleanupLogs(
 		return nil, permErr
 	}
 
-	resp := &apiv1.CleanupLogsResponse{}
-	resp.RemovedCount, err = logretention.DeleteExpiredTaskLogs(a.m.taskSpec.LogRetentionDays)
-	return resp, err
+	removed, err := logretention.DeleteExpiredTaskLogs(ctx, a.m.taskSpec.LogRetentionDays)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.CleanupLogsResponse{RemovedCount: removed}, nil
 }

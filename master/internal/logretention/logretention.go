@@ -24,8 +24,8 @@ var (
 	}
 	scheduler gocron.Scheduler
 
-	// WaitGroup is used for testing purposes to wait for the log retention scheduler to finish.
-	WaitGroup *sync.WaitGroup
+	// TestingOnlySynchronizationHelper is used for testing purposes to wait for the log retention scheduler to finish.
+	TestingOnlySynchronizationHelper *sync.WaitGroup
 )
 
 func init() {
@@ -50,11 +50,11 @@ func Schedule(config model.LogRetentionPolicy) error {
 	// Create a task that deletes expired task logs.
 	task := gocron.NewTask(func() {
 		defer func() {
-			if WaitGroup != nil {
-				WaitGroup.Done()
+			if TestingOnlySynchronizationHelper != nil {
+				TestingOnlySynchronizationHelper.Done()
 			}
 		}()
-		count, err := DeleteExpiredTaskLogs(config.Days)
+		count, err := DeleteExpiredTaskLogs(context.Background(), config.Days)
 		if err != nil {
 			log.WithError(err).Error("failed to delete expired task logs")
 		} else if count > 0 {
@@ -86,7 +86,7 @@ func Schedule(config model.LogRetentionPolicy) error {
 
 // DeleteExpiredTaskLogs deletes task logs older than days time when defined and non-negative.
 // Task configured values may override the default provided number of days for retention.
-func DeleteExpiredTaskLogs(days *int16) (int64, error) {
+func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 	// If days is nil, use the default value of -1 to retain logs forever.
 	var defaultLogRetentionDays int16 = retainForever
 	if days != nil {
@@ -105,7 +105,7 @@ func DeleteExpiredTaskLogs(days *int16) (int64, error) {
 			WHERE log_retention_days >= 0
 				AND end_time <= ( retention_timestamp() - make_interval(days => log_retention_days) )
 		)
-	`, defaultLogRetentionDays)).Exec(context.Background())
+	`, defaultLogRetentionDays)).Exec(ctx)
 	if err != nil {
 		return 0, errors.Wrap(err, "error deleting expired task logs")
 	}

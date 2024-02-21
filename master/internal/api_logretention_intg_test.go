@@ -140,7 +140,7 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	require.NoError(t, quoteSetRetentionTime(time.Now().AddDate(0, 0, 30)))
 
 	// Verify that the logs are still there if we delete with 0 day expiration.
-	count, err := logretention.DeleteExpiredTaskLogs(ptrs.Ptr(int16(0)))
+	count, err := logretention.DeleteExpiredTaskLogs(ctx, ptrs.Ptr(int16(0)))
 	require.NoError(t, err)
 	require.Equal(t, int64(0), count)
 
@@ -159,14 +159,14 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 		require.Equal(t, int64(1), rows)
 	}
 	// Verify that the logs are still there if we delete without an expirary.
-	count, err = logretention.DeleteExpiredTaskLogs(nil)
+	count, err = logretention.DeleteExpiredTaskLogs(ctx, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), count)
 
 	// Move time database time 100 days in the future.
 	require.NoError(t, quoteSetRetentionTime(time.Now().AddDate(0, 0, 100).Add(time.Second)))
 	// Verify that the logs are deleted with a 100 day expiration.
-	count, err = logretention.DeleteExpiredTaskLogs(ptrs.Ptr(int16(100)))
+	count, err = logretention.DeleteExpiredTaskLogs(ctx, ptrs.Ptr(int16(100)))
 	require.NoError(t, err)
 	require.Equal(t, int64(10), count)
 
@@ -192,14 +192,14 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	// Move time database time 999 days in the future.
 	require.NoError(t, quoteSetRetentionTime(time.Now().AddDate(0, 0, 999).Add(time.Second)))
 	// Verify that the logs are not deleted with a 999 day expiration.
-	count, err = logretention.DeleteExpiredTaskLogs(ptrs.Ptr(int16(999)))
+	count, err = logretention.DeleteExpiredTaskLogs(ctx, ptrs.Ptr(int16(999)))
 	require.NoError(t, err)
 	require.Equal(t, int64(0), count)
 
 	// Move time database time 1000 days in the future.
 	require.NoError(t, quoteSetRetentionTime(time.Now().AddDate(0, 0, 1000).Add(time.Second)))
 	// Verify that the logs are deleted with a 1000 day expiration.
-	count, err = logretention.DeleteExpiredTaskLogs(ptrs.Ptr(int16(1000)))
+	count, err = logretention.DeleteExpiredTaskLogs(ctx, ptrs.Ptr(int16(1000)))
 	require.NoError(t, err)
 	require.Equal(t, int64(10), count)
 
@@ -219,7 +219,7 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	// Move time database time 100 years in the future.
 	require.NoError(t, quoteSetRetentionTime(time.Now().AddDate(100, 0, 0).Add(time.Second)))
 	// Verify that the logs are not deleted with a 0 day expiration.
-	count, err = logretention.DeleteExpiredTaskLogs(ptrs.Ptr(int16(0)))
+	count, err = logretention.DeleteExpiredTaskLogs(ctx, ptrs.Ptr(int16(0)))
 	require.NoError(t, err)
 	require.Equal(t, int64(0), count)
 
@@ -251,11 +251,11 @@ func incrementScheduler(
 ) (time.Time, clockwork.FakeClock) {
 	for i := 0; i < days; i++ {
 		fakeClock.BlockUntil(1)
-		logretention.WaitGroup.Add(1)
+		logretention.TestingOnlySynchronizationHelper.Add(1)
 		timestamp = timestamp.AddDate(0, 0, 1)
 		require.NoError(t, quoteSetRetentionTime(timestamp))
 		fakeClock.Advance(timestamp.Sub(fakeClock.Now()))
-		logretention.WaitGroup.Wait()
+		logretention.TestingOnlySynchronizationHelper.Wait()
 	}
 	return timestamp, fakeClock
 }
@@ -268,7 +268,7 @@ func TestScheduleRetention(t *testing.T) {
 
 	fakeClock := clockwork.NewFakeClock()
 	logretention.SetupScheduler(gocron.WithClock(fakeClock))
-	logretention.WaitGroup = &sync.WaitGroup{}
+	logretention.TestingOnlySynchronizationHelper = &sync.WaitGroup{}
 
 	api, _, ctx := setupAPITest(t, nil)
 
