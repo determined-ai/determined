@@ -18,22 +18,19 @@ const defaultResourcePoolName = "default"
 
 func TestResourceManagerForwardMessage(t *testing.T) {
 	user.InitService(nil, nil)
-	//nolint:exhaustruct
 	conf := &config.ResourceConfig{
-		ResourceManagers: config.ResourceManagersConfig{
-			{
-				AgentRM: &config.AgentResourceManagerConfigV1{
-					Scheduler: &config.SchedulerConfig{
-						FairShare:     &config.FairShareSchedulerConfig{},
-						FittingPolicy: best,
-					},
-					ResourcePools: []config.ResourcePoolConfig{
-						{
-							PoolName:                 defaultResourcePoolName,
-							MaxAuxContainersPerAgent: 100,
-						},
-					},
+		ResourceManager: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Scheduler: &config.SchedulerConfig{
+					FairShare:     &config.FairShareSchedulerConfig{},
+					FittingPolicy: best,
 				},
+			},
+		},
+		ResourcePools: []config.ResourcePoolConfig{
+			{
+				PoolName:                 defaultResourcePoolName,
+				MaxAuxContainersPerAgent: 100,
 			},
 		},
 	}

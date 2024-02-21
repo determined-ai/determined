@@ -41,12 +41,10 @@ type agents struct {
 	agents       *tasklist.Registry[agentID, *agent]
 	agentUpdates *queue.Queue[agentUpdatedEvent]
 	poolConfigs  []config.ResourcePoolConfig
-	rmConfig     *config.AgentResourceManagerConfigV1
 	opts         *aproto.MasterSetAgentOptions
 }
 
 func newAgentService(
-	rmConfig *config.AgentResourceManagerConfigV1,
 	poolConfigs []config.ResourcePoolConfig,
 	opts *aproto.MasterSetAgentOptions,
 ) (*agents, *queue.Queue[agentUpdatedEvent]) {
@@ -55,7 +53,6 @@ func newAgentService(
 		syslog:       logrus.WithField("component", "agents"),
 		agents:       tasklist.NewRegistry[agentID, *agent](),
 		agentUpdates: agentUpdates,
-		rmConfig:     rmConfig,
 		poolConfigs:  poolConfigs,
 		opts:         opts,
 	}
@@ -132,7 +129,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	// Here, we just have to check that there are any certificates at all, since the top-level TLS
 	// config verifies that any certificates that are provided are valid.
 	if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
-		requireAuth := a.rmConfig.RequireAuthentication
+		requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
 		missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
 		if requireAuth && missingAuth {
 			a.syslog.WithField("remote-addr", tlsConn.RemoteAddr()).

@@ -2,7 +2,6 @@ package rm
 
 import (
 	"crypto/tls"
-	"fmt"
 
 	"github.com/labstack/echo/v4"
 
@@ -23,17 +22,10 @@ func New(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) ResourceManager {
-	if len(config.ResourceManagers) != 1 {
-		panic(fmt.Sprintf("expected only one resource manager got %d instead",
-			len(config.ResourceManagers)))
-	}
-
-	// TODO(multirm) support multiple resource managers.
-	c := config.ResourceManagers[0]
 	switch {
-	case c.AgentRM != nil:
+	case config.ResourceManager.AgentRM != nil:
 		return agentrm.New(db, echo, config, opts, cert)
-	case c.KubernetesRM != nil:
+	case config.ResourceManager.KubernetesRM != nil:
 		return kubernetesrm.New(db, config, taskContainerDefaults, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")

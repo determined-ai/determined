@@ -117,9 +117,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 				},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
 				ResourceConfig: config.ResourceConfig{
-					ResourceManagers: config.ResourceManagersConfig{
-						&config.ResourceManagerConfigV1{},
-					},
+					ResourceManager: &config.ResourceManagerConfig{},
 				},
 			},
 			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},

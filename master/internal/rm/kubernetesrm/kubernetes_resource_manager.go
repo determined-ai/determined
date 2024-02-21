@@ -35,7 +35,7 @@ const (
 type ResourceManager struct {
 	syslog *logrus.Entry
 
-	config                *config.KubernetesResourceManagerConfigV1
+	config                *config.KubernetesResourceManagerConfig
 	poolsConfig           []config.ResourcePoolConfig
 	taskContainerDefaults *model.TaskContainerDefaultsConfig
 
@@ -62,14 +62,6 @@ func New(
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
 
-	// TODO(multirm) support multible agents.
-	var kubeRMConfig *config.KubernetesResourceManagerConfigV1
-	for _, c := range rmConfigs.ResourceManagers {
-		if c.KubernetesRM != nil {
-			kubeRMConfig = c.KubernetesRM
-		}
-	}
-
 	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
 	clusterID, err := db.GetOrCreateClusterID("")
 	if err != nil {
@@ -80,8 +72,8 @@ func New(
 	k := &ResourceManager{
 		syslog: logrus.WithField("component", "k8srm"),
 
-		config:                kubeRMConfig,
-		poolsConfig:           kubeRMConfig.ResourcePools,
+		config:                rmConfigs.ResourceManager.KubernetesRM,
+		poolsConfig:           rmConfigs.ResourcePools,
 		taskContainerDefaults: taskContainerDefaults,
 
 		pools: make(map[string]*kubernetesResourcePool),

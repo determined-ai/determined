@@ -189,7 +189,6 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 
 	_, rmExisted := configMap["resource_manager"]
 	_, rpsExisted := configMap["resource_pools"]
-	_, rmsExisted := configMap["resource_managers"]
 	vScheduler, schedulerExisted := configMap["scheduler"]
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
@@ -199,7 +198,7 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 			"cannot use the old and the new configuration schema at the same time",
 		)
 	}
-	if rmExisted || rpsExisted || rmsExisted {
+	if rmExisted || rpsExisted {
 		return configMap, nil
 	}
 
