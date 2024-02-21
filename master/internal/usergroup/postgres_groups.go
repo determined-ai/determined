@@ -511,8 +511,8 @@ func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User,
 WITH deleted_rows AS (
   DELETE FROM user_group_membership WHERE user_id = ? AND group_id IN (
     SELECT groups.id FROM groups
-	JOIN user_group_membership ON groups.id = user_group_membership.group_id
-	WHERE group_name NOT IN (?) AND user_group_membership.user_id = ?
+    JOIN user_group_membership ON groups.id = user_group_membership.group_id
+    WHERE group_name NOT IN (?) AND user_group_membership.user_id = ?
   )
 )
 INSERT INTO user_group_membership (user_id, group_id)
