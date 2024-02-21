@@ -31,10 +31,10 @@ func AddJob(j *model.Job) error {
 
 // JobByID retrieves a job by ID.
 func JobByID(ctx context.Context, jobID model.JobID) (*model.Job, error) {
-	j := model.Job{}
+	var j model.Job
 	err := Bun().NewSelect().Model(&j).
 		Where("job_id = ?", jobID).
-		Scan(context.TODO())
+		Scan(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("querying job: %w", err)
 	}

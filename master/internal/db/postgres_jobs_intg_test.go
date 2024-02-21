@@ -48,7 +48,7 @@ func TestJobByID(t *testing.T) {
 		require.NoError(t, err)
 
 		// retrieve job and test for equality
-		recvJob, err := JobByID(context.TODO(), sendJob.JobID)
+		recvJob, err := JobByID(context.Background(), sendJob.JobID)
 		require.NoError(t, err)
 		assert.Equal(t, sendJob.JobID, recvJob.JobID)
 		assert.Equal(t, sendJob.JobType, recvJob.JobType)
@@ -58,7 +58,7 @@ func TestJobByID(t *testing.T) {
 
 	t.Run("retrieve non-existent job", func(t *testing.T) {
 		// attempt to retrieve job that does not exist
-		recvJob, err := JobByID(context.TODO(), model.NewJobID())
+		recvJob, err := JobByID(context.Background(), model.NewJobID())
 		require.Error(t, err)
 		require.Nil(t, recvJob)
 	})
@@ -74,11 +74,11 @@ func TestUpdateJobPosition(t *testing.T) {
 
 		// update job position
 		newPos := decimal.NewFromInt(5)
-		err = UpdateJobPosition(context.TODO(), sendJob.JobID, newPos)
+		err = UpdateJobPosition(context.Background(), sendJob.JobID, newPos)
 		require.NoError(t, err)
 
 		// retrieve job and confirm pos update
-		recvJob, err := JobByID(context.TODO(), sendJob.JobID)
+		recvJob, err := JobByID(context.Background(), sendJob.JobID)
 		require.NoError(t, err)
 		assert.Equal(t, newPos.Equal(recvJob.QPos), true)
 		// expect other fields to remain the same
@@ -94,11 +94,11 @@ func TestUpdateJobPosition(t *testing.T) {
 
 		// update job position
 		newPos := decimal.NewFromInt(-5)
-		err = UpdateJobPosition(context.TODO(), sendJob.JobID, newPos)
+		err = UpdateJobPosition(context.Background(), sendJob.JobID, newPos)
 		require.NoError(t, err)
 
 		// retrieve job and confirm pos update
-		recvJob, err := JobByID(context.TODO(), sendJob.JobID)
+		recvJob, err := JobByID(context.Background(), sendJob.JobID)
 		require.NoError(t, err)
 		assert.Equal(t, newPos.Equal(recvJob.QPos), true)
 		// expect other fields to remain the same
@@ -113,11 +113,11 @@ func TestUpdateJobPosition(t *testing.T) {
 
 		// update job position
 		newPos := decimal.NewFromInt(5)
-		err = UpdateJobPosition(context.TODO(), model.JobID(""), newPos)
+		err = UpdateJobPosition(context.Background(), model.JobID(""), newPos)
 		require.Error(t, err)
 
 		// retrieve job and ensure queue pos not updated
-		recvJob, err := JobByID(context.TODO(), sendJob.JobID)
+		recvJob, err := JobByID(context.Background(), sendJob.JobID)
 		require.NoError(t, err)
 		assert.Equal(t, sendJob.QPos.Equal(recvJob.QPos), true)
 	})
@@ -129,7 +129,7 @@ func TestUpdateJobPosition(t *testing.T) {
 
 		// update job position for a job that doesn't exist
 		newPos := decimal.NewFromInt(5)
-		err = UpdateJobPosition(context.TODO(), model.NewJobID(), newPos)
+		err = UpdateJobPosition(context.Background(), model.NewJobID(), newPos)
 		require.NoError(t, err)
 	})
 }
