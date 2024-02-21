@@ -12,16 +12,20 @@ coverage:
       backend:
         target: 42%
         threshold: 3%
-        flags: 
+        flags:
           - backend
         informational: false
-    patch: 
+      web:
+        flags:
+          - web
+        informational: true
+    patch:
       default:
         informational: true
-      backend: 
+      backend:
         target: 80%
         threshold: 5%
-        flags: 
+        flags:
           - backend
         informational: false
         only_pulls: true
@@ -29,12 +33,12 @@ coverage:
 flags:
   backend:
     carryforward: true
-    
+
 github_checks:
   annotations: false
 
-comment: 
-  layout: "diff, flags, files"
+comment:
+  layout: 'diff, flags, files'
   behavior: default
 
 parsers:

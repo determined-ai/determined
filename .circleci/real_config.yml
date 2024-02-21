@@ -1581,7 +1581,6 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
-          file: webui/react/junit.xml
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
