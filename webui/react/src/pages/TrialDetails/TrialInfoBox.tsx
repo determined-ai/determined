@@ -110,7 +110,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         )}
         {bestCheckpoint && (
           <>
-            <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
+            <OverviewStats title="Best Checkpoint!" onClick={handleModalCheckpointClick}>
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
             <registerModal.Component
