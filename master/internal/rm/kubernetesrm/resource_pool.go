@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -270,6 +271,7 @@ func (k *kubernetesResourcePool) ValidateResources(
 	k.reschedule = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
+	log.Print("MAX SLOTS PER POD", k.maxSlotsPerPod, msg.Slots)
 	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"maps"
 	"time"
 
@@ -367,7 +368,9 @@ func (k *ResourceManager) ValidateResources(
 		}
 		resp := rp.ValidateResources(msg)
 		if !resp.Fulfillable {
-			return resp, nil, errors.New("request unfulfillable, please try requesting less slots")
+			log.Print("JUST FAILED")
+			return resp, nil, fmt.Errorf(
+				"request unfulfillable, please try requesting less slots  %d %d", msg.Slots, rp.maxSlotsPerPod)
 		}
 		return sproto.ValidateResourcesResponse{}, nil, nil
 	} else if err := k.resourcePoolExists(msg.ResourcePool); err != nil {
