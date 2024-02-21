@@ -2,10 +2,10 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, Dict, List, Set, Tuple
 
-import determined.cli.render
-from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
+from determined import cli
+from determined.cli import render
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
 rbac_flag_disabled_message = (
@@ -49,13 +49,12 @@ userAssignmentHeaders = namedtuple(
 )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def my_permissions(args: Namespace) -> None:
-    session = setup_session(args)
-    resp = bindings.get_GetPermissionsSummary(session)
+    sess = cli.setup_session(args)
+    resp = bindings.get_GetPermissionsSummary(sess)
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        render.print_json(resp.to_json())
         return
 
     role_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
@@ -87,7 +86,7 @@ def my_permissions(args: Namespace) -> None:
         if wid == 0:
             print("global permissions assigned")
         else:
-            workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
+            workspace_name = bindings.get_GetWorkspace(sess, id=wid).workspace.name
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
 
         render.render_objects(
@@ -96,17 +95,17 @@ def my_permissions(args: Namespace) -> None:
         print()
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_roles(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     req = bindings.v1SearchRolesAssignableToScopeRequest(
         limit=args.limit,
         offset=args.offset,
         workspaceId=1 if args.exclude_global_roles else None,
     )
-    resp = bindings.post_SearchRolesAssignableToScope(setup_session(args), body=req)
+    resp = bindings.post_SearchRolesAssignableToScope(sess, body=req)
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -150,14 +149,13 @@ def role_with_assignment_to_dict(
     }
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_users_roles(args: Namespace) -> None:
-    session = setup_session(args)
-    user_id = api.usernames_to_user_ids(session, [args.username])[0]
-    resp = bindings.get_GetRolesAssignedToUser(session, userId=user_id)
+    sess = cli.setup_session(args)
+    user_id = api.usernames_to_user_ids(sess, [args.username])[0]
+    resp = bindings.get_GetRolesAssignedToUser(sess, userId=user_id)
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -168,16 +166,14 @@ def list_users_roles(args: Namespace) -> None:
     for r in resp.roles:
         if r.userRoleAssignments is not None:
             for u in r.userRoleAssignments:
-                o = role_with_assignment_to_dict(session, r, u.roleAssignment)
+                o = role_with_assignment_to_dict(sess, r, u.roleAssignment)
                 o["assignedDirectlyToUser"] = True
                 output.append(o)
         if r.groupRoleAssignments is not None:
             for g in r.groupRoleAssignments:
-                o = role_with_assignment_to_dict(session, r, g.roleAssignment)
+                o = role_with_assignment_to_dict(sess, r, g.roleAssignment)
                 o["assignedToGroupID"] = g.groupId
-                o["assignedToGroupName"] = bindings.get_GetGroup(
-                    session, groupId=g.groupId
-                ).group.name
+                o["assignedToGroupName"] = bindings.get_GetGroup(sess, groupId=g.groupId).group.name
                 output.append(o)
 
     render.render_objects(
@@ -186,14 +182,13 @@ def list_users_roles(args: Namespace) -> None:
     )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_groups_roles(args: Namespace) -> None:
-    session = setup_session(args)
-    group_id = api.group_name_to_group_id(session, args.group_name)
-    resp = bindings.get_GetRolesAssignedToGroup(session, groupId=group_id)
+    sess = cli.setup_session(args)
+    group_id = api.group_name_to_group_id(sess, args.group_name)
+    resp = bindings.get_GetRolesAssignedToGroup(sess, groupId=group_id)
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        render.print_json(resp.to_json())
         return
 
     if resp.roles is None or len(resp.roles) == 0:
@@ -209,7 +204,7 @@ def list_groups_roles(args: Namespace) -> None:
 
         workspace_ids = resp.assignments[i].scopeWorkspaceIds or []
         for wid in workspace_ids:
-            workspace_name = bindings.get_GetWorkspace(session, id=wid).workspace.name
+            workspace_name = bindings.get_GetWorkspace(sess, id=wid).workspace.name
             workspaces.append(
                 {
                     "workspaceID": wid,
@@ -226,15 +221,14 @@ def list_groups_roles(args: Namespace) -> None:
         print()
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def describe_role(args: Namespace) -> None:
-    session = setup_session(args)
-    role_id = api.role_name_to_role_id(session, args.role_name)
+    sess = cli.setup_session(args)
+    role_id = api.role_name_to_role_id(sess, args.role_name)
     req = bindings.v1GetRolesByIDRequest(roleIds=[role_id])
-    resp = bindings.post_GetRolesByID(session, body=req)
+    resp = bindings.post_GetRolesByID(sess, body=req)
     if args.json:
-        determined.cli.render.print_json(resp.roles[0].to_json() if resp.roles else None)
+        render.print_json(resp.roles[0].to_json() if resp.roles else None)
         return
 
     if resp.roles is None or len(resp.roles) != 1:
@@ -263,9 +257,9 @@ def describe_role(args: Namespace) -> None:
         for group_assignment in group_assignments:
             workspace_id = group_assignment.roleAssignment.scopeWorkspaceId
             workspace_name = None
-            group_name = bindings.get_GetGroup(session, groupId=group_assignment.groupId).group.name
+            group_name = bindings.get_GetGroup(sess, groupId=group_assignment.groupId).group.name
             if workspace_id is not None:
-                workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
+                workspace_name = bindings.get_GetWorkspace(sess, id=workspace_id).workspace.name
 
             output.append(
                 {
@@ -290,9 +284,9 @@ def describe_role(args: Namespace) -> None:
         for user_assignment in user_assignments:
             workspace_id = user_assignment.roleAssignment.scopeWorkspaceId
             workspace_name = None
-            username = bindings.get_GetUser(session, userId=user_assignment.userId).user.username
+            username = bindings.get_GetUser(sess, userId=user_assignment.userId).user.username
             if workspace_id is not None:
-                workspace_name = bindings.get_GetWorkspace(session, id=workspace_id).workspace.name
+                workspace_name = bindings.get_GetWorkspace(sess, id=workspace_id).workspace.name
 
             output.append(
                 {
@@ -340,8 +334,7 @@ def make_assign_req(
     return user_assign, group_assign
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def assign_role(args: Namespace) -> None:
     # Valid CLI usage is enforced before even creating a session.
     if (args.username_to_assign is None) == (args.group_name_to_assign is None):
@@ -349,12 +342,12 @@ def assign_role(args: Namespace) -> None:
             "must provide exactly one of --username-to-assign or --group-name-to-assign"
         )
 
-    session = setup_session(args)
-    user_assign, group_assign = make_assign_req(session, args)
+    sess = cli.setup_session(args)
+    user_assign, group_assign = make_assign_req(sess, args)
     req = bindings.v1AssignRolesRequest(
         userRoleAssignments=user_assign, groupRoleAssignments=group_assign
     )
-    bindings.post_AssignRoles(session, body=req)
+    bindings.post_AssignRoles(sess, body=req)
 
     scope = " globally"
     if args.workspace_name:
@@ -373,8 +366,7 @@ def assign_role(args: Namespace) -> None:
         )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def unassign_role(args: Namespace) -> None:
     # Valid CLI usage is enforced before even creating a session.
     if (args.username_to_assign is None) == (args.group_name_to_assign is None):
@@ -382,12 +374,12 @@ def unassign_role(args: Namespace) -> None:
             "must provide exactly one of --username-to-assign or --group-name-to-assign"
         )
 
-    session = setup_session(args)
-    user_assign, group_assign = make_assign_req(session, args)
+    sess = cli.setup_session(args)
+    user_assign, group_assign = make_assign_req(sess, args)
     req = bindings.v1RemoveAssignmentsRequest(
         userRoleAssignments=user_assign, groupRoleAssignments=group_assign
     )
-    bindings.post_RemoveAssignments(session, body=req)
+    bindings.post_RemoveAssignments(sess, body=req)
 
     scope = " globally"
     if args.workspace_name:
@@ -429,7 +421,7 @@ args_description = [
                         help="Ignore roles with global permissions",
                     ),
                     Arg("--json", action="store_true", help="print as JSON"),
-                    *default_pagination_args,
+                    *cli.make_pagination_args(),
                 ],
                 is_default=True,
             ),

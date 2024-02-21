@@ -245,9 +245,13 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
 
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
-@mock.patch("determined.common.api.post")
+@mock.patch("determined.common.api.authentication.login_with_cache")
+@mock.patch("determined.common.api._session.Session.post")
 def test_launch_worker(
-    mock_api: mock.MagicMock, mock_cluster_info: mock.MagicMock, mock_subprocess: mock.MagicMock
+    mock_post: mock.MagicMock,
+    mock_login: mock.MagicMock,
+    mock_cluster_info: mock.MagicMock,
+    mock_subprocess: mock.MagicMock,
 ) -> None:
     cluster_info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, 4)
     mock_cluster_info.return_value = cluster_info
@@ -257,7 +261,8 @@ def test_launch_worker(
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
 
-    mock_api.assert_called_once()
+    mock_login.assert_called_once()
+    mock_post.assert_called_once()
 
     pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)

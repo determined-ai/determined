@@ -12,7 +12,7 @@ from determined import cli
 from determined.cli import errors, render
 from determined.cli.master import format_log_entry
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
 from determined.experimental import client
 
@@ -91,7 +91,6 @@ def _workloads_tabulate(
     return headers, values
 
 
-@authentication.required
 def describe_trial(args: Namespace) -> None:
     session = cli.setup_session(args)
 
@@ -148,7 +147,8 @@ def describe_trial(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    det = client.Determined(args.master, args.user)
+    sess = cli.setup_session(args)
+    det = client.Determined._from_session(sess)
 
     if [args.latest, args.best, args.uuid].count(True) != 1:
         raise ValueError("exactly one of --latest, --best, or --uuid must be set")
@@ -198,17 +198,17 @@ def download(args: Namespace) -> None:
         render_checkpoint(checkpoint, path)
 
 
-@authentication.required
 def kill_trial(args: Namespace) -> None:
-    api.post(args.master, "/api/v1/trials/{}/kill".format(args.trial_id))
-    print("Killed trial {}".format(args.trial_id))
+    sess = cli.setup_session(args)
+    sess.post(f"/api/v1/trials/{args.trial_id}/kill")
+    print("Killed trial", args.trial_id)
 
 
-@authentication.required
 def trial_logs(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     try:
         logs = api.trial_logs(
-            cli.setup_session(args),
+            sess,
             args.trial_id,
             head=args.head,
             tail=args.tail,
@@ -237,8 +237,8 @@ def trial_logs(args: Namespace) -> None:
         )
 
 
-@authentication.required
 def generate_support_bundle(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     try:
         output_dir = args.output_dir
         if output_dir is None:
@@ -249,9 +249,9 @@ def generate_support_bundle(args: Namespace) -> None:
         fullpath = os.path.join(output_dir, f"{bundle_name}.tar.gz")
 
         with tempfile.TemporaryDirectory() as temp_dir, tarfile.open(fullpath, "w:gz") as bundle:
-            trial_logs_filepath = write_trial_logs(args, temp_dir)
-            master_logs_filepath = write_master_logs(args, temp_dir)
-            api_experiment_filepath, api_trail_filepath = write_api_call(args, temp_dir)
+            trial_logs_filepath = write_trial_logs(sess, args, temp_dir)
+            master_logs_filepath = write_master_logs(sess, args, temp_dir)
+            api_experiment_filepath, api_trail_filepath = write_api_call(sess, args, temp_dir)
 
             bundle.add(
                 trial_logs_filepath,
@@ -276,9 +276,8 @@ def generate_support_bundle(args: Namespace) -> None:
         print("Could not create the bundle because the output_dir provived was not found.")
 
 
-def write_trial_logs(args: Namespace, temp_dir: str) -> str:
-    session = cli.setup_session(args)
-    trial_logs = api.trial_logs(session, args.trial_id)
+def write_trial_logs(sess: api.Session, args: Namespace, temp_dir: str) -> str:
+    trial_logs = api.trial_logs(sess, args.trial_id)
     file_path = os.path.join(temp_dir, "trial_logs.txt")
     with open(file_path, "w") as f:
         for log in trial_logs:
@@ -287,8 +286,8 @@ def write_trial_logs(args: Namespace, temp_dir: str) -> str:
     return file_path
 
 
-def write_master_logs(args: Namespace, temp_dir: str) -> str:
-    responses = bindings.get_MasterLogs(cli.setup_session(args))
+def write_master_logs(sess: api.Session, args: Namespace, temp_dir: str) -> str:
+    responses = bindings.get_MasterLogs(sess)
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
         for response in responses:
@@ -296,13 +295,13 @@ def write_master_logs(args: Namespace, temp_dir: str) -> str:
     return file_path
 
 
-def write_api_call(args: Namespace, temp_dir: str) -> Tuple[str, str]:
+def write_api_call(sess: api.Session, args: Namespace, temp_dir: str) -> Tuple[str, str]:
     api_experiment_filepath = os.path.join(temp_dir, "api_experiment_call.json")
     api_trial_filepath = os.path.join(temp_dir, "api_trial_call.json")
 
-    trial_obj = bindings.get_GetTrial(cli.setup_session(args), trialId=args.trial_id).trial
+    trial_obj = bindings.get_GetTrial(sess, trialId=args.trial_id).trial
     experiment_id = trial_obj.experimentId
-    exp_obj = bindings.get_GetExperiment(cli.setup_session(args), experimentId=experiment_id)
+    exp_obj = bindings.get_GetExperiment(sess, experimentId=experiment_id)
 
     create_json_file_in_dir(exp_obj.to_json(), api_experiment_filepath)
     create_json_file_in_dir(trial_obj.to_json(), api_trial_filepath)

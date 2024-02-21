@@ -9,7 +9,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import ntsc, render
 from determined.common import api, context, util
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.api.bindings import v1AllocationSummary, v1CreateGenericTaskResponse
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -71,19 +71,19 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@authentication.required
 def list_tasks(args: Namespace) -> None:
-    r = bindings.get_GetTasks(cli.setup_session(args))
+    sess = cli.setup_session(args)
+    r = bindings.get_GetTasks(sess)
     tasks = r.allocationIdToSummary or {}
     render_tasks(args, tasks)
 
 
-@authentication.required
 def logs(args: Namespace) -> None:
-    task_id = cast(str, ntsc.expand_uuid_prefixes(args, args.task_id))
+    sess = cli.setup_session(args)
+    task_id = cast(str, ntsc.expand_uuid_prefixes(sess, args, args.task_id))
     try:
         logs = api.task_logs(
-            cli.setup_session(args),
+            sess,
             task_id,
             head=args.head,
             tail=args.tail,
@@ -112,7 +112,6 @@ def logs(args: Namespace) -> None:
         )
 
 
-@authentication.required
 def kill(args: Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1KillGenericTaskRequest(taskId=args.task_id, killFromRoot=args.root)
@@ -142,13 +141,12 @@ def task_creation_output(
             )
 
 
-@authentication.required
 def create(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     config = ntsc.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
     context_directory = context.read_v1_context(args.context, args.include)
 
-    sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
         config=config_text,
         contextDirectory=context_directory,
@@ -162,7 +160,6 @@ def create(args: Namespace) -> None:
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
-@authentication.required
 def config(args: Namespace) -> None:
     sess = cli.setup_session(args)
     config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
@@ -173,7 +170,6 @@ def config(args: Namespace) -> None:
         print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
 
 
-@authentication.required
 def fork(args: Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
@@ -187,14 +183,12 @@ def fork(args: Namespace) -> None:
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
-@authentication.required
 def pause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_PauseGenericTask(sess, taskId=args.task_id)
     print(f"Paused task: {args.task_id}")
 
 
-@authentication.required
 def unpause(args: Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_UnpauseGenericTask(sess, taskId=args.task_id)

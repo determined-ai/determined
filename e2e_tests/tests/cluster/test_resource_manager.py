@@ -8,12 +8,10 @@ import pytest
 
 from determined.common import util
 from determined.common.api import bindings
-from determined.common.api.bindings import experimentv1State
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-
-from .test_agent_disable import _wait_for_slots
+from tests.cluster import test_agent_disable
 
 # How long we should for the Nth = 1 rank to free.
 RANK_ONE_WAIT_TIME = 300
@@ -26,10 +24,12 @@ def test_allocation_resources_incremental_release() -> None:
     Start an two container experiment and ensure one container exits before the other. Ensure
     resources are released and schedule-able without the other needing to be released.
     """
+    admin = api_utils.admin_session()
+    sess = api_utils.user_session()
     cleanup_exp_ids = []
 
     try:
-        slots = _wait_for_slots(2)
+        slots = test_agent_disable._wait_for_slots(admin, 2)
         assert len(slots) == 2
 
         with tempfile.TemporaryDirectory() as context_dir, open(
@@ -48,15 +48,16 @@ def test_allocation_resources_incremental_release() -> None:
                 conf.fixtures_path("no_op/model_def.py"), os.path.join(context_dir, "model_def.py")
             )
 
-            exp_id = exp.create_experiment(config_file.name, context_dir, None)
+            exp_id = exp.create_experiment(sess, config_file.name, context_dir, None)
             cleanup_exp_ids.append(exp_id)
 
         # Wait for the experiment to start and run some.
         exp.wait_for_experiment_state(
+            sess,
             exp_id,
-            experimentv1State.RUNNING,
+            bindings.experimentv1State.RUNNING,
         )
-        exp.wait_for_experiment_active_workload(exp_id)
+        exp.wait_for_experiment_active_workload(sess, exp_id)
 
         # And wait for exactly one of the resources to free, while one is still in use.
         confirmations = 0
@@ -79,14 +80,15 @@ def test_allocation_resources_incremental_release() -> None:
 
         # Ensure we can schedule on the free slot, not only that the API says its available.
         exp_id_2 = exp.create_experiment(
+            sess,
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
             None,
         )
         cleanup_exp_ids.append(exp_id_2)
 
-        exp.wait_for_experiment_workload_progress(exp_id_2)
-        exp.wait_for_experiment_state(exp_id_2, experimentv1State.COMPLETED)
+        exp.wait_for_experiment_workload_progress(sess, exp_id_2)
+        exp.wait_for_experiment_state(sess, exp_id_2, bindings.experimentv1State.COMPLETED)
         cleanup_exp_ids = cleanup_exp_ids[:-1]
 
         # And check the hung experiment still is holding on to its hung slot.
@@ -96,12 +98,12 @@ def test_allocation_resources_incremental_release() -> None:
 
     finally:
         for exp_id in cleanup_exp_ids:
-            bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
-            exp.wait_for_experiment_state(exp_id, experimentv1State.CANCELED)
+            bindings.post_KillExperiment(sess, id=exp_id)
+            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 
 def list_free_agents() -> List[bindings.v1Agent]:
-    agents = bindings.get_GetAgents(api_utils.determined_test_session())
+    agents = bindings.get_GetAgents(api_utils.user_session())
     if not agents.agents:
         pytest.fail(f"missing agents: {agents}")
 
@@ -111,11 +113,14 @@ def list_free_agents() -> List[bindings.v1Agent]:
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.timeout(600)
 def test_experiment_is_single_node() -> None:
-    slots = _wait_for_slots(2)
+    admin = api_utils.admin_session()
+    sess = api_utils.user_session()
+    slots = test_agent_disable._wait_for_slots(admin, 2)
     assert len(slots) == 2
 
     with pytest.raises(AssertionError):
         exp.create_experiment(
+            sess,
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
             [

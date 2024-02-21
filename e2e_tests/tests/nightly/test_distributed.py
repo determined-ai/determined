@@ -6,6 +6,7 @@ import warnings
 import pytest
 
 from determined.common import util
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -13,6 +14,7 @@ from tests import experiment as exp
 @pytest.mark.distributed
 @pytest.mark.parametrize("image_type", ["PT", "TF2", "PT2"])
 def test_mnist_pytorch_distributed(image_type: str) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
@@ -25,26 +27,29 @@ def test_mnist_pytorch_distributed(image_type: str) -> None:
     else:
         warnings.warn("Using default images", stacklevel=2)
 
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
 
 
 @pytest.mark.distributed
 def test_mnist_pytorch_set_stop_requested_distributed() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/distributed-stop-requested.yaml"))
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_api_integration() -> None:
+    sess = api_utils.user_session()
     test_dir = "hf_image_classification"
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))
-    exp.run_basic_test_with_temp_config(config, conf.hf_trainer_examples_path(test_dir), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.hf_trainer_examples_path(test_dir), 1)
 
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
 def test_gpt_neox_zero1() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1.yaml"))
     config = conf.set_max_length(config, {"batches": 100})
     config = conf.set_min_validation_period(config, {"batches": 100})
@@ -53,7 +58,7 @@ def test_gpt_neox_zero1() -> None:
     config["hyperparameters"]["conf_file"] = ["350M.yml", "determined_cluster.yml"]
     config["hyperparameters"]["overwrite_values"]["train_batch_size"] = 32
 
-    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.deepspeed_examples_path("gpt_neox"), 1)
 
 
 HUGGINGFACE_CONTEXT_ERR_MSG = """
@@ -80,6 +85,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
     The Hugging Face account details can be found at
     github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
+    sess = api_utils.user_session()
     config = conf.load_config(
         conf.diffusion_examples_path(
             "textual_inversion_stable_diffusion/finetune_const_advanced.yaml"
@@ -91,7 +97,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
             config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
         )
         exp.run_basic_test_with_temp_config(
-            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
+            sess, config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 1
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
@@ -112,6 +118,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
     The Hugging Face account details can be found at
     github.com/determined-ai/secrets/blob/master/ci/hugging_face.txt
     """
+    sess = api_utils.user_session()
     config = conf.load_config(
         conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
     )
@@ -127,7 +134,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
         )
         exp.run_basic_test_with_temp_config(
-            config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 2
+            sess, config, conf.diffusion_examples_path("textual_inversion_stable_diffusion"), 2
         )
     except KeyError as k:
         if str(k) == "'HF_READ_ONLY_TOKEN'":
@@ -139,6 +146,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
+    sess = api_utils.user_session()
     test_dir = "hf_image_classification"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
@@ -148,6 +156,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
         # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
+            sess,
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
             1,
@@ -158,6 +167,7 @@ def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
+    sess = api_utils.user_session()
     test_dir = "hf_language_modeling"
     config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
@@ -167,6 +177,7 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
         # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
+            sess,
             tf.name,
             conf.hf_trainer_examples_path(test_dir),
             1,
@@ -177,6 +188,7 @@ def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_torchvision_core_api_deepspeed_autotuning() -> None:
+    sess = api_utils.user_session()
     test_dir = "torchvision/core_api"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
@@ -186,6 +198,7 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
         # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
+            sess,
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),
             1,
@@ -196,6 +209,7 @@ def test_torchvision_core_api_deepspeed_autotuning() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
+    sess = api_utils.user_session()
     test_dir = "torchvision/deepspeed_trial"
     config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
     config = conf.load_config(config_path)
@@ -205,6 +219,7 @@ def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
         # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
         # a single trial (which in turn generates a second, possibly multi-trial experiment).
         _ = exp.run_basic_autotuning_test(
+            sess,
             tf.name,
             conf.deepspeed_autotune_examples_path(test_dir),
             1,
@@ -215,6 +230,7 @@ def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
 @pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_torch_batch_process_generate_embedding() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(
         conf.features_examples_path("torch_batch_process_embeddings/distributed.yaml")
     )
@@ -225,4 +241,4 @@ def test_torch_batch_process_generate_embedding() -> None:
             conf.features_examples_path("torch_batch_process_embeddings"),
             copy_destination,
         )
-        exp.run_basic_test_with_temp_config(config, copy_destination, 1)
+        exp.run_basic_test_with_temp_config(sess, config, copy_destination, 1)

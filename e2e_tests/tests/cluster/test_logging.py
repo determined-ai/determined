@@ -7,7 +7,8 @@ from typing import Any, Callable, Dict, Iterable, Optional, Union
 import pytest
 
 from determined.common import api
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -26,16 +27,12 @@ LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsR
 @pytest.mark.e2e_pbs
 @pytest.mark.timeout(10 * 60)
 def test_trial_logs() -> None:
-    # TODO: refactor tests to not use cli singleton auth.
-    master_url = conf.make_master_url()
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = api_utils.user_session()
 
     experiment_id = exp.run_basic_test(
-        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial = exp.experiment_trials(experiment_id)[0].trial
+    trial = exp.experiment_trials(sess, experiment_id)[0].trial
     trial_id = trial.id
     task_id = trial.taskId
     assert task_id != ""
@@ -45,15 +42,15 @@ def test_trial_logs() -> None:
     # Trial-specific APIs should work just fine.
     check_logs(
         log_regex,
-        functools.partial(api.trial_logs, session, trial_id),
-        functools.partial(bindings.get_TrialLogsFields, session, trialId=trial_id),
+        functools.partial(api.trial_logs, sess, trial_id),
+        functools.partial(bindings.get_TrialLogsFields, sess, trialId=trial_id),
     )
 
     # And so should new task log APIs.
     check_logs(
         log_regex,
-        functools.partial(api.task_logs, session, task_id),
-        functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
+        functools.partial(api.task_logs, sess, task_id),
+        functools.partial(bindings.get_TaskLogsFields, sess, taskId=task_id),
     )
 
 
@@ -73,39 +70,37 @@ def test_trial_logs() -> None:
     ],
 )
 def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
-    master_url = conf.make_master_url()
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
+    sess = api_utils.user_session()
 
-    rps = bindings.get_GetResourcePools(session)
+    rps = bindings.get_GetResourcePools(sess)
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
     if task_type == "tensorboard":
         exp_id = exp.run_basic_test(
+            sess,
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
             1,
         )
         treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_id])
-        task_id = bindings.post_LaunchTensorboard(session, body=treq).tensorboard.id
+        task_id = bindings.post_LaunchTensorboard(sess, body=treq).tensorboard.id
     elif task_type == "notebook":
         nreq = bindings.v1LaunchNotebookRequest(config=task_config)
-        task_id = bindings.post_LaunchNotebook(session, body=nreq).notebook.id
+        task_id = bindings.post_LaunchNotebook(sess, body=nreq).notebook.id
     elif task_type == "command":
         creq = bindings.v1LaunchCommandRequest(config=task_config)
-        task_id = bindings.post_LaunchCommand(session, body=creq).command.id
+        task_id = bindings.post_LaunchCommand(sess, body=creq).command.id
     elif task_type == "shell":
         sreq = bindings.v1LaunchShellRequest(config=task_config)
-        task_id = bindings.post_LaunchShell(session, body=sreq).shell.id
+        task_id = bindings.post_LaunchShell(sess, body=sreq).shell.id
     else:
         raise ValueError("unknown task type: {task_type}")
 
     def task_logs(**kwargs: Any) -> Iterable[Log]:
-        return api.task_logs(session, task_id, **kwargs)
+        return api.task_logs(sess, task_id, **kwargs)
 
     def task_log_fields(follow: Optional[bool] = None) -> Iterable[LogFields]:
-        return bindings.get_TaskLogsFields(session, taskId=task_id, follow=follow)
+        return bindings.get_TaskLogsFields(sess, taskId=task_id, follow=follow)
 
     try:
         result: Optional[Exception] = None
@@ -115,8 +110,8 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
             try:
                 check_logs(
                     log_regex,
-                    functools.partial(api.task_logs, session, task_id),
-                    functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
+                    functools.partial(api.task_logs, sess, task_id),
+                    functools.partial(bindings.get_TaskLogsFields, sess, taskId=task_id),
                 )
             except Exception as e:
                 result = e
@@ -139,13 +134,13 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
 
     finally:
         if task_type == "tensorboard":
-            bindings.post_KillTensorboard(session, tensorboardId=task_id)
+            bindings.post_KillTensorboard(sess, tensorboardId=task_id)
         elif task_type == "notebook":
-            bindings.post_KillNotebook(session, notebookId=task_id)
+            bindings.post_KillNotebook(sess, notebookId=task_id)
         elif task_type == "command":
-            bindings.post_KillCommand(session, commandId=task_id)
+            bindings.post_KillCommand(sess, commandId=task_id)
         elif task_type == "shell":
-            bindings.post_KillShell(session, shellId=task_id)
+            bindings.post_KillShell(sess, shellId=task_id)
 
 
 def check_logs(

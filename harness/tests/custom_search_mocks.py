@@ -5,8 +5,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 from unittest.mock import Mock
 
 from determined import searcher
+from determined.common import api
 from determined.common.api import bindings
-from determined.experimental import client
 
 
 class MockMaster(metaclass=abc.ABCMeta):
@@ -116,7 +116,7 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
 
     def post_operations(
         self,
-        session: client.Session,
+        session: api.Session,
         experiment_id: int,
         event: bindings.v1SearcherEvent,
         operations: List[searcher.Operation],
@@ -126,7 +126,7 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
 
     def get_events(
         self,
-        session: client.Session,
+        session: api.Session,
         experiment_id: int,
     ) -> Optional[Sequence[bindings.v1SearcherEvent]]:
         logging.info("MockMasterSearchRunner.get_events")
@@ -151,7 +151,7 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
         operations: Optional[List[searcher.Operation]] = None
-        session: client.Session = Mock()
+        session: api.Session = Mock()
         super(MockMasterSearchRunner, self).run_experiment(
             experiment_id, session, operations, sleep_time=0.0
         )

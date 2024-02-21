@@ -6,12 +6,11 @@ import determined.cli.render
 from determined import cli
 from determined.cli import render
 from determined.common import api
-from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental import Determined, Model, ModelSortBy, ModelVersion, OrderBy
+from determined.experimental import client
 
 
-def render_model(model: Model) -> None:
+def render_model(model: client.Model) -> None:
     table = [
         ["ID", model.model_id],
         ["Name", model.name],
@@ -27,7 +26,7 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def _render_model_versions(model_versions: List[ModelVersion]) -> None:
+def _render_model_versions(model_versions: List[client.ModelVersion]) -> None:
     headers = [
         "Version #",
         "Trial ID",
@@ -60,12 +59,14 @@ def _render_model_versions(model_versions: List[ModelVersion]) -> None:
 
 
 def list_models(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
     workspace_names = None
     if args.workspace_names is not None:
         workspace_names = args.workspace_names.split(",")
-    models = Determined(args.master, args.user).list_models(
-        sort_by=ModelSortBy[args.sort_by.upper()],
-        order_by=OrderBy[args.order_by.upper()],
+    models = d.list_models(
+        sort_by=client.ModelSortBy[args.sort_by.upper()],
+        order_by=client.OrderBy[args.order_by.upper()],
         workspace_names=workspace_names,
     )
     if args.json:
@@ -88,15 +89,16 @@ def list_models(args: Namespace) -> None:
         render.tabulate_or_csv(headers, values, False)
 
 
-def model_by_name(args: Namespace) -> Model:
-    return Determined(args.master, args.user).get_model(identifier=args.name)
+def model_by_name(sess: api.Session, name: str) -> client.Model:
+    d = client.Determined._from_session(sess)
+    return d.get_model(identifier=name)
 
 
-@authentication.required
 def list_versions(args: Namespace) -> None:
-    model = model_by_name(args)
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
     if args.json:
-        r = api.get(args.master, "api/v1/models/{}/versions".format(model.model_id))
+        r = sess.get(f"api/v1/models/{model.model_id}/versions")
         data = r.json()
         determined.cli.render.print_json(data)
 
@@ -107,10 +109,9 @@ def list_versions(args: Namespace) -> None:
 
 
 def create(args: Namespace) -> None:
-    model = Determined(args.master, args.user).create_model(
-        args.name, args.description, workspace_name=args.workspace_name
-    )
-
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    model = d.create_model(args.name, args.description, workspace_name=args.workspace_name)
     if args.json:
         determined.cli.render.print_json(render.model_to_json(model))
     else:
@@ -118,12 +119,14 @@ def create(args: Namespace) -> None:
 
 
 def move(args: Namespace) -> None:
-    model = model_by_name(args)
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
     model.move_to_workspace(args.workspace_name)
 
 
 def describe(args: Namespace) -> None:
-    model = model_by_name(args)
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
     model_version = model.get_version(args.version)
 
     if args.json:
@@ -135,13 +138,12 @@ def describe(args: Namespace) -> None:
             _render_model_versions([model_version])
 
 
-@authentication.required
 def register_version(args: Namespace) -> None:
-    model = model_by_name(args)
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
     if args.json:
-        resp = api.post(
-            args.master,
-            "/api/v1/models/{}/versions".format(model.model_id),
+        resp = sess.post(
+            f"/api/v1/models/{model.model_id}/versions",
             json={"checkpointUuid": args.uuid},
         )
 

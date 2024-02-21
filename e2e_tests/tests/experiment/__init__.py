@@ -45,7 +45,3 @@ from .experiment import (
     has_at_least_one_checkpoint,
     wait_for_at_least_one_checkpoint,
 )
-
-from .record_profiling import (
-    profile_test,
-)

@@ -1,4 +1,3 @@
-import subprocess
 import time
 from typing import List
 
@@ -7,6 +6,7 @@ import pytest
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 
 TIMESTAMP = int(time.time())
@@ -45,6 +45,7 @@ TIMESTAMP = int(time.time())
 def test_run_asha_searcher_exp_core_api(
     config_name: str, exp_name: str, exception_points: List[str]
 ) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_asha.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name " + config_name
@@ -53,23 +54,22 @@ def test_run_asha_searcher_exp_core_api(
     config["max_restarts"] = len(exception_points)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("custom_searcher"), 1
+        sess, config, conf.fixtures_path("custom_searcher"), 1
     )
-    session = api_utils.determined_test_session()
 
     # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
+    searcher_exp = bindings.get_GetExperiment(sess, experimentId=experiment_id).experiment
     assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
-    response = bindings.get_GetExperiments(session, name=exp_name)
+    response = bindings.get_GetExperiments(sess, name=exp_name)
     experiments = response.experiments
     assert len(experiments) == 1
 
     experiment = experiments[0]
     assert experiment.numTrials == 16
 
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
+    response_trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment.id).trials
 
     # 16 trials in rung 1 (#batches = 150)
     assert sum(t.totalBatchesProcessed >= 150 for t in response_trials) == 16
@@ -82,11 +82,7 @@ def test_run_asha_searcher_exp_core_api(
         assert trial.state == bindings.trialv1State.COMPLETED
 
     # check logs to ensure failures actually happened
-    logs = str(
-        subprocess.check_output(
-            ["det", "-m", conf.make_master_url(), "experiment", "logs", str(experiment_id)]
-        )
-    )
+    logs = detproc.check_output(sess, ["det", "experiment", "logs", str(experiment_id)])
     failures = logs.count("Max retries exceeded with url: http://dummyurl (Caused by None)")
     assert failures == len(exception_points)
 

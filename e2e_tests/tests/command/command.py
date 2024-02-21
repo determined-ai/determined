@@ -1,15 +1,14 @@
+import contextlib
 import os
 import re
 import subprocess
-from contextlib import contextmanager
-from typing import IO, Any, Iterator, Optional
+from typing import IO, Any, Iterator, List, Optional
 
 import requests
 
 from determined.common import api
-from determined.common.api import authentication, certs, task_logs
-from tests import api_utils
 from tests import config as conf
+from tests import detproc
 
 
 class _InteractiveCommandProcess:
@@ -51,47 +50,42 @@ class _InteractiveCommandProcess:
         return self.process.stdin
 
 
-@contextmanager
-def interactive_command(*args: str) -> Iterator[_InteractiveCommandProcess]:
+@contextlib.contextmanager
+def interactive_command(sess: api.Session, args: List[str]) -> Iterator[_InteractiveCommandProcess]:
     """
     Runs a Determined CLI command in a subprocess. On exit, it kills the
     corresponding Determined task if possible before closing the subprocess.
 
     Example usage:
 
-    with util.interactive_command("notebook", "start") as notebook:
+    with util.interactive_command(sess, ["notebook", "start"]) as notebook:
         for line in notebook.stdout:
             if "Jupyter Notebook is running" in line:
                 break
     """
 
-    with subprocess.Popen(
-        ("det", "-m", conf.make_master_url()) + args,
+    with detproc.Popen(
+        sess,
+        ["det"] + args,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        env={"PYTHONUNBUFFERED": "1", **os.environ},
     ) as p:
         cmd = _InteractiveCommandProcess(p, detach="--detach" in args)
         if cmd.task_id is None:
             raise AssertionError(
-                "Task ID for '{}' could not be found. "
+                f"Task ID for '{args}' could not be found. "
                 "If it is still active, this command may persist "
-                "in the Determined test deployment...".format(args)
+                "in the Determined test deployment..."
             )
         try:
             yield cmd
         finally:
-            subprocess.check_call(
-                ["det", "-m", conf.make_master_url(), str(args[0]), "kill", cmd.task_id]
-            )
+            detproc.check_call(sess, ["det", str(args[0]), "kill", cmd.task_id])
             p.kill()
 
 
-def get_num_active_commands() -> int:
-    # TODO: refactor tests to not use cli singleton auth.
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    r = api.get(conf.make_master_url(), "api/v1/commands")
+def get_num_active_commands(sess: api.Session) -> int:
+    r = sess.get("api/v1/commands")
     assert r.status_code == requests.codes.ok, r.text
 
     return len(
@@ -107,33 +101,21 @@ def get_num_active_commands() -> int:
     )
 
 
-def get_command(command_id: str) -> Any:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-    r = api.get(conf.make_master_url(), "api/v1/commands/" + command_id)
+def get_command(sess: api.Session, command_id: str) -> Any:
+    r = sess.get("api/v1/commands/" + command_id)
     assert r.status_code == requests.codes.ok, r.text
     return r.json()["command"]
 
 
-def get_command_config(command_type: str, task_id: str) -> str:
+def get_command_config(sess: api.Session, command_type: str, task_id: str) -> str:
     assert command_type in ["command", "notebook", "shell"]
     command = ["det", "-m", conf.make_master_url(), command_type, "config", task_id]
     env = os.environ.copy()
     env["DET_DEBUG"] = "true"
-    completed_process = subprocess.run(
-        command,
-        universal_newlines=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-    )
-    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
-        completed_process.stdout, completed_process.stderr
-    )
-    return str(completed_process.stdout)
+    return detproc.check_output(sess, command, env)
 
 
-def print_command_logs(task_id: str) -> bool:
-    for tl in task_logs(api_utils.determined_test_session(), task_id):
+def print_command_logs(sess: api.Session, task_id: str) -> bool:
+    for tl in api.task_logs(sess, task_id):
         print(tl.message)
     return True

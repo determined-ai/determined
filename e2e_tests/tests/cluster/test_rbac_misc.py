@@ -3,15 +3,17 @@ from typing import Callable, List, Tuple
 
 import pytest
 
-from determined.common.api import authentication, bindings, errors
+from determined.common import api
+from determined.common.api import bindings, errors
 from tests import api_utils
-from tests.cluster.test_rbac import create_workspaces_with_users, rbac_disabled
+from tests.cluster import test_rbac
 
 
 @pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
+@api_utils.skipif_rbac_not_enabled()
 def test_cluster_admin_only_calls() -> None:
-    with create_workspaces_with_users(
+    admin = api_utils.admin_session()
+    with test_rbac.create_workspaces_with_users(
         [
             [
                 (1, ["Editor"]),
@@ -20,24 +22,20 @@ def test_cluster_admin_only_calls() -> None:
             ],
         ]
     ) as (_, creds):
-        u_admin_role = api_utils.create_test_user(
-            add_password=True,
+        u_admin_role, _ = api_utils.create_test_user(
             user=bindings.v1User(username=api_utils.get_random_string(), active=True, admin=False),
         )
-        session = api_utils.determined_test_session(admin=True)
         api_utils.assign_user_role(
-            session=session, user=u_admin_role.username, role="ClusterAdmin", workspace=None
+            session=admin, user=u_admin_role.username, role="ClusterAdmin", workspace=None
         )
 
         # normal determined admins without ClusterAdmin role.
-        u_det_admin = api_utils.create_test_user(
-            add_password=True,
+        u_det_admin, _ = api_utils.create_test_user(
             user=bindings.v1User(username=api_utils.get_random_string(), active=True, admin=True),
         )
 
-        def get_agent_slot_ids(creds: authentication.Credentials) -> Tuple[str, str]:
-            session = api_utils.determined_test_session(creds)
-            agents = sorted(bindings.get_GetAgents(session).agents, key=lambda a: a.id)
+        def get_agent_slot_ids(sess: api.Session) -> Tuple[str, str]:
+            agents = sorted(bindings.get_GetAgents(sess).agents, key=lambda a: a.id)
             assert len(agents) > 0
             agent = agents[0]
             assert agent.slots is not None
@@ -46,76 +44,68 @@ def test_cluster_admin_only_calls() -> None:
             assert slot_id is not None
             return agent.id, slot_id
 
-        def enable_agent(creds: authentication.Credentials) -> None:
-            session = api_utils.determined_test_session(creds)
-            agent_id, _ = get_agent_slot_ids(creds)
-            bindings.post_EnableAgent(session, agentId=agent_id)
+        def enable_agent(sess: api.Session) -> None:
+            agent_id, _ = get_agent_slot_ids(sess)
+            bindings.post_EnableAgent(sess, agentId=agent_id)
 
-        def disable_agent(creds: authentication.Credentials) -> None:
-            session = api_utils.determined_test_session(creds)
-            agent_id, _ = get_agent_slot_ids(creds)
+        def disable_agent(sess: api.Session) -> None:
+            agent_id, _ = get_agent_slot_ids(sess)
             bindings.post_DisableAgent(
-                session, agentId=agent_id, body=bindings.v1DisableAgentRequest(agentId=agent_id)
+                sess, agentId=agent_id, body=bindings.v1DisableAgentRequest(agentId=agent_id)
             )
 
-        def enable_slot(creds: authentication.Credentials) -> None:
-            session = api_utils.determined_test_session(creds)
-            agent_id, slot_id = get_agent_slot_ids(creds)
-            bindings.post_EnableSlot(session, agentId=agent_id, slotId=slot_id)
+        def enable_slot(sess: api.Session) -> None:
+            agent_id, slot_id = get_agent_slot_ids(sess)
+            bindings.post_EnableSlot(sess, agentId=agent_id, slotId=slot_id)
 
-        def disable_slot(creds: authentication.Credentials) -> None:
-            session = api_utils.determined_test_session(creds)
-            agent_id, slot_id = get_agent_slot_ids(creds)
+        def disable_slot(sess: api.Session) -> None:
+            agent_id, slot_id = get_agent_slot_ids(sess)
             bindings.post_DisableSlot(
-                session, agentId=agent_id, slotId=slot_id, body=bindings.v1DisableSlotRequest()
+                sess, agentId=agent_id, slotId=slot_id, body=bindings.v1DisableSlotRequest()
             )
 
-        def get_master_logs(creds: authentication.Credentials) -> None:
-            logs = list(bindings.get_MasterLogs(api_utils.determined_test_session(creds), limit=2))
+        def get_master_logs(sess: api.Session) -> None:
+            logs = list(bindings.get_MasterLogs(sess, limit=2))
             assert len(logs) == 2
 
-        def get_allocations_raw(creds: authentication.Credentials) -> None:
+        def get_allocations_raw(sess: api.Session) -> None:
             EXPECTED_TIME_FMT = "%Y-%m-%dT%H:%M:%S.000Z"
             start = datetime.datetime.now()
             start_str = start.strftime(EXPECTED_TIME_FMT)
             end_str = (start + datetime.timedelta(seconds=1)).strftime(EXPECTED_TIME_FMT)
             entries = bindings.get_ResourceAllocationRaw(
-                api_utils.determined_test_session(creds),
+                sess,
                 timestampAfter=start_str,
                 timestampBefore=end_str,
             ).resourceEntries
             assert isinstance(entries, list)
 
-        def get_allocations_aggregated(creds: authentication.Credentials) -> None:
+        def get_allocations_aggregated(sess: api.Session) -> None:
             EXPECTED_TIME_FMT = "%Y-%m-%d"
             start = datetime.datetime.now()
             end = start + datetime.timedelta(seconds=1)
             entries = bindings.get_ResourceAllocationAggregated(
-                api_utils.determined_test_session(creds),
-                # fmt: off
-                period=bindings.v1ResourceAllocationAggregationPeriod\
-                .DAILY,
-                # fmt: on
+                sess,
+                period=bindings.v1ResourceAllocationAggregationPeriod.DAILY,
                 startDate=start.strftime(EXPECTED_TIME_FMT),
                 endDate=end.strftime(EXPECTED_TIME_FMT),
             ).resourceEntries
             assert isinstance(entries, list)
 
-        def get_allocations_raw_echo(creds: authentication.Credentials) -> None:
+        def get_allocations_raw_echo(sess: api.Session) -> None:
             EXPECTED_TIME_FMT = "%Y-%m-%dT%H:%M:%S.000Z"
             start = datetime.datetime.now()
             start_str = start.strftime(EXPECTED_TIME_FMT)
             end_str = (start + datetime.timedelta(seconds=1)).strftime(EXPECTED_TIME_FMT)
             url = "/resources/allocation/raw"
             params = {"timestamp_after": start_str, "timestamp_before": end_str}
-            session = api_utils.determined_test_session(creds)
-            response = session.get(url, params=params)
+            response = sess.get(url, params=params)
             assert response.status_code == 200
 
         # FIXME: these can potentially affect other tests running against the same cluster.
         # the targeted agent_id and slot_id are not guaranteed to be the same across checks.
 
-        checks: List[Callable[[authentication.Credentials], None]] = [
+        checks: List[Callable[[api.Session], None]] = [
             get_master_logs,
             get_allocations_raw,
             get_allocations_aggregated,

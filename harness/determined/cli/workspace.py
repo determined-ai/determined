@@ -8,7 +8,7 @@ from determined import cli
 from determined.cli import render
 from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api, util
-from determined.common.api import authentication, bindings, errors
+from determined.common.api import bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import workspace
 
@@ -29,9 +29,10 @@ workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace nam
 
 
 def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
+    sess = cli.setup_session(args)
     workspace_id = None
     if args.workspace_name:
-        workspace = api.workspace_by_name(cli.setup_session(args), args.workspace_name)
+        workspace = api.workspace_by_name(sess, args.workspace_name)
         if workspace.archived:
             raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
         workspace_id = workspace.id
@@ -74,7 +75,6 @@ def render_workspaces(
     render.tabulate_or_csv(headers, values, False)
 
 
-@authentication.required
 def list_workspaces(args: Namespace) -> None:
     sess = cli.setup_session(args)
     orderArg = bindings.v1OrderBy[args.order_by.upper()]
@@ -100,7 +100,6 @@ def list_workspaces(args: Namespace) -> None:
         render_workspaces(all_workspaces, from_list_api=True)
 
 
-@authentication.required
 def list_workspace_projects(args: Namespace) -> None:
     sess = cli.setup_session(args)
     all_projects = workspace.Workspace(
@@ -135,11 +134,10 @@ def list_workspace_projects(args: Namespace) -> None:
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
 
-@authentication.required
 def list_pools(args: Namespace) -> None:
-    session = cli.setup_session(args)
-    w = api.workspace_by_name(session, args.workspace_name)
-    resp = bindings.get_ListRPsBoundToWorkspace(session, workspaceId=w.id)
+    sess = cli.setup_session(args)
+    w = api.workspace_by_name(sess, args.workspace_name)
+    resp = bindings.get_ListRPsBoundToWorkspace(sess, workspaceId=w.id)
     pools_str = ""
     if resp.resourcePools:
         pools_str = ", ".join(resp.resourcePools)
@@ -175,11 +173,11 @@ def _parse_checkpoint_storage_args(args: Namespace) -> Any:
     return checkpoint_storage
 
 
-@authentication.required
 def create_workspace(args: Namespace) -> None:
     agent_user_group = _parse_agent_user_group_args(args)
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
+    sess = cli.setup_session(args)
     content = bindings.v1PostWorkspaceRequest(
         name=args.name,
         agentUserGroup=agent_user_group,
@@ -187,7 +185,7 @@ def create_workspace(args: Namespace) -> None:
         defaultComputePool=args.default_compute_pool,
         defaultAuxPool=args.default_aux_pool,
     )
-    w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
+    w = bindings.post_PostWorkspace(sess, body=content).workspace
 
     if args.json:
         determined.cli.render.print_json(w.to_json())
@@ -195,7 +193,6 @@ def create_workspace(args: Namespace) -> None:
         render_workspaces([w])
 
 
-@authentication.required
 def describe_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
@@ -205,7 +202,6 @@ def describe_workspace(args: Namespace) -> None:
         render_workspaces([w])
 
 
-@authentication.required
 def delete_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
@@ -236,7 +232,6 @@ def delete_workspace(args: Namespace) -> None:
         print("Aborting workspace deletion.")
 
 
-@authentication.required
 def archive_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     current = api.workspace_by_name(sess, args.workspace_name)
@@ -244,7 +239,6 @@ def archive_workspace(args: Namespace) -> None:
     print(f"Successfully archived workspace {args.workspace_name}.")
 
 
-@authentication.required
 def unarchive_workspace(args: Namespace) -> None:
     sess = cli.setup_session(args)
     current = api.workspace_by_name(sess, args.workspace_name)
@@ -252,7 +246,6 @@ def unarchive_workspace(args: Namespace) -> None:
     print(f"Successfully un-archived workspace {args.workspace_name}.")
 
 
-@authentication.required
 def edit_workspace(args: Namespace) -> None:
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 

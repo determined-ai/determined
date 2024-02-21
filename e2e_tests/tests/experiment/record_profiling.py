@@ -1,22 +1,20 @@
 import json
-from statistics import mean
+import statistics
 from typing import Callable, Dict, List, Optional, Tuple
-from urllib.parse import urlencode
 
-from determined.common import api
-from determined.profiler import SysMetricName
-from tests import config as conf
+from determined import profiler
+from tests import api_utils
 
-summary_methods: Dict[str, Callable] = {"avg": mean, "max": max, "min": min}
+summary_methods: Dict[str, Callable] = {"avg": statistics.mean, "max": max, "min": min}
 
 default_metrics: Dict[str, List[str]] = {
-    SysMetricName.GPU_UTIL_METRIC: ["avg", "max"],
-    SysMetricName.SIMPLE_CPU_UTIL_METRIC: ["avg", "max"],
-    SysMetricName.DISK_IOPS_METRIC: ["avg", "max"],
-    SysMetricName.DISK_THRU_READ_METRIC: ["avg", "max"],
-    SysMetricName.DISK_THRU_WRITE_METRIC: ["avg", "max"],
-    SysMetricName.NET_THRU_SENT_METRIC: ["avg"],
-    SysMetricName.NET_THRU_RECV_METRIC: ["avg"],
+    profiler.SysMetricName.GPU_UTIL_METRIC: ["avg", "max"],
+    profiler.SysMetricName.SIMPLE_CPU_UTIL_METRIC: ["avg", "max"],
+    profiler.SysMetricName.DISK_IOPS_METRIC: ["avg", "max"],
+    profiler.SysMetricName.DISK_THRU_READ_METRIC: ["avg", "max"],
+    profiler.SysMetricName.DISK_THRU_WRITE_METRIC: ["avg", "max"],
+    profiler.SysMetricName.NET_THRU_SENT_METRIC: ["avg"],
+    profiler.SysMetricName.NET_THRU_RECV_METRIC: ["avg"],
 }
 
 
@@ -59,18 +57,14 @@ def get_profiling_metrics(trial_id: int, metric_type: str) -> List[float]:
     """
     Calls profiler API to return a list of metric values given trial ID and metric type
     """
-    with api.get(
-        conf.make_master_url(),
-        "api/v1/trials/{}/profiler/metrics?{}".format(
-            trial_id,
-            urlencode(
-                {
-                    "labels.name": metric_type,
-                    "labels.metricType": "PROFILER_METRIC_TYPE_SYSTEM",
-                    "follow": "true",
-                }
-            ),
-        ),
+    sess = api_utils.user_session()
+    with sess.get(
+        f"api/v1/trials/{trial_id}/profiler/metrics",
+        params={
+            "labels.name": metric_type,
+            "labels.metricType": "PROFILER_METRIC_TYPE_SYSTEM",
+            "follow": "true",
+        },
         stream=True,
     ) as r:
         return [

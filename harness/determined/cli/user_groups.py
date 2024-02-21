@@ -2,10 +2,10 @@ from argparse import Namespace
 from collections import namedtuple
 from typing import Any, List
 
-import determined.cli.render
-from determined.cli import default_pagination_args, render, require_feature_flag, setup_session
+from determined import cli
+from determined.cli import render
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd
 
 v1UserHeaders = namedtuple(
@@ -24,13 +24,12 @@ rbac_flag_disabled_message = (
 )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def create_group(args: Namespace) -> None:
-    session = setup_session(args)
-    add_users = api.usernames_to_user_ids(session, args.add_user)
+    sess = cli.setup_session(args)
+    add_users = api.usernames_to_user_ids(sess, args.add_user)
     body = bindings.v1CreateGroupRequest(name=args.group_name, addUsers=add_users)
-    resp = bindings.post_CreateGroup(session, body=body)
+    resp = bindings.post_CreateGroup(sess, body=body)
     group = resp.group
 
     print(f"user group with name {group.name} and ID {group.groupId} created")
@@ -38,10 +37,9 @@ def create_group(args: Namespace) -> None:
         print(f"{', '.join([g.username for g in group.users])} was added to the group")
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def list_groups(args: Namespace) -> None:
-    sess = setup_session(args)
+    sess = cli.setup_session(args)
     user_id = None
     if args.groups_user_belongs_to:
         user_id = api.usernames_to_user_ids(sess, [args.groups_user_belongs_to])[0]
@@ -49,7 +47,7 @@ def list_groups(args: Namespace) -> None:
     body = bindings.v1GetGroupsRequest(offset=args.offset, limit=args.limit, userId=user_id)
     resp = bindings.post_GetGroups(sess, body=body)
     if args.json:
-        determined.cli.render.print_json(resp.to_json())
+        render.print_json(resp.to_json())
     else:
         if resp.groups is None:
             resp.groups = []
@@ -64,16 +62,15 @@ def list_groups(args: Namespace) -> None:
         )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def describe_group(args: Namespace) -> None:
-    session = setup_session(args)
-    group_id = api.group_name_to_group_id(session, args.group_name)
-    resp = bindings.get_GetGroup(session, groupId=group_id)
+    sess = cli.setup_session(args)
+    group_id = api.group_name_to_group_id(sess, args.group_name)
+    resp = bindings.get_GetGroup(sess, groupId=group_id)
     group_details = resp.group
 
     if args.json:
-        determined.cli.render.print_json(group_details.to_json())
+        render.print_json(group_details.to_json())
     else:
         print(f"group ID {group_details.groupId} group name {group_details.name} with users added")
         if group_details.users is None:
@@ -84,61 +81,57 @@ def describe_group(args: Namespace) -> None:
         )
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def add_user_to_group(args: Namespace) -> None:
-    session = setup_session(args)
+    sess = cli.setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = api.group_name_to_group_id(session, args.group_name)
-    user_ids = api.usernames_to_user_ids(session, usernames)
+    group_id = api.group_name_to_group_id(sess, args.group_name)
+    user_ids = api.usernames_to_user_ids(sess, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, addUsers=user_ids)
-    resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
+    resp = bindings.put_UpdateGroup(sess, groupId=group_id, body=body)
 
     print(f"user group with ID {resp.group.groupId} name {resp.group.name}")
     for user_id, username in zip(user_ids, usernames):
         print(f"user added to group with username {username} and ID {user_id}")
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def remove_user_from_group(args: Namespace) -> None:
-    session = setup_session(args)
+    sess = cli.setup_session(args)
     usernames = args.usernames.split(",")
-    group_id = api.group_name_to_group_id(session, args.group_name)
-    user_ids = api.usernames_to_user_ids(session, usernames)
+    group_id = api.group_name_to_group_id(sess, args.group_name)
+    user_ids = api.usernames_to_user_ids(sess, usernames)
 
     body = bindings.v1UpdateGroupRequest(groupId=group_id, removeUsers=user_ids)
-    resp = bindings.put_UpdateGroup(setup_session(args), groupId=group_id, body=body)
+    resp = bindings.put_UpdateGroup(sess, groupId=group_id, body=body)
 
     print(f"user group with ID {resp.group.groupId} name {resp.group.name}")
     for user_id, username in zip(user_ids, usernames):
         print(f"user removed from the group with username {username} and ID {user_id}")
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def change_group_name(args: Namespace) -> None:
-    session = setup_session(args)
-    group_id = api.group_name_to_group_id(session, args.old_group_name)
+    sess = cli.setup_session(args)
+    group_id = api.group_name_to_group_id(sess, args.old_group_name)
     body = bindings.v1UpdateGroupRequest(groupId=group_id, name=args.new_group_name)
-    resp = bindings.put_UpdateGroup(session, groupId=group_id, body=body)
+    resp = bindings.put_UpdateGroup(sess, groupId=group_id, body=body)
     g = resp.group
 
     print(f"user group with ID {g.groupId} name changed from {args.old_group_name} to {g.name}")
 
 
-@authentication.required
-@require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
+@cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
 def delete_group(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting a group will result in an unrecoverable \n"
         "deletion of the group along with all the membership  \n"
         "information of the group. Do you still wish to proceed? \n"
     ):
-        session = setup_session(args)
-        group_id = api.group_name_to_group_id(session, args.group_name)
-        bindings.delete_DeleteGroup(session, groupId=group_id)
+        sess = cli.setup_session(args)
+        group_id = api.group_name_to_group_id(sess, args.group_name)
+        bindings.delete_DeleteGroup(sess, groupId=group_id)
         print(f"user group with name {args.group_name} and ID {group_id} deleted")
     else:
         print("Skipping group deletion.")
@@ -179,7 +172,7 @@ args_description = [
                 list_groups,
                 "list user groups",
                 [
-                    *default_pagination_args,
+                    *cli.make_pagination_args(),
                     Arg("--groups-user-belongs-to", help="list groups that the username is in"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],

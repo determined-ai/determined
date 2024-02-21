@@ -104,7 +104,7 @@ def wait_for_ntsc_state(
     return util.wait_for(get_state, timeout)
 
 
-def task_is_ready(
+def wait_for_task_ready(
     session: api.Session,
     task_id: str,
     progress_report: Optional[Callable] = None,

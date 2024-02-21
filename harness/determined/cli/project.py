@@ -6,7 +6,7 @@ import determined.cli.render
 from determined import cli
 from determined.cli import render
 from determined.common import api
-from determined.common.api import authentication, bindings, errors
+from determined.common.api import bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .workspace import list_workspace_projects, pagination_args
@@ -68,7 +68,6 @@ def project_by_name(
     return (w, p[0])
 
 
-@authentication.required
 def list_project_experiments(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
@@ -78,7 +77,7 @@ def list_project_experiments(args: Namespace) -> None:
         "sortBy": bindings.v1GetExperimentsRequestSortBy[args.sort_by.upper()],
     }
     if not args.all:
-        kwargs["users"] = [authentication.must_cli_auth().get_session_user()]
+        kwargs["users"] = [sess.username]
         kwargs["archived"] = "false"
 
     all_experiments: List[bindings.v1Experiment] = []
@@ -99,7 +98,6 @@ def list_project_experiments(args: Namespace) -> None:
         render_experiments(args, all_experiments)
 
 
-@authentication.required
 def create_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
@@ -113,7 +111,6 @@ def create_project(args: Namespace) -> None:
         render_project(p)
 
 
-@authentication.required
 def describe_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
@@ -127,7 +124,6 @@ def describe_project(args: Namespace) -> None:
         list_project_experiments(args)
 
 
-@authentication.required
 def delete_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
@@ -157,7 +153,6 @@ def delete_project(args: Namespace) -> None:
         print("Aborting project deletion.")
 
 
-@authentication.required
 def edit_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
@@ -170,7 +165,6 @@ def edit_project(args: Namespace) -> None:
         render_project(new_p)
 
 
-@authentication.required
 def archive_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
@@ -178,7 +172,6 @@ def archive_project(args: Namespace) -> None:
     print(f"Successfully archived project {args.project_name}.")
 
 
-@authentication.required
 def unarchive_project(args: Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)

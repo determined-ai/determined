@@ -69,9 +69,10 @@ class Trainer:
         assert self._info, "Determined profiler must be run on cluster."
 
         self._det_profiler = profiler.ProfilerAgent(
+            # XXX: bad hack
+            session=self._core.train._session,
             trial_id=str(self._info.trial.trial_id),
             agent_id=self._info.agent_id,
-            master_url=self._info.master_url,
             profiling_is_enabled=enabled,
             global_rank=self._core.distributed.get_rank(),
             local_rank=self._core.distributed.get_local_rank(),

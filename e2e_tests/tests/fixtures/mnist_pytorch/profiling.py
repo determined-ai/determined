@@ -4,7 +4,6 @@ import train as mnist_pytorch
 
 import determined as det
 from determined import pytorch
-from determined.common.api import certs
 
 
 def run():
@@ -12,9 +11,6 @@ def run():
 
     info = det.get_cluster_info()
     assert info, "Test must be run on cluster."
-
-    # TODO: refactor profiling to to not use the cli_cert.
-    certs.cli_cert = certs.default_load(info.master_url)
 
     with pytorch.init() as train_context:
         trial = mnist_pytorch.MNistTrial(train_context, hparams=info.trial.hparams)

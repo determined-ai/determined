@@ -17,12 +17,12 @@ from termcolor import colored
 from determined import cli
 from determined.cli import ntsc, render, task
 from determined.common import api
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
-@authentication.required
 def start_shell(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
     data = {}
     if args.passphrase:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
@@ -30,7 +30,7 @@ def start_shell(args: argparse.Namespace) -> None:
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
 
     resp = ntsc.launch_command(
-        args.master,
+        sess,
         "api/v1/shells",
         config,
         args.template,
@@ -48,12 +48,9 @@ def start_shell(args: argparse.Namespace) -> None:
 
     render.report_job_launched("shell", sid)
 
-    session = cli.setup_session(args)
-
-    shell = bindings.get_GetShell(session, shellId=sid).shell
+    shell = bindings.get_GetShell(sess, shellId=sid).shell
     _open_shell(
-        session,
-        args.master,
+        sess,
         shell.to_json(),
         args.ssh_opts,
         retain_keys_and_print=args.show_ssh_command,
@@ -61,14 +58,12 @@ def start_shell(args: argparse.Namespace) -> None:
     )
 
 
-@authentication.required
 def open_shell(args: argparse.Namespace) -> None:
-    shell_id = cast(str, ntsc.expand_uuid_prefixes(args))
-
-    shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
+    sess = cli.setup_session(args)
+    shell_id = cast(str, ntsc.expand_uuid_prefixes(sess, args))
+    shell = sess.get(f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
-        cli.setup_session(args),
-        args.master,
+        sess,
         shell,
         args.ssh_opts,
         retain_keys_and_print=args.show_ssh_command,
@@ -76,7 +71,6 @@ def open_shell(args: argparse.Namespace) -> None:
     )
 
 
-@authentication.required
 def show_ssh_command(args: argparse.Namespace) -> None:
     if platform.system() == "Linux" and "WSL" in os.uname().release:
         cli.warn(
@@ -85,11 +79,11 @@ def show_ssh_command(args: argparse.Namespace) -> None:
             "command in a Windows shell. For PyCharm users, configure the Pycharm "
             "ssh command to target the WSL ssh command."
         )
-    shell_id = ntsc.expand_uuid_prefixes(args)
-    shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
+    sess = cli.setup_session(args)
+    shell_id = ntsc.expand_uuid_prefixes(sess, args)
+    shell = sess.get(f"api/v1/shells/{shell_id}").json()["shell"]
     _open_shell(
-        cli.setup_session(args),
-        args.master,
+        sess,
         shell,
         args.ssh_opts,
         retain_keys_and_print=True,
@@ -141,8 +135,8 @@ def _prepare_key(retention_dir: Union[Path, None]) -> Tuple[ContextManager[IO], 
 
 
 def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, None]:
-    cert = certs.cli_cert
-    assert cert is not None, "cli_cert was not configured"
+    cert = cli.cert
+    assert cert is not None, "cli.cert was not configured"
     if retention_dir and isinstance(cert.bundle, str):
         retained_cert_bundle_path = retention_dir / "cert_bundle"
         shutil.copy2(str(cert.bundle), retained_cert_bundle_path)
@@ -152,7 +146,6 @@ def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, N
 
 def _open_shell(
     sess: api.Session,
-    master: str,
     shell: Dict[str, Any],
     additional_opts: List[str],
     retain_keys_and_print: bool,
@@ -173,7 +166,7 @@ def _open_shell(
 
         # Use determined.cli.tunnel as a portable script for using the HTTP CONNECT mechanism,
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
-        proxy_cmd = f"{sys.executable} -m determined.cli.tunnel {master} %h"
+        proxy_cmd = f"{sys.executable} -m determined.cli.tunnel {sess.master} %h"
 
         cert_bundle_path = _prepare_cert_bundle(cache_dir)
         if cert_bundle_path is False:
@@ -186,8 +179,8 @@ def _open_shell(
                 f"of type ({type(cert_bundle_path).__name__})"
             )
 
-        cert = certs.cli_cert
-        assert cert is not None, "cli_cert was not configured"
+        cert = cli.cert
+        assert cert is not None, "cli.cert was not configured"
         if cert.name:
             proxy_cmd += f' --cert-name "{cert.name}"'
 

@@ -9,10 +9,9 @@ from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
 import psutil
+from requests import exceptions
 
-import determined as det
 from determined.common import api, check
-from determined.common.api import TrialProfilerMetricsBatch
 
 MAX_COLLECTION_SECONDS = 300
 
@@ -223,16 +222,120 @@ def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
             break
 
 
-def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
+class TrialProfilerMetricsBatch:
+    """
+    TrialProfilerMetricsBatch is the representation of a batch of trial
+    profiler metrics as accepted by POST /api/v1/trials/:trial_id/profiler/metrics
+    """
+
+    def __init__(
+        self,
+        values: List[float],
+        batches: List[int],
+        timestamps: List[str],
+        labels: Dict[str, Any],
+    ):
+        self.values = values
+        self.batches = batches
+        self.timestamps = timestamps
+        self.labels = labels
+
+
+def post_trial_profiler_metrics_batches(
+    sess: api.Session,
+    batches: List[TrialProfilerMetricsBatch],
+) -> None:
+    """
+    Post the given metrics to the master to be persisted. Labels
+    must contain only a subset of the keys: trial_id,  name,
+    gpu_uuid, agent_id and metric_type, where metric_type is one
+    of PROFILER_METRIC_TYPE_SYSTEM or PROFILER_METRIC_TYPE_TIMING.
+    """
+    backoff_interval = 1
+    max_tries = 2
+    tries = 0
+
+    while tries < max_tries:
+        try:
+            sess.post(
+                "/api/v1/trials/profiler/metrics",
+                json={"batches": [b.__dict__ for b in batches]},
+            )
+            return
+        except exceptions.RequestException as e:
+            if e.response is not None and e.response.status_code < 500:
+                raise e
+
+            tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
+    return
+
+
+class TrialProfilerSeriesLabels:
+    def __init__(self, trial_id: int, name: str, agent_id: str, gpu_uuid: str, metric_type: str):
+        self.trial_id = str(trial_id)
+        self.name = name
+        self.agent_id = agent_id
+        self.gpu_uuid = gpu_uuid if gpu_uuid != "" else None  # type: Optional[str]
+        self.metric_type = metric_type
+
+
+def get_trial_profiler_available_series(
+    sess: api.Session,
+    trial_id: str,
+) -> List[TrialProfilerSeriesLabels]:
+    """
+    Get available profiler series for a trial. This uses the non-streaming version of the API
+    """
+    follow = False
+    backoff_interval = 1
+    max_tries = 2
+    tries = 0
+
+    response = None
+    while tries < max_tries:
+        try:
+            response = sess.get(
+                f"/api/v1/trials/{trial_id}/profiler/available_series",
+                params={"follow": follow},
+            )
+            break
+        except exceptions.RequestException as e:
+            if e.response is not None and e.response.status_code < 500:
+                raise e
+
+            tries += 1
+            if tries == max_tries:
+                raise e
+            time.sleep(backoff_interval)
+
+    assert response
+    j = response.json()
+    labels = [
+        TrialProfilerSeriesLabels(
+            trial_id=ld["trialId"],
+            name=ld["name"],
+            agent_id=ld["agentId"],
+            gpu_uuid=ld["gpuUuid"],
+            metric_type=ld["metricType"],
+        )
+        for ld in j["result"]["labels"]
+    ]
+    return labels
+
+
+def profiling_metrics_exist(sess: api.Session, trial_id: str) -> bool:
     """
     Return True if there are already profiling metrics for the trial.
     """
-    series_labels = api.get_trial_profiler_available_series(master_url, trial_id)
+    series_labels = get_trial_profiler_available_series(sess, trial_id)
     return len(series_labels) > 0
 
 
-SendBatchFnType = Callable[[str, List[TrialProfilerMetricsBatch]], None]
-CheckDataExistsFnType = Callable[[str, str], bool]
+SendBatchFnType = Callable[[api.Session, List[TrialProfilerMetricsBatch]], None]
+CheckDataExistsFnType = Callable[[api.Session, str], bool]
 
 
 class ProfilerAgent:
@@ -268,22 +371,22 @@ class ProfilerAgent:
 
     def __init__(
         self,
+        session: api.Session,
         trial_id: str,
         agent_id: str,
-        master_url: str,
         profiling_is_enabled: bool,
         global_rank: int,
         local_rank: int,
         begin_on_batch: int,
         sync_timings: bool,
         end_after_batch: Optional[int] = None,
-        send_batch_fn: SendBatchFnType = api.post_trial_profiler_metrics_batches,
+        send_batch_fn: SendBatchFnType = post_trial_profiler_metrics_batches,
         check_data_exists_fn: CheckDataExistsFnType = profiling_metrics_exist,
     ):
         self.current_batch_idx = 0
+        self.session = session
         self.trial_id = trial_id
         self.agent_id = agent_id
-        self.master_url = master_url
         self.profiling_is_enabled_in_experiment_config = profiling_is_enabled
         self.global_rank = global_rank
         self.local_rank = local_rank
@@ -308,7 +411,7 @@ class ProfilerAgent:
             self.pynvml_wrapper = PynvmlWrapper()
 
             self.disabled_due_to_preexisting_metrics = self.check_data_already_exists_fn(
-                self.master_url, self.trial_id
+                self.session, self.trial_id
             )
             if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
                 logger.warning(
@@ -342,26 +445,11 @@ class ProfilerAgent:
             )
 
             self.sender_thread = ProfilerSenderThread(
-                self.send_queue, self.master_url, num_producers, self.send_batch_fn
+                self.send_queue, self.session, num_producers, self.send_batch_fn
             )
 
     def _set_sync_device(self, sync_device: Callable[[], None]) -> None:
         self.sync_device = sync_device
-
-    @staticmethod
-    def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
-        begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
-        return ProfilerAgent(
-            trial_id=env.det_trial_id,
-            agent_id=env.det_agent_id,
-            master_url=env.master_url,
-            profiling_is_enabled=env.experiment_config.profiling_enabled(),
-            global_rank=global_rank,
-            local_rank=local_rank,
-            begin_on_batch=begin_on_batch,
-            end_after_batch=end_after_batch,
-            sync_timings=env.experiment_config.profiling_sync_timings(),
-        )
 
     # Launch the children threads. This does not mean 'start collecting metrics'
     def start(self) -> None:
@@ -897,12 +985,12 @@ class ProfilerSenderThread(threading.Thread):
     def __init__(
         self,
         inbound_queue: queue.Queue,
-        master_url: str,
+        session: api.Session,
         num_producers: int,
         send_batch_fn: SendBatchFnType,
     ) -> None:
-        self.master_url = master_url
         self.inbound_queue = inbound_queue
+        self.session = session
         self.num_producers = num_producers
         self.producers_shutdown = 0
         self.send_batch_fn = send_batch_fn
@@ -918,7 +1006,7 @@ class ProfilerSenderThread(threading.Thread):
                 else:
                     continue
             self.send_batch_fn(
-                self.master_url,
+                self.session,
                 message,
             )
 
