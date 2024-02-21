@@ -982,7 +982,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if password := m.config.Security.InitialUserPassword; password == "" {
 			log.Warn("This cluster was deployed without a default password for the built-in `determined` " +
 				"and `admin` users. You should set one using `det user change-password`. New clusters can be " +
-				"deployed with default passwords set using the DET_SECURITY_INITIAL_USER_PASSWORD setting.")
+				"deployed with default passwords set using the `security.initial_user_password` setting.")
 		} else {
 			for _, username := range user.BuiltInUsers {
 				err := user.SetUserPassword(ctx, username, password)
