@@ -1,6 +1,7 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
@@ -53,7 +54,7 @@ type kubernetesResourcePool struct {
 	queuePositions tasklist.JobSortState
 	reschedule     bool
 
-	db *db.PgDB
+	db *internaldb.PgDB
 
 	syslog *logrus.Entry
 }
@@ -62,7 +63,7 @@ func newResourcePool(
 	maxSlotsPerPod int,
 	poolConfig *config.ResourcePoolConfig,
 	podsService *pods,
-	db *db.PgDB,
+	db *internaldb.PgDB,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
 		maxSlotsPerPod:            maxSlotsPerPod,
@@ -399,7 +400,7 @@ func (k *kubernetesResourcePool) moveJob(
 	if err != nil {
 		return err
 	}
-	if err := k.db.UpdateJobPosition(jobID, jobPosition); err != nil {
+	if err := internaldb.UpdateJobPosition(context.TODO(), jobID, jobPosition); err != nil {
 		return err
 	}
 

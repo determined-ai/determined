@@ -35,7 +35,7 @@ func TestClusterAPI(t *testing.T) {
 		OwnerID: &user.ID,
 	}
 
-	err = db.AddJob(jIn)
+	err = AddJob(jIn)
 	require.NoError(t, err, "failed to add job")
 
 	// Add a task

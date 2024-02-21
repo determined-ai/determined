@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -95,7 +94,6 @@ type DB interface {
 	RecordInstanceStats(a *model.InstanceStats) error
 	EndInstanceStats(a *model.InstanceStats) error
 	EndAllInstanceStats() error
-	UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error
 }
 
 var (
