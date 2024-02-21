@@ -24,11 +24,11 @@ API.
  Reference
 ***********
 
-+----------------------------------------------------------------------------------+
-| REST API Reference                                                               |
-+==================================================================================+
-| `Determined REST API <https://docs.determined.ai/latest/rest-api/index.html>`_   |
-+----------------------------------------------------------------------------------+
++----------------------------------------------------+
+| REST API Reference                                 |
++====================================================+
+| `Determined REST API <../rest-api/index.html>`__   |
++----------------------------------------------------+
 
 The REST API reference documentation lists available endpoints grouped by workflow. Click an
 endpoint method to see the expected input parameters and response. You can also use **Try it out**
