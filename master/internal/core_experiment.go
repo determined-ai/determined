@@ -261,10 +261,10 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
+func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExperimentRequest, owner *model.User) (
 	*model.Experiment, []byte, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
-	ctx := context.TODO()
+	// ctx := context.TODO()
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
