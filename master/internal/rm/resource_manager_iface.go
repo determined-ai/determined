@@ -14,8 +14,7 @@ type ResourceManager interface {
 	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
-	ValidateCommandResources(sproto.ValidateCommandResourcesRequest) (sproto.ValidateCommandResourcesResponse, error)
-	ValidateResources(name string, slots int, command bool) error
+	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
 	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
 
@@ -34,7 +33,6 @@ type ResourceManager interface {
 	GetDefaultAuxResourcePool(sproto.GetDefaultAuxResourcePoolRequest) (sproto.GetDefaultAuxResourcePoolResponse, error)
 	ValidateResourcePool(name string) error
 	ResolveResourcePool(name string, workspace, slots int) (string, error)
-	ValidateResourcePoolAvailability(v *sproto.ValidateResourcePoolAvailabilityRequest) ([]command.LaunchWarning, error)
 	TaskContainerDefaults(
 		resourcePoolName string,
 		fallbackConfig model.TaskContainerDefaultsConfig,

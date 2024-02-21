@@ -96,12 +96,3 @@ func (t TerminateDecision) String() string {
 	}
 	return strings.Join(item, ",")
 }
-
-// ValidateResourcePoolAvailabilityRequest contains the params for ValidateResourcePoolAvailability().
-type ValidateResourcePoolAvailabilityRequest struct {
-	Name  string
-	Slots int
-	// Optional. If it is provided, ValidateResourcePoolAvailability() validates resource pool
-	// availability for a specific task.
-	TaskID *model.TaskID
-}
