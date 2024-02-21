@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
 
 const (
@@ -139,6 +140,116 @@ func TestGetAgents(t *testing.T) {
 				require.True(t, ok,
 					fmt.Sprintf("name %s is not present in agent id list", agent.Id))
 			}
+		})
+	}
+}
+
+func TestGetAgentsAllocationInfo(t *testing.T) {
+	type AgentsTestCase struct {
+		Name            string
+		podsService     *pods
+		wantedNumOfJobs int
+	}
+
+	auxNode1, auxNode2, compNode1, compNode2 := setupNodes()
+
+	agentsTests := []AgentsTestCase{
+		{
+			Name: "GetAgents-CPU-NoPodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				auxNode1Name: auxNode1,
+				auxNode2Name: auxNode2,
+			},
+				device.CPU,
+				false,
+			),
+			wantedNumOfJobs: 1,
+		},
+		{
+			Name: "GetAgents-CPU-PodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				auxNode1Name: auxNode1,
+				auxNode2Name: auxNode2,
+			},
+				device.CPU,
+				true,
+			),
+			wantedNumOfJobs: 1,
+		},
+		{
+			Name: "GetAgents-GPU-NoPodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				compNode1Name: compNode1,
+				compNode2Name: compNode2,
+			},
+				slotTypeGPU,
+				false,
+			),
+			wantedNumOfJobs: 1,
+		},
+		{
+			Name: "GetAgents-GPU-PodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				compNode1Name: compNode1,
+				compNode2Name: compNode2,
+			},
+				slotTypeGPU,
+				true,
+			),
+			wantedNumOfJobs: 1,
+		},
+		{
+			Name: "GetAgents-CUDA-NoPodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				compNode1Name: compNode1,
+				compNode2Name: compNode2,
+			},
+				device.CUDA,
+				false,
+			),
+			wantedNumOfJobs: 1,
+		},
+		{
+			Name: "GetAgents-CUDA-PodLabels",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				compNode1Name: compNode1,
+				compNode2Name: compNode2,
+			},
+				device.CUDA,
+				true,
+			),
+			wantedNumOfJobs: 1,
+		},
+	}
+
+	for _, test := range agentsTests {
+		t.Run(test.Name, func(t *testing.T) {
+			wantedJobInfo := test.podsService.podNameToPodHandler
+
+			agentsResp := test.podsService.handleGetAgentsRequest()
+			jobInfo := make(map[string]*containerv1.Container)
+			for _, agent := range agentsResp.Agents {
+				for _, slot := range agent.Slots {
+					if slot.Container != nil {
+						job, ok := wantedJobInfo[slot.Container.AllocationId]
+						require.True(t, ok,
+							fmt.Sprintf("allocation id %s is unexpected", slot.Container.AllocationId))
+
+						wantedJobID := job.jobID
+						wantedTaskID := model.AllocationID(slot.Container.AllocationId).ToTaskID()
+						jobID := model.JobID(slot.Container.JobId)
+						taskID := model.TaskID(slot.Container.TaskId)
+						require.Equal(t, wantedJobID, jobID,
+							fmt.Sprintf("expected: %v, got %v", wantedJobID, jobID))
+						require.Equal(t, wantedTaskID, taskID,
+							fmt.Sprintf("expected: %v, got %v", wantedTaskID, taskID))
+
+						jobInfo[slot.Container.AllocationId] = slot.Container
+					}
+				}
+			}
+
+			require.Equal(t, test.wantedNumOfJobs, len(jobInfo))
 		})
 	}
 }
@@ -549,27 +660,30 @@ func createMockPodsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 ) *pods {
 	// Create two pods that are scheduled on a node.
 	pod1 := &pod{
-		allocationID: model.AllocationID(uuid.New().String()),
+		allocationID: model.AllocationID(uuid.New().String() + ".1"),
 		slots:        pod1NumSlots,
 		pod: &k8sV1.Pod{
 			Spec: k8sV1.PodSpec{NodeName: auxNode1Name},
 		},
+		jobID: model.JobID(uuid.New().String()),
 	}
 	pod2 := &pod{
-		allocationID: model.AllocationID(uuid.New().String()),
+		allocationID: model.AllocationID(uuid.New().String() + ".1"),
 		slots:        pod2NumSlots,
 		pod: &k8sV1.Pod{
 			Spec: k8sV1.PodSpec{NodeName: compNode1Name},
 		},
+		jobID: model.JobID(uuid.New().String()),
 	}
 
 	// Create pod that is not yet scheduled on a node.
 	pod3 := &pod{
-		allocationID: model.AllocationID(uuid.New().String()),
+		allocationID: model.AllocationID(uuid.New().String() + ".1"),
 		slots:        0,
 		pod: &k8sV1.Pod{
 			Spec: k8sV1.PodSpec{NodeName: ""},
 		},
+		jobID: model.JobID(uuid.New().String()),
 	}
 
 	podsList := &k8sV1.PodList{Items: []k8sV1.Pod{*pod1.pod, *pod2.pod, *pod3.pod}}
@@ -603,7 +717,7 @@ func createMockPodsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 
 		// Create pod without determined label.
 		nonDetPod = &pod{
-			allocationID: model.AllocationID(uuid.New().String()),
+			allocationID: model.AllocationID(uuid.New().String() + ".1"),
 			slots:        0,
 			pod: &k8sV1.Pod{
 				Spec: k8sV1.PodSpec{NodeName: nonDetNodeName},

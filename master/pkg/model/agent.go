@@ -59,7 +59,7 @@ type SlotSummary struct {
 	ID        string            `json:"id"`
 	Device    device.Device     `json:"device"`
 	Enabled   bool              `json:"enabled"`
-	Container *cproto.Container `json:"container"`
+	Container *ContainerSummary `json:"container"`
 	Draining  bool              `json:"draining"`
 }
 
@@ -79,4 +79,30 @@ type AgentStats struct {
 	ResourcePool string `db:"resource_pool"`
 	AgentID      string `db:"agent_id"`
 	Slots        int    `db:"slots"`
+}
+
+// ContainerSummary summarizes a container.
+type ContainerSummary struct {
+	ID           cproto.ID       `json:"id"`
+	State        cproto.State    `json:"state"`
+	Devices      []device.Device `json:"devices"`
+	AllocationID AllocationID    `json:"allocation_id"`
+	TaskID       TaskID          `json:"task_id"`
+	JobID        JobID           `json:"job_id"`
+}
+
+// ToProto converts a ContainerSummary to its protobuf representation.
+func (c *ContainerSummary) ToProto() *containerv1.Container {
+	if c == nil {
+		return nil
+	}
+
+	return &containerv1.Container{
+		Id:           c.ID.String(),
+		State:        c.State.Proto(),
+		Devices:      device.Devices(c.Devices).Proto(),
+		AllocationId: c.AllocationID.String(),
+		TaskId:       c.TaskID.String(),
+		JobId:        c.JobID.String(),
+	}
 }

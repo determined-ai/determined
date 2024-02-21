@@ -63,3 +63,15 @@ func (d *Device) Proto() *devicev1.Device {
 		Type:  d.Type.Proto(),
 	}
 }
+
+// Devices is a slice of Device objects. Primarily useful for its methods.
+type Devices []Device
+
+// Proto converts Devices into its protobuf representation.
+func (ds Devices) Proto() []*devicev1.Device {
+	dp := make([]*devicev1.Device, len(ds))
+	for i, d := range ds {
+		dp[i] = d.Proto()
+	}
+	return dp
+}
