@@ -74,6 +74,8 @@ linters-settings:
     include:
       - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
       - 'github.com/determined-ai/determined/proto/pkg/userv1.UserWebSetting'
+      - 'github.com/determined-ai/determined/master/internal/config.AgentResourceManagerConfigV1'
+      - 'github.com/determined-ai/determined/master/internal/config.KubernetesResourceManagerConfigV1'
   forbidigo:
     forbid:
       - 'fmt\.Print.*'

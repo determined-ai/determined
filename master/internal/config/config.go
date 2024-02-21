@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -188,35 +188,50 @@ func SetMasterConfig(aConfig *Config) {
 
 // Printable returns a printable string.
 func (c Config) Printable() ([]byte, error) {
+	var configCopy Config
+	if err := copier.CopyWithOption(
+		&configCopy, &c, copier.Option{DeepCopy: true, IgnoreEmpty: true},
+	); err != nil {
+		return nil, fmt.Errorf("copying config %+v: %w", c, err)
+	}
+
 	const hiddenValue = "********"
-	if c.DB.Password != "" {
-		c.DB.Password = hiddenValue
+	if configCopy.DB.Password != "" {
+		configCopy.DB.Password = hiddenValue
 	}
-	if c.Telemetry.SegmentMasterKey != "" {
-		c.Telemetry.SegmentMasterKey = hiddenValue
+	if configCopy.Telemetry.SegmentMasterKey != "" {
+		configCopy.Telemetry.SegmentMasterKey = hiddenValue
 	}
-	if c.Telemetry.SegmentWebUIKey != "" {
-		c.Telemetry.SegmentWebUIKey = hiddenValue
+	if configCopy.Telemetry.SegmentWebUIKey != "" {
+		configCopy.Telemetry.SegmentWebUIKey = hiddenValue
 	}
-	if c.TaskContainerDefaults.RegistryAuth != nil {
-		if c.TaskContainerDefaults.RegistryAuth.Password != "" {
-			// RegistryAuth is a pointer, so if we need to hide the password we need to be very
-			// careful to replace the pointer, not the contents behind the pointer.
-			printable := *c.TaskContainerDefaults.RegistryAuth
+	if configCopy.TaskContainerDefaults.RegistryAuth != nil {
+		if configCopy.TaskContainerDefaults.RegistryAuth.Password != "" {
+			printable := *configCopy.TaskContainerDefaults.RegistryAuth
 			printable.Password = hiddenValue
-			c.TaskContainerDefaults.RegistryAuth = &printable
+			configCopy.TaskContainerDefaults.RegistryAuth = &printable
 		}
 	}
 
-	c.CheckpointStorage = c.CheckpointStorage.Printable()
+	configCopy.CheckpointStorage = configCopy.CheckpointStorage.Printable()
 
-	pools := make([]ResourcePoolConfig, 0, len(c.ResourcePools))
-	for _, poolConfig := range c.ResourcePools {
+	// Legacy pools replace.
+	pools := make([]ResourcePoolConfig, 0, len(configCopy.ResourcePoolsDontUse))
+	for _, poolConfig := range configCopy.ResourcePoolsDontUse {
 		pools = append(pools, poolConfig.Printable())
 	}
-	c.ResourcePools = pools
+	configCopy.ResourcePoolsDontUse = pools
 
-	optJSON, err := json.Marshal(c)
+	// V1 pools replace.
+	for _, rm := range configCopy.ResourceManagers {
+		pools := make([]ResourcePoolConfig, 0, len(configCopy.ResourcePoolsDontUse))
+		for _, poolConfig := range rm.Pools() {
+			pools = append(pools, poolConfig.Printable())
+		}
+		rm.setPools(pools)
+	}
+
+	optJSON, err := json.Marshal(configCopy)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
 	}
@@ -241,31 +256,36 @@ func (c *Config) Resolve() error {
 
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
 
-	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
-		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
+	// This must happen before processing of resource managers.
+	if err := c.ResolveResource(c.ResourcePoolsDontUse); err != nil {
+		return err
 	}
 
-	if c.ResourceManager.KubernetesRM != nil {
-		if c.TaskContainerDefaults.Kubernetes == nil {
-			c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
-		}
+	for _, rm := range c.ResourceManagers {
+		if rm.KubernetesRM != nil {
+			if c.TaskContainerDefaults.Kubernetes == nil {
+				c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+			}
 
-		rmMaxSlots := c.ResourceManager.KubernetesRM.MaxSlotsPerPod
-		taskMaxSlots := c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
-		if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
-			return fmt.Errorf("must provide exactly one of " +
-				"resource_manager.max_slots_per_pod and " +
-				"task_container_defaults.kubernetes.max_slots_per_pod")
-		}
+			// TODO(multirm) change behavior on max slots per pod.
+			rmMaxSlots := rm.KubernetesRM.MaxSlotsPerPod
+			taskMaxSlots := c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
+			if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
+				return fmt.Errorf("must provide exactly one of " +
+					"resource_manager.max_slots_per_pod and " +
+					"task_container_defaults.kubernetes.max_slots_per_pod")
+			}
 
-		if rmMaxSlots != nil {
-			c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
-		}
-		if taskMaxSlots != nil {
-			c.ResourceManager.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
-		}
-		if maxSlotsPerPod := *c.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
-			return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
+			if rmMaxSlots != nil {
+				c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
+			}
+			if taskMaxSlots != nil {
+				rm.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
+			}
+			if maxSlotsPerPod := *rm.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
+				return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
+			}
+			break // TODO(multirm) remove this break.
 		}
 	}
 
@@ -275,10 +295,6 @@ func (c *Config) Resolve() error {
 			return err
 		}
 		c.Webhooks.SigningKey = hex.EncodeToString(b)
-	}
-
-	if err := c.ResolveResource(); err != nil {
-		return err
 	}
 
 	if err := c.Logging.Resolve(); err != nil {
@@ -292,20 +308,19 @@ func (c *Config) Resolve() error {
 	return nil
 }
 
+func agentReattachDeprecateError(poolName string) error {
+	return fmt.Errorf(
+		"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
+			"as of 0.21.0 this feature is always on", poolName)
+}
+
 // Deprecations describe fields which were recently or will soon be removed.
 func (c *Config) Deprecations() (errs []error) {
-	for _, rp := range c.ResourcePools {
-		switch {
-		case rp.AgentReattachEnabled && c.ResourceManager.KubernetesRM != nil:
-			errs = append(errs, fmt.Errorf(
-				"agent_reattach_enabled does not impact Kubernetes resources behavior; "+
-					"reattach is always enabled for Kubernetes resource pools",
-			))
-		case rp.AgentReattachEnabled:
-			errs = append(errs, fmt.Errorf(
-				"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
-					"as of 0.21.0 this feature is always on", rp.PoolName,
-			))
+	for _, rm := range c.ResourceManagers {
+		for _, rp := range rm.Pools() {
+			if rp.AgentReattachEnabled {
+				errs = append(errs, agentReattachDeprecateError(rp.PoolName))
+			}
 		}
 	}
 	return errs
@@ -438,25 +453,29 @@ func ReadRMPreemptionStatus(rpName string) bool {
 }
 
 func readRMPreemptionStatus(config *Config, rpName string) bool {
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.PoolName != rpName {
-			continue
+	for _, rm := range config.ResourceManagers {
+		for _, rpConfig := range rm.Pools() {
+			if rpConfig.PoolName != rpName {
+				continue
+			}
+			if rpConfig.Scheduler != nil {
+				return rpConfig.Scheduler.GetPreemption()
+			}
+			break
 		}
-		if rpConfig.Scheduler != nil {
-			return rpConfig.Scheduler.GetPreemption()
-		}
-		break
 	}
 
-	// if not found, fall back to resource manager config
+	// TODO(multirm-rp-config) make this be correct for len(resourceManagers) > 0 by taking
+	// a resource manager name too.
+	rmConfig := config.ResourceManagers[0]
 	switch {
-	case config.ResourceManager.AgentRM != nil:
-		if config.ResourceManager.AgentRM.Scheduler == nil {
+	case rmConfig.AgentRM != nil:
+		if rmConfig.AgentRM.Scheduler == nil {
 			panic("scheduler not configured")
 		}
-		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
-	case config.ResourceManager.KubernetesRM != nil:
-		return config.ResourceManager.KubernetesRM.GetPreemption()
+		return rmConfig.AgentRM.Scheduler.GetPreemption()
+	case rmConfig.KubernetesRM != nil:
+		return rmConfig.KubernetesRM.GetPreemption()
 	default:
 		panic("unexpected resource configuration")
 	}
@@ -480,27 +499,31 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 	var schedulerConf *SchedulerConfig
 
 	// if not found, fall back to the resource pools config
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.PoolName != rpName {
-			continue
+	for _, rm := range config.ResourceManagers {
+		for _, rpConfig := range rm.Pools() {
+			if rpConfig.PoolName != rpName {
+				continue
+			}
+			schedulerConf = rpConfig.Scheduler
 		}
-		schedulerConf = rpConfig.Scheduler
 	}
 	prio = readPriorityFromScheduler(schedulerConf)
 	if prio != nil {
 		return *prio
 	}
 
-	// if not found, fall back to resource manager config
-	if config.ResourceManager.AgentRM != nil {
-		schedulerConf = config.ResourceManager.AgentRM.Scheduler
+	// TODO(multirm-rp-config) make this be correct for len(resourceManagers) > 0 by taking
+	// a resource manager name too.
+	rmConfig := config.ResourceManagers[0]
+	if rmConfig.AgentRM != nil {
+		schedulerConf = rmConfig.AgentRM.Scheduler
 		prio = readPriorityFromScheduler(schedulerConf)
 		if prio != nil {
 			return *prio
 		}
 	}
 
-	if config.ResourceManager.KubernetesRM != nil {
+	if rmConfig.KubernetesRM != nil {
 		return KubernetesDefaultPriority
 	}
 

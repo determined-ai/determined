@@ -41,7 +41,16 @@ func setupResourcePool(
 		}
 	}
 
-	agentsRef, _ := newAgentService([]config.ResourcePoolConfig{*conf}, &aproto.MasterSetAgentOptions{})
+	//nolint:exhaustruct
+	cfg := &config.AgentResourceManagerConfigV1{
+		Scheduler: &config.SchedulerConfig{
+			FairShare:     &config.FairShareSchedulerConfig{},
+			FittingPolicy: best,
+		},
+		DefaultAuxResourcePool:     "cpu-pool",
+		DefaultComputeResourcePool: "gpu-pool",
+	}
+	agentsRef, _ := newAgentService(cfg, []config.ResourcePoolConfig{*conf}, &aproto.MasterSetAgentOptions{})
 
 	rp, err := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),

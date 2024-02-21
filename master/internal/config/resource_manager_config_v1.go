@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -10,45 +11,99 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-const defaultResourcePoolName = "default"
+const (
+	defaultRMName = "defaultrm"
+	defaultRPName = "default"
+)
 
-// ResourceManagerConfig hosts configuration fields for the resource manager.
-type ResourceManagerConfig struct {
-	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
-	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
+// ResourceManagerConfigV1 hosts configuration fields for the resource manager.
+type ResourceManagerConfigV1 struct {
+	AgentRM      *AgentResourceManagerConfigV1      `union:"type,agent" json:"-"`
+	KubernetesRM *KubernetesResourceManagerConfigV1 `union:"type,kubernetes" json:"-"`
+}
+
+// Pools returns pools for config.
+func (r *ResourceManagerConfigV1) Pools() []ResourcePoolConfig {
+	if agentRM := r.AgentRM; agentRM != nil {
+		return agentRM.ResourcePools
+	}
+	if k8RM := r.KubernetesRM; k8RM != nil {
+		return k8RM.ResourcePools
+	}
+	// TODO dispatcher.
+
+	panic(fmt.Sprintf("unknown rm type %+v", r))
+}
+
+func (r *ResourceManagerConfigV1) setPools(pools []ResourcePoolConfig) {
+	switch {
+	case r.AgentRM != nil:
+		r.AgentRM.ResourcePools = pools
+	case r.KubernetesRM != nil:
+		r.KubernetesRM.ResourcePools = pools
+		// TODO dispatcher.
+	default:
+		panic(fmt.Sprintf("unknown rm type %+v", r))
+	}
+}
+
+// Name returns name for the resource manager.
+func (r *ResourceManagerConfigV1) Name() string {
+	if agentRM := r.AgentRM; agentRM != nil {
+		return agentRM.Name
+	}
+	if k8RM := r.KubernetesRM; k8RM != nil {
+		return k8RM.Name
+	}
+	// TODO dispatcher.
+
+	panic(fmt.Sprintf("unknown rm type %+v", r))
+}
+
+func (r *ResourceManagerConfigV1) setName(name string) {
+	switch {
+	case r.AgentRM != nil:
+		r.AgentRM.Name = name
+	case r.KubernetesRM != nil:
+		r.KubernetesRM.Name = name
+		// TODO dispatcher.
+	default:
+		panic(fmt.Sprintf("unknown rm type %+v", r))
+	}
 }
 
 // MarshalJSON implements the json.Marshaler interface.
-func (r ResourceManagerConfig) MarshalJSON() ([]byte, error) {
+func (r ResourceManagerConfigV1) MarshalJSON() ([]byte, error) {
 	return union.Marshal(r)
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
+func (r *ResourceManagerConfigV1) UnmarshalJSON(data []byte) error {
 	if err := union.Unmarshal(data, r); err != nil {
 		return err
 	}
 
-	type DefaultParser *ResourceManagerConfig
+	type DefaultParser *ResourceManagerConfigV1
 	if err := json.Unmarshal(data, DefaultParser(r)); err != nil {
 		return err
 	}
 
 	// Fill in the default config.
 	if r.AgentRM == nil && r.KubernetesRM == nil {
-		r.AgentRM = &AgentResourceManagerConfig{
+		r.AgentRM = &AgentResourceManagerConfigV1{ //nolint:exhaustruct
+			Name: defaultRMName,
 			Scheduler: &SchedulerConfig{
 				FittingPolicy: defaultFitPolicy,
 			},
-			DefaultComputeResourcePool: defaultResourcePoolName,
-			DefaultAuxResourcePool:     defaultResourcePoolName,
+			DefaultComputeResourcePool: defaultRPName,
+			DefaultAuxResourcePool:     defaultRPName,
 		}
 	}
 	return nil
 }
 
-// AgentResourceManagerConfig hosts configuration fields for the determined resource manager.
-type AgentResourceManagerConfig struct {
+// AgentResourceManagerConfigV1 hosts configuration fields for the determined resource manager.
+type AgentResourceManagerConfigV1 struct {
 	Scheduler                  *SchedulerConfig `json:"scheduler"`
 	DefaultAuxResourcePool     string           `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string           `json:"default_compute_resource_pool"`
@@ -58,13 +113,17 @@ type AgentResourceManagerConfig struct {
 	// Deprecated: use DefaultComputeResourcePool instead.
 	DefaultGPUResourcePool string `json:"default_gpu_resource_pool,omitempty"`
 
+	Name          string               `json:"name"`
+	Metadata      map[string]any       `json:"metadata"`
+	ResourcePools []ResourcePoolConfig `json:"resource_pools"`
+
 	RequireAuthentication bool   `json:"require_authentication"`
 	ClientCA              string `json:"client_ca"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
-	type DefaultParser *AgentResourceManagerConfig
+func (a *AgentResourceManagerConfigV1) UnmarshalJSON(data []byte) error {
+	type DefaultParser *AgentResourceManagerConfigV1
 	if err := json.Unmarshal(data, DefaultParser(a)); err != nil {
 		return err
 	}
@@ -80,10 +139,10 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 			a.DefaultComputeResourcePool = a.DefaultGPUResourcePool
 		}
 		if a.DefaultComputeResourcePool == "" {
-			a.DefaultComputeResourcePool = defaultResourcePoolName
+			a.DefaultComputeResourcePool = defaultRPName
 		}
 		if a.DefaultAuxResourcePool == "" {
-			a.DefaultAuxResourcePool = defaultResourcePoolName
+			a.DefaultAuxResourcePool = defaultRPName
 		}
 	}
 
@@ -94,7 +153,7 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 }
 
 // Validate implements the check.Validatable interface.
-func (a AgentResourceManagerConfig) Validate() []error {
+func (a AgentResourceManagerConfigV1) Validate() []error {
 	if a.NoDefaultResourcePools {
 		return []error{
 			check.Equal("", a.DefaultAuxResourcePool,
@@ -104,14 +163,16 @@ func (a AgentResourceManagerConfig) Validate() []error {
 					"set"),
 		}
 	}
+
 	return []error{
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
+		check.NotEmpty(a.Name, "name is required"),
 	}
 }
 
-// KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
-type KubernetesResourceManagerConfig struct {
+// KubernetesResourceManagerConfigV1 hosts configuration fields for the kubernetes resource manager.
+type KubernetesResourceManagerConfigV1 struct {
 	Namespace string `json:"namespace"`
 
 	// Deprecated: this can be per resource pool now on taskContainerDefaults.
@@ -130,24 +191,27 @@ type KubernetesResourceManagerConfig struct {
 	MasterIP   string       `json:"_master_ip,omitempty"`
 	MasterPort int32        `json:"_master_port,omitempty"`
 
+	Name          string               `json:"name"`
+	Metadata      map[string]any       `json:"metadata"`
+	ResourcePools []ResourcePoolConfig `json:"resource_pools"`
+
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 }
 
-var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
-	SlotType: device.CUDA, // default to CUDA-backed slots.
-}
-
 // GetPreemption returns whether the RM is set to preempt.
-func (k *KubernetesResourceManagerConfig) GetPreemption() bool {
+func (k *KubernetesResourceManagerConfigV1) GetPreemption() bool {
 	return k.DefaultScheduler == PreemptionScheduler
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
-	*k = defaultKubernetesResourceManagerConfig
-	type DefaultParser *KubernetesResourceManagerConfig
+func (k *KubernetesResourceManagerConfigV1) UnmarshalJSON(data []byte) error {
+	//nolint:exhaustruct
+	*k = KubernetesResourceManagerConfigV1{
+		SlotType: device.CUDA, // default to CUDA-backed slots.
+	}
+	type DefaultParser *KubernetesResourceManagerConfigV1
 	err := json.Unmarshal(data, DefaultParser(k))
 
 	if k.NoDefaultResourcePools {
@@ -155,21 +219,21 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 		k.DefaultAuxResourcePool = ""
 	} else {
 		if k.DefaultComputeResourcePool == "" {
-			k.DefaultComputeResourcePool = defaultResourcePoolName
+			k.DefaultComputeResourcePool = defaultRPName
 		}
 		if k.DefaultAuxResourcePool == "" {
-			k.DefaultAuxResourcePool = defaultResourcePoolName
+			k.DefaultAuxResourcePool = defaultRPName
 		}
 	}
 
-	if err == nil && k.SlotType == "gpu" {
+	if err == nil && k.SlotType == "gpu" { //nolint:goconst
 		k.SlotType = device.CUDA
 	}
 	return err
 }
 
 // Validate implements the check.Validatable interface.
-func (k KubernetesResourceManagerConfig) Validate() []error {
+func (k KubernetesResourceManagerConfigV1) Validate() []error {
 	var checkSlotType error
 	switch k.SlotType {
 	case device.CPU, device.CUDA:
@@ -188,6 +252,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	return []error{
 		checkSlotType,
 		checkCPUResource,
+		check.NotEmpty(k.Name, "name is required"),
 	}
 }
 

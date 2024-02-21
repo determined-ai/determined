@@ -35,11 +35,14 @@ import (
 func New(
 	db *db.PgDB,
 	e *echo.Echo,
-	config *config.ResourceConfig,
+	conf *config.ResourceConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *ResourceManager {
-	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
+	// TODO(multirm) support multible agents.
+	agentRMConfig, _ := conf.ResourceManagers.GetAgentRMConfig()
+
+	agentService, agentUpdates := newAgentService(agentRMConfig, agentRMConfig.ResourcePools, opts)
 
 	e.GET("/agents", func(c echo.Context) error {
 		if !c.IsWebSocket() {
@@ -48,14 +51,14 @@ func New(
 		return agentService.HandleWebsocketConnection(webSocketRequest{echoCtx: c})
 	})
 
-	return newAgentResourceManager(db, config, cert, agentService, agentUpdates)
+	return newAgentResourceManager(db, conf, agentRMConfig, cert, agentService, agentUpdates)
 }
 
 // A ResourceManager manages many resource pools and routing requests for resources to them.
 type ResourceManager struct {
 	syslog *logrus.Entry
 
-	config      *config.AgentResourceManagerConfig
+	config      *config.AgentResourceManagerConfigV1
 	poolsConfig []config.ResourcePoolConfig
 	cert        *tls.Certificate
 	db          *db.PgDB
@@ -66,14 +69,18 @@ type ResourceManager struct {
 }
 
 func newAgentResourceManager(
-	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService *agents,
+	db *db.PgDB,
+	conf *config.ResourceConfig,
+	agentRMConfig *config.AgentResourceManagerConfigV1,
+	cert *tls.Certificate,
+	agentService *agents,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
 ) *ResourceManager {
 	a := &ResourceManager{
 		syslog: logrus.WithField("component", "agentrm"),
 
-		config:       config.ResourceManager.AgentRM,
-		poolsConfig:  config.ResourcePools,
+		config:       agentRMConfig,
+		poolsConfig:  agentRMConfig.ResourcePools,
 		cert:         cert,
 		db:           db,
 		agentService: agentService,

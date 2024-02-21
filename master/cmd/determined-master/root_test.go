@@ -95,7 +95,7 @@ webhooks:
 		},
 	}
 
-	expected.ResourcePools = []config.ResourcePoolConfig{
+	expected.ResourcePoolsDontUse = []config.ResourcePoolConfig{ //nolint:staticcheck
 		{
 			PoolName:                 "default",
 			Provider:                 providerConf,
@@ -181,6 +181,14 @@ func TestApplyBackwardsCompatibility(t *testing.T) {
 					},
 					"master_service_name": "k8s-det",
 				},
+			},
+		},
+		{
+			before: map[string]interface{}{
+				"resource_managers": []any{},
+			},
+			expected: map[string]interface{}{
+				"resource_managers": []any{},
 			},
 		},
 	}

@@ -62,8 +62,8 @@ integrations:
 			Port:     "3000",
 		},
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
-				AgentRM: &AgentResourceManagerConfig{
+			ResourceManagerV0DontUse: &ResourceManagerConfigV0{
+				AgentRM: &AgentResourceManagerConfigV0{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
 						FittingPolicy: "best",
@@ -72,7 +72,7 @@ integrations:
 					DefaultAuxResourcePool:     "default",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			ResourcePoolsDontUse: []ResourcePoolConfig{
 				{
 					PoolName: "default",
 					Provider: &provconfig.Config{
@@ -130,8 +130,8 @@ resource_pools:
 `
 	expected := Config{
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
-				AgentRM: &AgentResourceManagerConfig{
+			ResourceManagerV0DontUse: &ResourceManagerConfigV0{
+				AgentRM: &AgentResourceManagerConfigV0{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
 						FittingPolicy: "best",
@@ -140,7 +140,7 @@ resource_pools:
 					DefaultAuxResourcePool:     "cpu-pool",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			ResourcePoolsDontUse: []ResourcePoolConfig{
 				{
 					PoolName: "cpu-pool",
 					Provider: &provconfig.Config{
@@ -401,19 +401,21 @@ task_container_defaults:
 		require.NoError(t, err)
 		require.NoError(t, unmarshaled.Resolve())
 		require.Equal(t, c.expected,
-			*unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+			*unmarshaled.ResourceConfig.ResourceManagers[0].KubernetesRM.MaxSlotsPerPod)
 		require.Equal(t, c.expected,
 			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}
 }
 
+//nolint:gosec // These are not potential hardcoded credentials.
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
-	//nolint:gosec // These are not potential hardcoded credentials.
 	s3Secret := "my_secret_key_secret"
 	masterSecret := "my_master_secret"
 	webuiSecret := "my_webui_secret"
 	registryAuthSecret := "i_love_cellos"
+	startupScriptSecret := "my_startup_script_secret"
+	containerStartupScriptSecret := "my_container_startup_secret"
 
 	raw := fmt.Sprintf(`
 db:
@@ -439,8 +441,27 @@ task_container_defaults:
     password: %v
     shm_size_bytes: 4294967296
     network_mode: bridge
-`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret)
 
+resource_pools:
+  - provider:
+      type: gcp
+      startup_script: %v
+      container_startup_script: %v
+
+resource_managers:
+  - type: agent
+    resource_pools:
+      - provider:
+          type: gcp
+          startup_script: %v
+          container_startup_script: %v
+`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret, startupScriptSecret,
+		containerStartupScriptSecret, startupScriptSecret, containerStartupScriptSecret)
+
+	provConfig := provconfig.DefaultConfig()
+	provConfig.StartupScript = startupScriptSecret
+	provConfig.ContainerStartupScript = containerStartupScriptSecret
+	provConfig.GCP = provconfig.DefaultGCPClusterConfig()
 	expected := Config{
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
@@ -471,6 +492,30 @@ task_container_defaults:
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
 		},
+		ResourceConfig: ResourceConfig{
+			ResourcePoolsDontUse: []ResourcePoolConfig{
+				{
+					Provider:                 provConfig,
+					AgentReconnectWait:       25000000000,
+					MaxAuxContainersPerAgent: 100,
+				},
+			},
+			ResourceManagers: ResourceManagersConfig{
+				{
+					AgentRM: &AgentResourceManagerConfigV1{
+						ResourcePools: []ResourcePoolConfig{
+							{
+								Provider:                 provConfig,
+								AgentReconnectWait:       25000000000,
+								MaxAuxContainersPerAgent: 100,
+							},
+						},
+						DefaultAuxResourcePool:     defaultRPName,
+						DefaultComputeResourcePool: defaultRPName,
+					},
+				},
+			},
+		},
 	}
 
 	unmarshaled := Config{
@@ -491,9 +536,42 @@ task_container_defaults:
 	assert.Assert(t, !bytes.Contains(printable, []byte(masterSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(webuiSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(registryAuthSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(startupScriptSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(containerStartupScriptSecret)))
 
 	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)
+}
+
+func TestDeprecations(t *testing.T) {
+	config := Config{
+		ResourceConfig: ResourceConfig{
+			ResourceManagers: ResourceManagersConfig{
+				{
+					AgentRM: &AgentResourceManagerConfigV1{
+						ResourcePools: []ResourcePoolConfig{
+							{
+								PoolName:             "a",
+								AgentReattachEnabled: true,
+							},
+							{
+								PoolName:             "b",
+								AgentReattachEnabled: false,
+							},
+							{
+								PoolName:             "c",
+								AgentReattachEnabled: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	actual := config.Deprecations()
+	expected := []error{agentReattachDeprecateError("a"), agentReattachDeprecateError("c")}
+	require.Equal(t, expected, actual)
 }
 
 func TestRMPreemptionStatus(t *testing.T) {

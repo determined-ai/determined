@@ -638,7 +638,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		var clientCAs *x509.CertPool
 		clientAuthMode := tls.NoClientCert
 
-		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+		if agentRM, ok := m.config.ResourceManagers.GetAgentRMConfig(); ok && agentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
@@ -920,7 +920,7 @@ func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 	}
 }
 
-func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerConfig) error {
+func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerConfigV1) error {
 	if rmConfig.AgentRM != nil {
 		err := db.CheckIfRPUnbound(rmConfig.AgentRM.DefaultComputeResourcePool)
 		if err != nil {
@@ -988,9 +988,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	logpattern.SetDefault(l)
 
-	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
-	if err != nil {
-		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
+	for _, c := range m.config.ResourceManagers {
+		if err = m.checkIfRMDefaultsAreUnbound(c); err != nil {
+			return fmt.Errorf("could not validate cluster default resource pools: %w", err)
+		}
 	}
 
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
