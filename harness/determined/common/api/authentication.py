@@ -1,28 +1,16 @@
-import argparse
 import contextlib
-import functools
 import getpass
 import hashlib
 import json
 import pathlib
-from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Tuple, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import filelock
 
-import determined as det
 from determined.common import api, constants, util
 from determined.common.api import bindings, certs
 
-Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
-
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
-
-
-def get_allocation_token() -> str:
-    info = det.get_cluster_info()
-    if info is None:
-        return ""
-    return info.session_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -38,203 +26,183 @@ class UsernameTokenPair:
         self.token = token
 
 
+def login(
+    master_address: str,
+    username: str,
+    password: str,
+    cert: Optional[certs.Cert] = None,
+) -> UsernameTokenPair:
+    """
+    Log in without considering or affecting the TokenStore on the file system.
+
+    Used as part of login_with_cache, and also useful in tests where you wish to not affect the
+    TokenStore.
+    """
+    password = api.salt_and_hash(password)
+    unauth_session = api.UnauthSession(master=master_address, cert=cert)
+    login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
+    r = bindings.post_Login(session=unauth_session, body=login)
+    return UsernameTokenPair(username, r.token)
+
+
 def default_load_user_password(
     requested_user: Optional[str],
     password: Optional[str],
     token_store: "TokenStore",
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[str, Optional[str], bool]:
+    """
+    Decide on a username and password for a login attempt.
+
+    When values are explicitly provided, they should be honored.  But when they are not provided,
+    check environment variables and the token store before falling back to the system default.
+
+    Args:
+        requested_user: a username explicitly provided by the end user
+        password: a password explicitly provided by the end user
+
+    Returns:
+        A tuple of (username, Optional[password], was_fallback], where was_fallback indicates that
+        we are returning the system default username and password.
+    """
     # Always prefer an explicitly provided user/password.
     if requested_user:
-        return requested_user, password
+        return requested_user, password, False
 
     # Next highest priority is user/password from environment.
     # Watch out! We have to check for DET_USER and DET_PASS, because containers will have DET_USER
     # set, but that doesn't overrule the active user in the TokenStore, because if the TokenStore in
     # the container has an active user, that means the user has explicitly ran `det user login`
     # inside the container.
+    env_user = util.get_det_username_from_env()
+    env_pass = util.get_det_password_from_env()
+    if env_user is not None and env_pass is not None:
+        return env_user, env_pass, False
+
+    # Next priority is the active user in the token store.
+    active_user = token_store.get_active_user()
+    if active_user is not None:
+        return active_user, password, False
+
+    # Last priority is the default username and password.
+    return (
+        constants.DEFAULT_DETERMINED_USER,
+        password or constants.DEFAULT_DETERMINED_PASSWORD,
+        True,
+    )
+
+
+def login_with_cache(
+    master_address: Optional[str] = None,
+    requested_user: Optional[str] = None,
+    password: Optional[str] = None,
+    cert: Optional[certs.Cert] = None,
+) -> UsernameTokenPair:
+    """
+    Log in, preferring cached credentials in the TokenStore, if possible.
+
+    This is the login path for nearly all user-facing cases.
+
+    There is also a special case for checking if the DET_USER_TOKEN is set in the environment (by
+    the determined-master).  That must happen in this function because it is only used when no other
+    login tokens are active, but it must be considered before asking the user for a password.
+
+    As a somewhat surprising side-effect re-using an existing token from the cache, it is actually
+    possible in cache hit scenarios for an invalid password here to result in a valid login since
+    the password is only used in a cache miss.
+
+    Returns:
+        The username and token of the logged in user.
+    """
+
+    master_address = master_address or util.get_default_master_address()
+    token_store = TokenStore(master_address)
+
+    user, password, was_fallback = default_load_user_password(requested_user, password, token_store)
+
+    # Check the token store if this session_user has a cached token. If so, check with the
+    # master to verify it has not expired. Otherwise, let the token be None.
+    token = token_store.get_token(user)
+    if token is not None and not _is_token_valid(master_address, token, cert):
+        token_store.drop_user(user)
+        token = None
+
+    if token is not None:
+        return UsernameTokenPair(user, token)
+
+    # Special case: use token provided from the container environment if:
+    # - No token was obtained from the token store already,
+    # - There is a token available from the container environment, and
+    # - No user was explicitly requested, or the requested user matches the token available in the
+    #   container environment.
     if (
         util.get_det_username_from_env() is not None
-        and util.get_det_password_from_env() is not None
+        and util.get_det_user_token_from_env() is not None
+        and requested_user in (None, util.get_det_username_from_env())
     ):
-        return util.get_det_username_from_env(), util.get_det_password_from_env()
+        env_user = util.get_det_username_from_env()
+        assert env_user
+        env_token = util.get_det_user_token_from_env()
+        assert env_token
+        return UsernameTokenPair(env_user, env_token)
 
-    # Last priority is the active user in the token store.
-    return token_store.get_active_user(), password
+    if password is None:
+        password = getpass.getpass(f"Password for user '{user}': ")
 
+    try:
+        utp = login(master_address, user, password, cert)
+        user, token = utp.username, utp.token
+    except api.errors.ForbiddenException:
+        if was_fallback:
+            raise api.errors.UnauthenticatedException()
+        raise
 
-class Authentication:
-    def __init__(
-        self,
-        master_address: Optional[str] = None,
-        requested_user: Optional[str] = None,
-        password: Optional[str] = None,
-        cert: Optional[certs.Cert] = None,
-    ) -> None:
-        self.master_address = master_address or util.get_default_master_address()
-        self.token_store = TokenStore(self.master_address)
+    token_store.set_token(user, token)
 
-        self.session = self._init_session(requested_user, password, cert)
-
-    def _init_session(
-        self,
-        requested_user: Optional[str],
-        password: Optional[str],
-        cert: Optional[certs.Cert],
-    ) -> UsernameTokenPair:
-        # Get session_user and password given the following priority:
-        # 1. User passed in with flag (requested_user)
-        # 2. User from environment if DET_PASS is set.
-        # 3. Active user from the token store.
-        session_user, password = default_load_user_password(
-            requested_user, password, self.token_store
-        )
-
-        # For login, we allow falling back to the default username.
-        if not session_user:
-            session_user = constants.DEFAULT_DETERMINED_USER
-        assert session_user is not None
-
-        # Check the token store if this session_user has a cached token. If so, check with the
-        # master to verify it has not expired. Otherwise, let the token be None.
-        token = self.token_store.get_token(session_user)
-        if token is not None and not _is_token_valid(self.master_address, token, cert):
-            self.token_store.drop_user(session_user)
-            token = None
-
-        # Special case: use token provided from the container environment if:
-        # - No token was obtained from the token store already,
-        # - There is a token available from the container environment, and
-        # - No user was explicitly requested, or the requested user matches the token available
-        #   in the container environment.
-        if (
-            token is None
-            and util.get_det_username_from_env() is not None
-            and util.get_det_user_token_from_env() is not None
-            and requested_user in (None, util.get_det_username_from_env())
-        ):
-            session_user = util.get_det_username_from_env()
-            assert session_user
-            token = util.get_det_user_token_from_env()
-
-        if token is not None:
-            return UsernameTokenPair(session_user, token)
-
-        # We'll need to create a new token, so we'll need a password. If there was no requested
-        # user and we ended up falling back to the default username `determined`, then we can fall
-        # back to the default login as well. Otherwise, ask the user for their password.
-        fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
-        if fallback_to_default:
-            password = constants.DEFAULT_DETERMINED_PASSWORD
-
-        if password is None:
-            password = getpass.getpass("Password for user '{}': ".format(session_user))
-
-        try:
-            token = do_login(self.master_address, session_user, password, cert)
-        except api.errors.ForbiddenException:
-            if fallback_to_default:
-                raise api.errors.UnauthenticatedException(username=session_user)
-            raise
-
-        self.token_store.set_token(session_user, token)
-
-        return UsernameTokenPair(session_user, token)
-
-    def is_user_active(self, username: str) -> bool:
-        return self.token_store.get_active_user() == username
-
-    def get_session_user(self) -> str:
-        """
-        Returns the session user for the current session. If there is no active
-        session, then an UnauthenticatedException will be raised.
-        """
-        return self.session.username
-
-    def get_session_token(self, must: bool = True) -> str:
-        """
-        Returns the authentication token for the session user. If there is no
-        active session, then an UnauthenticatedException will be raised.
-        """
-        if self.session is None:
-            if must:
-                raise api.errors.UnauthenticatedException(username="")
-            else:
-                return ""
-        return self.session.token
-
-
-def do_login(
-    master_address: str,
-    username: str,
-    password: str,
-    cert: Optional[certs.Cert] = None,
-) -> str:
-    password = api.salt_and_hash(password)
-    unauth_session = api.Session(user=username, master=master_address, auth=None, cert=cert)
-    login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
-    r = bindings.post_Login(session=unauth_session, body=login)
-    token = r.token
-
-    return token
-
-
-class LogoutAuthentication(Authentication):
-    """
-    An api-compatible Authentication object that is basically exactly a UserTokenPair.
-
-    TODO(MLG-215): delete Authentication class and write a function that returns a UsernameTokenPair
-    in its place, and let do_request() take UsernameTokenPair as input.
-    """
-
-    def __init__(self, session_user: str, session_token: str) -> None:
-        self.session_user = session_user
-        self.session_token = session_token
-
-    def get_session_user(self) -> str:
-        return self.session_user
-
-    def get_session_token(self, must: bool = True) -> str:
-        return self.session_token
+    return UsernameTokenPair(user, token)
 
 
 def logout(
     master_address: Optional[str],
     requested_user: Optional[str],
     cert: Optional[certs.Cert],
-) -> None:
+) -> Optional[str]:
     """
     Logout if there is an active session for this master/username pair, otherwise do nothing.
 
-    Additionally, if the user happens to be the active user, drop the active user from the
-    TokenStore.
+    A session is active when a valid token for it can be found. In that case, the token
+    is sent to the master for invalidation and dropped from the token store.
+
+    If requested_user is None, logout attempts to log out the token store's active_user.
+
+    Logout does not affect the "active_user" entry itself in the token store,
+    since the whole concept of an "active user" mostly belongs to the CLI and is
+    handled explicitly by the CLI.
+
+    Returns:
+        The name of the user who was logged out, if any.
     """
 
     master_address = master_address or util.get_default_master_address()
     token_store = TokenStore(master_address)
 
-    session_user, _ = default_load_user_password(requested_user, None, token_store)
-    # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
+    user, _, __ = default_load_user_password(requested_user, None, token_store)
 
-    if session_user is None:
-        return
+    token = token_store.get_token(user)
 
-    if session_user == token_store.get_active_user():
-        token_store.clear_active()
+    if token is None:
+        return None
 
-    session_token = token_store.get_token(session_user)
+    token_store.drop_user(user)
 
-    if session_token is None:
-        return
-
-    token_store.drop_user(session_user)
-
-    auth = LogoutAuthentication(session_user, session_token)
-    sess = api.Session(user=session_user, master=master_address, auth=auth, cert=cert)
+    utp = UsernameTokenPair(user, token)
+    sess = api.Session(master=master_address, utp=utp, cert=cert)
     try:
         bindings.post_Logout(sess)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         # This session may have expired, but we don't care.
         pass
+
+    return user
 
 
 def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> None:
@@ -246,17 +214,16 @@ def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> Non
     for user in users:
         logout(master_address, user, cert)
 
-    token_store.clear_active()
-
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
     """
     Find out whether the given token is valid by attempting to use it
     on the "api/v1/me" endpoint.
     """
-    headers = {"Authorization": "Bearer {}".format(token)}
+    utp = UsernameTokenPair("username-doesnt-matter", token)
+    sess = api.Session(master_address, utp, cert)
     try:
-        r = api.get(master_address, "api/v1/me", headers=headers, authenticated=False, cert=cert)
+        r = sess.get("api/v1/me")
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 
@@ -288,8 +255,14 @@ class TokenStore:
 
     def _reconfigure_from_store(self, store: dict) -> None:
         substore = store.get("masters", {}).get(self.master_address, {})
-        self._active_user = cast(str, substore.get("active_user"))
-        self._tokens = cast(Dict[str, str], substore.get("tokens", {}))
+
+        active_user = substore.get("active_user")
+        assert isinstance(active_user, (str, type(None))), active_user
+        self._active_user = active_user
+
+        tokens = substore.get("tokens", {})
+        assert isinstance(tokens, dict), tokens
+        self._tokens = tokens
 
     def get_active_user(self) -> Optional[str]:
         return self._active_user
@@ -323,7 +296,7 @@ class TokenStore:
         with self._persistent_store() as substore:
             tokens = substore.setdefault("tokens", {})
             if username not in tokens:
-                raise api.errors.UnauthenticatedException(username=username)
+                raise api.errors.UnauthenticatedException()
             substore["active_user"] = username
 
     def clear_active(self) -> None:
@@ -379,7 +352,8 @@ class TokenStore:
 
             validate_token_store_v1(store)
 
-            return cast(dict, store)
+            assert isinstance(store, dict), store
+            return store
 
         except api.errors.CorruptTokenCacheException:
             # Delete invalid caches before exiting.
@@ -481,27 +455,3 @@ def validate_token_store_v1(store: Any) -> bool:
             validate_token_store_v0(val)
 
     return True
-
-
-# cli_auth is the process-wide authentication used for api calls originating from the cli.
-cli_auth = None  # type: Optional[Authentication]
-
-
-def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
-    """
-    A decorator for cli functions.
-    """
-
-    @functools.wraps(func)
-    def f(namespace: argparse.Namespace) -> Any:
-        global cli_auth
-        cli_auth = Authentication(namespace.master, namespace.user)
-        return func(namespace)
-
-    return f
-
-
-def must_cli_auth() -> Authentication:
-    if not cli_auth:
-        raise api.errors.UnauthenticatedException(username="")
-    return cli_auth

@@ -7,8 +7,8 @@ import sys
 import types
 
 import determined as det
-import determined.common
 from determined.common import api, constants, storage
+from determined.common.api import certs
 from determined.exec import prep_container
 
 logger = logging.getLogger("determined")
@@ -21,9 +21,9 @@ def trigger_preemption(signum: int, frame: types.FrameType) -> None:
         # Chief container, requests preemption, others ignore
         logger.info("SIGTERM: Preemption imminent.")
         # Notify the master that we need to be preempted
-        api.post(
-            info.master_url, f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption"
-        )
+        cert = certs.default_load(info.master_url)
+        sess = api.UnauthSession(info.master_url, cert)
+        sess.post(f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption")
 
 
 def launch(experiment_config: det.ExperimentConfig) -> int:
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # Hack: read the full config.  The experiment config is not a stable API!
     experiment_config = det.ExperimentConfig(info.trial._config)
 
-    determined.common.set_logger(experiment_config.debug_enabled())
+    det.common.set_logger(experiment_config.debug_enabled())
 
     logger.info(
         f"New trial runner in (container {resources_id}) on agent {info.agent_id}: "

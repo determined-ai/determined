@@ -1,15 +1,13 @@
+import datetime
 import re
-import subprocess
 import traceback
-from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 
 from dateutil import parser
 
 from determined.common import api
 from determined.common.api import bindings
-from tests import api_utils
-from tests import config as conf
+from tests import api_utils, detproc
 
 ADD_KEY = "adding"
 REMOVE_KEY = "removing"
@@ -66,12 +64,12 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
         agent_uptime_hours = (end - start) / 3600
         print(f"{agent_id}: {agent_uptime_hours} hours")
 
-    global_start = datetime.fromtimestamp(min_ts, tz=timezone(timedelta(hours=0))).strftime(
-        "%Y-%m-%dT%H:%M:%S.000Z"
-    )
-    global_end = datetime.fromtimestamp(max_ts, tz=timezone(timedelta(hours=0))).strftime(
-        "%Y-%m-%dT%H:%M:%S.000Z"
-    )
+    global_start = datetime.datetime.fromtimestamp(
+        min_ts, tz=datetime.timezone(datetime.timedelta(hours=0))
+    ).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    global_end = datetime.datetime.fromtimestamp(
+        max_ts, tz=datetime.timezone(datetime.timedelta(hours=0))
+    ).strftime("%Y-%m-%dT%H:%M:%S.000Z")
     print(f"\nMaster log time period: {global_start} to {global_end} \n")
     print(f"Total agent up seconds: {total_agent_uptime_sec} ")
     return total_agent_uptime_sec, global_start, global_end
@@ -80,26 +78,26 @@ def parse_log_for_gpu_stats(log_path: str) -> Tuple[int, str, str]:
 log_path = "/tmp/det-master.log"
 
 
-def fetch_master_log() -> bool:
-    command = ["det", "-m", conf.make_master_url(), "master", "logs"]
+def fetch_master_log(sess: api.Session) -> bool:
+    command = ["det", "master", "logs"]
     try:
-        output = subprocess.check_output(command)
+        output = detproc.check_output(sess, command)
     except Exception:
         traceback.print_exc()
         return False
-    with open(log_path, "wb") as log:
+    with open(log_path, "w") as log:
         log.write(output)
     return True
 
 
-def compare_stats() -> None:
-    if not fetch_master_log():
+def compare_stats(sess: api.Session) -> None:
+    if not fetch_master_log(sess):
         print("Skip compare stats because error at fetch master")
         return
     gpu_from_log, global_start, global_end = parse_log_for_gpu_stats(log_path)
     try:
         res = bindings.get_ResourceAllocationRaw(
-            api_utils.determined_test_session(),
+            sess,
             timestampAfter=global_start,
             timestampBefore=global_end,
         )

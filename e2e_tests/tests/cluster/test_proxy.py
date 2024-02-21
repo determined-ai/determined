@@ -1,22 +1,23 @@
 import csv
+import io
 import pathlib
 import re
 import subprocess
 import time
-from io import StringIO
 
 import pytest
 import requests
 
+from determined.common import api
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 from tests import ray_utils
 
 
-def _experiment_task_id(exp_id: int) -> str:
-    sess = api_utils.determined_test_session()
+def _experiment_task_id(sess: api.Session, exp_id: int) -> str:
     trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
     assert len(trials) > 0
 
@@ -59,17 +60,20 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_tunnel() -> None:
+    sess = api_utils.user_session()
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
     exp_id = exp.create_experiment(
+        sess,
         str(exp_path / "ray_launcher.yaml"),
         str(exp_path),
         ["--config", "max_restarts=0", "--config", "resources.slots=1"],
     )
     try:
-        exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
-        task_id = _experiment_task_id(exp_id)
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+        task_id = _experiment_task_id(sess, exp_id)
 
-        proc = subprocess.Popen(
+        proc = detproc.Popen(
+            sess,
             [
                 "python",
                 "-m",
@@ -90,7 +94,6 @@ def test_experiment_proxy_ray_tunnel() -> None:
             proc.terminate()
             proc.wait(10)
     finally:
-        sess = api_utils.determined_test_session()
         bindings.post_KillExperiment(sess, id=exp_id)
 
 
@@ -109,11 +112,11 @@ def _parse_exp_id(proc: "subprocess.Popen[str]") -> int:
 
 
 def _kill_all_ray_experiments() -> None:
-    proc = subprocess.run(
+    sess = api_utils.user_session()
+    proc = detproc.run(
+        sess,
         [
             "det",
-            "-m",
-            conf.make_master_url(),
             "experiment",
             "list",
             "--csv",
@@ -122,8 +125,7 @@ def _kill_all_ray_experiments() -> None:
         text=True,
         check=True,
     )
-    reader = csv.DictReader(StringIO(proc.stdout))
-    sess = api_utils.determined_test_session()
+    reader = csv.DictReader(io.StringIO(proc.stdout))
     for row in reader:
         if row["name"] == "ray_launcher":
             if row["state"] not in ["CANCELED", "COMPLETED"]:
@@ -134,12 +136,12 @@ def _kill_all_ray_experiments() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_experiment_proxy_ray_publish() -> None:
+    sess = api_utils.user_session()
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
-    proc = subprocess.Popen(
+    proc = detproc.Popen(
+        sess,
         [
             "det",
-            "-m",
-            conf.make_master_url(),
             "experiment",
             "create",
             str(exp_path / "ray_launcher.yaml"),
@@ -164,11 +166,10 @@ def test_experiment_proxy_ray_publish() -> None:
             raise
 
         try:
-            exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
+            exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
             _probe_tunnel(proc)
             _ray_job_submit(exp_path)
         finally:
-            sess = api_utils.determined_test_session()
             bindings.post_KillExperiment(sess, id=exp_id)
     finally:
         proc.terminate()

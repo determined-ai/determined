@@ -68,23 +68,21 @@ class NotFoundException(APIException):
 
 
 class ForbiddenException(BadRequestException):
-    def __init__(self, username: str, message: str = ""):
+    def __init__(self, message: str = ""):
         err_message = f"Forbidden({message})"
         if not (message == "invalid credentials" or message == "user not found"):
             err_message += ": Please contact your administrator in order to access this resource."
 
         super().__init__(message=err_message)
-        self.username = username
 
 
 class UnauthenticatedException(BadRequestException):
-    def __init__(self, username: str):
+    def __init__(self) -> None:
         super().__init__(
             message="Unauthenticated: Please use 'det user login <username>' for password login, or"
             " for Enterprise users logging in with an SSO provider,"
             " use 'det auth login --provider=<provider>'."
         )
-        self.username = username
 
 
 class CorruptTokenCacheException(Exception):

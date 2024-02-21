@@ -2,6 +2,7 @@ from typing import List
 
 import pytest
 
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -9,10 +10,13 @@ from tests import experiment as exp
 @pytest.mark.parallel
 @pytest.mark.e2e_slurm_gpu
 def test_pytorch_gradient_aggregation() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 
-    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_identity"), 1)
-    trials = exp.experiment_trials(exp_id)
+    exp_id = exp.run_basic_test_with_temp_config(
+        sess, config, conf.fixtures_path("pytorch_identity"), 1
+    )
+    trials = exp.experiment_trials(sess, exp_id)
     assert len(trials) == 1
     workloads = exp.workloads_with_validation(trials[0].workloads)
     actual_weights = []

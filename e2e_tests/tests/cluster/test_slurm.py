@@ -5,29 +5,33 @@ from typing import List
 import pytest
 import torch
 
+from determined.common import api
 from determined.common.api import bindings
 from tests import api_utils, command
 from tests import config as conf
 from tests import experiment as exp
 
 
-def run_failure_test_multiple(config_file: str, model_def_file: str, errors: List[str]) -> int:
+def run_failure_test_multiple(
+    sess: api.Session, config_file: str, model_def_file: str, errors: List[str]
+) -> int:
     # Creates an experiment meant to fail and checks array of error messages
     # If one of the errors are present, then the assertion passes
     experiment_id = exp.create_experiment(
+        sess,
         config_file,
         model_def_file,
     )
     exp.wait_for_experiment_state(
-        experiment_id, bindings.experimentv1State.ERROR, max_wait_secs=600
+        sess, experiment_id, bindings.experimentv1State.ERROR, max_wait_secs=600
     )
-    trials = exp.experiment_trials(experiment_id)
+    trials = exp.experiment_trials(sess, experiment_id)
     for t in trials:
         trial = t.trial
         if trial.state != bindings.trialv1State.ERROR:
             continue
 
-        logs = exp.trial_logs(trial.id)
+        logs = exp.trial_logs(sess, trial.id)
         totalAssertion = False
         for e in errors:
             totalAssertion = totalAssertion or any(e in line for line in logs)
@@ -49,6 +53,7 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()
 def test_unsupported_option() -> None:
+    sess = api_utils.user_session()
     # Creates an experiment with a yaml file
     # It attempts to supply a slurm option that is controlled by Determined
     # run_failure_test expects the experiment to fail and will assert the log with the string
@@ -56,6 +61,7 @@ def test_unsupported_option() -> None:
     # Waits for experiment to reach a ERROR_STATE. Errors if it does not error
 
     exp.run_failure_test(
+        sess,
         conf.fixtures_path("failures/unsupported-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
         "resources failed with non-zero exit code: unable to launch job: "
@@ -67,6 +73,7 @@ def test_unsupported_option() -> None:
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()
 def test_docker_image() -> None:
+    sess = api_utils.user_session()
     # Creates an experiment with a bad docker image file that will error
     errors = [
         # Singularity message
@@ -82,7 +89,7 @@ def test_docker_image() -> None:
     ]
 
     run_failure_test_multiple(
-        conf.fixtures_path("failures/bad-image.yaml"), conf.fixtures_path("failures/"), errors
+        sess, conf.fixtures_path("failures/bad-image.yaml"), conf.fixtures_path("failures/"), errors
     )
 
 
@@ -93,6 +100,7 @@ def test_docker_image() -> None:
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()
 def test_node_not_available() -> None:
+    sess = api_utils.user_session()
     # Creates an experiment with a configuration that cannot be satisfied.
     # Verifies that the error message includes the SBATCH options of the failed submission.
     # Only casablanca displays the SBATCH options. Horizon does not upon failure
@@ -102,6 +110,7 @@ def test_node_not_available() -> None:
     error2 = "CPU count per node can not be satisfied"
     errors = [error1, error2]
     run_failure_test_multiple(
+        sess,
         conf.fixtures_path("failures/slurm-requested-node-not-available.yaml"),
         conf.fixtures_path("failures/"),
         errors,
@@ -109,7 +118,9 @@ def test_node_not_available() -> None:
 
 
 def bad_option_helper(config_path: str, fixture_path: str, error_string: str) -> None:
+    sess = api_utils.user_session()
     exp.run_failure_test(
+        sess,
         conf.fixtures_path(config_path),
         conf.fixtures_path(fixture_path),
         error_string,
@@ -150,7 +161,9 @@ def test_docker_login() -> None:
     )
     errorDocker = "lstat /root/.config/containers/registries.conf.d: permission denied"
     errors = [errorPermission, errorDocker]
+    sess = api_utils.user_session()
     run_failure_test_multiple(
+        sess,
         conf.fixtures_path("failures/docker-login-failure.yaml"),
         conf.fixtures_path("failures/"),
         errors,
@@ -162,8 +175,10 @@ def test_docker_login() -> None:
 @pytest.mark.e2e_slurm_misconfigured
 @api_utils.skipif_not_slurm()
 def test_master_host() -> None:
+    sess = api_utils.user_session()
     # Creates an experiment normally, should error if the back communication channel is broken
     exp.run_failure_test(
+        sess,
         conf.fixtures_path("no_op/single-one-short-step.yaml"),
         conf.fixtures_path("no_op"),
         "Unable to reach the master at DET_MASTER=http://junkmaster:8080.  "
@@ -178,12 +193,13 @@ def test_master_host() -> None:
 @pytest.mark.e2e_pbs
 @api_utils.skipif_not_hpc()
 def test_mnist_pytorch_distributed() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}
     config["records_per_epoch"] = 5000
     config["max_restarts"] = 0
 
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
 
 
 # Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.
@@ -207,9 +223,11 @@ def test_mnist_pytorch_distributed() -> None:
 @pytest.mark.e2e_slurm_preemption
 @api_utils.skipif_not_slurm()
 def test_slurm_preemption() -> None:
+    sess = api_utils.user_session()
     # Launch the cifar10_pytorch_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
     # partition
     cancelable_exp_id = exp.create_experiment(
+        sess,
         conf.cv_examples_path(
             "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_cancelable.yaml"
         ),
@@ -217,12 +235,13 @@ def test_slurm_preemption() -> None:
         None,
     )
     # Wait for the first cancellable experiment to enter RUNNING state.
-    exp.wait_for_experiment_state(cancelable_exp_id, bindings.experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
     # Wait for the first cancellable experiment to complete at least one checkpoint.
-    exp.wait_for_at_least_one_checkpoint(cancelable_exp_id, 300)
+    exp.wait_for_at_least_one_checkpoint(sess, cancelable_exp_id, 300)
     # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
     # partition
     high_priority_exp_id = exp.create_experiment(
+        sess,
         conf.cv_examples_path(
             "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_high_priority.yaml"
         ),
@@ -232,15 +251,15 @@ def test_slurm_preemption() -> None:
     # In this scenario, cifar10_pytorch_high_priority experiment will cause the
     # cifar10_pytorch_cancelable experiment to get requeued. The experiment
     # cifar10_pytorch_high_priority will execute to completion.
-    exp.wait_for_experiment_state(cancelable_exp_id, bindings.experimentv1State.QUEUED)
-    exp.wait_for_experiment_state(high_priority_exp_id, bindings.experimentv1State.RUNNING)
-    exp.wait_for_experiment_state(high_priority_exp_id, bindings.experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.QUEUED)
+    exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.COMPLETED)
     # Now, the experiment cifar10_pytorch_cancelable will resume as soon as the requested
     # resources are available.
-    exp.wait_for_experiment_state(cancelable_exp_id, bindings.experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
     # Finally, the experiment cifar10_pytorch_cancelable will complete if there are no other
     # interruptions.
-    exp.wait_for_experiment_state(cancelable_exp_id, bindings.experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.COMPLETED)
 
 
 @pytest.mark.e2e_slurm
@@ -257,10 +276,11 @@ def test_start_and_verify_hpc_home() -> None:
     user $HOME even when the /etc/nsswitch.conf is mis-configured, so this
     test uses a shell.
     """
+    sess = api_utils.user_session()
 
     foundLineWithUserName = False
 
-    with command.interactive_command("shell", "start") as shell:
+    with command.interactive_command(sess, ["shell", "start"]) as shell:
         # In order to identify whether we are running a Podman container, we will
         # check if we're running as "root", because Podman containers run as
         # "root".  Use "$(whoami)" to report the user we running as, because the

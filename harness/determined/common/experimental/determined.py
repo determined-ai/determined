@@ -25,6 +25,7 @@ logger = logging.getLogger("determined.client")
 
 
 class Determined:
+    # Dev note: Determined is basically a wrapper around Session that calls generated bindings.
     """
     Determined gives access to Determined API objects.
 
@@ -54,14 +55,9 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        auth = authentication.Authentication(self._master, user, password, cert=cert)
+        utp = authentication.login_with_cache(self._master, user, password, cert=cert)
         retry = api.default_retry()
-        self._session = api.Session(self._master, user, auth, cert, retry)
-        token_user = auth.token_store.get_active_user()
-        if token_user is not None:
-            self._token = auth.token_store.get_token(token_user)
-        else:
-            self._token = None
+        self._session = api.Session(self._master, utp, cert, retry)
 
     @classmethod
     def _from_session(cls, session: api.Session) -> "Determined":
@@ -69,18 +65,14 @@ class Determined:
 
         This constructor exists to help the CLI transition to using SDK methods, most of which are
         derived from a Determined object at some point in their lifespan.
-
-        WARNING: Determined objects created with this contsructor will not have a token, and so
-        have no access to the oauth API.
         """
         # mypy gives new_det "Any" type, even if cls is annotated
         new_det = cls.__new__(cls)  # type: Determined
         new_det._session = session
-        new_det._token = None
         return new_det
 
     def create_user(
-        self, username: str, admin: bool, password: Optional[str], remote: bool = False
+        self, username: str, admin: bool, password: Optional[str] = None, remote: bool = False
     ) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
@@ -105,22 +97,10 @@ class Determined:
         return user.User._from_bindings(resp.user, self._session)
 
     def get_session_username(self) -> str:
-        auth = self._session._auth
-        assert auth
-        return auth.get_session_user()
+        return self._session.username
 
     def logout(self) -> None:
-        auth = self._session._auth
-        # auth should only be None in the special login Session, which must not be used in a
-        # Determined object.
-        assert auth, "Determined.logout() found an unauthorized Session"
-
-        user = auth.get_session_user()
-        # get_session_user() is allowed to return an empty string, which seems dumb, but in that
-        # case we do not want to trigger the authentication.logout default username lookup logic.
-        assert user, "Determined.logout() couldn't find a valid username"
-
-        authentication.logout(self._session._master, user, self._session._cert)
+        authentication.logout(self._session.master, self._session.username, self._session.cert)
 
     def list_users(self, active: Optional[bool] = None) -> List[user.User]:
         def get_with_offset(offset: int) -> bindings.v1GetUsersResponse:
@@ -478,8 +458,7 @@ class Determined:
     def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimClient]:
         try:
             oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimClient] = []
-            headers = {"Authorization": "Bearer {}".format(self._token)}
-            clients = api.get(self._master, "oauth2/clients", headers=headers).json()
+            clients = self._session.get("oauth2/clients").json()
             for client in clients:
                 osc: oauth2_scim_client.Oauth2ScimClient = oauth2_scim_client.Oauth2ScimClient(
                     name=client["name"], client_id=client["id"], domain=client["domain"]
@@ -491,14 +470,9 @@ class Determined:
 
     def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimClient:
         try:
-            headers = {"Authorization": "Bearer {}".format(self._token)}
-            client = api.post(
-                self._master,
-                "oauth2/clients",
-                headers=headers,
-                json={"domain": domain, "name": name},
+            client = self._session.post(
+                "oauth2/clients", json={"domain": domain, "name": name}
             ).json()
-
             return oauth2_scim_client.Oauth2ScimClient(
                 client_id=str(client["id"]), secret=str(client["secret"]), domain=domain, name=name
             )
@@ -508,8 +482,7 @@ class Determined:
 
     def remove_oauth_client(self, client_id: str) -> None:
         try:
-            headers = {"Authorization": "Bearer {}".format(self._token)}
-            api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
+            self._session.delete(f"oauth2/clients/{client_id}")
         except api.errors.NotFoundException:
             raise det.errors.EnterpriseOnlyError("API not found: oauth2/clients")
 

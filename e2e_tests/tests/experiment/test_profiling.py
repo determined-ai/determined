@@ -1,12 +1,12 @@
 import json
 import tempfile
-from typing import Any, Dict, Optional, Sequence
-from urllib.parse import urlencode
+from typing import Any, Dict, Sequence
 
 import pytest
 
 from determined.common import api, util
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -21,33 +21,34 @@ from tests import experiment as exp
     ],
 )
 def test_streaming_observability_metrics_apis(model_def: str, timings_enabled: bool) -> None:
-    # TODO: refactor tests to not use cli singleton auth.
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-
+    sess = api_utils.user_session()
     config_path = conf.fixtures_path("mnist_pytorch/const-profiling.yaml")
 
     config_obj = conf.load_config(config_path)
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(tf.name, model_def)
+        experiment_id = exp.create_experiment(sess, tf.name, model_def)
 
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
-    trials = exp.experiment_trials(experiment_id)
+    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    trials = exp.experiment_trials(sess, experiment_id)
     trial_id = trials[0].trial.id
 
     gpu_enabled = conf.GPU_ENABLED
 
-    request_profiling_metric_labels(trial_id, timings_enabled, gpu_enabled)
+    request_profiling_metric_labels(sess, trial_id, timings_enabled, gpu_enabled)
     if gpu_enabled:
-        request_profiling_system_metrics(trial_id, "gpu_util")
+        request_profiling_system_metrics(sess, trial_id, "gpu_util")
     if timings_enabled:
-        request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
-        request_profiling_pytorch_timing_metrics(trial_id, "train_batch.backward", accumulated=True)
+        request_profiling_pytorch_timing_metrics(sess, trial_id, "train_batch")
+        request_profiling_pytorch_timing_metrics(
+            sess, trial_id, "train_batch.backward", accumulated=True
+        )
 
 
-def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_enabled: bool) -> None:
+def request_profiling_metric_labels(
+    sess: api.Session, trial_id: int, timing_enabled: bool, gpu_enabled: bool
+) -> None:
     def validate_labels(labels: Sequence[Dict[str, Any]]) -> None:
         # Check some labels against the expected labels. Return the missing labels.
         expected = {
@@ -86,9 +87,8 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_ena
                 f"expected completed experiment to have all labels but some are missing: {expected}"
             )
 
-    with api.get(
-        conf.make_master_url(),
-        "api/v1/trials/{}/profiler/available_series".format(trial_id),
+    with sess.get(
+        f"api/v1/trials/{trial_id}/profiler/available_series",
         stream=True,
     ) as r:
         for line in r.iter_lines():
@@ -98,7 +98,7 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_ena
             return
 
 
-def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
+def request_profiling_system_metrics(sess: api.Session, trial_id: int, metric_name: str) -> None:
     def validate_gpu_metric_batch(batch: Dict[str, Any]) -> None:
         num_values = len(batch["values"])
         num_batch_indexes = len(batch["batches"])
@@ -111,12 +111,12 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
         if num_values == 0:
             pytest.fail(f"received batch of size 0, something went wrong: {batch}")
 
-    with api.get(
-        conf.make_master_url(),
-        "api/v1/trials/{}/profiler/metrics?{}".format(
-            trial_id,
-            to_query_params(PROFILER_METRIC_TYPE_SYSTEM, metric_name),
-        ),
+    with sess.get(
+        f"api/v1/trials/{trial_id}/profiler/metrics",
+        params={
+            "labels.name": metric_name,
+            "labels.metricType": PROFILER_METRIC_TYPE_SYSTEM,
+        },
         stream=True,
     ) as r:
         have_batch = False
@@ -129,7 +129,7 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
 
 
 def request_profiling_pytorch_timing_metrics(
-    trial_id: int, metric_name: str, accumulated: bool = False
+    sess: api.Session, trial_id: int, metric_name: str, accumulated: bool = False
 ) -> None:
     def validate_timing_batch(batch: Dict[str, Any], batch_idx: int) -> int:
         values = batch["values"]
@@ -162,12 +162,12 @@ def request_profiling_pytorch_timing_metrics(
 
         return int(batches[-1]) + 1
 
-    with api.get(
-        conf.make_master_url(),
-        "api/v1/trials/{}/profiler/metrics?{}".format(
-            trial_id,
-            to_query_params(PROFILER_METRIC_TYPE_TIMING, metric_name),
-        ),
+    with sess.get(
+        f"api/v1/trials/{trial_id}/profiler/metrics",
+        params={
+            "labels.name": metric_name,
+            "labels.metricType": PROFILER_METRIC_TYPE_TIMING,
+        },
         stream=True,
     ) as r:
         batch_idx = 0
@@ -182,12 +182,3 @@ def request_profiling_pytorch_timing_metrics(
 
 PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
 PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
-
-
-def to_query_params(metric_type: str, metric_name: Optional[str] = None) -> str:
-    return urlencode(
-        {
-            "labels.name": metric_name,
-            "labels.metricType": metric_type,
-        }
-    )

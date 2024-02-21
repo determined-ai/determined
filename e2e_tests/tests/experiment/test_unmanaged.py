@@ -54,7 +54,7 @@ def test_unmanaged_checkpoints() -> None:
         {"DET_TEST_EXTERNAL_EXP_ID": external_id},
     )
 
-    sess = api_utils.determined_test_session()
+    sess = api_utils.user_session()
     exps = bindings.get_GetExperiments(sess, limit=-1).experiments
     exps = [exp for exp in exps if exp.externalExperimentId == external_id]
     assert len(exps) == 1

@@ -7,7 +7,7 @@ import appdirs
 import determined as det
 from determined import core, experimental, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 logger = logging.getLogger("determined.core")
 
@@ -43,9 +43,8 @@ def _make_v2_context(
 
         # We are on the cluster.
         cert = certs.default_load(info.master_url)
-        session = api.Session(
-            info.master_url, None, None, cert, max_retries=util.get_max_retries_config()
-        )
+        utp = authentication.login_with_cache(info.master_url, cert=cert)
+        session = api.Session(info.master_url, utp, cert, util.get_max_retries_config())
     else:
         unmanaged = True
 

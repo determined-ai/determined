@@ -12,7 +12,6 @@ with warnings.catch_warnings(record=True):
         ModelVersion,
         OrderBy,
         Project,
-        Session,
         Trial,
         TrialOrderBy,
         TrialReference,

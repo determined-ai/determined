@@ -1,5 +1,5 @@
 import uuid
-from typing import Callable, Optional, Sequence, TypeVar
+from typing import Callable, Optional, Sequence, Tuple, TypeVar
 
 import pytest
 
@@ -7,41 +7,60 @@ from determined.common import api
 from determined.common.api import authentication, bindings, certs, errors
 from tests import config as conf
 
+_cert: Optional[certs.Cert] = None
+
+
+def cert() -> certs.Cert:
+    global _cert
+    if _cert is None:
+        _cert = certs.default_load(conf.make_master_url())
+    return _cert
+
+
+def make_session(username: str, password: str) -> api.Session:
+    master_url = conf.make_master_url()
+    # Use login instead of login_with_cache() to not touch auth.json on the filesystem.
+    utp = authentication.login(master_url, username, password, cert())
+    return api.Session(master_url, utp, cert())
+
+
+_user_session: Optional[api.Session] = None
+
+
+def user_session() -> api.Session:
+    global _user_session
+    if _user_session is None:
+        _user_session = make_session("determined", "")
+    return _user_session
+
+
+_admin_session: Optional[api.Session] = None
+
+
+def admin_session() -> api.Session:
+    global _admin_session
+    if _admin_session is None:
+        _admin_session = make_session("admin", "")
+    return _admin_session
+
 
 def get_random_string() -> str:
     return str(uuid.uuid4())
 
 
-def determined_test_session(
-    credentials: Optional[authentication.Credentials] = None,
-    admin: Optional[bool] = None,
-) -> api.Session:
-    assert admin is None or credentials is None, "admin and credentials are mutually exclusive"
-
-    if credentials is None:
-        if admin:
-            credentials = conf.ADMIN_CREDENTIALS
-        else:
-            credentials = authentication.Credentials("determined", "")
-
-    murl = conf.make_master_url()
-    certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(
-        murl, requested_user=credentials.username, password=credentials.password
-    )
-    return api.Session(murl, credentials.username, authentication.cli_auth, certs.cli_cert)
-
-
 def create_test_user(
-    add_password: bool = False,
-    session: Optional[api.Session] = None,
     user: Optional[bindings.v1User] = None,
-) -> authentication.Credentials:
-    session = session or determined_test_session(admin=True)
-    user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
-    password = get_random_string() if add_password else ""
+) -> Tuple[api.Session, str]:
+    """
+    Returns a tuple of (Session, password).
+    """
+    session = admin_session()
+    username = get_random_string()
+    user = user or bindings.v1User(username=username, admin=False, active=True)
+    password = get_random_string()
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
-    return authentication.Credentials(user.username, password)
+    sess = make_session(username, password)
+    return sess, password
 
 
 def assign_user_role(session: api.Session, user: str, role: str, workspace: Optional[str]) -> None:
@@ -60,17 +79,6 @@ def assign_group_role(
     )
     req = bindings.v1AssignRolesRequest(userRoleAssignments=[], groupRoleAssignments=group_assign)
     bindings.post_AssignRoles(session, body=req)
-
-
-def configure_token_store(credentials: authentication.Credentials) -> None:
-    """Authenticate the user for CLI usage with the given credentials."""
-    token_store = authentication.TokenStore(conf.make_master_url())
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    token = authentication.do_login(
-        conf.make_master_url(), credentials.username, credentials.password, certs.cli_cert
-    )
-    token_store.set_token(credentials.username, token)
-    token_store.set_active(credentials.username)
 
 
 def launch_ntsc(
@@ -164,6 +172,38 @@ def list_ntsc(
         raise ValueError("unknown type")
 
 
+F = TypeVar("F", bound=Callable)
+
+
+_is_k8s: Optional[bool] = None
+
+
+def _get_is_k8s() -> Optional[bool]:
+    global _is_k8s
+
+    if _is_k8s is None:
+        try:
+            admin = admin_session()
+            resp = bindings.get_GetMasterConfig(admin)
+            _is_k8s = resp.config["resource_manager"]["type"] == "kubernetes"
+        except (errors.APIException, errors.MasterNotFoundException):
+            pass
+
+    return _is_k8s
+
+
+def skipif_not_k8s(reason: str = "test is k8s-specific") -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        is_k8s = _get_is_k8s()
+        if is_k8s is None:
+            return f
+        if not is_k8s:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
 _scheduler_type: Optional[bindings.v1SchedulerType] = None
 
 
@@ -174,7 +214,7 @@ def _get_scheduler_type() -> Optional[bindings.v1SchedulerType]:
     global _scheduler_type
     if _scheduler_type is None:
         try:
-            sess = determined_test_session()
+            sess = user_session()
             resourcePool = bindings.get_GetResourcePools(sess).resourcePools
             if not resourcePool:
                 raise ValueError(
@@ -184,9 +224,6 @@ def _get_scheduler_type() -> Optional[bindings.v1SchedulerType]:
         except (errors.APIException, errors.MasterNotFoundException):
             pass
     return _scheduler_type
-
-
-F = TypeVar("F", bound=Callable)
 
 
 def skipif_not_hpc(reason: str = "test is hpc-specific") -> Callable[[F], F]:
@@ -240,7 +277,8 @@ def _get_ee() -> Optional[bool]:
 
     if _is_ee is None:
         try:
-            info = api.get(conf.make_master_url(), "info", authenticated=False).json()
+            sess = api.UnauthSession(conf.make_master_url(), cert())
+            info = sess.get("info").json()
             _is_ee = "sso_providers" in info
         except (errors.APIException, errors.MasterNotFoundException):
             pass
@@ -280,7 +318,8 @@ def _get_scim_enabled() -> Optional[bool]:
 
     if _scim_enabled is None:
         try:
-            info = api.get(conf.make_master_url(), "info", authenticated=False).json()
+            sess = api.UnauthSession(conf.make_master_url(), cert())
+            info = sess.get("info").json()
             _scim_enabled = bool(info.get("sso_providers") and len(info["sso_providers"]) > 0)
         except (errors.APIException, errors.MasterNotFoundException):
             pass
@@ -294,6 +333,65 @@ def skipif_scim_not_enabled(reason: str = "scim is required for this test") -> C
         if se is None:
             return f
         if not se:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+_rbac_enabled: Optional[bool] = None
+
+
+def _get_rbac_enabled() -> Optional[bool]:
+    global _rbac_enabled
+
+    if _rbac_enabled is None:
+        try:
+            sess = api.UnauthSession(conf.make_master_url(), cert())
+            _rbac_enabled = bindings.get_GetMaster(sess).rbacEnabled
+        except (errors.APIException, errors.MasterNotFoundException):
+            pass
+
+    return _rbac_enabled
+
+
+def skipif_rbac_not_enabled(reason: str = "ee is required for this test") -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        re = _get_rbac_enabled()
+        if re is None:
+            return f
+        if not re:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+_strict_q: Optional[bool] = None
+
+
+def _get_strict_q() -> Optional[bool]:
+    global _strict_q
+
+    if _strict_q is None:
+        try:
+            sess = api.UnauthSession(conf.make_master_url(), cert())
+            resp = bindings.get_GetMaster(sess)
+            _strict_q = resp.rbacEnabled and resp.strictJobQueueControl
+        except (errors.APIException, errors.MasterNotFoundException):
+            pass
+
+    return _strict_q
+
+
+def skipif_strict_q_control_not_enabled(
+    reason: str = "rbac and strict queue control are required for this test",
+) -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        sq = _get_strict_q()
+        if sq is None:
+            return f
+        if not sq:
             return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
         return f
 

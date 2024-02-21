@@ -1,28 +1,24 @@
 import json
 import multiprocessing as mp
-import multiprocessing.pool
-import subprocess
 from typing import Dict, List, Set, Union
 
 import pytest
 
-from determined.common import api
-from determined.common.api import authentication, bindings, certs
+from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
 def test_streaming_metrics_api() -> None:
-    # TODO: refactor tests to not use cli singleton auth.
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
-
+    sess = api_utils.user_session()
     pool = mp.pool.ThreadPool(processes=7)
 
     experiment_id = exp.create_experiment(
+        sess,
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     )
@@ -66,9 +62,9 @@ def test_streaming_metrics_api() -> None:
 
 
 def request_metric_names(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/metrics-stream/metric-names?ids={}".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/metrics-stream/metric-names?ids={experiment_id}",
         params={"period_seconds": 1},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
@@ -102,9 +98,9 @@ def request_metric_names(experiment_id):  # type: ignore
 
 
 def request_train_metric_batches(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/batches",
         params={"metric_name": "loss", "metric_type": "METRIC_TYPE_TRAINING", "period_seconds": 1},
     )
     results = [message["result"] for message in map(json.loads, response.text.splitlines())]
@@ -126,9 +122,9 @@ def request_train_metric_batches(experiment_id):  # type: ignore
 
 
 def request_valid_metric_batches(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/batches".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/batches",
         params={
             "metric_name": "accuracy",
             "metric_type": "METRIC_TYPE_VALIDATION",
@@ -164,9 +160,9 @@ def validate_hparam_types(hparams: dict) -> Union[None, str]:
 
 
 def request_train_trials_snapshot(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/trials-snapshot".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/trials-snapshot",
         params={
             "metric_name": "loss",
             "metric_type": "METRIC_TYPE_TRAINING",
@@ -194,9 +190,9 @@ def request_train_trials_snapshot(experiment_id):  # type: ignore
 
 
 def request_valid_trials_snapshot(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/trials-snapshot".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/trials-snapshot",
         params={
             "metric_name": "accuracy",
             "metric_type": "METRIC_TYPE_VALIDATION",
@@ -261,9 +257,9 @@ def check_trials_sample_result(results: list) -> Union[None, tuple]:
 
 
 def request_train_trials_sample(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/trials-sample".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/trials-sample",
         params={
             "metric_name": "loss",
             "metric_type": "METRIC_TYPE_TRAINING",
@@ -275,9 +271,9 @@ def request_train_trials_sample(experiment_id):  # type: ignore
 
 
 def request_valid_trials_sample(experiment_id):  # type: ignore
-    response = api.get(
-        conf.make_master_url(),
-        "api/v1/experiments/{}/metrics-stream/trials-sample".format(experiment_id),
+    sess = api_utils.user_session()
+    response = sess.get(
+        f"api/v1/experiments/{experiment_id}/metrics-stream/trials-sample",
         params={
             "metric_name": "accuracy",
             "metric_type": "METRIC_TYPE_VALIDATION",
@@ -291,14 +287,15 @@ def request_valid_trials_sample(experiment_id):  # type: ignore
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("group", ["validation", "training", "abc"])
 def test_trial_time_series(group: str) -> None:
+    sess = api_utils.user_session()
     exp_id = exp.create_experiment(
+        sess,
         conf.fixtures_path("no_op/single-one-short-step.yaml"),
         conf.fixtures_path("no_op"),
         ["--project_id", str(1), ("--paused")],
     )
-    trials = exp.experiment_trials(exp_id)
+    trials = exp.experiment_trials(sess, exp_id)
     trial_id = trials[0].trial.id
-    sess = api_utils.determined_test_session(admin=False)
     metric_names = ["lossx"]
 
     trial_metrics = bindings.v1TrialMetrics(
@@ -325,16 +322,15 @@ def test_trial_time_series(group: str) -> None:
 
 @pytest.mark.e2e_cpu
 def test_trial_describe_metrics() -> None:
+    sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), 1
+        sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trials = exp.experiment_trials(exp_id)
+    trials = exp.experiment_trials(sess, exp_id)
     trial_id = trials[0].trial.id
 
     cmd = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "trial",
         "describe",
         "--json",
@@ -342,7 +338,7 @@ def test_trial_describe_metrics() -> None:
         str(trial_id),
     ]
 
-    output = json.loads(subprocess.check_output(cmd))
+    output = detproc.check_json(sess, cmd)
 
     workloads = output["workloads"]
     assert len(workloads) == 102
@@ -354,7 +350,6 @@ def test_trial_describe_metrics() -> None:
     assert len(losses) == 100
 
     # assert summary metrics in trial
-    sess = api_utils.determined_test_session(admin=True)
     resp = bindings.get_GetTrial(session=sess, trialId=trial_id)
     summaryMetrics = resp.trial.summaryMetrics
     assert summaryMetrics is not None

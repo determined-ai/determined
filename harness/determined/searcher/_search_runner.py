@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
+from determined.common import api
 from determined.common.api import bindings, errors
 from determined.experimental import client
 
@@ -118,7 +119,7 @@ class SearchRunner:
     def run_experiment(
         self,
         experiment_id: int,
-        session: client.Session,
+        session: api.Session,
         prior_operations: Optional[List[searcher.Operation]],
         sleep_time: float = 1.0,
     ) -> None:
@@ -186,7 +187,7 @@ class SearchRunner:
 
     def post_operations(
         self,
-        session: client.Session,
+        session: api.Session,
         experiment_id: int,
         event: bindings.v1SearcherEvent,
         operations: List[searcher.Operation],
@@ -221,7 +222,7 @@ class SearchRunner:
 
     def get_events(
         self,
-        session: client.Session,
+        session: api.Session,
         experiment_id: int,
     ) -> Optional[Sequence[bindings.v1SearcherEvent]]:
         # API is implemented with long polling.

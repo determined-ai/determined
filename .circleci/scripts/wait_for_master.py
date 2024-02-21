@@ -4,15 +4,16 @@ import time
 import requests
 
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 
 def _wait_for_master(address: str) -> None:
     print("Checking for master at", address)
     cert = certs.Cert(noverify=True)
+    sess = api.UnauthSession(address, cert)
     for _ in range(150):
         try:
-            r = api.get(address, "info", authenticated=False, cert=cert)
+            r = sess.get("info")
             if r.status_code == requests.codes.ok:
                 return
         except api.errors.MasterNotFoundException:

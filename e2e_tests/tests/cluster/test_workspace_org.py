@@ -1,36 +1,25 @@
 import contextlib
+import http
 import os
 import tempfile
 import uuid
-from http import HTTPStatus
 from typing import Generator, List, Optional
 
 import pytest
 
 from determined.common import api
-from determined.common.api import authentication, bindings, errors
-from determined.common.api._util import NTSC_Kind, wait_for_ntsc_state
-from determined.common.api.errors import APIException
+from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
-from tests.cluster.test_users import change_user_password, logged_in_user
-from tests.experiment import run_basic_test, wait_for_experiment_state
-
-from .test_agent_user_group import _delete_workspace_and_check
-from .test_groups import det_cmd, det_cmd_json
+from tests import detproc
+from tests import experiment as exp
+from tests.cluster import test_agent_user_group
 
 
 @pytest.mark.e2e_cpu
 def test_workspace_org() -> None:
-    with logged_in_user(conf.ADMIN_CREDENTIALS):
-        change_user_password("determined", "")
-    master_url = conf.make_master_url()
-    authentication.cli_auth = authentication.Authentication(master_url)
-    sess = api.Session(master_url, None, None, None)
-    admin_auth = authentication.Authentication(
-        master_url, conf.ADMIN_CREDENTIALS.username, conf.ADMIN_CREDENTIALS.password
-    )
-    admin_sess = api.Session(master_url, conf.ADMIN_CREDENTIALS.username, admin_auth, None)
+    sess = api_utils.user_session()
+    admin_sess = api_utils.admin_session()
 
     test_experiments: List[bindings.v1Experiment] = []
     test_projects: List[bindings.v1Project] = []
@@ -321,12 +310,12 @@ def test_workspace_org() -> None:
         assert len(returned_notes) == 1
 
         # Create an experiment in the default project.
-        test_exp_id = run_basic_test(
-            conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+        test_exp_id = exp.run_basic_test(
+            sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
         )
         test_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         test_experiments.append(test_exp)
-        wait_for_experiment_state(test_exp_id, bindings.experimentv1State.COMPLETED)
+        exp.wait_for_experiment_state(sess, test_exp_id, bindings.experimentv1State.COMPLETED)
         assert test_exp.projectId == default_project.id
 
         # Move the test experiment into a user-made project
@@ -370,7 +359,7 @@ def test_workspace_org() -> None:
         duplicate_workspace = r7.workspace
         assert duplicate_workspace is not None
         test_workspaces.append(duplicate_workspace)
-        with pytest.raises(APIException) as e:
+        with pytest.raises(errors.APIException) as e:
             r8 = bindings.post_PostWorkspace(
                 sess, body=bindings.v1PostWorkspaceRequest(name="_TestDuplicate")
             )
@@ -378,7 +367,7 @@ def test_workspace_org() -> None:
             assert failed_duplicate_workspace is None
             if failed_duplicate_workspace is not None:
                 test_workspaces.append(failed_duplicate_workspace)
-        assert e.value.status_code == HTTPStatus.CONFLICT
+        assert e.value.status_code == http.HTTPStatus.CONFLICT
 
         # Refuse to change a workspace name to an existing name
         r9 = bindings.post_PostWorkspace(
@@ -389,9 +378,9 @@ def test_workspace_org() -> None:
         test_workspaces.append(duplicate_patch_workspace)
         w_patch = bindings.v1PatchWorkspace.from_json(made_workspace.to_json())
         w_patch.name = "_TestDuplicate"
-        with pytest.raises(APIException) as e:
+        with pytest.raises(errors.APIException) as e:
             bindings.patch_PatchWorkspace(sess, body=w_patch, id=made_workspace.id)
-        assert e.value.status_code == HTTPStatus.CONFLICT
+        assert e.value.status_code == http.HTTPStatus.CONFLICT
 
     finally:
         # Clean out workspaces and all dependencies.
@@ -402,7 +391,7 @@ def test_workspace_org() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("file_type", ["json", "yaml"])
 def test_workspace_checkpoint_storage_file(file_type: str) -> None:
-    sess = api_utils.determined_test_session(admin=True)
+    sess = api_utils.admin_session()
     w_name = uuid.uuid4().hex[:8]
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "config")
@@ -416,23 +405,23 @@ type: shared_fs
 host_path: /tmp/yaml"""
                 )
 
-        det_cmd(
-            ["workspace", "create", w_name, "--checkpoint-storage-config-file", path], check=True
+        detproc.check_call(
+            sess, ["det", "workspace", "create", w_name, "--checkpoint-storage-config-file", path]
         )
 
     try:
-        w_id = det_cmd_json(["workspace", "describe", w_name, "--json"])["id"]
+        w_id = detproc.check_json(sess, ["det", "workspace", "describe", w_name, "--json"])["id"]
         w = bindings.get_GetWorkspace(sess, id=w_id).workspace
         assert w.checkpointStorageConfig is not None
         assert w.checkpointStorageConfig["type"] == "shared_fs"
         assert w.checkpointStorageConfig["host_path"] == "/tmp/" + file_type
     finally:
-        _delete_workspace_and_check(sess, w)
+        test_agent_user_group._delete_workspace_and_check(sess, w)
 
 
 @pytest.mark.e2e_cpu
 def test_reset_workspace_checkpoint_storage_conf() -> None:
-    sess = api_utils.determined_test_session(admin=True)
+    sess = api_utils.admin_session()
 
     # Make project with checkpoint storage config.
     resp_w = bindings.post_PostWorkspace(
@@ -458,14 +447,14 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
         )
         assert resp_patch.workspace.checkpointStorageConfig is None
     finally:
-        _delete_workspace_and_check(sess, resp_w.workspace)
+        test_agent_user_group._delete_workspace_and_check(sess, resp_w.workspace)
 
 
 @contextlib.contextmanager
 def setup_workspaces(
     session: Optional[api.Session] = None, count: int = 1
 ) -> Generator[List[bindings.v1Workspace], None, None]:
-    session = session or api_utils.determined_test_session(admin=True)
+    session = session or api_utils.admin_session()
     assert session
     workspaces: List[bindings.v1Workspace] = []
     try:
@@ -498,7 +487,7 @@ TERMINATING_STATES = [
 # tag: no-cli
 @pytest.mark.e2e_cpu
 def test_workspace_delete_notebook() -> None:
-    admin_session = api_utils.determined_test_session(admin=True)
+    admin_session = api_utils.admin_session()
 
     # create a workspace using bindings
 
@@ -543,9 +532,9 @@ def test_workspace_delete_notebook() -> None:
         assert outside_notebook.state not in TERMINATING_STATES
 
     # check that notebook is terminated or terminating.
-    wait_for_ntsc_state(
+    api.wait_for_ntsc_state(
         admin_session,
-        NTSC_Kind.notebook,
+        api.NTSC_Kind.notebook,
         ntsc_id=created_resp.notebook.id,
         predicate=lambda state: state in TERMINATING_STATES,
     )
@@ -567,7 +556,7 @@ def test_workspace_delete_notebook() -> None:
 # tag: no_cli
 @pytest.mark.e2e_cpu
 def test_launch_in_archived() -> None:
-    admin_session = api_utils.determined_test_session(admin=True)
+    admin_session = api_utils.admin_session()
 
     with setup_workspaces(admin_session) as [workspace]:
         # archive the workspace
@@ -588,7 +577,7 @@ def test_launch_in_archived() -> None:
 # tag: no_cli
 @pytest.mark.e2e_cpu
 def test_workspaceid_set() -> None:
-    admin_session = api_utils.determined_test_session(admin=True)
+    admin_session = api_utils.admin_session()
 
     with setup_workspaces(admin_session) as [workspace]:
         # create a command inside the workspace

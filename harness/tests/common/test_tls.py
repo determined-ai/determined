@@ -8,7 +8,8 @@ from typing import Iterator, Tuple
 import pytest
 import requests
 
-from determined.common.api import certs, request
+from determined.common import api
+from determined.common.api import certs
 
 TRUSTED_DOMAIN = "https://google.com"
 UNTRUSTED_DIR = os.path.join(os.path.dirname(__file__), "untrusted-root")
@@ -58,9 +59,9 @@ def test_custom_tls_certs() -> None:
             cert = certs.Cert(**kwargs)
 
             # Trusted domains should always work.
-            request.get(TRUSTED_DOMAIN, "", authenticated=False, cert=cert)
+            api.UnauthSession(TRUSTED_DOMAIN, cert=cert).get("")
 
             with contextlib.ExitStack() as ctx:
                 if raises:
                     ctx.enter_context(pytest.raises(requests.exceptions.SSLError))
-                request.get(untrusted_url, "", authenticated=False, cert=cert)
+                api.UnauthSession(untrusted_url, cert=cert).get("")

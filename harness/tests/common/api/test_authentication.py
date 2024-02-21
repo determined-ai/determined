@@ -1,41 +1,12 @@
-import contextlib
 import json
 import pathlib
 import shutil
-from typing import Optional
-
-import pytest
-import responses
-from responses import registries
 
 from determined.common.api import authentication
 from tests import confdir
-from tests.cli import util
 
 MOCK_MASTER_URL = "http://localhost:8080"
 AUTH_V0_PATH = pathlib.Path(__file__).parent / "auth_v0.json"
-
-
-@pytest.mark.parametrize("active_user", ["alice", "bob", None])
-def test_logout_clears_active_user(active_user: Optional[str]) -> None:
-    with contextlib.ExitStack() as es:
-        es.enter_context(util.setenv_optional("DET_MASTER", MOCK_MASTER_URL))
-        rsps = es.enter_context(
-            responses.RequestsMock(
-                registry=registries.OrderedRegistry,
-                assert_all_requests_are_fired=True,
-            )
-        )
-        mts = es.enter_context(util.MockTokenStore(strict=True))
-
-        mts.get_active_user(retval=active_user)
-        if active_user == "alice":
-            mts.clear_active()
-        mts.get_token("alice", retval="token")
-        mts.drop_user("alice")
-        rsps.post(f"{MOCK_MASTER_URL}/api/v1/auth/logout", status=200)
-
-        authentication.logout(MOCK_MASTER_URL, "alice", None)
 
 
 def test_auth_json_v0_upgrade() -> None:

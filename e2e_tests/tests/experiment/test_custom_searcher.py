@@ -1,6 +1,5 @@
 import logging
 import pathlib
-import subprocess
 import tempfile
 import time
 from typing import Iterator, List, Optional
@@ -9,22 +8,25 @@ import pytest
 from urllib3 import connectionpool
 
 from determined import searcher
-from determined.common import util
+from determined.common import api, util
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 from tests.fixtures.custom_searcher import searchers
 
 TIMESTAMP = int(time.time())
 
 
-def check_trial_state(trial: bindings.trialv1Trial, expect: bindings.trialv1State) -> bool:
+def check_trial_state(
+    sess: api.Session, trial: bindings.trialv1Trial, expect: bindings.trialv1State
+) -> bool:
     """If the trial is in an unexpected state, dump logs and return False."""
     if trial.state == expect:
         return True
-    exp.print_trial_logs(trial.id)
+    exp.print_trial_logs(sess, trial.id)
     return False
 
 
@@ -37,6 +39,7 @@ def client_login() -> Iterator[None]:
 
 @pytest.mark.e2e_cpu
 def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
+    sess = api_utils.user_session()
     # example searcher script
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
@@ -52,13 +55,13 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
     assert response.experiment.numTrials == 1
 
 
 @pytest.mark.e2e_cpu_2a
 def test_run_random_searcher_exp() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -80,9 +83,7 @@ def test_run_random_searcher_exp() -> None:
         search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
     assert response.experiment.numTrials == 5
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -134,6 +135,7 @@ def test_run_random_searcher_exp_core_api(
     exception_points: List[str],
     metric_as_dict: bool,
 ) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name " + config_name
@@ -144,39 +146,33 @@ def test_run_random_searcher_exp_core_api(
     config["max_restarts"] = len(exception_points)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("custom_searcher"), 1
+        sess, config, conf.fixtures_path("custom_searcher"), 1
     )
 
-    session = api_utils.determined_test_session()
-
     # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
+    searcher_exp = bindings.get_GetExperiment(sess, experimentId=experiment_id).experiment
     assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
-    response = bindings.get_GetExperiments(session, name=exp_name)
+    response = bindings.get_GetExperiments(sess, name=exp_name)
     experiments = response.experiments
     assert len(experiments) == 1
 
     experiment = experiments[0]
     assert experiment.numTrials == 5
 
-    trials = bindings.get_GetExperimentTrials(session, experimentId=experiment.id).trials
+    trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment.id).trials
 
     ok = True
     for trial in trials:
-        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+        ok = ok and check_trial_state(sess, trial, bindings.trialv1State.COMPLETED)
     assert ok, "some trials failed"
 
     for trial in trials:
         assert trial.totalBatchesProcessed == 500
 
     # check logs to ensure failures actually happened
-    logs = str(
-        subprocess.check_output(
-            ["det", "-m", conf.make_master_url(), "experiment", "logs", str(experiment_id)]
-        )
-    )
+    logs = detproc.check_output(sess, ["det", "experiment", "logs", str(experiment_id)])
     failures = logs.count("Max retries exceeded with url: http://dummyurl (Caused by None)")
     assert failures == len(exception_points)
 
@@ -187,6 +183,7 @@ def test_run_random_searcher_exp_core_api(
 
 @pytest.mark.e2e_cpu_2a
 def test_pause_multi_trial_random_searcher_core_api() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     exp_name = f"random-pause-{TIMESTAMP}"
     config["entrypoint"] += " --exp-name " + exp_name
@@ -198,44 +195,39 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
 
-        searcher_exp_id = exp.create_experiment(tf.name, model_def_path, None)
+        searcher_exp_id = exp.create_experiment(sess, tf.name, model_def_path, None)
         exp.wait_for_experiment_state(
+            sess,
             searcher_exp_id,
             bindings.experimentv1State.RUNNING,
         )
     # make sure both experiments have started by checking
     # that multi-trial experiment has at least 1 running trials
-    multi_trial_exp_id = exp.wait_for_experiment_by_name_is_active(exp_name, 1)
+    multi_trial_exp_id = exp.wait_for_experiment_by_name_is_active(sess, exp_name, 1)
 
     # pause multi-trial experiment
-    exp.pause_experiment(multi_trial_exp_id)
-    exp.wait_for_experiment_state(multi_trial_exp_id, bindings.experimentv1State.PAUSED)
+    exp.pause_experiment(sess, multi_trial_exp_id)
+    exp.wait_for_experiment_state(sess, multi_trial_exp_id, bindings.experimentv1State.PAUSED)
 
     # activate multi-trial experiment
-    exp.activate_experiment(multi_trial_exp_id)
+    exp.activate_experiment(sess, multi_trial_exp_id)
 
     # wait for searcher to complete
-    exp.wait_for_experiment_state(searcher_exp_id, bindings.experimentv1State.COMPLETED)
+    exp.wait_for_experiment_state(sess, searcher_exp_id, bindings.experimentv1State.COMPLETED)
 
     # searcher experiment
-    searcher_exp = bindings.get_GetExperiment(
-        api_utils.determined_test_session(), experimentId=searcher_exp_id
-    ).experiment
+    searcher_exp = bindings.get_GetExperiment(sess, experimentId=searcher_exp_id).experiment
     assert searcher_exp.state == bindings.experimentv1State.COMPLETED
 
     # actual experiment
-    experiment = bindings.get_GetExperiment(
-        api_utils.determined_test_session(), experimentId=multi_trial_exp_id
-    ).experiment
+    experiment = bindings.get_GetExperiment(sess, experimentId=multi_trial_exp_id).experiment
     assert experiment.numTrials == 5
 
-    trials = bindings.get_GetExperimentTrials(
-        api_utils.determined_test_session(), experimentId=experiment.id
-    ).trials
+    trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment.id).trials
 
     ok = True
     for trial in trials:
-        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+        ok = ok and check_trial_state(sess, trial, bindings.trialv1State.COMPLETED)
     assert ok, "some trials failed"
 
     for trial in trials:
@@ -262,6 +254,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
     ],
 )
 def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -310,9 +303,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
     assert search_runner.state.last_event_id == 41
     assert search_runner.state.experiment_completed is True
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
     assert response.experiment.numTrials == 5
     assert search_method.created_trials == 5
     assert search_method.pending_trials == 0
@@ -325,6 +316,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
 @pytest.mark.nightly
 def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -347,8 +339,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
     experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
 
     assert response.experiment.numTrials == 16
     assert search_method.asha_search_state.pending_trials == 0
@@ -357,7 +348,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
         search_method.asha_search_state.closed_trials
     )
 
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+    response_trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id).trials
 
     # 16 trials in rung 1 (#batches = 125)
     assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16
@@ -368,7 +359,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
 
     ok = True
     for trial in response_trials:
-        ok = ok and check_trial_state(trial, bindings.trialv1State.COMPLETED)
+        ok = ok and check_trial_state(sess, trial, bindings.trialv1State.COMPLETED)
     assert ok, "some trials failed"
 
 
@@ -399,6 +390,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> Non
     ],
 )
 def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -446,9 +438,7 @@ def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> N
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.experiment_completed is True
-    assert client._determined is not None
-    session = client._determined._session
-    response = bindings.get_GetExperiment(session, experimentId=experiment_id)
+    response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
 
     assert response.experiment.numTrials == 16
     # asha search method state
@@ -462,7 +452,7 @@ def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> N
         search_method.asha_search_state.closed_trials
     )
 
-    response_trials = bindings.get_GetExperimentTrials(session, experimentId=experiment_id).trials
+    response_trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id).trials
 
     # 16 trials in rung 1 (#batches = 125)
     assert sum(t.totalBatchesProcessed >= 125 for t in response_trials) == 16

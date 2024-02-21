@@ -2,7 +2,6 @@ appdirs
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 pytest-timeout
-pexpect
 torch==1.11.0
 torchvision==0.12.0
 tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'

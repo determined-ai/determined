@@ -6,7 +6,8 @@ import responses
 from responses import matchers
 
 from determined.common import api
-from determined.common.experimental import Checkpoint
+from determined.common.api import authentication
+from determined.experimental import client
 
 
 def get_long_str(approx_len: int) -> str:
@@ -78,8 +79,9 @@ def test_checkpoint_download_via_master(tmp_path: Path) -> None:
     )
 
     checkpoint_path = tmp_path / uuid_tgz
-    Checkpoint._download_via_master(
-        api.Session(master="https://dummy-master.none", user=None, auth=None, cert=None),
+    utp = authentication.UsernameTokenPair("username", "token")
+    client.Checkpoint._download_via_master(
+        api.Session("https://dummy-master.none", utp, cert=None),
         uuid_tgz,
         checkpoint_path,
     )

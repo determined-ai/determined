@@ -8,14 +8,16 @@ import pytest
 
 from determined.common import util
 from determined.common.api import bindings, errors
-from determined.common.experimental import resource_pool
-from determined.common.experimental.metrics import TrialMetrics
-from determined.experimental import client as _client
+from determined.experimental import client
+from tests import api_utils
 from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
-def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) -> None:
+def test_completed_experiment_and_checkpoint_apis() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
+
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
         config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
@@ -23,10 +25,10 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     emptydir = tempfile.mkdtemp()
     try:
         model_def = conf.fixtures_path("no_op/model_def.py")
-        exp = client.create_experiment(config, emptydir, includes=[model_def])
+        exp = detobj.create_experiment(config, emptydir, includes=[model_def])
     finally:
         os.rmdir(emptydir)
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
 
     # Await first trial is safe to call before a trial has started.
     trial = exp.await_first_trial()
@@ -34,7 +36,7 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     # .logs(follow=True) block until the trial completes.
     all_logs = list(trial.logs(follow=True))
 
-    assert exp.wait() == _client.ExperimentState.COMPLETED
+    assert exp.wait() == client.ExperimentState.COMPLETED
 
     assert all_logs == list(trial.logs())
     assert list(trial.logs(head=10)) == all_logs[:10]
@@ -42,7 +44,7 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
 
     trials = exp.get_trials()
     assert len(trials) == 1, trials
-    assert client.get_trial(trial.id).id == trial.id
+    assert detobj.get_trial(trial.id).id == trial.id
 
     ckpt = trial.top_checkpoint()
 
@@ -66,7 +68,7 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
 
     assert exp.top_checkpoint().uuid == ckpt.uuid
     assert ckpt.uuid in (c.uuid for c in exp.top_n_checkpoints(100))
-    assert client.get_checkpoint(ckpt.uuid).uuid == ckpt.uuid
+    assert detobj.get_checkpoint(ckpt.uuid).uuid == ckpt.uuid
 
     # Adding checkpoint metadata.
     ckpt.add_metadata({"newkey": "newvalue"})
@@ -74,25 +76,27 @@ def test_completed_experiment_and_checkpoint_apis(client: _client.Determined) ->
     assert ckpt.metadata
     assert ckpt.metadata["newkey"] == "newvalue"
     # Database should be updated.
-    ckpt = client.get_checkpoint(ckpt.uuid)
+    ckpt = detobj.get_checkpoint(ckpt.uuid)
     assert ckpt.metadata
     assert ckpt.metadata["newkey"] == "newvalue"
 
     # Removing checkpoint metadata
     ckpt.remove_metadata(["newkey"])
     assert "newkey" not in ckpt.metadata
-    ckpt = client.get_checkpoint(ckpt.uuid)
+    ckpt = detobj.get_checkpoint(ckpt.uuid)
     assert ckpt.metadata
     assert "newkey" not in ckpt.metadata
 
     # Test creation of experiment without a model definition
     with open(conf.fixtures_path("no_op/empty_model_dir.yaml")) as f:
         config = util.yaml_safe_load(f)
-    exp = client.create_experiment(config)
+    exp = detobj.create_experiment(config)
 
 
 @pytest.mark.e2e_cpu
-def test_checkpoint_apis(client: _client.Determined) -> None:
+def test_checkpoint_apis() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
     with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
         config = util.yaml_safe_load(f)
 
@@ -102,12 +106,12 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     config["checkpoint_storage"] = {}
     config["checkpoint_storage"]["save_trial_best"] = 10
 
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
 
     # Await first trial is safe to call before a trial has started.
     trial = exp.await_first_trial()
 
-    assert exp.wait() == _client.ExperimentState.COMPLETED
+    assert exp.wait() == client.ExperimentState.COMPLETED
     trials = exp.get_trials()
     assert len(trials) == 1, trials
 
@@ -116,14 +120,14 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 
     # Validate end (report) time sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.END_TIME, order_by=_client.OrderBy.DESC
+        sort_by=client.CheckpointSortBy.END_TIME, order_by=client.OrderBy.DESC
     )
     end_times = [checkpoint.report_time for checkpoint in checkpoints]
     assert all(x >= y for x, y in zip(end_times, end_times[1:]))  # type: ignore
 
     # Validate state sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.STATE, order_by=_client.OrderBy.ASC
+        sort_by=client.CheckpointSortBy.STATE, order_by=client.OrderBy.ASC
     )
     states = []
     for checkpoint in checkpoints:
@@ -133,14 +137,14 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
 
     # Validate UUID sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.UUID, order_by=_client.OrderBy.ASC
+        sort_by=client.CheckpointSortBy.UUID, order_by=client.OrderBy.ASC
     )
     uuids = [checkpoint.uuid for checkpoint in checkpoints]
     assert all(x <= y for x, y in zip(uuids, uuids[1:]))
 
     # Validate batch number sorting.
     checkpoints = trial.get_checkpoints(
-        sort_by=_client.CheckpointSortBy.BATCH_NUMBER, order_by=_client.OrderBy.DESC
+        sort_by=client.CheckpointSortBy.BATCH_NUMBER, order_by=client.OrderBy.DESC
     )
     batch_numbers = []
     for checkpoint in checkpoints:
@@ -149,7 +153,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     assert all(x >= y for x, y in zip(batch_numbers, batch_numbers[1:]))
 
     # Validate metric sorting.
-    checkpoints = trial.get_checkpoints(sort_by="validation_error", order_by=_client.OrderBy.ASC)
+    checkpoints = trial.get_checkpoints(sort_by="validation_error", order_by=client.OrderBy.ASC)
     validation_metrics = [
         checkpoint.training.validation_metrics["avgMetrics"]["validation_error"]  # type: ignore
         for checkpoint in checkpoints
@@ -160,7 +164,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
     checkpoints = [
         checkpoint
         for checkpoint in checkpoints
-        if checkpoint.state == _client.CheckpointState.COMPLETED
+        if checkpoint.state == client.CheckpointState.COMPLETED
     ]
     assert len(checkpoints) == 10
 
@@ -176,7 +180,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         deleted_checkpoints = [
             checkpoint
             for checkpoint in checkpoints
-            if checkpoint.state == _client.CheckpointState.DELETED
+            if checkpoint.state == client.CheckpointState.DELETED
         ]
         if deleted_checkpoints:
             break
@@ -199,7 +203,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         partially_deleted_checkpoints = [
             checkpoint
             for checkpoint in checkpoints
-            if checkpoint.state == _client.CheckpointState.PARTIALLY_DELETED
+            if checkpoint.state == client.CheckpointState.PARTIALLY_DELETED
         ]
         if partially_deleted_checkpoints:
             break
@@ -231,7 +235,7 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         deleted_checkpoints = [
             checkpoint
             for checkpoint in checkpoints
-            if checkpoint.state == _client.CheckpointState.DELETED
+            if checkpoint.state == client.CheckpointState.DELETED
             and checkpoint.uuid == partially_deleted_checkpoint.uuid
         ]
         if deleted_checkpoints:
@@ -240,12 +244,12 @@ def test_checkpoint_apis(client: _client.Determined) -> None:
         time.sleep(0.1)
 
 
-def _make_live_experiment(client: _client.Determined) -> _client.Experiment:
+def _make_live_experiment(detobj: client.Determined) -> client.Experiment:
     # Create an experiment that takes a long time to run
     with open(conf.fixtures_path("no_op/single-very-many-long-steps.yaml")) as f:
         config = util.yaml_safe_load(f)
 
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
     # Wait for a trial to actually start.
     start = time.time()
     deadline = start + 90
@@ -260,8 +264,10 @@ def _make_live_experiment(client: _client.Determined) -> _client.Experiment:
 
 
 @pytest.mark.e2e_cpu
-def test_experiment_manipulation(client: _client.Determined) -> None:
-    exp = _make_live_experiment(client)
+def test_experiment_manipulation() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
+    exp = _make_live_experiment(detobj)
 
     exp.pause()
     with pytest.raises(ValueError, match="Make sure the experiment is active"):
@@ -271,7 +277,7 @@ def test_experiment_manipulation(client: _client.Determined) -> None:
     exp.activate()
 
     exp.cancel()
-    assert exp.wait() == _client.ExperimentState.CANCELED
+    assert exp.wait() == client.ExperimentState.CANCELED
 
     assert isinstance(exp.config, dict)
 
@@ -280,37 +286,39 @@ def test_experiment_manipulation(client: _client.Determined) -> None:
     deleting_exp = exp
 
     # Create another experiment and kill it.
-    exp = _make_live_experiment(client)
+    exp = _make_live_experiment(detobj)
     exp.kill()
-    assert exp.wait() == _client.ExperimentState.CANCELED
+    assert exp.wait() == client.ExperimentState.CANCELED
 
     # Test remaining methods
     exp.archive()
-    assert bindings.get_GetExperiment(client._session, experimentId=exp.id).experiment.archived
+    assert bindings.get_GetExperiment(sess, experimentId=exp.id).experiment.archived
 
     exp.unarchive()
-    assert not bindings.get_GetExperiment(client._session, experimentId=exp.id).experiment.archived
+    assert not bindings.get_GetExperiment(sess, experimentId=exp.id).experiment.archived
 
     # Create another experiment and kill its trial.
-    exp = _make_live_experiment(client)
+    exp = _make_live_experiment(detobj)
     trial = exp.get_trials()[0]
     trial.kill()
-    assert exp.wait() == _client.ExperimentState.CANCELED
+    assert exp.wait() == client.ExperimentState.CANCELED
 
     # Make sure that the experiment we deleted earlier does actually delete.
     with pytest.raises(errors.APIException):
         for _ in range(300):
-            client.get_experiment(deleting_exp.id).get_trials()
+            detobj.get_experiment(deleting_exp.id).get_trials()
             time.sleep(0.1)
 
 
 @pytest.mark.e2e_cpu
-def test_models(client: _client.Determined) -> None:
+def test_models() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
     suffix = [random.sample("abcdefghijklmnopqrstuvwxyz", 1) for _ in range(10)]
     model_name = f"test-model-{suffix}"
-    model = client.create_model(model_name)
+    model = detobj.create_model(model_name)
     try:
-        assert model_name in (m.name for m in client.get_models())
+        assert model_name in (m.name for m in detobj.get_models())
 
         model.archive()
         model.unarchive()
@@ -321,12 +329,12 @@ def test_models(client: _client.Determined) -> None:
         model.set_description("modeldescr")
 
         # Check cached values
-        assert set(client.get_model_labels()) == set(labels)
+        assert set(detobj.get_model_labels()) == set(labels)
         assert model.metadata == {"a": 1, "b": 2, "c": 3}, model.metadata
         assert model.description == "modeldescr", model.description
 
         # avoid false-positives due to caching on the model object itself
-        model = client.get_model(model_name)
+        model = detobj.get_model(model_name)
         assert model.labels
         assert set(model.labels) == set(labels)
         assert model.metadata == {"a": 1, "b": 2, "c": 3}, model.metadata
@@ -337,7 +345,7 @@ def test_models(client: _client.Determined) -> None:
 
         # break the cache again, testing get_model_by_id.
         assert model.model_id is not None, "model_id was populated by create_model"
-        model = client.get_model_by_id(model.model_id)
+        model = detobj.get_model_by_id(model.model_id)
         assert model.labels == []
         assert model.metadata == {"c": 3}, model.metadata
 
@@ -345,16 +353,18 @@ def test_models(client: _client.Determined) -> None:
         model.delete()
 
     with pytest.raises(errors.APIException):
-        client.get_model(model_name)
+        detobj.get_model(model_name)
 
 
 @pytest.mark.e2e_cpu
-def test_stream_metrics(client: _client.Determined) -> None:
+def test_stream_metrics() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
         config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
-    assert exp.wait() == _client.ExperimentState.COMPLETED
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    assert exp.wait() == client.ExperimentState.COMPLETED
 
     trials = exp.get_trials()
     assert len(trials) == 1
@@ -362,11 +372,11 @@ def test_stream_metrics(client: _client.Determined) -> None:
 
     for metrics in [
         list(trial.stream_metrics("training")),
-        list(client.stream_trials_metrics([trial.id], "training")),
+        list(detobj.stream_trials_metrics([trial.id], "training")),
     ]:
         assert len(metrics) == config["searcher"]["max_length"]["batches"]
         for i, actual in enumerate(metrics):
-            assert actual == TrialMetrics(
+            assert actual == client.TrialMetrics(
                 trial_id=trial.id,
                 trial_run_id=1,
                 steps_completed=i + 1,
@@ -378,10 +388,10 @@ def test_stream_metrics(client: _client.Determined) -> None:
 
     for val_metrics in [
         list(trial.stream_metrics("validation")),
-        list(client.stream_trials_metrics([trial.id], "validation")),
+        list(detobj.stream_trials_metrics([trial.id], "validation")),
     ]:
         assert len(val_metrics) == 1
-        assert val_metrics[0] == TrialMetrics(
+        assert val_metrics[0] == client.TrialMetrics(
             trial_id=trial.id,
             trial_run_id=1,
             steps_completed=100,
@@ -395,16 +405,18 @@ def test_stream_metrics(client: _client.Determined) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_model_versions(client: _client.Determined) -> None:
+def test_model_versions() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
     with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
         config = util.yaml_safe_load(f)
-    exp = client.create_experiment(config, conf.fixtures_path("no_op"))
-    assert exp.wait() == _client.ExperimentState.COMPLETED
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    assert exp.wait() == client.ExperimentState.COMPLETED
     ckpt = exp.top_checkpoint()
 
     suffix = [random.sample("abcdefghijklmnopqrstuvwxyz", 1) for _ in range(10)]
     model_name = f"test-model-{suffix}"
-    model = client.create_model(model_name)
+    model = detobj.create_model(model_name)
     try:
         ver = model.register_version(ckpt.uuid)
 
@@ -441,7 +453,8 @@ def test_model_versions(client: _client.Determined) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_rp_workspace_mapping(client: _client.Determined) -> None:
+def test_rp_workspace_mapping() -> None:
+    sess = api_utils.user_session()
     workspace_names = ["Workspace A", "Workspace B"]
     overwrite_workspace_names = ["Workspace C", "Workspace D"]
     rp_names = ["default"]  # TODO: not sure how to add more rp
@@ -449,17 +462,15 @@ def test_rp_workspace_mapping(client: _client.Determined) -> None:
 
     for wn in workspace_names + overwrite_workspace_names:
         req = bindings.v1PostWorkspaceRequest(name=wn)
-        workspace_ids.append(
-            bindings.post_PostWorkspace(session=client._session, body=req).workspace.id
-        )
+        workspace_ids.append(bindings.post_PostWorkspace(sess, body=req).workspace.id)
 
     try:
         with pytest.raises(
             errors.APIException,
             match="default resource pool default cannot be bound to any workspace",
         ):
-            rp = resource_pool.ResourcePool(client._session, rp_names[0])
+            rp = client.ResourcePool(sess, rp_names[0])
             rp.add_bindings(workspace_names)
     finally:
         for wid in workspace_ids:
-            bindings.delete_DeleteWorkspace(session=client._session, id=wid)
+            bindings.delete_DeleteWorkspace(session=sess, id=wid)

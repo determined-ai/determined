@@ -14,24 +14,21 @@ from urllib import parse
 
 from termcolor import colored
 
-import determined.cli.render
 from determined import cli
-from determined.cli import errors
-from determined.common.api import authentication, bindings
+from determined.cli import errors, render
+from determined.common.api import bindings
 from determined.common.api import errors as api_errors
 from determined.common.api import request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
-@authentication.required
-def token(_: Namespace) -> None:
-    token = authentication.must_cli_auth().get_session_token()
-    print(token)
+def token(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    print(sess.token)
 
 
-@authentication.required
 def curl(args: Namespace) -> None:
-    assert authentication.cli_auth is not None
+    sess = cli.setup_session(args)
     if shutil.which("curl") is None:
         print(colored("curl is not installed on this machine", "red"))
         sys.exit(1)
@@ -47,7 +44,7 @@ def curl(args: Namespace) -> None:
         "curl",
         request.make_url_new(args.master, args.path),
         "-H",
-        f"Authorization: Bearer {authentication.cli_auth.get_session_token()}",
+        f"Authorization: Bearer {sess.token}",
         "-s",
     ]
     if args.curl_args:
@@ -66,7 +63,7 @@ def curl(args: Namespace) -> None:
     output = subprocess.run(cmd, stdout=subprocess.PIPE)
     try:
         out = output.stdout.decode("utf8")
-        determined.cli.render.print_json(out)
+        render.print_json(out)
     except UnicodeDecodeError:
         print(
             "Failed to decode response as utf8. Redirect output to capture it.",
@@ -292,7 +289,6 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     return fn_name
 
 
-@authentication.required
 def call_bindings(args: Namespace) -> None:
     """
     support calling some bindings with primitive arguments via the cli

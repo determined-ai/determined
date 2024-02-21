@@ -4,7 +4,7 @@ from typing import Optional
 import requests
 
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 from .errors import MasterTimeoutExpired
 
@@ -38,7 +38,8 @@ def wait_for_master_url(
     try:
         while time.time() - start_time < timeout:
             try:
-                r = api.get(master_url, "info", authenticated=False, cert=cert)
+                sess = api.UnauthSession(master_url, cert=cert)
+                r = sess.get("info")
                 if r.status_code == requests.codes.ok:
                     return
             except api.errors.MasterNotFoundException:
@@ -63,14 +64,15 @@ def wait_for_genai_url(
     POLL_INTERVAL = 2
     polling = False
     start_time = time.time()
-    GENAI_PREFIX = "/genai"
-    check_path = GENAI_PREFIX + "/api/v1/workspaces"
+
+    # Hopefully we have an active session to this master, or we can make a default one.
+    utp = authentication.login_with_cache(master_url, cert=cert)
+    sess = api.Session(master_url, utp, cert)
 
     try:
         while time.time() - start_time < timeout:
             try:
-                auth = api.Authentication(master_address=master_url, cert=cert)
-                r = api.get(master_url, check_path, authenticated=True, cert=cert, auth=auth)
+                r = sess.get("genai/api/v1/workspaces")
                 if r.status_code == requests.codes.ok:
                     _ = r.json()
                     return

@@ -198,8 +198,7 @@ def _build_unmanaged_trial_cluster_info(
     assert sess
 
     cluster_id = _get_cluster_id(sess)
-    assert sess._auth
-    token = sess._auth.get_session_token(True)
+    token = sess.token
 
     resp = _start_trial(client, trial_id, resume, distributed)
 
