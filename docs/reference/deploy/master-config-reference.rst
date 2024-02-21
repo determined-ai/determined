@@ -46,8 +46,8 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/host/>`__ will be used instead. Defaults to
-``bridge``.
+host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
 
@@ -123,8 +123,8 @@ Defaults to ``false``.
 =================
 
 Defines the default `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a custom
-base Docker image, if needed. If credentials are specified in the :ref:`experiment config
+<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
+custom base Docker image, if needed. If credentials are specified in the :ref:`experiment config
 <exp-environment-image>` this default value is overridden. Credentials are specified as the
 following nested fields:
 
@@ -841,8 +841,8 @@ to ``determinedai/determined-agent:<master version>``.
 ------------------------
 
 The Docker network to use for the Determined agent and task containers. If this is set to ``host``,
-`Docker host-mode networking <https://docs.docker.com/network/host/>`__ will be used instead. The
-default value is ``determined``.
+`Docker host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used
+instead. The default value is ``determined``.
 
 ``agent_docker_runtime``
 ------------------------
@@ -1182,11 +1182,10 @@ inside Google Compute Engine (GCE), the simplest approach is to ensure that the 
 Determined are running in a service account that has the "Storage Object Admin" role on the GCS
 bucket being used for checkpoints. As an alternative (or when running outside of GCE), you can add
 the appropriate `service account credentials
-<https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
-to your container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
-environment variable to the container path where the credentials are located. See
-:ref:`environment-variables` for more information on how to set environment variables in trial
-environments.
+<https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS`` environment
+variable to the container path where the credentials are located. See :ref:`environment-variables`
+for more information on how to set environment variables in trial environments.
 
 ``bucket``
 ----------

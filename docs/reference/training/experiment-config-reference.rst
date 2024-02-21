@@ -175,8 +175,9 @@ Examples:
    attribute of ``trial_classes`` defined in the ``determined_lib/trial.py`` file.
 
 These formats follow Python `Entry points
-<https://packaging.python.org/specifications/entry-points/>`_ specification except that the context
-directory name is prefixed by ``<module>`` or used as the module if the ``<module>`` field is empty.
+<https://packaging.python.org/en/latest/specifications/entry-points/>`_ specification except that
+the context directory name is prefixed by ``<module>`` or used as the module if the ``<module>``
+field is empty.
 
 Arbitrary Script
 ----------------
@@ -545,10 +546,10 @@ inside Google Compute Engine (GCE), the simplest approach is to ensure that the 
 Determined are running in a service account that has the "Storage Object Admin" role on the GCS
 bucket being used for checkpoints. As an alternative (or when running outside of GCE), you can add
 the appropriate `service account credentials
-<https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
-to your container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
-environment variable to the container path where the credentials are located. See
-:ref:`environment-variables` for more details on how to set environment variables in containers.
+<https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS`` environment
+variable to the container path where the credentials are located. See :ref:`environment-variables`
+for more details on how to set environment variables in containers.
 
 ``bucket``
 ----------
@@ -1324,9 +1325,9 @@ When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
 Podman container runtime. The image can be any of the supported PodMan container formats identified
 by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``, or
-``oci-archive:``). See the `Podman run
-<https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
-description of the capabilities.
+``oci-archive:``). Visit the `Podman
+<https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ run command documentation for a
+full description of the capabilities.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: enroot``, images are executed using the
@@ -1349,9 +1350,9 @@ built-in cache. Defaults to ``false``.
 ``registry_auth``
 =================
 
-Optional. The `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a custom
-base Docker image, if needed. Credentials are specified as the following nested fields:
+Optional. Defines the default `Docker registry credentials
+<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
+custom base Docker image, if needed. Credentials are specified as the following nested fields:
 
 -  ``username`` (required)
 -  ``password`` (required)

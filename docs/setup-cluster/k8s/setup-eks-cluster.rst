@@ -19,13 +19,13 @@ Determined requires GPU-enabled nodes and the Kubernetes cluster to be running v
 ***************
 
 Before setting up an EKS cluster, the user should have the latest versions of `AWS CLI
-<https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html>`_, `kubectl
-<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_, and `eksctl
-<https://eksctl.io/installation/>`_ installed on their local machine.
+<https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>`_, `kubectl
+<https://kubernetes.io/docs/tasks/tools/>`_, and `eksctl <https://eksctl.io/installation/>`_
+installed on their local machine.
 
 Additionally, make sure to be subscribed to the `EKS-optimized AMI with GPU support
-<https://aws.amazon.com/marketplace/pp/B07GRHFXGM>`_. Continuing without subscribing will cause node
-creation to fail.
+<https://aws.amazon.com/marketplace/pp/prodview-nwwwodawoxndm>`_. Continuing without subscribing
+will cause node creation to fail.
 
 *********************
  Create an S3 Bucket

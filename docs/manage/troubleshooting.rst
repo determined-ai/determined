@@ -38,9 +38,9 @@ Make sure you back up the database and temporarily shut down the master before p
 
 To fix this error message, locate the up migration with a suffix of ``.up.sql`` and a prefix
 matching the long number in the error message in `this directory
-<https://github.com/determined-ai/determined/tree/master/master/static/migrations>_` and carefully
-run the SQL within the file manually against the database used by Determined. For convenience, all
-the information needed to connect except the password can be found with:
+<https://github.com/determined-ai/determined/tree/main/master/static/migrations>_` and carefully run
+the SQL within the file manually against the database used by Determined. For convenience, all the
+information needed to connect except the password can be found with:
 
 .. code::
 
@@ -53,7 +53,7 @@ If this proceeds successfully, then mark the migration as successful by running 
    UPDATE schema_migrations SET dirty = false;
 
 And restart the master. Otherwise, please seek assistance in the community `Slack
-<https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
+<https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__.
 
 .. _validate-nvidia-container-toolkit:
 

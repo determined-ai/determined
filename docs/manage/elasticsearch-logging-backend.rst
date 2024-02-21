@@ -5,15 +5,14 @@
 ##############################
 
 Use this guide as a reference when considering a shift from the default logging backend to
-`Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ for optimized log storage and
-analysis.
+`Elasticsearch <https://www.elastic.co/elasticsearch>`__ for optimized log storage and analysis.
 
 We'll discuss the limitations of the default logging backend and provide tips and guidelines for
 migrating to Elasticsearch including how to tune Elasticsearch to work best with Determined.
 
-`Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ is a search engine commonly used
-for storing application logs for search and analytics. Determined supports using Elasticsearch as
-the storage backend for task logs. Configuring Determined to use Elasticsearch is simple; however,
+`Elasticsearch <https://www.elastic.co/elasticsearch>`__ is a search engine commonly used for
+storing application logs for search and analytics. Determined supports using Elasticsearch as the
+storage backend for task logs. Configuring Determined to use Elasticsearch is simple; however,
 managing an Elasticsearch cluster at scale is an involved task, so this guide is recommended for
 users who have hit the limitations of the default logging backend.
 

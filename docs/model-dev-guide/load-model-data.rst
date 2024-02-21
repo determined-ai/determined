@@ -21,7 +21,7 @@ to download the dataset prior to training.
 This document also introduces production data source options, such as Object Store ( `Amazon S3
 <https://aws.amazon.com/s3/>`__, `Google Cloud Storage <https://cloud.google.com/storage>`__) or
 Distributed File Systems (`NFS <https://en.wikipedia.org/wiki/Network_File_System>`__, `Ceph
-<https://ceph.io/>`__) if the above approaches do not apply to you.
+<https://ceph.io/en/>`__) if the above approaches do not apply to you.
 
 *******************************
  Including Data With Your Code
@@ -69,7 +69,7 @@ to access a shared data set via the familiar POSIX file system interface. Amazon
 System <https://aws.amazon.com/efs/>`__ and Google's `Cloud Filestore
 <https://cloud.google.com/filestore>`__ are examples of distributed file systems that are available
 in cloud environments. For on-premise deployments, popular distributed file systems include `Ceph
-<https://ceph.io/>`__, `GlusterFS <https://www.gluster.org/>`__, and `NFS
+<https://ceph.io/en/>`__, `GlusterFS <https://www.gluster.org/>`__, and `NFS
 <https://en.wikipedia.org/wiki/Network_File_System>`__.
 
 To access data on a distributed file system, you should first ensure that the file system is mounted

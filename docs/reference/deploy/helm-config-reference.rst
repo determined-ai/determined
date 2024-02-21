@@ -90,11 +90,11 @@
       nodes used by Determined are running in a service account that has the "Storage Object Admin"
       role on the GCS bucket being used for checkpoints. As an alternative (or when running outside
       of GKE), you can add the appropriate `service account credentials
-      <https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
-      to your container (e.g., via a bind-mount), and then set the
-      ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable to the container path where the
-      credentials are located. See :ref:`environment-variables` for more information on how to set
-      environment variables in trial environments.
+      <https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+      container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
+      environment variable to the container path where the credentials are located. See
+      :ref:`environment-variables` for more information on how to set environment variables in trial
+      environments.
 
       -  ``bucket``: The GCS bucket name to use.
       -  ``prefix``: The optional path prefix to use. Must not contain ``..``. Note: Prefix is

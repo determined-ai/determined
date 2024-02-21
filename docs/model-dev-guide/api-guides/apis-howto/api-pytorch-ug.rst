@@ -268,7 +268,7 @@ finding the common code snippet: ``for batch in dataloader``. In Determined,
 :meth:`~determined.pytorch.PyTorchTrial.train_batch` also works with one batch at a time.
 
 Take `this script implemented with the native PyTorch
-<https://github.com/pytorch/examples/blob/master/imagenet/main.py>`_ as an example. It has the
+<https://github.com/pytorch/examples/blob/main/imagenet/main.py>`_ as an example. It has the
 following code for the training loop.
 
 .. code:: python
@@ -410,8 +410,8 @@ training") is easy if you follow a few rules.
 -  Even if you are going to ultimately return an IterableDataset, it is best to use PyTorch's
    Sampler class as the basis for choosing the order of records. Operations on Samplers are quick
    and cheap, while operations on data afterwards are expensive. For more details, see the
-   discussion of random vs sequential access `here <https://yogadl.readthedocs.io>`_. If you don't
-   have a custom sampler, start with a simple one:
+   discussion of random vs sequential access `here <https://yogadl.readthedocs.io/en/latest/>`_. If
+   you don't have a custom sampler, start with a simple one:
 
    ..
       code::python
@@ -568,8 +568,8 @@ Remove Pinned GPUs
 Determined handles scheduling jobs on available slots. However, you need to let the Determined
 library handles choosing the GPUs.
 
-Take `this script <https://github.com/pytorch/examples/blob/master/imagenet/main.py>`_ as an
-example. It has the following code to configure the GPU:
+Take `this script <https://github.com/pytorch/examples/blob/main/imagenet/main.py>`_ as an example.
+It has the following code to configure the GPU:
 
 .. code:: python
 
@@ -585,8 +585,8 @@ To run distributed training outside Determined, you need to have code that handl
 launching processes, moving models to pined GPUs, sharding data, and reducing metrics. You need to
 remove this code to be not conflict with the Determined library.
 
-Take `this script <https://github.com/pytorch/examples/blob/master/imagenet/main.py>`_ as an
-example. It has the following code to initialize the process group:
+Take `this script <https://github.com/pytorch/examples/blob/main/imagenet/main.py>`_ as an example.
+It has the following code to initialize the process group:
 
 .. code:: python
 

@@ -169,10 +169,6 @@ You have the option to associate your batch inference run with the
 :class:~determined.experimental.model.ModelVersion employed during the run. This allows you to
 compile custom metrics for that specific object, which can then be analyzed at a later stage.
 
-The ``inference_example.py`` file in the `CIFAR10 Pytorch Example
-<https://github.com/determined-ai/determined/tree/main/examples/computer_vision/cifar10_pytorch>`__
-is an example.
-
 Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
 :class:`~determined.experimental.model.ModelVersion` to the inference run.
 

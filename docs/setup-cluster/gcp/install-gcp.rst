@@ -6,10 +6,11 @@
 
 This user guide describes how to deploy a Determined cluster on Google Cloud Platform (GCP). The
 ``det deploy`` tool makes it easy to create and deploy these resources in GCP. The ``det deploy``
-tool uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to
+tool uses `Terraform
+<https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli>`__ to
 automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a
 process for setting up infrastructure with Terraform, you can use our `Terraform modules
-<https://github.com/determined-ai/determined/tree/master/harness/determined/deploy/gcp/terraform>`__
+<https://github.com/determined-ai/determined/tree/main/harness/determined/deploy/gcp/terraform>`__
 rather than ``det deploy``.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
@@ -30,13 +31,12 @@ The following GCP APIs must be enabled on your GCP project:
 
 -  `Cloud Filestore API <https://console.cloud.google.com/apis/library/file.googleapis.com>`__
 -  `Cloud Resource Manager API
-   <https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
--  `Cloud SQL Admin API
-   <https://console.developers.google.com/apis/library/sqladmin.googleapis.com>`__
--  `IAM API <https://console.developers.google.com/apis/api/iam.googleapis.com/overview>`__
+   <https://console.cloud.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
+-  `Cloud SQL Admin API <https://console.cloud.google.com/apis/library/sqladmin.googleapis.com>`__
+-  `IAM API <https://cloud.google.com/iam/docs/reference/rest>`__
 -  `Service Networking API
    <https://console.cloud.google.com/apis/library/servicenetworking.googleapis.com>`__
--  `Cloud Logging API <https://console.cloud.google.com/apis/api/logging.googleapis.com/overview>`__
+-  `Cloud Logging API <https://cloud.google.com/logging/docs/reference/v2/rest>`__
 
 Credentials
 ===========
@@ -44,8 +44,8 @@ Credentials
 The ``det deploy`` tool requires credentials in order to create resources in GCP. There are two ways
 to provide these credentials:
 
--  Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to
-   authenticate your user account:
+-  Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive>`__ to authenticate your
+   user account:
 
    .. code::
 
@@ -60,7 +60,7 @@ to provide these credentials:
 Resource Quotas
 ===============
 
-The default `GCP Resource Quotas <https://cloud.google.com/compute/quotas>`__ for GPUs are
+The default `GCP Resource Quotas <https://cloud.google.com/compute/resource-usage>`__ for GPUs are
 relatively low; you may wish to request a quota increase.
 
 .. _gcp-install:
@@ -69,7 +69,8 @@ relatively low; you may wish to request a quota increase.
  Install
 *********
 
-#. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
+#. Install `Terraform
+   <https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli>`__.
 
 #. Install ``determined`` using ``pip``:
 
@@ -352,10 +353,9 @@ Example workflow:
 *****************************
 
 For more security controls, you can create a `service account
-<https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing service
-account from the `service account key page in the Google Cloud Console
-<https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the
-following IAM roles:
+<https://cloud.google.com/iam/docs/service-accounts-create>`__ or select an existing service account
+from the `service account key <https://cloud.google.com/iam/docs/keys-create-delete>`__ page in the
+Google Cloud Console and ensure it has the following IAM roles:
 
 -  Cloud Filestore Editor
 -  Cloud SQL Admin
@@ -369,7 +369,7 @@ following IAM roles:
 
 Roles provide the service account permissions to create specific resources in your project. You can
 add roles to service accounts following this `guide
-<https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
+<https://cloud.google.com/iam/docs/granting-changing-revoking-access>`__.
 
 Once you have a service account with the appropriate roles, go to the `service account key page in
 the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__
@@ -392,7 +392,7 @@ few considerations:
    <https://cloud.google.com/compute/docs/gpus/gpu-regions-zones>`__.
 
 -  Make sure you have sufficient resource quota for A100s in your target region and zone. `See more
-   on quotas <https://cloud.google.com/compute/quotas>`__.
+   on quotas <https://cloud.google.com/compute/resource-usage>`__.
 
 -  Adjust maximum number of instances and to be within your quota using ``--max-dynamic-agents
    NUMBER``.
