@@ -132,6 +132,40 @@ func expColumnNameToSQL(columnName string) (string, error) {
 	return col, nil
 }
 
+func runColumnNameToSQL(columnName string) (string, error) {
+	// To prevent SQL injection this function should never
+	// return a user generated field name
+
+	filterExperimentColMap := map[string]string{
+		"id":                   "e.id",
+		"description":          "e.config->>'description'",
+		"name":                 "e.config->>'name'",
+		"tags":                 "e.config->>'labels'",
+		"searcherType":         "e.config->'searcher'->>'name'",
+		"searcherMetric":       "e.config->'searcher'->>'metric'",
+		"startTime":            "r.start_time",
+		"endTime":              "r.end_time",
+		"duration":             "extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)",
+		"state":                "r.state",
+		"progress":             "ROUND(COALESCE(progress, 0) * 100)::INTEGER", // multiply by 100 for percent
+		"user":                 "e.owner_id",
+		"forkedFrom":           "e.parent_id",
+		"resourcePool":         "e.config->'resources'->>'resource_pool'",
+		"projectId":            "project_id",
+		"checkpointSize":       "e.checkpoint_size",
+		"checkpointCount":      "e.checkpoint_count",
+		"searcherMetricsVal":   "r.searcher_metric_value",
+		"externalExperimentId": "e.external_experiment_id",
+		"externalTrialId":      "r.external_run_id",
+	}
+	var exists bool
+	col, exists := filterExperimentColMap[columnName]
+	if !exists {
+		return "", fmt.Errorf("invalid experiment column %s", columnName)
+	}
+	return col, nil
+}
+
 // nolint: lll
 func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	op *operator, q *bun.SelectQuery,
@@ -319,8 +353,8 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	return q.Where(queryString, queryArgs...), nil
 }
 
-func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-	q, err := e.FilterGroup.toSQL(q, nil)
+func (e experimentFilterRoot) toSQL(q *bun.SelectQuery, isRunTable bool) (*bun.SelectQuery, error) {
+	q, err := e.FilterGroup.toSQL(q, nil, isRunTable)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +362,7 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error
 }
 
 func (e experimentFilter) toSQL(q *bun.SelectQuery,
-	c *filterConjunction,
+	c *filterConjunction, isRunTable bool,
 ) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
@@ -348,7 +382,12 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 		switch location {
 		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
-			col, err := expColumnNameToSQL(e.ColumnName)
+			var col string
+			if isRunTable {
+				col, err = expColumnNameToSQL(e.ColumnName)
+			} else {
+				col, err = runColumnNameToSQL(e.ColumnName)
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -440,7 +479,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 		for _, c := range e.Children {
 			q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
-				_, err = c.toSQL(q, e.Conjunction)
+				_, err = c.toSQL(q, e.Conjunction, isRunTable)
 				if err != nil {
 					return q
 				}

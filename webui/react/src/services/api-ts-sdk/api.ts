@@ -9113,6 +9113,60 @@ export interface V1Run {
      * @memberof V1Run
      */
     experimentName?: string;
+    /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1Run
+     */
+    displayName?: string;
+    /**
+     * The username of the user that created the experiment.
+     * @type {string}
+     * @memberof V1Run
+     */
+    username?: string;
+    /**
+     * Time in seconds which experiment ran or has been running.
+     * @type {number}
+     * @memberof V1Run
+     */
+    duration?: number;
+    /**
+     * The id of the project associated with this experiment.
+     * @type {number}
+     * @memberof V1Run
+     */
+    projectId?: number;
+    /**
+     * The name of the project associated with this experiment.
+     * @type {string}
+     * @memberof V1Run
+     */
+    projectName?: string;
+    /**
+     * The id of the workspace associated with this experiment.
+     * @type {number}
+     * @memberof V1Run
+     */
+    workspaceId?: number;
+    /**
+     * The name of the workspace associated with this experiment.
+     * @type {string}
+     * @memberof V1Run
+     */
+    workspaceName?: string;
+    /**
+     * The archived status of the parent project (can be inherited from workspace).
+     * @type {boolean}
+     * @memberof V1Run
+     */
+    parentArchived?: boolean;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1Run
+     */
+    unmanaged?: boolean;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.

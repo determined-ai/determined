@@ -12200,6 +12200,8 @@ class v1Run(Printable):
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
+    displayName: "typing.Optional[str]" = None
+    duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     experimentId: "typing.Optional[int]" = None
     experimentName: "typing.Optional[str]" = None
@@ -12210,7 +12212,10 @@ class v1Run(Printable):
     id: "typing.Optional[int]" = None
     metrics: "typing.Optional[str]" = None
     ownerId: "typing.Optional[int]" = None
+    parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
+    projectId: "typing.Optional[int]" = None
+    projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -12218,6 +12223,10 @@ class v1Run(Printable):
     startTime: "typing.Optional[str]" = None
     state: "typing.Optional[trialv1State]" = None
     tags: "typing.Optional[str]" = None
+    unmanaged: "typing.Optional[bool]" = None
+    username: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -12225,6 +12234,8 @@ class v1Run(Printable):
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
+        displayName: "typing.Union[str, None, Unset]" = _unset,
+        duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experimentId: "typing.Union[int, None, Unset]" = _unset,
         experimentName: "typing.Union[str, None, Unset]" = _unset,
@@ -12235,7 +12246,10 @@ class v1Run(Printable):
         id: "typing.Union[int, None, Unset]" = _unset,
         metrics: "typing.Union[str, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
+        parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+        projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -12243,6 +12257,10 @@ class v1Run(Printable):
         startTime: "typing.Union[str, None, Unset]" = _unset,
         state: "typing.Union[trialv1State, None, Unset]" = _unset,
         tags: "typing.Union[str, None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+        username: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(checkpointCount, Unset):
             self.checkpointCount = checkpointCount
@@ -12250,6 +12268,10 @@ class v1Run(Printable):
             self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(displayName, Unset):
+            self.displayName = displayName
+        if not isinstance(duration, Unset):
+            self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(experimentId, Unset):
@@ -12270,8 +12292,14 @@ class v1Run(Printable):
             self.metrics = metrics
         if not isinstance(ownerId, Unset):
             self.ownerId = ownerId
+        if not isinstance(parentArchived, Unset):
+            self.parentArchived = parentArchived
         if not isinstance(progress, Unset):
             self.progress = progress
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+        if not isinstance(projectName, Unset):
+            self.projectName = projectName
         if not isinstance(resourcePool, Unset):
             self.resourcePool = resourcePool
         if not isinstance(searcherMetric, Unset):
@@ -12286,6 +12314,14 @@ class v1Run(Printable):
             self.state = state
         if not isinstance(tags, Unset):
             self.tags = tags
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
+        if not isinstance(username, Unset):
+            self.username = username
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Run":
@@ -12297,6 +12333,10 @@ class v1Run(Printable):
             kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "displayName" in obj:
+            kwargs["displayName"] = obj["displayName"]
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "experimentId" in obj:
@@ -12317,8 +12357,14 @@ class v1Run(Printable):
             kwargs["metrics"] = obj["metrics"]
         if "ownerId" in obj:
             kwargs["ownerId"] = obj["ownerId"]
+        if "parentArchived" in obj:
+            kwargs["parentArchived"] = obj["parentArchived"]
         if "progress" in obj:
             kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        if "projectName" in obj:
+            kwargs["projectName"] = obj["projectName"]
         if "resourcePool" in obj:
             kwargs["resourcePool"] = obj["resourcePool"]
         if "searcherMetric" in obj:
@@ -12333,6 +12379,14 @@ class v1Run(Printable):
             kwargs["state"] = trialv1State(obj["state"]) if obj["state"] is not None else None
         if "tags" in obj:
             kwargs["tags"] = obj["tags"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
+        if "username" in obj:
+            kwargs["username"] = obj["username"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -12344,6 +12398,10 @@ class v1Run(Printable):
             out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "displayName" in vars(self):
+            out["displayName"] = self.displayName
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "experimentId" in vars(self):
@@ -12364,8 +12422,14 @@ class v1Run(Printable):
             out["metrics"] = self.metrics
         if not omit_unset or "ownerId" in vars(self):
             out["ownerId"] = self.ownerId
+        if not omit_unset or "parentArchived" in vars(self):
+            out["parentArchived"] = self.parentArchived
         if not omit_unset or "progress" in vars(self):
             out["progress"] = None if self.progress is None else dump_float(self.progress)
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        if not omit_unset or "projectName" in vars(self):
+            out["projectName"] = self.projectName
         if not omit_unset or "resourcePool" in vars(self):
             out["resourcePool"] = self.resourcePool
         if not omit_unset or "searcherMetric" in vars(self):
@@ -12380,6 +12444,14 @@ class v1Run(Printable):
             out["state"] = None if self.state is None else self.state.value
         if not omit_unset or "tags" in vars(self):
             out["tags"] = self.tags
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
+        if not omit_unset or "username" in vars(self):
+            out["username"] = self.username
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
         return out
 
 class v1RunPrepareForReportingRequest(Printable):

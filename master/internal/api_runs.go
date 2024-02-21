@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
@@ -62,7 +63,7 @@ func (a *apiServer) SearchRuns(
 	query := db.Bun().NewSelect().
 		Model(&resp.Runs).
 		ModelTableExpr("runs AS r").
-		Apply(getRunstColumns)
+		Apply(getRunsColumns)
 		// Limit(int(req.Limit)).
 		// Scan(ctx)
 
@@ -93,7 +94,7 @@ func (a *apiServer) SearchRuns(
 			return nil, err
 		}
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
+			_, err = efr.toSQL(q, true)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {
@@ -107,7 +108,7 @@ func (a *apiServer) SearchRuns(
 	}
 
 	if req.Sort != nil {
-		err = sortExperiments(req.Sort, query)
+		err = sortRuns(req.Sort, query)
 		if err != nil {
 			return nil, err
 		}
@@ -123,17 +124,19 @@ func (a *apiServer) SearchRuns(
 	return resp, nil
 }
 
-func getRunstColumns(q *bun.SelectQuery) *bun.SelectQuery {
+func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.
 		Column("r.id").
-		ColumnExpr("proto_time(e.start_time) AS start_time").
-		ColumnExpr("proto_time(e.end_time) AS end_time").
+		ColumnExpr("proto_time(r.start_time) AS start_time").
+		ColumnExpr("proto_time(r.end_time) AS end_time").
 		ColumnExpr(bunutils.ProtoStateDBCaseString(trialv1.State_value, "r.state", "state",
 			"STATE_")).
 		Column("r.tags").
 		Column("r.checkpoint_size").
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
+		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
+		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS metrics").
 		ColumnExpr("CASE WHEN e.parent_id IS NULL THEN NULL ELSE " +
@@ -147,5 +150,81 @@ func getRunstColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
 		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").
 		ColumnExpr("e.config->>'name' as experiment_name").
-		Join("JOIN experiments AS e ON r.experiment_id=e.id")
+		ColumnExpr("w.id AS workspace_id").
+		ColumnExpr("w.name AS workspace_name").
+		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
+		Column("e.unmanaged").
+		ColumnExpr("p.name AS project_name").
+		Join("JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("LEFT JOIN users u ON e.owner_id = u.id").
+		Join("LEFT JOIN projects p ON e.project_id = p.id").
+		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
+}
+
+func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
+	if sortString == nil {
+		return nil
+	}
+	orderColMap := map[string]string{
+		"id":                   "id",
+		"description":          "description",
+		"name":                 "name",
+		"searcherType":         "searcher_type",
+		"searcherMetric":       "searcher_metric",
+		"startTime":            "r.start_time",
+		"endTime":              "r.end_time",
+		"state":                "r.state",
+		"progress":             "COALESCE(progress, 0)",
+		"user":                 "display_name",
+		"forkedFrom":           "e.parent_id",
+		"resourcePool":         "resource_pool",
+		"projectId":            "e.project_id",
+		"checkpointSize":       "checkpoint_size",
+		"checkpointCount":      "checkpoint_count",
+		"duration":             "duration",
+		"searcherMetricsVal":   "r.searcher_metric_val",
+		"externalExperimentId": "e.external_experiment_id",
+		"externalRunId":        "r.external_run_id",
+	}
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
+	}
+	sortParams := strings.Split(*sortString, ",")
+	hasIDSort := false
+	for _, sortParam := range sortParams {
+		paramDetail := strings.Split(sortParam, "=")
+		if len(paramDetail) != 2 {
+			return status.Errorf(codes.InvalidArgument, "invalid sort parameter: %s", sortParam)
+		}
+		if _, ok := sortByMap[paramDetail[1]]; !ok {
+			return status.Errorf(codes.InvalidArgument, "invalid sort direction: %s", paramDetail[1])
+		}
+		sortDirection := sortByMap[paramDetail[1]]
+		switch {
+		case strings.HasPrefix(paramDetail[0], "hp."):
+			param := strings.ReplaceAll(paramDetail[0], "'", "")
+			hps := strings.ReplaceAll(strings.TrimPrefix(param, "hp."), ".", "'->'")
+			runQuery.OrderExpr(
+				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+		case strings.Contains(paramDetail[0], "."):
+			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
+			if err != nil {
+				return err
+			}
+			runQuery.OrderExpr("r.summary_metrics->?->?->>? ?",
+				metricGroup, metricName, metricQualifier, bun.Safe(sortDirection))
+		default:
+			if _, ok := orderColMap[paramDetail[0]]; !ok {
+				return status.Errorf(codes.InvalidArgument, "invalid sort col: %s", paramDetail[0])
+			}
+			hasIDSort = hasIDSort || paramDetail[0] == "id"
+			runQuery.OrderExpr(
+				fmt.Sprintf("%s %s", orderColMap[paramDetail[0]], sortDirection))
+		}
+	}
+	if !hasIDSort {
+		runQuery.OrderExpr("id ASC")
+	}
+	return nil
 }

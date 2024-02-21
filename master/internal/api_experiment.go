@@ -2553,7 +2553,7 @@ func (a *apiServer) SearchExperiments(
 			return nil, err
 		}
 		experimentQuery = experimentQuery.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
+			_, err = efr.toSQL(q, false)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {

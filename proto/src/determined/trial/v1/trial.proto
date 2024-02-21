@@ -366,4 +366,23 @@ message Run {
   string description = 20;
   // The experiment name.
   string experiment_name = 21;
+  // The display name of the user that created the experiment.
+  string display_name = 22;
+  // The username of the user that created the experiment.
+  string username = 23;
+  // Time in seconds which experiment ran or has been running.
+  optional int32 duration = 24;
+  // The id of the project associated with this experiment.
+  int32 project_id = 25;
+  // The name of the project associated with this experiment.
+  string project_name = 26;
+  // The id of the workspace associated with this experiment.
+  int32 workspace_id = 27;
+  // The name of the workspace associated with this experiment.
+  string workspace_name = 28;
+  // The archived status of the parent project (can be inherited from
+  // workspace).
+  bool parent_archived = 29;
+  // Unmanaged experiments are detached.
+  bool unmanaged = 30;
 }
