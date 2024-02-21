@@ -225,8 +225,8 @@ func (c Config) Printable() ([]byte, error) {
 		return pools
 	}
 	configCopy.RootPoolsInternal = maskPools(configCopy.RootPoolsInternal)
-	for _, r := range c.AdditionalResourceManagersInternal {
-		r.ResourcePools = maskPools(r.ResourcePools) // TODO(NICK) test
+	for _, r := range configCopy.AdditionalResourceManagersInternal {
+		r.ResourcePools = maskPools(r.ResourcePools)
 	}
 
 	optJSON, err := json.Marshal(configCopy)

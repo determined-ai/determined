@@ -407,13 +407,15 @@ task_container_defaults:
 	}
 }
 
+//nolint:gosec // These are not potential hardcoded credentials.
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
-	//nolint:gosec // These are not potential hardcoded credentials.
 	s3Secret := "my_secret_key_secret"
 	masterSecret := "my_master_secret"
 	webuiSecret := "my_webui_secret"
 	registryAuthSecret := "i_love_cellos"
+	startupScriptSecret := "my_startup_script_secret"
+	containerStartupScriptSecret := "my_container_startup_secret"
 
 	raw := fmt.Sprintf(`
 db:
@@ -439,8 +441,28 @@ task_container_defaults:
     password: %v
     shm_size_bytes: 4294967296
     network_mode: bridge
-`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret)
 
+resource_pools:
+  - provider:
+      type: gcp
+      startup_script: %v
+      container_startup_script: %v
+
+additional_resource_managers:
+  - resource_manager:
+      type: agent
+    resource_pools:
+      - provider:
+          type: gcp
+          startup_script: %v
+          container_startup_script: %v
+`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret, startupScriptSecret,
+		containerStartupScriptSecret, startupScriptSecret, containerStartupScriptSecret)
+
+	provConfig := provconfig.DefaultConfig()
+	provConfig.StartupScript = startupScriptSecret
+	provConfig.ContainerStartupScript = containerStartupScriptSecret
+	provConfig.GCP = provconfig.DefaultGCPClusterConfig()
 	expected := Config{
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
@@ -471,6 +493,32 @@ task_container_defaults:
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
 		},
+		ResourceConfig: ResourceConfig{
+			AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+				{
+					ResourceManager: &ResourceManagerConfig{
+						AgentRM: &AgentResourceManagerConfig{
+							DefaultAuxResourcePool:     defaultResourcePoolName,
+							DefaultComputeResourcePool: defaultResourcePoolName,
+						},
+					},
+					ResourcePools: []ResourcePoolConfig{
+						{
+							Provider:                 provConfig,
+							AgentReconnectWait:       25000000000,
+							MaxAuxContainersPerAgent: 100,
+						},
+					},
+				},
+			},
+			RootPoolsInternal: []ResourcePoolConfig{
+				{
+					Provider:                 provConfig,
+					AgentReconnectWait:       25000000000,
+					MaxAuxContainersPerAgent: 100,
+				},
+			},
+		},
 	}
 
 	unmarshaled := Config{
@@ -491,6 +539,8 @@ task_container_defaults:
 	assert.Assert(t, !bytes.Contains(printable, []byte(masterSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(webuiSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(registryAuthSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(startupScriptSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(containerStartupScriptSecret)))
 
 	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)
