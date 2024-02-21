@@ -152,6 +152,10 @@ def login_with_cache(
         utp = login(master_address, user, password, cert)
         user, token = utp.username, utp.token
     except api.errors.ForbiddenException:
+        # Master will return a 403 if the user is not found, or if the password is incorrect.
+        # This is the right response to a failed explicit login attempt. But in the "fallback" case,
+        # a user hasn't provided login information. There, a 401 "maybe try logging in" is a more
+        # appropriate response to login failure.
         if was_fallback:
             raise api.errors.UnauthenticatedException()
         raise
