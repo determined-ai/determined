@@ -12,7 +12,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
 )
 
@@ -489,50 +488,40 @@ func UsersInGroupTx(ctx context.Context, idb bun.IDB, gid int) ([]model.User, er
 
 // UpdateUserGroupMembershipTx takes in slice of groups, and updates a user's membership in those groups.
 func UpdateUserGroupMembershipTx(ctx context.Context, tx bun.IDB, u *model.User, groups []string) error {
-	// Get a list of groups a user is in.
-	currentGroups, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, "", u.ID)
-	if err != nil {
-		return fmt.Errorf("finding current user groups: %w", err)
+	if len(groups) == 0 {
+		if _, err := tx.NewDelete().Model(&model.GroupMembership{}).
+			Where("user_id = ?", u.ID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("deleting all of a user's groups: %w", err)
+		}
+		return nil
 	}
 
-	groupsToRemove := set.New[int]()
-	// Remove the user from any groups no longer included in the slice.
-	for _, g := range currentGroups {
-		if !slices.Contains(groups, g.Name) {
-			groupsToRemove.Insert(g.ID)
-		}
-	}
-	if len(groupsToRemove) != 0 {
-		if err := RemoveUsersFromGroupsTx(ctx, tx, groupsToRemove.ToSlice(), u.ID); err != nil {
-			return fmt.Errorf("failed to remove user from group: %w", err)
-		}
-	}
-
-	groupsToAdd := set.New[int]()
-	// Add the user to groups included in the slice.
+	var dbGroups []model.Group
 	for _, g := range groups {
-		// Check if the group already exists, regardless of if the user belongs to it.
-		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, tx, g, model.UserID(0))
-		if err != nil {
-			return fmt.Errorf("failed to find usergroup: %w", err)
-		}
-
-		if len(gps) == 0 {
-			newGroup, err := AddGroupTx(ctx, tx, model.Group{Name: g})
-			if err != nil {
-				return fmt.Errorf("failed to add usergroup: %w", err)
-			}
-			groupsToAdd.Insert(newGroup.ID)
-		} else if !slices.Contains(currentGroups, gps[0]) {
-			// gps should be a slice of length 1 since group name is unique.
-			groupsToAdd.Insert(gps[0].ID)
-		}
+		dbGroups = append(dbGroups, model.Group{Name: g})
+	}
+	if _, err := tx.NewInsert().Model(&dbGroups).
+		On("CONFLICT (group_name) DO NOTHING").
+		Exec(ctx); err != nil {
+		return fmt.Errorf("adding groups to sync group membership: %w", err)
 	}
 
-	if len(groupsToAdd) != 0 {
-		if err := AddUsersToGroupsTx(ctx, tx, groupsToAdd.ToSlice(), true, u.ID); err != nil {
-			return fmt.Errorf("error adding user to group: %s", err)
-		}
+	if _, err := db.Bun().NewRaw(`
+WITH deleted_rows AS (
+  DELETE FROM user_group_membership WHERE user_id = ? AND group_id IN (
+    SELECT groups.id FROM groups
+	JOIN user_group_membership ON groups.id = user_group_membership.group_id
+	WHERE group_name NOT IN (?) AND user_group_membership.user_id = ?
+  )
+)
+INSERT INTO user_group_membership (user_id, group_id)
+SELECT ? AS user_id, id AS group_id
+FROM groups
+WHERE group_name IN (?) AND id NOT IN (
+  SELECT group_id FROM user_group_membership WHERE user_id = ?
+)`, u.ID, bun.In(groups), u.ID, u.ID, bun.In(groups), u.ID).Exec(ctx); err != nil {
+		return fmt.Errorf("updating group membership: %w", err)
 	}
 
 	return nil

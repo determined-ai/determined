@@ -18,6 +18,44 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+func TestUpdateUserGroupMembershipTx(t *testing.T) {
+	ctx := context.Background()
+	pgDB := db.MustResolveTestPostgres(t)
+	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
+
+	tmpUser := db.RequireMockUser(t, pgDB)
+
+	name1 := uuid.NewString()
+	name2 := uuid.NewString()
+	name3 := uuid.NewString()
+
+	_, err := AddGroupTx(ctx, db.Bun(), model.Group{Name: name1})
+	require.NoError(t, err, "failed to add %s group", name1)
+
+	_, _, err = AddGroupWithMembers(ctx, model.Group{Name: name2}, tmpUser.ID)
+	require.NoError(t, err, "failed to add %s group", name2)
+
+	gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+	require.NoError(t, err, "failed to search groups")
+	require.Len(t, gps, 1, "failed to start with original group assignments.")
+	require.Equal(t, name2, gps[0].Name, "failed to start with %s group assignment.", name2)
+
+	err = UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{name1, name3})
+	require.NoError(t, err, "failed to update user-group membership")
+
+	gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+	require.NoError(t, err, "failed to search groups")
+	require.Len(t, gps, 2, "failed to end with two group assignments.")
+	require.ElementsMatch(t, []string{name1, name3}, []string{gps[0].Name, gps[1].Name},
+		"failed to end with %s group assignment.", name1)
+
+	err = UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{})
+	require.NoError(t, err)
+	gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
+	require.NoError(t, err)
+	require.Len(t, gps, 0)
+}
+
 func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
 	pgDB := db.MustResolveTestPostgres(t)
@@ -353,35 +391,6 @@ func TestUserGroups(t *testing.T) {
 		// Personal group still returns no error for UsersInGroupTx.
 		_, err = UsersInGroupTx(ctx, nil, personalGroup.ID)
 		require.NoError(t, err)
-	})
-
-	t.Run("test UpdateUserGroupMembership", func(t *testing.T) {
-		ctx := context.TODO()
-		tmpUser := db.RequireMockUser(t, pgDB)
-
-		name1 := uuid.NewString()
-		name2 := uuid.NewString()
-		name3 := uuid.NewString()
-
-		_, err := AddGroupTx(ctx, db.Bun(), model.Group{Name: name1})
-		require.NoError(t, err, "failed to add %s group", name1)
-
-		_, _, err = AddGroupWithMembers(ctx, model.Group{Name: name2}, tmpUser.ID)
-		require.NoError(t, err, "failed to add %s group", name2)
-
-		gps, err := SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
-		require.NoError(t, err, "failed to search groups")
-		require.Len(t, gps, 1, "failed to start with original group assignments.")
-		require.Equal(t, name2, gps[0].Name, "failed to start with %s group assignment.", name2)
-
-		err = UpdateUserGroupMembershipTx(ctx, db.Bun(), &tmpUser, []string{name1, name3})
-		require.NoError(t, err, "failed to update user-group membership")
-
-		gps, err = SearchGroupsWithoutPersonalGroupsTx(ctx, db.Bun(), "", tmpUser.ID)
-		require.NoError(t, err, "failed to search groups")
-		require.Len(t, gps, 2, "failed to end with two group assignments.")
-		require.ElementsMatch(t, []string{name1, name3}, []string{gps[0].Name, gps[1].Name},
-			"failed to end with %s group assignment.", name1)
 	})
 }
 
