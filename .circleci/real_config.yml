@@ -2723,6 +2723,7 @@ jobs:
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
+      - set-google-application-credentials
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
