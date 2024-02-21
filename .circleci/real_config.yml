@@ -2684,6 +2684,7 @@ jobs:
             - run:
                 name: Test FSx/Lustre
                 command: |
+                  DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
                   det cmd run --config resources.slots=1 'mount | grep lustre && echo MARKER' | grep MARKER
       - when:
           condition:
@@ -2692,6 +2693,7 @@ jobs:
             - run:
                 name: Test EFS
                 command: |
+                  DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
                   det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
@@ -3341,6 +3343,7 @@ workflows:
           name: test-e2e-gpu-distributed-nightly
           context:
             - aws
+            - aws-ci-cluster-default-user-credentials
             - hugging-face
           filters: *upstream-feature-branch
           requires:

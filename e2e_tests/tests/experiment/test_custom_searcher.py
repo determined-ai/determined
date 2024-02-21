@@ -30,13 +30,6 @@ def check_trial_state(
     return False
 
 
-@pytest.fixture
-def client_login() -> Iterator[None]:
-    client.login(master=conf.make_master_url())
-    yield
-    client._determined = None
-
-
 @pytest.mark.e2e_cpu
 def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
