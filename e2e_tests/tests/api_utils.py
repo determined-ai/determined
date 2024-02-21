@@ -27,12 +27,12 @@ def make_session(username: str, password: str) -> api.Session:
 
 @functools.lru_cache(maxsize=1)
 def user_session() -> api.Session:
-    return make_session("determined", "")
+    return make_session("determined", conf.USER_PASSWORD)
 
 
 @functools.lru_cache(maxsize=1)
 def admin_session() -> api.Session:
-    return make_session("admin", "")
+    return make_session("admin", conf.USER_PASSWORD)
 
 
 def get_random_string() -> str:
