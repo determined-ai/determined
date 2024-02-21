@@ -5,7 +5,7 @@
 #############################################################
 
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `AKS
-<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This document describes how to
+<https://azure.microsoft.com/en-us/products/kubernetes-service/>`_. This document describes how to
 set up an AKS cluster with GPU-enabled nodes. The recommended setup includes deploying a cluster
 with a single non-GPU node that will host the Determined master and database, and an autoscaling
 group of GPU nodes. After creating a suitable AKS cluster, you can then proceed with the standard
@@ -21,11 +21,11 @@ Determined requires GPU-enabled nodes and the Kubernetes cluster to be running v
 To deploy an AKS cluster, the user must have a resource group to manage the resources consumed by
 the cluster. To create one, follow the instructions found in the `Azure Resource Groups
 Documentation
-<https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#create-resource-groups>`_.
+<https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#create-resource-groups>`_.
 
 Additionally, users must have the `Azure CLI
-<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
-<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
+<https://learn.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
+<https://kubernetes.io/docs/tasks/tools/>`_ installed on their local machine.
 
 Finally, authenticate with the Azure CLI using ``az login`` in order to have access to your Azure
 subscription.

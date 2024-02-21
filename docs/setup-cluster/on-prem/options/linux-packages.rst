@@ -278,8 +278,8 @@ will restart the master):
    sudo systemctl restart determined-master.socket
 
 See the systemd documentation on `socket unit files
-<https://www.freedesktop.org/software/systemd/man/systemd.socket.html>`__ or `systemctl
-<https://www.freedesktop.org/software/systemd/man/systemctl.html>`__ for more information.
+<https://www.freedesktop.org/software/systemd/man/latest/systemd.socket.html>`__ or `systemctl
+<https://www.freedesktop.org/software/systemd/man/latest/systemctl.html>`__ for more information.
 
 ********************
  Manage the Cluster

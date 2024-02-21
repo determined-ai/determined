@@ -61,9 +61,9 @@ The following configuration settings are supported:
    -  ``pod_spec``: Only applicable when running Determined on Kubernetes. Applies a pod spec to the
       pods that are launched by Determined for this task. See :ref:`custom-pod-specs` for details.
 
-   -  ``registry_auth``: Specifies the `Docker registry credentials
-      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a
-      Docker image, if needed.
+   -  ``registry_auth``: Defines the default `Docker registry credentials
+      <https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when
+      pulling a custom base Docker image, if needed.
 
       -  ``username`` (required)
       -  ``password`` (required)

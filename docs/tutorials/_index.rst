@@ -40,7 +40,7 @@ how to take your existing model code and train your model in Determined.
 Examples let you build off of an existing model that already runs on Determined. Visit our
 :ref:`Examples <example-solutions>` to see if the model you'd like to train is already available.
 
-.. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
+.. _pytorch mnist example: https://github.com/PyTorch/examples/blob/main/mnist/main.py
 
 .. toctree::
    :hidden:

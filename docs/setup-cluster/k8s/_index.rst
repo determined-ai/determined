@@ -59,7 +59,7 @@ Determined is not able to autoscale your cluster, but equivalent functionality i
 the `Kubernetes Cluster Autoscaler
 <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_, which is supported on
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
-<https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
+<https://docs.aws.amazon.com/eks/latest/userguide/autoscaling.html>`_.
 
 Pod Security
 ============
@@ -75,10 +75,10 @@ root. For more information, see: :ref:`run-as-user`.
  Useful Helm and Kubectl Commands
 **********************************
 
-`kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ is a command-line tool for
-interacting with a Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to
-install and upgrade Determined on Kubernetes. This section covers some of the useful kubectl and
-helm commands when :ref:`running Determined on Kubernetes <install-on-kubernetes>`.
+`kubectl <https://kubernetes.io/docs/tasks/tools/>`_ is a command-line tool for interacting with a
+Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to install and upgrade
+Determined on Kubernetes. This section covers some of the useful kubectl and helm commands when
+:ref:`running Determined on Kubernetes <install-on-kubernetes>`.
 
 For all the commands listed below, include ``-n <kubernetes namespace name>`` if running Determined
 in a non-default `namespace

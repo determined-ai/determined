@@ -126,7 +126,7 @@ instance requires no further changes to your code.
 
 For a complete example of how to use DeepSpeed Autotune with ``DeepSpeedTrial``, visit the
 `Determined GitHub Repo
-<https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
+<https://github.com/determined-ai/determined/tree/main/examples/deepspeed_autotune/torchvision/deepspeed_trial>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/deepspeed_trial`` .
 
 .. note::
@@ -164,7 +164,7 @@ so there is no need to remove the context manager after the ``dsat`` trials have
 
 For a complete example of how to use DeepSpeed Autotune with Core API, visit the `Determined GitHub
 Repo
-<https://github.com/determined-ai/determined/tree/master/examples/deepspeed_autotune/torchvision/core_api>`__
+<https://github.com/determined-ai/determined/tree/main/examples/deepspeed_autotune/torchvision/core_api>`__
 and navigate to ``examples/deepspeed_autotune/torchvision/core_api`` .
 
 Hugging Face Trainer
@@ -215,8 +215,8 @@ relevant code:
       ``dsat_reporting_context`` context manager.
 
 To find examples that use DeepSpeed Autotune with Hugging Face Trainer, visit the `Determined GitHub
-Repo <https://github.com/determined-ai/determined/tree/master/examples/hf_trainer_api>`__ and
-navigate to ``examples/hf_trainer_api``.
+Repo <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`__ and navigate
+to ``examples/hf_trainer_api``.
 
 ******************
  Advanced Options

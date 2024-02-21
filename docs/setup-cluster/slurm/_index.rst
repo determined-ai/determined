@@ -40,11 +40,11 @@ follow the steps in the :ref:`install-on-slurm` document.
 -  :ref:`Determined Installation Requirements <system-requirements>`
 -  `Slurm <https://slurm.schedmd.com/documentation.html>`__
 -  `OpenPBS® <https://www.openpbs.org/>`__
--  `PBS Professional® <https://www.altair.com/pbs-professional/>`__
+-  `PBS Professional® <https://altair.com/pbs-professional/>`__
 -  `Singularity <https://docs.sylabs.io/guides/3.7/user-guide/introduction.html>`__
 -  `Apptainer <https://apptainer.org/>`__
 -  `NVIDIA Enroot <https://github.com/NVIDIA/enroot>`__
--  `Podman <https://docs.podman.io>`__
+-  `Podman <https://docs.podman.io/en/latest/>`__
 -  :ref:`Upgrading <upgrades>`
 
 .. toctree::
