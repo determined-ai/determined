@@ -3,16 +3,15 @@ import { Map } from 'immutable';
 import { find, remove } from 'lodash';
 
 import { getWorkspaceProjects } from 'services/api';
-import { StreamContent } from 'services/stream';
-import { ProjectSpec } from 'services/stream/projects';
-import { Stream } from 'services/stream/stream';
+import { Streamable, StreamContent } from 'services/stream';
+import { StreamSubscriber } from 'stores/stream';
 import { Project } from 'types';
 import handleError from 'utils/error';
-import { Observable, observable, WritableObservable } from 'utils/observable';
+import { ImmutableObservable, Observable, observable } from 'utils/observable';
 
-class ProjectStore {
-  #projects: WritableObservable<Map<number, Project>> = observable(Map());
-  #projectsByWorkspace: WritableObservable<Map<string, Project[]>> = observable(Map());
+class ProjectStore implements StreamSubscriber {
+  #projects: ImmutableObservable<Map<number, Project>> = observable(Map());
+  #projectsByWorkspace: ImmutableObservable<Map<string, Project[]>> = observable(Map());
 
   public fetch(workspaceId: number, signal?: AbortSignal, force = false): () => void {
     const workspaceKey = workspaceId.toString();
@@ -54,7 +53,7 @@ class ProjectStore {
     });
   }
 
-  public deleteProject(id: number) {
+  public delete(id: number) {
     let deleted: Project | undefined;
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
@@ -87,7 +86,8 @@ class ProjectStore {
     return { ...p };
   }
 
-  public upsertProject(p: Project) {
+  public upsert(content: StreamContent) {
+    const p = mapStreamProject(content);
     let prevProjectWorkspaceId: number | undefined;
 
     this.#projects.update((prev) =>
@@ -128,8 +128,8 @@ class ProjectStore {
     );
   }
 
-  public subscribe(stream: Stream, spec: ProjectSpec) {
-    stream.subscribe(spec);
+  public id(): Streamable {
+    return 'projects';
   }
 }
 

@@ -24,7 +24,6 @@ import usePermissions from 'hooks/usePermissions';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { StreamingProvider } from 'hooks/useStreamingProvider';
 import useTelemetry from 'hooks/useTelemetry';
 import { STORAGE_PATH, settings as themeSettings } from 'hooks/useTheme.settings';
 import Omnibar from 'omnibar/Omnibar';
@@ -33,6 +32,8 @@ import { paths, serverAddress } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
+import projectStore from 'stores/projects';
+import streamStore from 'stores/stream';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
@@ -68,6 +69,10 @@ const AppView: React.FC = () => {
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
+
+  useEffect(() => {
+    streamStore.on(projectStore);
+  }, []);
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);
@@ -207,9 +212,7 @@ const App: React.FC = () => {
       <ThemeProvider>
         <SettingsProvider>
           <DndProvider backend={HTML5Backend}>
-            <StreamingProvider>
-              <AppView />
-            </StreamingProvider>
+            <AppView />
           </DndProvider>
         </SettingsProvider>
       </ThemeProvider>

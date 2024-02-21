@@ -10,7 +10,7 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Link from 'components/Link';
@@ -32,12 +32,12 @@ import {
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
-import { Streaming } from 'hooks/useStreamingProvider';
 import { paths } from 'routes/utils';
 import { patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { ProjectSpec } from 'services/stream/projects';
 import projectStore from 'stores/projects';
+import streamStore from 'stores/stream';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -75,20 +75,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     projectStore.getProjectsByWorkspace(id),
   );
 
-  const { stream } = useContext(Streaming);
-
   useEffect(() => {
     Loadable.match(loadableProjects, {
       _: () => {},
       Loaded: (data) => {
         setProjects(data);
         setIsLoading(false);
-        if (stream) {
-          projectStore.subscribe(stream, new ProjectSpec([id]));
-        }
+        streamStore.emit(new ProjectSpec([id]));
       },
     });
-  }, [loadableProjects, stream, id]);
+  }, [loadableProjects, id]);
 
   useEffect(() => {
     setTotal(projects.length);
