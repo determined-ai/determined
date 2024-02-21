@@ -44,4 +44,10 @@ message Container {
   // (2) id
   // (4) devices
   bool permission_denied = 5;
+  // The id of the allocation.
+  string allocation_id = 6;
+  // The id of the task.
+  string task_id = 7;
+  // The id of the job.
+  string job_id = 8;
 }

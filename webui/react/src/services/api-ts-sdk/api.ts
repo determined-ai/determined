@@ -2052,6 +2052,24 @@ export interface V1Container {
      * @memberof V1Container
      */
     permissionDenied?: boolean;
+    /**
+     * The id of the allocation.
+     * @type {string}
+     * @memberof V1Container
+     */
+    allocationId?: string;
+    /**
+     * The id of the task.
+     * @type {string}
+     * @memberof V1Container
+     */
+    taskId?: string;
+    /**
+     * The id of the job.
+     * @type {string}
+     * @memberof V1Container
+     */
+    jobId?: string;
 }
 /**
  * Request to continue an experiment.

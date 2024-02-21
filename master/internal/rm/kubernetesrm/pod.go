@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -61,6 +62,7 @@ type pod struct {
 
 	clusterID    string
 	allocationID model.AllocationID
+	jobID        model.JobID
 	clientSet    k8sClient.Interface
 	namespace    string
 	masterIP     string
@@ -98,7 +100,7 @@ type podNodeInfo struct {
 	nodeName  string
 	numSlots  int
 	slotType  device.Type
-	container *cproto.Container
+	container *model.ContainerSummary
 }
 
 func newPod(
@@ -136,6 +138,7 @@ func newPod(
 		},
 		clusterID:            clusterID,
 		allocationID:         msg.AllocationID,
+		jobID:                msg.Req.JobID,
 		clientSet:            clientSet,
 		namespace:            namespace,
 		masterIP:             masterIP,
@@ -322,10 +325,17 @@ func (p *pod) getPodNodeInfo() podNodeInfo {
 	defer p.mu.Unlock()
 
 	return podNodeInfo{
-		nodeName:  p.pod.Spec.NodeName,
-		numSlots:  p.slots,
-		slotType:  p.slotType,
-		container: p.container.DeepCopy(),
+		nodeName: p.pod.Spec.NodeName,
+		numSlots: p.slots,
+		slotType: p.slotType,
+		container: &model.ContainerSummary{
+			ID:           p.container.ID,
+			State:        p.container.State,
+			Devices:      slices.Clone(p.container.Devices),
+			AllocationID: p.allocationID,
+			TaskID:       p.allocationID.ToTaskID(),
+			JobID:        p.jobID,
+		},
 	}
 }
 

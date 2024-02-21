@@ -112,7 +112,7 @@ func createPodWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 		)
 	}
 
-	aID := model.AllocationID(uuid.NewString())
+	aID := model.AllocationID(uuid.NewString() + ".1")
 	sub := rmevents.Subscribe(aID)
 	newPod := createPod(
 		aID,
