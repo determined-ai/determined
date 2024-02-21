@@ -62,7 +62,7 @@ integrations:
 			Port:     "3000",
 		},
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
+			RootManagerInternal: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
@@ -72,7 +72,7 @@ integrations:
 					DefaultAuxResourcePool:     "default",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			RootPoolsInternal: []ResourcePoolConfig{
 				{
 					PoolName: "default",
 					Provider: &provconfig.Config{
@@ -130,7 +130,7 @@ resource_pools:
 `
 	expected := Config{
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
+			RootManagerInternal: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
@@ -140,7 +140,7 @@ resource_pools:
 					DefaultAuxResourcePool:     "cpu-pool",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			RootPoolsInternal: []ResourcePoolConfig{
 				{
 					PoolName: "cpu-pool",
 					Provider: &provconfig.Config{
@@ -401,7 +401,7 @@ task_container_defaults:
 		require.NoError(t, err)
 		require.NoError(t, unmarshaled.Resolve())
 		require.Equal(t, c.expected,
-			*unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+			*unmarshaled.RootManagerInternal.KubernetesRM.MaxSlotsPerPod)
 		require.Equal(t, c.expected,
 			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}

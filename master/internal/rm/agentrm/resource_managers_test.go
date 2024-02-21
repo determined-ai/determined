@@ -19,7 +19,7 @@ const defaultResourcePoolName = "default"
 func TestResourceManagerForwardMessage(t *testing.T) {
 	user.InitService(nil, nil)
 	conf := &config.ResourceConfig{
-		ResourceManager: &config.ResourceManagerConfig{
+		RootManagerInternal: &config.ResourceManagerConfig{
 			AgentRM: &config.AgentResourceManagerConfig{
 				Scheduler: &config.SchedulerConfig{
 					FairShare:     &config.FairShareSchedulerConfig{},
@@ -27,7 +27,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 				},
 			},
 		},
-		ResourcePools: []config.ResourcePoolConfig{
+		RootPoolsInternal: []config.ResourcePoolConfig{
 			{
 				PoolName:                 defaultResourcePoolName,
 				MaxAuxContainersPerAgent: 100,
@@ -35,7 +35,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 		},
 	}
 
-	rm := New(nil, echo.New(), conf, nil, nil)
+	rm := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
 
 	taskSummary, err := rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.NilError(t, err)

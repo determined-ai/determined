@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -16,6 +17,31 @@ const defaultResourcePoolName = "default"
 type ResourceManagerConfig struct {
 	AgentRM      *AgentResourceManagerConfig      `union:"type,agent" json:"-"`
 	KubernetesRM *KubernetesResourceManagerConfig `union:"type,kubernetes" json:"-"`
+}
+
+// Name returns the name for the resource manager.
+func (r ResourceManagerConfig) Name() string {
+	if agentRM := r.AgentRM; agentRM != nil {
+		return agentRM.Name
+	}
+	if k8RM := r.KubernetesRM; k8RM != nil {
+		return k8RM.Name
+	}
+	// TODO dispatcher.
+
+	panic(fmt.Sprintf("unknown rm type %+v", r))
+}
+
+func (r *ResourceManagerConfig) setName(name string) {
+	switch {
+	case r.AgentRM != nil:
+		r.AgentRM.Name = name
+	case r.KubernetesRM != nil:
+		r.KubernetesRM.Name = name
+		// TODO dispatcher.
+	default:
+		panic(fmt.Sprintf("unknown rm type %+v", r))
+	}
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -60,6 +86,9 @@ type AgentResourceManagerConfig struct {
 
 	RequireAuthentication bool   `json:"require_authentication"`
 	ClientCA              string `json:"client_ca"`
+
+	Name     string         `json:"name"`
+	Metadata map[string]any `json:"metadata"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -95,19 +124,20 @@ func (a *AgentResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // Validate implements the check.Validatable interface.
 func (a AgentResourceManagerConfig) Validate() []error {
+	var errors []error
 	if a.NoDefaultResourcePools {
-		return []error{
+		errors = append(errors,
 			check.Equal("", a.DefaultAuxResourcePool,
 				"default_aux_resource_pool should be empty if no_default_resource_pools is set"),
 			check.Equal("", a.DefaultComputeResourcePool,
 				"default_compute_resource_pool should be empty if no_default_resource_pools is "+
-					"set"),
-		}
+					"set"))
 	}
-	return []error{
+	return append(errors,
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
-	}
+		check.NotEmpty(a.Name, "name is required"),
+	)
 }
 
 // KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
@@ -133,6 +163,9 @@ type KubernetesResourceManagerConfig struct {
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
+
+	Name     string         `json:"name"`
+	Metadata map[string]any `json:"metadata"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -188,6 +221,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	return []error{
 		checkSlotType,
 		checkCPUResource,
+		check.NotEmpty(k.Name, "name is required"),
 	}
 }
 

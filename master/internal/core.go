@@ -638,7 +638,9 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		var clientCAs *x509.CertPool
 		clientAuthMode := tls.NoClientCert
 
-		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+		c, ok := m.config.GetAgentRMConfig()
+		agentRM := c.ResourceManager.AgentRM
+		if ok && agentRM != nil && agentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
@@ -988,9 +990,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	logpattern.SetDefault(l)
 
-	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
-	if err != nil {
-		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
+	for _, r := range m.config.ResourceManagers() {
+		err = m.checkIfRMDefaultsAreUnbound(r.ResourceManager)
+		if err != nil {
+			return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
+		}
 	}
 
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
@@ -1121,10 +1125,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
+	// TODO(multirm) do multiple resource managers.
+	r := m.config.ResourceManagers()[0]
 	m.rm = rm.New(
 		m.db,
 		m.echo,
-		&m.config.ResourceConfig,
+		r,
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
