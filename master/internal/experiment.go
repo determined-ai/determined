@@ -116,18 +116,12 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		err := m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), false)
-		if err != nil {
+		if _, launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+			ResourcePool: poolName,
+			Slots:        resources.SlotsPerTrial(),
+			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
+		}); err != nil {
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
-		}
-		launchWarnings, err = m.rm.ValidateResourcePoolAvailability(
-			&sproto.ValidateResourcePoolAvailabilityRequest{
-				Name:  poolName,
-				Slots: resources.SlotsPerTrial(),
-			},
-		)
-		if err != nil {
-			return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
 		}
 		if m.config.ResourceManager.AgentRM != nil && m.config.LaunchError && len(launchWarnings) > 0 {
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")

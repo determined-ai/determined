@@ -40,18 +40,13 @@ func (m *Master) ResolveResources(
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = m.rm.ValidateResources(poolName, slots, isSingleNode); err != nil {
-		return "", nil, fmt.Errorf("validating resources: %v", err)
-	}
-
-	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
-		&sproto.ValidateResourcePoolAvailabilityRequest{
-			Name:  poolName,
-			Slots: slots,
-		},
-	)
+	_, launchWarnings, err := m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+		ResourcePool: poolName,
+		Slots:        slots,
+		IsSingleNode: isSingleNode,
+	})
 	if err != nil {
-		return "", launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
+		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
 	if m.config.ResourceManager.AgentRM != nil &&
 		m.config.LaunchError &&

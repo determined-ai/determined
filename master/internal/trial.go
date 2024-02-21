@@ -803,11 +803,12 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 }
 
 func (t *trial) checkResourcePoolRemainingCapacity() error {
-	launchWarnings, err := t.rm.ValidateResourcePoolAvailability(
-		&sproto.ValidateResourcePoolAvailabilityRequest{
-			Name:   t.config.Resources().ResourcePool(),
-			Slots:  t.config.Resources().SlotsPerTrial(),
-			TaskID: &t.taskID,
+	_, launchWarnings, err := t.rm.ValidateResources(
+		sproto.ValidateResourcesRequest{
+			ResourcePool: t.config.Resources().ResourcePool(),
+			Slots:        t.config.Resources().SlotsPerTrial(),
+			IsSingleNode: t.config.Resources().IsSingleNode() != nil && *t.config.Resources().IsSingleNode(),
+			TaskID:       &t.taskID,
 		},
 	)
 	if err != nil {
