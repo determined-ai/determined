@@ -26,7 +26,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 
 	// Set up one CPU resource pool and one GPU resource pool.
 	cfg := &config.ResourceConfig{
-		ResourceManager: &config.ResourceManagerConfig{
+		RootManagerInternal: &config.ResourceManagerConfig{
 			AgentRM: &config.AgentResourceManagerConfig{
 				Scheduler: &config.SchedulerConfig{
 					FairShare:     &config.FairShareSchedulerConfig{},
@@ -36,7 +36,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 				DefaultComputeResourcePool: "gpu-pool",
 			},
 		},
-		ResourcePools: []config.ResourcePoolConfig{
+		RootPoolsInternal: []config.ResourcePoolConfig{
 			{PoolName: "cpu-pool"},
 			{PoolName: "gpu-pool"},
 		},
@@ -50,8 +50,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 		nil, nil, []*MockAgent{{ID: "agent2", Slots: 4}},
 	)
 	agentRM := &ResourceManager{
-		config:      cfg.ResourceManager.AgentRM,
-		poolsConfig: cfg.ResourcePools,
+		config:      cfg.ResourceManagers()[0].ResourceManager.AgentRM,
+		poolsConfig: cfg.ResourceManagers()[0].ResourcePools,
 		pools: map[string]*resourcePool{
 			"cpu-pool": cpuPoolRef,
 			"gpu-pool": gpuPoolRef,

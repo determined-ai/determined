@@ -17,7 +17,7 @@ import (
 func New(
 	db *db.PgDB,
 	echo *echo.Echo,
-	config *config.ResourceConfig,
+	config *config.ResourceManagerWithPoolsConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,

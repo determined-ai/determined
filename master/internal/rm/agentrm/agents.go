@@ -129,7 +129,12 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	// Here, we just have to check that there are any certificates at all, since the top-level TLS
 	// config verifies that any certificates that are provided are valid.
 	if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
-		requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
+		r, ok := config.GetMasterConfig().GetAgentRMConfig()
+		if !ok {
+			return fmt.Errorf("can't read agent config")
+		}
+		requireAuth := r.ResourceManager.AgentRM.RequireAuthentication
+
 		missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
 		if requireAuth && missingAuth {
 			a.syslog.WithField("remote-addr", tlsConn.RemoteAddr()).
