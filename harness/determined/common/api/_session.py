@@ -10,6 +10,8 @@ from determined.common import api
 from determined.common import requests as det_requests
 from determined.common.api import authentication, certs, errors
 
+GeneralizedRetry = Union[urllib3.util.retry.Retry, int]
+
 # Default retry logic
 DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
     total=5,
@@ -22,7 +24,7 @@ def _do_request(
     method: str,
     host: str,
     path: str,
-    max_retries: Union[urllib3.util.retry.Retry, int],
+    max_retries: Optional[GeneralizedRetry],
     params: Optional[Dict[str, Any]] = None,
     json: Any = None,
     data: Optional[str] = None,
@@ -95,7 +97,7 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     master: str
     cert: Optional[certs.Cert]
-    _max_retries: Union[urllib3.util.retry.Retry, int]
+    _max_retries: Optional[GeneralizedRetry]
 
     @abc.abstractmethod
     def _do_request(
@@ -178,7 +180,7 @@ class UnauthSession(BaseSession):
         self,
         master: str,
         cert: Optional[certs.Cert],
-        max_retries: Union[urllib3.util.retry.Retry, int] = DEFAULT_MAX_RETRIES,
+        max_retries: Optional[GeneralizedRetry] = DEFAULT_MAX_RETRIES,
     ) -> None:
         if master != api.canonicalize_master_url(master):
             # This check is targeting developers of Determined, not users of Determined.
@@ -229,7 +231,7 @@ class Session(BaseSession):
         master: str,
         utp: authentication.UsernameTokenPair,
         cert: Optional[certs.Cert],
-        max_retries: Union[urllib3.util.retry.Retry, int] = DEFAULT_MAX_RETRIES,
+        max_retries: Optional[GeneralizedRetry] = DEFAULT_MAX_RETRIES,
     ) -> None:
         if master != api.canonicalize_master_url(master):
             # This check is targeting developers of Determined, not users of Determined.
