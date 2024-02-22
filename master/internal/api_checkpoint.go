@@ -19,7 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/checkpoints"
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
@@ -61,7 +61,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
 	}
-	exp, err := db.ExperimentByID(ctx, checkpoint.CheckpointTrainingMetadata.ExperimentID)
+	exp, err := internaldb.ExperimentByID(ctx, checkpoint.CheckpointTrainingMetadata.ExperimentID)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (a *apiServer) GetCheckpoint(
 
 	resp := &apiv1.GetCheckpointResponse{}
 
-	ckpt, err := db.GetCheckpoint(ctx, req.CheckpointUuid)
+	ckpt, err := internaldb.GetCheckpoint(ctx, req.CheckpointUuid)
 	if err != nil {
 		return resp, errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
 	}
@@ -172,7 +172,7 @@ func (a *apiServer) checkpointsRBACEditCheck(
 	// that the user has permission to view and edit.
 	exps := make([]*model.Experiment, len(groupCUUIDsByEIDs))
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
-		exp, err := db.ExperimentByID(ctx, expIDcUUIDs.ExperimentID)
+		exp, err := internaldb.ExperimentByID(ctx, expIDcUUIDs.ExperimentID)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -227,7 +227,7 @@ func (a *apiServer) PatchCheckpoints(
 			registeredCheckpointUUIDs)
 	}
 
-	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = internaldb.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		var updatedCheckpointSizes []uuid.UUID
 		for i, c := range req.Checkpoints {
 			if c.Resources != nil {
@@ -344,7 +344,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 	}
 
 	jobID := model.NewJobID()
-	if err = a.m.db.AddJob(&model.Job{
+	if err = internaldb.AddJob(&model.Job{
 		JobID:   jobID,
 		JobType: model.JobTypeCheckpointGC,
 		OwnerID: &curUser.ID,
@@ -415,7 +415,7 @@ func (a *apiServer) PostCheckpointMetadata(
 		return nil, err
 	}
 
-	currCheckpoint, err := db.GetCheckpoint(ctx, req.Checkpoint.Uuid)
+	currCheckpoint, err := internaldb.GetCheckpoint(ctx, req.Checkpoint.Uuid)
 	if err != nil {
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
@@ -456,7 +456,7 @@ func (a *apiServer) GetTrialMetricsByCheckpoint(
 	}
 
 	resp := &apiv1.GetTrialMetricsByCheckpointResponse{}
-	trialIDsQuery := db.Bun().NewSelect().Table("trial_source_infos").
+	trialIDsQuery := internaldb.Bun().NewSelect().Table("trial_source_infos").
 		Where("checkpoint_uuid = ?", req.CheckpointUuid)
 
 	if req.TrialSourceInfoType != nil {

@@ -69,11 +69,11 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		OwnerID: &user.ID,
 		QPos:    decimal.New(0, 0),
 	}
-	err := db.AddJob(jIn)
+	err := AddJob(jIn)
 	require.NoError(t, err, "failed to add job")
 
 	// Retrieve it back and make sure the mapping is exhaustive.
-	jOut, err := db.JobByID(jID)
+	jOut, err := JobByID(context.TODO(), jID)
 	require.NoError(t, err, "failed to retrieve job")
 	require.True(t, reflect.DeepEqual(jIn, jOut), pprintedExpect(jIn, jOut))
 
