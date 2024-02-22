@@ -5,28 +5,12 @@ import requests
 
 from determined.common import api
 from determined.common.api import authentication, certs
-
-from .errors import MasterTimeoutExpired
+from determined.deploy import errors
 
 DEFAULT_TIMEOUT = 100
 
 
-def _make_master_url(master_host: str, master_port: int, suffix: str = "") -> str:
-    return "http://{}:{}/{}".format(master_host, master_port, suffix)
-
-
 def wait_for_master(
-    master_host: str,
-    master_port: int = 8080,
-    timeout: int = DEFAULT_TIMEOUT,
-    cert: Optional[certs.Cert] = None,
-) -> None:
-    master_url = _make_master_url(master_host, master_port)
-
-    return wait_for_master_url(master_url, timeout, cert)
-
-
-def wait_for_master_url(
     master_url: str,
     timeout: int = DEFAULT_TIMEOUT,
     cert: Optional[certs.Cert] = None,
@@ -50,7 +34,7 @@ def wait_for_master_url(
             time.sleep(POLL_INTERVAL)
             print(".", end="", flush=True)
 
-        raise MasterTimeoutExpired
+        raise errors.MasterTimeoutExpired
     finally:
         if polling:
             print()
@@ -83,7 +67,7 @@ def wait_for_genai_url(
                 print("Waiting for GenAI instance to be available...", end="", flush=True)
             time.sleep(POLL_INTERVAL)
             print(".", end="", flush=True)
-        raise MasterTimeoutExpired
+        raise errors.MasterTimeoutExpired
     finally:
         if polling:
             print()

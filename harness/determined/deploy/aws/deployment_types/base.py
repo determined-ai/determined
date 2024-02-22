@@ -79,7 +79,7 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
             cert = certs.Cert(noverify=True)
         master_url = self._get_master_url()
-        return healthcheck.wait_for_master_url(master_url, timeout=timeout, cert=cert)
+        healthcheck.wait_for_master(master_url, timeout=timeout, cert=cert)
 
     def consolidate_parameters(self) -> List[Dict[str, Any]]:
         return [

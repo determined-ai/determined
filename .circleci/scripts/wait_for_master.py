@@ -25,7 +25,7 @@ def _wait_for_master(address: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Wait for master helper.")
-    parser.add_argument("address", help="Master address.")
+    parser.add_argument("address", type=api.canonicalize_master_url, help="Master address.")
     args = parser.parse_args()
     _wait_for_master(args.address)
 

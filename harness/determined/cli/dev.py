@@ -18,7 +18,6 @@ from determined import cli
 from determined.cli import errors, render
 from determined.common.api import bindings
 from determined.common.api import errors as api_errors
-from determined.common.api import request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -34,15 +33,17 @@ def curl(args: Namespace) -> None:
         sys.exit(1)
 
     parsed = parse.urlparse(args.path)
-    if parsed.scheme:
+    if parsed.scheme or parsed.netloc:
         raise errors.CliError(
             "path argument does not support absolute URLs."
             + " Set the host path through `det` command"
         )
 
+    relpath = args.path.lstrip("/")
+
     cmd: List[str] = [
         "curl",
-        request.make_url_new(args.master, args.path),
+        f"{args.master}/{relpath}",
         "-H",
         f"Authorization: Bearer {sess.token}",
         "-s",

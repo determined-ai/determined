@@ -80,8 +80,8 @@ def load_config(config_path: str) -> Any:
     return config
 
 
-def make_master_url(suffix: str = "") -> str:
-    return f"{MASTER_SCHEME}://{MASTER_IP}:{MASTER_PORT}/{suffix}"
+def make_master_url() -> str:
+    return api.canonicalize_master_url(f"{MASTER_SCHEME}://{MASTER_IP}:{MASTER_PORT}")
 
 
 def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:

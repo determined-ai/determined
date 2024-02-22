@@ -6,7 +6,7 @@ import termcolor
 
 from determined import cli
 from determined.cli import errors, render
-from determined.common import api, declarative_argparse, util
+from determined.common import api, declarative_argparse
 from determined.common.api import authentication, bindings
 
 output_format_args: Dict[str, declarative_argparse.Arg] = {
@@ -85,12 +85,12 @@ default_pagination_args = make_pagination_args()
 
 
 def unauth_session(args: argparse.Namespace) -> api.UnauthSession:
-    master_url = args.master or util.get_default_master_address()
+    master_url = args.master
     return api.UnauthSession(master=master_url, cert=cli.cert)
 
 
 def setup_session(args: argparse.Namespace) -> api.Session:
-    master_url = args.master or util.get_default_master_address()
+    master_url = args.master
     utp = authentication.login_with_cache(
         master_address=master_url,
         requested_user=args.user,

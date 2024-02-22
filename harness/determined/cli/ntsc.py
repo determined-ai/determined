@@ -3,12 +3,14 @@
 import base64
 import json
 import operator
+import os
 import re
 from argparse import Namespace
 from collections import OrderedDict
 from functools import reduce
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
+from urllib import parse
 
 from termcolor import colored
 
@@ -435,3 +437,34 @@ def launch_command(
         body["workspaceId"] = workspace_id
 
     return sess.post(endpoint, json=body).json()
+
+
+def make_interactive_task_url(
+    task_id: str,
+    service_address: str,
+    description: str,
+    resource_pool: str,
+    task_type: str,
+    currentSlotsExceeded: bool,
+) -> str:
+    wait_path = (
+        "/jupyter-lab/{}/events".format(task_id)
+        if task_type == "jupyter-lab"
+        else "/tensorboard/{}/events?tail=1".format(task_id)
+    )
+    wait_path_url = service_address + wait_path
+    public_url = os.environ.get("PUBLIC_URL", "/det")
+    wait_page_url = "{}/wait/{}/{}?eventUrl={}&serviceAddr={}".format(
+        public_url, task_type, task_id, wait_path_url, service_address
+    )
+    task_web_url = "{}/interactive/{}/{}/{}/{}/{}?{}".format(
+        public_url,
+        task_id,
+        task_type,
+        parse.quote(description),
+        resource_pool,
+        parse.quote_plus(wait_page_url),
+        f"currentSlotsExceeded={str(currentSlotsExceeded).lower()}",
+    )
+    # Return a relative path that can be joined to the master_url with a simple "/" separator.
+    return task_web_url.lstrip("/")

@@ -63,7 +63,7 @@ def _put_unmanaged_experiment(
 
 # TODO(ilia): add a singleton helper to get the URL for the current experiment / trial.
 def _url_reverse_webui_exp_view(client: experimental.Determined, exp_id: int) -> str:
-    return api.request.make_url(client._master, f"/det/experiments/{exp_id}")
+    return f"{client._master}/det/experiments/{exp_id}"
 
 
 def _get_cluster_id(sess: api.Session) -> str:
