@@ -19,7 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/checkpoints"
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -62,7 +62,7 @@ type (
 
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
-		db                  *db.PgDB
+		db                  *internaldb.PgDB
 		rm                  rm.ResourceManager
 		syslog              *logrus.Entry
 		searcher            *searcher.Searcher
@@ -206,7 +206,7 @@ func newUnmanagedExperiment(
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
 
-	if err := db.AddExperimentTx(ctx, idb, expModel, modelDef, activeConfig, true); err != nil {
+	if err := internaldb.AddExperimentTx(ctx, idb, expModel, modelDef, activeConfig, true); err != nil {
 		return nil, nil, err
 	}
 	telemetry.ReportExperimentCreated(expModel.ID, activeConfig)
@@ -275,7 +275,7 @@ func (e *internalExperiment) start() error {
 	jobservice.DefaultService.RegisterJob(e.JobID, e)
 
 	if e.restored {
-		j, err := e.db.JobByID(e.JobID)
+		j, err := internaldb.JobByID(context.TODO(), e.JobID)
 		if err != nil {
 			e.updateState(model.StateWithReason{
 				State:               model.StoppingErrorState,
@@ -729,7 +729,7 @@ func (e *internalExperiment) restoreTrials() {
 func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
 	var continueFromTrialID *int
 	if e.continueTrials {
-		switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
+		switch trial, err := internaldb.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
 		case errors.Is(err, sql.ErrNoRows):
 		// Trial doesn't exist, don't do anything
 		case err != nil:
@@ -886,7 +886,7 @@ var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
 
 func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	var experimentID int
-	err := db.Bun().NewSelect().
+	err := internaldb.Bun().NewSelect().
 		Table("run_id_task_id").
 		Column("experiment_id").
 		Join("LEFT JOIN trials ON trials.id = run_id_task_id.run_id").
@@ -905,7 +905,7 @@ func (e *internalExperiment) checkpointForCreate(op searcher.Create) (*model.Che
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
-		trial, err := db.TrialByExperimentAndRequestID(context.TODO(), e.ID, op.Checkpoint.RequestID)
+		trial, err := internaldb.TrialByExperimentAndRequestID(context.TODO(), e.ID, op.Checkpoint.RequestID)
 		if err != nil {
 			return nil, errors.Wrapf(err,
 				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
@@ -986,7 +986,7 @@ func (e *internalExperiment) restore(experimentSnapshot json.RawMessage) error {
 }
 
 func checkpointFromTrialIDOrUUID(
-	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
+	db *internaldb.PgDB, trialID *int, checkpointUUIDStr *string,
 ) (*model.Checkpoint, error) {
 	var checkpoint *model.Checkpoint
 	var err error

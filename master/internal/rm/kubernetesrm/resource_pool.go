@@ -1,6 +1,7 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -399,7 +400,7 @@ func (k *kubernetesResourcePool) moveJob(
 	if err != nil {
 		return err
 	}
-	if err := k.db.UpdateJobPosition(jobID, jobPosition); err != nil {
+	if err := db.UpdateJobPosition(context.TODO(), jobID, jobPosition); err != nil {
 		return err
 	}
 
