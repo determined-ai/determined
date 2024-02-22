@@ -2834,18 +2834,18 @@ workflows:
           requires:
             - build-docs
           context: determined-production
-          #filters:
-          #  branches:
-          #    only:
-          #      - main
-
-      - check-docs-links:
-          requires:
-            - build-docs
           filters:
             branches:
               only:
                 - main
+
+      - check-docs-links:
+          requires:
+            - build-docs
+          #filters:
+          #  branches:
+          #    only:
+          #      - main
 
       - test-debian-packaging:
           requires:
