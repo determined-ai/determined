@@ -304,7 +304,7 @@ def test_experiment_manipulation() -> None:
     assert exp.wait() == client.ExperimentState.CANCELED
 
     # Make sure that the experiment we deleted earlier does actually delete.
-    with pytest.raises(errors.APIException):
+    with pytest.raises(errors.NotFoundException):
         for _ in range(300):
             detobj.get_experiment(deleting_exp.id).get_trials()
             time.sleep(0.1)
@@ -352,7 +352,7 @@ def test_models() -> None:
     finally:
         model.delete()
 
-    with pytest.raises(errors.APIException):
+    with pytest.raises(errors.NotFoundException):
         detobj.get_model(model_name)
 
 
@@ -442,7 +442,7 @@ def test_model_versions() -> None:
 
         ver2.delete()
 
-        with pytest.raises(errors.APIException):
+        with pytest.raises(errors.NotFoundException):
             model.get_version(ver.model_version)
 
         # Test get_version without an arg, when no version exists.
