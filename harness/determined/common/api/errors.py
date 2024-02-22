@@ -61,7 +61,7 @@ class APIException(BadRequestException):
         self.status_code = response.status_code
 
 
-class NotFoundException(BadRequestException):
+class NotFoundException(APIException):
     """The internal API's analog to a 404 Not Found HTTP status code."""
 
     def __init__(self, error_message: str) -> None:
