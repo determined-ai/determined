@@ -97,7 +97,7 @@ def setup_session(args: argparse.Namespace) -> api.Session:
         password=None,
         cert=cli.cert,
     )
-    return api.Session(master_url, utp, cli.cert, api.default_retry())
+    return api.Session(master_url, utp, cli.cert)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:

@@ -10,6 +10,12 @@ from determined.common import api
 from determined.common import requests as det_requests
 from determined.common.api import authentication, certs, errors
 
+# Default max number of times to retry a request.
+DEFAULT_MAX_RETRIES = 5
+
+# HTTP status codes that will force request retries.
+RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Timeout
+
 
 def _do_request(
     method: str,
@@ -74,6 +80,15 @@ def _do_request(
         raise errors.APIException(r)
 
     return r
+
+
+def default_retry(max_retries: int = DEFAULT_MAX_RETRIES) -> urllib3.util.retry.Retry:
+    retry = urllib3.util.retry.Retry(
+        total=max_retries,
+        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+        status_forcelist=RETRY_STATUSES,
+    )
+    return retry
 
 
 class BaseSession(metaclass=abc.ABCMeta):
@@ -181,7 +196,7 @@ class UnauthSession(BaseSession):
 
         self.master = master
         self.cert = cert
-        self._max_retries = max_retries
+        self._max_retries = max_retries or default_retry()
 
     def _do_request(
         self,
@@ -234,7 +249,7 @@ class Session(BaseSession):
         self.username = utp.username
         self.token = utp.token
         self.cert = cert
-        self._max_retries = max_retries
+        self._max_retries = max_retries or default_retry()
 
     def _do_request(
         self,
