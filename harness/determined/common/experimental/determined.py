@@ -56,8 +56,7 @@ class Determined:
         )
 
         utp = authentication.login_with_cache(self._master, user, password, cert=cert)
-        retry = api.default_retry()
-        self._session = api.Session(self._master, utp, cert, retry)
+        self._session = api.Session(self._master, utp, cert)
 
     @classmethod
     def _from_session(cls, session: api.Session) -> "Determined":
