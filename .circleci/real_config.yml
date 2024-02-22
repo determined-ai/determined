@@ -837,6 +837,8 @@ commands:
         type: integer
       slot-type:
         type: string
+      max-slots-per-pod:
+        type: integer
       slot-resource-requests-cpu:
         type: integer
       region:
@@ -909,7 +911,7 @@ commands:
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
@@ -2460,6 +2462,9 @@ jobs:
       slot-resource-requests-cpu:
         type: integer
         default: 0
+      max-slots-per-pod:
+        type: integer
+        default: 1
       region:
         type: string
         default: "us-west1"
@@ -2513,6 +2518,7 @@ jobs:
           gpus-per-machine: <<parameters.gpus-per-machine>>
           slot-type: <<parameters.slot-type>>
           slot-resource-requests-cpu: <<parameters.slot-resource-requests-cpu>>
+          max-slots-per-pod: <<parameters.max-slots-per-pod>>
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
           environment-image: <<parameters.environment-image>>
@@ -3028,6 +3034,7 @@ workflows:
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
+              max-slots-per-pod: [4]
 
       # Legacy tf 2.4 tests.
       - test-e2e-gke:
@@ -3066,6 +3073,7 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+              max-slots-per-pod: [1]
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
@@ -3087,6 +3095,7 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
 
   test-e2e-quarantined:
     jobs:
@@ -3225,6 +3234,7 @@ workflows:
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
+              max-slots-per-pod: [4]
 
       # Requestable legacy tf 2.4 tests.
       - test-e2e-gke:
@@ -3266,6 +3276,7 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+              max-slots-per-pod: [1]
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
@@ -3286,6 +3297,7 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
