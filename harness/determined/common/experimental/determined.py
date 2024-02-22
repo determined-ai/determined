@@ -46,7 +46,7 @@ class Determined:
         cert_name: Optional[str] = None,
         noverify: bool = False,
     ):
-        self._master = master or util.get_default_master_address()
+        self._master = api.canonicalize_master_url(master or api.get_default_master_url())
 
         cert = certs.default_load(
             master_url=self._master,

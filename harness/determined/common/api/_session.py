@@ -6,9 +6,9 @@ import requests
 import urllib3
 
 import determined as det
+from determined.common import api
 from determined.common import requests as det_requests
-from determined.common import util
-from determined.common.api import authentication, certs, errors, request
+from determined.common.api import authentication, certs, errors
 
 
 def _do_request(
@@ -31,10 +31,12 @@ def _do_request(
     if json:
         data = det.util.json_encode(json)
 
+    relpath = path.lstrip("/")
+
     try:
         r = det_requests.request(
             method,
-            request.make_url(host, path),
+            f"{host}/{relpath}",
             params=params,
             data=data,
             headers=headers,
@@ -166,11 +168,18 @@ class UnauthSession(BaseSession):
 
     def __init__(
         self,
-        master: Optional[str],
+        master: str,
         cert: Optional[certs.Cert],
         max_retries: Optional[urllib3.util.retry.Retry] = None,
     ) -> None:
-        self.master = master or util.get_default_master_address()
+        if master != api.canonicalize_master_url(master):
+            # This check is targeting developers of Determined, not users of Determined.
+            raise RuntimeError(
+                f"UnauthSession created with non-canonicalized url: {master}; the master url "
+                "should have been canonicalized as soon as it was received from the end-user."
+            )
+
+        self.master = master
         self.cert = cert
         self._max_retries = max_retries
 
@@ -209,12 +218,19 @@ class Session(BaseSession):
 
     def __init__(
         self,
-        master: Optional[str],
+        master: str,
         utp: authentication.UsernameTokenPair,
         cert: Optional[certs.Cert],
         max_retries: Optional[urllib3.util.retry.Retry] = None,
     ) -> None:
-        self.master = master or util.get_default_master_address()
+        if master != api.canonicalize_master_url(master):
+            # This check is targeting developers of Determined, not users of Determined.
+            raise RuntimeError(
+                f"Session created with non-canonicalized url: {master}; the master url should have "
+                "been canonicalized as soon as it was received from the end-user."
+            )
+
+        self.master = master
         self.username = utp.username
         self.token = utp.token
         self.cert = cert

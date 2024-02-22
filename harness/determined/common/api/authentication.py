@@ -2,6 +2,7 @@ import contextlib
 import getpass
 import hashlib
 import json
+import os
 import pathlib
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -18,6 +19,18 @@ def salt_and_hash(password: str) -> str:
         return hashlib.sha512((PASSWORD_SALT + password).encode()).hexdigest()
     else:
         return password
+
+
+def get_det_username_from_env() -> Optional[str]:
+    return os.environ.get("DET_USER")
+
+
+def get_det_user_token_from_env() -> Optional[str]:
+    return os.environ.get("DET_USER_TOKEN")
+
+
+def get_det_password_from_env() -> Optional[str]:
+    return os.environ.get("DET_PASS")
 
 
 class UsernameTokenPair:
@@ -73,8 +86,8 @@ def default_load_user_password(
     # set, but that doesn't overrule the active user in the TokenStore, because if the TokenStore in
     # the container has an active user, that means the user has explicitly ran `det user login`
     # inside the container.
-    env_user = util.get_det_username_from_env()
-    env_pass = util.get_det_password_from_env()
+    env_user = get_det_username_from_env()
+    env_pass = get_det_password_from_env()
     if env_user is not None and env_pass is not None:
         return env_user, env_pass, False
 
@@ -92,7 +105,7 @@ def default_load_user_password(
 
 
 def login_with_cache(
-    master_address: Optional[str] = None,
+    master_address: str,
     requested_user: Optional[str] = None,
     password: Optional[str] = None,
     cert: Optional[certs.Cert] = None,
@@ -114,7 +127,6 @@ def login_with_cache(
         The username and token of the logged in user.
     """
 
-    master_address = master_address or util.get_default_master_address()
     token_store = TokenStore(master_address)
 
     user, password, was_fallback = default_load_user_password(requested_user, password, token_store)
@@ -135,13 +147,13 @@ def login_with_cache(
     # - No user was explicitly requested, or the requested user matches the token available in the
     #   container environment.
     if (
-        util.get_det_username_from_env() is not None
-        and util.get_det_user_token_from_env() is not None
-        and requested_user in (None, util.get_det_username_from_env())
+        get_det_username_from_env() is not None
+        and get_det_user_token_from_env() is not None
+        and requested_user in (None, get_det_username_from_env())
     ):
-        env_user = util.get_det_username_from_env()
+        env_user = get_det_username_from_env()
         assert env_user
-        env_token = util.get_det_user_token_from_env()
+        env_token = get_det_user_token_from_env()
         assert env_token
         return UsernameTokenPair(env_user, env_token)
 
@@ -166,7 +178,7 @@ def login_with_cache(
 
 
 def logout(
-    master_address: Optional[str],
+    master_address: str,
     requested_user: Optional[str],
     cert: Optional[certs.Cert],
 ) -> Optional[str]:
@@ -186,7 +198,6 @@ def logout(
         The name of the user who was logged out, if any.
     """
 
-    master_address = master_address or util.get_default_master_address()
     token_store = TokenStore(master_address)
 
     user, _, __ = default_load_user_password(requested_user, None, token_store)
@@ -209,8 +220,7 @@ def logout(
     return user
 
 
-def logout_all(master_address: Optional[str], cert: Optional[certs.Cert]) -> None:
-    master_address = master_address or util.get_default_master_address()
+def logout_all(master_address: str, cert: Optional[certs.Cert]) -> None:
     token_store = TokenStore(master_address)
 
     users = token_store.get_all_users()
@@ -245,6 +255,13 @@ class TokenStore:
     """
 
     def __init__(self, master_address: str, path: Optional[pathlib.Path] = None) -> None:
+        if master_address != api.canonicalize_master_url(master_address):
+            # This check is targeting developers of Determined, not users of Determined.
+            raise RuntimeError(
+                f"TokenStore created with non-canonicalized url: {master_address}; the master url "
+                "should have been canonicalized as soon as it was received from the end-user."
+            )
+
         self.master_address = master_address
         self.path = path or util.get_config_path().joinpath("auth.json")
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -350,11 +367,14 @@ class TokenStore:
                 raise api.errors.CorruptTokenCacheException()
 
             version = store.get("version", 0)
-            if version == 0:
+            if version < 1:
                 validate_token_store_v0(store)
                 store = shim_store_v0(store, self.master_address)
+            if version < 2:
+                validate_token_store_v1(store)
+                store = shim_store_v1(store)
 
-            validate_token_store_v1(store)
+            validate_token_store_v2(store)
 
             assert isinstance(store, dict), store
             return store
@@ -373,7 +393,79 @@ def shim_store_v0(v0: Dict[str, Any], master_address: str) -> Dict[str, Any]:
     return v1
 
 
-def validate_token_store_v0(store: Any) -> bool:
+def shim_store_v1(v1: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    v2 scheme is the same as v1 schema but with canonicalized master urls.
+    """
+    v1_masters = v1.get("masters", {})
+
+    # Build a 1-to-many mapping of canonical master urls to v1 master urls.
+    canonicals: Dict[str, List[Dict[str, Any]]] = {}
+    for master_url, entry in v1_masters.items():
+        canonical_url = api.canonicalize_master_url(master_url)
+        canonicals.setdefault(canonical_url, []).append(entry)
+
+    v2_masters: Dict[str, Any] = {}
+
+    for canonical_url, entries in canonicals.items():
+        # Keep one of every username/token pair.
+        tokens = {}
+        for entry in entries:
+            for user, token in entry.get("tokens", {}).items():
+                tokens[user] = token
+
+        v2_entry: Dict[str, Any] = {"tokens": tokens}
+
+        # Pick one active user, if there were any.
+        active_users = [e["active_user"] for e in entries if "active_user" in e]
+        if active_users:
+            v2_entry["active_user"] = active_users[0]
+
+        v2_masters[canonical_url] = v2_entry
+
+    v2 = {"version": 2, "masters": v2_masters}
+    return v2
+
+
+def validate_one_master_entry(obj: Any) -> None:
+    """A validation helper for various versioned validators."""
+
+    if not isinstance(obj, dict):
+        raise api.errors.CorruptTokenCacheException()
+
+    if len(set(obj.keys()).difference({"active_user", "tokens"})) > 0:
+        # Extra keys.
+        raise api.errors.CorruptTokenCacheException()
+
+    if "active_user" in obj:
+        if not isinstance(obj["active_user"], str):
+            raise api.errors.CorruptTokenCacheException()
+
+    if "tokens" in obj:
+        tokens = obj["tokens"]
+        if not isinstance(tokens, dict):
+            raise api.errors.CorruptTokenCacheException()
+        for k, v in tokens.items():
+            if not isinstance(k, str):
+                raise api.errors.CorruptTokenCacheException()
+            if not isinstance(v, str):
+                raise api.errors.CorruptTokenCacheException()
+
+
+def validate_dict_of_masters(masters: Any) -> None:
+    """A validation helper for various versioned validators."""
+
+    if not isinstance(masters, dict):
+        raise api.errors.CorruptTokenCacheException()
+
+    # Each entry of masters must be a master_url/substore pair.
+    for key, val in masters.items():
+        if not isinstance(key, str):
+            raise api.errors.CorruptTokenCacheException()
+        validate_one_master_entry(val)
+
+
+def validate_token_store_v0(store: Any) -> None:
     """
     Valid v0 schema example:
 
@@ -385,31 +477,10 @@ def validate_token_store_v0(store: Any) -> bool:
           }
         }
     """
-
-    if not isinstance(store, dict):
-        raise api.errors.CorruptTokenCacheException()
-
-    if len(set(store.keys()).difference({"active_user", "tokens"})) > 0:
-        # Extra keys.
-        raise api.errors.CorruptTokenCacheException()
-
-    if "active_user" in store:
-        if not isinstance(store["active_user"], str):
-            raise api.errors.CorruptTokenCacheException()
-
-    if "tokens" in store:
-        tokens = store["tokens"]
-        if not isinstance(tokens, dict):
-            raise api.errors.CorruptTokenCacheException()
-        for k, v in tokens.items():
-            if not isinstance(k, str):
-                raise api.errors.CorruptTokenCacheException()
-            if not isinstance(v, str):
-                raise api.errors.CorruptTokenCacheException()
-    return True
+    validate_one_master_entry(store)
 
 
-def validate_token_store_v1(store: Any) -> bool:
+def validate_token_store_v1(store: Any) -> None:
     """
     Valid v1 schema example:
 
@@ -438,7 +509,7 @@ def validate_token_store_v1(store: Any) -> bool:
     if not isinstance(store, dict):
         raise api.errors.CorruptTokenCacheException()
 
-    if len(set(store.keys()).difference({"version", "masters"})) > 0:
+    if set(store.keys()) > {"version", "masters"}:
         # Extra keys.
         raise api.errors.CorruptTokenCacheException()
 
@@ -448,14 +519,53 @@ def validate_token_store_v1(store: Any) -> bool:
         raise api.errors.CorruptTokenCacheException()
 
     if "masters" in store:
+        validate_dict_of_masters(store["masters"])
+
+
+def validate_token_store_v2(store: Any) -> None:
+    """
+    Valid v2 schema example:
+
+        {
+          "version": 2,
+          "masters": {
+            "master_url_a": {
+              "active_user": "user_a",
+              "tokens": {
+                "user_a": "TOKEN",
+                "user_b": "TOKEN"
+              }
+            },
+            "master_url_b": {
+              "active_user": "user_c",
+              "tokens": {
+                "user_c": "TOKEN",
+                "user_d": "TOKEN"
+              }
+            }
+          }
+        }
+
+    Note that store["masters"] is a mapping of string url's to valid v0 schemas.
+
+    Note that v2 is the same as v1 except master url's must be canonicalized.
+    """
+    if not isinstance(store, dict):
+        raise api.errors.CorruptTokenCacheException()
+
+    if set(store.keys()) > {"version", "masters"}:
+        # Extra keys.
+        raise api.errors.CorruptTokenCacheException()
+
+    # Handle version.
+    version = store.get("version")
+    if version != 2:
+        raise api.errors.CorruptTokenCacheException()
+
+    if "masters" in store:
         masters = store["masters"]
-        if not isinstance(masters, dict):
+        validate_dict_of_masters(masters)
+
+        if not all(api.canonicalize_master_url(key) == key for key in masters):
+            # A non-canonical master url is present.
             raise api.errors.CorruptTokenCacheException()
-
-        # Each entry of masters must be a master_url/substore pair.
-        for key, val in masters.items():
-            if not isinstance(key, str):
-                raise api.errors.CorruptTokenCacheException()
-            validate_token_store_v0(val)
-
-    return True

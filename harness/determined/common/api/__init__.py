@@ -1,9 +1,11 @@
-from determined.common.api import authentication, errors, metric, request, bindings
+from determined.common.api import authentication, errors, metric, bindings
 from determined.common.api._session import BaseSession, UnauthSession, Session
 from determined.common.api._util import (
     PageOpts,
     default_retry,
     get_ntsc_details,
+    canonicalize_master_url,
+    get_default_master_url,
     read_paginated,
     WARNING_MESSAGE_MAP,
     wait_for_ntsc_state,
@@ -25,9 +27,4 @@ from determined.common.api.logs import (
     pprint_logs,
     trial_logs,
     task_logs,
-)
-from determined.common.api.request import (
-    make_url,
-    browser_open,
-    parse_master_address,
 )

@@ -12,11 +12,12 @@ import time
 import urllib.request
 from dataclasses import dataclass
 from typing import Iterator, List, Optional
+from urllib import parse
 
 import lomond
 
 from determined.common import api
-from determined.common.api import bindings, certs, request
+from determined.common.api import bindings, certs
 
 
 @dataclass
@@ -138,8 +139,18 @@ def copy_from_websocket2(
         f.close()
 
 
+def maybe_upgrade_ws_scheme(master_address: str) -> str:
+    parsed = parse.urlparse(master_address)
+    if parsed.scheme == "https":
+        return parsed._replace(scheme="wss").geturl()
+    elif parsed.scheme == "http":
+        return parsed._replace(scheme="ws").geturl()
+    else:
+        return master_address
+
+
 def http_connect_tunnel(sess: api.BaseSession, service: str) -> None:
-    parsed_master = request.parse_master_address(sess.master)
+    parsed_master = parse.urlparse(sess.master)
     assert parsed_master.hostname is not None, f"Failed to parse master address: {sess.master}"
 
     # The "lomond.WebSocket()" function does not honor the "no_proxy" or
@@ -154,8 +165,8 @@ def http_connect_tunnel(sess: api.BaseSession, service: str) -> None:
     # specified, the default value is "None".
     proxies = {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
 
-    url = request.make_url(sess.master, f"proxy/{service}/")
-    ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url), proxies=proxies)
+    url = f"{sess.master}/proxy/{service}/"
+    ws = lomond.WebSocket(maybe_upgrade_ws_scheme(url), proxies=proxies)
     if isinstance(sess, api.Session):
         ws.add_header(b"Authorization", f"Bearer {sess.token}".encode())
 
@@ -186,10 +197,10 @@ def _http_tunnel_listener(
     sess: api.BaseSession,
     tunnel: ListenerConfig,
 ) -> socketserver.ThreadingTCPServer:
-    parsed_master = request.parse_master_address(sess.master)
+    parsed_master = parse.urlparse(sess.master)
     assert parsed_master.hostname is not None, f"Failed to parse master address: {sess.master}"
 
-    url = request.make_url(sess.master, f"proxy/{tunnel.service_id}/")
+    url = f"{sess.master}/proxy/{tunnel.service_id}/"
 
     class TunnelHandler(socketserver.BaseRequestHandler):
         def handle(self) -> None:
@@ -197,7 +208,7 @@ def _http_tunnel_listener(
                 {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
             )
 
-            ws = lomond.WebSocket(request.maybe_upgrade_ws_scheme(url), proxies=proxies)
+            ws = lomond.WebSocket(maybe_upgrade_ws_scheme(url), proxies=proxies)
             if isinstance(sess, api.Session):
                 ws.add_header(b"Authorization", f"Bearer {sess.token}".encode())
             # We can't send data to the WebSocket before the connection becomes ready,

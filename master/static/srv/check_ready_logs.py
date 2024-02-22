@@ -32,7 +32,7 @@ def post_ready(sess: api.Session, allocation_id: str, state: str):
 
 
 def main(ready: Pattern, waiting: Optional[Pattern] = None):
-    master_url = str(os.environ["DET_MASTER"])
+    master_url = api.canonicalize_master_url(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     # This only runs on-cluster, so it is expected the username and session token are present in the
     # environment.

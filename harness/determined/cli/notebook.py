@@ -1,3 +1,4 @@
+import webbrowser
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -8,7 +9,7 @@ from termcolor import colored
 from determined import cli
 from determined.cli import ntsc, render, task
 from determined.common import api, context
-from determined.common.api import bindings, request
+from determined.common.api import bindings
 from determined.common.check import check_none
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
@@ -51,7 +52,7 @@ def start_notebook(args: Namespace) -> None:
     cli.wait_ntsc_ready(sess, api.NTSC_Kind.notebook, nb.id)
 
     assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
-    nb_path = request.make_interactive_task_url(
+    nb_path = ntsc.make_interactive_task_url(
         task_id=nb.id,
         service_address=nb.serviceAddress,
         description=nb.description,
@@ -59,10 +60,10 @@ def start_notebook(args: Namespace) -> None:
         task_type="jupyter-lab",
         currentSlotsExceeded=currentSlotsExceeded,
     )
-    url = api.make_url(args.master, nb_path)
+    url = f"{args.master}/{nb_path}"
     if not args.no_browser:
-        api.browser_open(args.master, nb_path)
-    print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
+        webbrowser.open(url)
+    print(colored(f"Jupyter Notebook is running at: {url}", "green"))
 
 
 def open_notebook(args: Namespace) -> None:
@@ -75,17 +76,16 @@ def open_notebook(args: Namespace) -> None:
     nb = bindings.get_GetNotebook(sess, notebookId=notebook_id).notebook
     assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
 
-    api.browser_open(
-        args.master,
-        request.make_interactive_task_url(
-            task_id=nb.id,
-            service_address=nb.serviceAddress,
-            description=nb.description,
-            resource_pool=nb.resourcePool,
-            task_type="jupyter-lab",
-            currentSlotsExceeded=False,
-        ),
+    nb_path = ntsc.make_interactive_task_url(
+        task_id=nb.id,
+        service_address=nb.serviceAddress,
+        description=nb.description,
+        resource_pool=nb.resourcePool,
+        task_type="jupyter-lab",
+        currentSlotsExceeded=False,
     )
+
+    webbrowser.open(f"{args.master}/{nb_path}")
 
 
 args_description: ArgsDescription = [
