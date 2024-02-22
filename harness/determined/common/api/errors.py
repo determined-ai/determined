@@ -62,12 +62,16 @@ class APIException(BadRequestException):
 
 
 class NotFoundException(APIException):
+    """The internal API's analog to a 404 Not Found HTTP status code."""
+
     def __init__(self, error_message: str) -> None:
         self.message = error_message
         self.status_code = 404
 
 
 class ForbiddenException(BadRequestException):
+    """The internal API's analog to a 403 Forbidden HTTP status code."""
+
     def __init__(self, message: str = ""):
         err_message = f"Forbidden({message})"
         if not (message == "invalid credentials" or message == "user not found"):
@@ -77,6 +81,8 @@ class ForbiddenException(BadRequestException):
 
 
 class UnauthenticatedException(BadRequestException):
+    """The internal API's analog to a 401 Unauthorized HTTP status code."""
+
     def __init__(self) -> None:
         super().__init__(
             message="Unauthenticated: Please use 'det user login <username>' for password login, or"
