@@ -156,7 +156,7 @@ linkcheck_ignore = [
     r'^\.\./'
 ]
 
-linkcheck_timeout = 10
+linkcheck_timeout = 20
 
 # linkcheck gets confused by anchors sometimes
 linkcheck_anchors_ignore=[
