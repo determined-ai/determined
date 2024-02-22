@@ -107,6 +107,7 @@ func New(
 		k.config.CredsDir,
 		k.config.MasterIP,
 		k.config.MasterPort,
+		k.config.UseUserKubeconfig,
 		k.podStatusUpdateCallback,
 	)
 
