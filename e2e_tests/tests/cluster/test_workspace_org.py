@@ -547,7 +547,7 @@ def test_workspace_delete_notebook() -> None:
     assert nb is None
 
     # the api returns a 404
-    with pytest.raises(errors.APIException):
+    with pytest.raises(errors.NotFoundException):
         notebooks_resp = bindings.get_GetNotebooks(
             admin_session, workspaceId=workspace_resp.workspace.id
         )
@@ -566,7 +566,7 @@ def test_launch_in_archived() -> None:
         )
 
         # create a notebook inside the workspace
-        with pytest.raises(errors.APIException) as e:
+        with pytest.raises(errors.NotFoundException) as e:
             bindings.post_LaunchNotebook(
                 admin_session,
                 body=bindings.v1LaunchNotebookRequest(workspaceId=workspace.id),
