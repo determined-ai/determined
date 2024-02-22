@@ -2,7 +2,7 @@ import logging
 import pathlib
 import tempfile
 import time
-from typing import Iterator, List, Optional
+from typing import List, Optional
 
 import pytest
 from urllib3 import connectionpool
