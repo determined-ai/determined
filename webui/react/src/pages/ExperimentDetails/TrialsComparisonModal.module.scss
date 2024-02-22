@@ -19,7 +19,9 @@
     }
     th,
     td {
+      contain: paint;
       padding: 8px;
+      text-overflow: ellipsis;
       width: 180px;
     }
     .tableSelectCell {
