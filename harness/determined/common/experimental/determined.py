@@ -55,8 +55,7 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        utp = authentication.login_with_cache(self._master, user, password, cert=cert)
-        self._session = api.Session(self._master, utp, cert)
+        self._session = authentication.login_with_cache(self._master, user, password, cert=cert)
 
     @classmethod
     def _from_session(cls, session: api.Session) -> "Determined":
