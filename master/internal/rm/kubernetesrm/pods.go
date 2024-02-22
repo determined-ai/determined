@@ -81,12 +81,13 @@ type pods struct {
 
 	kubeconfigPath string
 
-	clientSet        k8sClient.Interface
-	detMasterIP      string
-	detMasterPort    int32
-	masterTLSConfig  model.TLSClientConfig
-	loggingTLSConfig model.TLSClientConfig
-	loggingConfig    model.LoggingConfig
+	clientSet         k8sClient.Interface
+	masterIP          string
+	masterPort        int32
+	masterTLSConfig   model.TLSClientConfig
+	loggingTLSConfig  model.TLSClientConfig
+	loggingConfig     model.LoggingConfig
+	useUserKubeconfig bool
 
 	resourceRequestQueue         *requestQueue
 	podNameToPodHandler          map[string]*pod
@@ -156,9 +157,10 @@ func newPodsService(
 	slotResourceRequests config.PodSlotResourceRequests,
 	resourcePoolConfigs []config.ResourcePoolConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-	detMasterIP string,
-	detMasterPort int32,
-	kubeconfigPath string,
+	credsDir string,
+	masterIP string,
+	masterPort int32,
+	useUserKubeconfig bool,
 	podStatusUpdateCallback podStatusUpdateCallback,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
@@ -175,6 +177,7 @@ func newPodsService(
 		scheduler:                    scheduler,
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
+		useUserKubeconfig:            useUserKubeconfig,
 		podNameToPodHandler:          make(map[string]*pod),
 		podNameToResourcePool:        make(map[string]string),
 		containerIDToPodName:         make(map[string]string),
@@ -334,8 +337,18 @@ func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgent
 	return p.disableNode(msg.AgentId, msg.Drain)
 }
 
-func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
-	if len(kubeconfigPath) == 0 {
+func readClientConfig(credsDir string, useUserKubeconfig bool) (*rest.Config, error) {
+	if useUserKubeconfig {
+		// use the current context in kubeconfig
+		kubeConfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
+		config, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+		if err != nil {
+			return nil, fmt.Errorf("building REST config from kubeconfig %s: %w", kubeConfig, err)
+		}
+		return config, nil
+	}
+
+	if credsDir == "" {
 		// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
 		// environment variables:
 		//   - KUBERNETES_SERVICE_HOST
@@ -366,7 +379,7 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 }
 
 func (p *pods) startClientSet() error {
-	config, err := readClientConfig(p.kubeconfigPath)
+	config, err := readClientConfig(p.credsDir, p.useUserKubeconfig)
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
 	}

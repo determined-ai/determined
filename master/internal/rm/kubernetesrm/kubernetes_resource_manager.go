@@ -105,9 +105,10 @@ func New(
 		config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 		k.poolsConfig,
 		k.taskContainerDefaults,
-		k.config.DetMasterIP,
-		k.config.DetMasterPort,
-		k.config.KubeconfigPath,
+		k.config.CredsDir,
+		k.config.MasterIP,
+		k.config.MasterPort,
+		k.config.UseUserKubeconfig,
 		k.podStatusUpdateCallback,
 	)
 
