@@ -16,7 +16,9 @@ class StreamStore {
   #subscribers: Partial<Record<Streamable, StreamSubscriber>> = {};
 
   constructor() {
-    const socketUrl = `${serverAddress().replace('http', 'ws')}/stream`;
+    const socketUrl = new URL(serverAddress());
+    socketUrl.pathname = 'stream';
+    socketUrl.protocol = socketUrl.protocol.replace('http', 'ws');
     const onUpsert = (m: Record<string, StreamContent>) => {
       forEach(m, (val, k) => {
         this.#subscribers[StreamEntityMap[k]]?.upsert(val);
@@ -35,7 +37,7 @@ class StreamStore {
         sub?.isLoaded?.(ids);
       });
     };
-    this.#stream = new Stream(socketUrl, onUpsert, onDelete, isLoaded);
+    this.#stream = new Stream(socketUrl.toString(), onUpsert, onDelete, isLoaded);
   }
 
   public on(sub: StreamSubscriber) {
@@ -48,6 +50,11 @@ class StreamStore {
 
   public emit(spec: StreamSpec, id?: string) {
     this.#stream.subscribe(spec, id);
+  }
+
+  public closeSocket() {
+    this.#subscribers = {};
+    this.#stream.close();
   }
 }
 
