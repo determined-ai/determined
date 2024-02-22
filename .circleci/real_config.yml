@@ -2834,10 +2834,10 @@ workflows:
           requires:
             - build-docs
           context: determined-production
-          filters:
-            branches:
-              only:
-                - main
+          #filters:
+          #  branches:
+          #    only:
+          #      - main
 
       - check-docs-links:
           requires:
