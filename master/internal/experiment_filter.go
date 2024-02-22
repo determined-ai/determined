@@ -384,9 +384,9 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 			var col string
 			if isRunTable {
-				col, err = expColumnNameToSQL(e.ColumnName)
-			} else {
 				col, err = runColumnNameToSQL(e.ColumnName)
+			} else {
+				col, err = expColumnNameToSQL(e.ColumnName)
 			}
 			if err != nil {
 				return nil, err
