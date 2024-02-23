@@ -77,7 +77,8 @@ func (r *ResourceConfig) ResolveResource() error {
 	}
 	for _, c := range r.AdditionalResourceManagersInternal {
 		if c.ResourceManager.AgentRM == nil && c.ResourceManager.KubernetesRM == nil {
-			c.ResourceManager.AgentRM = defaultAgentRM()
+			// This error should be impossible to go off.
+			return fmt.Errorf("please specify an resource manager type")
 		}
 	}
 
@@ -108,9 +109,7 @@ func (r *ResourceConfig) ResolveResource() error {
 
 // Validate implements the check.Validatable interface.
 func (r ResourceConfig) Validate() []error {
-	agentRMCount := 0
-	seenResourceManagerNames := map[string]bool{}
-
+	seenResourceManagerNames := make(map[string]bool)
 	var errs []error
 	for _, r := range r.ResourceManagers() {
 		name := r.ResourceManager.Name()
@@ -118,10 +117,6 @@ func (r ResourceConfig) Validate() []error {
 			errs = append(errs, fmt.Errorf("resource manager has a duplicate name: %s", name))
 		}
 		seenResourceManagerNames[name] = true
-
-		if r.ResourceManager.AgentRM != nil {
-			agentRMCount++
-		}
 
 		poolNames := make(map[string]bool)
 		for _, rp := range r.ResourcePools {
@@ -134,10 +129,11 @@ func (r ResourceConfig) Validate() []error {
 		}
 	}
 
-	if agentRMCount > 1 {
-		errs = append(errs, fmt.Errorf("got %d total agent resource managers, "+
-			"only a single agent resource manager is supported. Please use multiple "+
-			"resource pools if you want to do something similar", agentRMCount))
+	for _, r := range r.AdditionalResourceManagersInternal {
+		if r.ResourceManager.KubernetesRM == nil {
+			errs = append(errs, fmt.Errorf(
+				"additional_resource_managers only supports resource managers of type: kubernetes"))
+		}
 	}
 
 	return errs

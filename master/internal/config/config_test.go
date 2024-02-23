@@ -23,6 +23,42 @@ import (
 	"github.com/determined-ai/determined/master/version"
 )
 
+func TestDeprecations(t *testing.T) {
+	c := Config{
+		ResourceConfig: ResourceConfig{
+			RootManagerInternal: &ResourceManagerConfig{
+				KubernetesRM: &KubernetesResourceManagerConfig{},
+			},
+			RootPoolsInternal: []ResourcePoolConfig{
+				{
+					PoolName: "root",
+				},
+			},
+			AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+				{
+					ResourceManager: &ResourceManagerConfig{
+						AgentRM: &AgentResourceManagerConfig{},
+					},
+					ResourcePools: []ResourcePoolConfig{
+						{
+							PoolName: "test",
+						},
+					},
+				},
+			},
+		},
+	}
+	require.Len(t, c.Deprecations(), 0)
+
+	c.ResourceConfig.RootPoolsInternal[0].AgentReattachEnabled = true
+	c.ResourceConfig.AdditionalResourceManagersInternal[0].ResourcePools[0].AgentReattachEnabled = true
+	actual := c.Deprecations()
+	require.Len(t, actual, 2)
+	for i, n := range []string{"root", "test"} {
+		require.ErrorContains(t, actual[i], "agent_reattach_enabled is set for resource pool "+n)
+	}
+}
+
 func TestUnmarshalConfigWithAgentResourceManager(t *testing.T) {
 	raw := `
 log:

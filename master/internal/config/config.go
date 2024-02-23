@@ -264,7 +264,7 @@ func (c *Config) Resolve() error {
 			r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 		}
 
-		// TODO(multirm) change behavior on max slots per pod.
+		// TODO(RM-6) change behavior on max slots per pod.
 		if r.ResourceManager.KubernetesRM != nil {
 			if c.TaskContainerDefaults.Kubernetes == nil {
 				c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
@@ -288,7 +288,7 @@ func (c *Config) Resolve() error {
 				return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
 			}
 
-			break // TODO(multirm) remove this break.
+			break // TODO(RM-6) remove this break.
 		}
 	}
 
@@ -315,10 +315,12 @@ func (c *Config) Resolve() error {
 func (c *Config) Deprecations() (errs []error) {
 	for _, r := range c.ResourceManagers() {
 		for _, rp := range r.ResourcePools {
-			errs = append(errs, fmt.Errorf(
-				"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
-					"as of 0.21.0 this feature is always on", rp.PoolName,
-			))
+			if rp.AgentReattachEnabled {
+				errs = append(errs, fmt.Errorf(
+					"agent_reattach_enabled is set for resource pool %s but will be ignored; "+
+						"as of 0.21.0 this feature is always on", rp.PoolName,
+				))
+			}
 		}
 	}
 	return errs
@@ -451,7 +453,7 @@ func ReadRMPreemptionStatus(rpName string) bool {
 }
 
 func readRMPreemptionStatus(config *Config, rpName string) bool {
-	// TODO(multirm) make this be correct for len(resourceManagers) > 0 by taking
+	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
 	// a resource manager name too.
 	r := config.ResourceManagers()[0]
 
@@ -497,7 +499,7 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 	var schedulerConf *SchedulerConfig
 
 	// if not found, fall back to the resource pools config
-	// TODO(multirm) make this be correct for len(resourceManagers) > 0 by taking
+	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
 	// a resource manager name too.
 	r := config.ResourceManagers()[0]
 

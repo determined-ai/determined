@@ -639,16 +639,15 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		clientAuthMode := tls.NoClientCert
 
 		c, ok := m.config.GetAgentRMConfig()
-		agentRM := c.ResourceManager.AgentRM
-		if ok && agentRM != nil && agentRM.RequireAuthentication {
+		if ok && c.ResourceManager.AgentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
 			clientAuthMode = tls.VerifyClientCertIfGiven
 
-			if agentRM.ClientCA != "" {
+			if c.ResourceManager.AgentRM.ClientCA != "" {
 				clientCAs = x509.NewCertPool()
-				clientRootCA, iErr := os.ReadFile(agentRM.ClientCA)
+				clientRootCA, iErr := os.ReadFile(c.ResourceManager.AgentRM.ClientCA)
 				if iErr != nil {
 					return errors.Wrap(err, "failed to read agent CA file")
 				}

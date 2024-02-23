@@ -143,11 +143,9 @@ additional_resource_managers:
   - resource_manager:
       type: agent
       name: b`, nil, "Check Failed! 2 errors found:\n\terror found at root.ResourceConfig: " +
-			"got 2 total agent resource managers, only a single agent resource manager is " +
-			"supported. Please use multiple resource pools if you want to do something " +
-			"similar\n\terror found at root: got 2 total agent resource managers, only a single " +
-			"agent resource manager is supported. Please use multiple resource pools if you want " +
-			"to do something similar"},
+			"additional_resource_managers only supports resource managers of type: " +
+			"kubernetes\n\terror found at root: additional_resource_managers only supports " +
+			"resource managers of type: kubernetes"},
 
 		{"k8s name not specified", `
 resource_manager:
@@ -159,17 +157,6 @@ additional_resource_managers:
       max_slots_per_pod: 12`, nil, "Check Failed! 1 errors found:\n\terror found at " +
 			"root.ResourceConfig.AdditionalResourceManagersInternal[0]." +
 			"ResourceManager.KubernetesRM: name is required:  must be non-empty"},
-
-		{"agent name not specified", `
-resource_manager:
-  type: kubernetes
-  max_slots_per_pod: 1
-  name: a
-additional_resource_managers:
-  - resource_manager:
-      type: agent`, nil, "Check Failed! 1 errors found:\n\terror found at " +
-			"root.ResourceConfig.AdditionalResourceManagersInternal[0].ResourceManager.AgentRM: " +
-			"name is required:  must be non-empty"},
 
 		{"k8s rocm config", `
 resource_manager:
@@ -331,8 +318,6 @@ resource_manager:
   type: agent
   metadata:
     region: "nw"
-    nest:
-      into: "c"
 additional_resource_managers:
  - resource_manager:
      name: test
@@ -348,9 +333,8 @@ additional_resource_managers:
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
-						Metadata: map[string]any{
+						Metadata: map[string]string{
 							"region": "nw",
-							"nest":   map[string]any{"into": "c"},
 						},
 					},
 				},
@@ -371,7 +355,7 @@ additional_resource_managers:
 								DefaultAuxResourcePool:     "default",
 								MaxSlotsPerPod:             ptrs.Ptr(65),
 								DefaultComputeResourcePool: "default",
-								Metadata: map[string]any{
+								Metadata: map[string]string{
 									"test": "y",
 									"name": "k8s",
 								},
@@ -395,8 +379,6 @@ resource_manager:
   type: agent
   metadata:
     region: "nw"
-    nest:
-      into: "c"
 resource_pools:
  - pool_name: a
  - pool_name: b
@@ -418,9 +400,8 @@ additional_resource_managers:
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
-						Metadata: map[string]any{
+						Metadata: map[string]string{
 							"region": "nw",
-							"nest":   map[string]any{"into": "c"},
 						},
 					},
 				},
@@ -445,7 +426,7 @@ additional_resource_managers:
 								DefaultAuxResourcePool:     "default",
 								MaxSlotsPerPod:             ptrs.Ptr(65),
 								DefaultComputeResourcePool: "default",
-								Metadata: map[string]any{
+								Metadata: map[string]string{
 									"test": "y",
 									"name": "k8s",
 								},
