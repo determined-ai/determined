@@ -5,29 +5,30 @@
 #################
 
 Determined aims to support *reproducible* machine learning experiments: that is, the result of
-running a Determined experiment should be deterministic, so that rerunning a previous experiment
-should produce an identical model. For example, if the model produced from an experiment is ever
-lost, it can be recovered by rerunning the experiment that produced it.
+running a Determined experiment should be deterministic, so that rerunning an experiment produces an
+identical model. This ensures that in the event of model loss, recovery is possible by rerunning the
+experiment responsible for its creation.
 
-********
- Status
-********
+**********
+ Progress
+**********
 
-The current version of Determined provides limited support for reproducibility; unfortunately, the
-hardware and software stack typically used for deep learning makes perfect reproducibility very
-challenging.
+While the current version of Determined offers limited support for reproducibility, challenges arise
+due to the inherent complexity of the hardware and software stack typically utilized in deep
+learning environments.
 
-Determined can control and reproduce the following sources of randomness:
+Determined effectively manages and reproduces several sources of randomness, including:
 
 -  Hyperparameter sampling decisions.
 -  The initial weights for a given hyperparameter configuration.
--  Shuffling of training data in a trial.
--  Dropout or other random layers.
+-  Data shuffling during trial training.
+-  Utilization of dropout or other random layers.
 
-Determined currently does not offer support for controlling non-determinism in floating-point
-operations. Modern deep learning frameworks typically implement training using floating point
-operations that result in non-deterministic results, particularly on GPUs. If only CPUs are used for
-training, reproducible results can be achieved, as described in the following sections.
+However, it's important to note that Determined does not currently provide mechanisms for
+controlling non-deterministic floating-point operations. Most modern deep learning frameworks employ
+floating-point operations that may result in non-deterministic outcomes, particularly on GPUs.
+Achieving reproducible results is feasible when training exclusively on CPUs, as elaborated in the
+following sections.
 
 **************
  Random Seeds
