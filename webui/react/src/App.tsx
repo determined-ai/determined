@@ -72,6 +72,8 @@ const AppView: React.FC = () => {
 
   useEffect(() => {
     streamStore.on(projectStore);
+
+    return () => streamStore.off(projectStore.id());
   }, []);
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);

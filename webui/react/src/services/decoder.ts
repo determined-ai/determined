@@ -806,10 +806,7 @@ export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceS
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
     ...data,
-    lastExperimentStartedAt:
-      typeof data.lastExperimentStartedAt === 'string'
-        ? new Date(data.lastExperimentStartedAt)
-        : data.lastExperimentStartedAt,
+    lastExperimentStartedAt: data.lastExperimentStartedAt as unknown as string,
     state: mapWorkspaceState(data.state),
     workspaceName: data.workspaceName ?? '',
   };

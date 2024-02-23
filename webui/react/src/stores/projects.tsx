@@ -1,17 +1,17 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { Map } from 'immutable';
-import { find, remove } from 'lodash';
+import { List, Map } from 'immutable';
 
 import { getWorkspaceProjects } from 'services/api';
 import { Streamable, StreamContent } from 'services/stream';
 import { StreamSubscriber } from 'stores/stream';
 import { Project } from 'types';
+import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
 import handleError from 'utils/error';
-import { ImmutableObservable, Observable, observable } from 'utils/observable';
+import { immutableObservable, Observable } from 'utils/observable';
 
 class ProjectStore implements StreamSubscriber {
-  #projects: ImmutableObservable<Map<number, Project>> = observable(Map());
-  #projectsByWorkspace: ImmutableObservable<Map<string, Project[]>> = observable(Map());
+  #projects = immutableObservable<Map<number, ValueObjectOf<Project>>>(Map());
+  #projectsByWorkspace = immutableObservable<Map<string, List<Project>>>(Map());
 
   public fetch(workspaceId: number, signal?: AbortSignal, force = false): () => void {
     const workspaceKey = workspaceId.toString();
@@ -24,10 +24,14 @@ class ProjectStore implements StreamSubscriber {
           if (!force && this.#projectsByWorkspace.get().has(workspaceKey)) return;
           this.#projects.update((prev) =>
             prev.withMutations((map) => {
-              response.projects.forEach((project) => map.set(project.id, project));
+              response.projects.forEach((project) =>
+                map.set(project.id, asValueObject(Project, project)),
+              );
             }),
           );
-          this.#projectsByWorkspace.update((prev) => prev.set(workspaceKey, response.projects));
+          this.#projectsByWorkspace.update((prev) =>
+            prev.set(workspaceKey, List(response.projects)),
+          );
         })
         .catch(handleError);
     }
@@ -44,7 +48,7 @@ class ProjectStore implements StreamSubscriber {
     });
   }
 
-  public getProjectsByWorkspace(workspaceId?: number): Observable<Loadable<Project[]>> {
+  public getProjectsByWorkspace(workspaceId?: number): Observable<Loadable<List<Project>>> {
     return this.#projectsByWorkspace.select((map) => {
       if (workspaceId == null) return NotLoaded;
 
@@ -67,8 +71,8 @@ class ProjectStore implements StreamSubscriber {
           if (deleted) {
             const ws = map.get(deleted.workspaceId.toString());
             if (ws) {
-              remove(ws, (p) => p.id === id);
-              map.set(deleted.workspaceId.toString(), [...ws]);
+              const i = ws.findIndex((p) => p.id === id);
+              map.set(deleted.workspaceId.toString(), ws.remove(i));
             }
           }
           return map;
@@ -97,30 +101,29 @@ class ProjectStore implements StreamSubscriber {
           prevProjectWorkspaceId = project.workspaceId;
           this.#upsert(project, p);
         } else {
-          map.set(p.id, { ...p });
+          map.set(p.id, asValueObject(Project, p));
         }
         return map;
       }),
     );
     this.#projectsByWorkspace.update((prev) =>
       prev.withMutations((map) => {
-        const projectInWs = find(map.get(p.workspaceId.toString()), (tp) => tp.id === p.id);
+        const ws = map.get(p.workspaceId.toString());
+        const projectInWs = ws?.find((tp) => tp.id === p.id);
         if (projectInWs) {
           // The workspaceId has not changed, just update
           this.#upsert(projectInWs, p);
           return map;
         }
         // The workspaceId has changed, add to the new workspace and remove from the old workspace
-        const ws = map.get(p.workspaceId.toString());
         if (ws) {
-          ws.push(p);
-          map.set(p.workspaceId.toString(), [...ws]);
+          map.set(p.workspaceId.toString(), ws.push(p));
         }
         if (prevProjectWorkspaceId) {
           const ows = map.get(prevProjectWorkspaceId.toString());
           if (ows) {
-            remove(ows, (op) => op.id === p.id);
-            map.set(prevProjectWorkspaceId.toString(), [...ows]);
+            const i = ows.findIndex((op) => op.id === p.id);
+            map.set(prevProjectWorkspaceId.toString(), ows.remove(i));
           }
         }
         return map;

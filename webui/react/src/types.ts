@@ -1046,25 +1046,33 @@ export const WorkspaceState = {
 
 export type WorkspaceState = ValueOf<typeof WorkspaceState>;
 
-export interface Note {
-  contents: string;
-  name: string;
-}
-export interface Project {
-  archived: boolean;
-  description?: string;
-  id: number;
-  immutable: boolean;
-  lastExperimentStartedAt?: Date;
-  name: string;
-  notes: Note[];
-  numActiveExperiments?: number;
-  numExperiments?: number;
-  state: WorkspaceState;
-  userId: number;
-  workspaceId: number;
-  workspaceName?: string;
-}
+export const Note = t.type({
+  contents: t.string,
+  name: t.string,
+});
+export type Note = t.TypeOf<typeof Note>;
+
+export const Project = t.intersection([
+  t.type({
+    archived: t.boolean,
+    id: t.number,
+    immutable: t.boolean,
+    name: t.string,
+    notes: t.array(Note),
+    state: valueof(WorkspaceState),
+    userId: t.number,
+    workspaceId: t.number,
+  }),
+  t.partial({
+    description: t.string,
+    lastExperimentStartedAt: t.string,
+    numActiveExperiments: t.number,
+    numExperiments: t.number,
+    workspaceName: t.string,
+  }),
+]);
+
+export type Project = t.TypeOf<typeof Project>;
 
 export interface ProjectPagination extends WithPagination {
   projects: Project[];

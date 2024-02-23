@@ -10,6 +10,7 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
+import { List } from 'immutable';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -62,7 +63,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<List<Project>>(List());
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
@@ -71,7 +72,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
-  const loadableProjects: Loadable<Project[]> = useObservable(
+  const loadableProjects: Loadable<List<Project>> = useObservable(
     projectStore.getProjectsByWorkspace(id),
   );
 
@@ -87,7 +88,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [loadableProjects, id]);
 
   useEffect(() => {
-    setTotal(projects.length);
+    setTotal(projects.size);
   }, [projects]);
 
   const handleProjectCreateClick = useCallback(() => {
@@ -347,7 +348,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
-            dataSource={projects}
+            dataSource={projects.toArray()}
             loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
@@ -428,7 +429,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         </Row>
       </Section>
       <Spinner conditionalRender spinning={isLoading}>
-        {projects.length !== 0 ? (
+        {projects.size !== 0 ? (
           projectsList
         ) : workspace.numProjects === 0 ? (
           <Message
