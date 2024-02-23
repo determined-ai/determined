@@ -2,6 +2,7 @@ package rm
 
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -13,8 +14,7 @@ type ResourceManager interface {
 	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
-	ValidateCommandResources(sproto.ValidateCommandResourcesRequest) (sproto.ValidateCommandResourcesResponse, error)
-	ValidateResources(name string, slots int, command bool) error
+	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
 	DeleteJob(jobID model.JobID) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
 
