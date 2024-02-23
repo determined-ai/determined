@@ -2,7 +2,6 @@ from determined.common.api import authentication, errors, metric, bindings
 from determined.common.api._session import BaseSession, UnauthSession, Session
 from determined.common.api._util import (
     PageOpts,
-    default_retry,
     get_ntsc_details,
     canonicalize_master_url,
     get_default_master_url,
