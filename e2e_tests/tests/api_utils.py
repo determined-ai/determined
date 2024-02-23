@@ -277,7 +277,7 @@ def _get_ee() -> Optional[bool]:
 
     if _is_ee is None:
         try:
-            sess = api.UnauthSession(conf.make_master_url(), cert())
+            sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=None)
             info = sess.get("info").json()
             _is_ee = "sso_providers" in info
         except (errors.APIException, errors.MasterNotFoundException):
@@ -318,7 +318,7 @@ def _get_scim_enabled() -> Optional[bool]:
 
     if _scim_enabled is None:
         try:
-            sess = api.UnauthSession(conf.make_master_url(), cert())
+            sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=None)
             info = sess.get("info").json()
             _scim_enabled = bool(info.get("sso_providers") and len(info["sso_providers"]) > 0)
         except (errors.APIException, errors.MasterNotFoundException):
@@ -347,7 +347,7 @@ def _get_rbac_enabled() -> Optional[bool]:
 
     if _rbac_enabled is None:
         try:
-            sess = api.UnauthSession(conf.make_master_url(), cert())
+            sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=None)
             _rbac_enabled = bindings.get_GetMaster(sess).rbacEnabled
         except (errors.APIException, errors.MasterNotFoundException):
             pass
