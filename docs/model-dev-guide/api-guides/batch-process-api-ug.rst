@@ -39,16 +39,16 @@ This API automatically handles the following for you:
 This is a flexible API that can be used for many different tasks, including batch (offline)
 inference.
 
-If you have some trained models in a :class:~determined.experimental.checkpoint.Checkpoint or a
-:class:~determined.experimental.model.Model with more than one
-:class:~determined.experimental.model.ModelVersion inside, you can associate the trial with the
-:class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion used in a given inference run to aggregate custom
-inference metrics.
+If you have some trained models in a :class:`~determined.experimental.checkpoint.Checkpoint` or a
+:class:`~determined.experimental.model.Model` with more than one
+:class:`~determined.experimental.model.ModelVersion` inside, you can associate the trial with the
+:class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` used in a given inference run to aggregate
+custom inference metrics.
 
-You can then query those :class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion objects using the :ref:Python SDK <python-sdk> to
-see all metrics associated with them.
+You can then query those :class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` objects using the :ref:`Python SDK
+<python-sdk>` to see all metrics associated with them.
 
 *******
  Usage
@@ -165,8 +165,8 @@ Step 2: Link the Run to a Checkpoint or Model Version (Optional)
 ================================================================
 
 You have the option to associate your batch inference run with the
-:class:~determined.experimental.checkpoint.Checkpoint or
-:class:~determined.experimental.model.ModelVersion employed during the run. This allows you to
+:class:`~determined.experimental.checkpoint.Checkpoint` or
+:class:`~determined.experimental.model.ModelVersion` employed during the run. This allows you to
 compile custom metrics for that specific object, which can then be analyzed at a later stage.
 
 Connect the :class:`~determined.experimental.checkpoint.Checkpoint` or
