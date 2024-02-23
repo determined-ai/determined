@@ -73,7 +73,7 @@ def test_rbac_permission_assignment() -> None:
 
     # User has no permissions.
     assert "no permissions" in detproc.check_output(sess, ["det", "rbac", "my-permissions"])
-    json_out = detproc.check_json(sess, ["rbac", "my-permissions", "--json"])
+    json_out = detproc.check_json(sess, ["det", "rbac", "my-permissions", "--json"])
     assert json_out["roles"] == []
     assert json_out["assignments"] == []
 
@@ -333,7 +333,7 @@ def test_rbac_permission_assignment_errors() -> None:
     # Assign a role multiple times.
     detproc.check_error(
         admin,
-        ["rbac", "assign-role", "Viewer", "--group-name-to-assign", group_name],
+        ["det", "rbac", "assign-role", "Viewer", "--group-name-to-assign", group_name],
         "row already exists",
     )
 
