@@ -25,8 +25,10 @@ spec:
       - name: genai-{{ .Release.Name }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
-        image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
-        imagePullPolicy: "Always"
+        # image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
+        # imagePullPolicy: "Always"
+        image: lore_backend:latest
+        imagePullPolicy: "Never"
         env:
           - name: DET_MASTER
             value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
@@ -46,6 +48,14 @@ spec:
             value: {{ include "genai.PVCName" . }}
           - name: RESOURCE_POOL_EXTRA_METADATA_PATH
             value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
+          - name: MESSAGE_QUEUE_HOST
+            value: genai-queue-service-{{ .Release.Name }}
+          - name: MESSAGE_QUEUE_PORT
+            value: {{ .Values.genai.messageQueuePort | quote }}
+          - name: GENAI_HOST
+            value: genai-backend-service-{{ .Release.Name }}
+          - name: GENAI_HOST_PORT
+            value: {{ .Values.genai.port | quote }}
         volumeMounts:
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs

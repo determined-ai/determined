@@ -1,4 +1,5 @@
-{{- if (and .Values.genai .Values.genai.version) }}
+{{- if .Values.genai }}
+{{- if .Values.genai.version }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -9,10 +10,11 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   ports:
-  - port: {{ required "A valid Values.genai.port entry required!" .Values.genai.port }}
-    targetPort: {{ .Values.genai.port }}
+  - port: {{ required "A valid Values.genai.messageQueuePort entry required!" .Values.genai.messageQueuePort }}
+    targetPort: {{ .Values.genai.messageQueuePort }}
     protocol: TCP
   type: LoadBalancer
   selector:
     app: genai-{{ .Release.Name }}
+{{ end }}
 {{ end }}
