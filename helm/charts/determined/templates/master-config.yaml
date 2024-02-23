@@ -171,6 +171,12 @@ stringData:
       default_aux_resource_pool: {{.Values.defaultAuxResourcePool}}
       default_compute_resource_pool: {{.Values.defaultComputeResourcePool}}
 
+
+    {{- if .Values.additional_resource_managers}}
+    additional_resource_managers:
+      {{- toYaml .Values.additional_resource_managers | nindent 4}}
+    {{- end }}
+
     {{- if .Values.resourcePools}}
     resource_pools:
       {{- toYaml .Values.resourcePools | nindent 6}}

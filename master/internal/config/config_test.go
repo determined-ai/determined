@@ -23,6 +23,42 @@ import (
 	"github.com/determined-ai/determined/master/version"
 )
 
+func TestDeprecations(t *testing.T) {
+	c := Config{
+		ResourceConfig: ResourceConfig{
+			RootManagerInternal: &ResourceManagerConfig{
+				KubernetesRM: &KubernetesResourceManagerConfig{},
+			},
+			RootPoolsInternal: []ResourcePoolConfig{
+				{
+					PoolName: "root",
+				},
+			},
+			AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+				{
+					ResourceManager: &ResourceManagerConfig{
+						AgentRM: &AgentResourceManagerConfig{},
+					},
+					ResourcePools: []ResourcePoolConfig{
+						{
+							PoolName: "test",
+						},
+					},
+				},
+			},
+		},
+	}
+	require.Len(t, c.Deprecations(), 0)
+
+	c.ResourceConfig.RootPoolsInternal[0].AgentReattachEnabled = true
+	c.ResourceConfig.AdditionalResourceManagersInternal[0].ResourcePools[0].AgentReattachEnabled = true
+	actual := c.Deprecations()
+	require.Len(t, actual, 2)
+	for i, n := range []string{"root", "test"} {
+		require.ErrorContains(t, actual[i], "agent_reattach_enabled is set for resource pool "+n)
+	}
+}
+
 func TestUnmarshalConfigWithAgentResourceManager(t *testing.T) {
 	raw := `
 log:
@@ -62,7 +98,7 @@ integrations:
 			Port:     "3000",
 		},
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
+			RootManagerInternal: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
@@ -72,7 +108,7 @@ integrations:
 					DefaultAuxResourcePool:     "default",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			RootPoolsInternal: []ResourcePoolConfig{
 				{
 					PoolName: "default",
 					Provider: &provconfig.Config{
@@ -130,7 +166,7 @@ resource_pools:
 `
 	expected := Config{
 		ResourceConfig: ResourceConfig{
-			ResourceManager: &ResourceManagerConfig{
+			RootManagerInternal: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
 						FairShare:     &FairShareSchedulerConfig{},
@@ -140,7 +176,7 @@ resource_pools:
 					DefaultAuxResourcePool:     "cpu-pool",
 				},
 			},
-			ResourcePools: []ResourcePoolConfig{
+			RootPoolsInternal: []ResourcePoolConfig{
 				{
 					PoolName: "cpu-pool",
 					Provider: &provconfig.Config{
@@ -401,19 +437,21 @@ task_container_defaults:
 		require.NoError(t, err)
 		require.NoError(t, unmarshaled.Resolve())
 		require.Equal(t, c.expected,
-			*unmarshaled.ResourceConfig.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+			*unmarshaled.RootManagerInternal.KubernetesRM.MaxSlotsPerPod)
 		require.Equal(t, c.expected,
 			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}
 }
 
+//nolint:gosec // These are not potential hardcoded credentials.
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
-	//nolint:gosec // These are not potential hardcoded credentials.
 	s3Secret := "my_secret_key_secret"
 	masterSecret := "my_master_secret"
 	webuiSecret := "my_webui_secret"
 	registryAuthSecret := "i_love_cellos"
+	startupScriptSecret := "my_startup_script_secret"
+	containerStartupScriptSecret := "my_container_startup_secret"
 
 	raw := fmt.Sprintf(`
 db:
@@ -439,8 +477,28 @@ task_container_defaults:
     password: %v
     shm_size_bytes: 4294967296
     network_mode: bridge
-`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret)
 
+resource_pools:
+  - provider:
+      type: gcp
+      startup_script: %v
+      container_startup_script: %v
+
+additional_resource_managers:
+  - resource_manager:
+      type: agent
+    resource_pools:
+      - provider:
+          type: gcp
+          startup_script: %v
+          container_startup_script: %v
+`, s3Key, s3Secret, masterSecret, webuiSecret, registryAuthSecret, startupScriptSecret,
+		containerStartupScriptSecret, startupScriptSecret, containerStartupScriptSecret)
+
+	provConfig := provconfig.DefaultConfig()
+	provConfig.StartupScript = startupScriptSecret
+	provConfig.ContainerStartupScript = containerStartupScriptSecret
+	provConfig.GCP = provconfig.DefaultGCPClusterConfig()
 	expected := Config{
 		Logging: model.LoggingConfig{
 			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
@@ -471,6 +529,32 @@ task_container_defaults:
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
 		},
+		ResourceConfig: ResourceConfig{
+			AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+				{
+					ResourceManager: &ResourceManagerConfig{
+						AgentRM: &AgentResourceManagerConfig{
+							DefaultAuxResourcePool:     defaultResourcePoolName,
+							DefaultComputeResourcePool: defaultResourcePoolName,
+						},
+					},
+					ResourcePools: []ResourcePoolConfig{
+						{
+							Provider:                 provConfig,
+							AgentReconnectWait:       25000000000,
+							MaxAuxContainersPerAgent: 100,
+						},
+					},
+				},
+			},
+			RootPoolsInternal: []ResourcePoolConfig{
+				{
+					Provider:                 provConfig,
+					AgentReconnectWait:       25000000000,
+					MaxAuxContainersPerAgent: 100,
+				},
+			},
+		},
 	}
 
 	unmarshaled := Config{
@@ -491,6 +575,8 @@ task_container_defaults:
 	assert.Assert(t, !bytes.Contains(printable, []byte(masterSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(webuiSecret)))
 	assert.Assert(t, !bytes.Contains(printable, []byte(registryAuthSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(startupScriptSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(containerStartupScriptSecret)))
 
 	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)

@@ -52,7 +52,7 @@ type ResourceManager struct {
 // and submits work to a Kubernetes apiserver.
 func New(
 	db *db.PgDB,
-	rmConfigs *config.ResourceConfig,
+	rmConfigs *config.ResourceManagerWithPoolsConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,

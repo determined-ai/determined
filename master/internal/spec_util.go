@@ -48,9 +48,7 @@ func (m *Master) ResolveResources(
 	if err != nil {
 		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
-	if m.config.ResourceManager.AgentRM != nil &&
-		m.config.LaunchError &&
-		len(launchWarnings) > 0 {
+	if m.config.LaunchError && len(launchWarnings) > 0 {
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
