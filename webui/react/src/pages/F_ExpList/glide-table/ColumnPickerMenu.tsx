@@ -13,7 +13,6 @@ import { FixedSizeList as List } from 'react-window';
 
 import {
   defaultProjectSettings,
-  F_ExperimentListSettings,
   ProjectSettings,
   settingsPathForProject,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
@@ -70,8 +69,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
   const projectSettings = useObservable(userSettings.get(ProjectSettings, settingsPath));
   const updateSettings = useCallback(
-    (p: Partial<F_ExperimentListSettings>) =>
-      userSettings.setPartial(ProjectSettings, settingsPath, p),
+    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
     [settingsPath],
   );
   const settings = useMemo(

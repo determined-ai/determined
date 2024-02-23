@@ -40,14 +40,15 @@ export const ProjectSettings = t.intersection([
     sortString: t.string,
   }),
 ]);
-export type F_ExperimentListSettings = t.TypeOf<typeof ProjectSettings>;
+export type ProjectSettings = t.TypeOf<typeof ProjectSettings>;
+
 export const ProjectUrlSettings = t.partial({
   compare: t.boolean,
   page: t.number,
 });
 
 export const settingsPathForProject = (id: number): string => `experimentListingForProject${id}`;
-export const defaultProjectSettings: Required<F_ExperimentListSettings> = {
+export const defaultProjectSettings: Required<ProjectSettings> = {
   columns: defaultExperimentColumns,
   columnWidths: defaultColumnWidths,
   compare: false,

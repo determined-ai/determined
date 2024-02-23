@@ -44,7 +44,6 @@ import {
   DEFAULT_SELECTION,
   defaultProjectSettings,
   F_ExperimentListGlobalSettings,
-  F_ExperimentListSettings,
   ProjectSettings,
   ProjectUrlSettings,
   SelectionType as SelectionState,
@@ -104,11 +103,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
-  const projectSettings = useObservable(userSettings.get(ProjectSettings, settingsPath));
+  const projectSettingsObs = useMemo(
+    () => userSettings.get(ProjectSettings, settingsPath),
+    [settingsPath],
+  );
+  const projectSettings = useObservable(projectSettingsObs);
   const isLoadingSettings = useMemo(() => projectSettings.isNotLoaded, [projectSettings]);
   const updateSettings = useCallback(
-    (p: Partial<F_ExperimentListSettings>) =>
-      userSettings.setPartial(ProjectSettings, settingsPath, p),
+    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
     [settingsPath],
   );
   const settings = useMemo(
@@ -170,20 +172,51 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, []);
 
+  const resetPagination = useCallback(() => {
+    setIsLoading(true);
+    setPage(0);
+    setExperiments(INITIAL_LOADING_EXPERIMENTS);
+  }, [setPage]);
+
   useEffect(() => {
-    // useSettings load the default value first, and then load the data from DB
-    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    if (isLoadingSettings) return;
-    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-    if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
-        publicSubject: 'Unable to initialize filterset from settings',
+    let cleanup: () => void;
+    // we only want to init the filterset state from settings once and only when
+    // the settings have finished loading. subscribing to the project settings
+    // observable only works on initial loads -- the settings store will be
+    // fully loaded when navigating to the page in-router, so we check if we
+    // need to subscribe at all.
+    const initFormset = (ps: Loadable<ProjectSettings | null>) => {
+      ps.forEach((s) => {
+        if (!s?.filterset) return;
+        const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+        if (isLeft(formSetValidation)) {
+          handleError(formSetValidation.left, {
+            publicSubject: 'Unable to initialize filterset from settings',
+          });
+        } else {
+          formStore.init(formSetValidation.right);
+        }
+        cleanup = formStore.asJsonString.subscribe(() => {
+          resetPagination();
+          const loadableFormset = formStore.formset.get();
+          Loadable.forEach(loadableFormset, (formSet) =>
+            updateSettings({ filterset: JSON.stringify(formSet) }),
+          );
+        });
       });
+    };
+    if (projectSettingsObs.get().isLoaded) {
+      initFormset(projectSettingsObs.get());
     } else {
-      const formset = formSetValidation.right;
-      formStore.init(formset);
+      cleanup = projectSettingsObs.subscribe((ps) => {
+        if (ps.isLoaded) {
+          cleanup();
+          initFormset(ps);
+        }
+      });
     }
-  }, [settings.filterset, isLoadingSettings]);
+    return () => cleanup?.();
+  }, [projectSettingsObs, resetPagination, updateSettings]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
@@ -264,12 +297,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [experimentFilters, rootFilterChildren.length]);
 
-  const resetPagination = useCallback(() => {
-    setIsLoading(true);
-    setPage(0);
-    setExperiments(INITIAL_LOADING_EXPERIMENTS);
-  }, [setPage]);
-
   const handleSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
@@ -290,19 +317,34 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [isLoadingSettings]);
 
   useEffect(() => {
+    let cleanup: () => void;
     // wait until settings is loaded before messing with it
-    projectSettings.isLoaded &&
-      params.compare !== undefined &&
-      updateSettings({ compare: params.compare });
-  }, [params.compare, updateSettings, projectSettings.isLoaded]);
-
-  useEffect(() => {
-    projectSettings.forEach((s) => {
-      if (s) {
-        updateParams({ compare: s.compare || undefined });
-      }
-    });
-  }, [projectSettings, updateParams]);
+    const handCompareOffToSettings = (ps: Loadable<ProjectSettings | null>) => {
+      ps.forEach(() => {
+        if (params.compare !== undefined) {
+          updateSettings({ compare: params.compare });
+        }
+        cleanup = projectSettingsObs.subscribe((ps) => {
+          ps.forEach((s) => {
+            if (s) {
+              updateParams({ compare: s.compare || undefined });
+            }
+          });
+        });
+      });
+    };
+    if (projectSettingsObs.get().isLoaded) {
+      handCompareOffToSettings(projectSettingsObs.get());
+    } else {
+      cleanup = projectSettingsObs.subscribe((ps) => {
+        if (ps.isLoaded) {
+          cleanup();
+          handCompareOffToSettings(ps);
+        }
+      });
+    }
+    return () => cleanup?.();
+  }, [params.compare, updateSettings, updateParams, projectSettingsObs]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
@@ -413,18 +455,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
-  useEffect(
-    () =>
-      formStore.asJsonString.subscribe(() => {
-        resetPagination();
-        const loadableFormset = formStore.formset.get();
-        Loadable.forEach(loadableFormset, (formSet) =>
-          updateSettings({ filterset: JSON.stringify(formSet) }),
-        );
-      }),
-    [resetPagination, updateSettings],
-  );
-
   const rowRangeToIds = useCallback(
     (range: [number, number]) => {
       const slice = experiments.slice(range[0], range[1]);
@@ -436,16 +466,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const handleSelectionChange: HandleSelectionChangeType = useCallback(
     (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
       let newSettings: SelectionState = { ...settings.selection };
-      const includedSet = new Set(selectedExperimentIds.keys());
-      const excludedSet = new Set(excludedExperimentIds.keys());
 
       switch (selectionType) {
         case 'add':
           if (!range) return;
           if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
             rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
             newSettings.exclusions = Array.from(excludedSet);
           } else {
+            const includedSet = new Set(newSettings.selections);
             rowRangeToIds(range).forEach((id) => includedSet.add(id));
             newSettings.selections = Array.from(includedSet);
           }
@@ -461,9 +491,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         case 'remove':
           if (!range) return;
           if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
             rowRangeToIds(range).forEach((id) => excludedSet.add(id));
             newSettings.exclusions = Array.from(excludedSet);
           } else {
+            const includedSet = new Set(newSettings.selections);
             rowRangeToIds(range).forEach((id) => includedSet.delete(id));
             newSettings.selections = Array.from(includedSet);
           }
@@ -485,13 +517,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
       updateSettings({ selection: newSettings });
     },
-    [
-      rowRangeToIds,
-      settings.selection,
-      updateSettings,
-      excludedExperimentIds,
-      selectedExperimentIds,
-    ],
+    [rowRangeToIds, settings.selection, updateSettings],
   );
 
   const handleActionComplete = useCallback(async () => {
