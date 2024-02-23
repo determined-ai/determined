@@ -46,11 +46,10 @@ def create_test_user(
     Returns a tuple of (Session, password).
     """
     session = admin_session()
-    username = get_random_string()
-    user = user or bindings.v1User(username=username, admin=False, active=True)
+    user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
     password = get_random_string()
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
-    sess = make_session(username, password)
+    sess = make_session(user.username, password)
     return sess, password
 
 
