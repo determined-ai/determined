@@ -1398,9 +1398,9 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 			for j := 0; j < numSlots; j++ {
 				id := fmt.Sprintf("%s/%s/%s/%d", poolName, node.Name, string(slotType), j)
 
-				var containerSummary *model.ContainerSummary
+				var container *cproto.Container
 				if pseudoContainersAdded < numContainersInPool {
-					containerSummary = &model.ContainerSummary{
+					container = &cproto.Container{
 						ID:    cproto.ID(id),
 						State: "RUNNING",
 					}
@@ -1411,7 +1411,7 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 					ID:        id,
 					Device:    device.Device{Type: slotType},
 					Enabled:   true,
-					Container: containerSummary,
+					Container: container,
 				}
 			}
 		}
@@ -1487,18 +1487,11 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:       strconv.Itoa(curSlot),
-					Device:   device.Device{Type: deviceType},
-					Draining: isDraining,
-					Enabled:  !isDisabled,
-					Container: &model.ContainerSummary{
-						ID:           podInfo.container.ID,
-						State:        podInfo.container.State,
-						Devices:      podInfo.container.Devices,
-						AllocationID: podInfo.container.AllocationID,
-						TaskID:       podInfo.container.TaskID,
-						JobID:        podInfo.container.JobID,
-					},
+					ID:        strconv.Itoa(curSlot),
+					Device:    device.Device{Type: deviceType},
+					Draining:  isDraining,
+					Enabled:   !isDisabled,
+					Container: podInfo.container,
 				}
 				curSlot++
 			}
@@ -1516,10 +1509,11 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					Device:   device.Device{Type: deviceType},
 					Draining: isDraining,
 					Enabled:  !isDisabled,
-					Container: &model.ContainerSummary{
-						ID:      cproto.ID(taskName),
-						State:   "RUNNING",
-						Devices: []device.Device{},
+					Container: &cproto.Container{
+						ID:          cproto.ID(taskName),
+						State:       "RUNNING",
+						Devices:     []device.Device{},
+						Description: "unknown",
 					},
 				}
 				curSlot++

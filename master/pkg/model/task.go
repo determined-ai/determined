@@ -111,10 +111,7 @@ func (a AllocationID) String() string {
 
 // ToTaskID converts an AllocationID to its taskID.
 func (a AllocationID) ToTaskID() TaskID {
-	if a != "" {
-		return TaskID(a[:strings.LastIndex(string(a), ".")])
-	}
-	return TaskID("")
+	return TaskID(a[:strings.LastIndex(string(a), ".")])
 }
 
 // GetAllocationSpecifier retrieves number at the end of the allocation's id.
