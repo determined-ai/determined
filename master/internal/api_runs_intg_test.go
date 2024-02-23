@@ -5,6 +5,7 @@ package internal
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -35,6 +36,7 @@ func TestSearchRuns(t *testing.T) {
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
 		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
 	}, task.TaskID))
 
 	resp, err = api.SearchRuns(ctx, req)
@@ -49,6 +51,7 @@ func TestSearchRuns(t *testing.T) {
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
 		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
 	}, task2.TaskID))
 
 	// Sort by start time

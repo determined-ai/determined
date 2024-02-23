@@ -59,13 +59,11 @@ func (a *apiServer) RunPrepareForReporting(
 func (a *apiServer) SearchRuns(
 	ctx context.Context, req *apiv1.SearchRunsRequest,
 ) (*apiv1.SearchRunsResponse, error) {
-	resp := &apiv1.SearchRunsResponse{Runs: []*trialv1.Run{}}
+	resp := &apiv1.SearchRunsResponse{Runs: []*trialv1.FlatRun{}}
 	query := db.Bun().NewSelect().
 		Model(&resp.Runs).
 		ModelTableExpr("runs AS r").
 		Apply(getRunsColumns)
-		// Limit(int(req.Limit)).
-		// Scan(ctx)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -156,6 +154,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.unmanaged").
 		ColumnExpr("p.name AS project_name").
 		Join("JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("JOIN run_id_task_id AS rt ON r.id=rt.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")

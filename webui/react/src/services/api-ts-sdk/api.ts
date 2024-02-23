@@ -3153,6 +3153,193 @@ export const V1FittingPolicy = {
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
 /**
+ * Flat run respresentation.
+ * @export
+ * @interface V1FlatRun
+ */
+export interface V1FlatRun {
+    /**
+     * The id of the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    id?: number;
+    /**
+     * The time the run was started.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    startTime?: Date | DateString;
+    /**
+     * The time the run ended.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    endTime?: Date | DateString;
+    /**
+     * The current state of the run(trial).
+     * @type {Trialv1State}
+     * @memberof V1FlatRun
+     */
+    state?: Trialv1State;
+    /**
+     * The tags of the run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    tags?: string;
+    /**
+     * The total size of checkpoints.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    checkpointSize?: string;
+    /**
+     * The count of checkpoints.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    checkpointCount?: number;
+    /**
+     * The type of searcher for the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    searcherType?: string;
+    /**
+     * The searcher metric name for the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    searcherMetric?: string;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    searcherMetricValue?: number;
+    /**
+     * The id of external run
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    externalRunId?: number;
+    /**
+     * Trial hyperparameters.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    hyperparameters?: string;
+    /**
+     * summary metrics.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    metrics?: string;
+    /**
+     * The id of the experiment linked to the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    experimentId?: number;
+    /**
+     * The id of the user who created the parent project.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    ownerId?: number;
+    /**
+     * Original id of a forked or continued experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    forkedFrom?: number;
+    /**
+     * The id of external experiment
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    externalExperimentId?: number;
+    /**
+     * The resource pool the experiment was created in.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    resourcePool?: string;
+    /**
+     * The current progress of a running experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    progress?: number;
+    /**
+     * The description of the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    description?: string;
+    /**
+     * The experiment name.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    experimentName?: string;
+    /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    displayName?: string;
+    /**
+     * The username of the user that created the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    username?: string;
+    /**
+     * Time in seconds which experiment ran or has been running.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    duration?: number;
+    /**
+     * The id of the project associated with this experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    projectId?: number;
+    /**
+     * The name of the project associated with this experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    projectName?: string;
+    /**
+     * The id of the workspace associated with this experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    workspaceId?: number;
+    /**
+     * The name of the workspace associated with this experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    workspaceName?: string;
+    /**
+     * The archived status of the parent project (can be inherited from workspace).
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    parentArchived?: boolean;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    unmanaged?: boolean;
+}
+/**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
  * @export
  * @enum {string}
@@ -8982,193 +9169,6 @@ export interface V1RPQueueStat {
     aggregates?: Array<V1AggregateQueueStats>;
 }
 /**
- * Flat run respresentation.
- * @export
- * @interface V1Run
- */
-export interface V1Run {
-    /**
-     * The id of the run.
-     * @type {number}
-     * @memberof V1Run
-     */
-    id?: number;
-    /**
-     * The time the run was started.
-     * @type {Date | DateString}
-     * @memberof V1Run
-     */
-    startTime?: Date | DateString;
-    /**
-     * The time the run ended.
-     * @type {Date | DateString}
-     * @memberof V1Run
-     */
-    endTime?: Date | DateString;
-    /**
-     * The current state of the run(trial).
-     * @type {Trialv1State}
-     * @memberof V1Run
-     */
-    state?: Trialv1State;
-    /**
-     * The tags of the run.
-     * @type {string}
-     * @memberof V1Run
-     */
-    tags?: string;
-    /**
-     * The total size of checkpoints.
-     * @type {string}
-     * @memberof V1Run
-     */
-    checkpointSize?: string;
-    /**
-     * The count of checkpoints.
-     * @type {number}
-     * @memberof V1Run
-     */
-    checkpointCount?: number;
-    /**
-     * The type of searcher for the experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    searcherType?: string;
-    /**
-     * The searcher metric name for the experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    searcherMetric?: string;
-    /**
-     * Signed searcher metrics value.
-     * @type {number}
-     * @memberof V1Run
-     */
-    searcherMetricValue?: number;
-    /**
-     * The id of external run
-     * @type {number}
-     * @memberof V1Run
-     */
-    externalRunId?: number;
-    /**
-     * Trial hyperparameters.
-     * @type {string}
-     * @memberof V1Run
-     */
-    hyperparameters?: string;
-    /**
-     * summary metrics.
-     * @type {string}
-     * @memberof V1Run
-     */
-    metrics?: string;
-    /**
-     * The id of the experiment linked to the run.
-     * @type {number}
-     * @memberof V1Run
-     */
-    experimentId?: number;
-    /**
-     * The id of the user who created the parent project.
-     * @type {number}
-     * @memberof V1Run
-     */
-    ownerId?: number;
-    /**
-     * Original id of a forked or continued experiment.
-     * @type {number}
-     * @memberof V1Run
-     */
-    forkedFrom?: number;
-    /**
-     * The id of external experiment
-     * @type {number}
-     * @memberof V1Run
-     */
-    externalExperimentId?: number;
-    /**
-     * The resource pool the experiment was created in.
-     * @type {string}
-     * @memberof V1Run
-     */
-    resourcePool?: string;
-    /**
-     * The current progress of a running experiment.
-     * @type {number}
-     * @memberof V1Run
-     */
-    progress?: number;
-    /**
-     * The description of the experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    description?: string;
-    /**
-     * The experiment name.
-     * @type {string}
-     * @memberof V1Run
-     */
-    experimentName?: string;
-    /**
-     * The display name of the user that created the experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    displayName?: string;
-    /**
-     * The username of the user that created the experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    username?: string;
-    /**
-     * Time in seconds which experiment ran or has been running.
-     * @type {number}
-     * @memberof V1Run
-     */
-    duration?: number;
-    /**
-     * The id of the project associated with this experiment.
-     * @type {number}
-     * @memberof V1Run
-     */
-    projectId?: number;
-    /**
-     * The name of the project associated with this experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    projectName?: string;
-    /**
-     * The id of the workspace associated with this experiment.
-     * @type {number}
-     * @memberof V1Run
-     */
-    workspaceId?: number;
-    /**
-     * The name of the workspace associated with this experiment.
-     * @type {string}
-     * @memberof V1Run
-     */
-    workspaceName?: string;
-    /**
-     * The archived status of the parent project (can be inherited from workspace).
-     * @type {boolean}
-     * @memberof V1Run
-     */
-    parentArchived?: boolean;
-    /**
-     * Unmanaged experiments are detached.
-     * @type {boolean}
-     * @memberof V1Run
-     */
-    unmanaged?: boolean;
-}
-/**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
  * @export
  * @interface V1RunnableOperation
@@ -9446,10 +9446,10 @@ export interface V1SearchRolesAssignableToScopeResponse {
 export interface V1SearchRunsResponse {
     /**
      * The list of returned runs.
-     * @type {Array<V1Run>}
+     * @type {Array<V1FlatRun>}
      * @memberof V1SearchRunsResponse
      */
-    runs: Array<V1Run>;
+    runs: Array<V1FlatRun>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -20082,6 +20082,61 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/runs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
+            }
+            
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -21710,6 +21765,29 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchRuns(projectId, offset, limit, sort, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -22558,6 +22636,20 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
             return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+            return InternalApiFp(configuration).searchRuns(projectId, offset, limit, sort, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -23472,6 +23564,22 @@ export class InternalApi extends BaseAPI {
      */
     public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
         return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of runs.
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+        return InternalApiFp(this.configuration).searchRuns(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27659,150 +27767,6 @@ export class RBACApi extends BaseAPI {
      */
     public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
         return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath)
-    }
-    
-}
-
-/**
- * RunsApi - fetch parameter creator
- * @export
- */
-export const RunsApiFetchParamCreator = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/runs`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (projectId !== undefined) {
-                localVarQueryParameter['projectId'] = projectId
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
-            }
-            
-            if (sort !== undefined) {
-                localVarQueryParameter['sort'] = sort
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-    }
-};
-
-/**
- * RunsApi - functional programming interface
- * @export
- */
-export const RunsApiFp = function (configuration?: Configuration) {
-    return {
-        /**
-         * 
-         * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
-            const localVarFetchArgs = RunsApiFetchParamCreator(configuration).searchRuns(projectId, offset, limit, sort, filter, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-    }
-};
-
-/**
- * RunsApi - factory interface
- * @export
- */
-export const RunsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
-    return {
-        /**
-         * 
-         * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-            return RunsApiFp(configuration).searchRuns(projectId, offset, limit, sort, filter, options)(fetch, basePath);
-        },
-    }
-};
-
-/**
- * RunsApi - object-oriented interface
- * @export
- * @class
- * @extends {BaseAPI}
- */
-export class RunsApi extends BaseAPI {
-    /**
-     * 
-     * @summary Get a list of runs.
-     * @param {number} [projectId] ID of the project to look at.
-     * @param {number} [offset] How many experiments to skip before including in the results.
-     * @param {number} [limit] How many results to show.
-     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-     * @param {string} [filter] Filter expression.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof RunsApi
-     */
-    public searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-        return RunsApiFp(this.configuration).searchRuns(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
 }

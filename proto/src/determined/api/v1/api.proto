@@ -2471,7 +2471,7 @@ service Determined {
       get: "/api/v1/runs"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Runs"
+      tags: "Internal"
     };
   }
 }

@@ -323,7 +323,7 @@ message TrialSourceInfo {
 }
 
 // Flat run respresentation.
-message Run {
+message FlatRun {
   // The id of the run.
   int32 id = 1;
   // The time the run was started.

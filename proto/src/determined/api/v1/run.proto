@@ -50,7 +50,7 @@ message SearchRunsResponse {
     json_schema: { required: [ "runs", "pagination" ] }
   };
   // The list of returned runs.
-  repeated determined.trial.v1.Run runs = 1;
+  repeated determined.trial.v1.FlatRun runs = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }

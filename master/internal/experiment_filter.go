@@ -137,7 +137,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 	// return a user generated field name
 
 	filterExperimentColMap := map[string]string{
-		"id":                   "e.id",
+		"id":                   "r.id",
 		"description":          "e.config->>'description'",
 		"name":                 "e.config->>'name'",
 		"tags":                 "e.config->>'labels'",
