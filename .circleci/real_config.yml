@@ -1029,7 +1029,7 @@ commands:
             sudo apt-get install -y postgresql
       - run:
           command: |
-            pg_ctlcluster 12 main start
+            sudo pg_ctlcluster 12 main start
             sudo su - postgres -c "psql -c \"
                 CREATE ROLE circleci WITH SUPERUSER LOGIN PASSWORD 'postgres';
                 CREATE DATABASE determined;
