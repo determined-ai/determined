@@ -150,10 +150,13 @@ autodoc_mock_imports = [
 sitemap_url_scheme = "latest/{link}"
 
 # ignore internal urls when running linkcheck
+# also ignore urls that have IP-checking measures in place that block aws
+# connections based on IP.
 linkcheck_ignore = [
     r'^#',
     r'^http://127.0.0.1',
-    r'^\.\./'
+    r'^\.\./',
+    'https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html'
 ]
 
 linkcheck_timeout = 20
