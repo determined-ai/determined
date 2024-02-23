@@ -2348,39 +2348,27 @@ class v1Container(Printable):
     """Container is a Docker container that is either scheduled to run or is
     currently running on a set of slots.
     """
-    allocationId: "typing.Optional[str]" = None
     devices: "typing.Optional[typing.Sequence[v1Device]]" = None
-    jobId: "typing.Optional[str]" = None
     parent: "typing.Optional[str]" = None
     permissionDenied: "typing.Optional[bool]" = None
-    taskId: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: str,
         state: "containerv1State",
-        allocationId: "typing.Union[str, None, Unset]" = _unset,
         devices: "typing.Union[typing.Sequence[v1Device], None, Unset]" = _unset,
-        jobId: "typing.Union[str, None, Unset]" = _unset,
         parent: "typing.Union[str, None, Unset]" = _unset,
         permissionDenied: "typing.Union[bool, None, Unset]" = _unset,
-        taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
         self.state = state
-        if not isinstance(allocationId, Unset):
-            self.allocationId = allocationId
         if not isinstance(devices, Unset):
             self.devices = devices
-        if not isinstance(jobId, Unset):
-            self.jobId = jobId
         if not isinstance(parent, Unset):
             self.parent = parent
         if not isinstance(permissionDenied, Unset):
             self.permissionDenied = permissionDenied
-        if not isinstance(taskId, Unset):
-            self.taskId = taskId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Container":
@@ -2388,18 +2376,12 @@ class v1Container(Printable):
             "id": obj["id"],
             "state": containerv1State(obj["state"]),
         }
-        if "allocationId" in obj:
-            kwargs["allocationId"] = obj["allocationId"]
         if "devices" in obj:
             kwargs["devices"] = [v1Device.from_json(x) for x in obj["devices"]] if obj["devices"] is not None else None
-        if "jobId" in obj:
-            kwargs["jobId"] = obj["jobId"]
         if "parent" in obj:
             kwargs["parent"] = obj["parent"]
         if "permissionDenied" in obj:
             kwargs["permissionDenied"] = obj["permissionDenied"]
-        if "taskId" in obj:
-            kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -2407,18 +2389,12 @@ class v1Container(Printable):
             "id": self.id,
             "state": self.state.value,
         }
-        if not omit_unset or "allocationId" in vars(self):
-            out["allocationId"] = self.allocationId
         if not omit_unset or "devices" in vars(self):
             out["devices"] = None if self.devices is None else [x.to_json(omit_unset) for x in self.devices]
-        if not omit_unset or "jobId" in vars(self):
-            out["jobId"] = self.jobId
         if not omit_unset or "parent" in vars(self):
             out["parent"] = self.parent
         if not omit_unset or "permissionDenied" in vars(self):
             out["permissionDenied"] = self.permissionDenied
-        if not omit_unset or "taskId" in vars(self):
-            out["taskId"] = self.taskId
         return out
 
 class v1ContinueExperimentRequest(Printable):

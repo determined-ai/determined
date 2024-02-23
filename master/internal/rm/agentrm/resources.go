@@ -59,7 +59,6 @@ func (c containerResources) Start(
 
 	c.agent.handler.StartTaskContainer(sproto.StartTaskContainer{
 		AllocationID: c.req.AllocationID,
-		JobID:        c.req.JobID,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
 				ID:          c.containerID,

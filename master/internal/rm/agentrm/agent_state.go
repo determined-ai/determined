@@ -54,7 +54,6 @@ type agentState struct {
 
 	slotStates          map[device.ID]*slot
 	containerAllocation map[cproto.ID]model.AllocationID
-	containerJob        map[cproto.ID]model.JobID
 	containerState      map[cproto.ID]*cproto.Container
 }
 
@@ -69,7 +68,6 @@ func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
 		enabled:               true,
 		slotStates:            make(map[device.ID]*slot),
 		containerAllocation:   make(map[cproto.ID]model.AllocationID),
-		containerJob:          make(map[cproto.ID]model.JobID),
 		containerState:        make(map[cproto.ID]*cproto.Container),
 		uuid:                  uuid.New(),
 	}
@@ -348,7 +346,6 @@ func (a *agentState) startContainer(msg sproto.StartTaskContainer) error {
 	}
 
 	a.containerAllocation[msg.Container.ID] = msg.AllocationID
-	a.containerJob[msg.Container.ID] = msg.JobID
 
 	if err := a.persist(); err != nil {
 		a.syslog.WithError(err).Warnf("startContainer persist failure")
@@ -374,32 +371,18 @@ func (a *agentState) getSlotsSummary(baseAddress string) model.SlotsSummary {
 
 func (a *agentState) getSlotSummary(deviceID device.ID) model.SlotSummary {
 	s := a.slotStates[deviceID]
+	cid := s.containerID
+	var container *cproto.Container
+	if cid != nil {
+		container = a.containerState[*cid]
+	}
 
-	containerSummary := a.getContainerSummary(s)
 	return model.SlotSummary{
 		ID:        strconv.Itoa(int(s.device.ID)),
 		Device:    s.device,
 		Enabled:   s.enabled.enabled(),
-		Container: containerSummary,
+		Container: container,
 		Draining:  s.enabled.draining,
-	}
-}
-
-func (a *agentState) getContainerSummary(s *slot) *model.ContainerSummary {
-	cid := s.containerID
-	if cid == nil {
-		return nil
-	}
-
-	container := a.containerState[*cid]
-
-	return &model.ContainerSummary{
-		ID:           container.ID,
-		State:        container.State,
-		Devices:      container.Devices,
-		AllocationID: a.containerAllocation[*cid],
-		TaskID:       a.containerAllocation[*cid].ToTaskID(),
-		JobID:        a.containerJob[*cid],
 	}
 }
 
@@ -642,7 +625,6 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 		slotStates:            slotStates,
 		Devices:               devices,
 		containerAllocation:   make(map[cproto.ID]model.AllocationID),
-		containerJob:          make(map[cproto.ID]model.JobID),
 		containerState:        containerState,
 	}
 
