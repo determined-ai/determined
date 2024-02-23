@@ -9,6 +9,8 @@ import LogViewer, {
   Props,
 } from 'hew/LogViewer/LogViewer';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
+import { VirtuosoMockContext } from 'react-virtuoso';
+import { vi } from 'vitest';
 
 import { serverAddress } from 'routes/utils';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -37,7 +39,7 @@ const NOW = Date.now();
  * The generated messages are intentionally kept short to ensure that
  * the log entries don't wrap with the given window width.
  */
-const VISIBLE_LINES = 57;
+const VISIBLE_LINES = 50;
 
 const user = userEvent.setup();
 
@@ -87,6 +89,13 @@ const setup = (props: Props<TestLog>) => {
       {/* increase variation in DOM */}
       <span>{Math.random()}</span>
     </UIProvider>,
+    {
+      wrapper: ({ children }) => (
+        <VirtuosoMockContext.Provider value={{ itemHeight: 20, viewportHeight: 1000 }}>
+          {children}
+        </VirtuosoMockContext.Provider>
+      ),
+    },
   );
 };
 
@@ -144,77 +153,73 @@ const findTimeLogIndex = (logs: TestLog[], timeString: string): number => {
   return logs.findIndex((log) => log.message.includes(timestamp));
 };
 
-vi.mock('hew/internal/useResize', () => {
-  const refObject = { current: null };
+vi.mock('hew/internal/services', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('hew/internal/services')>();
   return {
-    __esModule: true,
-    default: () => ({
-      refObject,
-      size: { height: 1824, width: 1280, x: 0, y: 0 },
-    }),
+    ...mod,
+    readLogStream: vi.fn(
+      (
+        _serverAddress: (path: string) => string,
+        { options }: FetchArgs,
+        _onError: (e: unknown, options?: object) => void,
+        onEvent: (event: unknown) => void,
+      ): void => {
+        // Default mocking options.
+        const existingLogs = options.existingLogs ?? [];
+        const skipStreaming = options.skipStreaming ?? true;
+        const streamingRounds = options.streamingRounds ?? 100;
+        const desc = options.orderBy === 'ORDER_BY_DESC';
+
+        if (!options.follow) {
+          const range = [0, existingLogs.length - 1];
+          if (desc) {
+            if (options.timestampBefore) {
+              const before = findTimeLogIndex(existingLogs, options.timestampBefore);
+              range[0] = before - options.limit;
+              range[1] = before;
+            } else {
+              range[0] = existingLogs.length - options.limit;
+              range[1] = existingLogs.length;
+            }
+          } else {
+            if (options.timestampAfter) {
+              const after = findTimeLogIndex(existingLogs, options.timestampAfter);
+              range[0] = after + 1;
+              range[1] = after + options.limit + 1;
+            } else {
+              range[0] = 0;
+              range[1] = options.limit;
+            }
+          }
+          const filteredLogs: TestLog[] = existingLogs.slice(range[0], range[1]);
+          if (desc) filteredLogs.reverse();
+          if (options.logsReference) options.logsReference.push(...filteredLogs);
+          filteredLogs.forEach((log) => onEvent(log));
+        } else if (options.follow && !skipStreaming) {
+          let startIndex = existingLogs.length;
+          let rounds = 0;
+          while (rounds < streamingRounds) {
+            const count = Math.floor(Math.random() * 4) + 1;
+            const logs = generateLogs(count, startIndex, existingLogs.length - 1);
+            if (options.logsReference) options.logsReference.push(...logs);
+            logs.forEach((log) => onEvent(log));
+            startIndex += count;
+            rounds++;
+          }
+        }
+      },
+    ),
   };
 });
 
-vi.mock('hew/internal/useGetCharMeasureInContainer', () => ({
-  __esModule: true,
-  default: () => ({ height: 18, width: 7 }),
-}));
-
-vi.mock('hew/internal/services', () => ({
-  __esModule: true,
-  readLogStream: (
-    _serverAddress: (path: string) => string,
-    { options }: FetchArgs,
-    _onError: (e: unknown, options?: object) => void,
-    onEvent: (event: unknown) => void,
-  ): void => {
-    // Default mocking options.
-    const existingLogs = options.existingLogs ?? [];
-    const skipStreaming = options.skipStreaming ?? true;
-    const streamingRounds = options.streamingRounds ?? 100;
-    const desc = options.orderBy === 'ORDER_BY_DESC';
-
-    if (!options.follow) {
-      const range = [0, existingLogs.length - 1];
-      if (desc) {
-        if (options.timestampBefore) {
-          const before = findTimeLogIndex(existingLogs, options.timestampBefore);
-          range[0] = before - options.limit;
-          range[1] = before;
-        } else {
-          range[0] = existingLogs.length - options.limit;
-          range[1] = existingLogs.length;
-        }
-      } else {
-        if (options.timestampAfter) {
-          const after = findTimeLogIndex(existingLogs, options.timestampAfter);
-          range[0] = after + 1;
-          range[1] = after + options.limit + 1;
-        } else {
-          range[0] = 0;
-          range[1] = options.limit;
-        }
-      }
-      const filteredLogs: TestLog[] = existingLogs.slice(range[0], range[1]);
-      if (desc) filteredLogs.reverse();
-      if (options.logsReference) options.logsReference.push(...filteredLogs);
-      filteredLogs.forEach((log) => onEvent(log));
-    } else if (options.follow && !skipStreaming) {
-      let startIndex = existingLogs.length;
-      let rounds = 0;
-      while (rounds < streamingRounds) {
-        const count = Math.floor(Math.random() * 4) + 1;
-        const logs = generateLogs(count, startIndex, existingLogs.length - 1);
-        if (options.logsReference) options.logsReference.push(...logs);
-        logs.forEach((log) => onEvent(log));
-        startIndex += count;
-        rounds++;
-      }
-    }
-  },
-}));
-
 describe('LogViewer', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   const decoder = mapV1LogsResponse;
 
   describe('static logs', () => {
@@ -223,6 +228,10 @@ describe('LogViewer', () => {
       const firstLog = initialLogs[0];
       const lastLog = initialLogs[initialLogs.length - 1];
       setup({ decoder, initialLogs, onError: handleError, serverAddress });
+      screen.debug();
+      console.error({ firstLog });
+      console.error(firstLog.message);
+      console.error(screen.queryByText(firstLog.message));
 
       /*
        * The react-window should only display the 1st `VISIBILE_LINES` log entrys
@@ -263,7 +272,11 @@ describe('LogViewer', () => {
       setup({ decoder, onError: handleError, serverAddress });
 
       await waitFor(() => {
-        expect(screen.queryByLabelText('Close Logs')).not.toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('Close Logs', {
+            selector: 'button',
+          }),
+        ).not.toBeInTheDocument();
       });
     });
 
@@ -274,7 +287,11 @@ describe('LogViewer', () => {
       setup({ decoder, handleCloseLogs, onError: handleError, serverAddress });
 
       await waitFor(() => {
-        expect(screen.queryByLabelText('Close Logs')).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('Close Logs', {
+            selector: 'button',
+          }),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -354,6 +371,8 @@ describe('LogViewer', () => {
         selector: 'button',
       });
       await user.click(enableTailingButton);
+
+      vi.runAllTimers();
 
       await waitFor(() => {
         const lastLog = logsReference[logsReference.length - 1];
