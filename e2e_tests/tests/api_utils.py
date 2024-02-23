@@ -21,7 +21,7 @@ def make_session(username: str, password: str) -> api.Session:
     master_url = conf.make_master_url()
     # Use login instead of login_with_cache() to not touch auth.json on the filesystem.
     utp = authentication.login(master_url, username, password, cert())
-    return api.Session(master_url, utp, cert())
+    return api.Session(master_url, utp, cert(), max_retries=None)
 
 
 _user_session: Optional[api.Session] = None
@@ -269,6 +269,7 @@ def is_hpc() -> bool:
     return st in (bindings.v1SchedulerType.SLURM, bindings.v1SchedulerType.PBS)
 
 
+_master_is_reachable: Optional[bool] = None
 _is_ee: Optional[bool] = None
 
 
