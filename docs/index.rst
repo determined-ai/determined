@@ -31,6 +31,11 @@
 Find setup guides, examples, tutorials, API references, and more to learn how to quickly train
 almost any deep learning model using Determined.
 
+.. tip::
+
+   Learn about three commonly-used `LLM prompting techniques
+   <https://www.determined.ai/blog/llm-prompting>`__.
+
 .. raw:: html
 
    <div class="landing">
