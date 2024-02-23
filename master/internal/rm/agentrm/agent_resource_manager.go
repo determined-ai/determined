@@ -35,7 +35,7 @@ import (
 func New(
 	db *db.PgDB,
 	e *echo.Echo,
-	config *config.ResourceConfig,
+	config *config.ResourceManagerWithPoolsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *ResourceManager {
@@ -66,7 +66,8 @@ type ResourceManager struct {
 }
 
 func newAgentResourceManager(
-	db *db.PgDB, config *config.ResourceConfig, cert *tls.Certificate, agentService *agents,
+	db *db.PgDB, config *config.ResourceManagerWithPoolsConfig,
+	cert *tls.Certificate, agentService *agents,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
 ) *ResourceManager {
 	a := &ResourceManager{
