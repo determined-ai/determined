@@ -1026,14 +1026,15 @@ commands:
           command: | 
             sudo apt-get update -y
             sudo apt-get install -y iproute2
+            sudo apt-get install -y gettext-base
             sudo apt-get install -y postgresql
       - run:
           command: |
             sudo pg_ctlcluster 12 main start
             sudo su - postgres -c "psql -c \"
                 CREATE ROLE circleci WITH SUPERUSER LOGIN PASSWORD 'postgres';
-                CREATE DATABASE determined;
             \""
+            sudo su - postgres -c "createdb determined"
           name: Setup postgres server
       - run:
           command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
@@ -1057,7 +1058,7 @@ commands:
             echo "export MASTER_PORT_FROM_INTERNAL=8443" >> $BASH_ENV
           name: Set master address
       - run: 
-          command: envsubst < tools/kubernetes > .circleci/devcluster/shared-cluster.devcluster.yaml
+          command: envsubst < tools/kubernetes/devcluster.tpl.yaml > .circleci/devcluster/shared-cluster.devcluster.yaml
           name: Populate devcluster config
       - start-devcluster:
           target-stage: master
