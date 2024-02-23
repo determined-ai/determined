@@ -1024,6 +1024,7 @@ commands:
           name: Install GKE auth plugin
       - run:
           command: | 
+            sudo apt-get update -y
             sudo apt-get install -y iproute2
             sudo apt-get install -y postgresql
       - run:
