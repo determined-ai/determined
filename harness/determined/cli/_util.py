@@ -86,7 +86,7 @@ default_pagination_args = make_pagination_args()
 
 def unauth_session(args: argparse.Namespace) -> api.UnauthSession:
     master_url = args.master
-    return api.UnauthSession(master=master_url, cert=cli.cert)
+    return api.UnauthSession(master=master_url, cert=cli.cert, max_retries=0)
 
 
 def setup_session(args: argparse.Namespace) -> api.Session:
@@ -97,7 +97,7 @@ def setup_session(args: argparse.Namespace) -> api.Session:
         password=None,
         cert=cli.cert,
     )
-    return api.Session(master_url, utp, cli.cert, api.default_retry())
+    return api.Session(master_url, utp, cli.cert)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:

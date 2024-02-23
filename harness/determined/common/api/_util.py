@@ -3,8 +3,6 @@ import os
 from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
 from urllib import parse
 
-import urllib3
-
 from determined.common import api, util
 from determined.common.api import bindings
 
@@ -13,12 +11,6 @@ class PageOpts(str, enum.Enum):
     single = "1"
     all = "all"
 
-
-# HTTP status codes that will force request retries.
-RETRY_STATUSES = [502, 503, 504]  # Bad Gateway, Service Unavailable, Gateway Timeout
-
-# Default max number of times to retry a request.
-MAX_RETRIES = 5
 
 # Default seconds for an NTSC task to become ready before timeout.
 DEFAULT_NTSC_TIMEOUT = 60 * 5
@@ -116,15 +108,6 @@ def read_paginated(
             break
         assert pagination.endIndex is not None
         offset = pagination.endIndex
-
-
-def default_retry(max_retries: int = MAX_RETRIES) -> urllib3.util.retry.Retry:
-    retry = urllib3.util.retry.Retry(
-        total=max_retries,
-        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-        status_forcelist=RETRY_STATUSES,
-    )
-    return retry
 
 
 # Literal["notebook", "tensorboard", "shell", "command"]

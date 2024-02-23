@@ -10,11 +10,21 @@ from determined.common import api
 from determined.common import requests as det_requests
 from determined.common.api import authentication, certs, errors
 
+GeneralizedRetry = Union[urllib3.util.retry.Retry, int]
+
+# Default retry logic
+DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
+    total=5,
+    backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+    status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
+)
+
 
 def _do_request(
     method: str,
     host: str,
     path: str,
+    max_retries: Optional[GeneralizedRetry],
     params: Optional[Dict[str, Any]] = None,
     json: Any = None,
     data: Optional[str] = None,
@@ -22,7 +32,6 @@ def _do_request(
     cert: Optional[certs.Cert] = None,
     timeout: Optional[Union[Tuple, float]] = None,
     stream: bool = False,
-    max_retries: Optional[urllib3.util.retry.Retry] = None,
 ) -> requests.Response:
     # Allow the json to come pre-encoded, if we need custom encoding.
     if json is not None and data is not None:
@@ -88,6 +97,7 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     master: str
     cert: Optional[certs.Cert]
+    _max_retries: Optional[GeneralizedRetry]
 
     @abc.abstractmethod
     def _do_request(
@@ -170,7 +180,7 @@ class UnauthSession(BaseSession):
         self,
         master: str,
         cert: Optional[certs.Cert],
-        max_retries: Optional[urllib3.util.retry.Retry] = None,
+        max_retries: Optional[GeneralizedRetry] = DEFAULT_MAX_RETRIES,
     ) -> None:
         if master != api.canonicalize_master_url(master):
             # This check is targeting developers of Determined, not users of Determined.
@@ -198,6 +208,7 @@ class UnauthSession(BaseSession):
             method=method,
             host=self.master,
             path=path,
+            max_retries=self._max_retries,
             params=params,
             json=json,
             data=data,
@@ -205,7 +216,6 @@ class UnauthSession(BaseSession):
             cert=self.cert,
             timeout=timeout,
             stream=stream,
-            max_retries=self._max_retries,
         )
 
 
@@ -221,7 +231,7 @@ class Session(BaseSession):
         master: str,
         utp: authentication.UsernameTokenPair,
         cert: Optional[certs.Cert],
-        max_retries: Optional[urllib3.util.retry.Retry] = None,
+        max_retries: Optional[GeneralizedRetry] = DEFAULT_MAX_RETRIES,
     ) -> None:
         if master != api.canonicalize_master_url(master):
             # This check is targeting developers of Determined, not users of Determined.
@@ -251,9 +261,10 @@ class Session(BaseSession):
         headers = dict(headers) if headers is not None else {}
         headers["Authorization"] = f"Bearer {self.token}"
         return _do_request(
-            method,
-            self.master,
-            path,
+            method=method,
+            host=self.master,
+            path=path,
+            max_retries=self._max_retries,
             params=params,
             json=json,
             data=data,
@@ -261,5 +272,4 @@ class Session(BaseSession):
             headers=headers,
             timeout=timeout,
             stream=stream,
-            max_retries=self._max_retries,
         )

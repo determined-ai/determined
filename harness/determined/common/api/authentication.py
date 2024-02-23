@@ -52,7 +52,7 @@ def login(
     TokenStore.
     """
     password = api.salt_and_hash(password)
-    unauth_session = api.UnauthSession(master=master_address, cert=cert)
+    unauth_session = api.UnauthSession(master=master_address, cert=cert, max_retries=0)
     login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
     r = bindings.post_Login(session=unauth_session, body=login)
     return UsernameTokenPair(username, r.token)
