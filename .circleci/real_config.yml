@@ -2842,10 +2842,10 @@ workflows:
       - check-docs-links:
           requires:
             - build-docs
-          #filters:
-          #  branches:
-          #    only:
-          #      - main
+          filters:
+            branches:
+              only:
+                - main
 
       - test-debian-packaging:
           requires:
