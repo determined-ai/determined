@@ -3,26 +3,18 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useId } from 'react';
 
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import {
-  assignRolesToGroup,
-  createGroup,
-  getGroup,
-  getGroupRoles,
-  removeRolesFromGroup,
-  updateGroup,
-} from 'services/api';
-import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
+import { assignRolesToGroup, createGroup, removeRolesFromGroup, updateGroup } from 'services/api';
+import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import { UserRole } from 'types';
@@ -60,17 +52,15 @@ const EDIT_VALUES: Messages = {
 
 interface Props {
   group?: V1GroupSearchResult;
+  groupRoles?: UserRole[];
   onClose?: () => void;
 }
 
-const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
+const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group, groupRoles }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm();
   const { rbacEnabled } = useObservable(determinedStore.info);
   const { canModifyPermissions } = usePermissions();
-  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
-  const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
-  const [isLoading, setIsLoading] = useState(true);
   const isCreateModal = !group;
   const messages = isCreateModal ? CREATE_VALUES : EDIT_VALUES;
 
@@ -79,53 +69,15 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
   const roles = useObservable(roleStore.roles);
   const groupName = Form.useWatch(GROUP_NAME_NAME, form);
 
-  const fetchGroupDetail = useCallback(async () => {
-    if (group?.group.groupId) {
-      try {
-        const response = await getGroup({ groupId: group?.group.groupId });
-        const groupDetail = response.group;
-        setGroupDetail(groupDetail);
-        form.setFieldsValue({
-          [GROUP_NAME_NAME]: groupDetail.name,
-        });
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch group data.' });
-      }
-    }
-  }, [group, form]);
-
-  const fetchGroupRoles = useCallback(async () => {
-    if (group?.group.groupId && rbacEnabled) {
-      try {
-        const roles = await getGroupRoles({ groupId: group.group.groupId });
-        const groupRoles = roles.filter((r) => r.scopeCluster);
-        setGroupRoles(groupRoles);
-        form.setFieldValue(GROUP_ROLE_NAME, groupRoles?.map((r) => r.id));
-      } catch (e) {
-        handleError(e, { publicSubject: "Unable to fetch this group's roles." });
-      }
-    }
-  }, [form, group, rbacEnabled]);
-
-  const fetchData = useCallback(async () => {
-    await fetchGroupDetail();
-    await fetchGroupRoles();
-    setIsLoading(false);
-  }, [fetchGroupDetail, fetchGroupRoles]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const handleSubmit = async () => {
     try {
       const formData = await form.validateFields();
 
       if (group) {
-        const nameUpdated = !_.isEqual(formData.name, groupDetail?.name);
+        const nameUpdated = !_.isEqual(formData.name, group.group?.name);
         const rolesUpdated = !_.isEqual(
           formData.roles,
-          groupRoles.map((r) => r.id),
+          (groupRoles ?? []).map((r) => r.id),
         );
         if (!nameUpdated && !rolesUpdated) {
           openToast({ title: 'No changes to save.' });
@@ -154,7 +106,6 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
               roleIds: Array.from(rolesToRemove),
             });
           }
-          await fetchGroupRoles();
         }
       } else {
         const newGroup = await createGroup(formData);
@@ -196,43 +147,43 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
       }}
       title={messages.MODAL_HEADER_LABEL}
       onClose={form.resetFields}>
-      <Spinner spinning={isLoading}>
-        <Form form={form} id={idPrefix + FORM_ID}>
-          <Form.Item
-            label={GROUP_NAME_LABEL}
-            name={GROUP_NAME_NAME}
-            required
-            rules={[{ whitespace: true }]}
-            validateTrigger={['onSubmit', 'onChange']}>
-            <Input autoComplete="off" autoFocus maxLength={128} placeholder={GROUP_NAME_LABEL} />
-          </Form.Item>
-          {rbacEnabled && canModifyPermissions && (
-            <>
-              <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
-                <Select
-                  loading={Loadable.isNotLoaded(roles)}
-                  mode="multiple"
-                  placeholder={'Add Roles'}>
-                  {roles
-                    .getOrElse([])
-                    .sort((r1, r2) => r1.id - r2.id)
-                    .map((r) => (
-                      <Option key={r.id} value={r.id}>
-                        {r.name}
-                      </Option>
-                    ))}
-                </Select>
-              </Form.Item>
-              <Body inactive>
-                Groups may have additional inherited workspace roles not reflected here. &nbsp;
-                <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
-                  Learn more
-                </Link>
-              </Body>
-            </>
-          )}
-        </Form>
-      </Spinner>
+      <Form form={form} id={idPrefix + FORM_ID}>
+        <Form.Item
+          initialValue={group?.group.name}
+          label={GROUP_NAME_LABEL}
+          name={GROUP_NAME_NAME}
+          required
+          rules={[{ whitespace: true }]}
+          validateTrigger={['onSubmit', 'onChange']}>
+          <Input autoComplete="off" autoFocus maxLength={128} placeholder={GROUP_NAME_LABEL} />
+        </Form.Item>
+        {rbacEnabled && canModifyPermissions && (
+          <>
+            <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
+              <Select
+                defaultValue={(groupRoles ?? []).map((r) => r.id)} // TODO: use form initialvalue after hew update
+                loading={Loadable.isNotLoaded(roles)}
+                mode="multiple"
+                placeholder={'Add Roles'}>
+                {roles
+                  .getOrElse([])
+                  .sort((r1, r2) => r1.id - r2.id)
+                  .map((r) => (
+                    <Option key={r.id} value={r.id}>
+                      {r.name}
+                    </Option>
+                  ))}
+              </Select>
+            </Form.Item>
+            <Body inactive>
+              Groups may have additional inherited workspace roles not reflected here. &nbsp;
+              <Link external path={paths.docs('/cluster-setup-guide/security/rbac.html')} popout>
+                Learn more
+              </Link>
+            </Body>
+          </>
+        )}
+      </Form>
     </Modal>
   );
 };
