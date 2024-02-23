@@ -156,8 +156,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	existingRef, ok := a.agents.Load(agentID(id))
 	if ok {
 		a.syslog.WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
-		existingRef.HandleWebsocketConnection(msg)
-		return nil
+		return existingRef.HandleWebsocketConnection(msg)
 	}
 
 	// If the agent actor is _not_ alive on our side and the agent is trying to reconnect,

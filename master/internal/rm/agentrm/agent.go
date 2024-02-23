@@ -31,7 +31,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-var errRecovering = errors.New("agent disconnected, wait for recovery")
+var (
+	errRecovering                = errors.New("agent disconnected, wait for recovery")
+	errWebsocketAlreadyConnected = errors.New("websocket already connected")
+)
 
 type (
 	agent struct {
@@ -302,20 +305,24 @@ func (a *agent) stop(cause error) {
 	a.notifyListeners()
 }
 
-func (a *agent) HandleWebsocketConnection(msg webSocketRequest) {
+func (a *agent) HandleWebsocketConnection(msg webSocketRequest) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	err := a.handleWebsocketConnection(msg)
 	if err != nil {
+		if errors.Is(err, errWebsocketAlreadyConnected) {
+			return fmt.Errorf("agent: %w", err)
+		}
 		a.stop(err)
-		return
+		return nil
 	}
+	return nil
 }
 
 func (a *agent) handleWebsocketConnection(msg webSocketRequest) error {
 	if a.socket != nil {
-		err := errors.New("websocket already connected")
+		err := errWebsocketAlreadyConnected
 		a.syslog.WithError(err).Error("socket not nil when WebSocketRequest received")
 		return err
 	}
