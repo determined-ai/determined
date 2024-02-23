@@ -1208,6 +1208,22 @@ jobs:
           at: .
       - run: make -C docs upload-search-index
 
+  check-docs-links:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - attach_workspace:
+          at: .
+      - run:
+          command: make -C docs check-links
+
   publish-docs:
     docker:
       - image: hashicorp/terraform:light
@@ -2824,6 +2840,14 @@ workflows:
           requires:
             - build-docs
           context: determined-production
+          filters:
+            branches:
+              only:
+                - main
+
+      - check-docs-links:
+          requires:
+            - build-docs
           filters:
             branches:
               only:
