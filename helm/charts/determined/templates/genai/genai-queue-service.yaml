@@ -13,7 +13,7 @@ spec:
   - port: {{ required "A valid Values.genai.messageQueuePort entry required!" .Values.genai.messageQueuePort }}
     targetPort: {{ .Values.genai.messageQueuePort }}
     protocol: TCP
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: genai-{{ .Release.Name }}
 {{ end }}
