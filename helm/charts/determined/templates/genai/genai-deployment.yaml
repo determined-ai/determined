@@ -25,10 +25,8 @@ spec:
       - name: genai-{{ .Release.Name }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
-        # image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
-        # imagePullPolicy: "Always"
-        image: lore_backend:latest
-        imagePullPolicy: "Never"
+        image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
+        imagePullPolicy: "Always"
         env:
           - name: DET_MASTER
             value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}

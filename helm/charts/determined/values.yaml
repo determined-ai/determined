@@ -158,10 +158,8 @@ db:
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
   storageSize: 30Gi
-  cpuRequest: 100m
-  memRequest: 1Gi
-  # cpuRequest: 2
-  # memRequest: 8Gi
+  cpuRequest: 2
+  memRequest: 8Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -244,10 +242,8 @@ maxSlotsPerPod:
   # cpu: 7
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 100m
-masterMemRequest: 1Gi
-# masterCpuRequest: 2
-# masterMemRequest: 8Gi
+masterCpuRequest: 2
+masterMemRequest: 8Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -340,58 +336,5 @@ telemetry:
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
   - pool_name: default
-  - pool_name: a100
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
-
-## Configure GenAI Deployment
-genai:
-  ## Version of GenAI to use. If unset, GenAI will not be deployed
-  version: "0.1.1-rc5"
-  
-  ## Port for GenAI to use
-  port: 9011
-  
-  ## Secret to pull the GenAI image
-  # imagePullSecretName:
-
-  ## GenAI pod memory request
-  memRequest: 1Gi
-
-  ## GenAI pod cpu request
-  cpuRequest: 100m
-
-  ## GenAI pod memory limit
-  # memLimit: 1Gi
-
-  ## GenAI pod cpu limit
-  # cpuLimit: 2
-
-  ## PVC Name for the shared file system for GenAI.
-  ## Note: Either `sharedPVCName` or `generatedPVC.storageSize` (to
-  ## generate a new PVC) is required for GenAI deployment
-  # sharedPVCName:
-
-  ## Spec for the generated PVC for GenAI
-  ## Note: In order to generate a shared PVC, you will need access to a
-  ## StorageClass that can provide a ReadWriteMany volume
-  generatedPVC:
-    ## Storage class name for the generated PVC
-    # storageClassName: standard-rwx
-    storageClassName: standard
-
-    ## Size of the generated PVC
-    storageSize: 100Gi
-
-  ## Extra Resource Pool Metadata is hardcoded information about the
-  ## GPUs available to the resource pools. This information
-  ## is not provided in k8s so we provide it directly.
-  ## Note: All resource pools defined here need to also be reflected in
-  ## the .Values.resourcePools.
-  extraResourcePoolMetadata:
-    a100:
-      gpu_type: A100
-      max_agents: 3
-    # v100:
-    #   gpu_type: V100
-    #   max_agents: 2
