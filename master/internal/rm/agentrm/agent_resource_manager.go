@@ -133,7 +133,7 @@ func (a *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.Resource
 }
 
 // DeleteJob implements rm.ResourceManager.
-func (*ResourceManager) DeleteJob(model.JobID) (sproto.DeleteJobResponse, error) {
+func (*ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error) {
 	return sproto.EmptyDeleteJobResponse(), nil
 }
 

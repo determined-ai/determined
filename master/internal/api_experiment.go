@@ -501,7 +501,9 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			// delete jobs per experiment
 			// TODO (multirm for dispatcherrm): since we're not passing in an RM name here
 			// you'll have to check ALL RMs and all RPs for the job.
-			resp, err := a.m.rm.DeleteJob(exp.JobID)
+			resp, err := a.m.rm.DeleteJob(sproto.DeleteJob{
+				JobID: exp.JobID,
+			})
 			if err != nil {
 				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
 				return err

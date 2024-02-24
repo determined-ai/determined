@@ -161,7 +161,7 @@ func (k *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.Resource
 }
 
 // DeleteJob implements rm.ResourceManager.
-func (ResourceManager) DeleteJob(model.JobID) (sproto.DeleteJobResponse, error) {
+func (ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error) {
 	// For now, there is nothing to clean up in k8s.
 	return sproto.EmptyDeleteJobResponse(), nil
 }

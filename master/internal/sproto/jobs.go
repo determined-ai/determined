@@ -34,6 +34,12 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
+// DeleteJob instructs the RM to clean up all metadata associated with a job external to
+// Determined.
+type DeleteJob struct {
+	JobID model.JobID
+}
+
 // DeleteJobResponse returns to the caller if the cleanup was successful or not.
 type DeleteJobResponse struct {
 	Err <-chan error

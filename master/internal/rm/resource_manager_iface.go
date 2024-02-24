@@ -15,7 +15,7 @@ type ResourceManager interface {
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
 	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
-	DeleteJob(jobID model.JobID) (sproto.DeleteJobResponse, error)
+	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
 
 	// Scheduling related stuff
