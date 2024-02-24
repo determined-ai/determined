@@ -155,6 +155,7 @@ func (c *Command) Start(ctx context.Context) error {
 			IsUserVisible:       true,
 			Name:                c.Config.Description,
 			SlotsNeeded:         c.Config.Resources.Slots,
+			ResourceManager:     c.Config.Resources.ResourceManager,
 			ResourcePool:        c.Config.Resources.ResourcePool,
 			FittingRequirements: sproto.FittingRequirements{SingleAgent: true},
 			ProxyPorts:          sproto.NewProxyPortConfig(c.GenericCommandSpec.ProxyPorts(), c.taskID),

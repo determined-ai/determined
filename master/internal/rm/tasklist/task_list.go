@@ -102,20 +102,6 @@ func (l *TaskList) RemoveAllocation(id model.AllocationID) {
 	l.taskByID[id].State = sproto.SchedulingStateQueued
 }
 
-// ForResourcePool returns a new TaskList filtered by resource pool.
-func (l *TaskList) ForResourcePool(name string) *TaskList {
-	newTaskList := New()
-	for it := l.Iterator(); it.Next(); {
-		task := it.Value()
-		if task.ResourcePool != name {
-			continue
-		}
-
-		newTaskList.AddTask(it.Value())
-	}
-	return newTaskList
-}
-
 // TaskSummary returns a summary for an allocation in the TaskList.
 func (l *TaskList) TaskSummary(
 	id model.AllocationID,
@@ -171,15 +157,16 @@ func newTaskSummary(
 		}
 	}
 	summary := sproto.AllocationSummary{
-		TaskID:         request.TaskID,
-		AllocationID:   request.AllocationID,
-		Name:           request.Name,
-		RegisteredTime: request.RequestTime,
-		ResourcePool:   request.ResourcePool,
-		SlotsNeeded:    request.SlotsNeeded,
-		Resources:      resourcesSummaries,
-		SchedulerType:  schedulerType,
-		ProxyPorts:     request.ProxyPorts,
+		TaskID:          request.TaskID,
+		AllocationID:    request.AllocationID,
+		Name:            request.Name,
+		RegisteredTime:  request.RequestTime,
+		ResourceManager: request.ResourceManager,
+		ResourcePool:    request.ResourcePool,
+		SlotsNeeded:     request.SlotsNeeded,
+		Resources:       resourcesSummaries,
+		SchedulerType:   schedulerType,
+		ProxyPorts:      request.ProxyPorts,
 	}
 
 	if group, ok := groups[request.JobID]; ok {

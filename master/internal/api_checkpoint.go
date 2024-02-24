@@ -374,7 +374,7 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 			for _, g := range groups {
 				err = runCheckpointGCTask(
-					a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
+					exps[i].Config.ResourceManager, a.m.rm, a.m.db, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
 					exps[i].Config, g.StorageID, g.Checkpoints, req.CheckpointGlobs,
 					false, agentUserGroup, curUser, nil,
 				)

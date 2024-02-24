@@ -29,6 +29,7 @@ import (
 const fullDeleteGlob = "**/*"
 
 func runCheckpointGCForCheckpoints(
+	rmName string,
 	rm rm.ResourceManager,
 	db *db.PgDB,
 	jobID model.JobID,
@@ -54,7 +55,7 @@ func runCheckpointGCForCheckpoints(
 		wg.Go(func() error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
 			if err := runCheckpointGCTask(
-				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
+				rmName, rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
 				expID, legacyConfig, g.StorageID, g.Checkpoints,
 				checkpointGlobs, deleteTensorboards,
 				agentUserGroup, owner, logCtx,
@@ -74,6 +75,7 @@ func runCheckpointGCForCheckpoints(
 }
 
 func runCheckpointGCTask(
+	rmName string,
 	rm rm.ResourceManager,
 	pgDB *db.PgDB,
 	taskID model.TaskID,
@@ -99,7 +101,12 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	rp, err := rm.ResolveResourcePool("", -1, 0)
+	resolvedRM, rp, err := rm.ResolveResourcePool(rmName,
+		sproto.ResolveResourcesRequest{
+			ResourcePool: "",
+			Workspace:    -1,
+			Slots:        0,
+		})
 	if err != nil {
 		return fmt.Errorf("resolving resource pool: %w", err)
 	}
@@ -107,7 +114,7 @@ func runCheckpointGCTask(
 	// t.Base is just a shallow copy of the m.taskSpec on the master, so
 	// use caution when mutating it.
 	tcd, err := rm.TaskContainerDefaults(
-		rp,
+		resolvedRM, rp,
 		config.GetMasterConfig().TaskContainerDefaults)
 	if err != nil {
 		return fmt.Errorf("creating task container defaults: %v", err)
@@ -182,7 +189,8 @@ func runCheckpointGCTask(
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: true,
 		},
-		ResourcePool: rp,
+		ResourceManager: resolvedRM,
+		ResourcePool:    rp,
 	}, pgDB, rm, gcSpec, onExit)
 	if err != nil {
 		return err

@@ -489,7 +489,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 			}
 			if len(checkpoints) > 0 {
 				if err := runCheckpointGCForCheckpoints(
-					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+					exp.Config.ResourceManager, a.m.rm, a.m.db, exp.JobID, exp.StartTime,
 					&taskSpec, exp.ID, exp.Config, checkpoints,
 					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
 				); err != nil {
@@ -1288,7 +1288,7 @@ func (a *apiServer) PatchExperiment(
 
 			go func() {
 				if err := runCheckpointGCForCheckpoints(
-					a.m.rm, a.m.db, modelExp.JobID, modelExp.StartTime,
+					modelExp.Config.ResourceManager, a.m.rm, a.m.db, modelExp.JobID, modelExp.StartTime,
 					&taskSpec, modelExp.ID, modelExp.Config, checkpoints,
 					[]string{fullDeleteGlob}, true, agentUserGroup, user, nil,
 				); err != nil {
@@ -3031,7 +3031,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 
 	var uuidList []uuid.UUID
 	err = runCheckpointGCTask(
-		a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
+		exp.Config.ResourceManager, a.m.rm, a.m.db, model.NewTaskID(), exp.JobID, exp.StartTime, *a.m.taskSpec, exp.ID,
 		exp.Config, nil, uuidList, nil, true, agentUserGroup, curUser,
 		nil,
 	)
