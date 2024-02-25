@@ -31,7 +31,7 @@ func (c *Command) ToV1Job() (*jobv1.Job, error) {
 	}
 
 	j.IsPreemptible = false
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &c.Config))
+	j.Priority = int32(config.ReadPriority(c.Config.Resources.ResourceManager, j.ResourcePool, &c.Config))
 	j.Weight = config.ReadWeight(j.ResourcePool, &c.Config)
 
 	j.ResourcePool = c.Config.Resources.ResourcePool
