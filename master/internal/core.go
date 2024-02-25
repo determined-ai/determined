@@ -53,6 +53,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
@@ -1140,19 +1141,14 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	// TODO(multirm) do multiple resource managers.
-	r := m.config.ResourceManagers()[0]
-	m.rm = rm.New(
-		m.db,
-		m.echo,
-		r,
+	m.rm = multirm.New(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
 		},
-		cert,
-	)
+		cert)
+
 	jobservice.SetDefaultService(m.rm)
 
 	tasksGroup := m.echo.Group("/tasks")

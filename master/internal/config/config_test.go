@@ -588,7 +588,7 @@ func TestRMPreemptionStatus(t *testing.T) {
 		err := yaml.Unmarshal([]byte(configRaw), unmarshaled, yaml.DisallowUnknownFields)
 		assert.NilError(t, unmarshaled.Resolve())
 		assert.NilError(t, err)
-		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled, rpName), expected)
+		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled.ResourceManagers()[0], rpName), expected)
 	}
 
 	testCases := []struct {
