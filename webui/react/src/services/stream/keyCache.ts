@@ -4,8 +4,8 @@ export function decode_keys(keys: string): Array<number> {
     return retval;
   }
   for (const key of keys.split(',')) {
-    if (key.includes('-')) {
-      const [start, end] = key.split('-');
+    const [start, end] = key.split('-', 2);
+    if (end) {
       for (let i = Number(start); i <= Number(end); i++) {
         retval.push(i);
       }

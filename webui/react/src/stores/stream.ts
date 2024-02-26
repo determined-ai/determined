@@ -40,8 +40,10 @@ class StreamStore {
     this.#stream = new Stream(socketUrl.toString(), onUpsert, onDelete, isLoaded);
   }
 
-  public on(sub: StreamSubscriber) {
+  public on(sub: StreamSubscriber): () => void {
     this.#subscribers[sub.id()] = sub;
+
+    return () => this.#closeSocket.bind(this);
   }
 
   public off(key: Streamable) {
@@ -52,7 +54,7 @@ class StreamStore {
     this.#stream.subscribe(spec, id);
   }
 
-  public closeSocket() {
+  #closeSocket() {
     this.#subscribers = {};
     this.#stream.close();
   }
