@@ -185,6 +185,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"searcherMetricsVal":   "r.searcher_metric_val",
 		"externalExperimentId": "e.external_experiment_id",
 		"externalRunId":        "r.external_run_id",
+		"experimentId":         "e.id",
 	}
 	sortByMap := map[string]string{
 		"asc":  "ASC",

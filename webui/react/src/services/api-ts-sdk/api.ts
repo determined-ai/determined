@@ -426,193 +426,6 @@ export interface RuntimeStreamError {
     details?: Array<ProtobufAny>;
 }
 /**
- * Flat run respresentation.
- * @export
- * @interface Runv1FlatRun
- */
-export interface Runv1FlatRun {
-    /**
-     * The id of the run.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    id: number;
-    /**
-     * The time the run was started.
-     * @type {Date | DateString}
-     * @memberof Runv1FlatRun
-     */
-    startTime: Date | DateString;
-    /**
-     * The time the run ended.
-     * @type {Date | DateString}
-     * @memberof Runv1FlatRun
-     */
-    endTime?: Date | DateString;
-    /**
-     * The current state of the run(trial).
-     * @type {Trialv1State}
-     * @memberof Runv1FlatRun
-     */
-    state: Trialv1State;
-    /**
-     * The tags of the run.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    tags: string;
-    /**
-     * The total size of checkpoints.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    checkpointSize: string;
-    /**
-     * The count of checkpoints.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    checkpointCount: number;
-    /**
-     * The type of searcher for the experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    searcherType?: string;
-    /**
-     * The searcher metric name for the experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    searcherMetric?: string;
-    /**
-     * Signed searcher metrics value.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    searcherMetricValue?: number;
-    /**
-     * The id of external run
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    externalRunId?: number;
-    /**
-     * Trial hyperparameters.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    hyperparameters?: string;
-    /**
-     * summary metrics.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    metrics?: string;
-    /**
-     * The id of the experiment linked to the run.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    experimentId?: number;
-    /**
-     * The id of the user who created the parent project.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    ownerId?: number;
-    /**
-     * Original id of a forked or continued experiment.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    forkedFrom?: number;
-    /**
-     * The id of external experiment
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    externalExperimentId?: number;
-    /**
-     * The resource pool the experiment was created in.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    resourcePool?: string;
-    /**
-     * The current progress of a running experiment.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    progress?: number;
-    /**
-     * The description of the experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    description?: string;
-    /**
-     * The experiment name.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    experimentName?: string;
-    /**
-     * The display name of the user that created the experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    displayName?: string;
-    /**
-     * The username of the user that created the experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    username?: string;
-    /**
-     * Time in seconds which experiment ran or has been running.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    duration?: number;
-    /**
-     * The id of the project associated with this experiment.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    projectId?: number;
-    /**
-     * The name of the project associated with this experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    projectName?: string;
-    /**
-     * The id of the workspace associated with this experiment.
-     * @type {number}
-     * @memberof Runv1FlatRun
-     */
-    workspaceId?: number;
-    /**
-     * The name of the workspace associated with this experiment.
-     * @type {string}
-     * @memberof Runv1FlatRun
-     */
-    workspaceName?: string;
-    /**
-     * The archived status of the parent project (can be inherited from workspace).
-     * @type {boolean}
-     * @memberof Runv1FlatRun
-     */
-    parentArchived?: boolean;
-    /**
-     * Unmanaged experiments are detached.
-     * @type {boolean}
-     * @memberof Runv1FlatRun
-     */
-    unmanaged?: boolean;
-}
-/**
  * 
  * @export
  * @interface StreamResultOfV1ExpMetricNamesResponse
@@ -3339,6 +3152,193 @@ export const V1FittingPolicy = {
     PBS: 'FITTING_POLICY_PBS',
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
+/**
+ * Flat run respresentation.
+ * @export
+ * @interface V1FlatRun
+ */
+export interface V1FlatRun {
+    /**
+     * The id of the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    id: number;
+    /**
+     * The time the run was started.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    startTime: Date | DateString;
+    /**
+     * The time the run ended.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    endTime?: Date | DateString;
+    /**
+     * The current state of the run(trial).
+     * @type {Trialv1State}
+     * @memberof V1FlatRun
+     */
+    state: Trialv1State;
+    /**
+     * The tags of the run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    tags: string;
+    /**
+     * The total size of checkpoints.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    checkpointSize: string;
+    /**
+     * The count of checkpoints.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    checkpointCount: number;
+    /**
+     * The type of searcher for the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    searcherType?: string;
+    /**
+     * The searcher metric name for the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    searcherMetric?: string;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    searcherMetricValue?: number;
+    /**
+     * The id of external run
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    externalRunId?: number;
+    /**
+     * Trial hyperparameters.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    hyperparameters?: string;
+    /**
+     * summary metrics.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    metrics?: string;
+    /**
+     * The id of the experiment linked to the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    experimentId?: number;
+    /**
+     * The id of the user who created the parent project.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    ownerId?: number;
+    /**
+     * Original id of a forked or continued experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    forkedFrom?: number;
+    /**
+     * The id of external experiment
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    externalExperimentId?: number;
+    /**
+     * The resource pool the experiment was created in.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    resourcePool?: string;
+    /**
+     * The current progress of a running experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    progress?: number;
+    /**
+     * The description of the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    description?: string;
+    /**
+     * The experiment name.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    experimentName?: string;
+    /**
+     * The display name of the user that created the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    displayName?: string;
+    /**
+     * The username of the user that created the experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    username?: string;
+    /**
+     * Time in seconds which experiment ran or has been running.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    duration?: number;
+    /**
+     * The id of the project associated with this experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    projectId?: number;
+    /**
+     * The name of the project associated with this experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    projectName?: string;
+    /**
+     * The id of the workspace associated with this experiment.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    workspaceId?: number;
+    /**
+     * The name of the workspace associated with this experiment.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    workspaceName?: string;
+    /**
+     * The archived status of the parent project (can be inherited from workspace).
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    parentArchived?: boolean;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    unmanaged?: boolean;
+}
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
  * @export
@@ -9448,10 +9448,10 @@ export interface V1SearchRolesAssignableToScopeResponse {
 export interface V1SearchRunsResponse {
     /**
      * The list of returned runs.
-     * @type {Array<Runv1FlatRun>}
+     * @type {Array<V1FlatRun>}
      * @memberof V1SearchRunsResponse
      */
-    runs: Array<Runv1FlatRun>;
+    runs: Array<V1FlatRun>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}

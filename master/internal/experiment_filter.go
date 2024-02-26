@@ -157,11 +157,12 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"searcherMetricsVal":   "r.searcher_metric_value",
 		"externalExperimentId": "e.external_experiment_id",
 		"externalTrialId":      "r.external_run_id",
+		"experimentId":         "e.id",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
 	if !exists {
-		return "", fmt.Errorf("invalid experiment column %s", columnName)
+		return "", fmt.Errorf("invalid run column %s", columnName)
 	}
 	return col, nil
 }
