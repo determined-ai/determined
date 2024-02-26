@@ -31,7 +31,8 @@ stages:
           namespace: $KUBERNETES_NAMESPACE
           slot_type: "cpu"
           max_slots_per_pod: 1
-          slot_resource_requests.cpu: 1
+          slot_resource_requests:
+            cpu: 1
           default_aux_resource_pool: default
           default_compute_resource_pool: default
           _master_ip: $MASTER_IP_FROM_INTERNAL
