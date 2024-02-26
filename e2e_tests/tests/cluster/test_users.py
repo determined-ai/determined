@@ -584,7 +584,6 @@ def test_link_without_agent_user() -> None:
 
 @pytest.mark.e2e_cpu
 def test_non_root_shell(tmp_path: pathlib.Path) -> None:
-    # XXX: failing because prep_conatiner has login_with_cache(), which fails reading /.config
     sess = create_linked_user(1234, "someuser", 1234, "somegroup")
     exp = "someuser:1234:somegroup:1234"
     cmd = "echo; echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"

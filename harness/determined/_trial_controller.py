@@ -71,7 +71,6 @@ class TrialController(metaclass=abc.ABCMeta):
         self.workloads = workloads
 
         if hasattr(context._core.train, "_session"):
-            # XXX: stealing this session feels _horrible_
             sess = context._core.train._session
             self.prof = _profiler_agent_from_env(
                 sess, env, context.distributed.rank, context.distributed.local_rank
