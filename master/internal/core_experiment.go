@@ -21,7 +21,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/templates"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -262,10 +261,9 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
+func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExperimentRequest, owner *model.User) (
 	*model.Experiment, []byte, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
-	ctx := context.TODO()
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
@@ -363,7 +361,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		}
 	}
 
-	token, createSessionErr := user.StartSession(ctx, owner)
+	token, createSessionErr := getTaskSessionToken(ctx, owner)
 	if createSessionErr != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
