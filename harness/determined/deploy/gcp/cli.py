@@ -1,4 +1,5 @@
 import argparse
+import getpass
 import os
 import sys
 from pathlib import Path
@@ -181,6 +182,24 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         gcp.dry_run(det_configs, env, variables_to_exclude)
         print("Printed plan. To execute, run `det deploy gcp`")
         return
+
+    # If local tf state exists this cluster isn't new anyway, so we can just check the bucket.
+    if (
+        hasattr(args, "tf_state_gcs_bucket_name")
+        and args.tf_state_gcs_bucket_name
+        and not gcp.cluster_exists(
+            args.tf_state_gcs_bucket_name, det_configs["project_id"], det_configs["cluster_id"]
+        )
+    ):
+        initial_user_password = args.initial_user_password
+        if not initial_user_password:
+            initial_user_password = getpass.getpass(
+                "Please enter an initial password for the built-in `determined` and `admin` users: "
+            )
+            initial_user_password_check = getpass.getpass("Enter the password again: ")
+            if initial_user_password != initial_user_password_check:
+                raise ValueError("passwords did not match")
+        det_configs["initial_user_password"] = initial_user_password
 
     print("Starting Determined deployment on GCP...\n")
     gcp.deploy(det_configs, env, variables_to_exclude)
@@ -572,6 +591,11 @@ args_description = Cmd(
                             default=None,
                             help="apply label to master instance in key=value format, "
                             "can be repeated",
+                        ),
+                        Arg(
+                            "--initial-user-password",
+                            type=str,
+                            help="Password for the default 'determined' and 'admin' users.",
                         ),
                     ],
                 ),

@@ -226,6 +226,11 @@ Parameters:
     Description: preexisting EFS ID to mount
     Default: ""
 
+  InitialUserPassword:
+    Type: String
+    Description: Default password for the built-in 'determined' and 'admin' user.
+    Default: ""
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -284,12 +289,14 @@ Parameters:
             cpu_slots_allowed: true
             {{- toYaml .resource_pools.aws | nindent 6}}
 
-      {{ if eq .scheme "https" }}
+
       security:
+        initial_user_password: {{ .security.initial_user_password }}
+        {{- if eq .scheme "https" }}
         tls:
           cert: /etc/determined/master.crt
           key: /etc/determined/master.key
-      {{ end }}
+        {{- end }}
 
       {{ if and (ne .genai_version nil) (ne .genai_version "") }}
       feature_switches:
@@ -927,6 +934,9 @@ Resources:
             bind_mounts:
               - host_path: /mnt/efs
                 container_path: /run/determined/workdir/shared_fs
+            
+            security:
+              initial_user_password: "${InitialUserPassword}"
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc
