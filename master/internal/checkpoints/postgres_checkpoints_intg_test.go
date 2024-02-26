@@ -377,6 +377,7 @@ func TestUpdateCheckpointStateToDeleted(t *testing.T) {
 	ckpt1 := uuid.New()
 	checkpoint1 := db.MockModelCheckpoint(ckpt1, allocation)
 	err := db.AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
+	require.NoError(t, err)
 
 	ckpt2 := uuid.New()
 	checkpoint2 := db.MockModelCheckpoint(ckpt2, allocation)
@@ -404,11 +405,9 @@ func TestUpdateCheckpointStateToDeleted(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 0, numDStateCheckpoints)
-
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
-
 	// Verify that checkpoints only get deleted when their state is 'DELETED', indicating that all
 	// corresponding checkpoint files were thoroughly removed from storage.
 	ctx := context.Background()
@@ -422,10 +421,10 @@ func TestDeleteCheckpoints(t *testing.T) {
 	ckpt1 := uuid.New()
 	checkpoint1 := db.MockModelCheckpoint(ckpt1, allocation)
 	err := db.AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
-
 	require.NoError(t, err)
 
 	_, err = db.Bun().NewDelete().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Exec(ctx)
+	require.NoError(t, err)
 
 	// Verify that checkpoint wasn't deleted since its state is not 'DELETED'.
 	ct, err := db.Bun().NewSelect().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Count(ctx)
@@ -437,12 +436,12 @@ func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = db.Bun().NewDelete().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Exec(ctx)
+	require.NoError(t, err)
 
 	// Verify that checkpoint was deleted once its state was marked 'DELETED'.
 	ct, err = db.Bun().NewSelect().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 0, ct)
-
 }
 
 func BenchmarkUpdateCheckpointSize(b *testing.B) {
