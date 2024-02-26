@@ -1054,7 +1054,7 @@ commands:
           name: Create GCS checkpoint bucket
       - run: 
           command: |
-            echo "export MASTER_IP_FROM_INTERNAL=\"localhost\"" >> $BASH_ENV
+            echo "export MASTER_IP_FROM_INTERNAL=\"$(wget -qO- http://ipecho.net/plain)\"" >> $BASH_ENV
             echo "export MASTER_PORT_FROM_INTERNAL=8443" >> $BASH_ENV
             echo "export MASTER_SCHEME=\"https\"" >> $BASH_ENV
           name: Set master address
@@ -2677,7 +2677,7 @@ jobs:
       # - set-google-application-credentials
       - run-e2e-tests:
           mark: <<parameters.mark>>
-          master-host: ${MASTER_IP_FROM_INTERNAL}
+          master-host: localhost
           master-scheme: ${MASTER_SCHEME:-http}
           master-port: ${MASTER_PORT_FROM_INTERNAL:-8080}
           master-cert: ${MASTER_TLS_CERT}
