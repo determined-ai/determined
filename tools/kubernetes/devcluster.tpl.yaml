@@ -5,7 +5,7 @@ stages:
       config_file:
         port: $MASTER_PORT_FROM_INTERNAL
         db:
-          host: localhost
+          host: 127.0.0.1
           port: 5432
           password: postgres
           user: postgres
