@@ -21,12 +21,12 @@ import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/T
 import UserBadge from 'components/UserBadge';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import { getGroup, getGroups } from 'services/api';
+import { getGroup, getGroupRoles, getGroups } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
-import { DetailedUser, User } from 'types';
+import { DetailedUser, User, UserRole } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -66,12 +66,27 @@ const GroupActionDropdown = ({
     fetchGroups();
     expanded && group.group.groupId && fetchGroup(group.group.groupId);
   };
+  const [groupRoles, setGroupRoles] = useState<UserRole[]>([]);
+  const { rbacEnabled } = useObservable(determinedStore.info);
+
   const EditGroupModal = useModal(CreateGroupModalComponent);
   const AddUsersToGroupModal = useModal(AddUsersToGroupModalComponent);
   const DeleteGroupModal = useModal(DeleteGroupModalComponent);
 
+  const fetchGroupRoles = useCallback(async () => {
+    if (group?.group.groupId && rbacEnabled) {
+      try {
+        const roles = await getGroupRoles({ groupId: group.group.groupId });
+        const groupRoles = roles.filter((r) => r.scopeCluster);
+        setGroupRoles(groupRoles);
+      } catch (e) {
+        handleError(e, { publicSubject: "Unable to fetch this group's roles." });
+      }
+    }
+  }, [group, rbacEnabled]);
+
   const handleDropdown = useCallback(
-    (key: string) => {
+    async (key: string) => {
       switch (key) {
         case MenuKey.AddMembers:
           AddUsersToGroupModal.open();
@@ -80,11 +95,12 @@ const GroupActionDropdown = ({
           DeleteGroupModal.open();
           break;
         case MenuKey.Edit:
+          await fetchGroupRoles();
           EditGroupModal.open();
           break;
       }
     },
-    [AddUsersToGroupModal, DeleteGroupModal, EditGroupModal],
+    [AddUsersToGroupModal, DeleteGroupModal, EditGroupModal, fetchGroupRoles],
   );
 
   return (
@@ -93,7 +109,7 @@ const GroupActionDropdown = ({
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <AddUsersToGroupModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
-      <EditGroupModal.Component group={group} onClose={onFinishEdit} />
+      <EditGroupModal.Component group={group} groupRoles={groupRoles} onClose={onFinishEdit} />
       <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
     </div>
   );
