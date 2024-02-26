@@ -43,6 +43,7 @@ COMMON_TEMPLATE_PARAMETER_KEYS = [
     constants.cloudformation.DOCKER_PASS,
     constants.cloudformation.NOTEBOOK_TIMEOUT,
     constants.cloudformation.GENAI_VERSION,
+    constants.cloudformation.INITIAL_USER_PASSWORD,
 ]  # type: List[str]
 
 
@@ -73,6 +74,14 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
         pass
+
+    def exists(self) -> bool:
+        stack_name = self.parameters[constants.cloudformation.CLUSTER_ID]
+        boto3_session = self.parameters[constants.cloudformation.BOTO3_SESSION]
+        return aws.stack_exists(stack_name, boto3_session)
+
+    def add_parameters(self, parameters: Dict[str, Any]) -> None:
+        self.parameters.update(parameters)
 
     def wait_for_master(self, timeout: int = 5 * 60) -> None:
         cert = None

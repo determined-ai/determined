@@ -1,5 +1,6 @@
 import argparse
 import base64
+import getpass
 import json
 import re
 from pathlib import Path
@@ -295,6 +296,20 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     if not args.no_preflight_checks:
         check_quotas(det_configs, deployment_object)
+
+    if not deployment_object.exists():
+        initial_user_password = args.initial_user_password
+        if not initial_user_password:
+            initial_user_password = getpass.getpass(
+                "Please enter a password for the built-in `determined` and `admin` users: "
+            )
+            initial_user_password_check = getpass.getpass("Enter the password again: ")
+            if initial_user_password != initial_user_password_check:
+                raise ValueError("passwords did not match")
+
+        deployment_object.add_parameters(
+            {constants.cloudformation.INITIAL_USER_PASSWORD: initial_user_password}
+        )
 
     print("Starting Determined Deployment")
     try:
@@ -686,6 +701,11 @@ args_description = Cmd(
                     type=str,
                     help="Specifies the version of GenAI to install. The value must be a valid"
                     + " GenAI tag available on Docker Hub.",
+                ),
+                Arg(
+                    "--initial-user-password",
+                    type=str,
+                    help="Password for the default 'determined' and 'admin' users.",
                 ),
             ],
         ),

@@ -112,12 +112,12 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 }
 
 // Migrate runs the migrations from the specified directory URL.
-func (db *PgDB) Migrate(migrationURL string, actions []string) error {
+func (db *PgDB) Migrate(migrationURL string, actions []string) (isNew bool, err error) {
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
 	// with pgx, so we use a one-off go-pg/pg connection.
 	pgOpts, err := makeGoPgOpts(db.URL)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	pgConn := pg.Connect(pgOpts)
@@ -129,7 +129,7 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 
 	tx, err := pgConn.Begin()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	defer func() {
@@ -147,15 +147,15 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 
 	_, err = tx.Exec("SELECT pg_advisory_xact_lock(?)", MigrationLockID)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
-		return errors.Wrap(err, "error upgrading migration metadata")
+		return false, errors.Wrap(err, "error upgrading migration metadata")
 	}
 
 	if err = tx.Commit(); err != nil {
-		return err
+		return false, err
 	}
 
 	log.Infof("running DB migrations from %s; this might take a while...", migrationURL)
@@ -163,21 +163,21 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	re := regexp.MustCompile(`file://(.+)`)
 	match := re.FindStringSubmatch(migrationURL)
 	if len(match) != 2 {
-		return fmt.Errorf("failed to parse migrationsURL: %s", migrationURL)
+		return false, fmt.Errorf("failed to parse migrationsURL: %s", migrationURL)
 	}
 
 	collection := migrations.NewCollection()
 	collection.DisableSQLAutodiscover(true)
 	if err = collection.DiscoverSQLMigrations(match[1]); err != nil {
-		return err
+		return false, err
 	}
 	if len(collection.Migrations()) == 0 {
-		return errors.New("failed to discover any migrations")
+		return false, errors.New("failed to discover any migrations")
 	}
 
 	oldVersion, newVersion, err := collection.Run(pgConn, actions...)
 	if err != nil {
-		return errors.Wrap(err, "error applying migrations")
+		return false, errors.Wrap(err, "error applying migrations")
 	}
 
 	if oldVersion == newVersion {
@@ -187,5 +187,5 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) error {
 	}
 
 	log.Info("DB migrations completed")
-	return nil
+	return oldVersion == 0, nil
 }

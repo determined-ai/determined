@@ -144,3 +144,6 @@ variable "master_config_template" {
 
 variable "labels" {
 }
+
+variable "initial_user_password" {
+}

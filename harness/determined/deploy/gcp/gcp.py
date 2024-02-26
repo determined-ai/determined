@@ -383,6 +383,19 @@ def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) ->
             raise
 
 
+def cluster_exists(bucket_name: str, project_id: str, cluster_id: str) -> bool:
+    set_validate_gcp_credentials()
+    storage_client = storage.Client(project=project_id)
+    blobs = storage_client.list_blobs(bucket_name)
+    for blob in blobs:
+        name = blob.name[:-16]
+        json_data_string = blob.download_as_string()
+        json_data = json.loads(json_data_string)
+        if json_data.get("resources") and name == cluster_id:
+            return True
+    return False
+
+
 def list_clusters(bucket_name: str, project_id: str, print_format: str = "table") -> None:
     set_validate_gcp_credentials()
     storage_client = storage.Client(project=project_id)

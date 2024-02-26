@@ -2,7 +2,7 @@ import logging
 import pathlib
 import tempfile
 import time
-from typing import Iterator, List, Optional
+from typing import List, Optional
 
 import pytest
 from urllib3 import connectionpool
@@ -28,13 +28,6 @@ def check_trial_state(
         return True
     exp.print_trial_logs(sess, trial.id)
     return False
-
-
-@pytest.fixture
-def client_login() -> Iterator[None]:
-    client.login(master=conf.make_master_url())
-    yield
-    client._determined = None
 
 
 @pytest.mark.e2e_cpu

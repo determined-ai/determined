@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 import subprocess
 import time
@@ -96,6 +97,12 @@ def pytest_addoption(parser: _pytest.config.argparsing.Parser) -> None:
     )
     parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
     parser.addoption("--no-compare-stats", action="store_true", help="Disable usage stats check")
+    parser.addoption(
+        "--user-password",
+        action="store",
+        default=os.environ.get("INITIAL_USER_PASSWORD", ""),
+        help="Password for the admin and determined users",
+    )
 
 
 def pytest_configure(config: _pytest.config.Config) -> None:
@@ -110,6 +117,7 @@ def pytest_configure(config: _pytest.config.Config) -> None:
     conf.MASTER_IP = config.getoption("--master-host")
     conf.MASTER_PORT = config.getoption("--master-port")
     conf.DET_VERSION = config.getoption("--det-version")
+    conf.USER_PASSWORD = config.getoption("--user-password")
 
 
 @pytest.fixture(scope="session", autouse=True)
