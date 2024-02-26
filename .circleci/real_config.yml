@@ -1033,6 +1033,7 @@ commands:
             sudo pg_ctlcluster 12 main start
             sudo su - postgres -c "psql -c \"
                 CREATE ROLE circleci WITH SUPERUSER LOGIN PASSWORD 'postgres';
+                ALTER ROLE postgres WITH PASSWORD 'postgres';
             \""
             sudo su - postgres -c "createdb determined"
           name: Setup postgres server
@@ -1053,9 +1054,9 @@ commands:
           name: Create GCS checkpoint bucket
       - run: 
           command: |
-            MASTER_IP_FROM_INTERNAL=$(wget -qO- http://ipecho.net/plain)
-            echo "export MASTER_IP_FROM_INTERNAL=\"${MASTER_IP_FROM_INTERNAL}\"" >> $BASH_ENV
+            echo "export MASTER_IP_FROM_INTERNAL=\"localhost\"" >> $BASH_ENV
             echo "export MASTER_PORT_FROM_INTERNAL=8443" >> $BASH_ENV
+            echo "export MASTER_SCHEME=\"https\"" >> $BASH_ENV
           name: Set master address
       - run: 
           command: envsubst < tools/kubernetes/devcluster.tpl.yaml > .circleci/devcluster/shared-cluster.devcluster.yaml
