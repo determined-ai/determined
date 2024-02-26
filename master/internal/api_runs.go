@@ -92,7 +92,7 @@ func (a *apiServer) SearchRuns(
 			return nil, err
 		}
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q, true)
+			_, err = efr.toSQL(q)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {
@@ -153,8 +153,8 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
 		Column("e.unmanaged").
 		ColumnExpr("p.name AS project_name").
-		Join("JOIN experiments AS e ON r.experiment_id=e.id").
-		Join("JOIN run_id_task_id AS rt ON r.id=rt.run_id").
+		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("LEFT JOIN run_id_task_id AS rt ON r.id=rt.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
@@ -205,7 +205,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 			param := strings.ReplaceAll(paramDetail[0], "'", "")
 			hps := strings.ReplaceAll(strings.TrimPrefix(param, "hp."), ".", "'->'")
 			runQuery.OrderExpr(
-				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
+				fmt.Sprintf("r.hparams->'%s' %s", hps, sortDirection))
 		case strings.Contains(paramDetail[0], "."):
 			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
 			if err != nil {

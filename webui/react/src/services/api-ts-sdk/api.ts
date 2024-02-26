@@ -3163,13 +3163,13 @@ export interface V1FlatRun {
      * @type {number}
      * @memberof V1FlatRun
      */
-    id?: number;
+    id: number;
     /**
      * The time the run was started.
      * @type {Date | DateString}
      * @memberof V1FlatRun
      */
-    startTime?: Date | DateString;
+    startTime: Date | DateString;
     /**
      * The time the run ended.
      * @type {Date | DateString}
@@ -3181,25 +3181,25 @@ export interface V1FlatRun {
      * @type {Trialv1State}
      * @memberof V1FlatRun
      */
-    state?: Trialv1State;
+    state: Trialv1State;
     /**
      * The tags of the run.
      * @type {string}
      * @memberof V1FlatRun
      */
-    tags?: string;
+    tags: string;
     /**
      * The total size of checkpoints.
      * @type {string}
      * @memberof V1FlatRun
      */
-    checkpointSize?: string;
+    checkpointSize: string;
     /**
      * The count of checkpoints.
      * @type {number}
      * @memberof V1FlatRun
      */
-    checkpointCount?: number;
+    checkpointCount: number;
     /**
      * The type of searcher for the experiment.
      * @type {string}
@@ -5748,7 +5748,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+ * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric  - LOCATION_TYPE_RUN: Column is located on the run  - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
  * @export
  * @enum {string}
  */
@@ -5759,6 +5759,8 @@ export const V1LocationType = {
     VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
     TRAINING: 'LOCATION_TYPE_TRAINING',
     CUSTOMMETRIC: 'LOCATION_TYPE_CUSTOM_METRIC',
+    RUN: 'LOCATION_TYPE_RUN',
+    RUNHYPERPARAMETERS: 'LOCATION_TYPE_RUN_HYPERPARAMETERS',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**

@@ -166,10 +166,62 @@ func runColumnNameToSQL(columnName string) (string, error) {
 	return col, nil
 }
 
+func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
+	op *operator, q *bun.SelectQuery,
+	fc *filterConjunction,
+) (*bun.SelectQuery, error) {
+	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
+	var o operator
+	var queryValue interface{}
+	if filterValue == nil && op != nil && *op != empty && *op != notEmpty {
+		return nil, fmt.Errorf("hyperparameter field defined without value and without a valid operator")
+	}
+	o = *op
+	if o != empty && o != notEmpty {
+		queryValue = *filterValue
+	}
+	if filterColumnType != nil {
+		queryColumnType = *filterColumnType
+	}
+	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+	hpQuery := strings.Join(hp, "->")
+	oSQL, err := o.toSQL()
+	if err != nil {
+		return nil, err
+	}
+	var queryArgs []interface{}
+	var queryString string
+	switch o {
+	case empty:
+		queryString = fmt.Sprintf(`r.hparams->'%s' IS NULL`, hpQuery)
+	case notEmpty:
+		queryString = fmt.Sprintf(`r.hparams->'%s' NOT NULL`, hpQuery)
+	case contains:
+		queryArgs = append(queryArgs, queryValue)
+		queryString = fmt.Sprintf(`r.hparams->'%s' LIKE %s`, hpQuery, "?")
+	case doesNotContain:
+		queryArgs = append(queryArgs, queryValue)
+		queryString = fmt.Sprintf(`r.hparams->'%s' NOT LIKE %s`, hpQuery, "?")
+	default:
+		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
+			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
+			queryString = fmt.Sprintf(`r.hparams->'%s' %s %s`, hpQuery, "?", "?")
+		} else {
+			queryString = fmt.Sprintf(`(r.hparams->>'%s')::float8 %s %s`, hpQuery, "?", "?")
+		}
+	}
+
+	if fc != nil && *fc == or {
+		return q.WhereOr(queryString, queryArgs...), nil
+	}
+	return q.Where(queryString, queryArgs...), nil
+}
+
 // nolint: lll
 func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	op *operator, q *bun.SelectQuery,
-	fc *filterConjunction,
+	fc *filterConjunction, isRunTable bool,
 ) (*bun.SelectQuery, error) {
 	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var o operator
@@ -353,8 +405,8 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	return q.Where(queryString, queryArgs...), nil
 }
 
-func (e experimentFilterRoot) toSQL(q *bun.SelectQuery, isRunTable bool) (*bun.SelectQuery, error) {
-	q, err := e.FilterGroup.toSQL(q, nil, isRunTable)
+func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+	q, err := e.FilterGroup.toSQL(q, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +414,7 @@ func (e experimentFilterRoot) toSQL(q *bun.SelectQuery, isRunTable bool) (*bun.S
 }
 
 func (e experimentFilter) toSQL(q *bun.SelectQuery,
-	c *filterConjunction, isRunTable bool,
+	c *filterConjunction,
 ) (*bun.SelectQuery, error) {
 	switch e.Kind {
 	case field:
@@ -383,11 +435,41 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		switch location {
 		case projectv1.LocationType_LOCATION_TYPE_EXPERIMENT.String():
 			var col string
-			if isRunTable {
-				col, err = runColumnNameToSQL(e.ColumnName)
-			} else {
-				col, err = expColumnNameToSQL(e.ColumnName)
+			col, err = expColumnNameToSQL(e.ColumnName)
+			if err != nil {
+				return nil, err
 			}
+			var queryArgs []interface{}
+			var queryString string
+			switch *e.Operator {
+			case contains:
+				queryString = "? ILIKE ?"
+				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
+			case doesNotContain:
+				queryString = "? NOT ILIKE ?"
+				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
+			case empty:
+				queryString = "? IS NULL OR ? = '' OR ? = '[]'"
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
+			case notEmpty:
+				queryString = "? IS NOT NULL AND ? != '' AND ? != '[]'"
+				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
+			default:
+				queryArgs = append(queryArgs, bun.Safe(col),
+					bun.Safe(oSQL), *e.Value)
+				queryString = "? ? ?"
+			}
+			if c != nil && *c == or {
+				q.WhereOr(queryString, queryArgs...)
+			} else {
+				q.Where(queryString, queryArgs...)
+			}
+			if err != nil {
+				return nil, err
+			}
+		case projectv1.LocationType_LOCATION_TYPE_RUN.String():
+			var col string
+			col, err = runColumnNameToSQL(e.ColumnName)
 			if err != nil {
 				return nil, err
 			}
@@ -458,7 +540,9 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				q.Where(queryString, queryArgs...)
 			}
 		case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String():
-			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
+			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c, false)
+		case projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS.String():
+			return runHpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		}
 	case group:
 		var co string
@@ -479,7 +563,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 		}
 		for _, c := range e.Children {
 			q = q.WhereGroup(co, func(q *bun.SelectQuery) *bun.SelectQuery {
-				_, err = c.toSQL(q, e.Conjunction, isRunTable)
+				_, err = c.toSQL(q, e.Conjunction)
 				if err != nil {
 					return q
 				}

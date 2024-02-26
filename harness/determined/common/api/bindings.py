@@ -3957,8 +3957,6 @@ class v1FittingPolicy(DetEnum):
 
 class v1FlatRun(Printable):
     """Flat run respresentation."""
-    checkpointCount: "typing.Optional[int]" = None
-    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     duration: "typing.Optional[int]" = None
@@ -3969,7 +3967,6 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
-    id: "typing.Optional[int]" = None
     metrics: "typing.Optional[str]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
@@ -3980,9 +3977,6 @@ class v1FlatRun(Printable):
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     searcherType: "typing.Optional[str]" = None
-    startTime: "typing.Optional[str]" = None
-    state: "typing.Optional[trialv1State]" = None
-    tags: "typing.Optional[str]" = None
     unmanaged: "typing.Optional[bool]" = None
     username: "typing.Optional[str]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -3991,8 +3985,12 @@ class v1FlatRun(Printable):
     def __init__(
         self,
         *,
-        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
-        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
+        checkpointCount: int,
+        checkpointSize: str,
+        id: int,
+        startTime: str,
+        state: "trialv1State",
+        tags: str,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         duration: "typing.Union[int, None, Unset]" = _unset,
@@ -4003,7 +4001,6 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
-        id: "typing.Union[int, None, Unset]" = _unset,
         metrics: "typing.Union[str, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
@@ -4014,18 +4011,17 @@ class v1FlatRun(Printable):
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         searcherType: "typing.Union[str, None, Unset]" = _unset,
-        startTime: "typing.Union[str, None, Unset]" = _unset,
-        state: "typing.Union[trialv1State, None, Unset]" = _unset,
-        tags: "typing.Union[str, None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         username: "typing.Union[str, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
-        if not isinstance(checkpointCount, Unset):
-            self.checkpointCount = checkpointCount
-        if not isinstance(checkpointSize, Unset):
-            self.checkpointSize = checkpointSize
+        self.checkpointCount = checkpointCount
+        self.checkpointSize = checkpointSize
+        self.id = id
+        self.startTime = startTime
+        self.state = state
+        self.tags = tags
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -4046,8 +4042,6 @@ class v1FlatRun(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
-        if not isinstance(id, Unset):
-            self.id = id
         if not isinstance(metrics, Unset):
             self.metrics = metrics
         if not isinstance(ownerId, Unset):
@@ -4068,12 +4062,6 @@ class v1FlatRun(Printable):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(searcherType, Unset):
             self.searcherType = searcherType
-        if not isinstance(startTime, Unset):
-            self.startTime = startTime
-        if not isinstance(state, Unset):
-            self.state = state
-        if not isinstance(tags, Unset):
-            self.tags = tags
         if not isinstance(unmanaged, Unset):
             self.unmanaged = unmanaged
         if not isinstance(username, Unset):
@@ -4086,11 +4074,13 @@ class v1FlatRun(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRun":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": obj["checkpointCount"],
+            "checkpointSize": obj["checkpointSize"],
+            "id": obj["id"],
+            "startTime": obj["startTime"],
+            "state": trialv1State(obj["state"]),
+            "tags": obj["tags"],
         }
-        if "checkpointCount" in obj:
-            kwargs["checkpointCount"] = obj["checkpointCount"]
-        if "checkpointSize" in obj:
-            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -4111,8 +4101,6 @@ class v1FlatRun(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
-        if "id" in obj:
-            kwargs["id"] = obj["id"]
         if "metrics" in obj:
             kwargs["metrics"] = obj["metrics"]
         if "ownerId" in obj:
@@ -4133,12 +4121,6 @@ class v1FlatRun(Printable):
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "searcherType" in obj:
             kwargs["searcherType"] = obj["searcherType"]
-        if "startTime" in obj:
-            kwargs["startTime"] = obj["startTime"]
-        if "state" in obj:
-            kwargs["state"] = trialv1State(obj["state"]) if obj["state"] is not None else None
-        if "tags" in obj:
-            kwargs["tags"] = obj["tags"]
         if "unmanaged" in obj:
             kwargs["unmanaged"] = obj["unmanaged"]
         if "username" in obj:
@@ -4151,11 +4133,13 @@ class v1FlatRun(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": self.checkpointCount,
+            "checkpointSize": self.checkpointSize,
+            "id": self.id,
+            "startTime": self.startTime,
+            "state": self.state.value,
+            "tags": self.tags,
         }
-        if not omit_unset or "checkpointCount" in vars(self):
-            out["checkpointCount"] = self.checkpointCount
-        if not omit_unset or "checkpointSize" in vars(self):
-            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
@@ -4176,8 +4160,6 @@ class v1FlatRun(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
-        if not omit_unset or "id" in vars(self):
-            out["id"] = self.id
         if not omit_unset or "metrics" in vars(self):
             out["metrics"] = self.metrics
         if not omit_unset or "ownerId" in vars(self):
@@ -4198,12 +4180,6 @@ class v1FlatRun(Printable):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "searcherType" in vars(self):
             out["searcherType"] = self.searcherType
-        if not omit_unset or "startTime" in vars(self):
-            out["startTime"] = self.startTime
-        if not omit_unset or "state" in vars(self):
-            out["state"] = None if self.state is None else self.state.value
-        if not omit_unset or "tags" in vars(self):
-            out["tags"] = self.tags
         if not omit_unset or "unmanaged" in vars(self):
             out["unmanaged"] = self.unmanaged
         if not omit_unset or "username" in vars(self):
@@ -7916,6 +7892,8 @@ class v1LocationType(DetEnum):
     - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
     - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
     - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+    - LOCATION_TYPE_RUN: Column is located on the run
+    - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
     """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
@@ -7923,6 +7901,8 @@ class v1LocationType(DetEnum):
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
     CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
+    RUN = "LOCATION_TYPE_RUN"
+    RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None
