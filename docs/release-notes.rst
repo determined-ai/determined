@@ -3027,8 +3027,7 @@ Version 0.13.13
 
 -  Update experiment details pages to include a learning curve visualization. This will enable a
    comparison of hyperparameter performance among many different trials within an experiment.
--  Support Elasticsearch as an alternative backend for logging. Read more about
-   :ref:`elasticsearch-logging-backend` to see if it's appropriate for your Determined deployment.
+-  Support Elasticsearch as an alternative backend for logging.
 
 **Improvements**
 
