@@ -1496,7 +1496,7 @@ func (a *apiServer) ContinueExperiment(
 		return nil, err
 	}
 
-	dbExp, modelDef, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, _, taskSpec, err := a.m.parseCreateExperiment(ctx,
 		&apiv1.CreateExperimentRequest{
 			Config: string(configBytes),
 		}, user,
@@ -1653,7 +1653,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(ctx,
 		req, user,
 	)
 	if err != nil {
@@ -1735,7 +1735,7 @@ func (a *apiServer) PutExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(
+	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(ctx,
 		req.CreateExperimentRequest, user,
 	)
 	if err != nil {
