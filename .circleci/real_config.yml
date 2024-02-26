@@ -2987,7 +2987,9 @@ workflows:
       - deploy:
           name: deploy-preview-cluster
           enable-cors: true
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
