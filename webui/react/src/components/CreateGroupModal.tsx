@@ -159,9 +159,11 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group, groupRoles
         </Form.Item>
         {rbacEnabled && canModifyPermissions && (
           <>
-            <Form.Item label={GROUP_ROLE_LABEL} name={GROUP_ROLE_NAME}>
+            <Form.Item
+              initialValue={(groupRoles ?? []).map((r) => r.id)}
+              label={GROUP_ROLE_LABEL}
+              name={GROUP_ROLE_NAME}>
               <Select
-                defaultValue={(groupRoles ?? []).map((r) => r.id)} // TODO: use form initialvalue after hew update
                 loading={Loadable.isNotLoaded(roles)}
                 mode="multiple"
                 placeholder={'Add Roles'}>
