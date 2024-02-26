@@ -580,6 +580,241 @@ class runtimeStreamError(Printable):
             out["message"] = self.message
         return out
 
+class runv1FlatRun(Printable):
+    """Flat run respresentation."""
+    description: "typing.Optional[str]" = None
+    displayName: "typing.Optional[str]" = None
+    duration: "typing.Optional[int]" = None
+    endTime: "typing.Optional[str]" = None
+    experimentId: "typing.Optional[int]" = None
+    experimentName: "typing.Optional[str]" = None
+    externalExperimentId: "typing.Optional[int]" = None
+    externalRunId: "typing.Optional[int]" = None
+    forkedFrom: "typing.Optional[int]" = None
+    hyperparameters: "typing.Optional[str]" = None
+    metrics: "typing.Optional[str]" = None
+    ownerId: "typing.Optional[int]" = None
+    parentArchived: "typing.Optional[bool]" = None
+    progress: "typing.Optional[float]" = None
+    projectId: "typing.Optional[int]" = None
+    projectName: "typing.Optional[str]" = None
+    resourcePool: "typing.Optional[str]" = None
+    searcherMetric: "typing.Optional[str]" = None
+    searcherMetricValue: "typing.Optional[float]" = None
+    searcherType: "typing.Optional[str]" = None
+    unmanaged: "typing.Optional[bool]" = None
+    username: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+    workspaceName: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        checkpointCount: int,
+        checkpointSize: str,
+        id: int,
+        startTime: str,
+        state: "trialv1State",
+        tags: str,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        displayName: "typing.Union[str, None, Unset]" = _unset,
+        duration: "typing.Union[int, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+        experimentId: "typing.Union[int, None, Unset]" = _unset,
+        experimentName: "typing.Union[str, None, Unset]" = _unset,
+        externalExperimentId: "typing.Union[int, None, Unset]" = _unset,
+        externalRunId: "typing.Union[int, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        metrics: "typing.Union[str, None, Unset]" = _unset,
+        ownerId: "typing.Union[int, None, Unset]" = _unset,
+        parentArchived: "typing.Union[bool, None, Unset]" = _unset,
+        progress: "typing.Union[float, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+        projectName: "typing.Union[str, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
+        searcherType: "typing.Union[str, None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+        username: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.checkpointCount = checkpointCount
+        self.checkpointSize = checkpointSize
+        self.id = id
+        self.startTime = startTime
+        self.state = state
+        self.tags = tags
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(displayName, Unset):
+            self.displayName = displayName
+        if not isinstance(duration, Unset):
+            self.duration = duration
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+        if not isinstance(experimentId, Unset):
+            self.experimentId = experimentId
+        if not isinstance(experimentName, Unset):
+            self.experimentName = experimentName
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
+        if not isinstance(externalRunId, Unset):
+            self.externalRunId = externalRunId
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
+        if not isinstance(metrics, Unset):
+            self.metrics = metrics
+        if not isinstance(ownerId, Unset):
+            self.ownerId = ownerId
+        if not isinstance(parentArchived, Unset):
+            self.parentArchived = parentArchived
+        if not isinstance(progress, Unset):
+            self.progress = progress
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+        if not isinstance(projectName, Unset):
+            self.projectName = projectName
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
+        if not isinstance(searcherMetric, Unset):
+            self.searcherMetric = searcherMetric
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
+        if not isinstance(searcherType, Unset):
+            self.searcherType = searcherType
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
+        if not isinstance(username, Unset):
+            self.username = username
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "runv1FlatRun":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": obj["checkpointCount"],
+            "checkpointSize": obj["checkpointSize"],
+            "id": obj["id"],
+            "startTime": obj["startTime"],
+            "state": trialv1State(obj["state"]),
+            "tags": obj["tags"],
+        }
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "displayName" in obj:
+            kwargs["displayName"] = obj["displayName"]
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        if "experimentId" in obj:
+            kwargs["experimentId"] = obj["experimentId"]
+        if "experimentName" in obj:
+            kwargs["experimentName"] = obj["experimentName"]
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "externalRunId" in obj:
+            kwargs["externalRunId"] = obj["externalRunId"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
+        if "metrics" in obj:
+            kwargs["metrics"] = obj["metrics"]
+        if "ownerId" in obj:
+            kwargs["ownerId"] = obj["ownerId"]
+        if "parentArchived" in obj:
+            kwargs["parentArchived"] = obj["parentArchived"]
+        if "progress" in obj:
+            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        if "projectName" in obj:
+            kwargs["projectName"] = obj["projectName"]
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
+        if "searcherMetric" in obj:
+            kwargs["searcherMetric"] = obj["searcherMetric"]
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
+        if "searcherType" in obj:
+            kwargs["searcherType"] = obj["searcherType"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
+        if "username" in obj:
+            kwargs["username"] = obj["username"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": self.checkpointCount,
+            "checkpointSize": self.checkpointSize,
+            "id": self.id,
+            "startTime": self.startTime,
+            "state": self.state.value,
+            "tags": self.tags,
+        }
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "displayName" in vars(self):
+            out["displayName"] = self.displayName
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        if not omit_unset or "experimentId" in vars(self):
+            out["experimentId"] = self.experimentId
+        if not omit_unset or "experimentName" in vars(self):
+            out["experimentName"] = self.experimentName
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "externalRunId" in vars(self):
+            out["externalRunId"] = self.externalRunId
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
+        if not omit_unset or "metrics" in vars(self):
+            out["metrics"] = self.metrics
+        if not omit_unset or "ownerId" in vars(self):
+            out["ownerId"] = self.ownerId
+        if not omit_unset or "parentArchived" in vars(self):
+            out["parentArchived"] = self.parentArchived
+        if not omit_unset or "progress" in vars(self):
+            out["progress"] = None if self.progress is None else dump_float(self.progress)
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        if not omit_unset or "projectName" in vars(self):
+            out["projectName"] = self.projectName
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
+        if not omit_unset or "searcherMetric" in vars(self):
+            out["searcherMetric"] = self.searcherMetric
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
+        if not omit_unset or "searcherType" in vars(self):
+            out["searcherType"] = self.searcherType
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
+        if not omit_unset or "username" in vars(self):
+            out["username"] = self.username
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
+        return out
+
 class taskv1State(DetEnum):
     """The current state of the task.
     - STATE_UNSPECIFIED: The task state is unknown.
@@ -3954,241 +4189,6 @@ class v1FittingPolicy(DetEnum):
     KUBERNETES = "FITTING_POLICY_KUBERNETES"
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
-
-class v1FlatRun(Printable):
-    """Flat run respresentation."""
-    description: "typing.Optional[str]" = None
-    displayName: "typing.Optional[str]" = None
-    duration: "typing.Optional[int]" = None
-    endTime: "typing.Optional[str]" = None
-    experimentId: "typing.Optional[int]" = None
-    experimentName: "typing.Optional[str]" = None
-    externalExperimentId: "typing.Optional[int]" = None
-    externalRunId: "typing.Optional[int]" = None
-    forkedFrom: "typing.Optional[int]" = None
-    hyperparameters: "typing.Optional[str]" = None
-    metrics: "typing.Optional[str]" = None
-    ownerId: "typing.Optional[int]" = None
-    parentArchived: "typing.Optional[bool]" = None
-    progress: "typing.Optional[float]" = None
-    projectId: "typing.Optional[int]" = None
-    projectName: "typing.Optional[str]" = None
-    resourcePool: "typing.Optional[str]" = None
-    searcherMetric: "typing.Optional[str]" = None
-    searcherMetricValue: "typing.Optional[float]" = None
-    searcherType: "typing.Optional[str]" = None
-    unmanaged: "typing.Optional[bool]" = None
-    username: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[int]" = None
-    workspaceName: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        checkpointCount: int,
-        checkpointSize: str,
-        id: int,
-        startTime: str,
-        state: "trialv1State",
-        tags: str,
-        description: "typing.Union[str, None, Unset]" = _unset,
-        displayName: "typing.Union[str, None, Unset]" = _unset,
-        duration: "typing.Union[int, None, Unset]" = _unset,
-        endTime: "typing.Union[str, None, Unset]" = _unset,
-        experimentId: "typing.Union[int, None, Unset]" = _unset,
-        experimentName: "typing.Union[str, None, Unset]" = _unset,
-        externalExperimentId: "typing.Union[int, None, Unset]" = _unset,
-        externalRunId: "typing.Union[int, None, Unset]" = _unset,
-        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
-        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
-        metrics: "typing.Union[str, None, Unset]" = _unset,
-        ownerId: "typing.Union[int, None, Unset]" = _unset,
-        parentArchived: "typing.Union[bool, None, Unset]" = _unset,
-        progress: "typing.Union[float, None, Unset]" = _unset,
-        projectId: "typing.Union[int, None, Unset]" = _unset,
-        projectName: "typing.Union[str, None, Unset]" = _unset,
-        resourcePool: "typing.Union[str, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
-        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
-        searcherType: "typing.Union[str, None, Unset]" = _unset,
-        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
-        username: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
-        workspaceName: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        self.checkpointCount = checkpointCount
-        self.checkpointSize = checkpointSize
-        self.id = id
-        self.startTime = startTime
-        self.state = state
-        self.tags = tags
-        if not isinstance(description, Unset):
-            self.description = description
-        if not isinstance(displayName, Unset):
-            self.displayName = displayName
-        if not isinstance(duration, Unset):
-            self.duration = duration
-        if not isinstance(endTime, Unset):
-            self.endTime = endTime
-        if not isinstance(experimentId, Unset):
-            self.experimentId = experimentId
-        if not isinstance(experimentName, Unset):
-            self.experimentName = experimentName
-        if not isinstance(externalExperimentId, Unset):
-            self.externalExperimentId = externalExperimentId
-        if not isinstance(externalRunId, Unset):
-            self.externalRunId = externalRunId
-        if not isinstance(forkedFrom, Unset):
-            self.forkedFrom = forkedFrom
-        if not isinstance(hyperparameters, Unset):
-            self.hyperparameters = hyperparameters
-        if not isinstance(metrics, Unset):
-            self.metrics = metrics
-        if not isinstance(ownerId, Unset):
-            self.ownerId = ownerId
-        if not isinstance(parentArchived, Unset):
-            self.parentArchived = parentArchived
-        if not isinstance(progress, Unset):
-            self.progress = progress
-        if not isinstance(projectId, Unset):
-            self.projectId = projectId
-        if not isinstance(projectName, Unset):
-            self.projectName = projectName
-        if not isinstance(resourcePool, Unset):
-            self.resourcePool = resourcePool
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
-        if not isinstance(searcherMetricValue, Unset):
-            self.searcherMetricValue = searcherMetricValue
-        if not isinstance(searcherType, Unset):
-            self.searcherType = searcherType
-        if not isinstance(unmanaged, Unset):
-            self.unmanaged = unmanaged
-        if not isinstance(username, Unset):
-            self.username = username
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
-        if not isinstance(workspaceName, Unset):
-            self.workspaceName = workspaceName
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1FlatRun":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "checkpointCount": obj["checkpointCount"],
-            "checkpointSize": obj["checkpointSize"],
-            "id": obj["id"],
-            "startTime": obj["startTime"],
-            "state": trialv1State(obj["state"]),
-            "tags": obj["tags"],
-        }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
-        if "displayName" in obj:
-            kwargs["displayName"] = obj["displayName"]
-        if "duration" in obj:
-            kwargs["duration"] = obj["duration"]
-        if "endTime" in obj:
-            kwargs["endTime"] = obj["endTime"]
-        if "experimentId" in obj:
-            kwargs["experimentId"] = obj["experimentId"]
-        if "experimentName" in obj:
-            kwargs["experimentName"] = obj["experimentName"]
-        if "externalExperimentId" in obj:
-            kwargs["externalExperimentId"] = obj["externalExperimentId"]
-        if "externalRunId" in obj:
-            kwargs["externalRunId"] = obj["externalRunId"]
-        if "forkedFrom" in obj:
-            kwargs["forkedFrom"] = obj["forkedFrom"]
-        if "hyperparameters" in obj:
-            kwargs["hyperparameters"] = obj["hyperparameters"]
-        if "metrics" in obj:
-            kwargs["metrics"] = obj["metrics"]
-        if "ownerId" in obj:
-            kwargs["ownerId"] = obj["ownerId"]
-        if "parentArchived" in obj:
-            kwargs["parentArchived"] = obj["parentArchived"]
-        if "progress" in obj:
-            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
-        if "projectId" in obj:
-            kwargs["projectId"] = obj["projectId"]
-        if "projectName" in obj:
-            kwargs["projectName"] = obj["projectName"]
-        if "resourcePool" in obj:
-            kwargs["resourcePool"] = obj["resourcePool"]
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
-        if "searcherMetricValue" in obj:
-            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
-        if "searcherType" in obj:
-            kwargs["searcherType"] = obj["searcherType"]
-        if "unmanaged" in obj:
-            kwargs["unmanaged"] = obj["unmanaged"]
-        if "username" in obj:
-            kwargs["username"] = obj["username"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
-        if "workspaceName" in obj:
-            kwargs["workspaceName"] = obj["workspaceName"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "checkpointCount": self.checkpointCount,
-            "checkpointSize": self.checkpointSize,
-            "id": self.id,
-            "startTime": self.startTime,
-            "state": self.state.value,
-            "tags": self.tags,
-        }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
-        if not omit_unset or "displayName" in vars(self):
-            out["displayName"] = self.displayName
-        if not omit_unset or "duration" in vars(self):
-            out["duration"] = self.duration
-        if not omit_unset or "endTime" in vars(self):
-            out["endTime"] = self.endTime
-        if not omit_unset or "experimentId" in vars(self):
-            out["experimentId"] = self.experimentId
-        if not omit_unset or "experimentName" in vars(self):
-            out["experimentName"] = self.experimentName
-        if not omit_unset or "externalExperimentId" in vars(self):
-            out["externalExperimentId"] = self.externalExperimentId
-        if not omit_unset or "externalRunId" in vars(self):
-            out["externalRunId"] = self.externalRunId
-        if not omit_unset or "forkedFrom" in vars(self):
-            out["forkedFrom"] = self.forkedFrom
-        if not omit_unset or "hyperparameters" in vars(self):
-            out["hyperparameters"] = self.hyperparameters
-        if not omit_unset or "metrics" in vars(self):
-            out["metrics"] = self.metrics
-        if not omit_unset or "ownerId" in vars(self):
-            out["ownerId"] = self.ownerId
-        if not omit_unset or "parentArchived" in vars(self):
-            out["parentArchived"] = self.parentArchived
-        if not omit_unset or "progress" in vars(self):
-            out["progress"] = None if self.progress is None else dump_float(self.progress)
-        if not omit_unset or "projectId" in vars(self):
-            out["projectId"] = self.projectId
-        if not omit_unset or "projectName" in vars(self):
-            out["projectName"] = self.projectName
-        if not omit_unset or "resourcePool" in vars(self):
-            out["resourcePool"] = self.resourcePool
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
-        if not omit_unset or "searcherMetricValue" in vars(self):
-            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
-        if not omit_unset or "searcherType" in vars(self):
-            out["searcherType"] = self.searcherType
-        if not omit_unset or "unmanaged" in vars(self):
-            out["unmanaged"] = self.unmanaged
-        if not omit_unset or "username" in vars(self):
-            out["username"] = self.username
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
-        if not omit_unset or "workspaceName" in vars(self):
-            out["workspaceName"] = self.workspaceName
-        return out
 
 class v1GenericTaskState(DetEnum):
     """State of a Generic task
@@ -12761,7 +12761,7 @@ class v1SearchRunsResponse(Printable):
         self,
         *,
         pagination: "v1Pagination",
-        runs: "typing.Sequence[v1FlatRun]",
+        runs: "typing.Sequence[runv1FlatRun]",
     ):
         self.pagination = pagination
         self.runs = runs
@@ -12770,7 +12770,7 @@ class v1SearchRunsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1SearchRunsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "pagination": v1Pagination.from_json(obj["pagination"]),
-            "runs": [v1FlatRun.from_json(x) for x in obj["runs"]],
+            "runs": [runv1FlatRun.from_json(x) for x in obj["runs"]],
         }
         return cls(**kwargs)
 

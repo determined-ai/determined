@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
+	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -59,7 +60,7 @@ func (a *apiServer) RunPrepareForReporting(
 func (a *apiServer) SearchRuns(
 	ctx context.Context, req *apiv1.SearchRunsRequest,
 ) (*apiv1.SearchRunsResponse, error) {
-	resp := &apiv1.SearchRunsResponse{Runs: []*trialv1.FlatRun{}}
+	resp := &apiv1.SearchRunsResponse{Runs: []*runv1.FlatRun{}}
 	query := db.Bun().NewSelect().
 		Model(&resp.Runs).
 		ModelTableExpr("runs AS r").

@@ -9,6 +9,7 @@ import "determined/api/v1/pagination.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/trial/v1/trial.proto";
+import "determined/run/v1/run.proto";
 import "determined/common/v1/common.proto";
 
 // Request to prepare to start reporting to a run.
@@ -50,7 +51,7 @@ message SearchRunsResponse {
     json_schema: { required: [ "runs", "pagination" ] }
   };
   // The list of returned runs.
-  repeated determined.trial.v1.FlatRun runs = 1;
+  repeated determined.run.v1.FlatRun runs = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }

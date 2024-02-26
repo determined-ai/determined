@@ -221,7 +221,7 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 // nolint: lll
 func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	op *operator, q *bun.SelectQuery,
-	fc *filterConjunction, isRunTable bool,
+	fc *filterConjunction,
 ) (*bun.SelectQuery, error) {
 	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
 	var o operator
@@ -405,6 +405,30 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	return q.Where(queryString, queryArgs...), nil
 }
 
+func expRunOperatorQuery(o operator, col string, oSQL string, val *interface{}) (string, []interface{}) {
+	var queryArgs []interface{}
+	var queryString string
+	switch o {
+	case contains:
+		queryString = "? ILIKE ?"
+		queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *val))
+	case doesNotContain:
+		queryString = "? NOT ILIKE ?"
+		queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *val))
+	case empty:
+		queryString = "? IS NULL OR ? = '' OR ? = '[]'"
+		queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
+	case notEmpty:
+		queryString = "? IS NOT NULL AND ? != '' AND ? != '[]'"
+		queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
+	default:
+		queryArgs = append(queryArgs, bun.Safe(col),
+			bun.Safe(oSQL), *val)
+		queryString = "? ? ?"
+	}
+	return queryString, queryArgs
+}
+
 func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 	q, err := e.FilterGroup.toSQL(q, nil)
 	if err != nil {
@@ -439,26 +463,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-			var queryArgs []interface{}
-			var queryString string
-			switch *e.Operator {
-			case contains:
-				queryString = "? ILIKE ?"
-				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-			case doesNotContain:
-				queryString = "? NOT ILIKE ?"
-				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-			case empty:
-				queryString = "? IS NULL OR ? = '' OR ? = '[]'"
-				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
-			case notEmpty:
-				queryString = "? IS NOT NULL AND ? != '' AND ? != '[]'"
-				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
-			default:
-				queryArgs = append(queryArgs, bun.Safe(col),
-					bun.Safe(oSQL), *e.Value)
-				queryString = "? ? ?"
-			}
+			queryString, queryArgs := expRunOperatorQuery(*e.Operator, col, oSQL, e.Value)
 			if c != nil && *c == or {
 				q.WhereOr(queryString, queryArgs...)
 			} else {
@@ -473,26 +478,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if err != nil {
 				return nil, err
 			}
-			var queryArgs []interface{}
-			var queryString string
-			switch *e.Operator {
-			case contains:
-				queryString = "? ILIKE ?"
-				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-			case doesNotContain:
-				queryString = "? NOT ILIKE ?"
-				queryArgs = append(queryArgs, bun.Safe(col), fmt.Sprintf("%%%s%%", *e.Value))
-			case empty:
-				queryString = "? IS NULL OR ? = '' OR ? = '[]'"
-				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
-			case notEmpty:
-				queryString = "? IS NOT NULL AND ? != '' AND ? != '[]'"
-				queryArgs = append(queryArgs, bun.Safe(col), bun.Safe(col), bun.Safe(col))
-			default:
-				queryArgs = append(queryArgs, bun.Safe(col),
-					bun.Safe(oSQL), *e.Value)
-				queryString = "? ? ?"
-			}
+			queryString, queryArgs := expRunOperatorQuery(*e.Operator, col, oSQL, e.Value)
 			if c != nil && *c == or {
 				q.WhereOr(queryString, queryArgs...)
 			} else {
@@ -540,7 +526,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 				q.Where(queryString, queryArgs...)
 			}
 		case projectv1.LocationType_LOCATION_TYPE_HYPERPARAMETERS.String():
-			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c, false)
+			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		case projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS.String():
 			return runHpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		}

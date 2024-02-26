@@ -1677,7 +1677,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		var efr experimentFilterRoot
 		err := json.Unmarshal([]byte(c), &efr)
 		require.NoError(t, err)
-		_, err = efr.toSQL(q, false)
+		_, err = efr.toSQL(q)
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{
@@ -1814,7 +1814,7 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 		err := json.Unmarshal([]byte(c[0]), &efr)
 		require.NoError(t, err)
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q, false)
+			_, err = efr.toSQL(q)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {
