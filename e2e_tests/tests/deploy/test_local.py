@@ -22,7 +22,7 @@ def mksess(host: str, port: int, username: str = "determined", password: str = "
 
     master_url = api.canonicalize_master_url(f"http://{host}:{port}")
     utp = authentication.login(master_url, username=username, password=password)
-    return api.Session(master_url, utp, cert=None)
+    return api.Session(master_url, utp, cert=None, max_retries=0)
 
 
 def det_deploy(subcommand: List) -> None:
