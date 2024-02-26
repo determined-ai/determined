@@ -3323,6 +3323,113 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
 
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach1
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach2
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+        - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach3
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach4
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+        - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach5
+          context: gcp-ci
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+              max-slots-per-pod: [1]
+
+
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
           type: approval

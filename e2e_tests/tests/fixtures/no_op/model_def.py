@@ -120,6 +120,7 @@ class NoOpTrialController(det.TrialController):
                 time.sleep(1800)
 
         for w, response_func in self.workloads:
+            print("W.kind", w.kind)
             if w.kind == workload.Workload.Kind.RUN_STEP:
                 response = self.train_for_step(w.step_id, w.num_batches)
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
@@ -158,8 +159,13 @@ class NoOpTrialController(det.TrialController):
     def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         if self.request_stop:
             self.context.set_stop_requested(True)
+
+        print("CHAOS FAIL", self.chaos_probability_train)
         self.chaos_failure(self.chaos_probability_train)
+        print("SLEEPING FOR", self.train_batch_secs * num_batches)
         time.sleep(self.train_batch_secs * num_batches)
+
+        print("should write null", self.write_null)
         if self.write_null:
             with open("/dev/stdout", "wb") as f:
                 f.write(b"\x00")
