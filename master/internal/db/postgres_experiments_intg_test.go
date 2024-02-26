@@ -730,8 +730,9 @@ func TestDeleteExperiments(t *testing.T) {
 				ckpt := uuid.New()
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
 
-				// Set checkpoint state to 'DELETED' so that their deletion isn't blocked by the
-				// on_checkpoint_deletion trigger.
+				// Set checkpoint state to 'DELETED' (indicating that they cease to exist in
+				// storage) so that their deletion isn't blocked by the on_checkpoint_deletion
+				// trigger.
 				checkpoint.State = model.DeletedState
 				err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 				require.NoError(t, err)

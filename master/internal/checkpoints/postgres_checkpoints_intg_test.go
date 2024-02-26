@@ -374,6 +374,7 @@ func TestUpdateCheckpointStateToDeleted(t *testing.T) {
 	tr, task := db.RequireMockTrial(t, db.SingleDB(), exp)
 	allocation := db.RequireMockAllocation(t, db.SingleDB(), task.TaskID)
 
+	// Create checkpoints
 	ckpt1 := uuid.New()
 	checkpoint1 := db.MockModelCheckpoint(ckpt1, allocation)
 	err := db.AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
