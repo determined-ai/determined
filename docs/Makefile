@@ -67,6 +67,7 @@ pre-publish:
 	cp ./swagger-ui/swagger-ui-main-deploy.js ./site/html/rest-api/swagger-ui-main.js
 
 .PHONY: publish-check
+publish-check:
 	python3 redirects.py publish-check
 
 .PHONY: check-links

@@ -45,7 +45,7 @@ build-%:
 	$(MAKE) -C $(subst -,/,$*) build
 
 .PHONY: build-docs
-build-docs: build-harness build-model_hub build-examples build-helm build-proto
+build-docs: build-harness build-model_hub build-examples build-helm build-proto build-bindings
 	$(MAKE) -C docs build
 
 .PHONY: build-bindings
