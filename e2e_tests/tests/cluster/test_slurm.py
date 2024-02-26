@@ -213,9 +213,9 @@ def test_mnist_pytorch_distributed() -> None:
 # typically assign varying levels of priority for each partition. Also, users can request the
 # WLM to provide specific partition and priority level for their jobs.
 # In the following test case we test an example preemption scenario. We launch the two experiments
-# cifar10_pytorch_cancellable and cifar10_pytorch_high_priority in order. Ensure that the
-# cifar10_pytorch_cancellable experiment is requeued, cifar10_pytorch_high_priority experiment
-# runs to completion. After that, cifar10_pytorch_cancellable experiment is resumed and it runs
+# iris_tf_keras_cancellable and iris_tf_keras_high_priority in order. Ensure that the
+# iris_tf_keras_cancellable experiment is requeued, iris_tf_keras_high_priority experiment
+# runs to completion. After that, iris_tf_keras_cancellable experiment is resumed and it runs
 # to completion.
 # NB: The clusters casablanca-login and znode have one node (8-GPUs) being used in two partitions:
 #   1. defq_GPU_cancellable - partition for low priority and jobs are requeued if necessary
@@ -224,40 +224,36 @@ def test_mnist_pytorch_distributed() -> None:
 @api_utils.skipif_not_slurm()
 def test_slurm_preemption() -> None:
     sess = api_utils.user_session()
-    # Launch the cifar10_pytorch_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
+    # Launch the iris_tf_keras_cancellable experiment requesting 8 GPUs on defq_GPU_cancellable
     # partition
     cancelable_exp_id = exp.create_experiment(
         sess,
-        conf.cv_examples_path(
-            "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_cancelable.yaml"
-        ),
-        conf.cv_examples_path("../legacy/computer_vision/cifar10_pytorch"),
+        conf.cv_examples_path("iris_tf_keras/iris_tf_keras_cancelable.yaml"),
+        conf.cv_examples_path("iris_tf_keras"),
         None,
     )
     # Wait for the first cancellable experiment to enter RUNNING state.
     exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
     # Wait for the first cancellable experiment to complete at least one checkpoint.
     exp.wait_for_at_least_one_checkpoint(sess, cancelable_exp_id, 300)
-    # Launch the cifar10_pytorch_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
+    # Launch the iris_tf_keras_high_priority experiment requesting 8 GPUs on defq_GPU_hipri
     # partition
     high_priority_exp_id = exp.create_experiment(
         sess,
-        conf.cv_examples_path(
-            "../legacy/computer_vision/cifar10_pytorch/cifar10_pytorch_high_priority.yaml"
-        ),
-        conf.cv_examples_path("../legacy/computer_vision/cifar10_pytorch"),
+        conf.cv_examples_path("iris_tf_keras/iris_tf_keras_high_priority.yaml"),
+        conf.cv_examples_path("iris_tf_keras"),
         None,
     )
-    # In this scenario, cifar10_pytorch_high_priority experiment will cause the
-    # cifar10_pytorch_cancelable experiment to get requeued. The experiment
-    # cifar10_pytorch_high_priority will execute to completion.
+    # In this scenario, iris_tf_keras_high_priority experiment will cause the
+    # iris_tf_keras_cancelable experiment to get requeued. The experiment
+    # iris_tf_keras_high_priority will execute to completion.
     exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.QUEUED)
     exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.RUNNING)
     exp.wait_for_experiment_state(sess, high_priority_exp_id, bindings.experimentv1State.COMPLETED)
-    # Now, the experiment cifar10_pytorch_cancelable will resume as soon as the requested
+    # Now, the experiment iris_tf_keras_cancelable will resume as soon as the requested
     # resources are available.
     exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.RUNNING)
-    # Finally, the experiment cifar10_pytorch_cancelable will complete if there are no other
+    # Finally, the experiment iris_tf_keras_cancelable will complete if there are no other
     # interruptions.
     exp.wait_for_experiment_state(sess, cancelable_exp_id, bindings.experimentv1State.COMPLETED)
 
