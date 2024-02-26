@@ -78,6 +78,7 @@ class cloudformation:
     DOCKER_PASS = "DockerPass"
     NOTEBOOK_TIMEOUT = "NotebookTimeout"
     GENAI_VERSION = "GenAIVersion"
+    INITIAL_USER_PASSWORD = "InitialUserPassword"
 
 
 class misc:

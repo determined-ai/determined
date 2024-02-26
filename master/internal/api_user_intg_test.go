@@ -501,7 +501,7 @@ func TestPatchUser(t *testing.T) {
 		UserId: int32(userID),
 		User: &userv1.PatchUser{
 			DisplayName: ptrs.Ptr(displayName),
-			Password:    ptrs.Ptr(replicateClientSideSaltAndHash(password)),
+			Password:    ptrs.Ptr(user.ReplicateClientSideSaltAndHash(password)),
 			IsHashed:    true,
 		},
 	})

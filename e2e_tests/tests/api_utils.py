@@ -30,7 +30,7 @@ _user_session: Optional[api.Session] = None
 def user_session() -> api.Session:
     global _user_session
     if _user_session is None:
-        _user_session = make_session("determined", "")
+        _user_session = make_session("determined", conf.USER_PASSWORD)
     return _user_session
 
 
@@ -40,7 +40,7 @@ _admin_session: Optional[api.Session] = None
 def admin_session() -> api.Session:
     global _admin_session
     if _admin_session is None:
-        _admin_session = make_session("admin", "")
+        _admin_session = make_session("admin", conf.USER_PASSWORD)
     return _admin_session
 
 
