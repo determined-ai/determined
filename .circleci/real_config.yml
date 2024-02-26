@@ -2973,7 +2973,9 @@ workflows:
           name: deploy-latest-master-cluster
           enable-cors: true
           reattach-enabled: true
-          context: aws
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
