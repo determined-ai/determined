@@ -600,8 +600,6 @@ commands:
           working_directory: ~/project/e2e_tests
           no_output_timeout: 30m
           command: |
-            pip install -U ddtrace
-
             DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
@@ -2076,6 +2074,7 @@ jobs:
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
+      - run: pip install -U ddtrace
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - run: sh -c "pip check || true"
