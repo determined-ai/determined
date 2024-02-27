@@ -132,7 +132,7 @@ func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption)
 	return rmerrors.ErrNotSupported
 }
 
-func (k *kubernetesResourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
+func (k *kubernetesResourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
@@ -140,7 +140,7 @@ func (k *kubernetesResourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sp
 	return k.jobQInfo()
 }
 
-func (k *kubernetesResourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats {
+func (k *kubernetesResourcePool) GetJobQStats() *jobv1.QueueStats {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
@@ -211,15 +211,6 @@ func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
 	k.reschedule = true
 
 	return k.moveJob(msg.ID, msg.Anchor, msg.Ahead)
-}
-
-func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJobResponse {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	k.reschedule = true
-
-	// For now, there is nothing to cleanup in k8s.
-	return sproto.EmptyDeleteJobResponse()
 }
 
 func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {

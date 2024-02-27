@@ -40,6 +40,8 @@ message BindRPToWorkspaceRequest {
   repeated int32 workspace_ids = 2;
   // The workspace names to be bound to the resource pool.
   repeated string workspace_names = 3;
+  // The resource manager name for the request.
+  string resource_manager_name = 4;
 }
 
 // Bind a resource pool to workspaces response.
@@ -74,6 +76,8 @@ message OverwriteRPWorkspaceBindingsRequest {
   repeated int32 workspace_ids = 2;
   // The new workspace names to bind to the resource_pool.
   repeated string workspace_names = 3;
+  // The resource manager name for the request.
+  string resource_manager_name = 4;
 }
 
 // Overwrite and replace the workspaces bound to an RP response.
