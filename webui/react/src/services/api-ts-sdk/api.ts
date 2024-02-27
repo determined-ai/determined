@@ -7953,10 +7953,10 @@ export interface V1QueueControl {
     weight?: number;
     /**
      * Name of the target resource_manager & resource_pool to move the job to.
-     * @type {V1Resources}
+     * @type {V1ResourcePoolQualifier}
      * @memberof V1QueueControl
      */
-    resources?: V1Resources;
+    resources?: V1ResourcePoolQualifier;
 }
 /**
  * Statistics for a queue.
@@ -8780,6 +8780,25 @@ export interface V1ResourcePoolPrioritySchedulerDetail {
     k8Priorities?: Array<V1K8PriorityClass>;
 }
 /**
+ * Describes a resource manager and resource pool, for use in multi-Resource Manager environments.
+ * @export
+ * @interface V1ResourcePoolQualifier
+ */
+export interface V1ResourcePoolQualifier {
+    /**
+     * Name of the target resource_manager.
+     * @type {string}
+     * @memberof V1ResourcePoolQualifier
+     */
+    resourceManager?: string;
+    /**
+     * Name of the target resource_pool
+     * @type {string}
+     * @memberof V1ResourcePoolQualifier
+     */
+    resourcePool?: string;
+}
+/**
  * The type of the ResourcePool.   - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.  - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.  - RESOURCE_POOL_TYPE_STATIC: A static resource pool.  - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
  * @export
  * @enum {string}
@@ -8792,25 +8811,6 @@ export const V1ResourcePoolType = {
     K8S: 'RESOURCE_POOL_TYPE_K8S',
 } as const
 export type V1ResourcePoolType = ValueOf<typeof V1ResourcePoolType>
-/**
- * Describes a resource manager and resource pool, for use in multi-Resource Manager environments.
- * @export
- * @interface V1Resources
- */
-export interface V1Resources {
-    /**
-     * Name of the target resource_manager.
-     * @type {string}
-     * @memberof V1Resources
-     */
-    resourceManager?: string;
-    /**
-     * Name of the target resource_pool
-     * @type {string}
-     * @memberof V1Resources
-     */
-    resourcePool?: string;
-}
 /**
  * ResourcesFailure contains information about restored resources' failure.
  * @export

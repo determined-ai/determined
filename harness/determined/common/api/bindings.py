@@ -10927,7 +10927,7 @@ class v1QueueControl(Printable):
     behindOf: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
     resourcePool: "typing.Optional[str]" = None
-    resources: "typing.Optional[v1Resources]" = None
+    resources: "typing.Optional[v1ResourcePoolQualifier]" = None
     weight: "typing.Optional[float]" = None
 
     def __init__(
@@ -10938,7 +10938,7 @@ class v1QueueControl(Printable):
         behindOf: "typing.Union[str, None, Unset]" = _unset,
         priority: "typing.Union[int, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
-        resources: "typing.Union[v1Resources, None, Unset]" = _unset,
+        resources: "typing.Union[v1ResourcePoolQualifier, None, Unset]" = _unset,
         weight: "typing.Union[float, None, Unset]" = _unset,
     ):
         self.jobId = jobId
@@ -10969,7 +10969,7 @@ class v1QueueControl(Printable):
         if "resourcePool" in obj:
             kwargs["resourcePool"] = obj["resourcePool"]
         if "resources" in obj:
-            kwargs["resources"] = v1Resources.from_json(obj["resources"]) if obj["resources"] is not None else None
+            kwargs["resources"] = v1ResourcePoolQualifier.from_json(obj["resources"]) if obj["resources"] is not None else None
         if "weight" in obj:
             kwargs["weight"] = float(obj["weight"]) if obj["weight"] is not None else None
         return cls(**kwargs)
@@ -11886,22 +11886,7 @@ class v1ResourcePoolPrioritySchedulerDetail(Printable):
             out["k8Priorities"] = None if self.k8Priorities is None else [x.to_json(omit_unset) for x in self.k8Priorities]
         return out
 
-class v1ResourcePoolType(DetEnum):
-    """The type of the ResourcePool.
-    - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
-    just an artifact of using protobuf.
-    - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.
-    - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.
-    - RESOURCE_POOL_TYPE_STATIC: A static resource pool.
-    - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
-    """
-    UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
-    AWS = "RESOURCE_POOL_TYPE_AWS"
-    GCP = "RESOURCE_POOL_TYPE_GCP"
-    STATIC = "RESOURCE_POOL_TYPE_STATIC"
-    K8S = "RESOURCE_POOL_TYPE_K8S"
-
-class v1Resources(Printable):
+class v1ResourcePoolQualifier(Printable):
     """Describes a resource manager and resource pool, for use in multi-Resource
     Manager environments.
     """
@@ -11920,7 +11905,7 @@ class v1Resources(Printable):
             self.resourcePool = resourcePool
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1Resources":
+    def from_json(cls, obj: Json) -> "v1ResourcePoolQualifier":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
         if "resourceManager" in obj:
@@ -11937,6 +11922,21 @@ class v1Resources(Printable):
         if not omit_unset or "resourcePool" in vars(self):
             out["resourcePool"] = self.resourcePool
         return out
+
+class v1ResourcePoolType(DetEnum):
+    """The type of the ResourcePool.
+    - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is
+    just an artifact of using protobuf.
+    - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.
+    - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.
+    - RESOURCE_POOL_TYPE_STATIC: A static resource pool.
+    - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
+    """
+    UNSPECIFIED = "RESOURCE_POOL_TYPE_UNSPECIFIED"
+    AWS = "RESOURCE_POOL_TYPE_AWS"
+    GCP = "RESOURCE_POOL_TYPE_GCP"
+    STATIC = "RESOURCE_POOL_TYPE_STATIC"
+    K8S = "RESOURCE_POOL_TYPE_K8S"
 
 class v1ResourcesFailure(Printable):
     """ResourcesFailure contains information about restored resources' failure."""

@@ -180,13 +180,13 @@ message QueueControl {
     // The desired job weight in fairshare scheduler.
     float weight = 6;
     // Name of the target resource_manager & resource_pool to move the job to.
-    Resources resources = 7;
+    ResourcePoolQualifier resources = 7;
   }
 }
 
 // Describes a resource manager and resource pool, for use in multi-Resource
 // Manager environments.
-message Resources {
+message ResourcePoolQualifier {
   // Name of the target resource_manager.
   string resource_manager = 1;
   // Name of the target resource_pool
