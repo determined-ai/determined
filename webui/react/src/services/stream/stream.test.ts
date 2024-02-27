@@ -54,7 +54,6 @@ describe('stream', () => {
     // Duplicated subscribe won't send twice
     client.subscribe(spec1);
     client.subscribe(spec1);
-    client.subscribe(spec2);
 
     await expect(server).toReceiveMessage({
       known: {
@@ -71,6 +70,8 @@ describe('stream', () => {
     });
     server.send({ complete: false, sync_id: '1' });
     server.send({ complete: true, sync_id: '1' });
+
+    client.subscribe(spec2);
     await expect(server).toReceiveMessage({
       known: {
         projects: '',

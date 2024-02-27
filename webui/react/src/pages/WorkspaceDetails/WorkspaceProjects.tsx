@@ -36,9 +36,7 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
-import { ProjectSpec } from 'services/stream/projects';
 import projectStore from 'stores/projects';
-import streamStore from 'stores/stream';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -63,9 +61,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
-  const [projects, setProjects] = useState<List<Project>>(List());
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const { canCreateProject } = usePermissions();
   const ProjectCreateModal = useModal(ProjectCreateModalComponent);
@@ -76,20 +71,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     projectStore.getProjectsByWorkspace(id),
   );
 
-  useEffect(() => {
-    Loadable.match(loadableProjects, {
-      _: () => {},
-      Loaded: (data) => {
-        setProjects(data);
-        setIsLoading(false);
-        streamStore.emit(new ProjectSpec([id]));
-      },
-    });
-  }, [loadableProjects, id]);
-
-  useEffect(() => {
-    setTotal(projects.size);
-  }, [projects]);
+  const [projects, isLoading] = useMemo(
+    () =>
+      loadableProjects.map((p): [Project[], boolean] => [p.toJSON(), false]).getOrElse([[], true]),
+    [loadableProjects],
+  );
 
   const handleProjectCreateClick = useCallback(() => {
     ProjectCreateModal.open();
@@ -157,33 +143,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     }
   }, []);
 
-  const onProjectRemove = useCallback(
-    (id: number) => {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-    },
-    [setProjects],
-  );
-
-  const onProjectEdit = useCallback(
-    (id: number, name: string, archived: boolean) => {
-      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived, name } : p)));
-    },
-    [setProjects],
-  );
-
   const columns = useMemo(() => {
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
-      <ProjectActionDropdown
-        project={record}
-        workspaceArchived={workspace?.archived}
-        onDelete={() => onProjectRemove(record.id)}
-        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
-        onMove={() => onProjectRemove(record.id)}
-      />
+      <ProjectActionDropdown project={record} workspaceArchived={workspace?.archived} />
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
@@ -267,7 +233,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [saveProjectDescription, workspace?.archived, users, onProjectEdit, onProjectRemove]);
+  }, [saveProjectDescription, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -308,13 +274,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const actionDropdown = useCallback(
     ({ record, children }: { children: React.ReactNode; record: Project }) => (
-      <ProjectActionDropdown
-        isContextMenu
-        project={record}
-        workspaceArchived={workspace?.archived}
-        onDelete={() => onProjectRemove(record.id)}
-        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
-        onMove={() => onProjectRemove(record.id)}>
+      <ProjectActionDropdown isContextMenu project={record} workspaceArchived={workspace?.archived}>
         {children}
       </ProjectActionDropdown>
     ),
@@ -334,10 +294,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
-                onEdit={(name: string, archived: boolean) =>
-                  onProjectEdit(project.id, name, archived)
-                }
-                onRemove={() => onProjectRemove(project.id)}
               />
             ))}
           </Card.Group>
@@ -348,14 +304,14 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             columns={columns}
             containerRef={pageRef}
             ContextMenu={actionDropdown}
-            dataSource={projects.toArray()}
+            dataSource={projects}
             loading={isLoading || Loadable.isNotLoaded(loadableUsers)}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
                 offset: settings.tableOffset,
               },
-              total,
+              projects.length,
             )}
             rowKey="id"
             settings={settings}
@@ -369,12 +325,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     columns,
     isLoading,
     loadableUsers,
-    onProjectEdit,
-    onProjectRemove,
     pageRef,
     projects,
     settings,
-    total,
     updateSettings,
     workspace?.archived,
   ]);
@@ -429,7 +382,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         </Row>
       </Section>
       <Spinner conditionalRender spinning={isLoading}>
-        {projects.size !== 0 ? (
+        {projects.length !== 0 ? (
           projectsList
         ) : workspace.numProjects === 0 ? (
           <Message

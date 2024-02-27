@@ -96,13 +96,13 @@ export class Stream {
   }
 
   #shouldSkip(newSub?: SubscriptionGroup): boolean {
-    if(!newSub) return true
+    if (!newSub) return true;
     if (!this.#curSub) return false;
-    let same = true;
+    let skip = true;
     forEach(newSub, (val, k) => {
-      if (!this.#curSub?.[k as Streamable]?.spec.equals(val?.spec)) same = false;
+      if (!this.#curSub?.[k as Streamable]?.spec.equals(val?.spec)) skip = false;
     });
-    return same;
+    return skip;
   }
 
   #sendSpec(newSub: SubscriptionGroup): void {
@@ -187,12 +187,12 @@ export class Stream {
 
     if (this.#syncComplete === this.#syncSent) {
       // For established connection, only send a new sub when current sub is completed
-  
       // Skip and move to next in case of duplication
       while (this.#shouldSkip(spec) && this.#subs.length > 0) {
         spec = this.#subs.shift();
       }
-      spec && this.#sendSpec(spec);
+
+      if (spec && !this.#shouldSkip(spec)) this.#sendSpec(spec);
     }
   }
 

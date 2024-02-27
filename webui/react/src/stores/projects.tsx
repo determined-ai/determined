@@ -3,7 +3,8 @@ import { List, Map } from 'immutable';
 
 import { getWorkspaceProjects } from 'services/api';
 import { Streamable, StreamContent } from 'services/stream';
-import { StreamSubscriber } from 'stores/stream';
+import { ProjectSpec } from 'services/stream/projects';
+import streamStore, { StreamSubscriber } from 'stores/stream';
 import { Project } from 'types';
 import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
 import handleError from 'utils/error';
@@ -34,6 +35,13 @@ class ProjectStore implements StreamSubscriber {
           );
         })
         .catch(handleError);
+      const workspaceIds = this.#projectsByWorkspace
+        .get()
+        .keySeq()
+        .map((s) => Number(s))
+        .toJSON();
+
+      streamStore.emit(new ProjectSpec([...workspaceIds, workspaceId]));
     }
 
     return () => canceler.abort();
@@ -98,6 +106,7 @@ class ProjectStore implements StreamSubscriber {
         const project = map.get(p.id);
         if (project) {
           this.#upsert(project, p);
+          map.set(project.id, asValueObject(Project, project));
         } else {
           // TODO: We should insert the new record to store once we can stream all needed information.
           // map.set(p.id, asValueObject(Project, p));
@@ -107,24 +116,19 @@ class ProjectStore implements StreamSubscriber {
     );
     this.#projectsByWorkspace.update((prev) =>
       prev.withMutations((map) => {
-        const ws = map.get(p.workspaceId.toString());
-        const projectInWs = ws?.find((tp) => tp.id === p.id);
-        if (projectInWs) {
+        const ws = List(map.get(p.workspaceId.toString()));
+        const projectInWs = ws?.findIndex((tp) => tp.id === p.id);
+        if (projectInWs >= 0) {
           // The workspaceId has not changed, just update
-          this.#upsert(projectInWs, p);
+          const updatedProject = this.#upsert(ws.get(projectInWs)!, p);
+          map.set(p.workspaceId.toString(), ws.set(projectInWs, updatedProject));
           return map;
         }
         // TODO: When workspaceId has changed, we should add it to the new workspace and remove it from the old workspace, once we can stream all needed information.
-        // if (ws) {
-        //   map.set(p.workspaceId.toString(), ws.push(p));
-        // }
-        // if (prevProjectWorkspaceId) {
-        //   const ows = map.get(prevProjectWorkspaceId.toString());
-        //   if (ows) {
-        //     const i = ows.findIndex((op) => op.id === p.id);
-        //     map.set(prevProjectWorkspaceId.toString(), ows.remove(i));
-        //   }
-        // }
+        if (ws) {
+          // map.set(p.workspaceId.toString(), ws.push(p));
+          this.fetch(p.workspaceId, undefined, true);
+        }
         return map;
       }),
     );
