@@ -57,7 +57,7 @@ type FlatRun struct {
 	Metrics *string `protobuf:"bytes,13,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
 	// The id of the experiment linked to the run.
 	ExperimentId *int32 `protobuf:"varint,14,opt,name=experiment_id,json=experimentId,proto3,oneof" json:"experiment_id,omitempty"`
-	// The id of the user who created the parent project.
+	// The id of the user who created the run.
 	OwnerId *int32 `protobuf:"varint,15,opt,name=owner_id,json=ownerId,proto3,oneof" json:"owner_id,omitempty"`
 	// Original id of a forked or continued experiment.
 	ForkedFrom *wrappers.Int32Value `protobuf:"bytes,16,opt,name=forked_from,json=forkedFrom,proto3,oneof" json:"forked_from,omitempty"`
