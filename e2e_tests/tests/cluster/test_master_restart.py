@@ -489,7 +489,7 @@ def _test_master_restart_tensorboard(
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess,
-        conf.fixtures_path("no_op/single-default-ckpt.yaml"),
+        conf.fixtures_path("no_op/short-default-ckpt.yaml"),
         conf.fixtures_path("no_op"),
         None,
     )
