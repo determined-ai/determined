@@ -489,8 +489,6 @@ message AllocationPendingPreemptionSignalRequest {
   };
   // The id of the allocation.
   string allocation_id = 1;
-  // The resource manager for the request.
-  string resource_manager = 2;
 }
 
 // Response to AllocationPendingPreemptionSignalRequest
@@ -610,8 +608,6 @@ message NotifyContainerRunningRequest {
   string node_name = 5;
   // The data from this process.
   google.protobuf.Struct data = 6;
-  // The resource manager for the request.
-  string resource_manager = 7;
 }
 // Response to NotifyContainerRunningResponse
 message NotifyContainerRunningResponse {

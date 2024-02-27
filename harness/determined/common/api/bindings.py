@@ -1331,33 +1331,25 @@ class v1AllocationAllGatherResponse(Printable):
         return out
 
 class v1AllocationPendingPreemptionSignalRequest(Printable):
-    resourceManager: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         allocationId: str,
-        resourceManager: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocationId = allocationId
-        if not isinstance(resourceManager, Unset):
-            self.resourceManager = resourceManager
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1AllocationPendingPreemptionSignalRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "allocationId": obj["allocationId"],
         }
-        if "resourceManager" in obj:
-            kwargs["resourceManager"] = obj["resourceManager"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "allocationId": self.allocationId,
         }
-        if not omit_unset or "resourceManager" in vars(self):
-            out["resourceManager"] = self.resourceManager
         return out
 
 class v1AllocationPreemptionSignalResponse(Printable):
@@ -8589,7 +8581,6 @@ class v1NotifyContainerRunningRequest(Printable):
     numPeers: "typing.Optional[int]" = None
     rank: "typing.Optional[int]" = None
     requestUuid: "typing.Optional[str]" = None
-    resourceManager: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -8600,7 +8591,6 @@ class v1NotifyContainerRunningRequest(Printable):
         numPeers: "typing.Union[int, None, Unset]" = _unset,
         rank: "typing.Union[int, None, Unset]" = _unset,
         requestUuid: "typing.Union[str, None, Unset]" = _unset,
-        resourceManager: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.allocationId = allocationId
         self.data = data
@@ -8612,8 +8602,6 @@ class v1NotifyContainerRunningRequest(Printable):
             self.rank = rank
         if not isinstance(requestUuid, Unset):
             self.requestUuid = requestUuid
-        if not isinstance(resourceManager, Unset):
-            self.resourceManager = resourceManager
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1NotifyContainerRunningRequest":
@@ -8629,8 +8617,6 @@ class v1NotifyContainerRunningRequest(Printable):
             kwargs["rank"] = obj["rank"]
         if "requestUuid" in obj:
             kwargs["requestUuid"] = obj["requestUuid"]
-        if "resourceManager" in obj:
-            kwargs["resourceManager"] = obj["resourceManager"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -8646,8 +8632,6 @@ class v1NotifyContainerRunningRequest(Printable):
             out["rank"] = self.rank
         if not omit_unset or "requestUuid" in vars(self):
             out["requestUuid"] = self.requestUuid
-        if not omit_unset or "resourceManager" in vars(self):
-            out["resourceManager"] = self.resourceManager
         return out
 
 class v1NotifyContainerRunningResponse(Printable):

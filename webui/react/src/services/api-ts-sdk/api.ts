@@ -1258,12 +1258,6 @@ export interface V1AllocationPendingPreemptionSignalRequest {
      * @memberof V1AllocationPendingPreemptionSignalRequest
      */
     allocationId: string;
-    /**
-     * The resource manager for the request.
-     * @type {string}
-     * @memberof V1AllocationPendingPreemptionSignalRequest
-     */
-    resourceManager?: string;
 }
 /**
  * 
@@ -6376,12 +6370,6 @@ export interface V1NotifyContainerRunningRequest {
      * @memberof V1NotifyContainerRunningRequest
      */
     data: any;
-    /**
-     * The resource manager for the request.
-     * @type {string}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    resourceManager?: string;
 }
 /**
  * 
