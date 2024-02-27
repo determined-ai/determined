@@ -310,6 +310,8 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 @pytest.mark.nightly
 def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
+    client._determined = client.Determined._from_session(sess)
+
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -384,6 +386,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
 )
 def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     sess = api_utils.user_session()
+    client._determined = client.Determined._from_session(sess)
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
