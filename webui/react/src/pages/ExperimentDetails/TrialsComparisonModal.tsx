@@ -325,7 +325,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                           typeof metricValue === 'number' ? (
                             <HumanReadableNumber num={metricValue} />
                           ) : (
-                            metricValue
+                            <Label truncate={{ tooltip: true }}>{metricValue.toString()}</Label>
                           )
                         ) : null}
                       </td>
