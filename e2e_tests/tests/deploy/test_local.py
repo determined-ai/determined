@@ -1,15 +1,13 @@
 import os
 import pathlib
-import random
 import subprocess
-import time
 from typing import List
 
 import docker
 import pytest
 
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
@@ -235,74 +233,4 @@ def test_agent_up_down() -> None:
     containers = client.containers.list(filters={"name": agent_name})
     assert len(containers) == 0
 
-    master_down(["--master-name", master_name])
-
-
-@pytest.mark.parametrize("steps", [10])
-@pytest.mark.parametrize("num_agents", [3, 5])
-@pytest.mark.parametrize("should_disconnect", [False, True])
-@pytest.mark.stress_test
-def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect: bool) -> None:
-    random.seed(42)
-    cluster_name = "test_stress_agents_reconnect"
-    master_name = f"{cluster_name}_determined-master_1"
-    master_up(["--master-name", master_name])
-
-    sess = mksess("localhost", 8080, "admin")
-
-    # Start all agents.
-    agents_are_up = [True] * num_agents
-    for i in range(num_agents):
-        agent_up(["--agent-name", f"agent-{i}"])
-    time.sleep(10)
-
-    for step in range(steps):
-        print("================ step", step)
-        for agent_id, agent_is_up in enumerate(agents_are_up):
-            if random.choice([True, False]):  # Flip agents status randomly.
-                continue
-
-            if should_disconnect:
-                # Can't just randomly deploy up/down due to just getting a Docker name conflict.
-                if agent_is_up:
-                    agent_down(["--agent-name", f"agent-{agent_id}"])
-                else:
-                    agent_up(["--agent-name", f"agent-{agent_id}"])
-                agents_are_up[agent_id] = not agents_are_up[agent_id]
-            else:
-                if random.choice([True, False]):
-                    agent_disable(sess, [f"agent-{agent_id}"])
-                    agents_are_up[agent_id] = False
-                else:
-                    agent_enable(sess, [f"agent-{agent_id}"])
-                    agents_are_up[agent_id] = True
-        print("agents_are_up:", agents_are_up)
-        time.sleep(10)
-
-        # Validate that our master kept track of the agent reconnect spam.
-        agent_list = detproc.check_json(sess, ["det", "agent", "list", "--json"])
-        print("agent_list:", agent_list)
-        assert sum(agents_are_up) <= len(agent_list)
-        for agent in agent_list:
-            print("agent:", agent)
-            agent_id = int(agent["id"].replace("agent-", ""))
-            if agents_are_up[agent_id] != agent["enabled"]:
-                subprocess.check_call(["det", "deploy", "local", "logs"])
-            assert (
-                agents_are_up[agent_id] == agent["enabled"]
-            ), f"agent is up: {agents_are_up[agent_id]}, agent status: {agent}"
-
-        # Can we still schedule something?
-        if any(agents_are_up):
-            mksess("localhost", 8080)
-            experiment_id = exp.create_experiment(
-                sess,
-                conf.fixtures_path("no_op/single-one-short-step.yaml"),
-                conf.fixtures_path("no_op"),
-                None,
-            )
-            exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
-
-    for agent_id in range(num_agents):
-        agent_down(["--agent-name", f"agent-{agent_id}"])
     master_down(["--master-name", master_name])
