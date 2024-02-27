@@ -285,11 +285,12 @@ func (e *internalExperiment) start() error {
 		}
 
 		if j.QPos.GreaterThan(decimal.Zero) {
-			e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
-				JobID:        e.JobID,
-				JobPosition:  j.QPos,
-				ResourcePool: e.activeConfig.Resources().ResourcePool(),
-			})
+			e.rm.RecoverJobPosition(e.activeConfig.Resources().ResourceManager(),
+				sproto.RecoverJobPosition{
+					JobID:        e.JobID,
+					JobPosition:  j.QPos,
+					ResourcePool: e.activeConfig.Resources().ResourcePool(),
+				})
 		}
 
 		e.restoreTrials()
@@ -1046,11 +1047,12 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 	}
 
 	if forward {
-		switch err := e.rm.SetGroupPriority(sproto.SetGroupPriority{
-			Priority:     *priority,
-			ResourcePool: e.activeConfig.Resources().ResourcePool(),
-			JobID:        e.JobID,
-		}).(type) {
+		switch err := e.rm.SetGroupPriority(resources.ResourceManager(),
+			sproto.SetGroupPriority{
+				Priority:     *priority,
+				ResourcePool: resources.ResourcePool(),
+				JobID:        e.JobID,
+			}).(type) {
 		case nil:
 		case rmerrors.UnsupportedError:
 			e.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
@@ -1073,11 +1075,12 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 
-	switch err := e.rm.SetGroupWeight(sproto.SetGroupWeight{
-		Weight:       weight,
-		ResourcePool: e.activeConfig.Resources().ResourcePool(),
-		JobID:        e.JobID,
-	}).(type) {
+	switch err := e.rm.SetGroupWeight(resources.ResourceManager(),
+		sproto.SetGroupWeight{
+			Weight:       weight,
+			ResourcePool: resources.ResourcePool(),
+			JobID:        e.JobID,
+		}).(type) {
 	case nil:
 	case rmerrors.UnsupportedError:
 		e.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
@@ -1089,7 +1092,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	return nil
 }
 
-func (e *internalExperiment) setRP(resourcePool string) error {
+func (e *internalExperiment) setRP(resourceManager string, resourcePool string) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)

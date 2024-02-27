@@ -65,6 +65,17 @@ func (r *ResourcesConfigV0) SetShmSize(val *int) {
 	r.RawShmSize = val
 }
 
+func (r ResourcesConfigV0) ResourceManager() string {
+	if r.RawResourceManager == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .ResourceManager")
+	}
+	return *r.RawResourceManager
+}
+
+func (r *ResourcesConfigV0) SetResourceManager(val string) {
+	r.RawResourceManager = &val
+}
+
 func (r ResourcesConfigV0) ResourcePool() string {
 	if r.RawResourcePool == nil {
 		panic("You must call WithDefaults on ResourcesConfigV0 before .ResourcePool")

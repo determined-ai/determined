@@ -272,21 +272,21 @@ func (a *ResourceManager) GetDefaultComputeResourcePool(
 }
 
 // GetExternalJobs implements rm.ResourceManager.
-func (*ResourceManager) GetExternalJobs(sproto.GetExternalJobs) ([]*jobv1.Job, error) {
+func (*ResourceManager) GetExternalJobs(_, _ string) ([]*jobv1.Job, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // GetJobQ implements rm.ResourceManager.
-func (a *ResourceManager) GetJobQ(msg sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error) {
-	if msg.ResourcePool == "" {
-		msg.ResourcePool = a.config.DefaultComputeResourcePool
+func (a *ResourceManager) GetJobQ(_, resourcePool string) (map[model.JobID]*sproto.RMJobInfo, error) {
+	if resourcePool == "" {
+		resourcePool = a.config.DefaultComputeResourcePool
 	}
 
-	pool, err := a.poolByName(msg.ResourcePool)
+	pool, err := a.poolByName(resourcePool)
 	if err != nil {
 		return nil, err
 	}
-	return pool.GetJobQ(sproto.GetJobQ{ResourcePool: msg.ResourcePool}), nil
+	return pool.GetJobQ(), nil
 }
 
 // GetJobQueueStatsRequest implements rm.ResourceManager.
@@ -302,7 +302,7 @@ func (a *ResourceManager) GetJobQueueStatsRequest(
 			continue
 		}
 
-		stats := pool.GetJobQStats(sproto.GetJobQStats{})
+		stats := pool.GetJobQStats()
 
 		aggregates, err := a.fetchAvgQueuedTime(name)
 		if err != nil {
@@ -375,7 +375,7 @@ func (*ResourceManager) IsReattachableOnlyAfterStarted() bool {
 }
 
 // MoveJob implements rm.ResourceManager.
-func (a *ResourceManager) MoveJob(msg sproto.MoveJob) error {
+func (a *ResourceManager) MoveJob(_ string, msg sproto.MoveJob) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
@@ -392,7 +392,7 @@ func (*ResourceManager) NotifyContainerRunning(sproto.NotifyContainerRunning) er
 }
 
 // RecoverJobPosition implements rm.ResourceManager.
-func (a *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
+func (a *ResourceManager) RecoverJobPosition(_ string, msg sproto.RecoverJobPosition) {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		a.syslog.WithError(err).Error("recovering job position")
@@ -487,7 +487,7 @@ func (a *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 }
 
 // SetGroupPriority implements rm.ResourceManager.
-func (a *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
+func (a *ResourceManager) SetGroupPriority(_ string, msg sproto.SetGroupPriority) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("set group priority found no resource pool with name %s: %w",
@@ -497,7 +497,7 @@ func (a *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
 }
 
 // SetGroupWeight implements rm.ResourceManager.
-func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
+func (a *ResourceManager) SetGroupWeight(_ string, msg sproto.SetGroupWeight) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("set group weight found no resource pool with name %s: %w",
@@ -607,7 +607,7 @@ func (a *ResourceManager) getPoolJobStats(poolConfig config.ResourcePoolConfig) 
 	if err != nil {
 		return nil, err
 	}
-	return pool.GetJobQStats(sproto.GetJobQStats{}), nil
+	return pool.GetJobQStats(), nil
 }
 
 func (a *ResourceManager) getResourcePoolConfig(poolName string) (

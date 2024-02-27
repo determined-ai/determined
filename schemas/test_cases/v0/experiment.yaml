@@ -117,6 +117,7 @@
       weight: 1000
       max_slots: 900
       priority: 55
+      resource_manager: "qwert"
       resource_pool: 'asdf'
       native_parallel: false
     scheduling_unit: 100
@@ -216,6 +217,7 @@
       weight: 1
       max_slots: null
       priority: null
+      resource_manager: ''
       resource_pool: ''
       is_single_node: null
     scheduling_unit: 100

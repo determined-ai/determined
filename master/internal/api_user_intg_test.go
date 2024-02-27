@@ -72,7 +72,7 @@ func MockRM() *mocks.ResourceManager {
 		nil,
 	)
 	mockRM.On("SetGroupMaxSlots", mock.Anything).Return()
-	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
+	mockRM.On("SetGroupWeight", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
 		return rmevents.Subscribe(msg.AllocationID)
 	}, nil)

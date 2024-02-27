@@ -214,5 +214,6 @@
     weight: 1
     max_slots: null
     priority: null
+    resource_manager: ''
     resource_pool: ''
     is_single_node: null

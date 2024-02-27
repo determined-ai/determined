@@ -774,13 +774,13 @@ func (rp *resourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
-func (rp *resourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats {
+func (rp *resourcePool) GetJobQStats() *jobv1.QueueStats {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return tasklist.JobStats(rp.taskList)
 }
 
-func (rp *resourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
+func (rp *resourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return rp.scheduler.JobQInfo(rp)
