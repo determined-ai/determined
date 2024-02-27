@@ -3,7 +3,7 @@ import Link from 'hew/Link';
 import { Modal } from 'hew/Modal';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import NodeElement from 'pages/ResourcePool/NodeElement';
 import { handlePath, paths } from 'routes/utils';
@@ -56,11 +56,11 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
       <Button onClick={onClose}>Done</Button>
     </div>
   );
-  const renderNodes = useCallback(() => {
+  const renderNodes = useMemo(() => {
     if (activeNodes.length > 0) {
-      return activeNodes.map(({ id, resources, slots }, idx) => (
+      return activeNodes.map(({ id, resources, slots }) => (
         <NodeElement
-          key={`${idx}${id}`}
+          key={id}
           limitSlots={limitSlots}
           name={id}
           resources={resources}
@@ -78,6 +78,10 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
       />
     ));
   }, [activeNodes, limitSlots, nodes]);
+  const handleClick = useCallback(
+    (e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(rpName) }),
+    [rpName],
+  );
 
   useEffect(() => {
     if (isRunning && agents.length !== 0) {
@@ -107,16 +111,8 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
   return (
     <Modal cancel footer={footer} size="medium" title="Resource Allocation">
       <div className={css.base}>
-        <div className={css.nodesContainer}>{renderNodes()}</div>
-        <InfoContainer
-          info={
-            <Link
-              onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.resourcePool(rpName) })}>
-              {rpName}
-            </Link>
-          }
-          label="Resource Pool"
-        />
+        <div className={css.nodesContainer}>{renderNodes}</div>
+        <InfoContainer info={<Link onClick={handleClick}>{rpName}</Link>} label="Resource Pool" />
         <InfoContainer info={accelerator} label="Accelerator" />
         {nodes.map(({ nodeName, slotsIds }) => (
           <div className={css.slotsContainer} key={`info_${nodeName}`}>

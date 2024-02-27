@@ -12,11 +12,11 @@ import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import ResourceAllocationModalComponent from 'components/ResourceAllocationModal';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
+import { useAsync } from 'hooks/useAsync';
 import { getModels, getTaskAllocation } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import {
-  AllocationData,
   CheckpointWorkloadExtended,
   ExperimentBase,
   ModelItem,
@@ -65,14 +65,37 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const [canceler] = useState(new AbortController());
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
-  const [taskAllocation, setTaskAllocation] =
-    useState<Loadable<AllocationData | undefined>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const shouldRenderAllocationCard = useMemo(
     () => trial !== undefined && experiment.numTrials === 1,
     [trial, experiment],
   ); // as per ticket requirements, we're only rendering it on single trial experiments and trial details pages
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
+
+  const taskAllocation = useAsync(async () => {
+    if (!trial) return;
+
+    // one big issue is that taskIds is an optional property
+    const taskId = trial.taskIds !== undefined ? trial.taskIds[trial.taskIds.length - 1] : '';
+
+    if (!taskId) return;
+
+    try {
+      const response = await getTaskAllocation(taskId, {
+        signal: canceler.signal,
+      });
+
+      return response;
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Unable to fetch task allocation data.',
+        silent: true,
+        type: ErrorType.Api,
+      });
+
+      return;
+    }
+  }, [canceler.signal, trial]);
 
   const experimentRPInfo = useMemo(() => {
     if (!trial) return undefined;
@@ -161,39 +184,9 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     }
   }, [canceler.signal]);
 
-  const fetchTaskAllocation = useCallback(async () => {
-    if (!trial) return;
-
-    // one big issue is that taskIds is an optional property
-    const taskId = trial.taskIds !== undefined ? trial.taskIds[trial.taskIds.length - 1] : '';
-
-    if (!taskId) return;
-
-    try {
-      const response = await getTaskAllocation(taskId, {
-        signal: canceler.signal,
-      });
-
-      setTaskAllocation((prev) => {
-        const loadedAllocation = Loaded(response);
-
-        if (isEqual(prev, loadedAllocation)) return prev;
-
-        return loadedAllocation;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch task allocation data.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal, trial]);
-
   useEffect(() => {
     fetchModels();
-    fetchTaskAllocation();
-  }, [fetchModels, fetchTaskAllocation]);
+  }, [fetchModels]);
 
   const handleModalCheckpointClick = useCallback(() => {
     checkpointModal.open();
