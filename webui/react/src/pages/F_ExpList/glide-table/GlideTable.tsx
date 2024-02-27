@@ -382,33 +382,33 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         col < staticColumns.length || isMobile
           ? null
           : !isPinned
-            ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                  newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                  onSortableColumnChange?.(newSortableColumns);
-                  onPinnedColumnsCountChange?.(
-                    Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                  );
-                  setMenuIsOpen(false);
-                },
-              }
-            : {
-                disabled: pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                  newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                  onSortableColumnChange?.(newSortableColumns);
-                  onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                  setMenuIsOpen(false);
-                },
+          ? {
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(
+                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                );
+                setMenuIsOpen(false);
               },
+            }
+          : {
+              disabled: pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -681,10 +681,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             dataPath = `run.${currentColumn.column}`;
             break;
           case V1LocationType.RUNHYPERPARAMETERS:
-            dataPath = `run.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}`;
+            dataPath = `run.hyperparameters.${currentColumn.column.replace('hp.', '')}`;
             break;
           case V1LocationType.UNSPECIFIED:
             break;
@@ -763,13 +760,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   );
 
   const sortMap = useMemo(() => {
-    return sorts.reduce(
-      (acc, sort) => {
-        if (sort.column && sort.direction) acc[sort.column] = sort.direction;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    return sorts.reduce((acc, sort) => {
+      if (sort.column && sort.direction) acc[sort.column] = sort.direction;
+      return acc;
+    }, {} as Record<string, string>);
   }, [sorts]);
 
   const drawHeader: DrawHeaderCallback = useCallback(
