@@ -613,12 +613,6 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
-      - run:
-          name: Upload results to DataDog
-          command: |
-            curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" \
-              --output "./datadog-ci" && chmod +x "./datadog-ci"
-            ls -lf # DD_ENV=ci datadog-ci junit upload --service pachyderm /tmp/test-results/e2e/ || true     
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
@@ -2074,7 +2068,6 @@ jobs:
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
-      - run: pip install -U ddtrace
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - run: sh -c "pip check || true"
