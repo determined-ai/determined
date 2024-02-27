@@ -467,6 +467,12 @@ export const getExperimentFileFromTree = generateDetApi<
   string
 >(Config.getExperimentFileFromTree);
 
+export const changeExperimentLogRetention = generateDetApi<
+  Api.V1PutExperimentsRetainLogsRequest,
+  Api.V1PutExperimentsRetainLogsResponse,
+  Type.BulkActionResult
+>(Config.changeExperimentLogRetention);
+
 /* Tasks */
 
 export const getTask = generateDetApi<

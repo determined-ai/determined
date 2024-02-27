@@ -13,6 +13,7 @@ export type TrialColumnName =
   | 'totalBatchesProcessed'
   | 'bestValidationMetric'
   | 'latestValidationMetric'
+  | 'logRetentionDays'
   | 'startTime'
   | 'duration'
   | 'autoRestarts'
@@ -25,6 +26,7 @@ export const DEFAULT_COLUMNS: TrialColumnName[] = [
   'totalBatchesProcessed',
   'bestValidationMetric',
   'latestValidationMetric',
+  'logRetentionDays',
   'startTime',
   'duration',
   'autoRestarts',
@@ -40,6 +42,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   duration: 117,
   id: 85,
   latestValidationMetric: 200,
+  logRetentionDays: 160,
   startTime: 117,
   state: 100,
   totalBatchesProcessed: 90,
@@ -75,6 +78,7 @@ export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
           literal('totalBatchesProcessed'),
           literal('bestValidationMetric'),
           literal('latestValidationMetric'),
+          literal('logRetentionDays'),
           literal('startTime'),
           literal('duration'),
           literal('autoRestarts'),
@@ -115,6 +119,7 @@ export const configForExperiment = (id: number): SettingsConfig<Settings> => ({
         literal(V1GetExperimentTrialsRequestSortBy.ENDTIME),
         literal(V1GetExperimentTrialsRequestSortBy.ID),
         literal(V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC),
+        literal(V1GetExperimentTrialsRequestSortBy.LOGRETENTIONDAYS),
         literal(V1GetExperimentTrialsRequestSortBy.RESTARTS),
         literal(V1GetExperimentTrialsRequestSortBy.STARTTIME),
         literal(V1GetExperimentTrialsRequestSortBy.STATE),

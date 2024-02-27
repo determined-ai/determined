@@ -418,6 +418,42 @@ service Determined {
       tags: "Experiments"
     };
   }
+
+  // Retain logs for an experiment.
+  rpc PutExperimentRetainLogs(PutExperimentRetainLogsRequest)
+      returns (PutExperimentRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/{experiment_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Retain logs for an experiment.
+  rpc PutExperimentsRetainLogs(PutExperimentsRetainLogsRequest)
+      returns (PutExperimentsRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Retain logs for a Trial.
+  rpc PutTrialRetainLogs(PutTrialRetainLogsRequest)
+      returns (PutTrialRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/trials/{trial_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Trials"
+    };
+  }
   // Get the model definition of an experiment.
   rpc GetModelDef(GetModelDefRequest) returns (GetModelDefResponse) {
     option (google.api.http) = {

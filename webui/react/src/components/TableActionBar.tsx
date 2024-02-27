@@ -12,6 +12,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
@@ -54,6 +55,7 @@ import css from './TableActionBar.module.scss';
 const batchActions = [
   ExperimentAction.OpenTensorBoard,
   ExperimentAction.Move,
+  ExperimentAction.RetainLogs,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
   ExperimentAction.Delete,
@@ -72,6 +74,7 @@ const actionIcons: Record<BatchAction, IconName> = {
   [ExperimentAction.Archive]: 'archive',
   [ExperimentAction.Unarchive]: 'document',
   [ExperimentAction.Move]: 'workspaces',
+  [ExperimentAction.RetainLogs]: 'logs',
   [ExperimentAction.OpenTensorBoard]: 'tensor-board',
   [ExperimentAction.Kill]: 'cancelled',
   [ExperimentAction.Delete]: 'error',
@@ -140,6 +143,7 @@ const TableActionBar: React.FC<Props> = ({
   const [batchAction, setBatchAction] = useState<BatchAction>();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
   const { Component: ExperimentTensorBoardModalComponent, open: openExperimentTensorBoardModal } =
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
@@ -207,6 +211,8 @@ const TableActionBar: React.FC<Props> = ({
         }
         case ExperimentAction.Move:
           return ExperimentMoveModal.open();
+        case ExperimentAction.RetainLogs:
+          return ExperimentRetainLogsModal.open();
         case ExperimentAction.Activate:
           return await activateExperiments(params);
         case ExperimentAction.Archive:
@@ -229,6 +235,7 @@ const TableActionBar: React.FC<Props> = ({
       filters,
       excludedExperimentIds,
       ExperimentMoveModal,
+      ExperimentRetainLogsModal,
       openExperimentTensorBoardModal,
       project?.workspaceId,
     ],
@@ -238,6 +245,15 @@ const TableActionBar: React.FC<Props> = ({
     async (successfulIds?: number[]) => {
       if (!successfulIds) return;
       onActionSuccess?.(ExperimentAction.Move, successfulIds);
+      await onActionComplete?.();
+    },
+    [onActionComplete, onActionSuccess],
+  );
+
+  const handleSubmitRetainLogs = useCallback(
+    async (successfulIds?: number[]) => {
+      if (!successfulIds) return;
+      onActionSuccess?.(ExperimentAction.RetainLogs, successfulIds);
       await onActionComplete?.();
     },
     [onActionComplete, onActionSuccess],
@@ -306,6 +322,8 @@ const TableActionBar: React.FC<Props> = ({
       if (action === ExperimentAction.OpenTensorBoard) {
         submitBatchAction(action);
       } else if (action === ExperimentAction.Move) {
+        sendBatchActions(action);
+      } else if (action === ExperimentAction.RetainLogs) {
         sendBatchActions(action);
       } else {
         setBatchAction(action as BatchAction);
@@ -443,6 +461,18 @@ const TableActionBar: React.FC<Props> = ({
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
+      />
+      <ExperimentRetainLogsModal.Component
+        excludedExperimentIds={excludedExperimentIds}
+        experimentIds={experimentIds.filter(
+          (id) =>
+            canActionExperiment(ExperimentAction.RetainLogs, experimentMap[id]) &&
+            permissions.canModifyExperiment({
+              workspace: { id: experimentMap[id].workspaceId },
+            }),
+        )}
+        filters={selectAll ? filters : undefined}
+        onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent
         filters={selectAll ? filters : undefined}
