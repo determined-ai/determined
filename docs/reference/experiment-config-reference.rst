@@ -717,7 +717,7 @@ current value of a hyperparameter named ``learning_rate`` by calling
    with :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`
    and :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`.
 
-.. include:: ../../_shared/note-dtrain-learn-more.txt
+.. include:: ../_shared/note-dtrain-learn-more.txt
 
 The hyperparameter space is defined by a dictionary. Each key in the dictionary is the name of a
 hyperparameter; the associated value defines the range of the hyperparameter. If the value is a
