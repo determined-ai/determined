@@ -100,11 +100,13 @@ class ProjectStore implements StreamSubscriber {
 
   public upsert(content: StreamContent) {
     const p = mapStreamProject(content);
+    let prevProjectWorkspaceId: number | undefined;
 
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
         const project = map.get(p.id);
         if (project) {
+          prevProjectWorkspaceId = project.workspaceId;
           this.#upsert(project, p);
           map.set(project.id, asValueObject(Project, project));
         } else {
@@ -124,10 +126,17 @@ class ProjectStore implements StreamSubscriber {
           map.set(p.workspaceId.toString(), ws.set(projectInWs, updatedProject));
           return map;
         }
-        // TODO: When workspaceId has changed, we should add it to the new workspace and remove it from the old workspace, once we can stream all needed information.
+        // TODO: When workspaceId has changed, we should add it to the new workspace, since we do not have all the fields from streaming endpoint, we just fetch for the new workspace.
         if (ws) {
-          // map.set(p.workspaceId.toString(), ws.push(p));
           this.fetch(p.workspaceId, undefined, true);
+        }
+        // Remove project from the old workspace
+        if (prevProjectWorkspaceId) {
+          const ows = map.get(prevProjectWorkspaceId.toString());
+          if (ows) {
+            const i = ows.findIndex((op) => op.id === p.id);
+            map.set(prevProjectWorkspaceId.toString(), ows.remove(i));
+          }
         }
         return map;
       }),
