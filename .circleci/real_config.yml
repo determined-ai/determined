@@ -611,6 +611,12 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
+      - upload-dd-results:
+        name: Upload results to DataDog
+        command: |
+          curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" \
+            --output "./datadog-ci" && chmod +x "./datadog-ci"
+          DD_ENV=ci datadog-ci junit upload --service pachyderm /tmp/test-results/e2e/ || true
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
