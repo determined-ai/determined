@@ -867,6 +867,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     searcherMetricValue?: number;
+    /**
+     * Number of days to retain logs for.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    logRetentionDays?: number;
 }
 /**
  * 
@@ -3698,7 +3704,7 @@ export interface V1GetExperimentsResponse {
     pagination: V1Pagination;
 }
 /**
- * Sorts trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+ * Sorts trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
  * @export
  * @enum {string}
  */
@@ -3714,6 +3720,7 @@ export const V1GetExperimentTrialsRequestSortBy = {
     DURATION: 'SORT_BY_DURATION',
     RESTARTS: 'SORT_BY_RESTARTS',
     CHECKPOINTSIZE: 'SORT_BY_CHECKPOINT_SIZE',
+    LOGRETENTIONDAYS: 'SORT_BY_LOG_RETENTION_DAYS',
 } as const
 export type V1GetExperimentTrialsRequestSortBy = ValueOf<typeof V1GetExperimentTrialsRequestSortBy>
 /**
@@ -8038,6 +8045,70 @@ export interface V1PutExperimentResponse {
     config: any;
 }
 /**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutExperimentRetainLogsRequest
+ */
+export interface V1PutExperimentRetainLogsRequest {
+    /**
+     * The ID of the experiment.
+     * @type {number}
+     * @memberof V1PutExperimentRetainLogsRequest
+     */
+    experimentId: number;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutExperimentRetainLogsRequest
+     */
+    numDays: number;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutExperimentRetainLogsResponse
+ */
+export interface V1PutExperimentRetainLogsResponse {
+}
+/**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutExperimentsRetainLogsRequest
+ */
+export interface V1PutExperimentsRetainLogsRequest {
+    /**
+     * The ids of the experiments being moved.
+     * @type {Array<number>}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    experimentIds: Array<number>;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    numDays: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    filters?: V1BulkExperimentFilters;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutExperimentsRetainLogsResponse
+ */
+export interface V1PutExperimentsRetainLogsResponse {
+    /**
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentActionResult>}
+     * @memberof V1PutExperimentsRetainLogsResponse
+     */
+    results: Array<V1ExperimentActionResult>;
+}
+/**
  * Request for setting project notes.
  * @export
  * @interface V1PutProjectNotesRequest
@@ -8113,6 +8184,32 @@ export interface V1PutTrialResponse {
      * @memberof V1PutTrialResponse
      */
     trial: Trialv1Trial;
+}
+/**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutTrialRetainLogsRequest
+ */
+export interface V1PutTrialRetainLogsRequest {
+    /**
+     * The ID of the trial.
+     * @type {number}
+     * @memberof V1PutTrialRetainLogsRequest
+     */
+    trialId?: number;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutTrialRetainLogsRequest
+     */
+    numDays: number;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutTrialRetainLogsResponse
+ */
+export interface V1PutTrialRetainLogsResponse {
 }
 /**
  * Describes a message to control jobs in a queue.
@@ -14600,7 +14697,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -15383,6 +15480,88 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling putExperimentRetainLogs.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putExperimentRetainLogs.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/retain_logs`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putExperimentsRetainLogs.');
+            }
+            const localVarPath = `/api/v1/experiments/retain_logs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -15992,7 +16171,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -16367,6 +16546,45 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentRetainLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentRetainLogs(experimentId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentsRetainLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentsRetainLogs(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -16687,7 +16905,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -16888,6 +17106,27 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         putExperimentLabel(experimentId: number, label: string, options?: any) {
             return ExperimentsApiFp(configuration).putExperimentLabel(experimentId, label, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentRetainLogs(experimentId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentsRetainLogs(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17197,7 +17436,7 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
      * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -17435,6 +17674,31 @@ export class ExperimentsApi extends BaseAPI {
      */
     public putExperimentLabel(experimentId: number, label: string, options?: any) {
         return ExperimentsApiFp(this.configuration).putExperimentLabel(experimentId, label, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for an experiment.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {V1PutExperimentRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentRetainLogs(experimentId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for an experiment.
+     * @param {V1PutExperimentsRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentsRetainLogs(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -30078,7 +30342,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30408,6 +30672,50 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling putTrialRetainLogs.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putTrialRetainLogs.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/retain_logs`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -30556,7 +30864,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30702,6 +31010,26 @@ export const TrialsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTrialRetainLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).putTrialRetainLogs(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -30764,7 +31092,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30847,6 +31175,17 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any) {
+            return TrialsApiFp(configuration).putTrialRetainLogs(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream trial logs.
          * @param {number} trialId The id of the trial.
          * @param {number} [limit] Limit the number of trial logs. A value of 0 denotes no limit.
@@ -30892,7 +31231,7 @@ export class TrialsApi extends BaseAPI {
      * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
      * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30985,6 +31324,19 @@ export class TrialsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for a Trial.
+     * @param {number} trialId The ID of the trial.
+     * @param {V1PutTrialRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any) {
+        return TrialsApiFp(this.configuration).putTrialRetainLogs(trialId, body, options)(this.fetch, this.basePath)
     }
     
     /**

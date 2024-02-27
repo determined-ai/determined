@@ -145,6 +145,8 @@ message Trial {
   repeated string task_ids = 20;
   // Signed searcher metrics value.
   double searcher_metric_value = 21;
+  // Number of days to retain logs for.
+  optional int32 log_retention_days = 22;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

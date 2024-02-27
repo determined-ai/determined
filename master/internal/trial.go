@@ -300,6 +300,7 @@ func (t *trial) create() error {
 		model.JSONObj(t.searcher.Create.Hparams),
 		t.warmStartCheckpoint,
 		int64(t.searcher.Create.TrialSeed),
+		t.taskSpec.LogRetentionDays,
 	)
 
 	err := t.addTask(context.TODO())

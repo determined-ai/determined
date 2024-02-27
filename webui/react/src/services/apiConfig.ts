@@ -1003,6 +1003,16 @@ export const moveExperiments: DetApi<
   request: (params, options) => detApi.Experiments.moveExperiments(params, options),
 };
 
+export const changeExperimentLogRetention: DetApi<
+  Api.V1PutExperimentsRetainLogsRequest,
+  Api.V1PutExperimentsRetainLogsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'changeExperimentLogRetention',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params, options) => detApi.Experiments.putExperimentsRetainLogs(params, options),
+};
+
 export const timeSeries: DetApi<
   Service.TimeSeriesParams,
   Api.V1CompareTrialsResponse,

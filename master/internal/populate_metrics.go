@@ -258,9 +258,10 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	}
 
 	tr := model.Trial{
-		ExperimentID: exp.ID,
-		State:        model.CompletedState,
-		StartTime:    time.Now(),
+		ExperimentID:     exp.ID,
+		State:            model.CompletedState,
+		StartTime:        time.Now(),
+		LogRetentionDays: masterConfig.LoggingRetention.Days,
 	}
 	if err = db.AddTrial(ctx, &tr, tID); err != nil {
 		return err

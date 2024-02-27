@@ -19,6 +19,12 @@ from determined.experimental import client
 from .checkpoint import render_checkpoint
 
 
+def none_or_int(string: str) -> Optional[int]:
+    if string.lower().strip() in ("null", "none"):
+        return None
+    return int(string)
+
+
 def _workload_container_unpack(
     container: bindings.v1WorkloadContainer,
 ) -> Union[bindings.v1MetricsWorkload, bindings.v1CheckpointWorkload]:
@@ -235,6 +241,27 @@ def trial_logs(args: Namespace) -> None:
                 "green",
             )
         )
+
+
+def set_log_retention(args: Namespace) -> None:
+    if not args.forever and not isinstance(args.days, int):
+        raise cli.errors.CliError(
+            "Please provide an argument to set log retention. --days sets the number of days to"
+            " retain logs from the time of creation, eg. `det t set log-retention 1 --days 50`."
+            " --forever retains logs indefinitely, eg.`det t set log-retention 1 --forever`."
+        )
+    elif isinstance(args.days, int) and (args.days < -1 or args.days > 32767):
+        raise cli.errors.CliError(
+            "Please provide a valid value for --days. The allowed range is between -1 and "
+            "32767 days."
+        )
+    bindings.put_PutTrialRetainLogs(
+        cli.setup_session(args),
+        body=bindings.v1PutTrialRetainLogsRequest(
+            trialId=args.trial_id, numDays=-1 if args.forever else args.days
+        ),
+        trialId=args.trial_id,
+    )
 
 
 def generate_support_bundle(args: Namespace) -> None:
@@ -496,6 +523,35 @@ args_description: ArgsDescription = [
             ),
             Cmd(
                 "kill", kill_trial, "forcibly terminate a trial", [Arg("trial_id", help="trial ID")]
+            ),
+            Cmd(
+                "set",
+                None,
+                "set trial attributes",
+                [
+                    Cmd(
+                        "log-retention",
+                        set_log_retention,
+                        "set `log-retention-days` for a trial",
+                        [
+                            Arg("trial_id", type=int, help="trial ID"),
+                            Group(
+                                Arg(
+                                    "--days",
+                                    type=none_or_int,
+                                    help="from the time of creation, number of days to "
+                                    "retain the logs for. allowed range: -1 to 32767.",
+                                ),
+                                Arg(
+                                    "--forever",
+                                    action="store_true",
+                                    help="retain logs forever",
+                                    required=False,
+                                ),
+                            ),
+                        ],
+                    ),
+                ],
             ),
         ],
     ),

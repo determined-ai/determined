@@ -185,6 +185,8 @@ const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   [ExperimentAction.ViewLogs]: alwaysTrueExperimentChecker,
 
   [ExperimentAction.SwitchPin]: alwaysTrueExperimentChecker,
+
+  [ExperimentAction.RetainLogs]: alwaysTrueExperimentChecker,
 };
 
 export const canActionExperiment = (
@@ -235,6 +237,7 @@ export const getActionsForExperiment = (
             workspace: { id: experiment?.workspaceId },
           });
 
+        case ExperimentAction.RetainLogs:
         case ExperimentAction.Archive:
         case ExperimentAction.Unarchive:
           return permissions.canModifyExperiment({ workspace });
