@@ -48,7 +48,6 @@ class GCSTensorboardManager(base.TensorboardManager):
                 retry.if_exception_type(
                     ConnectionError,
                     exceptions.ServerError,
-                    exceptions.TooManyRequests,
                     urllib3.exceptions.ProtocolError,
                     requests.exceptions.ConnectionError,
                 )
