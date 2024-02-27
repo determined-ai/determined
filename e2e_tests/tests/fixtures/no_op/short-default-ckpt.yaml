@@ -19,3 +19,4 @@ min_checkpoint_period:
   batches: 10
 max_restarts: 0
 entrypoint: model_def:NoOpTrial
+debug: true
