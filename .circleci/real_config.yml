@@ -606,7 +606,7 @@ commands:
             pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
-            --ddtrace
+            --ddtrace \
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
