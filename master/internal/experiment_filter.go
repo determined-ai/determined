@@ -158,6 +158,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"externalExperimentId": "e.external_experiment_id",
 		"externalTrialId":      "r.external_run_id",
 		"experimentId":         "e.id",
+		"numRuns":              "(SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id)",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]

@@ -84,4 +84,6 @@ message FlatRun {
   optional bool parent_archived = 29;
   // Unmanaged experiments are detached.
   optional bool unmanaged = 30;
+  // Number of runs that are a part of the associated experiment
+  optional int32 num_runs = 31;
 }

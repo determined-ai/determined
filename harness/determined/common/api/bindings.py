@@ -3968,6 +3968,7 @@ class v1FlatRun(Printable):
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
     metrics: "typing.Optional[str]" = None
+    numRuns: "typing.Optional[int]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
@@ -4002,6 +4003,7 @@ class v1FlatRun(Printable):
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
         metrics: "typing.Union[str, None, Unset]" = _unset,
+        numRuns: "typing.Union[int, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
@@ -4044,6 +4046,8 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(metrics, Unset):
             self.metrics = metrics
+        if not isinstance(numRuns, Unset):
+            self.numRuns = numRuns
         if not isinstance(ownerId, Unset):
             self.ownerId = ownerId
         if not isinstance(parentArchived, Unset):
@@ -4103,6 +4107,8 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "metrics" in obj:
             kwargs["metrics"] = obj["metrics"]
+        if "numRuns" in obj:
+            kwargs["numRuns"] = obj["numRuns"]
         if "ownerId" in obj:
             kwargs["ownerId"] = obj["ownerId"]
         if "parentArchived" in obj:
@@ -4162,6 +4168,8 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "metrics" in vars(self):
             out["metrics"] = self.metrics
+        if not omit_unset or "numRuns" in vars(self):
+            out["numRuns"] = self.numRuns
         if not omit_unset or "ownerId" in vars(self):
             out["ownerId"] = self.ownerId
         if not omit_unset or "parentArchived" in vars(self):

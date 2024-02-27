@@ -134,6 +134,8 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_size").
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
+		ColumnExpr(
+			"(SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) AS num_runs").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
 		ColumnExpr("r.hparams AS hyperparameters").
@@ -155,7 +157,6 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.unmanaged").
 		ColumnExpr("p.name AS project_name").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
-		Join("LEFT JOIN run_id_task_id AS rt ON r.id=rt.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
@@ -190,6 +191,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalExperimentId": "e.external_experiment_id",
 		"externalRunId":        "r.external_run_id",
 		"experimentId":         "e.id",
+		"numRuns":              "num_runs",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
