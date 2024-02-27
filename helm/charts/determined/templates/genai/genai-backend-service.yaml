@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: genai-service-{{ .Release.Name }}
+  name: genai-backend-service-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     app: genai-{{ .Release.Name }}
@@ -13,7 +13,7 @@ spec:
   - port: {{ required "A valid Values.genai.port entry required!" .Values.genai.port }}
     targetPort: {{ .Values.genai.port }}
     protocol: TCP
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: genai-{{ .Release.Name }}
 {{ end }}
