@@ -28,9 +28,8 @@ type Supervisor struct {
 
 // NewSupervisor creates a new Supervisor.
 func NewSupervisor(dbAddress string) *Supervisor {
-	// initialize with a valid PublisherSet and canceled supervisor context,
-	// so connections prior to runOne() can at least send messages collected
-	// during startup.
+	// initialize with a valid PublisherSet and canceled publisherSetCtx,
+	// so connections prior to runOne() can at least send offline messages.
 	ctx, cancelFn := context.WithCancel(context.Background())
 	cancelFn()
 

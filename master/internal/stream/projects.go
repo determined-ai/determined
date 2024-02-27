@@ -136,7 +136,7 @@ func ProjectCollectStartupMsgs(
 	}
 	_, globalAccess := accessMap[model.GlobalAccessScopeID]
 	var accessScopes []model.AccessScopeID
-	// only populate accessScopes if user doesn' have global access
+	// only populate accessScopes if user doesn't have global access
 	if !globalAccess {
 		for id, isPermitted := range accessMap {
 			if isPermitted {
@@ -157,7 +157,7 @@ func ProjectCollectStartupMsgs(
 		spec,
 	)
 
-	// get events that happened prior to since that a relevant (appearance)
+	// get events that happened prior to since that are relevant (appearance)
 	oldEventsQuery.Where("p.seq <= ?", spec.Since)
 	var exist []int64
 	err = oldEventsQuery.Scan(ctx, &exist)
