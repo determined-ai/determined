@@ -165,6 +165,10 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	if sortString == nil {
 		return nil
 	}
+	sortByMap := map[string]string{
+		"asc":  "ASC",
+		"desc": "DESC NULLS LAST",
+	}
 	orderColMap := map[string]string{
 		"id":                   "id",
 		"description":          "description",
@@ -186,10 +190,6 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalExperimentId": "e.external_experiment_id",
 		"externalRunId":        "r.external_run_id",
 		"experimentId":         "e.id",
-	}
-	sortByMap := map[string]string{
-		"asc":  "ASC",
-		"desc": "DESC NULLS LAST",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false

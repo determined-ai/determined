@@ -3243,7 +3243,7 @@ export interface V1FlatRun {
      */
     experimentId?: number;
     /**
-     * The id of the user who created the parent project.
+     * The id of the user who created the run.
      * @type {number}
      * @memberof V1FlatRun
      */
