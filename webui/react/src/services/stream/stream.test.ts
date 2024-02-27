@@ -282,15 +282,12 @@ describe('stream', () => {
     server.send({ complete: true, sync_id: '3' });
     server.send({ experiments_deleted: '5' });
 
-    // Change subscription for projects, since spec1 is a subset of spec2, so keyCache for spec2 is no longer valid.
     client.subscribe(spec1);
 
-    // Change subscription for projects
-    // Note that KeyCache for experiments has been updated
     await expect(server).toReceiveMessage({
       known: {
         experiments: '4,6',
-        projects: '',
+        projects: '1-2',
       },
       subscribe: {
         experiments: {
@@ -299,7 +296,7 @@ describe('stream', () => {
         },
         projects: {
           project_ids: [],
-          since: 0,
+          since: 3,
           workspace_ids: spec1ws,
         },
       },

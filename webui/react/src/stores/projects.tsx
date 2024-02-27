@@ -92,16 +92,15 @@ class ProjectStore implements StreamSubscriber {
 
   public upsert(content: StreamContent) {
     const p = mapStreamProject(content);
-    let prevProjectWorkspaceId: number | undefined;
 
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
         const project = map.get(p.id);
         if (project) {
-          prevProjectWorkspaceId = project.workspaceId;
           this.#upsert(project, p);
         } else {
-          map.set(p.id, asValueObject(Project, p));
+          // TODO: We should insert the new record to store once we can stream all needed information.
+          // map.set(p.id, asValueObject(Project, p));
         }
         return map;
       }),
@@ -115,17 +114,17 @@ class ProjectStore implements StreamSubscriber {
           this.#upsert(projectInWs, p);
           return map;
         }
-        // The workspaceId has changed, add to the new workspace and remove from the old workspace
-        if (ws) {
-          map.set(p.workspaceId.toString(), ws.push(p));
-        }
-        if (prevProjectWorkspaceId) {
-          const ows = map.get(prevProjectWorkspaceId.toString());
-          if (ows) {
-            const i = ows.findIndex((op) => op.id === p.id);
-            map.set(prevProjectWorkspaceId.toString(), ows.remove(i));
-          }
-        }
+        // TODO: When workspaceId has changed, we should add it to the new workspace and remove it from the old workspace, once we can stream all needed information.
+        // if (ws) {
+        //   map.set(p.workspaceId.toString(), ws.push(p));
+        // }
+        // if (prevProjectWorkspaceId) {
+        //   const ows = map.get(prevProjectWorkspaceId.toString());
+        //   if (ows) {
+        //     const i = ows.findIndex((op) => op.id === p.id);
+        //     map.set(prevProjectWorkspaceId.toString(), ows.remove(i));
+        //   }
+        // }
         return map;
       }),
     );

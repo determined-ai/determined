@@ -9,7 +9,6 @@ export const StreamEntityMap: Record<string, Streamable> = {
 };
 
 export abstract class StreamSpec {
-  abstract contains: (sp: StreamSpec) => boolean;
   abstract equals: (sp?: StreamSpec) => boolean;
   abstract id: () => Streamable;
   abstract toWire: () => Record<string, Array<number>>;

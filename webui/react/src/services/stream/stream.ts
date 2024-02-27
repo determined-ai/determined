@@ -95,7 +95,8 @@ export class Stream {
     return ws;
   }
 
-  #shouldSkip(newSub: SubscriptionGroup): boolean {
+  #shouldSkip(newSub?: SubscriptionGroup): boolean {
+    if(!newSub) return true
     if (!this.#curSub) return false;
     let same = true;
     forEach(newSub, (val, k) => {
@@ -105,12 +106,6 @@ export class Stream {
   }
 
   #sendSpec(newSub: SubscriptionGroup): void {
-    // Skip current sub and move to next only if sub has already been sent
-    if (this.#shouldSkip(newSub) && this.#syncSent) {
-      this.#advance();
-      return;
-    }
-
     const newSpecWithCache: Partial<Record<Streamable, SubscriptionWithCache>> = {};
     this.#numSyncs += 1;
     const sync_id = this.#numSyncs.toString();
@@ -123,8 +118,7 @@ export class Stream {
         if (!ent) return payload;
         const k = ent.spec.id();
         const curSpec = this.#curSub?.[k];
-        const keyCache =
-          curSpec && ent.spec.contains(curSpec.spec) ? curSpec.keyCache.copy() : new KeyCache();
+        const keyCache = curSpec?.keyCache || new KeyCache();
         newSpecWithCache[k] = { ...ent, keyCache };
         payload['known'][k] = keyCache.known();
         payload['subscribe'][k] = {
@@ -152,7 +146,6 @@ export class Stream {
           const completedSpecId = map(this.#curSub, (spec) => spec?.id || '').filter((i) => !!i);
           this.#isLoaded?.(completedSpecId);
           this.#syncComplete = msg['sync_id'];
-          this.#advance();
         }
       } else if (this.#syncSent !== this.#syncStarted) {
         // Ignore all messages between when we send a new subscription and when the
@@ -192,10 +185,14 @@ export class Stream {
       return;
     }
 
-    if (this.#subs.length > 0 && this.#syncComplete === this.#syncSent) {
+    if (this.#syncComplete === this.#syncSent) {
       // For established connection, only send a new sub when current sub is completed
-      spec = this.#subs.shift();
-      this.#sendSpec(spec!);
+  
+      // Skip and move to next in case of duplication
+      while (this.#shouldSkip(spec) && this.#subs.length > 0) {
+        spec = this.#subs.shift();
+      }
+      spec && this.#sendSpec(spec);
     }
   }
 
