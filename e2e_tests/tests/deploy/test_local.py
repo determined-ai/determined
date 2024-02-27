@@ -1,3 +1,4 @@
+import contextlib
 import os
 import pathlib
 import subprocess
@@ -20,7 +21,7 @@ def mksess(host: str, port: int, username: str = "determined", password: str = "
 
     master_url = api.canonicalize_master_url(f"http://{host}:{port}")
     utp = authentication.login(master_url, username=username, password=password)
-    return api.Session(master_url, utp, cert=None)
+    return api.Session(master_url, utp, cert=None, max_retries=0)
 
 
 def det_deploy(subcommand: List) -> None:
@@ -47,6 +48,15 @@ def cluster_down(arguments: List) -> None:
     command = ["cluster-down"]
     command += arguments
     det_deploy(command)
+
+
+@contextlib.contextmanager
+def manage_cluster(arguments: List, delete_db: bool = True) -> None:
+    cluster_up(arguments, delete_db)
+    try:
+        yield
+    finally:
+        cluster_down(arguments)
 
 
 def master_up(arguments: List, delete_db: bool = True) -> None:
