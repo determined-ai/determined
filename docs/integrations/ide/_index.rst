@@ -4,7 +4,11 @@
  IDEs
 ######
 
-Determined shells can be used in the popular IDEs similarly to a common remote SSH host.
+Determined shells can be seamlessly integrated into popular IDEs, functioning similarly to a remote
+SSH host.
+
+-  :ref:`PyCharm <pycharm>`
+-  :ref:`VSCode <vscode>`
 
 .. toctree::
    :hidden:

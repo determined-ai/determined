@@ -8,7 +8,8 @@
  Master Port
 *************
 
-By default, the master listens on TCP port 8080. This can be configured via the ``port`` option.
+By default, the master listens on TCP port 8080. You can configure this port via the ``port``
+option.
 
 .. _security:
 
@@ -17,32 +18,27 @@ By default, the master listens on TCP port 8080. This can be configured via the 
 **********
 
 The master can secure all incoming connections using `TLS
-<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. That ability requires a TLS private key
-and certificate to be provided; set the options ``security.tls.cert`` and ``security.tls.key`` to
-paths to a PEM-encoded TLS certificate and private key, respectively, to do so. If TLS is enabled,
-the default port becomes 8443 rather than 8080. See :ref:`tls` for more information.
+<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. To enable this feature, provide a TLS
+private key and certificate by setting the options ``security.tls.cert`` and ``security.tls.key`` to
+paths to a PEM-encoded TLS certificate and private key, respectively. If TLS is enabled, the default
+port becomes 8443 rather than 8080. Refer to :ref:`tls` for more information.
 
 .. _agent-network-proxy:
 
-*************************************
- Configuring Trial Runner Networking
-*************************************
+***************************************
+ Configuring Task Container Networking
+***************************************
 
-The master is capable of selecting the network interface that trial runners will use to communicate
-when performing distributed (multi-machine) training. The network interface can be configured by
-editing ``task_container_defaults.dtrain_network_interface``. If left unspecified, which is the
-default setting, Determined will auto-discover a common network interface shared by the trial
-runners.
+The master can select the network interface that task containers will use to communicate during
+distributed (multi-machine) training. You can configure the network interface by editing
+``task_container_defaults.dtrain_network_interface``. If left unspecified, which is the default
+setting, Determined will auto-discover a common network interface shared by the task containers.
 
 .. note::
 
-   For :ref:`multi-gpu-training`, Determined automatically detects a common network interface shared
-   by the agent machines. If your cluster has multiple common network interfaces, please specify the
-   fastest one.
-
-Additionally, the ports used by the GLOO and NCCL libraries, which are used during distributed
-(multi-machine) training can be configured to fall within user-defined ranges. If left unspecified,
-ports will be chosen randomly from the unprivileged port range (1024-65535).
+   For :ref:`multi-gpu-training`, the platform automatically detects a common network interface
+   shared by the agent machines. If your cluster has multiple common network interfaces, please
+   specify the fastest one.
 
 ****************************
  Default Checkpoint Storage
@@ -56,11 +52,13 @@ See :ref:`checkpoint-storage` for details.
  Telemetry
 ***********
 
-By default, the master and WebUI collect anonymous information about how Determined is being used.
-This usage information is collected so that we can improve the design of the product. Determined
-does not report information that can be used to identify individual users of the product, nor does
-it include model source code, model architecture/checkpoints, training datasets, training and
-validation metrics, logs, or hyperparameter values.
+To improve product design, the master and WebUI both collect anonymous information about how
+Determined is being used, by default. This information includes various metrics and events such as
+the number of experiments, trials, registered users, and more.
+
+Telemetry does not report information that can be used to identify individual users of the product,
+nor does it include model source code, model architecture/checkpoints, training datasets, training
+and validation metrics, logs, or hyperparameter values.
 
 The information we collect from the master periodically includes:
 
@@ -120,7 +118,7 @@ OpenTelemetry
 =============
 
 Separate from the telemetry reporting mentioned above, Determined also supports `OpenTelemetry
-<https://opentelemetry.io/>`__ to collect traces. This is disabled by default; to enable it, use the
+<https://opentelemetry.io/>`__ to collect traces. This is disabled by default. To enable it, use the
 master configuration setting ``telemetry.otel-enabled``. When enabled, the master will send
 OpenTelemetry traces to a collector running at ``localhost:4317``. A different endpoint can be set
 via the ``telemetry.otel-endpoint`` configuration setting.

@@ -1,8 +1,8 @@
 .. _custom-env:
 
-##############################
- Customizing Your Environment
-##############################
+############################
+ Customize Your Environment
+############################
 
 Determined launches workloads using Docker containers. By default, workloads execute inside a
 Determined-provided container that includes common deep learning libraries and frameworks.

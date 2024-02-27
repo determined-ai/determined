@@ -1502,8 +1502,7 @@ Trial logs are shipped to the master and stored in Postgres. If nothing is set, 
 =================
 
 Trial logs are shipped to the Elasticsearch cluster described by the configuration settings in the
-section. See :ref:`the topic guide <elasticsearch-logging-backend>` for a more detailed explanation
-of how and when to use Elasticsearch.
+section.
 
 ``host``
 --------
