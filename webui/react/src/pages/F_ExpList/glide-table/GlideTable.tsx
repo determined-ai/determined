@@ -677,6 +677,15 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           case V1LocationType.CUSTOMMETRIC:
             dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
             break;
+          case V1LocationType.RUN:
+            dataPath = `run.${currentColumn.column}`;
+            break;
+          case V1LocationType.RUNHYPERPARAMETERS:
+            dataPath = `run.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}`;
+            break;
           case V1LocationType.UNSPECIFIED:
             break;
         }
