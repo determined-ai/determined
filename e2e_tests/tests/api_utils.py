@@ -25,12 +25,10 @@ def make_session(username: str, password: str) -> api.Session:
     return api.Session(master_url, utp, cert(), max_retries=0)
 
 
-@functools.lru_cache(maxsize=1)
 def user_session() -> api.Session:
     return make_session("determined", conf.USER_PASSWORD)
 
 
-@functools.lru_cache(maxsize=1)
 def admin_session() -> api.Session:
     return make_session("admin", conf.USER_PASSWORD)
 
