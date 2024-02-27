@@ -395,32 +395,6 @@ LIMIT 1`, metricOrdering), exp.Config.Searcher.Metric, id).Scan(ctx, &metric); e
 	return metric, nil
 }
 
-// CheckExperimentExists checks if the experiment exists.
-func (db *PgDB) CheckExperimentExists(id int) (bool, error) {
-	var exists bool
-	err := db.sql.QueryRow(`
-SELECT
-EXISTS(
-  select id
-  FROM experiments
-  WHERE id = $1
-)`, id).Scan(&exists)
-	return exists, err
-}
-
-// CheckTrialExists checks if the trial exists.
-func (db *PgDB) CheckTrialExists(id int) (bool, error) {
-	var exists bool
-	err := db.sql.QueryRow(`
-SELECT
-EXISTS(
-  select id
-  FROM trials
-  WHERE id = $1
-)`, id).Scan(&exists)
-	return exists, err
-}
-
 // TrialExperimentAndRequestID returns the trial's experiment and request ID.
 func (db *PgDB) TrialExperimentAndRequestID(id int) (int, model.RequestID, error) {
 	var eID int
