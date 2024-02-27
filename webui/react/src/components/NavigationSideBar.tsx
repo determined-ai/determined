@@ -1,4 +1,3 @@
-import LogoGenAI from 'assets/images/logo-genai.svg?url';
 import Avatar from 'hew/Avatar';
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
@@ -10,10 +9,11 @@ import Spinner from 'hew/Spinner';
 import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import { boolean } from 'io-ts';
-import React, { useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import LogoGenAI from 'assets/images/logo-genai.svg?url';
 import Link, { Props as LinkProps } from 'components/Link';
 import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
@@ -195,7 +195,7 @@ const NavigationSideBar: React.FC = () => {
     if (gasLinkOn) {
       bottomItems.push({
         external: true,
-        icon: <img alt="GenAI Studio" src={LogoGenAI} width={24} height={24} />,
+        icon: <img alt="GenAI Studio" height={24} src={LogoGenAI} width={24} />,
         label: 'GenAI',
         path: serverAddress('/genai'),
         popout: true,
