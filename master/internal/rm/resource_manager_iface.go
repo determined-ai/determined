@@ -15,14 +15,14 @@ type ResourceManager interface {
 	Allocate(rmName string, req sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(rmName string, req sproto.ResourcesReleased)
 	ValidateResources(rmName string, req sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
-	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error) // only used in dispatcherrm
-	NotifyContainerRunning(rmName string, req sproto.NotifyContainerRunning) error
+	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)   // only used in dispatcherrm
+	NotifyContainerRunning(req sproto.NotifyContainerRunning) error // only used in dispatcherrm
 
 	// Scheduling related stuff
 	SetGroupMaxSlots(rmName string, req sproto.SetGroupMaxSlots)
 	SetGroupWeight(rmName string, req sproto.SetGroupWeight) error
 	SetGroupPriority(rmName string, req sproto.SetGroupPriority) error
-	ExternalPreemptionPending(rmName string, allocID model.AllocationID) error
+	ExternalPreemptionPending(allocID model.AllocationID) error // only used in dispatcherrm
 	IsReattachableOnlyAfterStarted(rmName string) bool
 
 	// Resource pool stuff

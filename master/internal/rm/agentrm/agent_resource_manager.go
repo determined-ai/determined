@@ -219,7 +219,7 @@ func (a *ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcesReque
 }
 
 // ExternalPreemptionPending implements rm.ResourceManager.
-func (*ResourceManager) ExternalPreemptionPending(string, model.AllocationID) error {
+func (*ResourceManager) ExternalPreemptionPending(model.AllocationID) error {
 	return rmerrors.ErrNotSupported
 }
 
@@ -376,7 +376,7 @@ func (a *ResourceManager) MoveJob(_ string, msg sproto.MoveJob) error {
 }
 
 // NotifyContainerRunning implements rm.ResourceManager.
-func (*ResourceManager) NotifyContainerRunning(string, sproto.NotifyContainerRunning) error {
+func (*ResourceManager) NotifyContainerRunning(sproto.NotifyContainerRunning) error {
 	// Agent Resource Manager does not implement a handler for the
 	// NotifyContainerRunning message, as it is only used on HPC
 	// (High Performance Computing).

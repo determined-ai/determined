@@ -167,7 +167,7 @@ func (ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, er
 }
 
 // ExternalPreemptionPending implements rm.ResourceManager.
-func (ResourceManager) ExternalPreemptionPending(string, model.AllocationID) error {
+func (ResourceManager) ExternalPreemptionPending(model.AllocationID) error {
 	return rmerrors.ErrNotSupported
 }
 
@@ -459,9 +459,7 @@ func (k ResourceManager) ValidateResourcePool(_, name string) error {
 
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
-func (k ResourceManager) NotifyContainerRunning(
-	_ string, msg sproto.NotifyContainerRunning,
-) error {
+func (k ResourceManager) NotifyContainerRunning(msg sproto.NotifyContainerRunning) error {
 	// Kubernetes Resource Manager does not implement a handler for the
 	// NotifyContainerRunning message, as it is only used on HPC
 	// (High Performance Computing).
