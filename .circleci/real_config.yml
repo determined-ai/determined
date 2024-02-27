@@ -3132,32 +3132,6 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
 
-  test-e2e-quarantined:
-    jobs:
-      - build-proto
-      - build-helm
-      - build-react:
-          dev-mode: true
-      - build-docs:
-          requires:
-            - build-helm
-            - build-proto
-      - package-and-push-system-local:
-          requires:
-            - build-react
-            - build-docs
-
-      - test-stress:
-          name: test-stress
-          filters: *any-upstream
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [1]
-              mark: ["stress_test"]
-              det-version: [$CIRCLE_SHA1]
-
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
@@ -3168,6 +3142,10 @@ workflows:
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
+  test-e2e-quarantined:
+    jobs:
+      - build-react:
+          dev-mode: true
       - test-unit-react-quarantined
 
   test-e2e-longrunning:
@@ -3482,6 +3460,17 @@ workflows:
           requires:
             - package-and-push-system-local
             - request-packaging-tests
+
+      # Local deployment
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
 
       # Request AWS FS tests
       - request-aws-fs-tests:

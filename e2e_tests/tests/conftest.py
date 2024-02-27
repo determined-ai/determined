@@ -36,7 +36,6 @@ _INTEG_MARKERS = {
     "e2e_slurm_internet_connected_cluster",
     "e2e_slurm_misconfigured",
     "det_deploy_local",
-    "stress_test",
     "test_oauth",
     "test_model_registry_rbac",
     "distributed",
