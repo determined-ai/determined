@@ -600,10 +600,13 @@ commands:
           working_directory: ~/project/e2e_tests
           no_output_timeout: 30m
           command: |
+            pip install -U ddtrace
+            DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com DD_ENV=ci DD_SERVICE='test-e2e-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
+            --ddtrace
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
@@ -616,7 +619,7 @@ commands:
           command: |
             curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" \
               --output "./datadog-ci" && chmod +x "./datadog-ci"
-            DD_ENV=ci datadog-ci junit upload --service pachyderm /tmp/test-results/e2e/ || true
+            ls -lf # DD_ENV=ci datadog-ci junit upload --service pachyderm /tmp/test-results/e2e/ || true     
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
