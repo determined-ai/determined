@@ -15,11 +15,9 @@ import (
 
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
-	Migrate(migrationURL string, actions []string) error
+	Migrate(migrationURL string, actions []string) (isNew bool, err error)
 	Close() error
 	GetOrCreateClusterID(telemetryID string) (string, error)
-	CheckExperimentExists(id int) (bool, error)
-	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	AddExperiment(experiment *model.Experiment, modelDef []byte, activeConfig expconf.ExperimentConfig) error
 	ExperimentIDByTrialID(trialID int) (int, error)

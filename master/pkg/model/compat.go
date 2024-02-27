@@ -32,16 +32,17 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 	}
 
 	return schemas.WithDefaults(expconf.ResourcesConfig{
-		RawSlots:          ptrs.Ptr(r.Slots),
-		RawMaxSlots:       r.MaxSlots,
-		RawSlotsPerTrial:  ptrs.Ptr(1),
-		RawWeight:         ptrs.Ptr(r.Weight),
-		RawNativeParallel: ptrs.Ptr(r.NativeParallel),
-		RawShmSize:        shm,
-		RawResourcePool:   ptrs.Ptr(r.ResourcePool),
-		RawPriority:       r.Priority,
-		RawDevices:        r.Devices.ToExpconf(),
-		RawIsSingleNode:   r.IsSingleNode,
+		RawSlots:           ptrs.Ptr(r.Slots),
+		RawMaxSlots:        r.MaxSlots,
+		RawSlotsPerTrial:   ptrs.Ptr(1),
+		RawWeight:          ptrs.Ptr(r.Weight),
+		RawNativeParallel:  ptrs.Ptr(r.NativeParallel),
+		RawShmSize:         shm,
+		RawResourceManager: ptrs.Ptr(r.ResourceManager),
+		RawResourcePool:    ptrs.Ptr(r.ResourcePool),
+		RawPriority:        r.Priority,
+		RawDevices:         r.Devices.ToExpconf(),
+		RawIsSingleNode:    r.IsSingleNode,
 	})
 }
 

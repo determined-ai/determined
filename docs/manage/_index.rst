@@ -12,12 +12,6 @@
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="elasticsearch-logging-backend.html">
-               <h2 class="tile-title">Elasticsearch-Backed Logging</h2>
-               <p class="tile-description">Considering a shift to Elasticsearch for optimized log storage and analysis? Follow these tips and guidelines.</p>
-            </a>
-         </div>
-         <div class="tile-container">
             <a class="tile" href="historical-cluster-usage-data.html">
                <h2 class="tile-title">Historical Cluster Usage Data</h2>
                <p class="tile-description">Discover how to unlock the secrets of your cluster with historical usage data.</p>

@@ -1438,6 +1438,12 @@ Whether this feature is enabled. Defaults to ``true``.
 Integer identifier of a role to be assigned. Defaults to ``2``, which is the role id of
 ``WorkspaceAdmin`` role.
 
+``initial_user_password``
+=========================
+
+Initial password for the built-in ``determined`` and ``admin`` users. Applies on first launch when a
+cluster's database is bootstrapped, otherwise it is ignored.
+
 **************
  ``webhooks``
 **************
@@ -1496,8 +1502,7 @@ Trial logs are shipped to the master and stored in Postgres. If nothing is set, 
 =================
 
 Trial logs are shipped to the Elasticsearch cluster described by the configuration settings in the
-section. See :ref:`the topic guide <elasticsearch-logging-backend>` for a more detailed explanation
-of how and when to use Elasticsearch.
+section.
 
 ``host``
 --------

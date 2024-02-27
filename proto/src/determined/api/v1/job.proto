@@ -23,6 +23,8 @@ message GetJobsRequest {
   OrderBy order_by = 3;
   // Filter to jobs with states among those given.
   repeated determined.job.v1.State states = 4;
+  // The resource manager for the request.
+  string resource_manager = 5;
 }
 
 // Response to GetJobsRequest.
@@ -52,6 +54,8 @@ message GetJobsV2Request {
   OrderBy order_by = 3;
   // Filter to jobs with states among those given.
   repeated determined.job.v1.State states = 4;
+  // The resource manager for the request.
+  string resource_manager = 5;
 }
 
 // Response to GetJobsV2Request.
@@ -94,6 +98,8 @@ message RPQueueStat {
 message GetJobQueueStatsRequest {
   // Filter the results based on a set of resource pools.
   repeated string resource_pools = 1;
+  // The resource manager for the request.
+  string resource_manager = 2;
 }
 // Response to GetJobQueueStatsRequest.
 message GetJobQueueStatsResponse {

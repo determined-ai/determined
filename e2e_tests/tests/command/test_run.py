@@ -200,11 +200,11 @@ def test_image_pull_after_remove() -> None:
     sess = api_utils.user_session()
     client = docker.from_env()
     try:
-        client.images.remove("python:3.8.16")
+        client.images.remove("python:3.8.15")
     except docker.errors.ImageNotFound:
         pass
 
-    _run_cmd(sess, ["--config", "environment.image=python:3.8.16", "true"], expect_success=True)
+    _run_cmd(sess, ["--config", "environment.image=python:3.8.15", "true"], expect_success=True)
 
 
 @pytest.mark.e2e_cpu
