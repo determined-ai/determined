@@ -44,7 +44,8 @@ const (
 	defaultSearcherMetric = "okness"
 	// DefaultTestSrcPath returns src to the mnsit_pytorch model example.
 	DefaultTestSrcPath = "../../../examples/tutorials/mnist_pytorch"
-	DefaultProjectID   = 1
+	// DefaultProjectID is the project used when none is specified.
+	DefaultProjectID = 1
 )
 
 // Model represents a row from the `models` table. Unused except for tests.
@@ -201,7 +202,7 @@ func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 	return jID
 }
 
-// RequireMockWorkspaceID returns a mock workspace ID and name
+// RequireMockWorkspaceID returns a mock workspace ID and name.
 func RequireMockWorkspaceID(t *testing.T, db *PgDB) (int, string) {
 	mockWorkspace := struct {
 		bun.BaseModel `bun:"table:workspaces"`
@@ -217,7 +218,7 @@ func RequireMockWorkspaceID(t *testing.T, db *PgDB) (int, string) {
 	return mockWorkspace.ID, mockWorkspace.Name
 }
 
-// RequireMockProjectID returns a mock project ID and name
+// RequireMockProjectID returns a mock project ID and name.
 func RequireMockProjectID(t *testing.T, db *PgDB, workspaceID int, archived bool) (int, string) {
 	mockProject := struct {
 		bun.BaseModel `bun:"table:projects"`
@@ -288,7 +289,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	return RequireMockExperimentParams(t, db, user, MockExperimentParams{}, DefaultProjectID)
 }
 
-// RequireMockExperimentProject returns a mock experiment attached to a specific project
+// RequireMockExperimentProject returns a mock experiment attached to a specific project.
 func RequireMockExperimentProject(t *testing.T, db *PgDB, user model.User, projectID int) *model.Experiment {
 	return RequireMockExperimentParams(t, db, user, MockExperimentParams{}, projectID)
 }

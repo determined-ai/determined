@@ -36,7 +36,7 @@ func ProjectByName(ctx context.Context, workspaceName string, projectName string
 	if archived {
 		return 1, fmt.Errorf("project is archived and cannot add new experiments")
 	}
-	return int(pID), nil
+	return pID, nil
 }
 
 // ProjectIDByName returns a project's ID if it exists in the given workspace.

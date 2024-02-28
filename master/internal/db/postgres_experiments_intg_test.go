@@ -910,6 +910,7 @@ func TestProjectExperiments(t *testing.T) {
 	// add a workspace, and project
 	workspaceID, _ := RequireMockWorkspaceID(t, db)
 	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
+	RequireMockUser(t, db)
 
 	t.Run("valid project with zero experiments", func(t *testing.T) {
 		actualExps, err := ProjectExperiments(context.Background(), projectID)
