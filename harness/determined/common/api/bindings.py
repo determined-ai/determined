@@ -3967,7 +3967,6 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
-    metrics: "typing.Optional[str]" = None
     numRuns: "typing.Optional[int]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
@@ -3978,6 +3977,7 @@ class v1FlatRun(Printable):
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     searcherType: "typing.Optional[str]" = None
+    summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     unmanaged: "typing.Optional[bool]" = None
     username: "typing.Optional[str]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -4002,7 +4002,6 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
-        metrics: "typing.Union[str, None, Unset]" = _unset,
         numRuns: "typing.Union[int, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
@@ -4013,6 +4012,7 @@ class v1FlatRun(Printable):
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         searcherType: "typing.Union[str, None, Unset]" = _unset,
+        summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         username: "typing.Union[str, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
@@ -4044,8 +4044,6 @@ class v1FlatRun(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
-        if not isinstance(metrics, Unset):
-            self.metrics = metrics
         if not isinstance(numRuns, Unset):
             self.numRuns = numRuns
         if not isinstance(ownerId, Unset):
@@ -4066,6 +4064,8 @@ class v1FlatRun(Printable):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(searcherType, Unset):
             self.searcherType = searcherType
+        if not isinstance(summaryMetrics, Unset):
+            self.summaryMetrics = summaryMetrics
         if not isinstance(unmanaged, Unset):
             self.unmanaged = unmanaged
         if not isinstance(username, Unset):
@@ -4105,8 +4105,6 @@ class v1FlatRun(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
-        if "metrics" in obj:
-            kwargs["metrics"] = obj["metrics"]
         if "numRuns" in obj:
             kwargs["numRuns"] = obj["numRuns"]
         if "ownerId" in obj:
@@ -4127,6 +4125,8 @@ class v1FlatRun(Printable):
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "searcherType" in obj:
             kwargs["searcherType"] = obj["searcherType"]
+        if "summaryMetrics" in obj:
+            kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "unmanaged" in obj:
             kwargs["unmanaged"] = obj["unmanaged"]
         if "username" in obj:
@@ -4166,8 +4166,6 @@ class v1FlatRun(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
-        if not omit_unset or "metrics" in vars(self):
-            out["metrics"] = self.metrics
         if not omit_unset or "numRuns" in vars(self):
             out["numRuns"] = self.numRuns
         if not omit_unset or "ownerId" in vars(self):
@@ -4188,6 +4186,8 @@ class v1FlatRun(Printable):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "searcherType" in vars(self):
             out["searcherType"] = self.searcherType
+        if not omit_unset or "summaryMetrics" in vars(self):
+            out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "unmanaged" in vars(self):
             out["unmanaged"] = self.unmanaged
         if not omit_unset or "username" in vars(self):

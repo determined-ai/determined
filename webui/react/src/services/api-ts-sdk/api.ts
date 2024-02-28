@@ -3232,10 +3232,10 @@ export interface V1FlatRun {
     hyperparameters?: string;
     /**
      * summary metrics.
-     * @type {string}
+     * @type {any}
      * @memberof V1FlatRun
      */
-    metrics?: string;
+    summaryMetrics?: any;
     /**
      * The id of the experiment linked to the run.
      * @type {number}

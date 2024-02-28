@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.run.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/runv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "determined/common/v1/common.proto";
 import "google/protobuf/wrappers.proto";
@@ -48,7 +49,7 @@ message FlatRun {
   // Trial hyperparameters.
   string hyperparameters = 12;
   // summary metrics.
-  optional string metrics = 13;
+  optional google.protobuf.Struct summary_metrics = 13;
   // The id of the experiment linked to the run.
   optional int32 experiment_id = 14;
   // The id of the user who created the run.

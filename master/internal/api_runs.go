@@ -139,7 +139,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
 		ColumnExpr("r.hparams AS hyperparameters").
-		ColumnExpr("r.summary_metrics AS metrics").
+		ColumnExpr("r.summary_metrics AS summary_metrics").
 		ColumnExpr("CASE WHEN e.parent_id IS NULL THEN NULL ELSE " +
 			"json_build_object('value', e.parent_id) END AS forked_from").
 		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
