@@ -15,7 +15,7 @@ def set_docker_image(config: Dict) -> Dict:
     )
 
     config = conf.set_image(
-        config, conf.TF1_CPU_IMAGE, f"determinedai/model-hub-mmdetection:{git_short_hash}"
+        config, conf.TF2_CPU_IMAGE, f"determinedai/model-hub-mmdetection:{git_short_hash}"
     )
     return config
 
