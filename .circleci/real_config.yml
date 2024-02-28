@@ -1581,11 +1581,13 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
-          file: webui/react/junit.xml
+          file: webui/react/coverage/clover.xml
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
           path: webui/react/coverage
+      - store_artifacts:
+          path: webui/react/junit.xml
 
   test-unit-react-quarantined:
     docker:
