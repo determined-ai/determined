@@ -412,7 +412,6 @@ const ExperimentContinueModalComponent = ({
       title={type}
       onClose={handleModalClose}>
       <>
-        {modalState.error && <Message icon="error" title={modalState.error} />}
         {modalState.configError && modalIsInAdvancedMode && (
           <Message icon="error" title={modalState.configError} />
         )}
