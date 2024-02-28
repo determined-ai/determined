@@ -1,6 +1,5 @@
 import json
-import multiprocessing as mp
-import multiprocessing.pool
+from multiprocessing import pool
 from typing import Dict, List, Set, Union
 
 import pytest
@@ -16,7 +15,7 @@ from tests import experiment as exp
 @pytest.mark.timeout(600)
 def test_streaming_metrics_api() -> None:
     sess = api_utils.user_session()
-    pool = mp.pool.ThreadPool(processes=7)
+    thread_pool = pool.ThreadPool(processes=7)
 
     experiment_id = exp.create_experiment(
         sess,
@@ -30,13 +29,25 @@ def test_streaming_metrics_api() -> None:
     # The HP importance portion of this test is commented out until the feature is enabled by
     # default
 
-    metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
-    train_metric_batches_thread = pool.apply_async(request_train_metric_batches, (experiment_id,))
-    valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches, (experiment_id,))
-    train_trials_snapshot_thread = pool.apply_async(request_train_trials_snapshot, (experiment_id,))
-    valid_trials_snapshot_thread = pool.apply_async(request_valid_trials_snapshot, (experiment_id,))
-    train_trials_sample_thread = pool.apply_async(request_train_trials_sample, (experiment_id,))
-    valid_trials_sample_thread = pool.apply_async(request_valid_trials_sample, (experiment_id,))
+    metric_names_thread = thread_pool.apply_async(request_metric_names, (experiment_id,))
+    train_metric_batches_thread = thread_pool.apply_async(
+        request_train_metric_batches, (experiment_id,)
+    )
+    valid_metric_batches_thread = thread_pool.apply_async(
+        request_valid_metric_batches, (experiment_id,)
+    )
+    train_trials_snapshot_thread = thread_pool.apply_async(
+        request_train_trials_snapshot, (experiment_id,)
+    )
+    valid_trials_snapshot_thread = thread_pool.apply_async(
+        request_valid_trials_snapshot, (experiment_id,)
+    )
+    train_trials_sample_thread = thread_pool.apply_async(
+        request_train_trials_sample, (experiment_id,)
+    )
+    valid_trials_sample_thread = thread_pool.apply_async(
+        request_valid_trials_sample, (experiment_id,)
+    )
 
     metric_names_results = metric_names_thread.get()
     train_metric_batches_results = train_metric_batches_thread.get()
