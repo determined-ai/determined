@@ -51,13 +51,17 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 	eg := errgroupx.WithContext(ctx)
 	eg.Go(
 		func(c context.Context) error {
-			return publishLoop(
+			err := publishLoop(
 				c,
 				ps.DBAddress,
 				projectChannel,
 				ps.Projects,
 				readyChannels[ps.Projects],
 			)
+			if err != nil {
+				return fmt.Errorf("project publishLoop failed: %s", err.Error())
+			}
+			return nil
 		},
 	)
 
@@ -170,21 +174,19 @@ func (ps *PublisherSet) streamHandler(
 
 	// detect context cancelation, and bring it into the websocket thread
 	go func() {
+		defer streamer.Close()
 		select {
 		// did the streamer crash?
 		case <-ctx.Done():
 			log.Tracef("context canceled, closing streamer: %v", streamer)
-			streamer.Close()
 		// did a publisher crash?
 		case <-publisherSetCtx.Done():
 			// close streamer if PublisherSet is down, prepping for restart
 			log.Tracef("a publisher crashed, closing streamer: %v", streamer)
-			streamer.Close()
 		// did permissions change?
 		case <-bootemChan:
 			// close this streamer if online appearance/disappearance occurred
 			log.Tracef("permission scope detected, closing streamer: %v", streamer)
-			streamer.Close()
 		}
 	}()
 
@@ -307,8 +309,8 @@ func (ps *PublisherSet) processStream(
 	}
 }
 
-// publishLoop is a wrapper that closes all active streamers in the event that
-// an error occurs while listening for and publishing new events.
+// publishLoop watches the channel for new events and broadcasts them to the provided Publisher's
+// streamers.
 func publishLoop[T stream.Msg](
 	ctx context.Context,
 	dbAddress,
@@ -316,24 +318,11 @@ func publishLoop[T stream.Msg](
 	publisher *stream.Publisher[T],
 	readyChan chan bool,
 ) error {
-	err := doPublishLoop(ctx, dbAddress, channelName, publisher, readyChan)
-	if err != nil {
-		log.Errorf("publishLoop failed: %s", err.Error())
-		publisher.CloseAllStreamers()
-		return err
-	}
-	return nil
-}
+	// Always close all active streamers when we shut down, because no subscription can be valid
+	// across the transition from an old PublisherSet to a new PublisherSet; there would always be
+	// a risk of dropped events between the two.
+	defer publisher.CloseAllStreamers()
 
-// doPublishLoop watches the channel for new events
-// and broadcasts them to the provided Publisher's streamers.
-func doPublishLoop[T stream.Msg](
-	ctx context.Context,
-	dbAddress,
-	channelName string,
-	publisher *stream.Publisher[T],
-	readyChan chan bool,
-) error {
 	listener, err := newDBListener(dbAddress, channelName)
 	if err != nil {
 		return fmt.Errorf("failed to listen to %s: %s", channelName, err.Error())
@@ -350,6 +339,9 @@ func doPublishLoop[T stream.Msg](
 		}
 	}()
 
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		var events []stream.Event[T]
 		select {
@@ -357,7 +349,7 @@ func doPublishLoop[T stream.Msg](
 		case <-ctx.Done():
 			return nil
 		// Is the pq listener still active?
-		case <-time.After(30 * time.Second):
+		case <-ticker.C:
 			pingErrChan := make(chan error)
 			go func() {
 				pingErrChan <- listener.Ping()
@@ -422,6 +414,9 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 		}
 	}()
 
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		// did permissions change?
@@ -431,7 +426,7 @@ func BootemLoop(ctx context.Context, ps *PublisherSet) error {
 				ps.bootStreamers()
 			}()
 		// is the listener still alive?
-		case <-time.After(30 * time.Second):
+		case <-ticker.C:
 			pingErrChan := make(chan error)
 			go func() {
 				pingErrChan <- permListener.Ping()
