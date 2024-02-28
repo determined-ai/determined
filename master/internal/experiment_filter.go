@@ -186,6 +186,14 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 		queryColumnType = *filterColumnType
 	}
 	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
+	for i := 0; i < len(hp); i++ {
+		// for last element
+		if i == len(hp)-1 {
+			hp[i] = fmt.Sprintf(`>'%s'`, hp[i])
+		} else {
+			hp[i] = fmt.Sprintf(`'%s'`, hp[i])
+		}
+	}
 	hpQuery := strings.Join(hp, "->")
 	oSQL, err := o.toSQL()
 	if err != nil {
@@ -195,22 +203,32 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var queryString string
 	switch o {
 	case empty:
-		queryString = fmt.Sprintf(`r.hparams->'%s' IS NULL`, hpQuery)
+		queryString = fmt.Sprintf(`r.hparams->%s IS NULL`, hpQuery)
 	case notEmpty:
-		queryString = fmt.Sprintf(`r.hparams->'%s' NOT NULL`, hpQuery)
+		queryString = fmt.Sprintf(`r.hparams->%s IS NOT NULL`, hpQuery)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
-		queryString = fmt.Sprintf(`r.hparams->'%s' LIKE %s`, hpQuery, "?")
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
+			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
+			queryString = fmt.Sprintf(`r.hparams->%s LIKE %s`, hpQuery, "?")
+		} else {
+			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 = %s`, hpQuery, "?")
+		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
-		queryString = fmt.Sprintf(`r.hparams->'%s' NOT LIKE %s`, hpQuery, "?")
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
+			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
+			queryString = fmt.Sprintf(`r.hparams->%s NOT LIKE %s`, hpQuery, "?")
+		} else {
+			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 != %s`, hpQuery, "?")
+		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
 			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->'%s' %s %s`, hpQuery, "?", "?")
+			queryString = fmt.Sprintf(`r.hparams->%s %s %s`, hpQuery, "?", "?")
 		} else {
-			queryString = fmt.Sprintf(`(r.hparams->>'%s')::float8 %s %s`, hpQuery, "?", "?")
+			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 %s %s`, hpQuery, "?", "?")
 		}
 	}
 

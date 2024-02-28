@@ -65,7 +65,7 @@ func TestSearchRunsSort(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 0)
 
-	hyperparameters := map[string]any{"global_batch_size": 1}
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
 	exp := createTestExpForRun(t, api, curUser, projectIDInt)
 
@@ -82,7 +82,7 @@ func TestSearchRunsSort(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 
-	hyperparameters2 := map[string]any{"global_batch_size": 2}
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
 
 	// Add second experiment
 	exp2 := createTestExpForRun(t, api, curUser, projectIDInt)
@@ -115,6 +115,16 @@ func TestSearchRunsSort(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int32(exp2.ID), *resp.Runs[0].ExperimentId)
 	require.Equal(t, int32(exp.ID), *resp.Runs[1].ExperimentId)
+
+	// Sort by nested hyperparameter
+	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+		ProjectId: req.ProjectId,
+		Sort:      ptrs.Ptr("hp.test1.test2=desc"),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, int32(exp2.ID), *resp.Runs[0].ExperimentId)
+	require.Equal(t, int32(exp.ID), *resp.Runs[1].ExperimentId)
 }
 
 func TestSearchRunsFilter(t *testing.T) {
@@ -131,7 +141,7 @@ func TestSearchRunsFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 0)
 
-	hyperparameters := map[string]any{"global_batch_size": 1}
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
 	exp := createTestExpForRun(t, api, curUser, projectIDInt)
 
@@ -148,7 +158,7 @@ func TestSearchRunsFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 
-	hyperparameters2 := map[string]any{"global_batch_size": 2}
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
 
 	// Add second experiment
 	exp2 := createTestExpForRun(t, api, curUser, projectIDInt)
@@ -179,6 +189,17 @@ func TestSearchRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
 		ProjectId: req.ProjectId,
 		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+			`"conjunction":"and","kind":"group"},"showArchived":false}`),
+	})
+
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	// Filter by nested hyperparameter
+	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+		ProjectId: req.ProjectId,
+		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
 			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 			`"conjunction":"and","kind":"group"},"showArchived":false}`),
 	})
