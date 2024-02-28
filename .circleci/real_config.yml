@@ -3524,6 +3524,7 @@ workflows:
           context:
             - aws
             - hugging-face
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
