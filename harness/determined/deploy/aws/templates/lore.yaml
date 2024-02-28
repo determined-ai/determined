@@ -824,7 +824,7 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 200
+            VolumeSize: 400
             VolumeType: gp2
       UserData:
         Fn::Base64: !Sub
@@ -911,7 +911,7 @@ Resources:
                   security_group_id: ${AgentSecurityGroup.GroupId}
                   subnet_id: ${Subnet1}
                 type: aws
-                root_volume_size: 200
+                root_volume_size: 400
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
