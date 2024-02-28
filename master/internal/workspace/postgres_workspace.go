@@ -70,17 +70,6 @@ func WorkspaceIDsFromNames(ctx context.Context, workspaceNames []string) (
 	return workspaceIDs, nil
 }
 
-// ProjectIDByName returns a project's ID if it exists in the given workspace.
-func ProjectIDByName(ctx context.Context, workspaceID int, projectName string) (*int, error) {
-	var pID int
-	err := db.Bun().NewRaw("SELECT id FROM projects WHERE name = ? AND workspace_id = ?",
-		projectName, workspaceID).Scan(ctx, &pID)
-	if err != nil {
-		return nil, err
-	}
-	return &pID, nil
-}
-
 // WorkspaceByProjectID returns a workspace given a project ID.
 func WorkspaceByProjectID(ctx context.Context, projectID int) (*model.Workspace, error) {
 	var w model.Workspace
