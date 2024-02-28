@@ -885,16 +885,18 @@ func (a *agent) socketDisconnected() {
 	timer := time.AfterFunc(a.agentReconnectWait, a.HandleReconnectTimeout)
 	a.reconnectTimers = append(a.reconnectTimers, timer)
 
-	a.preDisconnectEnabled = a.agentState.enabled
-	a.preDisconnectDraining = a.agentState.draining
-	// Mark ourselves as draining to avoid action on ourselves while we recover. While the
-	// system is technically correct without this, it's better because we avoid any waste
-	// effort scheduling things only to have them suffer AgentErrors later.
-	a.agentState.disable(true)
-	a.agentState.patchAllSlotsState(patchAllSlotsState{
-		enabled: &a.agentState.enabled,
-		drain:   &a.agentState.draining,
-	})
+	if a.agentState != nil { // This is nil for a bit after `a.socket` is connected but before `a.started` is true.
+		a.preDisconnectEnabled = a.agentState.enabled
+		a.preDisconnectDraining = a.agentState.draining
+		// Mark ourselves as draining to avoid action on ourselves while we recover. While the
+		// system is technically correct without this, it's better because we avoid any waste
+		// effort scheduling things only to have them suffer AgentErrors later.
+		a.agentState.disable(true)
+		a.agentState.patchAllSlotsState(patchAllSlotsState{
+			enabled: &a.agentState.enabled,
+			drain:   &a.agentState.draining,
+		})
+	}
 	a.notifyListeners()
 }
 
