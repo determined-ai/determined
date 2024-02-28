@@ -5,9 +5,10 @@ import { Resource, SlotsRecord } from 'types';
 
 import css from './NodeElement.module.scss';
 
+export type SimplifiedNode = { container?: { id: string } };
 interface NodeElementProps {
   name: string;
-  resources: Resource[];
+  resources: Resource[] | SimplifiedNode[];
   slots?: SlotsRecord;
   isRunning?: boolean;
   limitSlots?: number;

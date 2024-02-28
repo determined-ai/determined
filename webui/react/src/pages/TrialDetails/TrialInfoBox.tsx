@@ -13,6 +13,7 @@ import ResourceAllocationModalComponent from 'components/ResourceAllocationModal
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useAsync } from 'hooks/useAsync';
+import { SimplifiedNode } from 'pages/ResourcePool/NodeElement';
 import { getModels, getTaskAllocation } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
@@ -115,13 +116,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     if (!allocation?.acceleratorData.length) return undefined;
 
     const getSlots = (accelerators: string[]) => {
-      const slots = accelerators.map((slotId) => ({
+      const slots: SimplifiedNode[] = accelerators.map((slotId) => ({
         container: { id: slotId },
-      })) as Resource[];
+      }));
 
       if (rpData.slotsPerAgent !== undefined && slots.length < rpData.slotsPerAgent) {
         for (let i = 0; i < rpData.slotsPerAgent; i++) {
-          slots.push({ container: undefined } as Resource);
+          slots.push({ container: undefined });
         }
       }
 
