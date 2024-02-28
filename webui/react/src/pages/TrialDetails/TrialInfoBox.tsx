@@ -66,10 +66,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [canceler] = useState(new AbortController());
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
   const [selectedModelName, setSelectedModelName] = useState<string>();
-  const shouldRenderAllocationCard = useMemo(
-    () => trial !== undefined && experiment.numTrials === 1,
-    [trial, experiment],
-  ); // as per ticket requirements, we're only rendering it on single trial experiments and trial details pages
+  const shouldRenderAllocationCard = trial !== undefined && experiment.numTrials === 1; // as per ticket requirements, we're only rendering it on single trial experiments and trial details pages
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const taskAllocation = useAsync(async () => {
