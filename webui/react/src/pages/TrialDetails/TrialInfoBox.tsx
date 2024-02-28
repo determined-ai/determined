@@ -109,8 +109,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     const allocation = Loadable.getOrElse(undefined, taskAllocation);
     const rpUsedSlots =
       allocation?.acceleratorData.reduce((acc, nodes) => {
-        if (nodes.acceleratorUuids) acc = acc + nodes.acceleratorUuids.length;
-        return acc;
+        return acc + (nodes.acceleratorUuids?.length ?? 0);
       }, 0) || 0;
 
     if (!allocation?.acceleratorData.length) return undefined;
