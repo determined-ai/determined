@@ -664,7 +664,7 @@ func (a *apiServer) DeleteProject(
 			req.Id)
 	}
 
-	expList, err := a.m.db.ProjectExperiments(int(req.Id))
+	expList, err := db.ProjectExperiments(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}

@@ -240,7 +240,7 @@ func getCreateExperimentsProject(
 			errProjectNotFound = api.NotFoundErrs("workspace/project",
 				config.Workspace()+"/"+config.Project(), true)
 
-			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
+			projectID, err = project.ProjectByName(context.TODO(), config.Workspace(), config.Project())
 			if errors.Is(err, db.ErrNotFound) {
 				return nil, errProjectNotFound
 			} else if err != nil {

@@ -14,6 +14,7 @@ import (
 
 	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -474,7 +475,7 @@ func generateSlackPayload(
 		}
 		wID = w.ID
 
-		pID, err := workspace.ProjectIDByName(ctx, wID, pName)
+		pID, err := project.ProjectIDByName(ctx, wID, pName)
 		if pID != nil {
 			projectID = *pID
 		}
