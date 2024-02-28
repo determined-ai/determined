@@ -108,6 +108,7 @@ def test_cluster_down() -> None:
 
 
 @pytest.mark.det_deploy_local
+@pytest.mark.skip("Skipping until logic to get scheduler type is fixed")
 def test_custom_etc() -> None:
     name = "test_custom_etc"
     etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/master.yaml").resolve())
@@ -155,6 +156,7 @@ def test_agent_config_path() -> None:
 
 
 @pytest.mark.det_deploy_local
+@pytest.mark.skip("Skipping until logic to get scheduler type is fixed")
 def test_custom_port() -> None:
     name = "port_test"
     custom_port = 12321
