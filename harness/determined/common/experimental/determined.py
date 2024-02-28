@@ -121,6 +121,9 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: Optional[Union[str, pathlib.Path]] = None,
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
+        parent_id: Optional[int] = None,
+        project_id: Optional[int] = None,
+        template: Optional[str] = None,
     ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
@@ -162,9 +165,9 @@ class Determined:
             activate=True,
             config=config_text,
             modelDefinition=model_context,
-            # TODO: add these as params to create_experiment()
-            parentId=None,
-            projectId=None,
+            parentId=parent_id,
+            projectId=project_id,
+            template=template,
         )
 
         resp = bindings.post_CreateExperiment(self._session, body=req)

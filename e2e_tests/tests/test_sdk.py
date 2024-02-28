@@ -474,3 +474,32 @@ def test_rp_workspace_mapping() -> None:
     finally:
         for wid in workspace_ids:
             bindings.delete_DeleteWorkspace(session=sess, id=wid)
+
+
+@pytest.mark.e2e_cpu
+def test_experiment_w_template() -> None:
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
+    # create template
+    tpl = bindings.v1Template(
+        name=api_utils.get_random_string(),
+        config=conf.load_config(conf.fixtures_path(f"templates/template.yaml")),
+        workspaceId=1,
+    )
+    tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
+    # create experiment with template
+    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+        config = util.yaml_safe_load(f)
+    config["hyperparameters"]["num_validation_metrics"] = 2
+    emptydir = tempfile.mkdtemp()
+    try:
+        model_def = conf.fixtures_path("no_op/model_def.py")
+        exp = detobj.create_experiment(
+            config, emptydir, includes=[model_def], template=tpl_resp.template.name
+        )
+    finally:
+        os.rmdir(emptydir)
+    exp.await_first_trial()
+
+    trials = exp.get_trials()
+    assert len(trials) == 1, trials
