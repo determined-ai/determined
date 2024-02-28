@@ -219,7 +219,6 @@ func RequireMockWorkspaceID(t *testing.T, db *PgDB) (int, string) {
 
 // RequireMockProjectID returns a mock project ID and name
 func RequireMockProjectID(t *testing.T, db *PgDB, workspaceID int, archived bool) (int, string) {
-
 	mockProject := struct {
 		bun.BaseModel `bun:"table:projects"`
 

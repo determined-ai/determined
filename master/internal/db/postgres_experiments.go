@@ -50,7 +50,6 @@ func ProjectExperiments(ctx context.Context, id int) (experiments []*model.Exper
 		Join("JOIN users AS u ON (e.owner_id = u.id)").
 		Where("e.project_id = ?", id).
 		Rows(ctx)
-
 	if err != nil {
 		return nil, fmt.Errorf("selecting project experiments: %w", err)
 	}
