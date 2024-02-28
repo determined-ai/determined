@@ -511,14 +511,16 @@ def num_trials(sess: api.Session, experiment_id: int) -> int:
 
 def num_active_trials(sess: api.Session, experiment_id: int) -> int:
     return sum(
-        1
-        if t.trial.state
-        in [
-            bindings.trialv1State.RUNNING,
-            bindings.trialv1State.STARTING,
-            bindings.trialv1State.PULLING,
-        ]
-        else 0
+        (
+            1
+            if t.trial.state
+            in [
+                bindings.trialv1State.RUNNING,
+                bindings.trialv1State.STARTING,
+                bindings.trialv1State.PULLING,
+            ]
+            else 0
+        )
         for t in experiment_trials(sess, experiment_id)
     )
 
@@ -843,9 +845,11 @@ def run_basic_autotuning_test(
     wait_for_experiment_state(
         sess,
         client_exp_id,
-        bindings.experimentv1State.COMPLETED
-        if not expect_client_failed
-        else bindings.experimentv1State.ERROR,
+        (
+            bindings.experimentv1State.COMPLETED
+            if not expect_client_failed
+            else bindings.experimentv1State.ERROR
+        ),
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(sess, orchestrator_exp_id) == 0
@@ -952,7 +956,7 @@ def verify_completed_experiment_metadata(
         # When the experiment completes, all slots should now be free. This requires terminating the
         # experiment's last container, which might take some time (especially on Slurm where our
         # polling is longer).
-        max_secs_to_free_slots = 300 if api_utils.is_hpc() else 30
+        max_secs_to_free_slots = 300 if api_utils.is_hpc(uncached=True) else 30
         for _ in range(max_secs_to_free_slots):
             if cluster_utils.num_free_slots(sess) == cluster_utils.num_slots(sess):
                 break

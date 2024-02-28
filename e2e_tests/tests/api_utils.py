@@ -240,7 +240,9 @@ def skipif_not_pbs(reason: str = "test is slurm-specific") -> Callable[[F], F]:
     return decorator
 
 
-def is_hpc() -> bool:
+def is_hpc(uncached: Optional[bool] = False) -> bool:
+    if uncached:
+        _get_scheduler_type.cache_clear()
     st = _get_scheduler_type()
     if st is None:
         raise RuntimeError("unable to contact master to determine is_hpc()")

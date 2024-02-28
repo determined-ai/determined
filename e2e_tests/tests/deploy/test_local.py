@@ -95,7 +95,11 @@ def resource_manager(
     resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
     try:
         yield
+    except Exception:
+        print("Caught exception in resource_manager.")
+        raise
     finally:
+        print(f"bringing down {resource}:{name}")
         resource_down(resource, name)
 
 
