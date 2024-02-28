@@ -1,0 +1,108 @@
+{
+    "ProxyAddress": "127.0.0.1",
+    "ContainerInfo": {
+        "Id": "290ca3fd78410c7a66c06f3b9b1a64642560641b37fd7109b2b1bee821fb41a3",
+        "HostConfig": {
+            "NetworkMode": "bridge",
+            "PortBindings": null
+        },
+        "Config": {
+            "Hostname": "290ca3fd7841",
+            "Domainname": "",
+            "ExposedPorts": {
+                "12351/tcp": {},
+                "12361/tcp": {},
+                "12366/tcp": {},
+                "1734/tcp": {},
+                "29401/tcp": {}
+            }
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "25b9c42c12d8673f8c88db4252cfbdc453767937594b1688f238533d54f70dd6",
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "Ports": {
+                "12351/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32806"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "32806"
+                    }
+                ],
+                "12361/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32805"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "32805"
+                    }
+                ],
+                "12366/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32804"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "32804"
+                    }
+                ],
+                "1734/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32807"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "32807"
+                    }
+                ],
+                "29401/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32803"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "32803"
+                    }
+                ]
+            },
+            "SandboxKey": "/var/run/docker/netns/25b9c42c12d8",
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "71868308c817579a691408e0afc3efa9ead3caa7408300221662873aeafa1dd1",
+            "Gateway": "172.17.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "172.17.0.4",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "MacAddress": "02:42:ac:11:00:04",
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "NetworkID": "637f0e831f9611fa66e32196fdd2d5b7ca38af95324520c358750e6ee843cce9",
+                    "EndpointID": "71868308c817579a691408e0afc3efa9ead3caa7408300221662873aeafa1dd1",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.4",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:11:00:04",
+                    "DriverOpts": null
+                }
+            }
+        }
+    }
+}

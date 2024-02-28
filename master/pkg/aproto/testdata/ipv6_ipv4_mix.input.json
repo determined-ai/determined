@@ -1,0 +1,88 @@
+{
+    "ProxyAddress": "[::1]",
+    "ContainerInfo": {
+        "Id": "e806fd21e063a3d1d35174b86fd1a56ab8d9fb8f4292d48657803ae731b313df",
+        "HostConfig": {
+            "NetworkMode": "bridge",
+            "PortBindings": null
+        },
+        "Config": {
+            "Hostname": "e806fd21e063",
+            "Domainname": "",
+            "ExposedPorts": {
+                "12350/tcp": {},
+                "12360/tcp": {},
+                "12365/tcp": {},
+                "1734/tcp": {},
+                "29400/tcp": {}
+            }
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "f840a6d7b73f414c10eeb769542fc2dab8c9eaf83f66d9364c0ef84ec71042ef",
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "Ports": {
+                "12350/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32901"
+                    }
+                ],
+                "12360/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32900"
+                    }
+                ],
+                "12365/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32899"
+                    }
+                ],
+                "1734/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32902"
+                    }
+                ],
+                "29400/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "32898"
+                    }
+                ]
+            },
+            "SandboxKey": "/var/run/docker/netns/f840a6d7b73f",
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "bb75a35d4990e2489549f5a661a708e28aea6feeaa30ef38858a780477570bfe",
+            "Gateway": "172.17.0.1",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "172.17.0.3",
+            "IPPrefixLen": 16,
+            "IPv6Gateway": "",
+            "MacAddress": "02:42:ac:11:00:03",
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "NetworkID": "be47d444aaf5efae2aa2007cba0c753d667271f25b0bf277a13e6c942b0f9546",
+                    "EndpointID": "bb75a35d4990e2489549f5a661a708e28aea6feeaa30ef38858a780477570bfe",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.3",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:11:00:03",
+                    "DriverOpts": null
+                }
+            }
+        }
+    }
+}

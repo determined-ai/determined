@@ -2,11 +2,11 @@ package aproto
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/maps"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -94,8 +94,6 @@ func (c ContainerStarted) String() string {
 // started information.
 func (c ContainerStarted) Addresses() []cproto.Address {
 	proxy := c.ProxyAddress
-	proxyIsIPv4 := net.ParseIP(proxy).To4() != nil
-
 	info := c.ContainerInfo
 
 	var addresses []cproto.Address
@@ -122,24 +120,6 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 		for port, bindings := range info.NetworkSettings.Ports {
 			for _, binding := range bindings {
 				for _, ip := range ipAddresses {
-					hostIP := binding.HostIP
-					switch {
-					case hostIP == "0.0.0.0":
-						// Just don't return the ipv4 binding for an ipv6 proxy
-						if !proxyIsIPv4 {
-							continue
-						}
-						hostIP = proxy
-					case hostIP == "::":
-						// And vice versa.
-						if proxyIsIPv4 {
-							continue
-						}
-						hostIP = proxy
-					case hostIP == "":
-						hostIP = proxy
-					}
-
 					hostPort, err := strconv.Atoi(binding.HostPort)
 					if err != nil {
 						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
@@ -148,12 +128,20 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 					addresses = append(addresses, cproto.Address{
 						ContainerIP:   ip,
 						ContainerPort: port.Int(),
-						HostIP:        hostIP,
+						HostIP:        proxy,
 						HostPort:      hostPort,
 					})
 				}
 			}
 		}
+
+		// Remove duplicates caused by docker returning bindings for both ipv4 and ipv6.
+		// The address ends up the same since we replace host IP with the agent IP.
+		dedup := map[cproto.Address]bool{}
+		for _, addr := range addresses {
+			dedup[addr] = true
+		}
+		addresses = maps.Keys(dedup)
 	}
 	return addresses
 }

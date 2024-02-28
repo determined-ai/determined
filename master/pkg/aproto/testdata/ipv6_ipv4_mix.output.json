@@ -1,0 +1,32 @@
+[
+    {
+        "container_ip": "172.17.0.3",
+        "container_port": 12360,
+        "host_ip": "[::1]",
+        "host_port": 32900
+    },
+    {
+        "container_ip": "172.17.0.3",
+        "container_port": 12365,
+        "host_ip": "[::1]",
+        "host_port": 32899
+    },
+    {
+        "container_ip": "172.17.0.3",
+        "container_port": 1734,
+        "host_ip": "[::1]",
+        "host_port": 32902
+    },
+    {
+        "container_ip": "172.17.0.3",
+        "container_port": 29400,
+        "host_ip": "[::1]",
+        "host_port": 32898
+    },
+    {
+        "container_ip": "172.17.0.3",
+        "container_port": 12350,
+        "host_ip": "[::1]",
+        "host_port": 32901
+    }
+]
