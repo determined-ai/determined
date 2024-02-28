@@ -22,7 +22,7 @@
       width: fit-content;
     }
     .dots {
-      border-bottom: 2px dotted;
+      border-bottom: 2px dotted var(--theme-surface-border-weak);
       flex-basis: auto;
       flex-grow: 1;
       height: 0;

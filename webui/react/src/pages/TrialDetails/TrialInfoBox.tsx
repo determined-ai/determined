@@ -109,7 +109,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         return acc;
       }, 0) || 0;
 
-    if (allocation === undefined) return undefined;
+    if (!allocation?.acceleratorData.length) return undefined;
 
     const getSlots = (accelerators: string[]) => {
       const slots = accelerators.map((slotId) => ({
