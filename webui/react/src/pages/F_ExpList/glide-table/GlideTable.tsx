@@ -678,11 +678,9 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
             break;
           case V1LocationType.RUN:
-            dataPath = `run.${currentColumn.column}`;
-            break;
+            throw new Error('Runs not supported for this table');
           case V1LocationType.RUNHYPERPARAMETERS:
-            dataPath = `run.hyperparameters.${currentColumn.column.replace('hp.', '')}`;
-            break;
+            throw new Error('Runs not supported for this table');
           case V1LocationType.UNSPECIFIED:
             break;
         }
