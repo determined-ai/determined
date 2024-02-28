@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 from typing import Any, Dict, Iterator, List, Optional, Tuple
+from urllib import parse
 
 import filelock
 
@@ -393,6 +394,33 @@ def shim_store_v0(v0: Dict[str, Any], master_address: str) -> Dict[str, Any]:
     return v1
 
 
+def precanonicalize_v1_url(url: str) -> str:
+    """
+    Remove parts of the url that were ignored by old versions of determined but will be rejected by
+    canonicalize_master_url() now.
+
+    We want to use canonicalize_master_url() to ensure the proper canonical form but we must
+    tolerate any urls which may previously have been written into the token_store.
+    """
+    # We need to prepend a scheme first, because urlparse() doesn't handle that case well.
+    if url.startswith("https://"):
+        default_port = 443
+    elif url.startswith("http://"):
+        default_port = 80
+    else:
+        url = f"http://{url}"
+        default_port = 8080
+
+    parsed = parse.urlparse(url)
+
+    # Extract just hostname:port from the authority section of the url.
+    port = parsed.port or default_port
+    netloc = f"{parsed.hostname}:{port}"
+
+    # Discard username, password, query, and fragment.
+    return parse.urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
+
+
 def shim_store_v1(v1: Dict[str, Any]) -> Dict[str, Any]:
     """
     v2 scheme is the same as v1 schema but with canonicalized master urls.
@@ -402,8 +430,14 @@ def shim_store_v1(v1: Dict[str, Any]) -> Dict[str, Any]:
     # Build a 1-to-many mapping of canonical master urls to v1 master urls.
     canonicals: Dict[str, List[Dict[str, Any]]] = {}
     for master_url, entry in v1_masters.items():
-        canonical_url = api.canonicalize_master_url(master_url)
-        canonicals.setdefault(canonical_url, []).append(entry)
+        try:
+            precanonical_url = precanonicalize_v1_url(master_url)
+            canonical_url = api.canonicalize_master_url(precanonical_url)
+            canonicals.setdefault(canonical_url, []).append(entry)
+        except ValueError:
+            # Just in case precanonicalize_v1_url() didn't catch something, we drop it from
+            # the authentication cache, instead of breaking the CLI completely.
+            pass
 
     v2_masters: Dict[str, Any] = {}
 

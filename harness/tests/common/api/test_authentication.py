@@ -45,7 +45,7 @@ def test_auth_json_v1_upgrade() -> None:
                         "a": "a.token",
                     },
                 },
-                "http://firstmaster:80": {
+                "http://firstmaster:80#fragment": {
                     "tokens": {
                         "b": "b.token",
                     },
@@ -58,7 +58,7 @@ def test_auth_json_v1_upgrade() -> None:
                         "b": "b.token1",
                     },
                 },
-                "https://secondmaster/": {
+                "https://secondmaster/?key=value": {
                     "tokens": {
                         "b": "b.token2",
                         "c": "c.token",
@@ -72,11 +72,27 @@ def test_auth_json_v1_upgrade() -> None:
                         "b": "b.token1",
                     },
                 },
-                "http://thirdmaster:8080": {
+                "http://user@thirdmaster:8080": {
                     "active_user": "b",
                     "tokens": {
                         "a": "a.token2",
                         "b": "b.token2",
+                    },
+                },
+                # Special case: force a ValueError to make sure the shim_store_v1 discards totally
+                # broken URLs (without crashing the CLI).
+                #
+                # This works because urlparse will reject the \u2100 character with a ValueError,
+                # which exercises the right codepath.  Something about "NFKC normalization".
+                #
+                # This is a little phony because the ValueErrors we are worried about would be cases
+                # where precanonicalize_v1_url isn't guarding against everything that
+                # canonicalize_master_url would reject.  But since I don't know of any such things,
+                # it's hard to exercise that codepath any other way.
+                "http://\u2100": {
+                    "active_user": "a",
+                    "tokens": {
+                        "a": "a.token",
                     },
                 },
             },
@@ -106,3 +122,6 @@ def test_auth_json_v1_upgrade() -> None:
         ts3.set_active("a")
         obj = json.loads(auth_json_path.read_text())
         assert obj["version"] == 2
+        # Make sure we got exactly the master urls we expected.
+        exp = {"http://firstmaster:80", "https://secondmaster:443", "http://thirdmaster:8080"}
+        assert set(obj["masters"]) == exp, list(obj["masters"])
