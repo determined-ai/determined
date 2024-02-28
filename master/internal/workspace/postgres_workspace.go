@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -16,8 +17,11 @@ import (
 func WorkspaceByName(ctx context.Context, workspaceName string) (*model.Workspace, error) {
 	var w model.Workspace
 	err := db.Bun().NewSelect().Model(&w).Where("name = ?", workspaceName).Scan(ctx)
+	if err == sql.ErrNoRows {
+		return nil, db.ErrNotFound
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting workspace: %w", err)
 	}
 	return &w, nil
 }

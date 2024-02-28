@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -27,11 +28,11 @@ func ProjectByName(ctx context.Context, workspaceName string, projectName string
 		Where("workspace_id = ?", workspace.ID).
 		Where("name = ?", projectName).
 		Scan(ctx, &pID, &archived)
+	if err == sql.ErrNoRows {
+		return 1, db.ErrNotFound
+	}
 	if err != nil {
 		return 1, err
-	}
-	if pID < 1 {
-		return 1, db.ErrNotFound
 	}
 	if archived {
 		return 1, fmt.Errorf("project is archived and cannot add new experiments")

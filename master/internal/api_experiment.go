@@ -1631,7 +1631,6 @@ func (a *apiServer) CreateExperiment(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
-
 	if req.ParentId != 0 {
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		var parentExp *experimentv1.Experiment
