@@ -10,7 +10,7 @@ import asValueObject, { ValueObjectOf } from 'utils/asValueObject';
 import handleError from 'utils/error';
 import { immutableObservable, Observable } from 'utils/observable';
 
-class ProjectStore implements StreamSubscriber {
+export class ProjectStore implements StreamSubscriber {
   #projects = immutableObservable<Map<number, ValueObjectOf<Project>>>(Map());
   #projectsByWorkspace = immutableObservable<Map<string, List<Project>>>(Map());
 
@@ -65,7 +65,7 @@ class ProjectStore implements StreamSubscriber {
     });
   }
 
-  public delete(id: number) {
+  public delete(id: number): void {
     let deleted: Project | undefined;
     this.#projects.update((prev) =>
       prev.withMutations((map) => {
@@ -98,7 +98,7 @@ class ProjectStore implements StreamSubscriber {
     return { ...p };
   }
 
-  public upsert(content: StreamContent) {
+  public upsert(content: StreamContent): void {
     const p = mapStreamProject(content);
     let prevProjectWorkspaceId: number | undefined;
 
