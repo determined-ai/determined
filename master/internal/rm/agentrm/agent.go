@@ -297,7 +297,7 @@ func (a *agent) stop(cause error) {
 		}
 	}
 
-	a.syslog.Infof("removing agent: %s", a.agentState.agentID())
+	a.syslog.Infof("removing agent: %s", a.id)
 	err := a.updateAgentEndStats(string(a.id))
 	if err != nil {
 		a.syslog.WithError(err).Error("failed to update agent end stats")
