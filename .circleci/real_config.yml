@@ -1706,6 +1706,7 @@ jobs:
           root: .
           paths:
             - master/coverage.out
+            - master/internal/mocks
 
   test-intg-agent:
     machine:
