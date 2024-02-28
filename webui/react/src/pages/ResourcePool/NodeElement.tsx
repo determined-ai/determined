@@ -28,8 +28,6 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
     () => (slots !== undefined ? Object.values(slots) : resources),
     [slots, resources],
   );
-  const singleSlot = slotsData.length === 1;
-  const coupleSlot = slotsData.length === 2;
   const slotStyles = [css.nodeSlot];
   const nodeStyles = [css.node];
   const nodeClusterStyles = [css.nodeCluster];
@@ -41,6 +39,9 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 
   const getSlotStyles = useCallback(
     (isActive: boolean, index: number) => {
+      const singleSlot = slotsData.length === 1; // this is only for styles
+      const coupleSlot = slotsData.length === 2; // this is only for styles
+
       if (singleSlot) slotStyles.push(css.singleSlot);
       if (coupleSlot) slotStyles.push(css.coupleSlot);
       if (isActive) slotStyles.push(css.active);
@@ -52,7 +53,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
       return slotStyles.join(' ');
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isRunning, singleSlot, coupleSlot, limitSlots],
+    [isRunning, limitSlots],
   );
 
   useEffect(() => {
