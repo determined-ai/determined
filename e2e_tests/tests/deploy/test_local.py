@@ -25,9 +25,7 @@ class Resource(enum.Enum):
 
 
 def mksess(host: str, port: int, username: str = "determined", password: str = "") -> api.Session:
-    """
-    Since this file frequently creates new masters, always create a fresh Session.
-    """
+    """Since this file frequently creates new masters, always create a fresh Session."""
 
     master_url = api.canonicalize_master_url(f"http://{host}:{port}")
     utp = authentication.login(master_url, username=username, password=password)
@@ -66,8 +64,8 @@ def resource_up(
     """
     command = [f"{resource}-up", "--no-gpu", f"--{resource}-name", name]
     if kwflags:
-        for k, v in kwflags.items():
-            command += [f"--{k}", v]
+        for flag, val in kwflags.items():
+            command += [f"--{flag}", val]
     if flags:
         for flag in flags:
             command += [f"--{flag}"]
@@ -99,14 +97,6 @@ def resource_manager(
         yield
     finally:
         resource_down(resource, name)
-
-
-def agent_enable(sess: api.Session, arguments: List) -> None:
-    detproc.check_output(sess, ["det", "agent", "enable"] + arguments)
-
-
-def agent_disable(sess: api.Session, arguments: List) -> None:
-    detproc.check_output(sess, ["det", "agent", "disable"] + arguments)
 
 
 @pytest.mark.det_deploy_local
