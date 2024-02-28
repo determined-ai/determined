@@ -566,12 +566,11 @@ def test_launch_in_archived() -> None:
         )
 
         # create a notebook inside the workspace
-        with pytest.raises(errors.NotFoundException) as e:
+        with pytest.raises(errors.NotFoundException):
             bindings.post_LaunchNotebook(
                 admin_session,
                 body=bindings.v1LaunchNotebookRequest(workspaceId=workspace.id),
             )
-        assert e.value.status_code == 404
 
 
 # tag: no_cli
