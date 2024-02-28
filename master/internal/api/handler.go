@@ -35,7 +35,8 @@ func equalASCIIFold(s, t string) bool {
 	return s == t
 }
 
-// Copied from https://github.com/gorilla/websocket/blob/695e9095ce8736ac99c83939ca6b0fe93768f680/server.go#L152 with slight modification to allow localhost.
+// Copied from https://github.com/gorilla/websocket/blob/695e9095ce8736ac99c83939ca6b0fe93768f680/server.go#L152
+// with slight modification to allow localhost.
 func checkOrigin(r *http.Request) bool {
 	origin := r.Header["Origin"]
 	if len(origin) == 0 {
