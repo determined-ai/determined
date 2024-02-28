@@ -488,7 +488,7 @@ func (e *internalExperiment) stop() error {
 	if len(checkpoints) > 0 {
 		go func() {
 			if err := runCheckpointGCForCheckpoints(
-				e.activeConfig.Resources().ResourceManager(), e.rm, e.db, e.JobID, e.StartTime, taskSpec,
+				e.rm, e.db, e.JobID, e.StartTime, taskSpec,
 				e.Experiment.ID, e.activeConfig.AsLegacy(), checkpoints,
 				[]string{fullDeleteGlob},
 				false, taskSpec.AgentUserGroup, taskSpec.Owner, e.logCtx,

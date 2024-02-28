@@ -136,7 +136,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 
 			jobID := db.RequireMockJob(t, pgDB, &user.ID)
 
-			if err := runCheckpointGCTask("",
+			if err := runCheckpointGCTask(
 				tt.args.rm,
 				pgDB,
 				model.NewTaskID(),

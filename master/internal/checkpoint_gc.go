@@ -29,7 +29,6 @@ import (
 const fullDeleteGlob = "**/*"
 
 func runCheckpointGCForCheckpoints(
-	rmName string,
 	rm rm.ResourceManager,
 	db *db.PgDB,
 	jobID model.JobID,
@@ -55,7 +54,7 @@ func runCheckpointGCForCheckpoints(
 		wg.Go(func() error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
 			if err := runCheckpointGCTask(
-				rmName, rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
+				rm, db, taskID, jobID, jobSubmissionTime, *taskSpec,
 				expID, legacyConfig, g.StorageID, g.Checkpoints,
 				checkpointGlobs, deleteTensorboards,
 				agentUserGroup, owner, logCtx,
@@ -75,7 +74,6 @@ func runCheckpointGCForCheckpoints(
 }
 
 func runCheckpointGCTask(
-	rmName string,
 	rm rm.ResourceManager,
 	pgDB *db.PgDB,
 	taskID model.TaskID,
@@ -101,7 +99,7 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	resolvedRM, rp, err := rm.ResolveResourcePool(rmName,
+	resolvedRM, rp, err := rm.ResolveResourcePool("", // todo (multirm)
 		sproto.ResolveResourcesRequest{
 			ResourcePool: "",
 			Workspace:    -1,

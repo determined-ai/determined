@@ -95,7 +95,6 @@ func (e ExperimentConfig) AsLegacy() LegacyConfig {
 		Environment:       schemas.Copy(e.Environment()),
 		Hyperparameters:   schemas.Copy(e.Hyperparameters()),
 		Searcher:          e.Searcher().AsLegacy(),
-		ResourceManager:   e.Resources().ResourceManager(),
 	}
 }
 

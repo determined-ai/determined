@@ -24,7 +24,6 @@ type LegacyConfig struct {
 	Environment       EnvironmentConfig
 	Hyperparameters   Hyperparameters
 	Searcher          LegacySearcher
-	ResourceManager   string
 }
 
 // LegacySearcher represents a subset of the SearcherConfig which can be expected to be available
@@ -223,16 +222,6 @@ func getLegacySearcher(raw map[string]interface{}) (LegacySearcher, error) {
 	}, nil
 }
 
-func getResourceManager(raw map[string]interface{}) (string, error) {
-	rm := raw["resource_manager"]
-	if rm == nil {
-		// Not error-ing if not found, as the RM field is optional.
-		return "", nil
-	}
-
-	return rm.(string), nil
-}
-
 // ParseLegacyConfigJSON parses bytes that represent an experiment config that was once valid
 // but might no longer be shimmable to the current version of ExperimentConfig.
 func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
@@ -279,12 +268,6 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 		return out, err
 	}
 	out.Searcher = searcher
-
-	rm, err := getResourceManager(raw)
-	if err != nil {
-		return out, err
-	}
-	out.ResourceManager = rm
 
 	return out, nil
 }
