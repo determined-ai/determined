@@ -38,6 +38,7 @@ def det_deploy(subcommand: List) -> None:
         "deploy",
         "local",
     ] + subcommand
+    print(f"Running deployment: {' '.join(command)}")
     subprocess.run(command, check=True)
 
 
@@ -51,10 +52,10 @@ def resource_up(
     """Issue a `det deploy local` command to bring up a resource.
 
     Ex:
-      det deploy local cluster-up --cluster-name test_cluster --det-version 0.15.0
+      det deploy local cluster-up --cluster-name test_cluster --det-version 0.15.0 --no-gpu
 
     Arguments:
-        resource: The resource to bring up, e.g. "cluster", "master", "agent".
+        resource: The type of resource to bring up, e.g. "cluster", "master", "agent".
         name: The name to give the resource.
         kwflags: A dictionary of keyword flags (and their values) to pass to the command.
         flags: A list of flags to pass to the command.
@@ -62,7 +63,7 @@ def resource_up(
 
     This additionally sets a --det-version flag if DET_VERSION is set in the config.
     """
-    command = [f"{resource}-up", "--no-gpu", f"--{resource}-name", name]
+    command = [f"{resource}-up", f"--{resource}-name", name]
     if kwflags:
         for flag, val in kwflags.items():
             command += [f"--{flag}", val]
@@ -95,11 +96,7 @@ def resource_manager(
     resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
     try:
         yield
-    except Exception:
-        print("Caught exception in resource_manager.")
-        raise
     finally:
-        print(f"bringing down {resource}:{name}")
         resource_down(resource, name)
 
 

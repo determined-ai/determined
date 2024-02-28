@@ -956,7 +956,7 @@ def verify_completed_experiment_metadata(
         # When the experiment completes, all slots should now be free. This requires terminating the
         # experiment's last container, which might take some time (especially on Slurm where our
         # polling is longer).
-        max_secs_to_free_slots = 300 if api_utils.is_hpc(uncached=True) else 30
+        max_secs_to_free_slots = 300 if api_utils.is_hpc(sess) else 30
         for _ in range(max_secs_to_free_slots):
             if cluster_utils.num_free_slots(sess) == cluster_utils.num_slots(sess):
                 break
