@@ -172,38 +172,111 @@ func TestSearchRunsFilter(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
-	// Filter by experiment id
-	filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",`+
-		`"location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":%d}],`+
-		`"conjunction":"and","kind":"group"},"showArchived":false}`, int32(exp2.ID))
-	require.NoError(t, err)
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Filter:    ptrs.Ptr(filter),
-	})
+	tests := map[string]struct {
+		expectedNumRuns int
+		filter          string
+	}{
+		"RunColEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN","operator":"isEmpty","type":"COLUMN_TYPE_TEST","value":null}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"RunColNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN","operator":"notEmpty","type":"COLUMN_TYPE_TEXT","value":null}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"RunColContains": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"kube"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"RunColNotContains": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"resourcePool","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"kube"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"RunColOperator": {
+			expectedNumRuns: 1,
+			filter: fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",`+
+				`"location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":%d}],`+
+				`"conjunction":"and","kind":"group"},"showArchived":false}`, int32(exp2.ID)),
+		},
+		"HyperParamEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"contains","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"notContains","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNestedEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNestedNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNestedContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"contains","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNestedNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"notContains","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"HyperParamNestedOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+	}
 
-	require.NoError(t, err)
-	require.Len(t, resp.Runs, 1)
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+				ProjectId: req.ProjectId,
+				Filter:    ptrs.Ptr(testVars.filter),
+			})
 
-	// Filter by hyperparameter
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.global_batch_size","kind":"field",` +
-			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
-			`"conjunction":"and","kind":"group"},"showArchived":false}`),
-	})
-
-	require.NoError(t, err)
-	require.Len(t, resp.Runs, 1)
-
-	// Filter by nested hyperparameter
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
-			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
-			`"conjunction":"and","kind":"group"},"showArchived":false}`),
-	})
-
-	require.NoError(t, err)
-	require.Len(t, resp.Runs, 1)
+			require.NoError(t, err)
+			require.Len(t, resp.Runs, testVars.expectedNumRuns)
+		})
+	}
 }
