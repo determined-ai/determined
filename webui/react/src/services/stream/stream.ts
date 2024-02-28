@@ -95,8 +95,7 @@ export class Stream {
     return ws;
   }
 
-  #shouldSkip(newSub?: SubscriptionGroup): boolean {
-    if (!newSub) return true;
+  #shouldSkip(newSub: SubscriptionGroup): boolean {
     if (!this.#curSub) return false;
     let skip = true;
     forEach(newSub, (val, k) => {
@@ -143,8 +142,7 @@ export class Stream {
         if (!msg['complete']) {
           this.#syncStarted = msg['sync_id'];
         } else {
-          const completedSpecId = map(this.#curSub, (spec) => spec?.id || '').filter((i) => !!i);
-          this.#isLoaded?.(completedSpecId);
+          this.#handleSubFinish(this.#curSub!);
           this.#syncComplete = msg['sync_id'];
         }
       } else if (this.#syncSent !== this.#syncStarted) {
@@ -185,14 +183,19 @@ export class Stream {
       return;
     }
 
-    if (this.#syncComplete === this.#syncSent) {
-      // For established connection, only send a new sub when current sub is completed
-      // Skip and move to next in case of duplication
-      while (this.#shouldSkip(spec) && this.#subs.length > 0) {
-        spec = this.#subs.shift();
-      }
+    // have we finished offline messages for the current subscription?
+    if (this.#syncComplete !== this.#syncSent) return;
 
-      if (spec && !this.#shouldSkip(spec)) this.#sendSpec(spec);
+    /* eslint-disable-next-line no-cond-assign */
+    while ((spec = this.#subs.shift())) {
+      // is this subscription worth sending?
+      if (this.#shouldSkip(spec)) {
+        this.#handleSubFinish(spec);
+        continue;
+      }
+      // we have a fresh spec to send
+      this.#sendSpec(spec);
+      return;
     }
   }
 
@@ -222,6 +225,10 @@ export class Stream {
     }
     this.#processPending();
     this.#processSubscription();
+  }
+
+  #handleSubFinish(spec: Partial<Record<Streamable, Subscription>>): void {
+    this.#isLoaded?.(map(spec, (s) => s?.id || '').filter((i) => !!i));
   }
 
   public subscribe(spec: StreamSpec, id?: string): void {

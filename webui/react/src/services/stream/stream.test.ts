@@ -5,8 +5,6 @@ import { ExperimentSpec } from './experiments';
 import { ProjectSpec } from './projects';
 import { Stream } from './stream';
 
-const sleep = (s: number): Promise<unknown> => new Promise((r) => setTimeout(r, 1000 * s));
-
 const onUpsert = vi.fn();
 const onDelete = vi.fn();
 const isLoaded = vi.fn();
@@ -39,7 +37,6 @@ describe('stream', () => {
     expect(s.readyState).toEqual(1);
 
     server.error();
-    await sleep(0.1);
     const newServer = genServer();
     s = await newServer.connected;
 
@@ -303,6 +300,12 @@ describe('stream', () => {
       },
       sync_id: '4',
     });
+    server.send({ complete: false, sync_id: '4' });
+    server.send({ complete: true, sync_id: '4' });
+
+    const newId = uuidv4();
+    client.subscribe(spec1, newId);
+    expect(isLoaded).toHaveBeenCalledWith([newId]);
 
     cleanup([client, server]);
   });
