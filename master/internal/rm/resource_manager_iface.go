@@ -11,47 +11,43 @@ import (
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
-	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
-	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
-	Release(sproto.ResourcesReleased)
-	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
-	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
-	NotifyContainerRunning(sproto.NotifyContainerRunning) error
+	GetAllocationSummaries() (map[model.AllocationID]sproto.AllocationSummary, error)
+	Allocate(rmName string, req sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
+	Release(rmName string, req sproto.ResourcesReleased)
+	ValidateResources(rmName string, req sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
+	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)   // only used in dispatcherrm
+	NotifyContainerRunning(req sproto.NotifyContainerRunning) error // only used in dispatcherrm
 
 	// Scheduling related stuff
-	SetGroupMaxSlots(sproto.SetGroupMaxSlots)
+	SetGroupMaxSlots(rmName string, req sproto.SetGroupMaxSlots)
 	SetGroupWeight(rmName string, req sproto.SetGroupWeight) error
 	SetGroupPriority(rmName string, req sproto.SetGroupPriority) error
-	ExternalPreemptionPending(sproto.PendingPreemption) error
-	IsReattachableOnlyAfterStarted() bool
+	ExternalPreemptionPending(allocID model.AllocationID) error // only used in dispatcherrm
+	IsReattachableOnlyAfterStarted(rmName string) bool
 
-	// Resource pool stuff.
-	GetResourcePools(*apiv1.GetResourcePoolsRequest) (*apiv1.GetResourcePoolsResponse, error)
-	GetDefaultComputeResourcePool(
-		sproto.GetDefaultComputeResourcePoolRequest,
-	) (sproto.GetDefaultComputeResourcePoolResponse, error)
-	GetDefaultAuxResourcePool(sproto.GetDefaultAuxResourcePoolRequest) (sproto.GetDefaultAuxResourcePoolResponse, error)
-	ValidateResourcePool(name string) error
-	ResolveResourcePool(name string, workspace, slots int) (string, error)
-	TaskContainerDefaults(
-		resourcePoolName string,
-		fallbackConfig model.TaskContainerDefaultsConfig,
-	) (model.TaskContainerDefaultsConfig, error)
+	// Resource pool stuff
+	GetResourcePools() (*apiv1.GetResourcePoolsResponse, error)
+	GetDefaultComputeResourcePool(rmName string) (sproto.GetDefaultComputeResourcePoolResponse, error)
+	GetDefaultAuxResourcePool(rmName string) (sproto.GetDefaultAuxResourcePoolResponse, error)
+	ValidateResourcePool(rmName string, rpName string) error
+	ResolveResourcePool(rmName string, req sproto.ResolveResourcesRequest) (rm string, rp string, err error)
+	TaskContainerDefaults(rmName string, rpName string, fallbackConfig model.TaskContainerDefaultsConfig) (
+		model.TaskContainerDefaultsConfig, error)
 
 	// Job queue
 	GetJobQ(rmName string, rpName string) (map[model.JobID]*sproto.RMJobInfo, error)
-	GetJobQueueStatsRequest(*apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
+	GetJobQueueStatsRequest(rmName string, req *apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
 	MoveJob(rmName string, req sproto.MoveJob) error
 	RecoverJobPosition(rmName string, req sproto.RecoverJobPosition)
 	GetExternalJobs(rmName string, rpName string) ([]*jobv1.Job, error)
 
 	// Cluster Management APIs
-	GetAgents(*apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)
-	GetAgent(*apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error)
-	EnableAgent(*apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error)
-	DisableAgent(*apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error)
-	GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error)
-	GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)
-	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
-	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
+	GetAgents() (*apiv1.GetAgentsResponse, error)
+	GetAgent(rmName string, req *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error)
+	EnableAgent(rmName string, req *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error)
+	DisableAgent(rmName string, req *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error)
+	GetSlots(rmName string, req *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error)
+	GetSlot(rmName string, req *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)
+	EnableSlot(rmName string, req *apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
+	DisableSlot(rmName string, req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
 }

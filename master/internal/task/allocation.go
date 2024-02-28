@@ -508,7 +508,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 			return nil, errors.Wrap(err, "loading trial allocation")
 		}
 
-		sub, err := a.rm.Allocate(a.req)
+		sub, err := a.rm.Allocate(a.req.ResourceManager, a.req)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to request allocation")
 		}
@@ -524,7 +524,7 @@ func (a *allocation) requestResources() (*sproto.ResourcesSubscription, error) {
 		return nil, errors.Wrap(err, "saving trial allocation")
 	}
 
-	sub, err := a.rm.Allocate(a.req)
+	sub, err := a.rm.Allocate(a.req.ResourceManager, a.req)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to request allocation")
 	}
@@ -564,10 +564,11 @@ func (a *allocation) finalize(
 	severity logrus.Level,
 	exitErr error,
 ) {
-	defer a.rm.Release(sproto.ResourcesReleased{
-		AllocationID: a.req.AllocationID,
-		ResourcePool: a.req.ResourcePool,
-	})
+	defer a.rm.Release(a.req.ResourceManager,
+		sproto.ResourcesReleased{
+			AllocationID: a.req.AllocationID,
+			ResourcePool: a.req.ResourcePool,
+		})
 	for _, cl := range a.closers {
 		defer cl()
 	}
@@ -789,11 +790,12 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		a.resources[msg.ResourcesID].Exited = msg.ResourcesStopped
 
 		a.syslog.Infof("releasing resources %s", msg.ResourcesID)
-		a.rm.Release(sproto.ResourcesReleased{
-			AllocationID: a.req.AllocationID,
-			ResourcesID:  &msg.ResourcesID,
-			ResourcePool: a.req.ResourcePool,
-		})
+		a.rm.Release(a.req.ResourceManager,
+			sproto.ResourcesReleased{
+				AllocationID: a.req.AllocationID,
+				ResourcesID:  &msg.ResourcesID,
+				ResourcePool: a.req.ResourcePool,
+			})
 
 		if err := a.resources[msg.ResourcesID].Persist(); err != nil {
 			a.crash(err)

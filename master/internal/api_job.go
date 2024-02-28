@@ -99,7 +99,7 @@ func (a *apiServer) GetJobsV2(
 func (a *apiServer) GetJobQueueStats(
 	_ context.Context, req *apiv1.GetJobQueueStatsRequest,
 ) (*apiv1.GetJobQueueStatsResponse, error) {
-	resp, err := a.m.rm.GetJobQueueStatsRequest(req)
+	resp, err := a.m.rm.GetJobQueueStatsRequest(req.ResourceManager, req)
 	if err != nil {
 		return nil, err
 	}

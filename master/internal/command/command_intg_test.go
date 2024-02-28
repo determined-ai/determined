@@ -171,7 +171,7 @@ func setupTest(t *testing.T) *db.PgDB {
 	// First init the new Command Service
 	var mockRM mocks.ResourceManager
 	sub := sproto.NewAllocationSubscription(queue.New[sproto.ResourcesEvent](), func() {})
-	mockRM.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
+	mockRM.On("Allocate", mock.Anything, mock.Anything, mock.Anything).Return(sub, nil)
 	mockRM.On("Release", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything, mock.Anything).Return(nil)
 

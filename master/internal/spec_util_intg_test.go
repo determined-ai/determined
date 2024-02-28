@@ -6,6 +6,7 @@ package internal
 import (
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +22,13 @@ import (
 
 func getMockResourceManager(poolName string) *mocks.ResourceManager {
 	rm := &mocks.ResourceManager{}
-	rm.On("ResolveResourcePool", "/", 0, 1).Return(poolName, nil)
-	rm.On("ValidateResources", sproto.ValidateResourcesRequest{
+	rm.On("ResolveResourcePool", mock.Anything, mock.Anything).Return(
+		mock.Anything, poolName, nil)
+	rm.On("ValidateResources", mock.Anything, sproto.ValidateResourcesRequest{
 		ResourcePool: poolName,
 		Slots:        1,
 		IsSingleNode: true,
-	}).Return(sproto.ValidateResourcesResponse{}, nil, nil)
+	}).Return(nil, nil)
 	return rm
 }
 
@@ -51,7 +53,7 @@ func TestResolveResources(t *testing.T) {
 				rm:     getMockResourceManager(testVars.expectedPoolName),
 				config: config.DefaultConfig(),
 			}
-			poolName, _, err := m.ResolveResources(testVars.resourcePool, testVars.slots, testVars.workspaceID, true)
+			_, poolName, _, err := m.ResolveResources("", testVars.resourcePool, testVars.slots, testVars.workspaceID, true)
 
 			require.NoError(t, err, "Error in ResolveResources()")
 			require.Equal(t, testVars.expectedPoolName, poolName)
@@ -89,10 +91,10 @@ func TestFillTaskSpec(t *testing.T) {
 				Owner:          testVars.userModel,
 			}
 			rm.On("TaskContainerDefaults",
-				testVars.poolName,
+				"", testVars.poolName,
 				m.config.TaskContainerDefaults,
 			).Return(model.TaskContainerDefaultsConfig{WorkDir: &testVars.workDir}, nil)
-			taskSpec, err := m.fillTaskSpec(testVars.poolName, testVars.agentUserGroup, testVars.userModel)
+			taskSpec, err := m.fillTaskSpec("", testVars.poolName, testVars.agentUserGroup, testVars.userModel)
 			require.NoError(t, err, "Error in fillTaskSpec()")
 			require.Equal(t, expectedTaskSpec, taskSpec)
 		})

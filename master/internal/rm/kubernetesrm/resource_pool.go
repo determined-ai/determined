@@ -128,7 +128,7 @@ func (k *kubernetesResourcePool) UpdatePodStatus(msg sproto.UpdatePodStatus) {
 	}
 }
 
-func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption) error {
+func (k *kubernetesResourcePool) PendingPreemption(model.AllocationID) error {
 	return rmerrors.ErrNotSupported
 }
 
@@ -221,9 +221,7 @@ func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPositio
 	k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
-func (k *kubernetesResourcePool) GetAllocationSummaries(
-	msg sproto.GetAllocationSummaries,
-) map[model.AllocationID]sproto.AllocationSummary {
+func (k *kubernetesResourcePool) GetAllocationSummaries() map[model.AllocationID]sproto.AllocationSummary {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -254,15 +252,13 @@ func (k *kubernetesResourcePool) getResourceSummary(msg getResourceSummary) (*re
 	}, nil
 }
 
-func (k *kubernetesResourcePool) ValidateResources(
-	msg sproto.ValidateResourcesRequest,
-) sproto.ValidateResourcesResponse {
+func (k *kubernetesResourcePool) ValidateResources(msg sproto.ValidateResourcesRequest) bool {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
+	return fulfillable
 }
 
 func (k *kubernetesResourcePool) Schedule() {

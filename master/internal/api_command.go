@@ -96,7 +96,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots = 0
 	}
 
-	poolName, launchWarnings, err := a.m.ResolveResources(
+	managerName, poolName, launchWarnings, err := a.m.ResolveResources(
+		resources.ResourceManager,
 		resources.ResourcePool,
 		resources.Slots,
 		int(cmdSpec.Metadata.WorkspaceID),
@@ -107,7 +108,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 
 	// Get the base TaskSpec.
-	taskSpec, err := a.m.fillTaskSpec(poolName, agentUserGroup, userModel)
+	taskSpec, err := a.m.fillTaskSpec(managerName, poolName, agentUserGroup, userModel)
 	if err != nil {
 		return nil, nil, err
 	}

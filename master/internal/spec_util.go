@@ -30,39 +30,46 @@ import (
 
 // ResolveResources - Validate ResoucePool and check for availability.
 func (m *Master) ResolveResources(
+	resourceManager string,
 	resourcePool string,
 	slots int,
 	workspaceID int,
 	isSingleNode bool,
-) (string, []pkgCommand.LaunchWarning, error) {
-	poolName, err := m.rm.ResolveResourcePool(
-		resourcePool, workspaceID, slots)
+) (resolvedRM string, resolvedRP string, warnings []pkgCommand.LaunchWarning, err error) {
+	managerName, poolName, err := m.rm.ResolveResourcePool(resourceManager,
+		sproto.ResolveResourcesRequest{
+			ResourcePool: resourcePool,
+			Workspace:    workspaceID,
+			Slots:        slots,
+		})
 	if err != nil {
-		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return "", "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	_, launchWarnings, err := m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
-		Slots:        slots,
-		IsSingleNode: isSingleNode,
-	})
+	launchWarnings, err := m.rm.ValidateResources(managerName,
+		sproto.ValidateResourcesRequest{
+			ResourcePool: poolName,
+			Slots:        slots,
+			IsSingleNode: isSingleNode,
+		})
 	if err != nil {
-		return "", nil, fmt.Errorf("validating resources: %v", err)
+		return "", "", nil, fmt.Errorf("validating resources: %v", err)
 	}
 	if m.config.LaunchError && len(launchWarnings) > 0 {
-		return "", nil, errors.New("slots requested exceeds cluster capacity")
+		return "", "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
-	return poolName, launchWarnings, nil
+	return managerName, poolName, launchWarnings, nil
 }
 
 // Fill and return TaskSpec.
 func (m *Master) fillTaskSpec(
+	rmName string,
 	poolName string,
 	agentUserGroup *model.AgentUserGroup,
 	userModel *model.User,
 ) (tasks.TaskSpec, error) {
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		poolName,
+		rmName, poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

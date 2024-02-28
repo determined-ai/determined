@@ -6,11 +6,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/context"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
-	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	summary, err := m.rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	summary, err := m.rm.GetAllocationSummaries()
 	if err != nil {
 		return nil, err
 	}
