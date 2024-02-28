@@ -19,7 +19,7 @@ import (
 func (a *apiServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
 ) (*apiv1.GetAgentsResponse, error) {
-	resp, err := a.m.rm.GetAgents(req)
+	resp, err := a.m.rm.GetAgents()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (a *apiServer) GetAgent(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAgent(req)
+	resp, err := a.m.rm.GetAgent(req.ResourceManager, req)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (a *apiServer) GetSlots(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetSlots(req)
+	resp, err := a.m.rm.GetSlots(req.ResourceManager, req)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (a *apiServer) GetSlot(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetSlot(req)
+	resp, err := a.m.rm.GetSlot(req.ResourceManager, req)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (a *apiServer) EnableAgent(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return a.m.rm.EnableAgent(req)
+	return a.m.rm.EnableAgent(req.ResourceManager, req)
 }
 
 func (a *apiServer) DisableAgent(
@@ -153,7 +153,7 @@ func (a *apiServer) DisableAgent(
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return a.m.rm.DisableAgent(req)
+	return a.m.rm.DisableAgent(req.ResourceManager, req)
 }
 
 func (a *apiServer) EnableSlot(
@@ -163,7 +163,7 @@ func (a *apiServer) EnableSlot(
 		return nil, err
 	}
 
-	resp, err = a.m.rm.EnableSlot(req)
+	resp, err = a.m.rm.EnableSlot(req.ResourceManager, req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):
 		return resp, status.Error(codes.Unimplemented, err.Error())
@@ -181,7 +181,7 @@ func (a *apiServer) DisableSlot(
 		return nil, err
 	}
 
-	resp, err = a.m.rm.DisableSlot(req)
+	resp, err = a.m.rm.DisableSlot(req.ResourceManager, req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):
 		return resp, status.Error(codes.Unimplemented, err.Error())

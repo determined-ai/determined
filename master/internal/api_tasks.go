@@ -23,7 +23,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/logpattern"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -551,7 +550,7 @@ func (a *apiServer) GetActiveTasksCount(
 func (a *apiServer) GetTasks(
 	ctx context.Context, req *apiv1.GetTasksRequest,
 ) (resp *apiv1.GetTasksResponse, err error) {
-	summary, err := a.m.rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	summary, err := a.m.rm.GetAllocationSummaries()
 	if err != nil {
 		return nil, err
 	}

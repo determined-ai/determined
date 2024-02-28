@@ -148,9 +148,7 @@ func TestGetTasksAuthZ(t *testing.T) {
 	var allocations map[model.AllocationID]sproto.AllocationSummary
 
 	mockRM := MockRM()
-	mockRM.On("GetAllocationSummaries", mock.Anything).Return(func(
-		_ sproto.GetAllocationSummaries,
-	) map[model.AllocationID]sproto.AllocationSummary {
+	mockRM.On("GetAllocationSummaries").Return(func() map[model.AllocationID]sproto.AllocationSummary {
 		return allocations
 	}, nil)
 

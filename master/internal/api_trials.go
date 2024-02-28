@@ -1192,9 +1192,7 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.m.rm.ExternalPreemptionPending(
-		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
-	); err != nil {
+	if err := a.m.rm.ExternalPreemptionPending(model.AllocationID(req.AllocationId)); err != nil {
 		return nil, err
 	}
 

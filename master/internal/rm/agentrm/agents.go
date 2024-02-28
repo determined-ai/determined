@@ -180,7 +180,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	return ref.HandleWebsocketConnection(msg)
 }
 
-func (a *agents) getAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
+func (a *agents) getAgents() *apiv1.GetAgentsResponse {
 	var response apiv1.GetAgentsResponse
 	for _, a := range a.summarize() {
 		response.Agents = append(response.Agents, a.ToProto())

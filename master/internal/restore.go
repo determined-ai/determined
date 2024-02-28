@@ -91,23 +91,25 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return err
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
-	poolName, err := m.rm.ResolveResourcePool(
-		activeConfig.Resources().ResourcePool(),
-		workspaceID,
-		activeConfig.Resources().SlotsPerTrial(),
-	)
+	managerName, poolName, err := m.rm.ResolveResourcePool(activeConfig.Resources().ResourceManager(),
+		sproto.ResolveResourcesRequest{
+			ResourcePool: activeConfig.Resources().ResourcePool(),
+			Workspace:    workspaceID,
+			Slots:        activeConfig.Resources().SlotsPerTrial(),
+		})
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
-	if _, _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
-		Slots:        activeConfig.Resources().SlotsPerTrial(),
-		IsSingleNode: false,
-	}); err != nil {
+	if _, err = m.rm.ValidateResources(activeConfig.Resources().ResourceManager(),
+		sproto.ValidateResourcesRequest{
+			ResourcePool: poolName,
+			Slots:        activeConfig.Resources().SlotsPerTrial(),
+			IsSingleNode: false,
+		}); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		poolName,
+		managerName, poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

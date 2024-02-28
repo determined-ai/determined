@@ -25,7 +25,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
 	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
-	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	taskSummaries := rp.GetAllocationSummaries()
 	assert.Equal(t, len(taskSummaries), 1)
 
 	rp.ResourcesReleased(sproto.ResourcesReleased{
@@ -38,7 +38,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	}
 
 	rp.stop()
-	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
+	assert.Equal(t, len(rp.GetAllocationSummaries()), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
@@ -47,7 +47,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
 	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
-	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	taskSummaries := rp.GetAllocationSummaries()
 	assert.Equal(t, len(taskSummaries), 1)
 
 	rp.ResourcesReleased(sproto.ResourcesReleased{
@@ -60,7 +60,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	}
 
 	rp.stop()
-	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
+	assert.Equal(t, len(rp.GetAllocationSummaries()), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
@@ -69,7 +69,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
 	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
-	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	taskSummaries := rp.GetAllocationSummaries()
 	assert.Equal(t, len(taskSummaries), 1)
 
 	rp.ResourcesReleased(sproto.ResourcesReleased{
@@ -82,7 +82,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	}
 
 	rp.stop()
-	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
+	assert.Equal(t, len(rp.GetAllocationSummaries()), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
@@ -91,7 +91,7 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	rp := setupResourcePool(t, nil, nil, tasks, nil, agents)
 
 	rp.Allocate(sproto.AllocateRequest{AllocationID: tasks[0].ID, SlotsNeeded: tasks[0].SlotsNeeded})
-	taskSummaries := rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	taskSummaries := rp.GetAllocationSummaries()
 	assert.Equal(t, len(taskSummaries), 1)
 
 	rp.ResourcesReleased(sproto.ResourcesReleased{
@@ -100,7 +100,7 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 	})
 
 	rp.stop()
-	assert.Equal(t, len(rp.GetAllocationSummaries(sproto.GetAllocationSummaries{})), 0)
+	assert.Equal(t, len(rp.GetAllocationSummaries()), 0)
 }
 
 func TestScalingInfoAgentSummary(t *testing.T) {
