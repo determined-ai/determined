@@ -31,10 +31,10 @@ const (
 )
 
 // ProjectExperiments returns a list of experiments within a project.
-func ProjectExperiments(ctx context.Context, id int) (experiments []*model.Experiment, err error) {
+func ProjectExperiments(ctx context.Context, pID int) (experiments []*model.Experiment, err error) {
 	rows, err := Bun().NewSelect().
 		Model((*model.Experiment)(nil)).
-		Column("e.id").
+		Column("experiment.id").
 		Column("state").
 		Column("config").
 		Column("start_time").
@@ -46,9 +46,8 @@ func ProjectExperiments(ctx context.Context, id int) (experiments []*model.Exper
 		Column("project_id").
 		Column("unmanaged").
 		ColumnExpr("u.username as username").
-		TableExpr("experiments AS e").
-		Join("JOIN users AS u ON (e.owner_id = u.id)").
-		Where("e.project_id = ?", id).
+		Join("JOIN users AS u ON (experiment.owner_id = u.id)").
+		Where("experiment.project_id = ?", pID).
 		Rows(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("selecting project experiments: %w", err)
@@ -57,10 +56,14 @@ func ProjectExperiments(ctx context.Context, id int) (experiments []*model.Exper
 	defer rows.Close()
 	for rows.Next() {
 		var exp model.Experiment
-		if err := Bun().ScanRow(ctx, rows, exp); err != nil {
+		if err := Bun().ScanRow(ctx, rows, &exp); err != nil {
 			return nil, fmt.Errorf("reading experiment from db: %w", err)
 		}
 		experiments = append(experiments, &exp)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("selecting project experiments: %w", err)
 	}
 
 	return experiments, nil
