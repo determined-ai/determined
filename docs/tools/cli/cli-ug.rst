@@ -35,9 +35,10 @@ and upgrade.
  Installation
 **************
 
-The CLI is distributed as a Python wheel package and requires Python >= 3.8. We recommend setting up
-a `virtualenv <https://virtualenv.pypa.io/en/latest/>`__ and using the ``pip`` utility to install
-``determined`` into the environment:
+The command-line interface (CLI) is distributed in the form of a Python wheel package and requires
+Python version 3.8 or later. We recommend setting up a `virtualenv
+<https://virtualenv.pypa.io/en/latest/>`__ and using the ``pip`` utility to install ``determined``
+into the environment:
 
 .. code::
 
