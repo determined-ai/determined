@@ -1319,11 +1319,6 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	})
 
 	t.Run("can't view project; project does not exist", func(t *testing.T) {
-		fmt.Println("*****")
-		fmt.Println()
-		fmt.Println("beginning failng test")
-		fmt.Println()
-		fmt.Println("*****")
 		var workspaceName string
 		err := db.Bun().NewSelect().
 			Table("workspaces").
