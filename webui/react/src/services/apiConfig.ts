@@ -1114,13 +1114,13 @@ export const getActiveTasks: DetApi<
 };
 
 export const getTaskAllocation: DetApi<
-  string,
+  Service.GetTaskParams,
   Api.V1GetTaskAcceleratorDataResponse,
   Type.AllocationData
 > = {
   name: 'getTaskAllocation',
   postProcess: (response) => response,
-  request: (params: string) => detApi.Internal.getTaskAcceleratorData(params),
+  request: (params: Service.GetTaskParams) => detApi.Internal.getTaskAcceleratorData(params.taskId),
 };
 
 /* Webhooks */

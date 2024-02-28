@@ -482,7 +482,7 @@ export const getActiveTasks = generateDetApi<
 >(Config.getActiveTasks);
 
 export const getTaskAllocation = generateDetApi<
-  string,
+  Service.GetTaskParams,
   Api.V1GetTaskAcceleratorDataResponse,
   Type.AllocationData | undefined
 >(Config.getTaskAllocation);

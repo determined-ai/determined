@@ -21,7 +21,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   limitSlots = 0,
 }) => {
   const [containerWidth, setContainerWidth] = useState(0);
-  const shouldTruncate = useMemo(() => name.length > 5, [name]);
+  const shouldTruncate = name.length > 5;
   const slotsContainer = useRef<HTMLSpanElement>(null);
   const slotsData = useMemo(
     () => (slots !== undefined ? Object.values(slots) : resources),
@@ -50,7 +50,6 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 
       return slotStyles.join(' ');
     },
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isRunning, singleSlot, coupleSlot, limitSlots],
   );

@@ -1,6 +1,7 @@
 import Button from 'hew/Button';
 import Link from 'hew/Link';
 import { Modal } from 'hew/Modal';
+import { Title } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -109,7 +110,10 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
   }, [agents, nodes, isRunning]);
 
   return (
-    <Modal cancel footer={footer} size="medium" title="Resource Allocation">
+    <Modal cancel footer={footer} size="medium" title="">
+      <div className={css.title}>
+        <Title>Resource Allocation</Title>
+      </div>
       <div className={css.base}>
         <div className={css.nodesContainer}>{renderNodes}</div>
         <InfoContainer info={<Link onClick={handleClick}>{rpName}</Link>} label="Resource Pool" />

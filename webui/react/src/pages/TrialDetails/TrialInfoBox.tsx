@@ -27,7 +27,7 @@ import {
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
-import { humanReadableBytes } from 'utils/string';
+import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialInfoBox.module.scss';
 
@@ -73,24 +73,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     if (!trial) return;
 
     // one big issue is that taskIds is an optional property
-    const taskId = trial.taskIds !== undefined ? trial.taskIds[trial.taskIds.length - 1] : '';
+    let taskId = '';
+
+    if (trial.taskIds?.length) taskId = trial.taskIds[trial.taskIds.length - 1];
 
     if (!taskId) return;
 
     try {
-      const response = await getTaskAllocation(taskId, {
-        signal: canceler.signal,
-      });
+      const response = await getTaskAllocation(
+        { taskId },
+        {
+          signal: canceler.signal,
+        },
+      );
 
       return response;
     } catch (e) {
       handleError(e, {
         publicSubject: 'Unable to fetch task allocation data.',
-        silent: true,
         type: ErrorType.Api,
       });
 
-      return;
+      return NotLoaded;
     }
   }, [canceler.signal, trial]);
 
@@ -198,7 +202,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     [allocationModal],
   );
 
-  const appendText = (n: number) => `Slot${n > 1 ? 's' : ''}`;
+  const appendText = (n: number) => pluralizer(n, 'Slot');
 
   return (
     <Section>
