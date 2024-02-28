@@ -600,10 +600,12 @@ commands:
           working_directory: ~/project/e2e_tests
           no_output_timeout: 30m
           command: |
+            DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
+            --ddtrace \
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
