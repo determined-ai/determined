@@ -16,6 +16,9 @@ from tests import experiment as exp
 
 
 class Resource(enum.Enum):
+    def __str__(self) -> str:
+        return self.value
+
     CLUSTER = "cluster"
     MASTER = "master"
     AGENT = "agent"
@@ -42,7 +45,7 @@ def det_deploy(subcommand: List) -> None:
 
 def resource_up(
     resource: Resource,
-    name,
+    name: str,
     kwflags: Optional[Dict[str, str]] = None,
     flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
@@ -85,12 +88,13 @@ def resource_down(resource: Resource, name: str) -> None:
 @contextlib.contextmanager
 def resource_manager(
     resource: Resource,
-    name,
+    name: str,
     kwflags: Optional[Dict[str, str]] = None,
     boolean_flags: Optional[List[str]] = None,
+    positional_arguments: Optional[List[str]] = None,
 ) -> Iterator[None]:
     """Context manager to bring resources up and down."""
-    resource_up(resource, name, kwflags, boolean_flags)
+    resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
     try:
         yield
     finally:
@@ -109,15 +113,12 @@ def agent_disable(sess: api.Session, arguments: List) -> None:
 def test_cluster_down() -> None:
     name = "test_cluster_down"
 
-    resource_up(Resource.CLUSTER, name, {}, ["no-gpu"])
+    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu"]):
+        container_name = name + "_determined-master_1"
+        client = docker.from_env()
 
-    container_name = name + "_determined-master_1"
-    client = docker.from_env()
-
-    containers = client.containers.list(filters={"name": container_name})
-    assert len(containers) > 0
-
-    resource_down(Resource.CLUSTER, name)
+        containers = client.containers.list(filters={"name": container_name})
+        assert len(containers) > 0
 
     containers = client.containers.list(filters={"name": container_name})
     assert len(containers) == 0
@@ -128,51 +129,52 @@ def test_cluster_down() -> None:
 def test_custom_etc() -> None:
     name = "test_custom_etc"
     etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/master.yaml").resolve())
-    resource_up(Resource.CLUSTER, name, {"master-config-path": etc_path}, ["no-gpu"])
-    sess = mksess("localhost", 8080)
-    exp.run_basic_test(
-        sess,
-        conf.fixtures_path("no_op/single-default-ckpt.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
-    assert os.path.exists("/tmp/ckpt-test/")
-    resource_down(Resource.CLUSTER, name)
+    with resource_manager(Resource.CLUSTER, name, {"master-config-path": etc_path}, ["no-gpu"]):
+        sess = mksess("localhost", 8080)
+        exp.run_basic_test(
+            sess,
+            conf.fixtures_path("no_op/single-default-ckpt.yaml"),
+            conf.fixtures_path("no_op"),
+            1,
+        )
+        assert os.path.exists("/tmp/ckpt-test/")
 
 
 @pytest.mark.det_deploy_local
 def test_agent_config_path() -> None:
     cluster_name = "test_agent_config_path"
     master_name = f"{cluster_name}_determined-master_1"
-    resource_up(Resource.MASTER, master_name)
+    with resource_manager(Resource.MASTER, master_name):
+        # Config makes it unmodified.
+        etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
+        agent_name = "test-path-agent"
+        with resource_manager(
+            Resource.AGENT,
+            agent_name,
+            {"agent-config-path": etc_path},
+            ["no-gpu"],
+            [conf.MASTER_IP],
+        ):
+            client = docker.from_env()
+            agent_container = client.containers.get(agent_name)
+            exit_code, out = agent_container.exec_run(["cat", "/etc/determined/agent.yaml"])
+            assert exit_code == 0
+            with open(etc_path) as f:
+                assert f.read() == out.decode("utf-8")
 
-    # Config makes it unmodified.
-    etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
-    agent_name = "test-path-agent"
-    resource_up(
-        Resource.AGENT, agent_name, {"agent-config-path": etc_path}, ["no-gpu"], [conf.MASTER_IP]
-    )
-
-    client = docker.from_env()
-    agent_container = client.containers.get(agent_name)
-    exit_code, out = agent_container.exec_run(["cat", "/etc/determined/agent.yaml"])
-    assert exit_code == 0
-    with open(etc_path) as f:
-        assert f.read() == out.decode("utf-8")
-    resource_down(Resource.AGENT, agent_name)
-
-    # Validate CLI flags overwrite config file options.
-    agent_name += "-2"
-    resource_up(
-        Resource.AGENT, agent_name, {"agent-config-path": etc_path}, ["no-gpu"], [conf.MASTER_IP]
-    )
-    sess = mksess("localhost", 8080)
-    agent_list = detproc.check_json(sess, ["det", "a", "list", "--json"])
-    agent_list = [el for el in agent_list if el["id"] == agent_name]
-    assert len(agent_list) == 1
-    resource_down(Resource.AGENT, agent_name)
-
-    resource_down(Resource.MASTER, master_name)
+        # Validate CLI flags overwrite config file options.
+        agent_name += "-2"
+        with resource_manager(
+            Resource.AGENT,
+            agent_name,
+            {"agent-config-path": etc_path},
+            ["no-gpu"],
+            [conf.MASTER_IP],
+        ):
+            sess = mksess("localhost", 8080)
+            agent_list = detproc.check_json(sess, ["det", "a", "list", "--json"])
+            agent_list = [el for el in agent_list if el["id"] == agent_name]
+            assert len(agent_list) == 1
 
 
 @pytest.mark.det_deploy_local
@@ -180,32 +182,28 @@ def test_agent_config_path() -> None:
 def test_custom_port() -> None:
     name = "port_test"
     custom_port = 12321
-    resource_up(Resource.CLUSTER, name, {"master-port": str(custom_port)}, ["no-gpu"])
+    with resource_manager(Resource.CLUSTER, name, {"master-port": str(custom_port)}, ["no-gpu"]):
+        sess = mksess("localhost", custom_port)
 
-    sess = mksess("localhost", custom_port)
-
-    exp.run_basic_test(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
-    resource_down(Resource.CLUSTER, name)
+        exp.run_basic_test(
+            sess,
+            conf.fixtures_path("no_op/single-one-short-step.yaml"),
+            conf.fixtures_path("no_op"),
+            1,
+        )
 
 
 @pytest.mark.det_deploy_local
 def test_agents_made() -> None:
     name = "agents_test"
     num_agents = 2
-    resource_up(Resource.CLUSTER, name, {"agents": str(num_agents)}, ["no-gpu"])
-    container_names = [name + f"-agent-{i}" for i in range(0, num_agents)]
-    client = docker.from_env()
+    with resource_manager(Resource.CLUSTER, name, {"agents": str(num_agents)}, ["no-gpu"]):
+        container_names = [name + f"-agent-{i}" for i in range(0, num_agents)]
+        client = docker.from_env()
 
-    for container_name in container_names:
-        containers = client.containers.list(filters={"name": container_name})
-        assert len(containers) > 0
-
-    resource_down(Resource.CLUSTER, name)
+        for container_name in container_names:
+            containers = client.containers.list(filters={"name": container_name})
+            assert len(containers) > 0
 
 
 @pytest.mark.det_deploy_local
@@ -213,14 +211,11 @@ def test_master_up_down() -> None:
     cluster_name = "test_master_up_down"
     master_name = f"{cluster_name}_determined-master_1"
 
-    resource_up(Resource.MASTER, master_name)
+    with resource_manager(Resource.MASTER, master_name):
+        client = docker.from_env()
 
-    client = docker.from_env()
-
-    containers = client.containers.list(filters={"name": master_name})
-    assert len(containers) > 0
-
-    resource_down(Resource.MASTER, master_name)
+        containers = client.containers.list(filters={"name": master_name})
+        assert len(containers) > 0
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
@@ -232,15 +227,11 @@ def test_agent_up_down() -> None:
     cluster_name = "test_agent_up_down"
     master_name = f"{cluster_name}_determined-master_1"
 
-    resource_up(Resource.MASTER, master_name)
-    resource_up(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP])
+    with resource_manager(Resource.MASTER, master_name):
+        with resource_manager(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP]):
+            client = docker.from_env()
+            containers = client.containers.list(filters={"name": agent_name})
+            assert len(containers) > 0
 
-    client = docker.from_env()
-    containers = client.containers.list(filters={"name": agent_name})
-    assert len(containers) > 0
-
-    resource_down(Resource.AGENT, agent_name)
-    containers = client.containers.list(filters={"name": agent_name})
-    assert len(containers) == 0
-
-    resource_down(Resource.MASTER, master_name)
+        containers = client.containers.list(filters={"name": agent_name})
+        assert len(containers) == 0
