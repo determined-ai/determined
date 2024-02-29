@@ -1,0 +1,53 @@
+stages:
+  - db:
+      name: db
+
+  - custom:
+      pre:
+        - sh: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        - sh: sudo install minikube-linux-amd64 /usr/local/bin/minikube
+        - sh: minikube start --profile defaultrm
+        - sh: kubectl --context defaultrm apply -f tools/k8s/my-service-account.yaml
+      name: creds-default
+      cmd:
+        - tools/k8s/fetch-creds.sh
+        - --context
+        - defaultrm
+        - /tmp/det-creds-default
+        - my-service-account
+      post:
+        - logcheck:
+            regex: successfully fetched initial token
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp/determined-cp
+        cache:
+          cache_dir: /tmp/determined-cache
+        log:
+          level: debug
+        enable_cors: true
+        root: tools/build
+
+        resource_manager:
+          type: kubernetes
+          namespace: default
+          max_slots_per_pod: 1
+          slot_type: "cpu"
+          slot_resource_requests:
+            cpu: 1
+          # Special settings for running determined-master outside of k8s:
+          _creds_dir: /tmp/det-creds-default
+          _master_ip: $DOCKER_LOCALHOST
+          _master_port: 8080

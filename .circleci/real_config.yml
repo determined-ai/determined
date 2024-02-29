@@ -2898,6 +2898,14 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
+          name: test-e2e-multi-k8s
+          requires:
+            - build-go
+          tf2: true
+          mark: e2e_multi_k8s
+          devcluster-config: multi-k8s.devcluster.yaml
+
+      - test-e2e:
           name: test-e2e-port-registry
           requires:
             - build-go
