@@ -43,3 +43,18 @@
 # Owned by @determined-ai/web except for generated files
 /webui    @determined-ai/web
 /webui/react/src/services/api-ts-sdk/
+
+# Owned by resource management, so far this is only the stuff that is obvious and in its own dir.
+/master/internal/command @determined-ai/resource-mgmt
+/master/internal/job @determined-ai/resource-mgmt
+/master/internal/postregistry @determined-ai/resource-mgmt
+/master/internal/sproto @determined-ai/resource-mgmt
+/master/internal/rm @determined-ai/resource-mgmt
+/master/internal/task @determined-ai/resource-mgmt
+/master/pkg/aproto @determined-ai/resource-mgmt
+/master/pkg/archive @determined-ai/resource-mgmt
+/master/pkg/command @determined-ai/resource-mgmt
+/master/pkg/cproto @determined-ai/resource-mgmt
+/master/pkg/device @determined-ai/resource-mgmt
+/master/pkg/etc @determined-ai/resource-mgmt
+/master/pkg/tasks @determined-ai/resource-mgmt
