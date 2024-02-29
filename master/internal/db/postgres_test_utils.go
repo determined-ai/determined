@@ -44,6 +44,8 @@ const (
 	defaultSearcherMetric = "okness"
 	// DefaultTestSrcPath returns src to the mnsit_pytorch model example.
 	DefaultTestSrcPath = "../../../examples/tutorials/mnist_pytorch"
+	// DefaultProjectID is the project used when none is specified.
+	DefaultProjectID = 1
 )
 
 // Model represents a row from the `models` table. Unused except for tests.
@@ -200,8 +202,8 @@ func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 	return jID
 }
 
-// RequireMockWorkspaceID returns a mock workspace ID.
-func RequireMockWorkspaceID(t *testing.T, db *PgDB) int {
+// RequireMockWorkspaceID returns a mock workspace ID and name.
+func RequireMockWorkspaceID(t *testing.T, db *PgDB) (int, string) {
 	mockWorkspace := struct {
 		bun.BaseModel `bun:"table:workspaces"`
 
@@ -213,27 +215,29 @@ func RequireMockWorkspaceID(t *testing.T, db *PgDB) int {
 	_, err := Bun().NewInsert().Model(&mockWorkspace).Returning("id").Exec(context.TODO())
 	require.NoError(t, err)
 
-	return mockWorkspace.ID
+	return mockWorkspace.ID, mockWorkspace.Name
 }
 
-// RequireMockProjectID returns a mock project ID.
-func RequireMockProjectID(t *testing.T, db *PgDB) int {
-	wID := RequireMockWorkspaceID(t, db)
-
+// RequireMockProjectID returns a mock project ID and name.
+func RequireMockProjectID(t *testing.T, db *PgDB, workspaceID int, archived bool) (int, string) {
 	mockProject := struct {
 		bun.BaseModel `bun:"table:projects"`
 
 		ID          int `bun:"id,pk,autoincrement"`
 		WorkspaceID int
 		Name        string
+		Archived    bool
+		Description string
 	}{
-		WorkspaceID: wID,
+		WorkspaceID: workspaceID,
 		Name:        uuid.New().String(),
+		Archived:    archived,
+		Description: "description text",
 	}
 	_, err := Bun().NewInsert().Model(&mockProject).Returning("id").Exec(context.TODO())
 	require.NoError(t, err)
 
-	return mockProject.ID
+	return mockProject.ID, mockProject.Name
 }
 
 // RequireGetProjectHParams returns projects hparams.
@@ -282,7 +286,12 @@ func RequireMockUser(t *testing.T, db *PgDB) model.User {
 
 // RequireMockExperiment returns a mock experiment.
 func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Experiment {
-	return RequireMockExperimentParams(t, db, user, MockExperimentParams{})
+	return RequireMockExperimentParams(t, db, user, MockExperimentParams{}, DefaultProjectID)
+}
+
+// RequireMockExperimentProject returns a mock experiment attached to a specific project.
+func RequireMockExperimentProject(t *testing.T, db *PgDB, user model.User, projectID int) *model.Experiment {
+	return RequireMockExperimentParams(t, db, user, MockExperimentParams{}, projectID)
 }
 
 // MockExperimentParams is the parameters for mock experiment.
@@ -300,6 +309,7 @@ func RequireMockExperimentParams(
 	db *PgDB,
 	user model.User,
 	p MockExperimentParams,
+	projectID int,
 ) *model.Experiment {
 	notDefaulted := expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
@@ -347,7 +357,7 @@ func RequireMockExperimentParams(
 		StartTime:            time.Now().Add(-time.Hour).Truncate(time.Millisecond),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
-		ProjectID:            1,
+		ProjectID:            projectID,
 		ExternalExperimentID: p.ExternalExperimentID,
 	}
 	if p.ProjectID != nil {

@@ -21,8 +21,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 const (
@@ -32,47 +30,42 @@ const (
 	min  = "min"
 )
 
-// ProjectByName returns a project's ID if it exists in the given workspace.
-func (db *PgDB) ProjectByName(workspaceName string, projectName string) (int, error) {
-	w := workspacev1.Workspace{}
-	err := db.Query("get_workspace_from_name", &w, workspaceName)
-	if err != nil {
-		return 1, err
-	}
-	p := projectv1.Project{}
-	err = db.Query("get_project_from_name", &p, w.Id, projectName)
-	if err != nil {
-		return 1, err
-	}
-	if p.Id < 1 {
-		return 1, ErrNotFound
-	}
-	if p.Archived {
-		return 1, fmt.Errorf("given workspace or project is archived and cannot add new experiments")
-	}
-	return int(p.Id), nil
-}
-
 // ProjectExperiments returns a list of experiments within a project.
-func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err error) {
-	rows, err := db.sql.Queryx(`
-SELECT e.id, state, config, start_time, end_time, archived, owner_id, notes,
-		 job_id, u.username as username, project_id, unmanaged
-FROM experiments e
-JOIN users u ON (e.owner_id = u.id)
-WHERE e.project_id = $1`, id)
+func ProjectExperiments(ctx context.Context, pID int) (experiments []*model.Experiment, err error) {
+	rows, err := Bun().NewSelect().
+		Model((*model.Experiment)(nil)).
+		Column("experiment.id").
+		Column("state").
+		Column("config").
+		Column("start_time").
+		Column("end_time").
+		Column("archived").
+		Column("owner_id").
+		Column("notes").
+		Column("job_id").
+		Column("project_id").
+		Column("unmanaged").
+		ColumnExpr("u.username as username").
+		Join("JOIN users AS u ON (experiment.owner_id = u.id)").
+		Where("experiment.project_id = ?", pID).
+		Rows(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("selecting project experiments: %w", err)
 	}
-	defer rows.Close()
 
+	defer rows.Close()
 	for rows.Next() {
 		var exp model.Experiment
-		if err = rows.StructScan(&exp); err != nil {
-			return nil, errors.Wrap(err, "unable to read experiment from db")
+		if err := Bun().ScanRow(ctx, rows, &exp); err != nil {
+			return nil, fmt.Errorf("reading experiment from db: %w", err)
 		}
 		experiments = append(experiments, &exp)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("selecting project experiments: %w", err)
+	}
+
 	return experiments, nil
 }
 
