@@ -59,6 +59,17 @@ func New(
 		}
 	}
 
+	return NewMultiRM(db, echo, rmConfigs, tcd, opts, cert)
+}
+
+// NewMultiRM returns a new MultiRM.
+func NewMultiRM(db *db.PgDB,
+	echo *echo.Echo,
+	rmConfigs []*config.ResourceManagerWithPoolsConfig,
+	tcd *model.TaskContainerDefaultsConfig,
+	opts *aproto.MasterSetAgentOptions,
+	cert *tls.Certificate,
+) *MultiRMRouter {
 	// Set the default RM name for the multi-rm, if the default indexed config is already named.
 	// This guarantees that any multi-rm request is sent to the default RM if a given RM name
 	// doesn't exist.
@@ -66,24 +77,25 @@ func New(
 	if name := rmConfigs[config.DefaultRMIndex].ResourceManager.Name(); name != "" {
 		defaultRMName = name
 	}
-
 	rms := map[string]rm.ResourceManager{}
 
 	for idx, cfg := range rmConfigs {
-		c := cfg
+		c := cfg.ResourceManager
 		switch {
-		case c.ResourceManager.AgentRM != nil:
-			// If the default config index doesn't have a named RM, name it.
-			if idx == config.DefaultRMIndex && c.ResourceManager.Name() == "" {
-				c.ResourceManager.AgentRM.Name = defaultRMName
+		case c.AgentRM != nil:
+			// If the default config index doesn't have a named RM, use the default name.
+			if idx == config.DefaultRMIndex && c.Name() == "" {
+				rms[defaultRMName] = agentrm.New(db, echo, cfg, opts, cert)
+			} else {
+				rms[c.Name()] = agentrm.New(db, echo, cfg, opts, cert)
 			}
-			rms[c.ResourceManager.Name()] = agentrm.New(db, echo, c, opts, cert)
-		case c.ResourceManager.KubernetesRM != nil:
-			// If the default config index doesn't have a named RM, name it.
-			if idx == config.DefaultRMIndex && c.ResourceManager.Name() == "" {
-				c.ResourceManager.KubernetesRM.Name = defaultRMName
+		case c.KubernetesRM != nil:
+			// If the default config index doesn't have a named RM, use the default name.
+			if idx == config.DefaultRMIndex && c.Name() == "" {
+				rms[defaultRMName] = kubernetesrm.New(db, cfg, tcd, opts, cert)
+			} else {
+				rms[c.Name()] = kubernetesrm.New(db, cfg, tcd, opts, cert)
 			}
-			rms[c.ResourceManager.Name()] = kubernetesrm.New(db, c, tcd, opts, cert)
 		default:
 			panic("no expected resource manager config is defined")
 		}

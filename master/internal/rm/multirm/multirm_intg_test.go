@@ -5,17 +5,23 @@ package multirm
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -24,6 +30,56 @@ import (
 )
 
 const rp = "resource-pool"
+
+func TestMain(m *testing.M) {
+	pgDB, err := db.ResolveTestPostgres()
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = db.MigrateTestPostgres(pgDB, "file://../../../static/migrations", "up")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = etc.SetRootPath("../../../static/srv")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	os.Exit(m.Run())
+}
+
+func TestNewMultiRM(t *testing.T) {
+	cases := []struct {
+		name string
+		cfgs []*config.ResourceManagerWithPoolsConfig
+	}{
+		{"simple", []*config.ResourceManagerWithPoolsConfig{mockConfig(uuid.NewString())}},
+		{"no-name", []*config.ResourceManagerWithPoolsConfig{mockConfig("")}},
+		{"multirm", []*config.ResourceManagerWithPoolsConfig{
+			mockConfig(uuid.NewString()),
+			mockConfig(uuid.NewString()),
+			mockConfig(uuid.NewString()),
+		}},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			m := NewMultiRM(db.SingleDB(), echo.New(), tt.cfgs, nil, nil, nil)
+			require.NotNil(t, m)
+			require.Equal(t, len(tt.cfgs), len(m.rms))
+
+			// If the cfg name is originally "", then NewMultiRM will use
+			// config.DefaultRMName.
+			if tt.cfgs[0].ResourceManager.Name() == "" {
+				require.Equal(t, config.DefaultRMName, m.defaultRMName)
+			} else {
+				require.Equal(t, tt.cfgs[0].ResourceManager.Name(), m.defaultRMName)
+			}
+		})
+	}
+}
 
 func TestGetAllocationSummaries(t *testing.T) {
 	cases := []struct {
@@ -682,4 +738,15 @@ func TestDisableSlot(t *testing.T) {
 	ret, err = m.DisableSlot("bogus", req)
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
+}
+
+// Only returns AgentRM for testing purposes.
+func mockConfig(rmName string) *config.ResourceManagerWithPoolsConfig {
+	return &config.ResourceManagerWithPoolsConfig{
+		ResourceManager: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Name: rmName,
+			},
+		},
+	}
 }
