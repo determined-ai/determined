@@ -121,7 +121,7 @@ def list_providers(args: Namespace) -> None:
     except KeyError:
         raise EnterpriseOnlyError("No SSO providers data")
 
-    if len(sso_providers) == 0:
+    if not sso_providers:
         print("No SSO providers found.")
         return
 
