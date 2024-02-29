@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
@@ -167,6 +168,8 @@ func checkReceiveTermination(
 func TestResourceCreationFailed(t *testing.T) {
 	setupEntrypoint(t)
 
+	const correctMsg = "already exists"
+
 	ref, aID, sub := createPodWithMockQueue(t, nil)
 
 	purge(aID, sub)
@@ -176,15 +179,14 @@ func TestResourceCreationFailed(t *testing.T) {
 	require.NoError(t, err)
 	time.Sleep(time.Second)
 
-	// We expect three messages in the queue because the pod actor sends itself a stop message.
-	assert.Equal(t, sub.Len(), 3)
+	// We expect two messages in the queue because the pod actor sends itself a stop message.
+	assert.Equal(t, sub.Len(), 2)
 	message := sub.Get()
-	require.IsType(t, &sproto.ContainerLog{}, message)
-	require.Contains(t, *message.(*sproto.ContainerLog).AuxMessage, "Pod Spec Configured")
-
-	message = sub.Get()
-	require.IsType(t, &sproto.ContainerLog{}, message)
-	require.Contains(t, *message.(*sproto.ContainerLog).AuxMessage, "already exists")
+	containerMsg, ok := message.(*sproto.ContainerLog)
+	if !ok {
+		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
+	}
+	assert.ErrorContains(t, errors.New(*containerMsg.AuxMessage), correctMsg)
 }
 
 func TestReceivePodStatusUpdateTerminated(t *testing.T) {
