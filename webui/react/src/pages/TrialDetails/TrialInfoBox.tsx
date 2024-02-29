@@ -138,7 +138,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return {
       ...rpData,
       isRPFull: rpUsedSlots === (experiment.config.resources.slots_per_trial || 0),
-      isRunning: trial.state === RunState.Active,
+      isRunning: trial.state === RunState.Running,
       name: rpData.name || experiment.resourcePool,
       nodes: allocation.acceleratorData.map((node) => ({
         nodeName: node.nodeName || '',
@@ -193,8 +193,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   useEffect(() => {
     fetchModels();
+  }, [fetchModels]);
+  useEffect(() => {
     fetchTaskAllocation();
-  }, [fetchModels, fetchTaskAllocation]);
+  }, [fetchTaskAllocation]);
 
   const handleModalCheckpointClick = useCallback(() => {
     checkpointModal.open();
