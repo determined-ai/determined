@@ -2901,6 +2901,7 @@ workflows:
           name: test-e2e-multi-k8s
           requires:
             - build-go
+          parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
           devcluster-config: multi-k8s.devcluster.yaml
