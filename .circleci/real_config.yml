@@ -2904,6 +2904,7 @@ workflows:
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
+          target-stage: master
           devcluster-config: multi-k8s.devcluster.yaml
 
       - test-e2e:
