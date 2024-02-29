@@ -3,55 +3,13 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"net/url"
-	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 )
 
-// equalASCIIFold returns true if s is equal to t with ASCII case folding as
-// defined in RFC 4790.
-func equalASCIIFold(s, t string) bool {
-	for s != "" && t != "" {
-		sr, size := utf8.DecodeRuneInString(s)
-		s = s[size:]
-		tr, size := utf8.DecodeRuneInString(t)
-		t = t[size:]
-		if sr == tr {
-			continue
-		}
-		if 'A' <= sr && sr <= 'Z' {
-			sr = sr + 'a' - 'A'
-		}
-		if 'A' <= tr && tr <= 'Z' {
-			tr = tr + 'a' - 'A'
-		}
-		if sr != tr {
-			return false
-		}
-	}
-	return s == t
-}
-
-// Copied from https://github.com/gorilla/websocket/blob/695e9095ce8736ac99c83939ca6b0fe93768f680/server.go#L152
-// with slight modification to allow localhost.
-func checkOrigin(r *http.Request) bool {
-	origin := r.Header["Origin"]
-	if len(origin) == 0 {
-		return true
-	}
-	u, err := url.Parse(origin[0])
-	if err != nil {
-		return false
-	}
-	return equalASCIIFold(u.Host, r.Host) || u.Hostname() == "localhost"
-}
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: checkOrigin,
-}
+var upgrader = websocket.Upgrader{}
 
 // Route returns an echo compatible handler for JSON requests.
 func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {
@@ -81,8 +39,11 @@ func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {
 }
 
 // WebSocketRoute upgrades incoming requests to websocket requests.
-func WebSocketRoute(handler func(socket *websocket.Conn, c echo.Context) error) echo.HandlerFunc {
+func WebSocketRoute(handler func(socket *websocket.Conn, c echo.Context) error, enableCORS bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		if enableCORS {
+			upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+		}
 		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			c.Logger().Error("websocket connection error: ", err)

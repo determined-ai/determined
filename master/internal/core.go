@@ -1394,7 +1394,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	go func() {
 		_ = ssup.Run(ctx)
 	}()
-	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket))
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
 
 	return m.startServers(ctx, cert, gRPCLogInitDone)
 }
