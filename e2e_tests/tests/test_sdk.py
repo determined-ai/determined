@@ -483,7 +483,7 @@ def test_experiment_w_template() -> None:
     # create template
     tpl = bindings.v1Template(
         name=api_utils.get_random_string(),
-        config=conf.load_config(conf.fixtures_path(f"templates/template.yaml")),
+        config=conf.load_config(conf.fixtures_path("templates/template.yaml")),
         workspaceId=1,
     )
     tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
