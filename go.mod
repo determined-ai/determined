@@ -1,6 +1,6 @@
 module github.com/determined-ai/determined
 
-go 1.22
+go 1.22.0
 
 require (
 	cloud.google.com/go v0.94.0
