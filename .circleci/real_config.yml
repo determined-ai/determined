@@ -3391,7 +3391,7 @@ workflows:
           requires:
             - package-and-push-system-dev
           parallelism: 1
-          mark: e2e_cpu
+          mark: "e2e_gpu and not gpu_required"
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
