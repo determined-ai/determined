@@ -38,6 +38,11 @@ vi.mock('services/api', () => ({
   ),
 }));
 
+vi.mock('routes/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('routes/utils')>()),
+  serverAddress: () => 'http://localhost',
+}));
+
 const user = userEvent.setup();
 
 const DISPLAY_NAME = 'Test Name';
