@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	"golang.org/x/exp/maps"
 
 	"github.com/docker/docker/api/types"
@@ -97,7 +96,7 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 	info := c.ContainerInfo
 
 	var addresses []cproto.Address
-	switch info.HostConfig.NetworkMode {
+	switch networkMode := info.HostConfig.NetworkMode; networkMode {
 	case "host":
 		for port := range info.Config.ExposedPorts {
 			addresses = append(addresses, cproto.Address{
@@ -111,32 +110,34 @@ func (c ContainerStarted) Addresses() []cproto.Address {
 		if info.NetworkSettings == nil {
 			return nil
 		}
-		networks := info.NetworkSettings.Networks
-		ipAddresses := make([]string, 0, len(networks))
-		for _, network := range networks {
-			ipAddresses = append(ipAddresses, network.IPAddress)
+
+		// We used to return a cproto.Address for each network in info.NetworkSettings.Networks that existed, but the
+		// harness only wants the tuple (host_ip, host_port) and disregards container_ip, and (!!) if it does receive
+		// two cproto.Address mappings for the rendezvous port of a container, it would just explode anyway because it
+		// expects a single address per container and doesn't know which one to use.
+		containerIPOnNetwork := "missing"
+		if containerNetwork := info.NetworkSettings.Networks[networkMode.NetworkName()]; containerNetwork != nil {
+			containerIPOnNetwork = containerNetwork.IPAddress
 		}
 
 		for port, bindings := range info.NetworkSettings.Ports {
 			for _, binding := range bindings {
-				for _, ip := range ipAddresses {
-					hostPort, err := strconv.Atoi(binding.HostPort)
-					if err != nil {
-						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
-					}
-
-					addresses = append(addresses, cproto.Address{
-						ContainerIP:   ip,
-						ContainerPort: port.Int(),
-						HostIP:        proxy,
-						HostPort:      hostPort,
-					})
+				hostPort, err := strconv.Atoi(binding.HostPort)
+				if err != nil {
+					panic(fmt.Errorf("unexpected host port %s: %w", binding.HostPort, err))
 				}
+
+				addresses = append(addresses, cproto.Address{
+					ContainerIP:   containerIPOnNetwork,
+					ContainerPort: port.Int(),
+					HostIP:        proxy,
+					HostPort:      hostPort,
+				})
 			}
 		}
 
-		// Remove duplicates caused by docker returning bindings for both ipv4 and ipv6.
-		// The address ends up the same since we replace host IP with the agent IP.
+		// Remove duplicates, just incase. In theory, I can't think of a case where we would have them, but
+		// in practice somehow we had them before and I'd rather be careful.
 		dedup := map[cproto.Address]bool{}
 		for _, addr := range addresses {
 			dedup[addr] = true

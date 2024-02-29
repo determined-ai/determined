@@ -8,7 +8,8 @@ import (
 
 // Address represents an exposed port on a container.
 type Address struct {
-	// ContainerIP is the IP address from inside the container.
+	// ContainerIP is the IP address from inside the container. Will be "missing" if we cannot find a network with a
+	// name matching the network configured via `task_container_defaults.network_mode`.
 	ContainerIP string `json:"container_ip"`
 	// ContainerPort is the port from inside the container.
 	ContainerPort int `json:"container_port"`

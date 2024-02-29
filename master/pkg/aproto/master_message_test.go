@@ -19,7 +19,7 @@ func TestContainerStarted_Addresses(t *testing.T) {
 		want  []cproto.Address
 	}{
 		{
-			name:  "ipv4 only",
+			name:  "ipv4 docker and agent addrs",
 			input: mustUnmarshal[ContainerStarted](t, mustReadFile(t, "testdata/ipv4_only.input.json")),
 			want:  mustUnmarshal[[]cproto.Address](t, mustReadFile(t, "testdata/ipv4_only.output.json")),
 		},
