@@ -531,7 +531,6 @@ func ReadPriority(rmName string, rpName string, jobConf interface{}) int {
 	}
 
 	// if not found, fall back to the resource pools config
-
 	for _, rm := range config.ResourceManagers() {
 		if rm.ResourceManager.Name() == rmName {
 			var schedulerConf *SchedulerConfig
