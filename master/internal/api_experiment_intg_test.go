@@ -1106,9 +1106,9 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
 // nolint: exhaustruct
-func createTestExpWithProjectID(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
+func createTestExpActiveConfig(
+	labels []string, data map[string]interface{},
+) expconf.ExperimentConfigV0 {
 	labelMap := make(map[string]bool)
 	for _, l := range labels {
 		labelMap[l] = true
@@ -1118,8 +1118,37 @@ func createTestExpWithProjectID(
 		RawLabels:      labelMap,
 		RawDescription: ptrs.Ptr("desc"),
 		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+		RawData:        data,
 	})
-	activeConfig = schemas.WithDefaults(activeConfig)
+
+	return schemas.WithDefaults(activeConfig)
+}
+
+func createTestExpWithActiveConfig(
+	t *testing.T, api *apiServer, curUser model.User, activeConfig expconf.ExperimentConfigV0,
+) (exp *model.Experiment) {
+	exp = &model.Experiment{
+		JobID:     model.JobID(uuid.New().String()),
+		State:     model.PausedState,
+		OwnerID:   &curUser.ID,
+		ProjectID: 1,
+		StartTime: time.Now(),
+		Config:    activeConfig.AsLegacy(),
+	}
+
+	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
+
+	// Get experiment as our API mostly will to make it easier to mock.
+	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
+	require.NoError(t, err)
+	return exp
+}
+
+// nolint: exhaustruct
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
+) *model.Experiment {
+	activeConfig := createTestExpActiveConfig(labels, nil)
 	exp := &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.PausedState,
@@ -1995,4 +2024,59 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 	t.Error("expected experiments to delete after 15 seconds and they did not")
+}
+
+func TestGetPachydermRepoURL(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	api.m.config.Integrations.Pachyderm.Address = "http://127.0.0.1"
+
+	cases := []struct {
+		name        string
+		data        map[string]interface{}
+		expectedURL string
+	}{
+		{
+			"Only Required Fields",
+			map[string]interface{}{
+				"pachyderm": map[string]interface{}{
+					"repo":    "test-repo",
+					"project": "test-project",
+				},
+			},
+			"http://127.0.0.1/lineage/test-project/repos/test-repo",
+		},
+		{
+			"optional fields included",
+			map[string]interface{}{
+				"pachyderm": map[string]interface{}{
+					"repo":            "test-repo",
+					"project":         "test-project",
+					"previous_commit": "1234",
+					"branch":          "main",
+				},
+			},
+			"http://127.0.0.1/lineage/test-project/repos/test-repo/commit/1234/?branchId=main",
+		},
+		{
+			"host & port specified, override master config",
+			map[string]interface{}{
+				"pachyderm": map[string]interface{}{
+					"host":    "https://localhost",
+					"port":    "443",
+					"repo":    "test-repo",
+					"project": "test-project",
+				},
+			},
+			"https://localhost:443/lineage/test-project/repos/test-repo",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			exp := createTestExpWithActiveConfig(t, api, curUser, createTestExpActiveConfig(nil, c.data))
+			resp, err := api.GetPachydermRepoURL(ctx, &apiv1.GetPachydermRepoURLRequest{ExperimentId: int32(exp.ID)})
+			require.NoError(t, err, "error occurred while getting pachyderm repo URL")
+			require.Equal(t, c.expectedURL, resp.PachydermInputRepoUrl)
+		})
+	}
 }

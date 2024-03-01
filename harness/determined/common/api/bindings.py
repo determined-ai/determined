@@ -5453,6 +5453,29 @@ class v1GetNotebooksResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
+class v1GetPachydermRepoURLResponse(Printable):
+    """Response to GetPachydermRepoURLRequest."""
+
+    def __init__(
+        self,
+        *,
+        pachydermInputRepoUrl: str,
+    ):
+        self.pachydermInputRepoUrl = pachydermInputRepoUrl
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetPachydermRepoURLResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "pachydermInputRepoUrl": obj["pachydermInputRepoUrl"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "pachydermInputRepoUrl": self.pachydermInputRepoUrl,
+        }
+        return out
+
 class v1GetPermissionsSummaryResponse(Printable):
     """Response to GetPermissionsSummaryRequest."""
 
@@ -18040,6 +18063,30 @@ accessible workspaces.
     if _resp.status_code == 200:
         return v1GetNotebooksResponse.from_json(_resp.json())
     raise APIHttpError("get_GetNotebooks", _resp)
+
+def get_GetPachydermRepoURL(
+    session: "api.BaseSession",
+    *,
+    experimentId: int,
+) -> "v1GetPachydermRepoURLResponse":
+    """Get pachyderm input repo URL based on experiment config, if present
+
+    - experimentId: ID of experiment to retrieve the URL
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/experiments/{experimentId}/pachyderm-repo-url",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetPachydermRepoURLResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetPachydermRepoURL", _resp)
 
 def get_GetPermissionsSummary(
     session: "api.BaseSession",

@@ -1546,6 +1546,17 @@ service Determined {
     };
   }
 
+  // Get pachyderm input repo URL based on experiment config, if present
+  rpc GetPachydermRepoURL(GetPachydermRepoURLRequest) 
+    returns (GetPachydermRepoURLResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/pachyderm-repo-url"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
   // Get a count of active tasks.
   rpc GetActiveTasksCount(GetActiveTasksCountRequest)
       returns (GetActiveTasksCountResponse) {

@@ -4199,6 +4199,19 @@ export interface V1GetNotebooksResponse {
     pagination?: V1Pagination;
 }
 /**
+ * Response to GetPachydermRepoURLRequest.
+ * @export
+ * @interface V1GetPachydermRepoURLResponse
+ */
+export interface V1GetPachydermRepoURLResponse {
+    /**
+     * URL for pachyderm input repository associated
+     * @type {string}
+     * @memberof V1GetPachydermRepoURLResponse
+     */
+    pachydermInputRepoUrl: string;
+}
+/**
  * Response to GetPermissionsSummaryRequest.
  * @export
  * @interface V1GetPermissionsSummaryResponse
@@ -14719,6 +14732,42 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get pachyderm input repo URL based on experiment config, if present
+         * @param {number} experimentId ID of experiment to retrieve the URL
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPachydermRepoURL(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getPachydermRepoURL.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/pachyderm-repo-url`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the list of custom searcher events with long polling.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -15999,6 +16048,25 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get pachyderm input repo URL based on experiment config, if present
+         * @param {number} experimentId ID of experiment to retrieve the URL
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPachydermRepoURL(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPachydermRepoURLResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getPachydermRepoURL(experimentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the list of custom searcher events with long polling.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -16649,6 +16717,16 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Get pachyderm input repo URL based on experiment config, if present
+         * @param {number} experimentId ID of experiment to retrieve the URL
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getPachydermRepoURL(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getPachydermRepoURL(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the list of custom searcher events with long polling.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -17165,6 +17243,18 @@ export class ExperimentsApi extends BaseAPI {
      */
     public getModelDefTree(experimentId: number, options?: any) {
         return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get pachyderm input repo URL based on experiment config, if present
+     * @param {number} experimentId ID of experiment to retrieve the URL
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getPachydermRepoURL(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getPachydermRepoURL(experimentId, options)(this.fetch, this.basePath)
     }
     
     /**
