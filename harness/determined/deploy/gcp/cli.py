@@ -142,7 +142,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
             "tf_state_gcs_bucket_name": args.project_id + "-determined-deploy",
         }
 
-        gcp.dry_run(det_configs, env, variables_to_exclude)
         gcp.delete(det_configs, env, args.yes)
         print("Delete Successful")
         return
