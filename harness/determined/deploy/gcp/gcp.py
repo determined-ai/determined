@@ -46,6 +46,11 @@ def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool =
         terraform_apply(configs, env, variables_to_exclude)
 
 
+def refresh(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    terraform_init(configs, env)
+    terraform_refresh(configs, env, variables_to_exclude)
+
+
 def dry_run(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
     return deploy(configs, env, variables_to_exclude, dry_run=True)
 
@@ -124,6 +129,16 @@ def terraform_init(configs: Dict, env: Dict) -> None:
                 os.path.join(configs["local_state_path"], "terraform.tfstate")
             )
         ]
+
+    run_command(command, env, cwd=terraform_dir(configs))
+
+
+def terraform_refresh(configs: Dict, env: Dict, variables_to_exclude: List) -> None:
+    vars_file_path = terraform_write_variables(configs, variables_to_exclude)
+
+    command = ["terraform", "refresh"]
+    command += ["-input=false"]
+    command += [f"-var-file={vars_file_path}"]
 
     run_command(command, env, cwd=terraform_dir(configs))
 
@@ -319,6 +334,7 @@ def delete(configs: Dict, env: Dict, no_prompt: bool) -> None:
 
 
 def run_command(command: List[str], env: Dict[str, str], cwd: Optional[str] = None) -> None:
+    print(f">>> {command}")
     subprocess.check_call(command, env=env, stdout=sys.stdout, cwd=cwd)
 
 
