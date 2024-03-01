@@ -2,8 +2,11 @@
 startup_input: "p"
 
 commands:
-  p: make -C bindings build && make -C harness clean build  # rebuild Python
-  w: make -C bindings build && make -C webui build          # rebuild Webui
+  p: |
+    make -C bindings build && \
+    make -C master stream-gen && \
+    make -C harness clean build  # rebuild Python
+  w: make -C bindings build && make -C webui build  # rebuild Webui
   c: make -C docs build  # rebuild doCs (capital C is the mnemonic)
 
 # Three stages: db, master, and agent.

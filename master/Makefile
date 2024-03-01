@@ -1,8 +1,10 @@
 .DEFAULT_GOAL := build
 SHELL := bash
-GENERATED := packaging/LICENSE
-GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' -prune -o -name '*.go' -print) $(shell find ../schemas/expconf -name '*.json')
-MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
+LICENSE := packaging/LICENSE
+SCHEMA_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' -prune -o -name '*.go' -print) $(shell find ../schemas/expconf -name '*.json')
+STREAM_INPUTS = $(shell find ./internal/stream/ -name '*_test.go' -prune -o -name '*.go' -print)
+STREAM_PYTHON_CLIENT = ../harness/determined/common/streams/wire.py
+MOCK_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
@@ -38,26 +40,33 @@ clean: ungen
 
 .PHONY: ungen
 ungen:
-	rm -f $(GENERATED)
+	rm -f $(LICENSE)
 	rm -f `find ./pkg/schemas/ -name 'zgen_*.go'` build/schema_gen.stamp
 	rm -f `find ./internal/mocks -name '*.go'` build/mock_gen.stamp
 
 .PHONY: gen
-gen: $(GENERATED) build/schema_gen.stamp
+gen: $(LICENSE) build/schema_gen.stamp $(STREAM_PYTHON_CLIENT)
 
 .PHONY: force-gen
 force-gen:
 	rm -f build/schema_gen.stamp
+	rm -f $(STREAM_PYTHON_CLIENT)
 
-build/schema_gen.stamp: $(GENERATION_INPUTS)
+build/schema_gen.stamp: $(SCHEMA_INPUTS)
 	go generate ./pkg/schemas/...
 	mkdir -p build
 	touch $@
 
+$(STREAM_PYTHON_CLIENT): build/stream-gen $(STREAM_INPUTS)
+	build/stream-gen $(STREAM_INPUTS) --python --output $@
+
+.PHONY: stream-gen
+stream-gen: $(STREAM_PYTHON_CLIENT)
+
 .PHONY: mocks
 mocks: build/mock_gen.stamp
 
-build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
+build/mock_gen.stamp: $(MOCK_INPUTS)
 	mockery --quiet --name=DB --dir=internal/db --output internal/mocks --filename db.go
 	mockery --quiet --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
 	mockery --quiet --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
@@ -82,11 +91,14 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain '**/zgen*')"
+	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT))"
 
 .PHONY: get-deps
 get-deps:
 	./get-deps.sh
+
+build/stream-gen: cmd/stream-gen/main.go
+	go build -o build/stream-gen ./cmd/stream-gen
 
 .PHONY: build
 build: export DET_SEGMENT_MASTER_KEY ?=
@@ -179,7 +191,7 @@ buildx:
 	}
 	docker buildx ls
 
-packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
+$(LICENSE): $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py master $@
 
 .PHONY: package
