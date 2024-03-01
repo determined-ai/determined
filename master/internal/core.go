@@ -23,6 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -953,6 +956,45 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
+func buildRM(
+	db *db.PgDB,
+	echo *echo.Echo,
+	rmConfigs []*config.ResourceManagerWithPoolsConfig,
+	tcd *model.TaskContainerDefaultsConfig,
+	opts *aproto.MasterSetAgentOptions,
+	cert *tls.Certificate,
+) rm.ResourceManager {
+	if len(rmConfigs) <= 1 {
+		config := rmConfigs[0]
+		switch {
+		case config.ResourceManager.AgentRM != nil:
+			return agentrm.New(db, echo, config, opts, cert)
+		case config.ResourceManager.KubernetesRM != nil:
+			return kubernetesrm.New(db, config, tcd, opts, cert)
+		default:
+			panic("no expected resource manager config is defined")
+		}
+	}
+
+	// Set the default RM name for the multi-rm, from the default RM index.
+	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
+	rms := map[string]rm.ResourceManager{}
+
+	for _, cfg := range rmConfigs {
+		c := cfg.ResourceManager
+		switch {
+		case c.AgentRM != nil:
+			rms[c.Name()] = agentrm.New(db, echo, cfg, opts, cert)
+		case c.KubernetesRM != nil:
+			rms[c.Name()] = kubernetesrm.New(db, cfg, tcd, opts, cert)
+		default:
+			panic("no expected resource manager config is defined")
+		}
+	}
+
+	return multirm.New(defaultRMName, rms)
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 //
 // gRPCLogInitDone is closed when the grpclog package's logger singletons are set. This is just
@@ -1141,13 +1183,14 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	m.rm = multirm.New(m.db, m.echo, m.config.ResourceManagers(),
+	m.rm = buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
 		},
-		cert)
+		cert,
+	)
 
 	jobservice.SetDefaultService(m.rm)
 

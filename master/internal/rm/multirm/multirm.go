@@ -1,22 +1,15 @@
 package multirm
 
 import (
-	"crypto/tls"
 	"fmt"
 
-	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/agentrm"
-	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -35,56 +28,8 @@ type MultiRMRouter struct {
 	syslog        *logrus.Entry
 }
 
-// New creates a new resource manager with the master set-up.
-// Since multirm imports the rm module, we have to put the New() func
-// here to avoid an import cycle. If only one rmConfig is passed, return a
-// single Agent or Kubernetes RM.
-func New(
-	db *db.PgDB,
-	echo *echo.Echo,
-	rmConfigs []*config.ResourceManagerWithPoolsConfig,
-	tcd *model.TaskContainerDefaultsConfig,
-	opts *aproto.MasterSetAgentOptions,
-	cert *tls.Certificate,
-) rm.ResourceManager {
-	if len(rmConfigs) <= 1 {
-		config := rmConfigs[0]
-		switch {
-		case config.ResourceManager.AgentRM != nil:
-			return agentrm.New(db, echo, config, opts, cert)
-		case config.ResourceManager.KubernetesRM != nil:
-			return kubernetesrm.New(db, config, tcd, opts, cert)
-		default:
-			panic("no expected resource manager config is defined")
-		}
-	}
-
-	return NewMultiRM(db, echo, rmConfigs, tcd, opts, cert)
-}
-
-// NewMultiRM returns a new MultiRM.
-func NewMultiRM(db *db.PgDB,
-	echo *echo.Echo,
-	rmConfigs []*config.ResourceManagerWithPoolsConfig,
-	tcd *model.TaskContainerDefaultsConfig,
-	opts *aproto.MasterSetAgentOptions,
-	cert *tls.Certificate,
-) *MultiRMRouter {
-	// Set the default RM name for the multi-rm, from the default RM index.
-	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
-	rms := map[string]rm.ResourceManager{}
-
-	for _, cfg := range rmConfigs {
-		c := cfg.ResourceManager
-		switch {
-		case c.AgentRM != nil:
-			rms[c.Name()] = agentrm.New(db, echo, cfg, opts, cert)
-		case c.KubernetesRM != nil:
-			rms[c.Name()] = kubernetesrm.New(db, cfg, tcd, opts, cert)
-		default:
-			panic("no expected resource manager config is defined")
-		}
-	}
+// New returns a new MultiRM.
+func New(defaultRMName string, rms map[string]rm.ResourceManager) *MultiRMRouter {
 	return &MultiRMRouter{
 		defaultRMName: defaultRMName,
 		rms:           rms,
