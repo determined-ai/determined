@@ -47,6 +47,7 @@ def curl(args: Namespace) -> None:
         "-H",
         f"Authorization: Bearer {sess.token}",
         "-s",
+        "--globoff",
     ]
     if args.curl_args:
         cmd += args.curl_args
