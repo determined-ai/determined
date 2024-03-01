@@ -239,6 +239,48 @@ func (c Config) Printable() ([]byte, error) {
 	return optJSON, nil
 }
 
+func k8sValidateMaxSlots(r *ResourceManagerWithPoolsConfig,
+	taskContainerDefaults model.TaskContainerDefaultsConfig, totalRMs int,
+) (model.TaskContainerDefaultsConfig, error) {
+	if taskContainerDefaults.Kubernetes == nil {
+		taskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+	}
+
+	rmMaxSlots := r.ResourceManager.KubernetesRM.MaxSlotsPerPod
+	taskMaxSlots := taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+
+	// if exactly one resource manager, allow global task default to be used
+	if totalRMs == 1 {
+		if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
+			return taskContainerDefaults, fmt.Errorf("must provide exactly one of " +
+				"resource_manager.max_slots_per_pod and " +
+				"task_container_defaults.kubernetes.max_slots_per_pod")
+		}
+
+		if rmMaxSlots != nil {
+			taskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
+		}
+		if taskMaxSlots != nil {
+			r.ResourceManager.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
+		}
+	} else {
+		// otherwise, must use max slots defined in resource manager config
+		if rmMaxSlots == nil {
+			return taskContainerDefaults, fmt.Errorf("must provide resource_manager.max_slots_per_pod")
+		}
+		if taskMaxSlots != nil {
+			log.Warn("ignoring task_container_defaults.kubernetes.max_slots_per_pod - " +
+				"must provide resource_manager.max_slots_per_pod " +
+				"if multiple resource managers are defined")
+		}
+	}
+
+	if maxSlotsPerPod := *r.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
+		return taskContainerDefaults, fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
+	}
+	return taskContainerDefaults, nil
+}
+
 // Resolve resolves the values in the configuration.
 func (c *Config) Resolve() error {
 	if c.Port == 0 {
@@ -267,31 +309,11 @@ func (c *Config) Resolve() error {
 			r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 		}
 
-		// TODO(RM-6) change behavior on max slots per pod.
 		if r.ResourceManager.KubernetesRM != nil {
-			if c.TaskContainerDefaults.Kubernetes == nil {
-				c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+			c.TaskContainerDefaults, err = k8sValidateMaxSlots(r, c.TaskContainerDefaults, len(c.ResourceManagers()))
+			if err != nil {
+				return err
 			}
-
-			rmMaxSlots := r.ResourceManager.KubernetesRM.MaxSlotsPerPod
-			taskMaxSlots := c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
-			if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
-				return fmt.Errorf("must provide exactly one of " +
-					"resource_manager.max_slots_per_pod and " +
-					"task_container_defaults.kubernetes.max_slots_per_pod")
-			}
-
-			if rmMaxSlots != nil {
-				c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
-			}
-			if taskMaxSlots != nil {
-				r.ResourceManager.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
-			}
-			if maxSlotsPerPod := *r.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
-				return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
-			}
-
-			break // TODO(RM-6) remove this break.
 		}
 	}
 

@@ -426,11 +426,12 @@ task_container_defaults:
 	for _, c := range []struct {
 		config   string
 		expected int
+		count    int
 	}{
-		{rm, 17},
-		{rmZero, 0},
-		{taskDefaults, 17},
-		{taskDefaultsZero, 0},
+		{rm, 17, 1},
+		{rmZero, 0, 2},
+		{taskDefaults, 17, 3},
+		{taskDefaultsZero, 0, 4},
 	} {
 		var unmarshaled Config
 		err := yaml.Unmarshal([]byte(c.config), &unmarshaled, yaml.DisallowUnknownFields)
@@ -439,8 +440,118 @@ task_container_defaults:
 		require.Equal(t, c.expected,
 			*unmarshaled.RootManagerInternal.KubernetesRM.MaxSlotsPerPod)
 		require.Equal(t, c.expected,
+			// FIXME kristine - task default is not set
 			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}
+}
+
+func TestMaxSlotsPerPodConfigMultiRM(t *testing.T) {
+	t.Run("valid RMs", func(t *testing.T) {
+		config := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 5
+
+additional_resource_managers:
+ - resource_manager:
+     name: test
+     type: kubernetes
+     max_slots_per_pod: 65
+`
+		var unmarshaled Config
+		expected := [2]int{5, 65}
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.NoError(t, unmarshaled.Resolve())
+		for i, r := range unmarshaled.ResourceConfig.ResourceManagers() {
+			require.Equal(t, expected[i], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+		}
+	})
+
+	t.Run("negative max for RM", func(t *testing.T) {
+		config := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 5
+
+additional_resource_managers:
+ - resource_manager:
+     name: test
+     type: kubernetes
+     max_slots_per_pod: -65
+`
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.Error(t, unmarshaled.Resolve(), ">= 0")
+	})
+
+	t.Run("max not defined for RM", func(t *testing.T) {
+		config := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 5
+
+additional_resource_managers:
+ - resource_manager:
+     name: test
+     type: kubernetes
+`
+		var unmarshaled Config
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.Error(t, unmarshaled.Resolve(), "must provide resource_manager.max_slots_per_pod")
+	})
+
+	t.Run("RM and global task max slots defined", func(t *testing.T) {
+		config := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 5
+
+additional_resource_managers:
+ - resource_manager:
+     name: test
+     type: kubernetes
+     max_slots_per_pod: 65
+
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 0
+`
+		var unmarshaled Config
+		expected := [2]int{5, 65}
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		require.NoError(t, unmarshaled.Resolve())
+		for i, r := range unmarshaled.ResourceConfig.ResourceManagers() {
+			require.Equal(t, expected[i], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+		}
+	})
 }
 
 //nolint:gosec // These are not potential hardcoded credentials.
