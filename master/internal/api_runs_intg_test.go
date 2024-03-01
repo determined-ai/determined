@@ -4,52 +4,17 @@
 package internal
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
-
-// nolint: exhaustruct
-func createTestExpForRun(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
-	labelMap := make(map[string]bool)
-	for _, l := range labels {
-		labelMap[l] = true
-	}
-
-	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-		RawLabels:      labelMap,
-		RawDescription: ptrs.Ptr("desc"),
-		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-	})
-	activeConfig = schemas.WithDefaults(activeConfig)
-	exp := &model.Experiment{
-		JobID:     model.JobID(uuid.New().String()),
-		State:     model.PausedState,
-		OwnerID:   &curUser.ID,
-		ProjectID: projectID,
-		StartTime: time.Now(),
-		Config:    activeConfig.AsLegacy(),
-	}
-	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
-
-	// Get experiment as our API mostly will to make it easier to mock.
-	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
-	require.NoError(t, err)
-	return exp
-}
 
 func TestSearchRunsSort(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
@@ -67,7 +32,7 @@ func TestSearchRunsSort(t *testing.T) {
 
 	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
-	exp := createTestExpForRun(t, api, curUser, projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task))
@@ -85,7 +50,7 @@ func TestSearchRunsSort(t *testing.T) {
 	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
 
 	// Add second experiment
-	exp2 := createTestExpForRun(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
@@ -143,7 +108,7 @@ func TestSearchRunsFilter(t *testing.T) {
 
 	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
-	exp := createTestExpForRun(t, api, curUser, projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task))
@@ -161,7 +126,7 @@ func TestSearchRunsFilter(t *testing.T) {
 	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
 
 	// Add second experiment
-	exp2 := createTestExpForRun(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))

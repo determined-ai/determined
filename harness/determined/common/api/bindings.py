@@ -3957,20 +3957,20 @@ class v1FittingPolicy(DetEnum):
 
 class v1FlatRun(Printable):
     """Flat run respresentation."""
-    description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
+    experimentDescription: "typing.Optional[str]" = None
     experimentId: "typing.Optional[int]" = None
     experimentName: "typing.Optional[str]" = None
+    experimentProgress: "typing.Optional[float]" = None
     externalExperimentId: "typing.Optional[int]" = None
     externalRunId: "typing.Optional[int]" = None
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
-    numRuns: "typing.Optional[int]" = None
+    isExpMultitrial: "typing.Optional[bool]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
-    progress: "typing.Optional[float]" = None
     projectId: "typing.Optional[int]" = None
     projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
@@ -3992,20 +3992,20 @@ class v1FlatRun(Printable):
         startTime: str,
         state: "trialv1State",
         tags: str,
-        description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
+        experimentDescription: "typing.Union[str, None, Unset]" = _unset,
         experimentId: "typing.Union[int, None, Unset]" = _unset,
         experimentName: "typing.Union[str, None, Unset]" = _unset,
+        experimentProgress: "typing.Union[float, None, Unset]" = _unset,
         externalExperimentId: "typing.Union[int, None, Unset]" = _unset,
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
-        numRuns: "typing.Union[int, None, Unset]" = _unset,
+        isExpMultitrial: "typing.Union[bool, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
-        progress: "typing.Union[float, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
@@ -4024,18 +4024,20 @@ class v1FlatRun(Printable):
         self.startTime = startTime
         self.state = state
         self.tags = tags
-        if not isinstance(description, Unset):
-            self.description = description
         if not isinstance(displayName, Unset):
             self.displayName = displayName
         if not isinstance(duration, Unset):
             self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
+        if not isinstance(experimentDescription, Unset):
+            self.experimentDescription = experimentDescription
         if not isinstance(experimentId, Unset):
             self.experimentId = experimentId
         if not isinstance(experimentName, Unset):
             self.experimentName = experimentName
+        if not isinstance(experimentProgress, Unset):
+            self.experimentProgress = experimentProgress
         if not isinstance(externalExperimentId, Unset):
             self.externalExperimentId = externalExperimentId
         if not isinstance(externalRunId, Unset):
@@ -4044,14 +4046,12 @@ class v1FlatRun(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
-        if not isinstance(numRuns, Unset):
-            self.numRuns = numRuns
+        if not isinstance(isExpMultitrial, Unset):
+            self.isExpMultitrial = isExpMultitrial
         if not isinstance(ownerId, Unset):
             self.ownerId = ownerId
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
-        if not isinstance(progress, Unset):
-            self.progress = progress
         if not isinstance(projectId, Unset):
             self.projectId = projectId
         if not isinstance(projectName, Unset):
@@ -4085,18 +4085,20 @@ class v1FlatRun(Printable):
             "state": trialv1State(obj["state"]),
             "tags": obj["tags"],
         }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
         if "duration" in obj:
             kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
+        if "experimentDescription" in obj:
+            kwargs["experimentDescription"] = obj["experimentDescription"]
         if "experimentId" in obj:
             kwargs["experimentId"] = obj["experimentId"]
         if "experimentName" in obj:
             kwargs["experimentName"] = obj["experimentName"]
+        if "experimentProgress" in obj:
+            kwargs["experimentProgress"] = float(obj["experimentProgress"]) if obj["experimentProgress"] is not None else None
         if "externalExperimentId" in obj:
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "externalRunId" in obj:
@@ -4105,14 +4107,12 @@ class v1FlatRun(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
-        if "numRuns" in obj:
-            kwargs["numRuns"] = obj["numRuns"]
+        if "isExpMultitrial" in obj:
+            kwargs["isExpMultitrial"] = obj["isExpMultitrial"]
         if "ownerId" in obj:
             kwargs["ownerId"] = obj["ownerId"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
-        if "progress" in obj:
-            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
         if "projectId" in obj:
             kwargs["projectId"] = obj["projectId"]
         if "projectName" in obj:
@@ -4146,18 +4146,20 @@ class v1FlatRun(Printable):
             "state": self.state.value,
             "tags": self.tags,
         }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
         if not omit_unset or "duration" in vars(self):
             out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
+        if not omit_unset or "experimentDescription" in vars(self):
+            out["experimentDescription"] = self.experimentDescription
         if not omit_unset or "experimentId" in vars(self):
             out["experimentId"] = self.experimentId
         if not omit_unset or "experimentName" in vars(self):
             out["experimentName"] = self.experimentName
+        if not omit_unset or "experimentProgress" in vars(self):
+            out["experimentProgress"] = None if self.experimentProgress is None else dump_float(self.experimentProgress)
         if not omit_unset or "externalExperimentId" in vars(self):
             out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "externalRunId" in vars(self):
@@ -4166,14 +4168,12 @@ class v1FlatRun(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
-        if not omit_unset or "numRuns" in vars(self):
-            out["numRuns"] = self.numRuns
+        if not omit_unset or "isExpMultitrial" in vars(self):
+            out["isExpMultitrial"] = self.isExpMultitrial
         if not omit_unset or "ownerId" in vars(self):
             out["ownerId"] = self.ownerId
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
-        if not omit_unset or "progress" in vars(self):
-            out["progress"] = None if self.progress is None else dump_float(self.progress)
         if not omit_unset or "projectId" in vars(self):
             out["projectId"] = self.projectId
         if not omit_unset or "projectName" in vars(self):

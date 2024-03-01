@@ -61,9 +61,9 @@ message FlatRun {
   // The resource pool the experiment was created in.
   optional string resource_pool = 18;
   // The current progress of a running experiment.
-  optional google.protobuf.DoubleValue progress = 19;
+  optional float experiment_progress = 19;
   // The description of the experiment.
-  optional string description = 20;
+  optional string experiment_description = 20;
   // The experiment name.
   optional string experiment_name = 21;
   // The display name of the user that created the experiment.
@@ -85,6 +85,6 @@ message FlatRun {
   optional bool parent_archived = 29;
   // Unmanaged experiments are detached.
   optional bool unmanaged = 30;
-  // Number of runs that are a part of the associated experiment
-  optional int32 num_runs = 31;
+  // True if the associated experiment is a multitrial experiment
+  optional bool is_exp_multitrial = 31;
 }

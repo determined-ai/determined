@@ -77,7 +77,7 @@ func (a *apiServer) SearchRuns(
 			return nil, err
 		}
 
-		query = query.Where("e.project_id = ?", req.ProjectId)
+		query = query.Where("r.project_id = ?", req.ProjectId)
 	}
 	if query, err = experiment.AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, proj, query,
@@ -134,19 +134,18 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_size").
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
+		Column("r.project_id").
 		ColumnExpr(
-			"(SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) AS num_runs").
+			"((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) AS is_exp_multitrial").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
-		ColumnExpr("CASE WHEN e.parent_id IS NULL THEN NULL ELSE " +
-			"json_build_object('value', e.parent_id) END AS forked_from").
-		ColumnExpr("CASE WHEN e.progress IS NULL THEN NULL ELSE " +
-			"json_build_object('value', e.progress) END AS progress").
+		ColumnExpr("e.parent_id AS forked_from").
+		ColumnExpr("e.progress AS experiment_progress").
 		ColumnExpr("e.id AS experiment_id").
 		Column("e.owner_id").
-		ColumnExpr("e.config->>'description' AS description").
+		ColumnExpr("e.config->>'description' AS experiment_description").
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
 		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").
@@ -158,7 +157,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("p.name AS project_name").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
-		Join("LEFT JOIN projects p ON e.project_id = p.id").
+		Join("LEFT JOIN projects p ON r.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
 
@@ -171,27 +170,27 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"desc": "DESC NULLS LAST",
 	}
 	orderColMap := map[string]string{
-		"id":                   "id",
-		"description":          "description",
-		"name":                 "name",
-		"searcherType":         "searcher_type",
-		"searcherMetric":       "searcher_metric",
-		"startTime":            "r.start_time",
-		"endTime":              "r.end_time",
-		"state":                "r.state",
-		"progress":             "COALESCE(progress, 0)",
-		"user":                 "display_name",
-		"forkedFrom":           "e.parent_id",
-		"resourcePool":         "resource_pool",
-		"projectId":            "e.project_id",
-		"checkpointSize":       "checkpoint_size",
-		"checkpointCount":      "checkpoint_count",
-		"duration":             "duration",
-		"searcherMetricsVal":   "r.searcher_metric_val",
-		"externalExperimentId": "e.external_experiment_id",
-		"externalRunId":        "r.external_run_id",
-		"experimentId":         "e.id",
-		"numRuns":              "num_runs",
+		"id":                    "id",
+		"experimentDescription": "experiment_description",
+		"experimentName":        "experiment_name",
+		"searcherType":          "searcher_type",
+		"searcherMetric":        "searcher_metric",
+		"startTime":             "r.start_time",
+		"endTime":               "r.end_time",
+		"state":                 "r.state",
+		"experimentProgress":    "COALESCE(progress, 0)",
+		"user":                  "display_name",
+		"forkedFrom":            "e.parent_id",
+		"resourcePool":          "resource_pool",
+		"projectId":             "r.project_id",
+		"checkpointSize":        "checkpoint_size",
+		"checkpointCount":       "checkpoint_count",
+		"duration":              "duration",
+		"searcherMetricsVal":    "r.searcher_metric_val",
+		"externalExperimentId":  "e.external_experiment_id",
+		"externalRunId":         "r.external_run_id",
+		"experimentId":          "e.id",
+		"isExpMultitrial":       "is_exp_multitrial",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false

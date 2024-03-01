@@ -3271,13 +3271,13 @@ export interface V1FlatRun {
      * @type {number}
      * @memberof V1FlatRun
      */
-    progress?: number;
+    experimentProgress?: number;
     /**
      * The description of the experiment.
      * @type {string}
      * @memberof V1FlatRun
      */
-    description?: string;
+    experimentDescription?: string;
     /**
      * The experiment name.
      * @type {string}
@@ -3339,11 +3339,11 @@ export interface V1FlatRun {
      */
     unmanaged?: boolean;
     /**
-     * Number of runs that are a part of the associated experiment
-     * @type {number}
+     * True if the associated experiment is a multitrial experiment
+     * @type {boolean}
      * @memberof V1FlatRun
      */
-    numRuns?: number;
+    isExpMultitrial?: boolean;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
