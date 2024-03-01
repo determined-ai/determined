@@ -1,6 +1,6 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -16,21 +16,22 @@ const useMetricNames = (
   quickPoll?: boolean,
 ): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
-  const previousExpIds = usePrevious(experimentIds, []);
+  const actualExpIds = useMemo(() => experimentIds, [experimentIds]);
+  const previousExpIds = usePrevious(actualExpIds, []);
 
   useEffect(() => {
-    if (experimentIds.length === 0) {
+    if (actualExpIds.length === 0) {
       setMetrics(Loaded([]));
       return;
     }
-    if (!_.isEqual(experimentIds, previousExpIds)) setMetrics(NotLoaded);
+    if (!_.isEqual(actualExpIds, previousExpIds)) setMetrics(NotLoaded);
     const canceler = new AbortController();
 
     // We do not want to plot any x-axis metric values as y-axis data
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
     readStream<V1ExpMetricNamesResponse>(
-      detApi.StreamingInternal.expMetricNames(experimentIds, quickPoll ? 5 : undefined, {
+      detApi.StreamingInternal.expMetricNames(actualExpIds, quickPoll ? 5 : undefined, {
         signal: canceler.signal,
       }),
       (event: V1ExpMetricNamesResponse) => {
@@ -77,7 +78,7 @@ const useMetricNames = (
       errorHandler,
     );
     return () => canceler.abort();
-  }, [experimentIds, previousExpIds, errorHandler, quickPoll]);
+  }, [actualExpIds, previousExpIds, errorHandler, quickPoll]);
 
   return metrics;
 };
