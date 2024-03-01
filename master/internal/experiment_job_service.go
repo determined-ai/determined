@@ -37,12 +37,11 @@ func (e *internalExperiment) ToV1Job() (*jobv1.Job, error) {
 	}
 
 	rmName := e.activeConfig.Resources().ResourceManager()
+	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
 
 	j.IsPreemptible = config.ReadRMPreemptionStatus(rmName, j.ResourcePool)
 	j.Priority = int32(config.ReadPriority(rmName, j.ResourcePool, &e.activeConfig))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.activeConfig)
-
-	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
 
 	return &j, nil
 }
