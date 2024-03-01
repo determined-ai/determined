@@ -5,7 +5,7 @@ import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import NodeElement from 'pages/ResourcePool/NodeElement';
+import NodeElement, { SimplifiedNode } from 'pages/ResourcePool/NodeElement';
 import { handlePath, paths } from 'routes/utils';
 import clusterStore from 'stores/cluster';
 import { Agent, Resource } from 'types';
@@ -13,9 +13,9 @@ import { AnyMouseEvent } from 'utils/routes';
 
 import css from './ResourceAllocationModal.module.scss';
 
-interface Node {
+export interface Node {
   nodeName: string;
-  slotsIds: Resource[];
+  slotsIds: Resource[] | SimplifiedNode[];
 }
 
 export interface Props {

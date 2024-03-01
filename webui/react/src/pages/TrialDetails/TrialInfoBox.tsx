@@ -21,8 +21,6 @@ import {
   CheckpointWorkloadExtended,
   ExperimentBase,
   ModelItem,
-  Resource,
-  ResourcePool,
   RunState,
   TrialDetails,
 } from 'types';
@@ -35,14 +33,6 @@ import css from './TrialInfoBox.module.scss';
 interface Props {
   experiment: ExperimentBase;
   trial?: TrialDetails;
-}
-
-interface RpData extends ResourcePool {
-  isRPFull: boolean;
-  isRunning: boolean;
-  name: string;
-  nodes: Array<{ nodeName: string; slotsIds: Resource[] }>;
-  totalSlots: number;
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
@@ -146,7 +136,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       })),
       slotsUsed: rpUsedSlots,
       totalSlots: (rpData.slotsPerAgent || 1) * rpData.maxAgents,
-    } as RpData;
+    };
   }, [experiment, resourcePools, trial, taskAllocation]);
 
   const modelCreateModal = useModal(ModelCreateModal);

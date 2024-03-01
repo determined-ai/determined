@@ -1,11 +1,11 @@
 import Tooltip from 'hew/Tooltip';
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Resource, SlotsRecord } from 'types';
+import { Resource, ResourceContainer, SlotsRecord } from 'types';
 
 import css from './NodeElement.module.scss';
 
-export type SimplifiedNode = { container?: { id: string } };
+export type SimplifiedNode = { container?: Pick<ResourceContainer, 'id'> };
 interface NodeElementProps {
   name: string;
   resources: Resource[] | SimplifiedNode[];
