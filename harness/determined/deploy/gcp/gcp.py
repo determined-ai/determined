@@ -334,7 +334,6 @@ def delete(configs: Dict, env: Dict, no_prompt: bool) -> None:
 
 
 def run_command(command: List[str], env: Dict[str, str], cwd: Optional[str] = None) -> None:
-    print(f">>> {command}")
     subprocess.check_call(command, env=env, stdout=sys.stdout, cwd=cwd)
 
 
