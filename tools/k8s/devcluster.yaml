@@ -12,16 +12,31 @@ stages:
       image_name: "postgres:10.14"
       data_dir: ~/.postgres
 
-  # To run the application with valid service-account credentials, we'll
-  # fetch suitable credentials for `my-service-account`, and store them in
-  # /tmp/det-creds.  This runs as its own stage because k8s v1.24+ expects to
-  # only use time-limited tokens, which must be continuously refreshed.
-  # Run `tools/k8s/fetch-creds.sh --help` for more info.
   - custom:
-      name: creds
+      pre:
+        #- sh: minikube start --profile defaultrm
+        - sh: kubectl --context defaultrm apply -f tools/k8s/my-service-account.yaml
+      name: creds-default
       cmd:
         - tools/k8s/fetch-creds.sh
-        - /tmp/det-creds
+        - --context
+        - defaultrm
+        - /tmp/det-creds-default
+        - my-service-account
+      post:
+        - logcheck:
+            regex: successfully fetched initial token
+
+  - custom:
+      pre:
+        #- sh: minikube start --profile additionalrm
+        - sh: kubectl --context additionalrm apply -f tools/k8s/my-service-account.yaml
+      name: creds-additionalrm
+      cmd:
+        - tools/k8s/fetch-creds.sh
+        - --context
+        - defaultrm
+        - /tmp/det-creds-additional
         - my-service-account
       post:
         - logcheck:
@@ -66,28 +81,18 @@ stages:
           slot_resource_requests:
             cpu: 1
           # Special settings for running determined-master outside of k8s:
-          _creds_dir: /tmp/det-creds
+          _creds_dir: /tmp/det-creds-default
           _master_ip: $DOCKER_LOCALHOST
           _master_port: 8080
-
-# Example custom stage running the coscheduler in a docker container.  In real
-# life, if you are not actually developing a custom scheduler, you might choose
-# to run the coscheduler via a k8s deployment, rather than here in devcluster.
-# But this also works and it illustrates how to combine fetch-creds.sh with a
-# k8s application packaged as a docker image.
-#
-# - custom_docker:
-#     name: coscheduler
-#     container_name: coscheduler
-#     run_args:
-#       # options for docker run
-#       - "-v=/tmp/det-creds:/var/run/secrets/kubernetes.io/serviceaccount"
-#       - "--env-file=/tmp/det-creds/docker-env-file"
-#       - "--network=host"
-#       # image name
-#       - "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.21.6"
-#       # command + args
-#       - "kube-scheduler"
-#       - "-v=7"
-#       - "--scheduler-name=coscheduler"
-#       - "--leader-elect=false"
+        additional_resource_managers:
+        - resource_manager:
+            type: kubernetes
+            name: additionalrm
+            namespace: default
+            max_slots_per_pod: 1
+            slot_type: "cpu"
+            slot_resource_requests:
+              cpu: 1
+            _creds_dir: /tmp/det-creds-additional
+            _master_ip: $DOCKER_LOCALHOST
+            _master_port: 8080
