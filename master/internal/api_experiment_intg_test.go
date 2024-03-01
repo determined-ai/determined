@@ -1144,7 +1144,6 @@ func createTestExpWithActiveConfig(
 	return exp
 }
 
-// nolint: exhaustruct
 func createTestExpWithProjectID(
 	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
 ) *model.Experiment {
