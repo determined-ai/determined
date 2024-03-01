@@ -189,7 +189,7 @@ func (a *apiServer) getExperimentTx(
 		e.checkpoint_count AS checkpoint_count,
 		u.username AS username,
 		(SELECT json_agg(id) FROM trial_ids) AS trial_ids,
-		  (SELECT count(id) FROM trial_ids) AS num_trials,
+		(SELECT count(id) FROM trial_ids) AS num_trials,
 		p.id AS project_id,
 		p.name AS project_name,
 		p.user_id AS project_owner_id,
@@ -197,7 +197,8 @@ func (a *apiServer) getExperimentTx(
 		w.name AS workspace_name,
 		(w.archived OR p.archived) AS parent_archived,
 		e.unmanaged AS unmanaged,
-		length(e.model_definition) AS model_definition_size
+		length(e.model_definition) AS model_definition_size,
+		NULLIF(e.config#>'{integration, pachyderm}', 'null') AS pachyderm_integration
 	FROM
 		experiments e
 	JOIN users u ON e.owner_id = u.id
@@ -585,6 +586,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.unmanaged").
 		Column("e.external_experiment_id").
 		ColumnExpr(`r.external_run_id AS external_trial_id`).
+		ColumnExpr("NULLIF(e.config#>'{integration, pachyderm}', 'null') AS pachyderm_integration").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
@@ -3089,4 +3091,18 @@ func (a *apiServer) DeleteTensorboardFiles(
 	}
 
 	return &apiv1.DeleteTensorboardFilesResponse{}, nil
+}
+
+func getPachydermConfig(config map[string]interface{}, experimentID int32) (map[string]interface{}, error) {
+	integrationConfig, ok := config["integration"].(map[string]interface{})
+	// this should not return if proper defaults are used.
+	if !ok {
+		return nil, api.NotFoundErrs("'integration' config for experiment", fmt.Sprint(experimentID), true)
+	}
+
+	pachydermConfig, ok := integrationConfig["pachyderm"].(map[string]interface{})
+	if !ok {
+		return nil, api.NotFoundErrs("'pachyderm' integration config for experiment", fmt.Sprint(experimentID), true)
+	}
+	return pachydermConfig, nil
 }

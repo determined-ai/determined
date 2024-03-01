@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/pachyderm.json",
+    "title": "PachydermConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "eventuallyRequired": [],
+    "properties": {
+        "pachd": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
+        },
+        "proxy": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
+        },
+        "dataset": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
+        }
+    }
+}

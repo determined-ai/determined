@@ -1331,22 +1331,14 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-// nolint: exhaustruct
-func createTestExpWithProjectID(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
-	labelMap := make(map[string]bool)
-	for _, l := range labels {
-		labelMap[l] = true
-	}
-
-	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-		RawLabels:      labelMap,
-		RawDescription: ptrs.Ptr("desc"),
-		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-	})
-	activeConfig = schemas.WithDefaults(activeConfig)
-	exp := &model.Experiment{
+func createTestExpWithActiveConfig(
+	t *testing.T,
+	api *apiServer,
+	curUser model.User,
+	projectID int,
+	activeConfig expconf.ExperimentConfig,
+) (exp *model.Experiment) {
+	exp = &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.PausedState,
 		OwnerID:   &curUser.ID,
@@ -1360,6 +1352,25 @@ func createTestExpWithProjectID(
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
 	return exp
+}
+
+// nolint: exhaustruct
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
+) *model.Experiment {
+	labelMap := make(map[string]bool)
+	for _, l := range labels {
+		labelMap[l] = true
+	}
+
+	experimentConfig := expconf.ExperimentConfig{
+		RawLabels:      labelMap,
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+	return createTestExpWithActiveConfig(t, api, curUser, projectID, activeConfig)
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
@@ -2235,3 +2246,181 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	}
 	t.Error("expected experiments to delete after 15 seconds and they did not")
 }
+
+// // nolint: exhaustruct
+// func TestGetPachydermRepoURL(t *testing.T) {
+// 	api, curUser, ctx := setupAPITest(t, nil)
+
+// 	t.Cleanup(
+// 		func() {
+// 			// Delete user and all experiments.
+// 			if _, err := db.Bun().NewDelete().Table("experiments").
+// 				Where("owner_id = ?", curUser.ID).Exec(ctx); err != nil {
+// 				t.Fatal(err)
+// 			}
+// 			if _, err := db.Bun().NewDelete().Table("jobs").
+// 				Where("owner_id = ?", curUser.ID).Exec(ctx); err != nil {
+// 				t.Fatal(err)
+// 			}
+// 			if _, err := db.Bun().NewDelete().Table("user_sessions").
+// 				Where("user_id = ?", curUser.ID).Exec(ctx); err != nil {
+// 				t.Fatal(err)
+// 			}
+// 			if _, err := db.Bun().NewDelete().Table("users").
+// 				Where("id = ?", curUser.ID).Exec(ctx); err != nil {
+// 				t.Fatal(err)
+// 			}
+// 		},
+// 	)
+
+// 	cases := []struct {
+// 		name              string
+// 		integrationConfig *expconf.IntegrationConfig
+// 		expectedURL       string
+// 		// used closure, instead of error, to define error and plug in experiment id later.
+// 		funcExpectedError func(string) error
+// 	}{
+// 		{
+// 			"Only Required Fields",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Host: ptrs.Ptr("http://127.0.0.1"),
+// 						Port: ptrs.Ptr("80"),
+// 					},
+// 					Repo:    ptrs.Ptr("test-repo"),
+// 					Project: ptrs.Ptr("test-project"),
+// 				},
+// 			},
+// 			"http://127.0.0.1:80/lineage/test-project/repos/test-repo",
+// 			func(string) error { return nil },
+// 		},
+// 		{
+// 			"Optional Fields Included",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Host: ptrs.Ptr("http://127.0.0.1"),
+// 						Port: ptrs.Ptr("80"),
+// 					},
+// 					Repo:    ptrs.Ptr("test-repo"),
+// 					Project: ptrs.Ptr("test-project"),
+// 					Commit:  ptrs.Ptr("1234"),
+// 					Branch:  ptrs.Ptr("main"),
+// 				},
+// 			},
+// 			"http://127.0.0.1:80/lineage/test-project/repos/test-repo/commit/1234/?branchId=main",
+// 			func(string) error { return nil },
+// 		},
+// 		{
+// 			"Missing Integration Configuration is Populated by Default",
+// 			nil,
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm Configuration",
+// 			&expconf.IntegrationConfig{},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm.Proxy Configuration",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{},
+// 			},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm.proxy' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm.Proxy.Host Configuration",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Port: ptrs.Ptr("80"),
+// 					},
+// 				},
+// 			},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm.proxy.host' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm.Proxy.Port Configuration",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Host: ptrs.Ptr("http://127.0.0.1"),
+// 					},
+// 				},
+// 			},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm.proxy.port' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm.Repo Configuration",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Host: ptrs.Ptr("http://127.0.0.1"),
+// 						Port: ptrs.Ptr("80"),
+// 					},
+// 					Project: ptrs.Ptr("test-project"),
+// 					Commit:  ptrs.Ptr("1234"),
+// 					Branch:  ptrs.Ptr("main"),
+// 				},
+// 			},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm.repo' integration config for experiment", id, true)
+// 			},
+// 		},
+// 		{
+// 			"Missing Integration.Pachyderm.Project Configuration",
+// 			&expconf.IntegrationConfig{
+// 				Pachyderm: &expconf.PachydermConfig{
+// 					ProxyConfig: &expconf.PachydermProxyConfig{
+// 						Host: ptrs.Ptr("http://127.0.0.1"),
+// 						Port: ptrs.Ptr("80"),
+// 					},
+// 					Repo:   ptrs.Ptr("test-repo"),
+// 					Commit: ptrs.Ptr("1234"),
+// 					Branch: ptrs.Ptr("main"),
+// 				},
+// 			},
+// 			"",
+// 			func(id string) error {
+// 				return apiPkg.NotFoundErrs("'pachyderm.project' integration config for experiment", id, true)
+// 			},
+// 		},
+// 	}
+
+// 	for _, c := range cases {
+// 		t.Run(c.name, func(t *testing.T) {
+// 			experimentConfig := expconf.ExperimentConfig{
+// 				RawDescription: ptrs.Ptr("desc"),
+// 				RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+// 				RawIntegration: c.integrationConfig,
+// 			}
+// 			activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+// 			exp := createTestExpWithActiveConfig(t, api, curUser, 1, activeConfig)
+// 			resp, err := api.GetPachydermRepoURL(ctx, &apiv1.GetPachydermRepoURLRequest{ExperimentId: int32(exp.ID)})
+
+// 			expectedError := c.funcExpectedError(strconv.Itoa(exp.ID))
+// 			require.ErrorIs(t, err, expectedError, "unexpected error occurred while getting pachyderm repo URL")
+
+// 			if expectedError == nil {
+// 				require.Equal(t, c.expectedURL, resp.PachydermInputRepoUrl)
+// 			}
+// 		})
+// 	}
+// }
