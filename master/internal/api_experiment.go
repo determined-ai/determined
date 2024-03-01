@@ -3044,20 +3044,12 @@ func (a *apiServer) DeleteTensorboardFiles(
 func getPachydermConfig(config map[string]interface{}, experimentID int32) (map[string]interface{}, error) {
 	dataConfig, ok := config["data"].(map[string]interface{})
 	if !ok {
-		return nil, api.NotFoundErrs(
-			"'data' config for experiment",
-			fmt.Sprint(experimentID),
-			true,
-		)
+		return nil, api.NotFoundErrs("'data' config for experiment", fmt.Sprint(experimentID), true)
 	}
 
 	pachydermConfig, ok := dataConfig["pachyderm"].(map[string]interface{})
 	if !ok {
-		return nil, api.NotFoundErrs(
-			"'pachyderm' config for experiment",
-			fmt.Sprint(experimentID),
-			true,
-		)
+		return nil, api.NotFoundErrs("'pachyderm' config for experiment", fmt.Sprint(experimentID), true)
 	}
 	return pachydermConfig, nil
 }
