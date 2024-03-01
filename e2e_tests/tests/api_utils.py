@@ -193,7 +193,7 @@ def skipif_not_k8s(reason: str = "test is k8s-specific") -> Callable[[F], F]:
 # Currently we are assuming that all resource pools are of the same scheduler type
 # which is why only the first resource pool's type is checked.
 @functools.lru_cache(maxsize=1)
-def _get_scheduler_type(sess: Optional[api.Session] = None) -> Optional[bindings.v1SchedulerType]:
+def _get_scheduler_type() -> Optional[bindings.v1SchedulerType]:
     try:
         sess = user_session()
         resourcePool = bindings.get_GetResourcePools(sess).resourcePools

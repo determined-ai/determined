@@ -511,16 +511,12 @@ def num_trials(sess: api.Session, experiment_id: int) -> int:
 
 def num_active_trials(sess: api.Session, experiment_id: int) -> int:
     return sum(
-        (
-            1
-            if t.trial.state
-            in [
-                bindings.trialv1State.RUNNING,
-                bindings.trialv1State.STARTING,
-                bindings.trialv1State.PULLING,
-            ]
-            else 0
-        )
+        t.trial.state
+        in [
+            bindings.trialv1State.RUNNING,
+            bindings.trialv1State.STARTING,
+            bindings.trialv1State.PULLING,
+        ]
         for t in experiment_trials(sess, experiment_id)
     )
 
