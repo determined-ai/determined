@@ -1,7 +1,6 @@
 .base {
   display: flex;
   flex-direction: column;
-  min-height: 460px;
 
   .nodesContainer {
     display: flex;
@@ -16,17 +15,16 @@
     margin: var(--spacing-xs) 0;
     position: relative;
 
+    &:last-of-type {
+      margin-bottom: 30px;
+    }
     span {
       flex-grow: 0;
       width: fit-content;
     }
     .dots {
       border-bottom: 2px dotted var(--theme-surface-border-weak);
-      flex-basis: auto;
       flex-grow: 1;
-      height: 0;
-      line-height: 0;
-      margin: 0 2px;
     }
   }
   .slotsContainer {

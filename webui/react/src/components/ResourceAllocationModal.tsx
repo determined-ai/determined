@@ -69,13 +69,8 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
       ));
     }
 
-    return nodes.map(({ nodeName, slotsIds }, idx) => (
-      <NodeElement
-        isRunning={false}
-        key={`${idx}${nodeName}`}
-        name={nodeName}
-        resources={slotsIds}
-      />
+    return nodes.map(({ nodeName, slotsIds }) => (
+      <NodeElement isRunning={false} key={nodeName} name={nodeName} resources={slotsIds} />
     ));
   }, [activeNodes, limitSlots, nodes]);
   const handleClick = useCallback(
@@ -120,7 +115,7 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
             {slotsIds.map((id, idx) => (
               <InfoContainer
                 info={id.container?.id}
-                key={`slot_${id}`}
+                key={id.container?.id}
                 label={`Slot ${idx + 1} ID`}
               />
             ))}

@@ -32,6 +32,9 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
   const nodeStyles = [css.node];
   const nodeClusterStyles = [css.nodeCluster];
 
+  const singleSlot = slotsData.length === 1; // this is only for styles
+  const coupleSlot = slotsData.length === 2; // this is only for styles
+
   if (!isRunning) {
     nodeStyles.push(css.notRunning);
     nodeClusterStyles.push(css.notRunning);
@@ -39,9 +42,6 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 
   const getSlotStyles = useCallback(
     (isActive: boolean, index: number) => {
-      const singleSlot = slotsData.length === 1; // this is only for styles
-      const coupleSlot = slotsData.length === 2; // this is only for styles
-
       if (singleSlot) slotStyles.push(css.singleSlot);
       if (coupleSlot) slotStyles.push(css.coupleSlot);
       if (isActive) slotStyles.push(css.active);
