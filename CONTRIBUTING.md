@@ -46,9 +46,8 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 
 #### Prerequisites
 
-- Go (>= 1.20)
-- Python (>= 3.8, <= 3.9), including:
-  - python3-venv
+- Go (>= 1.22)
+- Python 3.8. Newer Python versions are partially supported, but some components may not work (e.g., docs build).
   - python3-wheel
   - python3-dev
 - Node (>= 20.9.0, < 21)
