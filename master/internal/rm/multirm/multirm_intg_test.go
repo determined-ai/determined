@@ -52,31 +52,28 @@ func TestMain(m *testing.M) {
 
 func TestNewMultiRM(t *testing.T) {
 	cases := []struct {
-		name string
-		cfgs []*config.ResourceManagerWithPoolsConfig
+		name        string
+		cfgs        []*config.ResourceManagerWithPoolsConfig
+		expectedNum int
 	}{
-		{"simple", []*config.ResourceManagerWithPoolsConfig{mockConfig(uuid.NewString())}},
-		{"no-name", []*config.ResourceManagerWithPoolsConfig{mockConfig("")}},
+		{"simple", []*config.ResourceManagerWithPoolsConfig{mockConfig(uuid.NewString())}, 1},
+		// Although we will never expect the RM to have "" name (as the config would
+		// resolve this first), the MultiRM struct will still accept it as a valid name.
+		{"no-name", []*config.ResourceManagerWithPoolsConfig{mockConfig("")}, 1},
 		{"multirm", []*config.ResourceManagerWithPoolsConfig{
 			mockConfig(uuid.NewString()),
 			mockConfig(uuid.NewString()),
 			mockConfig(uuid.NewString()),
-		}},
+		}, 3},
+		{"duplicate-name", []*config.ResourceManagerWithPoolsConfig{mockConfig("dup"), mockConfig("dup")}, 1},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewMultiRM(db.SingleDB(), echo.New(), tt.cfgs, nil, nil, nil)
 			require.NotNil(t, m)
-			require.Equal(t, len(tt.cfgs), len(m.rms))
-
-			// If the cfg name is originally "", then NewMultiRM will use
-			// config.DefaultRMName.
-			if tt.cfgs[0].ResourceManager.Name() == "" {
-				require.Equal(t, config.DefaultRMName, m.defaultRMName)
-			} else {
-				require.Equal(t, tt.cfgs[0].ResourceManager.Name(), m.defaultRMName)
-			}
+			require.Equal(t, tt.expectedNum, len(m.rms))
+			require.Equal(t, tt.cfgs[0].ResourceManager.Name(), m.defaultRMName)
 		})
 	}
 }
@@ -146,10 +143,9 @@ func TestAllocate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, res, &sproto.ResourcesSubscription{})
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	res, err = m.Allocate("bogus", allocReq)
-	require.Equal(t, err, nil)
-	require.Equal(t, res, &sproto.ResourcesSubscription{})
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestValidateResources(t *testing.T) {
@@ -173,9 +169,9 @@ func TestValidateResources(t *testing.T) {
 	_, err := m.ValidateResources(manager, req)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	_, err = m.ValidateResources("bogus", req)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestDeleteJob(t *testing.T) {
@@ -228,9 +224,9 @@ func TestSetGroupWeight(t *testing.T) {
 	err := m.SetGroupWeight(manager, req1)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	err = m.SetGroupWeight("bogus", req1)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestSetGroupPriority(t *testing.T) {
@@ -250,9 +246,9 @@ func TestSetGroupPriority(t *testing.T) {
 	err := m.SetGroupPriority(manager, req1)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	err = m.SetGroupPriority("bogus", req1)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestExternalPreemptionPending(t *testing.T) {
@@ -288,9 +284,9 @@ func TestIsReattachable(t *testing.T) {
 	val := m.IsReattachableOnlyAfterStarted(manager)
 	require.Equal(t, true, val)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call defaults to false.
 	val = m.IsReattachableOnlyAfterStarted("bogus")
-	require.Equal(t, true, val)
+	require.Equal(t, false, val)
 }
 
 func TestGetResourcePools(t *testing.T) {
@@ -354,15 +350,15 @@ func TestGetDefaultResourcePools(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, res2, actual2)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	actual1, err = m.GetDefaultComputeResourcePool("bogus")
-	require.NoError(t, err)
-	require.Equal(t, res1, actual1)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, actual1)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	actual2, err = m.GetDefaultAuxResourcePool("bogus")
-	require.NoError(t, err)
-	require.Equal(t, res2, actual2)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, actual2)
 }
 
 func TestValidateResourcePool(t *testing.T) {
@@ -380,9 +376,9 @@ func TestValidateResourcePool(t *testing.T) {
 	err := m.ValidateResourcePool(manager, rp)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	err = m.ValidateResourcePool("bogus", rp)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestResolveResourcePool(t *testing.T) {
@@ -404,10 +400,10 @@ func TestResolveResourcePool(t *testing.T) {
 	require.Equal(t, manager, resolvedRM)
 	require.Equal(t, rp, resolvedRP)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	resolvedRM, resolvedRP, err = m.ResolveResourcePool("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, manager, resolvedRM)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Equal(t, "bogus", resolvedRM)
 	require.Equal(t, rp, resolvedRP)
 }
 
@@ -428,9 +424,9 @@ func TestTaskContainerDefaults(t *testing.T) {
 	_, err := m.TaskContainerDefaults(manager, rp, res)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	_, err = m.TaskContainerDefaults("bogus", rp, res)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestGetJobQ(t *testing.T) {
@@ -451,10 +447,10 @@ func TestGetJobQ(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetJobQ("bogus", rp)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestGetJobQueueStatsRequest(t *testing.T) {
@@ -476,10 +472,10 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetJobQueueStatsRequest("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestMoveJob(t *testing.T) {
@@ -499,9 +495,9 @@ func TestMoveJob(t *testing.T) {
 	err := m.MoveJob(manager, req)
 	require.NoError(t, err)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	err = m.MoveJob("bogus", req)
-	require.NoError(t, err)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
 }
 
 func TestGetExternalJobs(t *testing.T) {
@@ -522,10 +518,10 @@ func TestGetExternalJobs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetExternalJobs("bogus", rp)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestGetAgents(t *testing.T) {
@@ -584,10 +580,10 @@ func TestGetAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetAgent("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestEnableAgent(t *testing.T) {
@@ -609,10 +605,10 @@ func TestEnableAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.EnableAgent("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, ret, res)
 }
 
 func TestDisableAgent(t *testing.T) {
@@ -634,10 +630,10 @@ func TestDisableAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.DisableAgent("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestGetSlots(t *testing.T) {
@@ -659,10 +655,10 @@ func TestGetSlots(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetSlots("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestGetSlot(t *testing.T) {
@@ -684,10 +680,10 @@ func TestGetSlot(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ret, res)
 
-	// Check that bogus RM calls get routed to default RM.
+	// Check that bogus RM call errors.
 	ret, err = m.GetSlot("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestEnableSlot(t *testing.T) {
@@ -711,8 +707,8 @@ func TestEnableSlot(t *testing.T) {
 
 	// Check that bogus RM calls get routed to default RM.
 	ret, err = m.EnableSlot("bogus", req)
-	require.NoError(t, err)
-	require.Equal(t, ret, res)
+	require.Equal(t, err, ErrRMNotDefined("bogus"))
+	require.Empty(t, res)
 }
 
 func TestDisableSlot(t *testing.T) {
