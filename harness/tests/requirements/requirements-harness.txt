@@ -15,4 +15,4 @@ attrdict3
 moto<5.0.0 # moto 5.0.0 drops mock_s3, need to replace with mock_aws
 # Pydantic V2 has changes that break existing tests
 pydantic<2
-pandas
+pandas==1.5.3
