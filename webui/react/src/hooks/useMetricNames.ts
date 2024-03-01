@@ -10,6 +10,8 @@ import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
 import usePrevious from './usePrevious';
 
+// DO NOT pass a raw object for experimentIds param
+// That causes unwanted API call
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
