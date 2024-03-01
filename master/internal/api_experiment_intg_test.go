@@ -1108,7 +1108,7 @@ func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500)
 // nolint: exhaustruct
 func createTestExpActiveConfig(
 	labels []string, data map[string]interface{},
-) expconf.ExperimentConfigV0 {
+) expconf.ExperimentConfig {
 	labelMap := make(map[string]bool)
 	for _, l := range labels {
 		labelMap[l] = true
@@ -1125,7 +1125,7 @@ func createTestExpActiveConfig(
 }
 
 func createTestExpWithActiveConfig(
-	t *testing.T, api *apiServer, curUser model.User, activeConfig expconf.ExperimentConfigV0,
+	t *testing.T, api *apiServer, curUser model.User, activeConfig expconf.ExperimentConfig,
 ) (exp *model.Experiment) {
 	exp = &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
@@ -2029,6 +2029,7 @@ func TestGetPachydermRepoURL(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	api.m.config.Integrations.Pachyderm.Address = "http://127.0.0.1"
 
+	// TODO (ET-???): Use expconf.integration, instead of data, for pachyderm integration
 	cases := []struct {
 		name        string
 		data        map[string]interface{}

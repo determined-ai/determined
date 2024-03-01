@@ -47,6 +47,7 @@ type (
 	SharedFSConfig            = SharedFSConfigV0
 	SingleConfig              = SingleConfigV0
 	SlurmConfig               = SlurmConfigV0
+	IntegrationConfig         = IntegrationConfigV0
 )
 
 // These are EOL searchers, not to be used in new experiments.

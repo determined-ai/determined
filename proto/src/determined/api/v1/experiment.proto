@@ -936,12 +936,13 @@ message GetPachydermRepoURLRequest {
   // ID of experiment to retrieve the URL
   int32 experiment_id = 1;
 }
+
 // Response to GetPachydermRepoURLRequest.
 message GetPachydermRepoURLResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "pachyderm_input_repo_url" ] }
   };
-    // URL for pachyderm input repository associated
+    // URL for pachyderm input repository associated/
     string pachyderm_input_repo_url = 1;
 }
 

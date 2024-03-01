@@ -5158,7 +5158,7 @@ type GetPachydermRepoURLResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// URL for pachyderm input repository associated
+	// PachydermInputRepoUrl URL for pachyderm input repository associated.
 	PachydermInputRepoUrl string `protobuf:"bytes,1,opt,name=pachyderm_input_repo_url,json=pachydermInputRepoUrl,proto3" json:"pachyderm_input_repo_url,omitempty"`
 }
 
