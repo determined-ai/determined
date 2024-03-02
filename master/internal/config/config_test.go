@@ -426,12 +426,11 @@ task_container_defaults:
 	for _, c := range []struct {
 		config   string
 		expected int
-		count    int
 	}{
-		{rm, 17, 1},
-		{rmZero, 0, 2},
-		{taskDefaults, 17, 3},
-		{taskDefaultsZero, 0, 4},
+		{rm, 17},
+		{rmZero, 0},
+		{taskDefaults, 17},
+		{taskDefaultsZero, 0},
 	} {
 		var unmarshaled Config
 		err := yaml.Unmarshal([]byte(c.config), &unmarshaled, yaml.DisallowUnknownFields)
@@ -440,7 +439,6 @@ task_container_defaults:
 		require.Equal(t, c.expected,
 			*unmarshaled.RootManagerInternal.KubernetesRM.MaxSlotsPerPod)
 		require.Equal(t, c.expected,
-			// FIXME kristine - task default is not set
 			*unmarshaled.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod)
 	}
 }
