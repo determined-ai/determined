@@ -4540,7 +4540,7 @@ type DeterminedClient interface {
 	LaunchTensorboard(ctx context.Context, in *LaunchTensorboardRequest, opts ...grpc.CallOption) (*LaunchTensorboardResponse, error)
 	// Delete tensorboard files.
 	DeleteTensorboardFiles(ctx context.Context, in *DeleteTensorboardFilesRequest, opts ...grpc.CallOption) (*DeleteTensorboardFilesResponse, error)
-	// Get pachyderm input repo URL based on experiment config, if present
+	// Get pachyderm input repo URL based on experiment config, if present.
 	GetPachydermRepoURL(ctx context.Context, in *GetPachydermRepoURLRequest, opts ...grpc.CallOption) (*GetPachydermRepoURLResponse, error)
 	// Get a count of active tasks.
 	GetActiveTasksCount(ctx context.Context, in *GetActiveTasksCountRequest, opts ...grpc.CallOption) (*GetActiveTasksCountResponse, error)
@@ -7410,7 +7410,7 @@ type DeterminedServer interface {
 	LaunchTensorboard(context.Context, *LaunchTensorboardRequest) (*LaunchTensorboardResponse, error)
 	// Delete tensorboard files.
 	DeleteTensorboardFiles(context.Context, *DeleteTensorboardFilesRequest) (*DeleteTensorboardFilesResponse, error)
-	// Get pachyderm input repo URL based on experiment config, if present
+	// Get pachyderm input repo URL based on experiment config, if present.
 	GetPachydermRepoURL(context.Context, *GetPachydermRepoURLRequest) (*GetPachydermRepoURLResponse, error)
 	// Get a count of active tasks.
 	GetActiveTasksCount(context.Context, *GetActiveTasksCountRequest) (*GetActiveTasksCountResponse, error)

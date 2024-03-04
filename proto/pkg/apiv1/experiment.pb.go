@@ -5103,13 +5103,14 @@ func (*DeleteTensorboardFilesResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_experiment_proto_rawDescGZIP(), []int{83}
 }
 
-// Request to get pachyderm input repository associated with experiment, if configured.
+// Request to get pachyderm input repository associated with experiment, if
+// configured.
 type GetPachydermRepoURLRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// ID of experiment to retrieve the URL
+	// ID of experiment to retrieve the URL.
 	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
 }
 
@@ -5158,7 +5159,7 @@ type GetPachydermRepoURLResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// PachydermInputRepoUrl URL for pachyderm input repository associated.
+	// URL for pachyderm input repository associated.
 	PachydermInputRepoUrl string `protobuf:"bytes,1,opt,name=pachyderm_input_repo_url,json=pachydermInputRepoUrl,proto3" json:"pachyderm_input_repo_url,omitempty"`
 }
 

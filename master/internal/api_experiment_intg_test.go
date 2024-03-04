@@ -2029,7 +2029,7 @@ func TestGetPachydermRepoURL(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	api.m.config.Integrations.Pachyderm.Address = "http://127.0.0.1"
 
-	// TODO (ET-???): Use expconf.integration, instead of data, for pachyderm integration
+	// TODO (ET-47): Use expconf.integration, instead of data, for pachyderm integration
 	cases := []struct {
 		name        string
 		data        map[string]interface{}
