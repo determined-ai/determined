@@ -695,6 +695,8 @@ func (a *ResourceManager) createResourcePoolSummary(
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		SlotType:                     slotType.Proto(),
 		Accelerator:                  accelerator,
+		ResourceManagerName:          a.config.Name,
+		ResourceManagerMetadata:      a.config.Metadata,
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)
