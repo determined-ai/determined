@@ -69,7 +69,7 @@ export interface GlideTableProps {
   columns: ColumnDef[];
   columnWidths: Record<string, number>;
   rowIdPath?: string;
-  renderContextMenuComponent: (props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => JSX.Element;
+  renderContextMenuComponent?: (props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => JSX.Element;
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;

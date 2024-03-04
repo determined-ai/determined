@@ -37,7 +37,7 @@ export interface ContextMenuProps<RowData, CompleteAction, CompleteData> extends
   onComplete?: ContextMenuCompleteHandlerProps<CompleteAction, CompleteData>;
   onVisibleChange?: (visible: boolean) => void;
   open: boolean;
-  renderContextMenuComponent: (props: ContextMenuComponentProps<RowData, CompleteAction, CompleteData>) => JSX.Element;
+  renderContextMenuComponent?: (props: ContextMenuComponentProps<RowData, CompleteAction, CompleteData>) => JSX.Element;
   x: number;
   y: number;
 }
@@ -77,7 +77,7 @@ export function ContextMenu<RowData, CompleteAction, CompleteData>({
         top: y,
         zIndex: 10,
       }}>
-      {renderContextMenuComponent({
+      {renderContextMenuComponent?.({
         cell,
         link,
         onClose,
