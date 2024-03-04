@@ -47,6 +47,9 @@ resource "google_compute_instance" "master_instance" {
       ssl_mode: ${var.database_ssl_enabled ? "verify-ca" : "disable"}
       ssl_root_cert: ${var.database_ssl_enabled ? "/etc/determined/db_ssl_root_cert.pem" : ""}
 
+    security:
+      initial_user_password: ${var.initial_user_password}
+
     cpu_env_image: ${var.cpu_env_image}
     gpu_env_image: ${var.gpu_env_image}
 
@@ -98,9 +101,6 @@ resource "google_compute_instance" "master_instance" {
         base_config:
           minCpuPlatform: ${var.min_cpu_platform_agent}
         use_cloud_logging: true
-
-      security:
-        initial_user_password: ${var.initial_user_password}
     EOF
 
     if [ -n "${var.filestore_address}" ]; then
