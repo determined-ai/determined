@@ -168,19 +168,27 @@ def create_experiment(
     config: Union[str, pathlib.Path, Dict],
     model_dir: Optional[str] = None,
     includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
+    parent_id: Optional[int] = None,
+    project_id: Optional[int] = None,
+    template: Optional[str] = None,
 ) -> Experiment:
     """Create an experiment with config parameters and model directory.
 
     Args:
         config: Experiment config filename (.yaml) or a dict.
         model_dir: Directory containing model definition.
-        iterables: Additional files or directories to include in the model definition.
+        includes: Additional files or directories to include in the model definition.
+        parent_id: The id of the parent experiment.
+        project_id: The id of the project this experiment should belong to.
+        template: The name of the tamplate for the experiment.
 
     Returns:
         An :class:`~determined.experimental.client.Experiment` of the created experiment.
     """
     assert _determined is not None
-    return _determined.create_experiment(config, model_dir, includes)
+    return _determined.create_experiment(
+        config, model_dir, includes, parent_id, project_id, template
+    )
 
 
 @_require_singleton
