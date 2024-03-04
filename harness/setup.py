@@ -4,7 +4,7 @@ setuptools.setup(
     name="determined",
     version="0.29.0-dev0",
     author="Determined AI",
-    author_email="hello@determined.ai",
+    author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
     description="Determined Deep Learning Training Platform",
     long_description="See https://docs.determined.ai/ for more information.",
