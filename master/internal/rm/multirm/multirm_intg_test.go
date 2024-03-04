@@ -680,3 +680,60 @@ func TestDisableSlot(t *testing.T) {
 	require.Equal(t, err, ErrRMNotDefined("bogus"))
 	require.Empty(t, ret)
 }
+
+func TestGetRMName(t *testing.T) {
+	def := mocks.ResourceManager{}
+	def.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
+		ResourcePools: []*resourcepoolv1.ResourcePool{
+			{Name: "gcp2"},
+		},
+	}, nil)
+
+	gcp := mocks.ResourceManager{}
+	gcp.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
+		ResourcePools: []*resourcepoolv1.ResourcePool{
+			{Name: "gcp1"}, {Name: "gcp2"},
+		},
+	}, nil)
+
+	aws := mocks.ResourceManager{}
+	aws.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
+		ResourcePools: []*resourcepoolv1.ResourcePool{
+			{Name: "aws1"}, {Name: "gcp2"},
+		},
+	}, nil)
+
+	mockMultiRM := MultiRMRouter{
+		defaultRMName: "default",
+		rms: map[string]rm.ResourceManager{
+			"default": &def,
+			"gcp":     &gcp,
+			"aws":     &aws,
+		},
+		syslog: logrus.WithField("component", "resource-router"),
+	}
+
+	cases := []struct {
+		name           string
+		rmName         string
+		rpName         string
+		err            error
+		expectedRMName string
+	}{
+		{"RM/RP undefined", "", "", nil, mockMultiRM.defaultRMName},
+		{"RM defined, RP undefined", "aws", "", nil, "aws"},
+		{"RM defined/doesn't exist, RP undefined", "aws123", "", ErrRMNotDefined("aws123"), "aws123"},
+		{"RM defined, RP defined", "aws", "aws1", nil, "aws"},
+		{"RM defined, RP defined/doesn't exist", "aws", "awsa", nil, "aws"},
+		{"RM undefined, RP defined", "", "aws1", nil, "aws"},
+		{"RM undefined, RP defined + conflict", "", "gcp2", ErrRMConflict([]string{"default", "gcp", "aws"}, "gcp2"), ""},
+		{"RM undefined, RP defined/doesn't exist", "", "gcp3", ErrRPNotDefined("gcp3"), ""},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			rmName, err := mockMultiRM.getRM(tt.rmName, tt.rpName)
+			require.Equal(t, tt.expectedRMName, rmName)
+			require.Equal(t, tt.err, err)
+		})
+	}
+}
