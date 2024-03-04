@@ -14,10 +14,10 @@ orbs:
 executors:
   python-38:
     docker:
-      - image: python:3.8-slim-buster
+      - image: python:3.8-slim-bookworm
   python-39:
     docker:
-      - image: python:3.9-slim-buster
+      - image: python:3.9-slim-bookworm
 
 parameters:
   det-version:
