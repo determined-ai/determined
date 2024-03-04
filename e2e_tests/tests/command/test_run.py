@@ -286,7 +286,7 @@ def test_k8s_init_containers() -> None:
                 "spec": {
                     "initContainers": [
                         {
-                            "image": conf.TF1_CPU_IMAGE,
+                            "image": conf.TF2_CPU_IMAGE,
                             "name": "simple-init-container",
                             "command": ["/bin/bash"],
                             "args": ["-c", "exit 1"],
@@ -313,7 +313,7 @@ def test_k8s_sidecars() -> None:
                 "spec": {
                     "containers": [
                         {
-                            "image": conf.TF1_CPU_IMAGE,
+                            "image": conf.TF2_CPU_IMAGE,
                             "name": "sidecar",
                             "command": ["/bin/bash"],
                         }
