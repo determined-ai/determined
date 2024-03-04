@@ -112,13 +112,15 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
         {nodes.map(({ nodeName, slotsIds }) => (
           <div className={css.slotsContainer} key={`info_${nodeName}`}>
             <InfoContainer info={nodeName} label="Node ID" />
-            {slotsIds.map((id, idx) => (
-              <InfoContainer
-                info={id.container?.id}
-                key={id.container?.id}
-                label={`Slot ${idx + 1} ID`}
-              />
-            ))}
+            {slotsIds
+              .filter((id) => id.container !== undefined)
+              .map((id, idx) => (
+                <InfoContainer
+                  info={id.container?.id}
+                  key={id.container?.id}
+                  label={`Slot ${idx + 1} ID`}
+                />
+              ))}
           </div>
         ))}
       </div>

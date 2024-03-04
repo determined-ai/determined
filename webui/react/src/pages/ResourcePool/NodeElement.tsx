@@ -28,12 +28,8 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
     () => (slots !== undefined ? Object.values(slots) : resources),
     [slots, resources],
   );
-  const slotStyles = [css.nodeSlot];
   const nodeStyles = [css.node];
   const nodeClusterStyles = [css.nodeCluster];
-
-  const singleSlot = slotsData.length === 1; // this is only for styles
-  const coupleSlot = slotsData.length === 2; // this is only for styles
 
   if (!isRunning) {
     nodeStyles.push(css.notRunning);
@@ -42,18 +38,22 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
 
   const getSlotStyles = useCallback(
     (isActive: boolean, index: number) => {
-      if (singleSlot) slotStyles.push(css.singleSlot);
-      if (coupleSlot) slotStyles.push(css.coupleSlot);
-      if (isActive) slotStyles.push(css.active);
+      const slotStyles = [css.nodeSlot];
+      if (slotsData.length === 1) slotStyles.push(css.singleSlot);
+      if (slotsData.length === 2) slotStyles.push(css.coupleSlot);
       if (!isRunning) slotStyles.push(css.notRunning);
+      if (isActive) {
+        slotStyles.push(css.active);
+      } else {
+        slotStyles.push(css.emptySlot);
+      }
       if (limitSlots !== 0) {
         if (index + 1 > limitSlots && isActive) slotStyles.push(css.limitedActive); // it means that there we're visualizing the node where only part of the active slots are relevant to the UI context
       }
 
       return slotStyles.join(' ');
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isRunning, limitSlots],
+    [isRunning, limitSlots, slotsData],
   );
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({
       )}
       <span className={nodeClusterStyles.join(' ')} ref={slotsContainer}>
         {slotsData.map(({ container }, idx) => (
-          <span className={getSlotStyles(container !== undefined, idx)} key={`slot${idx}`} />
+          <span className={getSlotStyles(container !== undefined, idx)} key={`${name}${idx}`} />
         ))}
       </span>
     </div>

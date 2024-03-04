@@ -55,6 +55,9 @@
       &.notRunning {
         background-color: var(--theme-strong);
       }
+      &.emptySlot {
+        background-color: var(--theme-surface-strong);
+      }
     }
   }
 }
