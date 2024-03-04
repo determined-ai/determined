@@ -104,7 +104,7 @@ build/stream-gen: cmd/stream-gen/main.go
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=
 build: gen
-	export CGO_ENABLED=0 go build \
+	CGO_ENABLED=0 go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
