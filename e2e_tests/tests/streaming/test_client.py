@@ -1,3 +1,5 @@
+import random
+
 import pytest
 
 from determined.common import streams
@@ -17,6 +19,7 @@ def test_client_connection() -> None:
     assert event == _client.Sync(syncId, False)
 
     event = next(stream)
+    assert isinstance(event, streams.wire.ProjectMsg)
     assert event.id == 1
     assert event.immutable is True
     event = next(stream)
@@ -34,7 +37,7 @@ def test_client_subscribe() -> None:
     newProjectName = "streaming_project_1"
 
     resp_w = bindings.post_PostWorkspace(
-        sess, body=bindings.v1PostWorkspaceRequest(name="streaming_workspace")
+        sess, body=bindings.v1PostWorkspaceRequest(name=f"streaming_workspace_{random.random()}")
     )
     w = resp_w.workspace
     resp_p = bindings.post_PostProject(
@@ -51,6 +54,7 @@ def test_client_subscribe() -> None:
     event = next(stream)
     assert event == _client.Sync(syncId, False)
     event = next(stream)
+    assert isinstance(event, streams.wire.ProjectMsg)
     assert event.id == p.id
     assert event.name == projectName
     seq = event.seq
@@ -59,6 +63,7 @@ def test_client_subscribe() -> None:
 
     bindings.patch_PatchProject(sess, body=bindings.v1PatchProject(name=newProjectName), id=p.id)
     event = next(stream)
+    assert isinstance(event, streams.wire.ProjectMsg)
     assert event.id == p.id
     assert event.name == newProjectName
     assert event.seq > seq
