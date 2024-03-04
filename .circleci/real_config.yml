@@ -1277,7 +1277,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - pre-package-and-push-system:
           check: false
       - make-package
@@ -1310,7 +1310,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1349,7 +1349,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1379,7 +1379,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
