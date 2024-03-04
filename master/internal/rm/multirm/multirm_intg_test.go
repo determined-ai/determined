@@ -2,6 +2,7 @@ package multirm
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -733,7 +734,15 @@ func TestGetRMName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rmName, err := mockMultiRM.getRM(tt.rmName, tt.rpName)
 			require.Equal(t, tt.expectedRMName, rmName)
-			require.Equal(t, tt.err, err)
+			if tt.err != nil && strings.Contains(tt.err.Error(), "exists for both resource managers") {
+				// Manually checking for ErrRMConflict because RMs may be returned in different order.
+				require.ErrorContains(t, err, "exists for both resource managers")
+				require.ErrorContains(t, err, "aws")
+				require.ErrorContains(t, err, "gcp")
+				require.ErrorContains(t, err, "default")
+			} else {
+				require.Equal(t, tt.err, err)
+			}
 		})
 	}
 }
