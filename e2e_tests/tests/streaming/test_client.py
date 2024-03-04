@@ -18,13 +18,13 @@ def test_client_connection() -> None:
 
     event = next(stream)
     assert event.id == 1
-    assert event.immutable == True
+    assert event.immutable is True
     event = next(stream)
     assert event == _client.Sync(syncId, True)
 
 
 @pytest.mark.e2e_cpu
-def test_client_connection() -> None:
+def test_client_subscribe() -> None:
     sess = api_utils.admin_session()
     ws = _client.LomondStreamWebSocket(sess)
     stream = _client.Stream(ws)
