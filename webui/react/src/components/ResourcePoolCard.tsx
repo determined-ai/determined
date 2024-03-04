@@ -67,6 +67,7 @@ const poolAttributes = [
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
   { key: 'schedulerType', label: 'Scheduler Type' },
+  { key: 'resourceManagerName', label: 'Resource Manager Name' },
 ];
 
 /** Resource pool logo based on resource pool type */
@@ -103,6 +104,7 @@ const ResourcePoolCard: React.FC<Props> = ({
   const { canManageResourcePoolBindings } = usePermissions();
   const ResourcePoolBindingModal = useModal(ResourcePoolBindingModalComponent);
   const resourcePoolBindingMap = useObservable(clusterStore.resourcePoolBindings);
+  const multiResourceManagers = useObservable(clusterStore.multiResourceManagers);
   const resourcePoolBindings: number[] = resourcePoolBindingMap.get(pool.name, []);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
@@ -141,9 +143,12 @@ const ResourcePoolCard: React.FC<Props> = ({
       if (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') {
         delete acc[attribute.label];
       }
+      if (attribute.key === 'resourceManagerName' && !multiResourceManagers.getOrElse(false)) {
+        delete acc[attribute.label];
+      }
       return acc;
     }, {} as JsonObject);
-  }, [processedPool, isAux, pool]);
+  }, [processedPool, isAux, pool, multiResourceManagers]);
 
   const onDropdown = useCallback(
     (key: string) => {
