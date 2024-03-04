@@ -97,7 +97,9 @@ message ResourcePool {
         "agent_fluent_image",
         "max_idle_agent_period",
         "max_agent_starting_period",
-        "details"
+        "details",
+        "resource_manager_name",
+        "resource_manager_metadata"
       ]
     }
   };
@@ -187,6 +189,11 @@ message ResourcePool {
 
   // Job queue stats
   determined.job.v1.QueueStats stats = 34;
+
+  // Resource manager name.
+  string resource_manager_name = 35;
+  // Resource manager's metadata.
+  map<string, string> resource_manager_metadata = 36;
 }
 
 // Detailed information about the resource pool
