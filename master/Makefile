@@ -10,7 +10,6 @@ GORELEASER = goreleaser
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
 export DOCKER_REPO ?= determinedai
-export CGO_ENABLED=0
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
@@ -105,7 +104,7 @@ build/stream-gen: cmd/stream-gen/main.go
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=
 build: gen
-	go build \
+	export CGO_ENABLED=0 go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \

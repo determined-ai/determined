@@ -4,7 +4,6 @@ SHELL := bash
 export VERSION:=$(shell cat ../VERSION)
 export GO111MODULE := on
 export DOCKER_REPO ?= determinedai
-export CGO_ENABLED=0
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
@@ -39,7 +38,7 @@ get-deps:
 
 .PHONY: build
 build:
-	go build \
+	CGO_ENABLED=0 go build \
 		-ldflags "-X main.version=$(VERSION)" \
 		-o build/determined-agent \
 		./cmd/determined-agent
