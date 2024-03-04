@@ -45,9 +45,9 @@ import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
-import { TableViewMode } from './GlideTable';
-import MultiSortMenu, { Sort } from './MultiSortMenu';
-import { OptionsMenu, RowHeight } from './OptionsMenu';
+import { TableViewMode } from './glide-table/GlideTable';
+import MultiSortMenu, { Sort } from './glide-table/MultiSortMenu';
+import { OptionsMenu, RowHeight } from './glide-table/OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -265,9 +265,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             experiments`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,

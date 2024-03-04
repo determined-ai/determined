@@ -70,7 +70,7 @@ import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import { RowHeight } from './glide-table/OptionsMenu';
-import TableActionBar from './glide-table/TableActionBar';
+import TableActionBar from './TableActionBar';
 
 interface Props {
   project: Project;
