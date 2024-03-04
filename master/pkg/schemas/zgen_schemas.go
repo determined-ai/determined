@@ -777,7 +777,7 @@ var (
                 "null"
             ],
             "default": {},
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/integration.json"
         },
         "data_layer": {
             "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
@@ -1385,6 +1385,26 @@ var (
     }
 }
 `)
+	textIntegrationConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/integration.json",
+    "title": "IntegrationConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "eventuallyRequired": [],
+    "properties": {
+        "pachyderm": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
+        }
+    }
+}
+`)
 	textKerberosConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/kerberos.json",
@@ -1629,6 +1649,67 @@ var (
             ],
             "minimum": 0,
             "default": 64
+        }
+    }
+}
+`)
+	textPachydermConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/pachyderm.json",
+    "title": "PachydermConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "eventuallyRequired": [],
+    "properties": {
+        "port": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "host": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "branch": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "previous_commit": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "project": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "repo": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "token": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
         }
     }
 }
@@ -3217,6 +3298,8 @@ var (
 
 	schemaHyperparametersV0 interface{}
 
+	schemaIntegrationConfigV0 interface{}
+
 	schemaKerberosConfigV0 interface{}
 
 	schemaLengthV0 interface{}
@@ -3230,6 +3313,8 @@ var (
 	schemaLogPolicyV0 interface{}
 
 	schemaOptimizationsConfigV0 interface{}
+
+	schemaPachydermConfigV0 interface{}
 
 	schemaProfilingConfigV0 interface{}
 
@@ -3790,6 +3875,26 @@ func ParsedHyperparametersV0() interface{} {
 	return schemaHyperparametersV0
 }
 
+func ParsedIntegrationConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaIntegrationConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaIntegrationConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaIntegrationConfigV0 != nil {
+		return schemaIntegrationConfigV0
+	}
+	err := json.Unmarshal(textIntegrationConfigV0, &schemaIntegrationConfigV0)
+	if err != nil {
+		panic("invalid embedded json for IntegrationConfigV0")
+	}
+	return schemaIntegrationConfigV0
+}
+
 func ParsedKerberosConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaKerberosConfigV0 != nil {
@@ -3928,6 +4033,26 @@ func ParsedOptimizationsConfigV0() interface{} {
 		panic("invalid embedded json for OptimizationsConfigV0")
 	}
 	return schemaOptimizationsConfigV0
+}
+
+func ParsedPachydermConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaPachydermConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaPachydermConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaPachydermConfigV0 != nil {
+		return schemaPachydermConfigV0
+	}
+	err := json.Unmarshal(textPachydermConfigV0, &schemaPachydermConfigV0)
+	if err != nil {
+		panic("invalid embedded json for PachydermConfigV0")
+	}
+	return schemaPachydermConfigV0
 }
 
 func ParsedProfilingConfigV0() interface{} {
@@ -4515,6 +4640,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
 	cachedSchemaBytesMap[url] = textHyperparametersV0
+	url = "http://determined.ai/schemas/expconf/v0/integration.json"
+	cachedSchemaBytesMap[url] = textIntegrationConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/kerberos.json"
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"
@@ -4529,6 +4656,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textLogPolicyV0
 	url = "http://determined.ai/schemas/expconf/v0/optimizations.json"
 	cachedSchemaBytesMap[url] = textOptimizationsConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/pachyderm.json"
+	cachedSchemaBytesMap[url] = textPachydermConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/profiling.json"
 	cachedSchemaBytesMap[url] = textProfilingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/proxy-port.json"
