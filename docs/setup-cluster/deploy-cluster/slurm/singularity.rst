@@ -26,9 +26,9 @@ by default in this version of Determined are described below.
 +-------------+--------------------------------------------------------------------------+
 | Environment | File Name                                                                |
 +=============+==========================================================================+
-| CPUs        | ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-f66cbce``    |
+| CPUs        | ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-2196775``    |
 +-------------+--------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-f66cbce`` |
+| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-2196775`` |
 +-------------+--------------------------------------------------------------------------+
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512``  |
 +-------------+--------------------------------------------------------------------------+
