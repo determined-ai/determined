@@ -76,8 +76,10 @@ const MultiTrialDetailsHyperparameters: React.FC<Props> = ({
     ],
   );
 
+  const experimentIds = useMemo(() => [experiment.id], [experiment.id]);
+
   // Stream available metrics.
-  const loadableMetrics = useMetricNames([experiment.id], handleError);
+  const loadableMetrics = useMetricNames(experimentIds, handleError);
   const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const isSupported = useMemo(() => {
