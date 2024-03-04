@@ -99,7 +99,7 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	resolvedRM, rp, err := rm.ResolveResourcePool("", // todo (multirm)
+	resolvedRM, rp, err := rm.ResolveResourcePool("",
 		sproto.ResolveResourcesRequest{
 			ResourcePool: "",
 			Workspace:    -1,

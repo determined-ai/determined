@@ -7,6 +7,9 @@ import (
 // DefaultRMName is the default resource manager name when a user does not provide one.
 const DefaultRMName = "default"
 
+// DefaultRMIndex is the default resource manager index given a list of Resources().
+const DefaultRMIndex = 0
+
 // DefaultResourceConfig returns the default resource configuration.
 func DefaultResourceConfig() *ResourceConfig {
 	return &ResourceConfig{
