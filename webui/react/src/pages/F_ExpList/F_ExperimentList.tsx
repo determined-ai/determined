@@ -954,6 +954,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   );
                 }}
                 rowHeight={globalSettings.rowHeight}
+                rowIdPath={'experiment.id'}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}
                 selection={selection}

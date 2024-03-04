@@ -19,6 +19,7 @@ import Icon from 'hew/Icon';
 import { useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { literal, union } from 'io-ts';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -67,6 +68,7 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   columns: ColumnDef[];
   columnWidths: Record<string, number>;
+  rowIdPath?: string;
   renderContextMenuComponent: (props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => JSX.Element;
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
@@ -146,6 +148,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   page,
   pinnedColumnsCount,
   projectColumns,
+  rowIdPath,
   renderContextMenuComponent,
   rowHeight,
   scrollPositionSetCount,
@@ -222,12 +225,12 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const rowColorTheme = Loadable.match(data[row], {
         _: () => ({}),
         Loaded: (record) =>
-          colorMap[record.experiment.id] ? { accentColor: colorMap[record.experiment.id] } : {},
+          colorMap[_.get(record, rowIdPath ?? '')] ? { accentColor: colorMap[_.get(record, rowIdPath ?? '')] } : {},
       });
 
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, getThemeVar, hoveredRow, selection.rows],
+    [colorMap, data, getThemeVar, rowIdPath, hoveredRow, selection.rows],
   );
 
   const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
