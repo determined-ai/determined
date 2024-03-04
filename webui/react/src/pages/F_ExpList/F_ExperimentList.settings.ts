@@ -3,7 +3,7 @@ import { array, boolean, number, partial, record, string } from 'io-ts';
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
 
-import { defaultColumnWidths, defaultExperimentColumns } from './glide-table/columns';
+import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
 import { ioTableViewMode, TableViewMode } from './glide-table/GlideTable';
 import { ioRowHeight, RowHeight } from './glide-table/OptionsMenu';
 

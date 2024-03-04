@@ -35,7 +35,6 @@ import useMobile from 'hooks/useMobile';
 import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import usersStore from 'stores/users';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -51,14 +50,9 @@ import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
-  defaultDateColumn,
-  defaultNumberColumn,
-  defaultTextColumn,
-  getColumnDefs,
   getHeaderIcons,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
-  searcherMetricsValColumn,
 } from './columns';
 import { TableContextMenu, TableContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
@@ -73,6 +67,7 @@ import { getTheme } from './utils';
 
 export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
+  columns: ColumnDef[];
   columnWidths: Record<string, number>;
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
@@ -136,6 +131,7 @@ const rowHeightMap: Record<RowHeight, number> = {
 
 export const GlideTable: React.FC<GlideTableProps> = ({
   colorMap,
+  columns,
   columnWidths,
   comparisonViewOpen = false,
   data,
@@ -157,10 +153,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   pinnedColumnsCount,
   project,
   projectColumns,
-  projectHeatmap,
   rowHeight,
   scrollPositionSetCount,
-  selectAll,
   selection,
   sortableColumnIds,
   sorts,
@@ -207,47 +201,16 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const {
     ui: { theme: appTheme },
-    isDarkMode,
   } = useUI();
   const { getThemeVar } = useTheme();
   const theme = getTheme(appTheme);
 
-  const users = useObservable(usersStore.getUsers());
-
   const isMobile = useMobile();
-
-  const columnIds = useMemo(
-    () =>
-      comparisonViewOpen
-        ? [...staticColumns, ...sortableColumnIds.slice(0, pinnedColumnsCount)]
-        : [...staticColumns, ...sortableColumnIds],
-    [comparisonViewOpen, pinnedColumnsCount, sortableColumnIds, staticColumns],
-  );
-
-  const columnDefs = useMemo<Record<string, ColumnDef>>(
-    () =>
-      getColumnDefs({
-        appTheme,
-        columnWidths,
-        rowSelection: selection.rows,
-        selectAll,
-        themeIsDark: isDarkMode,
-        users,
-      }),
-    [selectAll, selection.rows, isDarkMode, columnWidths, users, appTheme],
-  );
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
 
-  const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = useMemo(() => {
-    return Loadable.map(projectColumns, (columns) => {
-      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
-    });
-  }, [projectColumns]);
-
   const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
-    columnDefs,
-    columnIds,
+    columns,
     data,
   });
 
@@ -302,19 +265,19 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
-      const columnId = columnIds[col];
+      const columnId = columns[col].id;
 
       if (columnId === MULTISELECT) {
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
-                  setMenuIsOpen(false);
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                onSelectionChange?.('remove-all', [0, data.length]);
+                setMenuIsOpen(false);
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -383,32 +346,32 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                  newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                  onSortableColumnChange?.(newSortableColumns);
-                  onPinnedColumnsCountChange?.(
-                    Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                  );
-                  setMenuIsOpen(false);
-                },
-              }
-            : {
-                disabled: pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                  newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                  onSortableColumnChange?.(newSortableColumns);
-                  onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                  setMenuIsOpen(false);
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(
+                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
+                );
+                setMenuIsOpen(false);
               },
+            }
+            : {
+              disabled: pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
+                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
+                onSortableColumnChange?.(newSortableColumns);
+                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -425,47 +388,47 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-              ...sortMenuItemsForColumn(column, sorts, onSortChange),
-              { type: 'divider' as const },
-              {
-                icon: <Icon decorative name="filter" />,
-                key: 'filter',
-                label: 'Add Filter',
-                onClick: () => {
-                  setTimeout(filterMenuItemsForColumn, 5);
-                },
+            ...sortMenuItemsForColumn(column, sorts, onSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
               },
-            ]),
+            },
+          ]),
         filterCount > 0
           ? {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter-clear',
-              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-              onClick: () => {
-                setTimeout(clearFilterForColumn, 5);
-              },
-            }
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
           : null,
         heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
+          (column.column === 'searcherMetricsVal' ||
+            (column.type === V1ColumnType.NUMBER &&
+              (column.location === V1LocationType.VALIDATIONS ||
+                column.location === V1LocationType.TRAINING)))
           ? {
-              icon: <Icon decorative name="heatmap" />,
-              key: 'heatmap',
-              label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-              onClick: () => {
-                toggleHeatmap(column.column);
-              },
-            }
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
+            onClick: () => {
+              toggleHeatmap(column.column);
+            },
+          }
           : null,
       ];
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
     [
-      columnIds,
+      columns,
       data.length,
       projectColumns,
       formStore,
@@ -506,8 +469,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       return Loadable.match(data[row], {
         _: () => loadingCell,
         Loaded: (rowData) => {
-          const columnId = columnIds[col];
-          let cell: GridCell | undefined = columnDefs[columnId]?.renderer(rowData, row);
+          let cell: GridCell | undefined = columns[col]?.renderer?.(rowData, row);
           if (cell) {
             switch (cell.kind) {
               case GridCellKind.Text:
@@ -531,7 +493,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }, // TODO correctly handle error state
       });
     },
-    [appTheme, data, columnIds, columnDefs, getThemeVar],
+    [appTheme, data, columns, getThemeVar],
   );
 
   const onCellClicked: DataEditorProps['onCellClicked'] = useCallback(
@@ -539,8 +501,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       const [col, row] = cell;
 
       Loadable.forEach(data[row], (rowData) => {
-        const columnId = columnIds[col];
-        const cell = columnDefs[columnId].renderer(rowData, row);
+        const cell = columns[col].renderer(rowData, row);
 
         if (isLinkCell(cell)) {
           handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
@@ -564,7 +525,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }
       });
     },
-    [data, columnIds, columnDefs, onSelectionChange, selection],
+    [data, columns, onSelectionChange, selection],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
@@ -580,8 +541,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
         // Delay needed due to the call to close previously existing context menu.
         setTimeout(() => {
-          const columnId = columnIds[col];
-          const cell = columnDefs[columnId].renderer(rowData, row);
+          const cell = columns[col].renderer(rowData, row);
 
           // Update the context menu based on the cell context.
           setContextMenuProps({
@@ -601,7 +561,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }, 50);
       });
     },
-    [columnDefs, columnIds, data, project, setContextMenuProps, contextMenuOpen],
+    [columns, data, project, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
@@ -643,110 +603,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     },
     [onItemHovered],
   );
-
-  const columns: DataEditorProps['columns'] = useMemo(() => {
-    const gridColumns = columnIds
-      .map((columnName) => {
-        if (columnName in columnDefs) return columnDefs[columnName];
-        if (!Loadable.isLoaded(projectColumnsMap)) return;
-        const currentColumn = projectColumnsMap.data[columnName];
-        if (!currentColumn) return;
-        let dataPath: string | undefined = undefined;
-        switch (currentColumn.location) {
-          case V1LocationType.EXPERIMENT:
-            dataPath = `experiment.${currentColumn.column}`;
-            break;
-          case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
-            break;
-          case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
-              'validation.',
-              '',
-            )}`;
-            break;
-          case V1LocationType.TRAINING:
-            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
-              'training.',
-              '',
-            )}`;
-            break;
-          case V1LocationType.CUSTOMMETRIC:
-            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
-            break;
-          case V1LocationType.UNSPECIFIED:
-            break;
-        }
-        switch (currentColumn.type) {
-          case V1ColumnType.NUMBER: {
-            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            if (heatmap && heatmapOn && !heatmapSkipped.includes(currentColumn.column)) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn,
-                columnWidths[currentColumn.column],
-                dataPath,
-                {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                },
-              );
-            } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn,
-                columnWidths[currentColumn.column],
-                dataPath,
-              );
-            }
-            break;
-          }
-          case V1ColumnType.DATE:
-            columnDefs[currentColumn.column] = defaultDateColumn(
-              currentColumn,
-              columnWidths[currentColumn.column],
-              dataPath,
-            );
-            break;
-          case V1ColumnType.TEXT:
-          case V1ColumnType.UNSPECIFIED:
-          default:
-            columnDefs[currentColumn.column] = defaultTextColumn(
-              currentColumn,
-              columnWidths[currentColumn.column],
-              dataPath,
-            );
-        }
-        if (currentColumn.column === 'searcherMetricsVal') {
-          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-          if (heatmap && heatmapOn && !heatmapSkipped.includes(currentColumn.column)) {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              columnWidths[currentColumn.column],
-              {
-                max: heatmap.max,
-                min: heatmap.min,
-              },
-            );
-          } else {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              columnWidths[currentColumn.column],
-            );
-          }
-        }
-        return columnDefs[currentColumn.column];
-      })
-      .flatMap((col) => (col ? [col] : []));
-    return gridColumns;
-  }, [
-    columnIds,
-    columnDefs,
-    projectColumnsMap,
-    columnWidths,
-    heatmapSkipped,
-    projectHeatmap,
-    heatmapOn,
-  ]);
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
     (col: number) => !comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,

@@ -3,7 +3,7 @@ import Tooltip from 'hew/Tooltip';
 import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
-import { ColumnDefs } from './columns';
+import { ColumnDef } from './columns';
 import { GlideTableProps } from './GlideTable';
 
 export interface TooltipProps {
@@ -15,8 +15,7 @@ export interface TooltipProps {
 
 interface UseTooltipParams {
   data: GlideTableProps['data'];
-  columnIds: string[];
-  columnDefs: ColumnDefs;
+  columns: ColumnDef[];
 }
 interface UseTooltipReturn {
   closeTooltip: () => void;
@@ -25,9 +24,8 @@ interface UseTooltipReturn {
 }
 
 export const useTableTooltip = ({
+  columns,
   data,
-  columnIds,
-  columnDefs,
 }: UseTooltipParams): UseTooltipReturn => {
   const [tooltipProps, setTooltipProps] = React.useState<TooltipProps | undefined>(undefined);
 
@@ -46,8 +44,7 @@ export const useTableTooltip = ({
         const [columnIdx, rowIdx] = args.location;
         const record = data[rowIdx];
         if (record && Loadable.isLoaded(record)) {
-          const columnId = columnIds[columnIdx];
-          const text = columnDefs?.[columnId]?.tooltip(record.data);
+          const text = columns[columnIdx]?.tooltip(record.data);
           if (text) {
             timeoutRef.current = window.setTimeout(() => {
               setTooltipProps({
@@ -63,7 +60,7 @@ export const useTableTooltip = ({
         closeTooltip();
       }
     },
-    [data, columnIds, columnDefs, closeTooltip],
+    [data, columns, closeTooltip],
   );
 
   useEffect(() => () => window.clearTimeout(timeoutRef.current), []);

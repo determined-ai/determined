@@ -18,6 +18,7 @@ import {
   FormGroup,
   IOFilterFormSet,
 } from 'components/FilterForm/components/type';
+import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -26,6 +27,7 @@ import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import usersStore from 'stores/users';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -38,6 +40,12 @@ import {
 import handleError from 'utils/error';
 
 import ComparisonView from './ComparisonView';
+import {
+  ExperimentColumn,
+  experimentColumns,
+  getColumnDefs,
+  searcherMetricsValColumn,
+} from './expListColumns';
 import css from './F_ExperimentList.module.scss';
 import {
   F_ExperimentListGlobalSettings,
@@ -46,9 +54,11 @@ import {
   settingsConfigGlobal,
 } from './F_ExperimentList.settings';
 import {
+  ColumnDef,
   columnWidthsFallback,
-  ExperimentColumn,
-  experimentColumns,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultTextColumn,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
   NO_PINS_WIDTH,
@@ -379,7 +389,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -733,6 +743,136 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
+  const {
+    ui: { theme: appTheme },
+    isDarkMode,
+  } = useUI();
+
+  const users = useObservable(usersStore.getUsers());
+
+  const columns: ColumnDef[] = useMemo(() => {
+    const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(projectColumns, (columns) => {
+      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+    });
+    const columnDefs = getColumnDefs({
+      appTheme,
+      columnWidths: settings.columnWidths,
+      rowSelection: selection.rows,
+      selectAll,
+      themeIsDark: isDarkMode,
+      users,
+    });
+    const gridColumns = (settings.compare
+      ? [...STATIC_COLUMNS, ...columnsIfLoaded.slice(0, settings.pinnedColumnsCount)]
+      : [...STATIC_COLUMNS, ...columnsIfLoaded])
+      .map((columnName) => {
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) return;
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = `experiment.${currentColumn.column}`;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.TRAINING:
+            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
+              'training.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.CUSTOMMETRIC:
+            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER: {
+            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+            if (heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)) {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                settings.columnWidths[currentColumn.column],
+                dataPath,
+                {
+                  max: heatmap.max,
+                  min: heatmap.min,
+                },
+              );
+            } else {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn,
+                settings.columnWidths[currentColumn.column],
+                dataPath,
+              );
+            }
+            break;
+          }
+          case V1ColumnType.DATE:
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
+            break;
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
+        }
+        if (currentColumn.column === 'searcherMetricsVal') {
+          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+          if (heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)) {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              settings.columnWidths[currentColumn.column],
+              {
+                max: heatmap.max,
+                min: heatmap.min,
+              },
+            );
+          } else {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              settings.columnWidths[currentColumn.column],
+            );
+          }
+        }
+        return columnDefs[currentColumn.column];
+      })
+      .flatMap((col) => (col ? [col] : []));
+    return gridColumns;
+  }, [
+    settings.compare,
+    settings.pinnedColumnsCount,
+    projectColumns,
+    settings.columnWidths,
+    settings.heatmapSkipped,
+    projectHeatmap,
+    settings.heatmapOn,
+    columnsIfLoaded,
+    appTheme,
+    isDarkMode,
+    selectAll,
+    selection.rows,
+    users,
+  ]);
+
   return (
     <>
       <TableActionBar
@@ -783,6 +923,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onWidthChange={handleCompareWidthChange}>
               <GlideTable
                 colorMap={colorMap}
+                columns={columns}
                 columnWidths={settings.columnWidths}
                 comparisonViewOpen={settings.compare}
                 data={experiments}
