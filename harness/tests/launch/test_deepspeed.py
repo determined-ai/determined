@@ -6,8 +6,8 @@ from unittest import mock
 import pytest
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 
-import determined.launch.deepspeed  # noqa: F401
-from determined import constants, launch
+import determined.launch.deepspeed as launch_deepspeed
+from determined import constants
 from tests.launch import test_util
 
 
@@ -33,7 +33,7 @@ def test_parse_args() -> None:
     }
 
     test_util.parse_args_check(
-        positive_test_cases, negative_test_cases, launch.deepspeed.parse_args
+        positive_test_cases, negative_test_cases, launch_deepspeed.parse_args
     )
 
 
@@ -52,18 +52,18 @@ def test_launch_multi_slot_chief(
     mock_start_time = time.time()
     mock_time.return_value = mock_start_time
     script = ["s1", "s2"]
-    sshd_cmd = launch.deepspeed.create_sshd_cmd()
-    pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
+    sshd_cmd = launch_deepspeed.create_sshd_cmd()
+    pid_server_cmd = launch_deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
+    deepspeed_cmd = launch_deepspeed.create_run_command(
         cluster_info.container_addrs[0],
-        launch.deepspeed.get_hostfile_path(
+        launch_deepspeed.get_hostfile_path(
             multi_machine=True, allocation_id=cluster_info.allocation_id
         ),
     )
-    pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
-    log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
+    pid_client_cmd = launch_deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = launch_deepspeed.create_log_redirect_cmd()
 
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
@@ -80,7 +80,7 @@ def test_launch_multi_slot_chief(
     mock_subprocess.side_effect = mock_process
 
     with test_util.set_resources_id_env_var():
-        launch.deepspeed.main(script)
+        launch_deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -105,7 +105,7 @@ def test_launch_multi_slot_chief(
     sshd_proc_mock().kill.assert_called_once()
     sshd_proc_mock().wait.assert_called_once()
 
-    # Cleanup deepspeed environment file created in launch.deepspeed.main
+    # Cleanup deepspeed environment file created in launch_deepspeed.main
     deepspeed_env_path = os.path.join(os.getcwd(), DEEPSPEED_ENVIRONMENT_NAME)
     if os.path.isfile(deepspeed_env_path):
         os.remove(deepspeed_env_path)
@@ -128,18 +128,18 @@ def test_launch_multi_slot_fail(
     mock_check_sshd.side_effect = ValueError("no sshd greeting")
 
     script = ["s1", "s2"]
-    sshd_cmd = launch.deepspeed.create_sshd_cmd()
-    pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
+    sshd_cmd = launch_deepspeed.create_sshd_cmd()
+    pid_server_cmd = launch_deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
+    deepspeed_cmd = launch_deepspeed.create_run_command(
         cluster_info.container_addrs[0],
-        launch.deepspeed.get_hostfile_path(
+        launch_deepspeed.get_hostfile_path(
             multi_machine=True, allocation_id=cluster_info.allocation_id
         ),
     )
-    pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
-    log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
+    pid_client_cmd = launch_deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = launch_deepspeed.create_log_redirect_cmd()
 
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
@@ -157,7 +157,7 @@ def test_launch_multi_slot_fail(
 
     with test_util.set_resources_id_env_var():
         with pytest.raises(ValueError, match="no sshd greeting"):
-            launch.deepspeed.main(script)
+            launch_deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -176,7 +176,7 @@ def test_launch_multi_slot_fail(
     sshd_proc_mock().kill.assert_called_once()
     sshd_proc_mock().wait.assert_called_once()
 
-    # Cleanup deepspeed environment file created in launch.deepspeed.main
+    # Cleanup deepspeed environment file created in launch_deepspeed.main
     deepspeed_env_path = os.path.join(os.getcwd(), DEEPSPEED_ENVIRONMENT_NAME)
     if os.path.isfile(deepspeed_env_path):
         os.remove(deepspeed_env_path)
@@ -190,21 +190,21 @@ def test_launch_one_slot(
     cluster_info = test_util.make_mock_cluster_info(["0.0.0.0"], 0, 4)
     mock_cluster_info.return_value = cluster_info
     script = ["s1", "s2"]
-    pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
+    pid_server_cmd = launch_deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
+    deepspeed_cmd = launch_deepspeed.create_run_command(
         "localhost",
-        launch.deepspeed.get_hostfile_path(
+        launch_deepspeed.get_hostfile_path(
             multi_machine=False, allocation_id=cluster_info.allocation_id
         ),
     )
-    pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
-    log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
+    pid_client_cmd = launch_deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = launch_deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
     with test_util.set_resources_id_env_var():
-        launch.deepspeed.main(script)
+        launch_deepspeed.main(script)
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -220,21 +220,21 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     mock_cluster_info.return_value = cluster_info
     mock_subprocess.return_value.wait.return_value = 1
     script = ["s1", "s2"]
-    pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
+    pid_server_cmd = launch_deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    deepspeed_cmd = launch.deepspeed.create_run_command(
+    deepspeed_cmd = launch_deepspeed.create_run_command(
         "localhost",
-        launch.deepspeed.get_hostfile_path(
+        launch_deepspeed.get_hostfile_path(
             multi_machine=False, allocation_id=cluster_info.allocation_id
         ),
     )
-    pid_client_cmd = launch.deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
-    log_redirect_cmd = launch.deepspeed.create_log_redirect_cmd()
+    pid_client_cmd = launch_deepspeed.create_pid_client_cmd(cluster_info.allocation_id)
+    log_redirect_cmd = launch_deepspeed.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
     with test_util.set_resources_id_env_var():
-        assert launch.deepspeed.main(script) == 1
+        assert launch_deepspeed.main(script) == 1
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
@@ -246,28 +246,28 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
 @mock.patch("determined.common.api.authentication.login_with_cache")
-@mock.patch("determined.common.api._session.Session.post")
 def test_launch_worker(
-    mock_post: mock.MagicMock,
     mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,
     mock_subprocess: mock.MagicMock,
 ) -> None:
     cluster_info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, 4)
     mock_cluster_info.return_value = cluster_info
+    mock_session = mock.MagicMock()
+    mock_login.return_value = mock_session
     with test_util.set_resources_id_env_var():
-        launch.deepspeed.main(["script"])
+        launch_deepspeed.main(["script"])
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == cluster_info.container_addrs[0]
 
     mock_login.assert_called_once()
-    mock_post.assert_called_once()
+    mock_session.post.assert_called_once()
 
-    pid_server_cmd = launch.deepspeed.create_pid_server_cmd(
+    pid_server_cmd = launch_deepspeed.create_pid_server_cmd(
         cluster_info.allocation_id, len(cluster_info.slot_ids)
     )
-    sshd_cmd = launch.deepspeed.create_sshd_cmd()
+    sshd_cmd = launch_deepspeed.create_sshd_cmd()
 
     expected_cmd = pid_server_cmd + sshd_cmd
     mock_subprocess.assert_called_once_with(expected_cmd)
@@ -288,6 +288,6 @@ def test_filter_env_vars() -> None:
         "DET_SESSION_TOKEN": "keep",
         "RANDOM_USER_VAR": "keep",
     }
-    env_out = launch.deepspeed.filter_env_vars(env_in)
+    env_out = launch_deepspeed.filter_env_vars(env_in)
     env_exp = {k: v for k, v in env_in.items() if v == "keep"}
     assert env_out == env_exp
