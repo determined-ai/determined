@@ -34,7 +34,7 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
+    default: linux-cuda-11:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
