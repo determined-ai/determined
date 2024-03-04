@@ -4,6 +4,7 @@
 package agentrm
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -15,6 +16,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
@@ -162,4 +165,82 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.NilError(t, err, "error fetch average queued time for gpu-pool")
 	_, err = agentRM.fetchAvgQueuedTime("non-existed-pool")
 	assert.NilError(t, err, "error fetch average queued time for non-existed-pool")
+}
+
+func TestGetResourcePools(t *testing.T) {
+	expectedName := "testname"
+	expectedMetadata := map[string]string{"x": "y*y"}
+	cfg := &config.ResourceConfig{
+		RootManagerInternal: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Name:     expectedName,
+				Metadata: expectedMetadata,
+				Scheduler: &config.SchedulerConfig{
+					FairShare:     &config.FairShareSchedulerConfig{},
+					FittingPolicy: best,
+				},
+				DefaultAuxResourcePool:     "cpu-pool",
+				DefaultComputeResourcePool: "gpu-pool",
+			},
+		},
+		RootPoolsInternal: []config.ResourcePoolConfig{
+			{PoolName: "cpu-pool"},
+			{PoolName: "gpu-pool"},
+		},
+	}
+	cpuPoolRef := setupResourcePool(
+		t, nil, &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+		nil, nil, []*MockAgent{{ID: "agent1", Slots: 0}},
+	)
+	gpuPoolRef := setupResourcePool(
+		t, nil, &config.ResourcePoolConfig{PoolName: "gpu-pool"},
+		nil, nil, []*MockAgent{{ID: "agent2", Slots: 4}},
+	)
+	agentRM := &ResourceManager{
+		config:      cfg.ResourceManagers()[0].ResourceManager.AgentRM,
+		poolsConfig: cfg.ResourceManagers()[0].ResourcePools,
+		pools: map[string]*resourcePool{
+			"cpu-pool": cpuPoolRef,
+			"gpu-pool": gpuPoolRef,
+		},
+		agentUpdates: queue.New[agentUpdatedEvent](),
+	}
+
+	resp, err := agentRM.GetResourcePools()
+	require.NoError(t, err)
+	actual, err := json.MarshalIndent(resp.ResourcePools, "", "  ")
+	require.NoError(t, err)
+
+	expectedPools := []*resourcepoolv1.ResourcePool{
+		{
+			Name:                    "cpu-pool",
+			Type:                    resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
+			DefaultAuxPool:          true,
+			SlotsPerAgent:           -1,
+			SchedulerType:           resourcepoolv1.SchedulerType_SCHEDULER_TYPE_FAIR_SHARE,
+			SchedulerFittingPolicy:  resourcepoolv1.FittingPolicy_FITTING_POLICY_BEST,
+			Location:                "on-prem",
+			Details:                 &resourcepoolv1.ResourcePoolDetail{},
+			Stats:                   &jobv1.QueueStats{},
+			ResourceManagerName:     expectedName,
+			ResourceManagerMetadata: expectedMetadata,
+		},
+		{
+			Name:                    "gpu-pool",
+			Type:                    resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC,
+			DefaultComputePool:      true,
+			SlotsPerAgent:           -1,
+			SchedulerType:           resourcepoolv1.SchedulerType_SCHEDULER_TYPE_FAIR_SHARE,
+			SchedulerFittingPolicy:  resourcepoolv1.FittingPolicy_FITTING_POLICY_BEST,
+			Location:                "on-prem",
+			Details:                 &resourcepoolv1.ResourcePoolDetail{},
+			Stats:                   &jobv1.QueueStats{},
+			ResourceManagerName:     expectedName,
+			ResourceManagerMetadata: expectedMetadata,
+		},
+	}
+	expected, err := json.MarshalIndent(expectedPools, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, string(expected), string(actual))
 }

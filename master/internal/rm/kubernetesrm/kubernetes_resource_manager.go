@@ -544,6 +544,8 @@ func (k *ResourceManager) createResourcePoolSummary(
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		Accelerator:                  accelerator,
+		ResourceManagerName:          k.config.Name,
+		ResourceManagerMetadata:      k.config.Metadata,
 	}
 
 	rp, err := k.poolByName(poolName)
