@@ -122,8 +122,10 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     setPageError(PageError.MetricNames);
   }, []);
 
+  const experimentIds = useMemo(() => [experiment.id], [experiment.id]);
+
   // Stream available metrics.
-  const loadableMetrics = useMetricNames([experiment.id], handleMetricNamesError);
+  const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
   const metrics = Loadable.getOrElse([], loadableMetrics);
 
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
