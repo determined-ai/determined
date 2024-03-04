@@ -658,7 +658,7 @@ func TestRMPreemptionStatus(t *testing.T) {
 		err := yaml.Unmarshal([]byte(configRaw), unmarshaled, yaml.DisallowUnknownFields)
 		assert.NilError(t, unmarshaled.Resolve())
 		assert.NilError(t, err)
-		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled, rpName), expected)
+		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled.ResourceManagers()[0], rpName), expected)
 	}
 
 	testCases := []struct {
@@ -805,4 +805,66 @@ resource_manager:
 			test(t, tc.configRaw, tc.rpName, tc.preemptionEnabled)
 		})
 	}
+}
+
+func TestMultiRMPreemptionAndPriority(t *testing.T) {
+	prio1 := 3
+	prio2 := 30
+
+	cfg := DefaultConfig()
+	cfg.ResourceConfig = ResourceConfig{
+		RootManagerInternal: &ResourceManagerConfig{AgentRM: &AgentResourceManagerConfig{
+			Name: DefaultRMName, Scheduler: &SchedulerConfig{
+				Priority: &PrioritySchedulerConfig{
+					Preemption:      false,
+					DefaultPriority: &prio1,
+				},
+			},
+		}},
+		RootPoolsInternal: []ResourcePoolConfig{{
+			PoolName: "default123",
+			Scheduler: &SchedulerConfig{Priority: &PrioritySchedulerConfig{
+				Preemption:      true,
+				DefaultPriority: &prio2,
+			}},
+		}},
+		AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+			{ResourceManager: &ResourceManagerConfig{KubernetesRM: &KubernetesResourceManagerConfig{
+				Name:             "test",
+				DefaultScheduler: "not-preemption-scheduler",
+			}}, ResourcePools: []ResourcePoolConfig{{
+				PoolName: "default234",
+				Scheduler: &SchedulerConfig{Priority: &PrioritySchedulerConfig{
+					Preemption:      true,
+					DefaultPriority: &prio1,
+				}},
+			}}},
+		},
+	}
+
+	SetMasterConfig(cfg)
+
+	// 'default123' RP exists under 'default' RM, so the preemption will
+	// be 'True' & priority to prio2, like the RP.
+	status := ReadRMPreemptionStatus("default123")
+	require.True(t, status)
+
+	priority := ReadPriority("default123", model.CommandConfig{})
+	require.Equal(t, prio2, priority)
+
+	// 'test1' RP doesn't exist under any RM so the preemption and
+	// priority will default.
+	status = ReadRMPreemptionStatus("test1")
+	require.False(t, status)
+
+	priority = ReadPriority("test1", model.CommandConfig{})
+	require.Equal(t, DefaultSchedulingPriority, priority)
+
+	// 'default234' RP exists under 'test' RM, so the preemption
+	// & priority will default to the RP's.
+	status = ReadRMPreemptionStatus("default234")
+	require.True(t, status)
+
+	priority = ReadPriority("default234", model.CommandConfig{})
+	require.Equal(t, prio1, priority)
 }

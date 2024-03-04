@@ -26,7 +26,7 @@ func getMockResourceManager(poolName string) *mocks.ResourceManager {
 		ResourcePool: poolName,
 		Slots:        1,
 		IsSingleNode: true,
-	}).Return(sproto.ValidateResourcesResponse{}, nil, nil)
+	}).Return(nil, nil)
 	return rm
 }
 
