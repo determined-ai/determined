@@ -31,7 +31,7 @@ parameters:
     default: determinedai/cimg-base:latest
   machine-image:
     type: string
-    default: ubuntu-2004:202201-02
+    default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
     default: ubuntu-2004-cuda-11.2:202103-01
