@@ -18069,9 +18069,9 @@ def get_GetPachydermRepoURL(
     *,
     experimentId: int,
 ) -> "v1GetPachydermRepoURLResponse":
-    """Get pachyderm input repo URL based on experiment config, if present
+    """Get pachyderm input repo URL based on experiment config, if present.
 
-    - experimentId: ID of experiment to retrieve the URL
+    - experimentId: ID of experiment to retrieve the URL.
     """
     _params = None
     _resp = session._do_request(

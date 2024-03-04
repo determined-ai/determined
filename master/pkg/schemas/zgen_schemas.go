@@ -771,6 +771,14 @@ var (
             ],
             "default": {}
         },
+        "integration": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
+        },
         "data_layer": {
             "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
             "type": [
