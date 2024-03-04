@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -28,7 +29,7 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 		switch typedMsg := msg.Msg.(type) {
 		case *ProjectMsg:
 			return fmt.Sprintf(
-				"key: %s, project_id: %d, state: %s, workspace_id: %d",
+				"type: %s, project_id: %d, state: %s, workspace_id: %d",
 				ProjectsUpsertKey,
 				typedMsg.ID,
 				typedMsg.State,
@@ -36,101 +37,129 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 			)
 		}
 	case stream.DeleteMsg:
-		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
+		return fmt.Sprintf("type: %s, deleted: %s", msg.Key, msg.Deleted)
 	case stream.SyncMsg:
-		return fmt.Sprintf("key: %s, sync_id: %s, complete: %t", syncKey, msg.SyncID, msg.Complete)
+		return fmt.Sprintf("type: %s, sync_id: %s, complete: %t", syncKey, msg.SyncID, msg.Complete)
 	}
 	return i
 }
 
 // mockSocket implements WebsocketLike and stores all messages received from streaming.
 type mockSocket struct {
-	inbound  chan interface{}
-	outbound chan *StartupMsg
-	closed   chan struct{}
+	fromServer chan interface{}
+	toServer   chan *StartupMsg
+	closed     bool
 }
 
 // newMockSocket creates a new instance mockSocket and initialize it's conditional variables.
 func newMockSocket() *mockSocket {
 	return &mockSocket{
-		inbound:  make(chan interface{}, channelBufferSize),
-		outbound: make(chan *StartupMsg, channelBufferSize),
-		closed:   make(chan struct{}),
+		fromServer:  make(chan interface{}, channelBufferSize),
+		toServer: make(chan *StartupMsg, channelBufferSize),
 	}
 }
 
-// WriteOut synchrounously appends the StartupMsg to outbound messages.
-func (s *mockSocket) WriteOutbound(t *testing.T, startup *StartupMsg) {
+// WriteToServer synchronously appends the StartupMsg to toServer messages.
+func (s *mockSocket) WriteToServer(t *testing.T, startup *StartupMsg) {
 	select {
-	case <-s.closed:
-		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
-	case s.outbound <- startup:
+	case s.toServer <- startup:
 		break
 	}
 }
 
-// ReadJSON implements WebsocketLike's ReadJSON(), blocks until able to read outbound messages off the mockSocket
-// or the mockSocket is closed.
+// ReadJSON implements WebsocketLike's ReadJSON(), blocks until able to read toServer messages off
+// the mockSocket or the mockSocket is closed.
 func (s *mockSocket) ReadJSON(data interface{}) error {
+	targetMsg, ok := data.(*StartupMsg)
+	if !ok {
+		return fmt.Errorf("target message type is not a pointer to StartupMsg")
+	}
 	select {
-	case <-s.closed:
-		return &websocket.CloseError{Code: websocket.CloseAbnormalClosure}
-	case msg := <-s.outbound:
-		targetMsg, ok := data.(*StartupMsg)
+	case msg, ok := <-s.toServer:
 		if !ok {
-			return fmt.Errorf("target message type is not a pointer to StartupMsg")
+			return &websocket.CloseError{Code: websocket.CloseAbnormalClosure}
 		}
 		*targetMsg = *msg
 		return nil
 	}
 }
 
-// Write implements WebsocketLike's Write(), appends the data to mockSocket's inbound messages.
+// Write implements WebsocketLike's Write(), appends the data to mockSocket's fromServer messages.
 func (s *mockSocket) Write(data interface{}) error {
 	select {
-	case <-s.closed:
-		return &websocket.CloseError{Code: websocket.CloseAbnormalClosure}
-	case s.inbound <- data:
+	case s.fromServer <- data:
 		return nil
 	}
 }
 
-// ReadData synchrounously reads an inbound message off the mockSocket.
-func (s *mockSocket) ReadIncoming(t *testing.T, data *string) {
+
+// ReadFromServer synchronously reads an fromServer message off the mockSocket.
+func (s *mockSocket) ReadFromServer(t *testing.T) string {
 	select {
-	case <-s.closed:
-		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
-	case msg := <-s.inbound:
+	case msg, ok := <-s.fromServer:
+		if !ok {
+			t.Fatal(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
+		}
 		stringMsg, ok := msg.(string)
 		if !ok {
-			t.Errorf("read unexpected message, likely due to type not being added to testPrepareFunc: %#v", msg)
+			t.Fatalf("read unexpected message, likely due to type not being added to testPrepareFunc: %#v", msg)
 		}
-		*data = stringMsg
+		return stringMsg
+	}
+}
+
+// AssertEOF makes sure that the server closes the websocket before sending any more messages
+func (s *mockSocket) AssertEOF(t *testing.T) {
+	select {
+	case msg, ok := <-s.fromServer:
+		if !ok {
+			// this is the EOF we were looking for
+			return
+		}
+		t.Fatalf("expected EOF from server but got msg instead: %v", msg)
+	case <- time.After(3 * time.Second):
+		t.Fatal("expected EOF from server but timed out instead")
 	}
 }
 
 func (s *mockSocket) ReadUntilFound(
 	t *testing.T,
-	data *[]string,
-	expected []string,
-) {
-	var msg string
-	checklist := map[string]struct{}{}
+	expected... string,
+) []string {
+	var recvd []string
+	checklist := map[string]bool{}
 	for _, s := range expected {
-		checklist[s] = struct{}{}
+		checklist[s] = false
 	}
 
 	for len(checklist) > 0 {
-		s.ReadIncoming(t, &msg)
-		*data = append(*data, msg)
+		t.Logf("ReadUntilFound()\n")
+		t.Logf("    have recvd:\n")
+		for _, r := range recvd {
+			t.Logf("      - %v\n", r)
+		}
+		t.Logf("    still awaiting:\n")
+		for c := range checklist {
+			t.Logf("      - %v\n", c)
+		}
+		msg := s.ReadFromServer(t)
+		recvd = append(recvd, msg)
 		delete(checklist, msg)
-		t.Logf("ReadUntilFound()\n\tcurrently read:\t%#v\n\tlooking for:\t%q", *data, checklist)
 	}
+
+	t.Logf("ReadUntilFound() complete")
+
+	return recvd
 }
 
 // Close closes the mockSocket.
 func (s *mockSocket) Close() {
-	close(s.closed)
+	if s.closed {
+		return
+	}
+	close(s.fromServer)
+	close(s.toServer)
+	s.closed = true
 }
 
 func splitMsgs(
@@ -149,11 +178,11 @@ func splitMsgs(
 	}
 
 	for i := range upsertKeys {
-		upsertKeys[i] = "^key: " + upsertKeys[i]
+		upsertKeys[i] = "^type: " + upsertKeys[i]
 	}
 
 	for i := range deleteKeys {
-		deleteKeys[i] = "^key: " + deleteKeys[i]
+		deleteKeys[i] = "^type: " + deleteKeys[i]
 	}
 
 	upsertPattern := regexp.MustCompile(
@@ -162,7 +191,7 @@ func splitMsgs(
 	deletePattern := regexp.MustCompile(
 		strings.Join(deleteKeys, "|"),
 	)
-	syncPattern := regexp.MustCompile("^key: " + syncKey)
+	syncPattern := regexp.MustCompile("^type: " + syncKey)
 
 	for _, msg := range messages {
 		switch {
@@ -173,7 +202,7 @@ func splitMsgs(
 		case syncPattern.MatchString(msg):
 			syncs = append(syncs, msg)
 		default:
-			t.Errorf("unknown message type: %q", msg)
+			t.Fatalf("unknown message type: %q", msg)
 		}
 	}
 	return deletions, upserts, syncs
@@ -198,21 +227,21 @@ func validateMsgs(
 	switch {
 	// check if we received the correct number of trial messages
 	case len(upserts) != len(expectedUpserts):
-		t.Errorf(
+		t.Fatalf(
 			"did not receive expected number of upsert messages:\n\texpected %d\n\tactual: %d",
 			len(expectedUpserts),
 			len(upserts),
 		)
 	// check if we received the correct number of deletion messages
 	case len(deletions) != len(expectedDeletions):
-		t.Errorf(
+		t.Fatalf(
 			"did not receive expected number of deletion messages:\n\texpected %v\n\tactual: %v",
 			len(expectedDeletions),
 			len(deletions),
 		)
 	// check if we receieved the correct SyncMsg
 	case len(syncs) != len(expectedSyncs):
-		t.Errorf(
+		t.Fatalf(
 			"did not receive expected number of sync message:\n\texpected: %#v\n\tactual: %v",
 			len(expectedSyncs),
 			len(syncs),
@@ -221,7 +250,7 @@ func validateMsgs(
 	default:
 		for i := range syncs {
 			if syncs[i] != expectedSyncs[i] {
-				t.Errorf(
+				t.Fatalf(
 					"did not receive expected sync message:\n\texpected: %#v\n\tactual: %q",
 					expectedSyncs[i],
 					syncs[i],
@@ -230,7 +259,7 @@ func validateMsgs(
 		}
 		for i := range upserts {
 			if upserts[i] != expectedUpserts[i] {
-				t.Errorf(
+				t.Fatalf(
 					"did not receive expected upsert message:\n\texpected: %#v\n\tactual: %q",
 					expectedUpserts[i],
 					upserts[i],
@@ -239,7 +268,7 @@ func validateMsgs(
 		}
 		for i := range deletions {
 			if deletions[i] != expectedDeletions[i] {
-				t.Errorf(
+				t.Fatalf(
 					"did not receive expected deletion message:\n\texpected: %#v\n\tactual: %q",
 					expectedDeletions[i],
 					deletions[i],

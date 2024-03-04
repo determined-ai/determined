@@ -4,15 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 
-	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
@@ -43,7 +40,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 }
 
 // Start starts each Publisher in the PublisherSet.
-func (ps *PublisherSet) Start(ctx context.Context) error {
+func (ps *PublisherSet) Run(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
 		ps.Projects: make(chan bool),
 	}
@@ -65,9 +62,19 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 		},
 	)
 
-	// wait for all publishers to become ready
+	// Wait for all publishers to become ready.
 	eg.Go(
 		func(c context.Context) error {
+			// Always set ready=true, even if the publisher loop crashes and this goroutine is
+			// canceled, because there might be streamers waiting for this PublisherSet to become
+			// ready, and we don't want them to hang.
+			defer func() {
+				ps.readyCond.L.Lock()
+				defer ps.readyCond.L.Unlock()
+				ps.ready = true
+				ps.readyCond.Broadcast()
+			}()
+
 			for i := range readyChannels {
 				select {
 				case <-c.Done():
@@ -76,39 +83,10 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 					continue
 				}
 			}
-			func() {
-				ps.readyCond.L.Lock()
-				defer ps.readyCond.L.Unlock()
-				ps.ready = true
-				ps.readyCond.Signal()
-			}()
 			return nil
 		},
 	)
 	return eg.Wait()
-}
-
-// StreamHandler is the Echo websocket endpoint handler for streaming updates,
-// defaulting the prepare function to prepareWebsocketMessage().
-func (ps *PublisherSet) StreamHandler(
-	publisherSetCtx context.Context,
-	socket *websocket.Conn,
-	c echo.Context,
-) error {
-	reqCtx := c.Request().Context()
-	detCtx, ok := c.(*detContext.DetContext)
-	if !ok {
-		log.Errorf("unable to run PublisherSet: expected DetContext but received %t",
-			reflect.TypeOf(c))
-	}
-	user := detCtx.MustGetUser()
-	return ps.streamHandler(
-		publisherSetCtx,
-		reqCtx,
-		user,
-		&WrappedWebsocket{Conn: socket},
-		prepareWebsocketMessage,
-	)
 }
 
 // entrypoint manages the streamer websocket connection, processing incoming events

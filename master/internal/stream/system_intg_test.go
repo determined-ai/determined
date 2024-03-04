@@ -9,13 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/master/test/streamdata"
 )
 
@@ -35,9 +34,9 @@ func TestMockSocket(t *testing.T) {
 		},
 	}
 
-	// test WriteOutbound
+	// test WriteToServer
 	socket := newMockSocket()
-	socket.WriteOutbound(t, &expectedMsg)
+	socket.WriteToServer(t, &expectedMsg)
 
 	// test ReadJSON
 	actualMsg := StartupMsg{}
@@ -46,15 +45,14 @@ func TestMockSocket(t *testing.T) {
 	require.Equal(t, actualMsg.Known, expectedMsg.Known)
 	require.Equal(t, actualMsg.Subscribe, expectedMsg.Subscribe)
 	require.Equal(t, actualMsg.SyncID, expectedMsg.SyncID)
-	require.Equal(t, 0, len(socket.outbound))
+	require.Equal(t, 0, len(socket.toServer))
 
 	// test write
 	err = socket.Write("test")
 	require.NoError(t, err)
 
 	// test read incoming
-	var data string
-	socket.ReadIncoming(t, &data)
+	data := socket.ReadFromServer(t)
 	require.Equal(t, "test", data)
 
 	// test ReadUntil
@@ -62,8 +60,7 @@ func TestMockSocket(t *testing.T) {
 	require.NoError(t, err)
 	err = socket.Write("final")
 	require.NoError(t, err)
-	var msgs []string
-	socket.ReadUntilFound(t, &msgs, []string{"final"})
+	msgs := socket.ReadUntilFound(t, "final")
 	require.NoError(t, err)
 	require.Equal(t, 2, len(msgs))
 	require.Equal(t, "test", msgs[0])
@@ -96,18 +93,17 @@ type startupTestCase struct {
 // basicStartupTest sends a startup message and validates the result against the test case.
 func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket) {
 	// write startup message
-	socket.WriteOutbound(t, &testCase.startupMsg)
+	socket.WriteToServer(t, &testCase.startupMsg)
 
 	// read messages collected during startup + sync msg.
-	var data []string
 
 	// constructed expected sync messages based on startup message.
-	baseSyncMsg := fmt.Sprintf("key: sync_msg, sync_id: %s", testCase.startupMsg.SyncID)
+	baseSyncMsg := fmt.Sprintf("type: sync_msg, sync_id: %s", testCase.startupMsg.SyncID)
 	expectedSyncs := []string{
 		baseSyncMsg + ", complete: false",
 		baseSyncMsg + ", complete: true",
 	}
-	socket.ReadUntilFound(t, &data, expectedSyncs)
+	data := socket.ReadUntilFound(t, expectedSyncs...)
 
 	deletions, upserts, syncs := splitMsgs(t, data)
 	// confirm these messages are the expected results
@@ -134,7 +130,7 @@ func runStartupTest(t *testing.T, pgDB *db.PgDB, testCases []startupTestCase) {
 	errgrp := errgroupx.WithContext(ctx)
 
 	// start PublisherSet and connect as testUser
-	errgrp.Go(ps.Start)
+	errgrp.Go(ps.Run)
 	errgrp.Go(func(ctx context.Context) error {
 		return ps.streamHandler(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
@@ -224,8 +220,10 @@ func basicUpdateTest(
 	}
 
 	// read until we received the expected message
-	data := []string{}
-	socket.ReadUntilFound(t, &data, append(testCase.expectedUpserts, testCase.expectedDeletions...))
+	var expected []string
+	expected = append(expected, testCase.expectedUpserts...)
+	expected = append(expected, testCase.expectedDeletions...)
+	data := socket.ReadUntilFound(t, expected...)
 	deletions, upserts, _ := splitMsgs(t, data)
 
 	// validate messages collected at startup
@@ -251,7 +249,7 @@ func runUpdateTest(t *testing.T, pgDB *db.PgDB, testCases []updateTestCase) {
 
 	// start publisher set and connect as testUser
 	errgrp := errgroupx.WithContext(ctx)
-	errgrp.Go(ps.Start)
+	errgrp.Go(ps.Run)
 	errgrp.Go(func(ctx context.Context) error {
 		return ps.streamHandler(superCtx, ctx, testUser, socket, testPrepareFunc)
 	})
@@ -287,35 +285,35 @@ func TestProjectStartup(t *testing.T) {
 				map[string]map[string][]int{projects: {projects: {1, 2}}},
 			),
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			expectedDeletions: []string{"type: projects_deleted, deleted: "},
 		},
 		{
 			description: "project subscription with excess project id",
 			startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2,3"},
 				map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
+			expectedDeletions: []string{"type: projects_deleted, deleted: 3"},
 		},
 		{
 			description: "project subscription with workspaces",
 			startupMsg: buildStartupMsg("3", map[string]string{projects: "1,2"},
 				map[string]map[string][]int{projects: {projects: {1, 2}}}),
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			expectedDeletions: []string{"type: projects_deleted, deleted: "},
 		},
 		{
 			description: "project offline fall out",
 			startupMsg: buildStartupMsg("4", map[string]string{projects: "1,2"},
 				map[string]map[string][]int{projects: {projects: {1}}}),
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
+			expectedDeletions: []string{"type: projects_deleted, deleted: 2"},
 		},
 		{
 			description: "project offline fall in",
 			startupMsg: buildStartupMsg("5", map[string]string{projects: "1"},
 				map[string]map[string][]int{projects: {projects: {1, 2}}}),
-			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
-			expectedDeletions: []string{"key: projects_deleted, deleted: "},
+			expectedUpserts:   []string{"type: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
+			expectedDeletions: []string{"type: projects_deleted, deleted: "},
 		},
 	}
 
@@ -345,11 +343,11 @@ func TestProjectUpdate(t *testing.T) {
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
 				expectedUpserts:   []string{},
-				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+				expectedDeletions: []string{"type: projects_deleted, deleted: "},
 			},
 			description:       "create project 3",
 			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject)},
-			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+			expectedUpserts:   []string{"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 		{
@@ -357,13 +355,13 @@ func TestProjectUpdate(t *testing.T) {
 				description: "startup case for: update project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
-				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+				expectedUpserts:   []string{"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+				expectedDeletions: []string{"type: projects_deleted, deleted: "},
 			},
 			description: "update project 3",
 			queries:     []streamdata.ExecutableQuery{streamdata.GetUpdateProjectQuery(projectMod)},
 			expectedUpserts: []string{
-				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1",
+				"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1",
 			},
 			expectedDeletions: []string{},
 		},
@@ -372,13 +370,13 @@ func TestProjectUpdate(t *testing.T) {
 				description: "startup case for: delete project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
 					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
-				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1"},
-				expectedDeletions: []string{"key: projects_deleted, deleted: "},
+				expectedUpserts:   []string{"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1"},
+				expectedDeletions: []string{"type: projects_deleted, deleted: "},
 			},
 			description:       "delete project 3",
 			queries:           []streamdata.ExecutableQuery{streamdata.GetDeleteProjectQuery(projectMod)},
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
+			expectedDeletions: []string{"type: projects_deleted, deleted: 3"},
 		},
 	}
 
@@ -407,12 +405,12 @@ func TestOnlineChanges(t *testing.T) {
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: projects_deleted, deleted: ",
+					"type: projects_deleted, deleted: ",
 				},
 			},
 			description:       "online create project",
 			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject)},
-			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+			expectedUpserts:   []string{"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 		{
@@ -425,7 +423,7 @@ func TestOnlineChanges(t *testing.T) {
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: projects_deleted, deleted: ",
+					"type: projects_deleted, deleted: ",
 				},
 			},
 			description: "online fall out project",
@@ -434,7 +432,7 @@ func TestOnlineChanges(t *testing.T) {
 				WorkspaceID: 1,
 			})},
 			expectedUpserts:   []string{},
-			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
+			expectedDeletions: []string{"type: projects_deleted, deleted: 3"},
 		},
 		{
 			startupCase: startupTestCase{
@@ -446,7 +444,7 @@ func TestOnlineChanges(t *testing.T) {
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
-					"key: projects_deleted, deleted: ",
+					"type: projects_deleted, deleted: ",
 				},
 			},
 			description: "online fall in project",
@@ -454,7 +452,7 @@ func TestOnlineChanges(t *testing.T) {
 				ID:          3,
 				WorkspaceID: 2,
 			})},
-			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
+			expectedUpserts:   []string{"type: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{},
 		},
 	}
