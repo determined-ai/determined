@@ -11,6 +11,7 @@ import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
   FilterFormSet,
@@ -38,6 +39,7 @@ import {
   RunState,
 } from 'types';
 import handleError from 'utils/error';
+import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 
 import ComparisonView from './ComparisonView';
 import {
@@ -63,6 +65,7 @@ import {
   MULTISELECT,
   NO_PINS_WIDTH,
 } from './glide-table/columns';
+import { ContextMenuCompleteHandlerProps, ContextMenuComponentProps } from './glide-table/contextMenu';
 import { Error, NoExperiments } from './glide-table/exceptions';
 import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
@@ -586,7 +589,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleSelectionChange, selectedExperimentIds, openToast],
   );
 
-  const handleContextMenuComplete = useCallback(
+  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem> = useCallback(
     (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
@@ -934,9 +937,22 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 height={height}
                 page={page}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
-                project={project}
                 projectColumns={projectColumns}
                 projectHeatmap={projectHeatmap}
+                renderContextMenuComponent={(props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => {
+                  return (
+                    <ExperimentActionDropdown
+                      cell={props.cell}
+                      experiment={getProjectExperimentForExperimentItem(props.rowData.experiment, project)}
+                      link={props.link}
+                      makeOpen={props.open}
+                      onComplete={props.onComplete}
+                      onLink={props.onClose}
+                      onVisibleChange={props.onVisibleChange}>
+                      <div />
+                    </ExperimentActionDropdown>
+                  );
+                }}
                 rowHeight={globalSettings.rowHeight}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}

@@ -1,10 +1,7 @@
 import { GridCell } from '@glideapps/glide-data-grid';
 import { MenuProps } from 'antd';
 import { DropdownEvent } from 'hew/Dropdown';
-import React, { MutableRefObject, useCallback, useEffect, useRef } from 'react';
-
-import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
-import { ExperimentAction, ExperimentItem, ProjectExperiment } from 'types';
+import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 // eslint-disable-next-line
 function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Event) => void) {
@@ -30,32 +27,39 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
   }, [ref, handler]);
 }
 
-export interface TableContextMenuProps extends MenuProps {
+export type ContextMenuCompleteHandlerProps<CompleteAction, CompleteData> = (action: CompleteAction, id: number, data?: Partial<CompleteData>) => void;
+
+export interface ContextMenuProps<RowData, CompleteAction, CompleteData> extends MenuProps {
   cell?: GridCell;
-  experiment: ProjectExperiment;
+  rowData: RowData;
   link?: string;
   onClose: (e?: DropdownEvent | Event) => void;
-  onComplete?: (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => void;
+  onComplete?: ContextMenuCompleteHandlerProps<CompleteAction, CompleteData>;
+  onVisibleChange?: (visible: boolean) => void;
   open: boolean;
+  renderContextMenuComponent: (props: ContextMenuComponentProps<RowData, CompleteAction, CompleteData>) => JSX.Element;
   x: number;
   y: number;
 }
 
-export const TableContextMenu: React.FC<TableContextMenuProps> = ({
+export type ContextMenuComponentProps<RowData, CompleteAction, CompleteData> = Omit<ContextMenuProps<RowData, CompleteAction, CompleteData>, 'renderContextMenuComponent' | 'x' | 'y'>;
+
+export function ContextMenu<RowData, CompleteAction, CompleteData>({
   cell,
-  experiment,
+  rowData,
   link,
   onClose,
   onComplete,
   open,
+  renderContextMenuComponent,
   x,
   y,
-}) => {
+}: ContextMenuProps<RowData, CompleteAction, CompleteData>): JSX.Element {
   const containerRef = useRef(null);
   useOutsideClickHandler(containerRef, onClose);
 
   const handleComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => {
+    (action: CompleteAction, id: number, data?: Partial<CompleteData>) => {
       onComplete?.(action, id, data);
       onClose();
     },
@@ -73,16 +77,15 @@ export const TableContextMenu: React.FC<TableContextMenuProps> = ({
         top: y,
         zIndex: 10,
       }}>
-      <ExperimentActionDropdown
-        cell={cell}
-        experiment={experiment}
-        link={link}
-        makeOpen={open}
-        onComplete={handleComplete}
-        onLink={onClose}
-        onVisibleChange={handleVisibleChange}>
-        <div />
-      </ExperimentActionDropdown>
+      {renderContextMenuComponent({
+        cell,
+        link,
+        onClose,
+        onComplete: handleComplete,
+        onVisibleChange: handleVisibleChange,
+        open,
+        rowData,
+      })}
     </div>
   );
 };

@@ -39,11 +39,9 @@ import {
   ExperimentAction,
   ExperimentItem,
   ExperimentWithTrial,
-  Project,
   ProjectColumn,
   ProjectMetricsRange,
 } from 'types';
-import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
@@ -54,7 +52,7 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from './columns';
-import { TableContextMenu, TableContextMenuProps } from './contextMenu';
+import { ContextMenu, ContextMenuCompleteHandlerProps, ContextMenuComponentProps, ContextMenuProps } from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
@@ -69,6 +67,7 @@ export interface GlideTableProps {
   colorMap: MapOfIdsToColors;
   columns: ColumnDef[];
   columnWidths: Record<string, number>;
+  renderContextMenuComponent: (props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => JSX.Element;
   comparisonViewOpen?: boolean;
   data: Loadable<ExperimentWithTrial>[];
   dataTotal: number;
@@ -77,11 +76,7 @@ export interface GlideTableProps {
   heatmapSkipped: string[];
   height: number;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
-  onContextMenuComplete?: (
-    action: ExperimentAction,
-    id: number,
-    data?: Partial<ExperimentItem>,
-  ) => void;
+  onContextMenuComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
   onHeatmapSelection?: (selection: string[]) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
@@ -91,7 +86,6 @@ export interface GlideTableProps {
   onSortChange?: (sorts: Sort[]) => void;
   page: number;
   pinnedColumnsCount: number;
-  project?: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
   rowHeight: RowHeight;
@@ -151,8 +145,8 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onSortChange,
   page,
   pinnedColumnsCount,
-  project,
   projectColumns,
+  renderContextMenuComponent,
   rowHeight,
   scrollPositionSetCount,
   selection,
@@ -184,18 +178,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     handleClose: () => setMenuIsOpen(false),
   });
 
-  const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) => {
-      onContextMenuComplete?.(action, id, data);
-    },
-    [onContextMenuComplete],
-  );
-
   const [contextMenuOpen] = useState(observable(false));
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
-    TableContextMenuProps,
+    ContextMenuProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>,
     'open'
   >>(null);
 
@@ -546,13 +533,14 @@ export const GlideTable: React.FC<GlideTableProps> = ({
           // Update the context menu based on the cell context.
           setContextMenuProps({
             cell,
-            experiment: getProjectExperimentForExperimentItem(rowData.experiment, project),
             link: isLinkCell(cell) ? cell.data.link.href : undefined,
             onClose: (e?: DropdownEvent | Event) => {
               // Prevent the context menu closing click from triggering something else.
               if (contextMenuOpen.get()) e?.stopPropagation();
               contextMenuOpen.set(false);
             },
+            renderContextMenuComponent,
+            rowData,
             x: Math.max(0, event.bounds.x + event.localEventX - 4),
             y: Math.max(0, event.bounds.y + event.localEventY - 4),
           });
@@ -561,7 +549,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
         }, 50);
       });
     },
-    [columns, data, project, setContextMenuProps, contextMenuOpen],
+    [columns, data, renderContextMenuComponent, setContextMenuProps, contextMenuOpen],
   );
 
   const onColumnMoved: DataEditorProps['onColumnMoved'] = useCallback(
@@ -687,10 +675,10 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
-        <TableContextMenu
+        <ContextMenu<ExperimentWithTrial, ExperimentAction, ExperimentItem>
           {...contextMenuProps}
           open={contextMenuIsOpen}
-          onComplete={handleContextMenuComplete}
+          onComplete={onContextMenuComplete}
         />
       )}
     </div>

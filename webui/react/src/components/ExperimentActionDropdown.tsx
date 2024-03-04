@@ -13,6 +13,7 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import usePermissions from 'hooks/usePermissions';
+import { ContextMenuCompleteHandlerProps } from 'pages/F_ExpList/glide-table/contextMenu';
 import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
@@ -37,11 +38,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (
-    action: ExperimentAction,
-    id: number,
-    data?: Partial<ExperimentItem>,
-  ) => void | Promise<void>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
