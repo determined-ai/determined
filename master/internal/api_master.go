@@ -35,7 +35,7 @@ func (a *apiServer) GetMaster(
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,
-		ClusterId:             a.m.ClusterID,
+		ClusterId:             cluster.ClusterID(),
 		ClusterName:           a.m.config.ClusterName,
 		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,

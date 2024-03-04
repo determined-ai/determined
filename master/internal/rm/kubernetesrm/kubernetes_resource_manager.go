@@ -51,7 +51,7 @@ type ResourceManager struct {
 // New returns a new ResourceManager, which communicates with
 // and submits work to a Kubernetes apiserver.
 func New(
-	db *db.PgDB,
+	pgdb *db.PgDB,
 	rmConfigs *config.ResourceManagerWithPoolsConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
@@ -61,13 +61,6 @@ func New(
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
-
-	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
-	clusterID, err := db.GetOrCreateClusterID("")
-	if err != nil {
-		panic(fmt.Errorf("getting clusterID: %w", err))
-	}
-	setClusterID(clusterID)
 
 	k := &ResourceManager{
 		syslog: logrus.WithField("component", "k8srm"),
@@ -81,7 +74,7 @@ func New(
 		masterTLSConfig: tlsConfig,
 		loggingConfig:   opts.LoggingOptions,
 
-		db: db,
+		db: pgdb,
 	}
 
 	poolNamespaces := make(map[string]string)

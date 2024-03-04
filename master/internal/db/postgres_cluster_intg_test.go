@@ -21,7 +21,7 @@ func TestClusterAPI(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	_, err := db.GetOrCreateClusterID("")
+	_, err := GetOrCreateClusterID("")
 	require.NoError(t, err, "failed to get or create cluster id")
 
 	// Add a mock user

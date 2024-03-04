@@ -1016,8 +1016,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
-	if err != nil {
+	m.ClusterID = m.config.Telemetry.ClusterID
+	if err := cluster.SetClusterID(m.ClusterID); err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
