@@ -14,18 +14,14 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca"
 DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-f66cbce"
-DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca"
 DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-f66cbce"
 DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-cpu-f66cbce"
 DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-f66cbce"
 DEFAULT_PT2_CPU_IMAGE = "determinedai/environments:py-3.10-pytorch-2.0-cpu-f66cbce"
 DEFAULT_PT2_GPU_IMAGE = "determinedai/environments:cuda-11.8-pytorch-2.0-gpu-f66cbce"
 
-TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
-TF1_GPU_IMAGE = os.environ.get("TF1_GPU_IMAGE") or DEFAULT_TF1_GPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
 PT_CPU_IMAGE = os.environ.get("PT_CPU_IMAGE") or DEFAULT_PT_CPU_IMAGE
 PT_GPU_IMAGE = os.environ.get("PT_GPU_IMAGE") or DEFAULT_PT_GPU_IMAGE
@@ -141,10 +137,6 @@ def set_image(config: Dict[Any, Any], cpu_image: str, gpu_image: str) -> Dict[An
     config.setdefault("environment", {})
     config["environment"]["image"] = {"cpu": cpu_image, "gpu": gpu_image}
     return config
-
-
-def set_tf1_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    return set_image(config, TF1_CPU_IMAGE, TF1_GPU_IMAGE)
 
 
 def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:

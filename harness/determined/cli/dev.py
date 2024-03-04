@@ -7,9 +7,10 @@ import shlex
 import shutil
 import subprocess
 import sys
+import typing
 from argparse import Namespace
 from collections.abc import Sequence
-from typing import Any, Dict, List, OrderedDict, Tuple
+from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union, get_args, get_origin
 from urllib import parse
 
 from termcolor import colored
@@ -53,10 +54,7 @@ def curl(args: Namespace) -> None:
         cmd += args.curl_args
 
     if args.x:
-        if hasattr(shlex, "join"):  # added in py 3.8
-            print(shlex.join(cmd))  # type: ignore
-        else:
-            print(" ".join(shlex.quote(arg) for arg in cmd))
+        print(shlex.join(cmd))
 
     if not sys.stdout.isatty():
         output = subprocess.run(cmd)
@@ -99,20 +97,13 @@ def unwrap_optional(annotation: Any) -> Any:
     """
     evaluates and unwraps a typing.Optional annotation to its inner type.
     """
-    import typing
-
-    try:
-        from typing import get_args, get_origin  # type: ignore
-    except ImportError:
-        raise errors.CliError("python >= 3.8 is required to use this feature")
-
     local_context = {
         "typing": typing,
-        "Optional": typing.Optional,
-        "Union": typing.Union,
-        "List": typing.List,
-        "Sequence": typing.Sequence,
-        "Dict": typing.Dict,
+        "Optional": Optional,
+        "Union": Union,
+        "List": List,
+        "Sequence": Sequence,
+        "Dict": Dict,
         "NoneType": type(None),
     }
     if isinstance(annotation, str):
@@ -123,10 +114,10 @@ def unwrap_optional(annotation: Any) -> Any:
     origin = get_origin(annotation)
     args = get_args(annotation)
 
-    if origin is typing.Union:
+    if origin is Union:
         if len(args) == 2 and type(None) in args:
             return args[0]
-    elif origin is typing.Optional:
+    elif origin is Optional:
         return args[0]
     return annotation
 
@@ -136,11 +127,6 @@ def is_supported_annotation(annot: Any) -> bool:
     determines if a our CLI deserializer supports a given type annotation
     and subsequently a binding's parameter.
     """
-    try:
-        from typing import get_args, get_origin  # type: ignore
-    except ImportError:
-        raise errors.CliError("python >= 3.8 is required to use this feature")
-
     annot = unwrap_optional(annot)
     supported_types = [str, int, float, type(None), bool]
     if annot in supported_types:
