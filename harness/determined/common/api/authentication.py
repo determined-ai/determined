@@ -119,7 +119,7 @@ def login_with_cache(
     the password is only used in a cache miss.
 
     Returns:
-        The username and token of the logged in user.
+        A new, logged-in Session (one that has a valid token).
     """
 
     token_store = TokenStore(master_address)
