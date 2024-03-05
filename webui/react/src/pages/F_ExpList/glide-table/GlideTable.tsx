@@ -22,7 +22,6 @@ import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useUI from 'components/ThemeProvider';
-import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
@@ -75,23 +74,21 @@ export const getTheme = (appTheme: HewTheme): DataEditorProps['theme'] => {
 };
 
 export interface GlideTableProps<T, ContextAction extends string, ContextActionData> {
-  colorMap: MapOfIdsToColors;
   columns: ColumnDef<T>[];
   columnWidths: Record<string, number>;
-  /** field to use as unique identifier for each element in data */
-  rowIdPath: string;
   renderContextMenuComponent?: (
     props: ContextMenuComponentProps<T, ContextAction, ContextActionData>,
   ) => JSX.Element;
-  comparisonViewOpen?: boolean;
   data: Loadable<T>[];
   dataTotal: number;
+  getRowAccentColor?: (rowData: T) => void;
   getHeaderMenuItems?: (
     columnId: string,
     colIdx: number,
     setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
   ) => MenuItem[];
   height: number;
+  hideUnpinned?: boolean;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
   onLinkClick?: (href: string) => void;
@@ -133,13 +130,13 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 };
 
 export function GlideTable<T, ContextAction extends string, ContextActionData>({
-  colorMap,
   columns,
   columnWidths,
-  comparisonViewOpen = false,
   data,
   dataTotal,
   getHeaderMenuItems,
+  getRowAccentColor,
+  hideUnpinned = false,
   height,
   onColumnResize,
   onContextMenuComplete,
@@ -151,7 +148,6 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   page,
   pageSize,
   pinnedColumnsCount,
-  rowIdPath,
   renderContextMenuComponent,
   rowHeight,
   scrollPositionSetCount,
@@ -227,15 +223,15 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
 
       const rowColorTheme = Loadable.match(data[row], {
         _: () => ({}),
-        Loaded: (record) =>
-          colorMap[_.get(record, rowIdPath)]
-            ? { accentColor: colorMap[_.get(record, rowIdPath)] }
-            : {},
+        Loaded: (record) => {
+          const accentColor = getRowAccentColor?.(record);
+          return accentColor ? { accentColor } : {};
+        },
       });
 
       return { ...rowColorTheme, ...hoverStyle };
     },
-    [colorMap, data, getThemeVar, rowIdPath, hoveredRow, selection.rows],
+    [getRowAccentColor, data, getThemeVar, hoveredRow, selection.rows],
   );
 
   const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
@@ -256,13 +252,13 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
-                  setMenuIsOpen(false);
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                onSelectionChange?.('remove-all', [0, data.length]);
+                setMenuIsOpen(false);
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -453,8 +449,8 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => !comparisonViewOpen && col === staticColumns.length + pinnedColumnsCount,
-    [comparisonViewOpen, pinnedColumnsCount, staticColumns.length],
+    (col: number) => hideUnpinned && col === staticColumns.length + pinnedColumnsCount,
+    [hideUnpinned, pinnedColumnsCount, staticColumns.length],
   );
 
   const sortMap = useMemo(() => {
@@ -502,7 +498,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       {tooltip}
       <div className={css.base}>
         <DataEditor
-          className={comparisonViewOpen ? css.compareTable : undefined}
+          className={hideUnpinned ? css.horizontalScrollDisabled : undefined}
           columns={columns}
           customRenderers={customRenderers}
           drawHeader={drawHeader}
