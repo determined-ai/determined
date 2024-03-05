@@ -1,12 +1,10 @@
 package kubernetesrm
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"sync"
@@ -24,6 +22,7 @@ import (
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -76,11 +75,12 @@ type pods struct {
 	slotResourceRequests  config.PodSlotResourceRequests
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
-	credsDir              string
+
+	kubeconfigPath string
 
 	clientSet        k8sClient.Interface
-	masterIP         string
-	masterPort       int32
+	detMasterIP      string
+	detMasterPort    int32
 	masterTLSConfig  model.TLSClientConfig
 	loggingTLSConfig model.TLSClientConfig
 	loggingConfig    model.LoggingConfig
@@ -153,9 +153,9 @@ func newPodsService(
 	slotResourceRequests config.PodSlotResourceRequests,
 	resourcePoolConfigs []config.ResourcePoolConfig,
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
-	credsDir string,
-	masterIP string,
-	masterPort int32,
+	detMasterIP string,
+	detMasterPort int32,
+	kubeconfigPath string,
 	podStatusUpdateCallback podStatusUpdateCallback,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
@@ -182,15 +182,16 @@ func newPodsService(
 		slotResourceRequests:         slotResourceRequests,
 		resourcePoolConfigs:          resourcePoolConfigs,
 		baseContainerDefaults:        taskContainerDefaults,
-		credsDir:                     credsDir,
-		masterIP:                     masterIP,
-		masterPort:                   masterPort,
+		detMasterIP:                  detMasterIP,
+		detMasterPort:                detMasterPort,
 		currentNodes:                 make(map[string]*k8sV1.Node),
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
 		syslog:                       logrus.WithField("namespace", namespace),
 		podStatusUpdateCallback:      podStatusUpdateCallback,
+
+		kubeconfigPath: kubeconfigPath,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -315,49 +316,32 @@ func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgent
 	return p.disableNode(msg.AgentId, msg.Drain)
 }
 
-func readClientConfig(credsDir string) (*rest.Config, error) {
-	if credsDir == "" {
-		// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
-		// environment variables:
-		//   - KUBERNETES_SERVICE_HOST
-		//   - KUBERNETES_SERVICE_PORT
-		// and it expects to find files:
-		//   - /var/run/secrets/kubernetes.io/serviceaccount/token
-		//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-		return rest.InClusterConfig()
+// TODO(!!!): extract k8s client construction.
+func (p *pods) readClientConfig() (*rest.Config, error) {
+	if p.kubeconfigPath != "" {
+		bs, err := os.ReadFile(p.kubeconfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("reading kubeconfig at %s: %w", p.kubeconfigPath, err)
+		}
+		cl, err := clientcmd.RESTConfigFromKubeConfig(bs)
+		if err != nil {
+			return nil, fmt.Errorf("building rest.Config from kubeconfig at %s: %w", p.kubeconfigPath, err)
+		}
+		return cl, nil
 	}
 
-	// A special case for rapid determined+k8s development: build a rest.Config from a specially
-	// packed directory with the same information.  Our tools/scripts/fetch-k8s-creds.sh script can
-	// create such a directory, with server, token, and ca.crt files.
-
-	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	server, err := os.ReadFile(filepath.Join(credsDir, "server"))
-	if err != nil {
-		return nil, err
-	}
-
-	server = bytes.Trim(server, " \t\r\n")
-
-	tokenFile := filepath.Join(credsDir, "token")
-	//nolint:gosec // Yes, we intend to read from this file specified in the config.
-	token, err := os.ReadFile(tokenFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return &rest.Config{
-		Host:            string(server),
-		BearerToken:     string(token),
-		BearerTokenFile: tokenFile,
-		TLSClientConfig: rest.TLSClientConfig{
-			CAFile: filepath.Join(credsDir, "ca.crt"),
-		},
-	}, nil
+	// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
+	// environment variables:
+	//   - KUBERNETES_SERVICE_HOST
+	//   - KUBERNETES_SERVICE_PORT
+	// and it expects to find files:
+	//   - /var/run/secrets/kubernetes.io/serviceaccount/token
+	//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+	return rest.InClusterConfig()
 }
 
 func (p *pods) startClientSet() error {
-	config, err := readClientConfig(p.credsDir)
+	config, err := p.readClientConfig()
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
@@ -377,8 +361,9 @@ func (p *pods) startClientSet() error {
 }
 
 func (p *pods) getMasterIPAndPort() error {
-	if p.masterIP != "" && p.masterPort != 0 {
-		// Master ip and port were manually configured (probably for development purposes).
+	if p.detMasterIP != "" && p.detMasterPort != 0 {
+		// Master ip and port were manually configured. For special circumstances, e.g., the master is running
+		// outside of this cluster (happens in development or when we spread across multiple k8s clusters).
 		return nil
 	}
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
@@ -387,9 +372,9 @@ func (p *pods) getMasterIPAndPort() error {
 		return errors.Wrap(err, "failed to get master service")
 	}
 
-	p.masterIP = masterService.Spec.ClusterIP
-	p.masterPort = masterService.Spec.Ports[0].Port
-	p.syslog.Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
+	p.detMasterIP = masterService.Spec.ClusterIP
+	p.detMasterPort = masterService.Spec.Ports[0].Port
+	p.syslog.Infof("master URL set to %s:%d", p.detMasterIP, p.detMasterPort)
 	return nil
 }
 
@@ -553,8 +538,8 @@ func (p *pods) reattachPod(
 		startMsg.Spec.ClusterID,
 		p.clientSet,
 		pod.Namespace,
-		p.masterIP,
-		p.masterPort,
+		p.detMasterIP,
+		p.detMasterPort,
 		p.masterTLSConfig,
 		p.loggingTLSConfig,
 		p.loggingConfig,
@@ -844,8 +829,8 @@ func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 		msg.Spec.ClusterID,
 		p.clientSet,
 		msg.Namespace,
-		p.masterIP,
-		p.masterPort,
+		p.detMasterIP,
+		p.detMasterPort,
 		p.masterTLSConfig,
 		p.loggingTLSConfig,
 		p.loggingConfig,
