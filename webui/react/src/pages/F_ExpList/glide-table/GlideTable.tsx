@@ -18,7 +18,6 @@ import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import * as io from 'io-ts';
-import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useUI from 'components/ThemeProvider';
