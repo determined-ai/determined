@@ -2,7 +2,6 @@ package multirm
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -720,33 +719,21 @@ func TestGetRMName(t *testing.T) {
 		rpName         string
 		err            error
 		expectedRMName string
-		rmConflicts    []string
 	}{
-		{"RM/RP undefined", "", "", nil, mockMultiRM.defaultRMName, nil},
-		{"RM defined, RP undefined", "aws", "", nil, "aws", nil},
-		{"RM defined/doesn't exist, RP undefined", "aws123", "", ErrRMNotDefined("aws123"), "aws123", nil},
-		{"RM defined, RP defined", "aws", "aws1", nil, "aws", nil},
-		{"RM defined, RP defined/doesn't exist", "aws", "awsa", nil, "aws", nil},
-		{"RM undefined, RP defined", "", "aws1", nil, "aws", nil},
-		{
-			"RM undefined, RP defined + conflict", "", "gcp2", ErrRMConflict([]string{"default", "gcp", "aws"}, "gcp2"),
-			"",
-			[]string{"default", "gcp", "aws"},
-		},
-		{"RM undefined, RP defined/doesn't exist", "", "gcp3", ErrRPNotDefined("gcp3"), "", nil},
+		{"RM/RP undefined", "", "", nil, mockMultiRM.defaultRMName},
+		{"RM defined, RP undefined", "aws", "", nil, "aws"},
+		{"RM defined/doesn't exist, RP undefined", "aws123", "", ErrRMNotDefined("aws123"), "aws123"},
+		{"RM defined, RP defined", "aws", "aws1", nil, "aws"},
+		{"RM defined, RP defined/doesn't exist", "aws", "awsa", nil, "aws"},
+		{"RM undefined, RP defined", "", "aws1", nil, "aws"},
+		{"RM undefined, RP defined + conflict", "", "gcp2", ErrRMConflict([]string{"default", "gcp", "aws"}, "gcp2"), ""},
+		{"RM undefined, RP defined/doesn't exist", "", "gcp3", ErrRPNotDefined("gcp3"), ""},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			rmName, err := mockMultiRM.getRM(tt.rmName, tt.rpName)
 			require.Equal(t, tt.expectedRMName, rmName)
-			if tt.err != nil && strings.Contains(tt.err.Error(), "exists for both resource managers") {
-				require.ErrorContains(t, err, "exists for both resource managers")
-				for _, r := range tt.rmConflicts {
-					require.ErrorContains(t, err, r)
-				}
-			} else {
-				require.Equal(t, tt.err, err)
-			}
+			require.Equal(t, tt.err, err)
 		})
 	}
 }

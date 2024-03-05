@@ -2,6 +2,7 @@ package multirm
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
@@ -19,6 +20,7 @@ import (
 // ErrRMConflict returns a detailed error if multiple resource managers define a resource pool
 // with the same name.
 func ErrRMConflict(rmNames []string, rp string) error {
+	slices.Sort(rmNames)
 	return fmt.Errorf("resource pool %s exists for both resource managers %v,", rp, rmNames)
 }
 
