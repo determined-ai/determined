@@ -73,8 +73,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const [projects, isLoading] = useMemo(
     () =>
-      loadableProjects.map((p): [Project[], boolean] => [p.toJSON(), false]).getOrElse([[], true]),
-    [loadableProjects],
+      loadableProjects
+        .map((p): [Project[], boolean] => [
+          p.toJSON().filter((p) => (settings.archived ? p : !p.archived)),
+          false,
+        ])
+        .getOrElse([[], true]),
+    [loadableProjects, settings.archived],
   );
 
   const handleProjectCreateClick = useCallback(() => {
