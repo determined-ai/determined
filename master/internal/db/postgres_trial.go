@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -367,6 +368,18 @@ func (db *PgDB) updateTotalBatches(ctx context.Context, tx *sqlx.Tx, trialID int
 	return nil
 }
 
+func (db *PgDB) _addTrialProfilingMetricsTx(
+	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
+) error {
+	if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+		return err
+	}
+
+	metrics := model.JSONObj(m.Metrics.AvgMetrics.AsMap())
+	_, err := db.addRawMetrics(ctx, tx, &metrics, tryAsTime(m.ReportTime), m.TrialRunId, m.TrialId, nil, mGroup)
+	return err
+}
+
 func (db *PgDB) _addTrialMetricsTx(
 	ctx context.Context, tx *sqlx.Tx, m *trialv1.TrialMetrics, mGroup model.MetricGroup,
 ) (rollbacks int, err error) {
@@ -377,7 +390,7 @@ func (db *PgDB) _addTrialMetricsTx(
 		return rollbacks, err
 	}
 
-	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.StepsCompleted,
+	if rollbacks, err = rollbackMetrics(ctx, tx, m.TrialRunId, m.TrialId, m.GetStepsCompleted(),
 		mGroup); err != nil {
 		return rollbacks, err
 	}
@@ -390,7 +403,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 
 	metricRowID, addedMetrics, err := db.addMetricsWithMerge(ctx, tx,
-		mBody, m.TrialRunId, m.TrialId, m.StepsCompleted, mGroup)
+		mBody, tryAsTime(m.ReportTime), m.TrialRunId, m.TrialId, m.StepsCompleted, mGroup)
 	if err != nil {
 		return rollbacks, err
 	}
@@ -482,7 +495,7 @@ WHERE id = $1;
 		if err := setTrialBestValidation(
 			tx, int(m.TrialId),
 			int(m.TrialRunId),
-			int(m.StepsCompleted)); err != nil {
+			int(m.GetStepsCompleted())); err != nil {
 			return rollbacks, errors.Wrap(err, "updating trial best validation")
 		}
 	}
@@ -500,7 +513,12 @@ func (db *PgDB) addTrialMetrics(
 	}
 	return rollbacks, db.withTransaction(fmt.Sprintf("add trial metrics %s", mGroup),
 		func(tx *sqlx.Tx) error {
-			rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mGroup)
+			switch {
+			case slices.Contains(model.ProfilingMetricGroups, mGroup):
+				err = db._addTrialProfilingMetricsTx(ctx, tx, m, mGroup)
+			default:
+				rollbacks, err = db._addTrialMetricsTx(ctx, tx, m, mGroup)
+			}
 			return err
 		})
 }

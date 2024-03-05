@@ -91,7 +91,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
 					TrialId:        int32(tr.ID),
-					StepsCompleted: stepsCompleted,
+					StepsCompleted: &stepsCompleted,
 					Metrics: &commonv1.Metrics{
 						AvgMetrics: &structpb.Struct{
 							Fields: map[string]*structpb.Value{
@@ -701,7 +701,7 @@ func TestDeleteExperiments(t *testing.T) {
 	createMetric := func(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
 		m := &trialv1.TrialMetrics{
 			TrialId:        int32(trID),
-			StepsCompleted: sc,
+			StepsCompleted: &sc,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: &structpb.Struct{
 					Fields: map[string]*structpb.Value{

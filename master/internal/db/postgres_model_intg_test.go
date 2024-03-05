@@ -89,10 +89,11 @@ func TestModels(t *testing.T) {
 			// Which maybe has some metrics.
 			var m *trialv1.TrialMetrics
 			const metricValue = 1.0
+			step := int32(stepsCompleted)
 			if tt.hasValidation {
 				m = &trialv1.TrialMetrics{
 					TrialId:        int32(tr.ID),
-					StepsCompleted: stepsCompleted,
+					StepsCompleted: &step,
 					Metrics: &commonv1.Metrics{
 						AvgMetrics: &structpb.Struct{
 							Fields: map[string]*structpb.Value{

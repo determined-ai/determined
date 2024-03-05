@@ -99,13 +99,15 @@ func createTestTrialWithMetrics(
 			},
 		}
 
+		step := int32(i)
+
 		group := model.MetricGroup("mygroup")
 		_, err := api.ReportTrialMetrics(ctx,
 			&apiv1.ReportTrialMetricsRequest{
 				Metrics: &trialv1.TrialMetrics{
 					TrialId:        int32(trial.ID),
 					TrialRunId:     0,
-					StepsCompleted: int32(i),
+					StepsCompleted: &step,
 					Metrics:        trainMetrics,
 				},
 				Group: group.ToString(),
@@ -132,7 +134,7 @@ func createTestTrialWithMetrics(
 				TrainingMetrics: &trialv1.TrialMetrics{
 					TrialId:        int32(trial.ID),
 					TrialRunId:     0,
-					StepsCompleted: int32(i),
+					StepsCompleted: &step,
 					Metrics:        trainMetrics,
 				},
 			})
@@ -171,7 +173,7 @@ func createTestTrialWithMetrics(
 				ValidationMetrics: &trialv1.TrialMetrics{
 					TrialId:        int32(trial.ID),
 					TrialRunId:     0,
-					StepsCompleted: int32(i),
+					StepsCompleted: &step,
 					Metrics:        valMetrics,
 				},
 			})
@@ -440,11 +442,12 @@ func TestNonNumericEpochMetric(t *testing.T) {
 	require.NoError(t, err)
 
 	trial, _ := createTestTrial(t, api, curUser)
+	step := int32(1)
 	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
 		ValidationMetrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     0,
-			StepsCompleted: 1,
+			StepsCompleted: &step,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: expectedMetrics,
 			},
@@ -466,12 +469,14 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
+	step := int32(1)
+
 	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialMetrics(ctx, &apiv1.ReportTrialMetricsRequest{
 		Metrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     0,
-			StepsCompleted: 1,
+			StepsCompleted: &step,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: expectedMetrics,
 			},
@@ -628,12 +633,14 @@ func TestUnusualMetricNames(t *testing.T) {
 	expectedMetrics, err := structpb.NewStruct(expectedMetricsMap)
 	require.NoError(t, err)
 
+	step := int32(1)
+
 	trial, _ := createTestTrial(t, api, curUser)
 	_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
 		ValidationMetrics: &trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     0,
-			StepsCompleted: 1,
+			StepsCompleted: &step,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: expectedMetrics,
 			},
@@ -1215,6 +1222,7 @@ func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *api
 	require.NoError(t, json.Unmarshal([]byte(
 		`{"inference": [{"a":1}, {"b":2}]}`,
 	), &trialMetrics))
+	step := int32(0)
 	for mType, metricsList := range trialMetrics {
 		for _, m := range metricsList {
 			metrics, err := structpb.NewStruct(m)
@@ -1223,7 +1231,7 @@ func createTestTrialInferenceMetrics(ctx context.Context, t *testing.T, api *api
 				&trialv1.TrialMetrics{
 					TrialId:        id,
 					TrialRunId:     int32(0),
-					StepsCompleted: int32(0),
+					StepsCompleted: &step,
 					Metrics: &commonv1.Metrics{
 						AvgMetrics: metrics,
 					},

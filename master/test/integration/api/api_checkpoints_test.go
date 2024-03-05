@@ -84,7 +84,7 @@ func testGetCheckpoint(
 				trialMetrics := trialv1.TrialMetrics{
 					TrialId:        int32(trial.ID),
 					TrialRunId:     int32(0),
-					StepsCompleted: stepsCompleted,
+					StepsCompleted: &stepsCompleted,
 					Metrics: &commonv1.Metrics{
 						AvgMetrics: &structpb.Struct{
 							Fields: map[string]*structpb.Value{
@@ -182,10 +182,11 @@ func testGetExperimentCheckpoints(
 		err := db.AddCheckpointMetadata(context.Background(), &checkpointMeta, trial.ID)
 		assert.NilError(t, err, "failed to add checkpoint meta")
 
+		step := int32(stepsCompleted)
 		trialMetrics := trialv1.TrialMetrics{
 			TrialId:        int32(trial.ID),
 			TrialRunId:     int32(0),
-			StepsCompleted: int32(stepsCompleted),
+			StepsCompleted: &step,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: &structpb.Struct{
 					Fields: map[string]*structpb.Value{

@@ -481,7 +481,7 @@ func AddTrialValidationMetrics(
 	trialMetrics := trialv1.TrialMetrics{
 		TrialId:        int32(tr.ID),
 		TrialRunId:     int32(0),
-		StepsCompleted: stepsCompleted,
+		StepsCompleted: &stepsCompleted,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics: &structpb.Struct{
 				Fields: map[string]*structpb.Value{

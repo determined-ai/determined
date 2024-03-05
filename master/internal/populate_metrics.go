@@ -92,9 +92,10 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 			},
 		}
 
+		stepsCompleted := int32(b + 1)
 		trainingMetrics := trialv1.TrialMetrics{
 			TrialId:        trialID,
-			StepsCompleted: int32(b + 1),
+			StepsCompleted: &stepsCompleted,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: trainingAvgMetrics,
 			},
@@ -127,11 +128,12 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 
 		validationMetrics := trialv1.TrialMetrics{
 			TrialId:        trialID,
-			StepsCompleted: int32(b + 1),
+			StepsCompleted: &stepsCompleted,
 			Metrics: &commonv1.Metrics{
 				AvgMetrics: validationAvgMetrics,
 			},
 		}
+
 		if b%trainingToValidationRatio == 0 {
 			err = db.SingleDB().AddValidationMetrics(ctx, &validationMetrics)
 		}
@@ -150,9 +152,10 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
 	fmt.Println("trivial metrics for", batches, "batches") //nolint:forbidigo
 
+	stepsCompleted := int32(batches)
 	trainingMetrics := trialv1.TrialMetrics{
 		TrialId:        trialID,
-		StepsCompleted: int32(batches),
+		StepsCompleted: &stepsCompleted,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics: makeMetrics(),
 		},
@@ -165,7 +168,7 @@ func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, ba
 
 	validationMetrics := trialv1.TrialMetrics{
 		TrialId:        trialID,
-		StepsCompleted: int32(batches),
+		StepsCompleted: &stepsCompleted,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics: makeMetrics(),
 		},
