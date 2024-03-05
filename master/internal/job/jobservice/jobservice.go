@@ -24,8 +24,8 @@ type Job interface {
 	ToV1Job() (*jobv1.Job, error)
 	SetJobPriority(priority int) error
 	SetWeight(weight float64) error
-	SetResourcePool(rm string, rp string) error
-	ResourcePool() (rm, rp string)
+	SetResourcePool(resourcePool string) error
+	ResourcePool() string
 }
 
 // Service manages the job service.
@@ -90,9 +90,8 @@ func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) (map[model.Jo
 	return jobRefs, nil
 }
 
-// GetJobs returns a list of jobs for a resource pool under a specific resource manager.
+// GetJobs returns a list of jobs for a resource pool.
 func (s *Service) GetJobs(
-	resourceManager string,
 	resourcePool string,
 	desc bool,
 	states []jobv1.State,
@@ -100,7 +99,7 @@ func (s *Service) GetJobs(
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	jobQ, err := s.rm.GetJobQ(resourceManager, resourcePool)
+	jobQ, err := s.rm.GetJobQ(sproto.GetJobQ{ResourcePool: resourcePool})
 	if err != nil {
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
@@ -114,7 +113,9 @@ func (s *Service) GetJobs(
 	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
 	// an error if there is any problem. Otherwise, RM returns rmerrors.ErrNotSupported
 	// error. In this case, continue without the External jobs.
-	externalJobs, err := s.rm.GetExternalJobs(resourceManager, resourcePool)
+	externalJobs, err := s.rm.GetExternalJobs(sproto.GetExternalJobs{
+		ResourcePool: resourcePool,
+	})
 	if err != nil {
 		// If the error is not 'ErrNotSupported' error, propagate the error upwards.
 		if err != rmerrors.ErrNotSupported {
@@ -160,13 +161,12 @@ func (s *Service) GetJobs(
 	return jobsInRM, nil
 }
 
-// GetJobSummary returns a summary of the job given an id and resource pool/resource manager.
-func (s *Service) GetJobSummary(id model.JobID, resourceManager string, resourcePool string,
-) (*jobv1.JobSummary, error) {
+// GetJobSummary returns a summary of the job given an id and resource pool.
+func (s *Service) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	jobQ, err := s.rm.GetJobQ(resourceManager, resourcePool)
+	jobQ, err := s.rm.GetJobQ(sproto.GetJobQ{ResourcePool: resourcePool})
 	if err != nil {
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
@@ -202,26 +202,24 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 			s.syslog.WithError(err).Info("setting command job weight")
 			return err
 		}
-	case *jobv1.QueueControl_Resources:
-		if action.Resources.ResourcePool == "" {
+	case *jobv1.QueueControl_ResourcePool:
+		if action.ResourcePool == "" {
 			s.syslog.Error("resource pool must be set")
 		}
-		return j.SetResourcePool(action.Resources.ResourceManager, action.Resources.ResourcePool)
+		return j.SetResourcePool(action.ResourcePool)
 	case *jobv1.QueueControl_AheadOf:
-		rmName, rpName := j.ResourcePool()
-		return s.rm.MoveJob(rmName, sproto.MoveJob{
+		return s.rm.MoveJob(sproto.MoveJob{
 			ID:           jobID,
 			Anchor:       model.JobID(action.AheadOf),
 			Ahead:        true,
-			ResourcePool: rpName,
+			ResourcePool: j.ResourcePool(),
 		})
 	case *jobv1.QueueControl_BehindOf:
-		rmName, rpName := j.ResourcePool()
-		return s.rm.MoveJob(rmName, sproto.MoveJob{
+		return s.rm.MoveJob(sproto.MoveJob{
 			ID:           jobID,
 			Anchor:       model.JobID(action.BehindOf),
 			Ahead:        false,
-			ResourcePool: rpName,
+			ResourcePool: j.ResourcePool(),
 		})
 	default:
 		return fmt.Errorf("unexpected action: %v", action)

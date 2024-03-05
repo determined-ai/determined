@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -63,7 +64,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	}
 
 	// Check if there are tasks.
-	taskSummaries, err := agentRM.GetAllocationSummaries()
+	taskSummaries, err := agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 0)
 
@@ -84,13 +85,13 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	gpuTask2 := &MockTask{ID: "gpu-task2", SlotsNeeded: 4}
 
 	// Let the CPU task actors request resources.
-	_, err = agentRM.Allocate("", sproto.AllocateRequest{
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
 		AllocationID: cpuTask1.ID,
 		SlotsNeeded:  cpuTask1.SlotsNeeded,
 		ResourcePool: cpuTask1.ResourcePool,
 	})
 	require.NoError(t, err)
-	_, err = agentRM.Allocate("", sproto.AllocateRequest{
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
 		AllocationID: cpuTask2.ID,
 		SlotsNeeded:  cpuTask2.SlotsNeeded,
 		ResourcePool: cpuTask2.ResourcePool,
@@ -98,7 +99,7 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummaries, err = agentRM.GetAllocationSummaries()
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -107,13 +108,13 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	)
 
 	// Let the GPU task actors request resources.
-	_, err = agentRM.Allocate("", sproto.AllocateRequest{
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
 		AllocationID: gpuTask1.ID,
 		SlotsNeeded:  gpuTask1.SlotsNeeded,
 		ResourcePool: gpuTask1.ResourcePool,
 	})
 	require.NoError(t, err)
-	_, err = agentRM.Allocate("", sproto.AllocateRequest{
+	_, err = agentRM.Allocate(sproto.AllocateRequest{
 		AllocationID: gpuTask2.ID,
 		SlotsNeeded:  gpuTask2.SlotsNeeded,
 		ResourcePool: gpuTask2.ResourcePool,
@@ -121,38 +122,39 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check the resource pools of the tasks are correct.
-	taskSummaries, err = agentRM.GetAllocationSummaries()
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(
 		t,
 		taskSummaries[gpuTask1.ID].ResourcePool,
 		taskSummaries[gpuTask2.ID].ResourcePool,
 	)
+
 	// Let the CPU task actors release resources.
-	agentRM.Release("",
+	agentRM.Release(
 		sproto.ResourcesReleased{
 			AllocationID: cpuTask1.ID,
 			ResourcePool: taskSummaries[cpuTask1.ID].ResourcePool,
 		},
 	)
-	agentRM.Release("", sproto.ResourcesReleased{
+	agentRM.Release(sproto.ResourcesReleased{
 		AllocationID: cpuTask2.ID,
 		ResourcePool: taskSummaries[cpuTask2.ID].ResourcePool,
 	})
-	taskSummaries, err = agentRM.GetAllocationSummaries()
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 2)
 
 	// Let the GPU task actors release resources.
-	agentRM.Release("", sproto.ResourcesReleased{
+	agentRM.Release(sproto.ResourcesReleased{
 		AllocationID: gpuTask1.ID,
 		ResourcePool: taskSummaries[gpuTask1.ID].ResourcePool,
 	})
-	agentRM.Release("", sproto.ResourcesReleased{
+	agentRM.Release(sproto.ResourcesReleased{
 		AllocationID: gpuTask2.ID,
 		ResourcePool: taskSummaries[gpuTask2.ID].ResourcePool,
 	})
-	taskSummaries, err = agentRM.GetAllocationSummaries()
+	taskSummaries, err = agentRM.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	require.NoError(t, err)
 	assert.Equal(t, len(taskSummaries), 0)
 
@@ -206,7 +208,7 @@ func TestGetResourcePools(t *testing.T) {
 		agentUpdates: queue.New[agentUpdatedEvent](),
 	}
 
-	resp, err := agentRM.GetResourcePools()
+	resp, err := agentRM.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	require.NoError(t, err)
 	actual, err := json.MarshalIndent(resp.ResourcePools, "", "  ")
 	require.NoError(t, err)

@@ -56,10 +56,11 @@ func TestRunCheckpointGCTask(t *testing.T) {
 			args: args{
 				rm: func() *mocks.ResourceManager {
 					var rm mocks.ResourceManager
-					rm.On("ResolveResourcePool", mock.Anything, mock.Anything).
-						Return("", "default", nil)
 
-					rm.On("TaskContainerDefaults", mock.Anything, mock.Anything, mock.Anything).
+					rm.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return("default", nil)
+
+					rm.On("TaskContainerDefaults", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(model.TaskContainerDefaultsConfig{}, nil)
 
 					return &rm
@@ -115,8 +116,8 @@ func TestRunCheckpointGCTask(t *testing.T) {
 				rm: func() *mocks.ResourceManager {
 					var rm mocks.ResourceManager
 
-					rm.On("ResolveResourcePool", mock.Anything, mock.Anything).
-						Return("", "", errors.New("rm is down or something"))
+					rm.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return("", errors.New("rm is down or something"))
 
 					return &rm
 				}(),

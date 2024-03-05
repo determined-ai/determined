@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/segmentio/analytics-go.v3"
 
@@ -119,7 +120,7 @@ func (m *mockClient) resetQueue() {
 // initMockedTelemetry() does what Init() does, but for tests.
 func initMockedTelemetry(t *testing.T) (*mockClient, *mocks.ResourceManager) {
 	mockRM := &mocks.ResourceManager{}
-	mockRM.On("GetResourcePools").Return(
+	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).Return(
 		&apiv1.GetResourcePoolsResponse{ResourcePools: []*resourcepoolv1.ResourcePool{}},
 		nil,
 	)

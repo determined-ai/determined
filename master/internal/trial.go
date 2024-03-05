@@ -241,12 +241,11 @@ func (t *trial) PatchSearcherState(req experiment.TrialSearcherState) error {
 	return nil
 }
 
-func (t *trial) PatchRP(rm, rp string) {
+func (t *trial) PatchRP(rp string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	resources := t.config.Resources()
-	resources.SetResourceManager(rm)
 	resources.SetResourcePool(rp)
 	t.config.SetResources(resources)
 	if t.allocationID != nil {
@@ -402,7 +401,6 @@ func (t *trial) maybeAllocateTask() error {
 			IsUserVisible:     true,
 			Name:              name,
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
-			ResourceManager:   t.config.Resources().ResourceManager(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: isSingleNode,
@@ -447,9 +445,8 @@ func (t *trial) maybeAllocateTask() error {
 		IsUserVisible:     true,
 		Name:              name,
 
-		SlotsNeeded:     t.config.Resources().SlotsPerTrial(),
-		ResourceManager: t.config.Resources().ResourceManager(),
-		ResourcePool:    t.config.Resources().ResourcePool(),
+		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
+		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: isSingleNode,
 		},
@@ -769,7 +766,7 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 		Where("end_time IS NULL").
 		Where("state != ?", model.AllocationStateTerminated)
 
-	if t.rm.IsReattachableOnlyAfterStarted(t.config.Resources().ResourceManager()) {
+	if t.rm.IsReattachableOnlyAfterStarted() {
 		selectQuery.Where("start_time IS NOT NULL")
 	}
 
@@ -806,7 +803,7 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 }
 
 func (t *trial) checkResourcePoolRemainingCapacity() error {
-	launchWarnings, err := t.rm.ValidateResources(t.config.Resources().ResourceManager(),
+	_, launchWarnings, err := t.rm.ValidateResources(
 		sproto.ValidateResourcesRequest{
 			ResourcePool: t.config.Resources().ResourcePool(),
 			Slots:        t.config.Resources().SlotsPerTrial(),
