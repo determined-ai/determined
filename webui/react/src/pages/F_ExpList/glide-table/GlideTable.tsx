@@ -164,8 +164,11 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
     if (gridRef.current !== null) {
       const rowOffset = Math.max(page * pageSize, 0);
-      gridRef.current.scrollTo(0, rowOffset);
-      scrollPositionSetCount.update((x) => x + 1);
+      const bounds = gridRef.current.getBounds(0, rowOffset);
+      if (bounds && !Number.isNaN(bounds.x)) {
+        gridRef.current.scrollTo(0, rowOffset);
+        scrollPositionSetCount.update((x) => x + 1);
+      }
     }
   });
 
