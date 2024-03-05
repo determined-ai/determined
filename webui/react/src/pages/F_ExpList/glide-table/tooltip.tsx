@@ -22,10 +22,7 @@ interface UseTooltipReturn {
   tooltip: ReactNode;
 }
 
-export function useTableTooltip<T>({
-  columns,
-  data,
-}: UseTooltipParams<T>): UseTooltipReturn {
+export function useTableTooltip<T>({ columns, data }: UseTooltipParams<T>): UseTooltipReturn {
   const [tooltipProps, setTooltipProps] = React.useState<TooltipProps | undefined>(undefined);
 
   const timeoutRef = React.useRef(0);
@@ -85,4 +82,4 @@ export function useTableTooltip<T>({
     onItemHovered,
     tooltip,
   };
-};
+}

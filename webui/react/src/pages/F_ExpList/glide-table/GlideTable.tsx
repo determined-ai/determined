@@ -26,13 +26,13 @@ import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
+import { ColumnDef, getHeaderIcons, MIN_COLUMN_WIDTH, MULTISELECT } from './columns';
 import {
-  ColumnDef,
-  getHeaderIcons,
-  MIN_COLUMN_WIDTH,
-  MULTISELECT,
-} from './columns';
-import { ContextMenu, ContextMenuCompleteHandlerProps, ContextMenuComponentProps, ContextMenuProps } from './contextMenu';
+  ContextMenu,
+  ContextMenuCompleteHandlerProps,
+  ContextMenuComponentProps,
+  ContextMenuProps,
+} from './contextMenu';
 import { customRenderers } from './custom-renderers';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
@@ -80,11 +80,17 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   columnWidths: Record<string, number>;
   /** field to use as unique identifier for each element in data */
   rowIdPath: string;
-  renderContextMenuComponent?: (props: ContextMenuComponentProps<T, ContextAction, ContextActionData>) => JSX.Element;
+  renderContextMenuComponent?: (
+    props: ContextMenuComponentProps<T, ContextAction, ContextActionData>,
+  ) => JSX.Element;
   comparisonViewOpen?: boolean;
   data: Loadable<T>[];
   dataTotal: number;
-  getHeaderMenuItems?: (columnId: string, colIdx: number, setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>) => MenuItem[];
+  getHeaderMenuItems?: (
+    columnId: string,
+    colIdx: number,
+    setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => MenuItem[];
   height: number;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
@@ -222,7 +228,9 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       const rowColorTheme = Loadable.match(data[row], {
         _: () => ({}),
         Loaded: (record) =>
-          colorMap[_.get(record, rowIdPath)] ? { accentColor: colorMap[_.get(record, rowIdPath)] } : {},
+          colorMap[_.get(record, rowIdPath)]
+            ? { accentColor: colorMap[_.get(record, rowIdPath)] }
+            : {},
       });
 
       return { ...rowColorTheme, ...hoverStyle };
@@ -248,13 +256,13 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
         const items: MenuItem[] = [
           selection.rows.length > 0
             ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                onSelectionChange?.('remove-all', [0, data.length]);
-                setMenuIsOpen(false);
-              },
-            }
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  onSelectionChange?.('remove-all', [0, data.length]);
+                  setMenuIsOpen(false);
+                },
+              }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -285,13 +293,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
-    [
-      columns,
-      data.length,
-      selection.rows.length,
-      onSelectionChange,
-      getHeaderMenuItems,
-    ],
+    [columns, data.length, selection.rows.length, onSelectionChange, getHeaderMenuItems],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -541,6 +543,6 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       )}
     </div>
   );
-};
+}
 
 export default GlideTable;

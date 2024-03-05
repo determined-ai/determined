@@ -76,8 +76,18 @@ import {
   MULTISELECT,
   NO_PINS_WIDTH,
 } from './glide-table/columns';
-import { ContextMenuCompleteHandlerProps, ContextMenuComponentProps } from './glide-table/contextMenu';
-import GlideTable, { HandleSelectionChangeType, SCROLL_SET_COUNT_NEEDED, SelectionType, Sort, validSort, ValidSort } from './glide-table/GlideTable';
+import {
+  ContextMenuCompleteHandlerProps,
+  ContextMenuComponentProps,
+} from './glide-table/contextMenu';
+import GlideTable, {
+  HandleSelectionChangeType,
+  SCROLL_SET_COUNT_NEEDED,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from './glide-table/GlideTable';
 import { EMPTY_SORT, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight, TableViewMode } from './OptionsMenu';
 import TableActionBar from './TableActionBar';
@@ -403,7 +413,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
+              experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -600,7 +610,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleSelectionChange, selectedExperimentIds, openToast],
   );
 
-  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem> = useCallback(
+  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<
+    ExperimentAction,
+    ExperimentItem
+  > = useCallback(
     (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
@@ -765,9 +778,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const users = useObservable(usersStore.getUsers());
 
   const columns: ColumnDef<ExperimentWithTrial>[] = useMemo(() => {
-    const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(projectColumns, (columns) => {
-      return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
-    });
+    const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
+      projectColumns,
+      (columns) => {
+        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+      },
+    );
     const columnDefs = getColumnDefs({
       appTheme,
       columnWidths: settings.columnWidths,
@@ -776,9 +792,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       themeIsDark: isDarkMode,
       users,
     });
-    const gridColumns = (settings.compare
-      ? [...STATIC_COLUMNS, ...columnsIfLoaded.slice(0, settings.pinnedColumnsCount)]
-      : [...STATIC_COLUMNS, ...columnsIfLoaded])
+    const gridColumns = (
+      settings.compare
+        ? [...STATIC_COLUMNS, ...columnsIfLoaded.slice(0, settings.pinnedColumnsCount)]
+        : [...STATIC_COLUMNS, ...columnsIfLoaded]
+    )
       .map((columnName) => {
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
@@ -816,7 +834,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
             const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            if (heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)) {
+            if (
+              heatmap &&
+              settings.heatmapOn &&
+              !settings.heatmapSkipped.includes(currentColumn.column)
+            ) {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
@@ -857,7 +879,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         }
         if (currentColumn.column === 'searcherMetricsVal') {
           const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-          if (heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)) {
+          if (
+            heatmap &&
+            settings.heatmapOn &&
+            !settings.heatmapSkipped.includes(currentColumn.column)
+          ) {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
               settings.columnWidths[currentColumn.column],
               {
@@ -891,7 +917,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
-  const getHeaderMenuItems = (columnId: string, colIdx: number, setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>): MenuItem[] => {
+  const getHeaderMenuItems = (
+    columnId: string,
+    colIdx: number,
+    setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  ): MenuItem[] => {
     const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
     if (!column) {
       return [];
@@ -902,9 +932,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
     const loadableFormset = formStore.formset.get();
     const filterMenuItemsForColumn = () => {
-      const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
-        column.column,
-      );
+      const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
       formStore.addChild(ROOT_ID, FormKind.Field, {
         index: Loadable.match(loadableFormset, {
           _: () => 0,
@@ -934,32 +962,32 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-            icon: <Icon decorative name="pin" />,
-            key: 'pin',
-            label: 'Pin column',
-            onClick: () => {
-              const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
-              newSortableColumns.splice(settings.pinnedColumnsCount, 0, column.column);
-              handleVisibleColumnChange?.(newSortableColumns);
-              handlePinnedColumnsCountChange?.(
-                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-              );
-              setMenuIsOpen(false);
-            },
-          }
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
+                newSortableColumns.splice(settings.pinnedColumnsCount, 0, column.column);
+                handleVisibleColumnChange?.(newSortableColumns);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
+                setMenuIsOpen(false);
+              },
+            }
           : {
-            disabled: settings.pinnedColumnsCount <= 1,
-            icon: <Icon decorative name="pin" />,
-            key: 'unpin',
-            label: 'Unpin column',
-            onClick: () => {
-              const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
-              newSortableColumns.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-              handleVisibleColumnChange?.(newSortableColumns);
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-              setMenuIsOpen(false);
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
+                newSortableColumns.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                handleVisibleColumnChange?.(newSortableColumns);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
             },
-          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -976,44 +1004,46 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-          { type: 'divider' as const },
-          {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter',
-            label: 'Add Filter',
-            onClick: () => {
-              setTimeout(filterMenuItemsForColumn, 5);
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
+              },
             },
-          },
-        ]),
+          ]),
       filterCount > 0
         ? {
-          icon: <Icon decorative name="filter" />,
-          key: 'filter-clear',
-          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-          onClick: () => {
-            setTimeout(clearFilterForColumn, 5);
-          },
-        }
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
         : null,
       settings.heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
+      (column.column === 'searcherMetricsVal' ||
+        (column.type === V1ColumnType.NUMBER &&
+          (column.location === V1LocationType.VALIDATIONS ||
+            column.location === V1LocationType.TRAINING)))
         ? {
-          icon: <Icon decorative name="heatmap" />,
-          key: 'heatmap',
-          label: !settings.heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-          onClick: () => {
-            handleHeatmapSelection?.(
-              settings.heatmapSkipped.includes(column.column)
-                ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                : [...settings.heatmapSkipped, column.column],
-            );
-          },
-        }
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !settings.heatmapSkipped.includes(column.column)
+              ? 'Cancel heatmap'
+              : 'Apply heatmap',
+            onClick: () => {
+              handleHeatmapSelection?.(
+                settings.heatmapSkipped.includes(column.column)
+                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                  : [...settings.heatmapSkipped, column.column],
+              );
+            },
+          }
         : null,
     ];
     return items;
@@ -1079,11 +1109,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 page={page}
                 pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
-                renderContextMenuComponent={(props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => {
+                renderContextMenuComponent={(
+                  props: ContextMenuComponentProps<
+                    ExperimentWithTrial,
+                    ExperimentAction,
+                    ExperimentItem
+                  >,
+                ) => {
                   return (
                     <ExperimentActionDropdown
                       cell={props.cell}
-                      experiment={getProjectExperimentForExperimentItem(props.rowData.experiment, project)}
+                      experiment={getProjectExperimentForExperimentItem(
+                        props.rowData.experiment,
+                        project,
+                      )}
                       link={props.link}
                       makeOpen={props.open}
                       onComplete={props.onComplete}

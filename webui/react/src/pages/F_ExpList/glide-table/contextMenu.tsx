@@ -27,7 +27,11 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: (event: Eve
   }, [ref, handler]);
 }
 
-export type ContextMenuCompleteHandlerProps<CompleteAction, CompleteData> = (action: CompleteAction, id: number, data?: Partial<CompleteData>) => void;
+export type ContextMenuCompleteHandlerProps<CompleteAction, CompleteData> = (
+  action: CompleteAction,
+  id: number,
+  data?: Partial<CompleteData>,
+) => void;
 
 export interface ContextMenuProps<RowData, CompleteAction, CompleteData> extends MenuProps {
   cell?: GridCell;
@@ -37,12 +41,17 @@ export interface ContextMenuProps<RowData, CompleteAction, CompleteData> extends
   onComplete?: ContextMenuCompleteHandlerProps<CompleteAction, CompleteData>;
   onVisibleChange?: (visible: boolean) => void;
   open: boolean;
-  renderContextMenuComponent?: (props: ContextMenuComponentProps<RowData, CompleteAction, CompleteData>) => JSX.Element;
+  renderContextMenuComponent?: (
+    props: ContextMenuComponentProps<RowData, CompleteAction, CompleteData>,
+  ) => JSX.Element;
   x: number;
   y: number;
 }
 
-export type ContextMenuComponentProps<RowData, CompleteAction, CompleteData> = Omit<ContextMenuProps<RowData, CompleteAction, CompleteData>, 'renderContextMenuComponent' | 'x' | 'y'>;
+export type ContextMenuComponentProps<RowData, CompleteAction, CompleteData> = Omit<
+  ContextMenuProps<RowData, CompleteAction, CompleteData>,
+  'renderContextMenuComponent' | 'x' | 'y'
+>;
 
 export function ContextMenu<RowData, CompleteAction, CompleteData>({
   cell,
@@ -88,4 +97,4 @@ export function ContextMenu<RowData, CompleteAction, CompleteData>({
       })}
     </div>
   );
-};
+}
