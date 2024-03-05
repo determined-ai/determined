@@ -22,7 +22,7 @@ Parameters:
   AuxAgentInstanceType:
     Type: String
     Description: Instance Type of agents in the auxiliary resource pool
-    Default: t2.xlarge
+    Default: m5.xlarge
 
   ComputeAgentInstanceType:
     Type: String
@@ -77,7 +77,7 @@ Parameters:
   MaxAuxContainersPerAgent:
     Type: Number
     Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
-    Default: 100
+    Default: 16
 
   MaxIdleAgentPeriod:
     Type: String
