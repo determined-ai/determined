@@ -1138,7 +1138,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 }}
                 rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
                 scrollPositionSetCount={scrollPositionSetCount}
-                selectAll={selectAll}
                 selection={selection}
                 sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}

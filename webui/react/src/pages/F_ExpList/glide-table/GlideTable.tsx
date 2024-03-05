@@ -100,7 +100,6 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   pinnedColumnsCount: number;
   rowHeight?: number;
   scrollPositionSetCount: WritableObservable<number>;
-  selectAll: boolean;
   selection: GridSelection;
   sortableColumnIds: string[];
   sorts: Sort[];
