@@ -444,7 +444,7 @@ task_container_defaults:
 }
 
 func TestMaxSlotsPerPodConfigMultiRM(t *testing.T) {
-	base_config := `
+	baseConfig := `
 db:
   user: config_file_user
   password: password
@@ -461,49 +461,53 @@ additional_resource_managers:
      type: kubernetes
 `
 
-	task_container_defaults_config := `
+	taskContainerDefaultsConfig := `
 task_container_defaults:
   kubernetes:
     max_slots_per_pod: 0
 `
 
-	expected_max_slots := [2]int{5, 65}
+	expectedMaxSlots := map[string]int{
+		"default": 5,
+		"test":    65,
+	}
 
-	test_cases := map[string]struct {
-		additional_max_slots string
-		expected_error       string
+	testCases := map[string]struct {
+		additionalMaxSlots string
+		expectedError      string
 	}{
 		"valid config": {
-			additional_max_slots: "     max_slots_per_pod: 65\n",
-			expected_error:       "",
+			additionalMaxSlots: "     max_slots_per_pod: 65\n",
+			expectedError:      "",
 		},
 		"negative max_slots": {
-			additional_max_slots: "     max_slots_per_pod: -5\n",
-			expected_error:       ">= 0",
+			additionalMaxSlots: "     max_slots_per_pod: -5\n",
+			expectedError:      ">= 0",
 		},
 		"max_slots not defined": {
-			additional_max_slots: "",
-			expected_error:       "must provide resource_manager.max_slots_per_pod",
+			additionalMaxSlots: "",
+			expectedError:      "must provide resource_manager.max_slots_per_pod",
 		},
 		"global task max_slots also defined": {
-			additional_max_slots: "     max_slots_per_pod: 65\n" + task_container_defaults_config,
-			expected_error:       "",
+			additionalMaxSlots: "     max_slots_per_pod: 65\n" + taskContainerDefaultsConfig,
+			expectedError:      "",
 		},
 	}
 
-	for name, test := range test_cases {
+	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
 			var unmarshaled Config
-			test_config := base_config + test.additional_max_slots
-			err := yaml.Unmarshal([]byte(test_config), &unmarshaled, yaml.DisallowUnknownFields)
+			testConfig := baseConfig + test.additionalMaxSlots
+			err := yaml.Unmarshal([]byte(testConfig), &unmarshaled, yaml.DisallowUnknownFields)
 			require.NoError(t, err)
-			if test.expected_error == "" { // no error is expected; this is a valid config
+			if test.expectedError == "" { // no error is expected; this is a valid config
 				require.NoError(t, unmarshaled.Resolve())
-				for i, r := range unmarshaled.ResourceConfig.ResourceManagers() {
-					require.Equal(t, expected_max_slots[i], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+				actualRMs := unmarshaled.ResourceConfig.ResourceManagers()
+				for _, r := range actualRMs {
+					require.Equal(t, expectedMaxSlots[r.ResourceManager.Name()], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
 				}
 			} else {
-				require.Error(t, unmarshaled.Resolve(), test.expected_error)
+				require.Error(t, unmarshaled.Resolve(), test.expectedError)
 			}
 		})
 	}
