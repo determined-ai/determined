@@ -7,7 +7,7 @@ import {
 } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
 
-import { ExperimentWithTrial, ProjectColumn } from 'types';
+import { ProjectColumn, RawJson } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 
@@ -16,25 +16,25 @@ export const NO_PINS_WIDTH = 200;
 
 export const MULTISELECT = 'selected';
 
-export type ColumnDef = SizedGridColumn & {
+export type ColumnDef<T> = SizedGridColumn & {
   id: string;
   isNumerical?: boolean;
-  renderer: (record: ExperimentWithTrial, idx: number) => GridCell;
-  tooltip: (record: ExperimentWithTrial) => string | undefined;
+  renderer: (record: T, idx: number) => GridCell;
+  tooltip: (record: T) => string | undefined;
 };
 
-export type ColumnDefs = Record<string, ColumnDef>;
+export type ColumnDefs<T> = Record<string, ColumnDef<T>>;
 
 export interface HeatmapProps {
   min: number;
   max: number;
 }
 
-export const defaultTextColumn = (
+export function defaultTextColumn<T extends RawJson>(
   column: ProjectColumn,
   columnWidth?: number,
   dataPath?: string,
-): ColumnDef => {
+): ColumnDef<T> {
   return {
     id: column.column,
     renderer: (record) => {
@@ -50,7 +50,7 @@ export const defaultTextColumn = (
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };
-};
+}
 
 const getHeatmapPercentage = (min: number, max: number, value: number): number => {
   if (min >= max || value >= max) return 1;
@@ -68,12 +68,12 @@ export const getHeatmapColor = (min: number, max: number, value: number): string
   })`;
 };
 
-export const defaultNumberColumn = (
+export function defaultNumberColumn<T extends RawJson>(
   column: ProjectColumn,
   columnWidth?: number,
   dataPath?: string,
   heatmapProps?: HeatmapProps,
-): ColumnDef => {
+): ColumnDef<T> {
   return {
     id: column.column,
     renderer: (record) => {
@@ -99,13 +99,13 @@ export const defaultNumberColumn = (
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };
-};
+}
 
-export const defaultDateColumn = (
+export function defaultDateColumn<T extends RawJson>(
   column: ProjectColumn,
   columnWidth?: number,
   dataPath?: string,
-): ColumnDef => {
+): ColumnDef<T> {
   return {
     id: column.column,
     renderer: (record) => {
@@ -121,7 +121,7 @@ export const defaultDateColumn = (
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };
-};
+}
 
 export const columnWidthsFallback = 140;
 

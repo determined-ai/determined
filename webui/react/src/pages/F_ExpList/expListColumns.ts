@@ -17,7 +17,7 @@ import {
   HeatmapProps,
   MULTISELECT,
 } from './glide-table/columns';
-import { getDurationInEnglish, getTimeInEnglish } from './glide-table/utils';
+import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
 export const experimentColumns = [
@@ -80,7 +80,7 @@ export const getColumnDefs = ({
   users,
   selectAll,
   appTheme,
-}: Params): ColumnDefs => ({
+}: Params): ColumnDefs<ExperimentWithTrial> => ({
   archived: {
     id: 'archived',
     renderer: (record: ExperimentWithTrial) => ({
@@ -411,7 +411,7 @@ export const getColumnDefs = ({
 export const searcherMetricsValColumn = (
   columnWidth?: number,
   heatmapProps?: HeatmapProps,
-): ColumnDef => {
+): ColumnDef<ExperimentWithTrial> => {
   return {
     id: 'searcherMetricsVal',
     isNumerical: true,

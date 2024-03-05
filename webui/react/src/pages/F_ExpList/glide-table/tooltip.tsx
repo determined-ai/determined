@@ -4,7 +4,6 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 
 import { ColumnDef } from './columns';
-import { GlideTableProps } from './GlideTable';
 
 export interface TooltipProps {
   x: number;
@@ -13,9 +12,9 @@ export interface TooltipProps {
   text: string;
 }
 
-interface UseTooltipParams {
-  data: GlideTableProps['data'];
-  columns: ColumnDef[];
+interface UseTooltipParams<T> {
+  data: Loadable<T>[];
+  columns: ColumnDef<T>[];
 }
 interface UseTooltipReturn {
   closeTooltip: () => void;
@@ -23,10 +22,10 @@ interface UseTooltipReturn {
   tooltip: ReactNode;
 }
 
-export const useTableTooltip = ({
+export function useTableTooltip<T>({
   columns,
   data,
-}: UseTooltipParams): UseTooltipReturn => {
+}: UseTooltipParams<T>): UseTooltipReturn {
   const [tooltipProps, setTooltipProps] = React.useState<TooltipProps | undefined>(undefined);
 
   const timeoutRef = React.useRef(0);

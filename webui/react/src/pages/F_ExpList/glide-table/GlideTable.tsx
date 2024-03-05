@@ -16,7 +16,7 @@ import DataEditor, {
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/dts/internal/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import { useTheme } from 'hew/Theme';
+import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { literal, union } from 'io-ts';
 import _ from 'lodash';
@@ -33,13 +33,9 @@ import {
 import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
-import { type HandleSelectionChangeType, PAGE_SIZE } from 'pages/F_ExpList/F_ExperimentList';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
-  ExperimentAction,
-  ExperimentItem,
-  ExperimentWithTrial,
   ProjectColumn,
   ProjectMetricsRange,
 } from 'types';
@@ -62,23 +58,44 @@ import { TableActionMenu, TableActionMenuProps } from './menu';
 import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
 import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
-import { getTheme } from './utils';
 
-export interface GlideTableProps {
+/**
+ * Glide Table Theme Reference
+ * https://github.com/glideapps/glide-data-grid/blob/main/packages/core/API.md#theme
+ */
+export const getTheme = (appTheme: HewTheme): DataEditorProps['theme'] => {
+  return {
+    accentLight: appTheme.float,
+    bgBubble: appTheme.ixStrong,
+    bgCell: appTheme.surface,
+    bgHeader: appTheme.surface,
+    bgHeaderHovered: appTheme.surfaceStrong,
+    borderColor: appTheme.ixBorder,
+    fontFamily: appTheme.fontFamily,
+    headerBottomBorderColor: appTheme.ixBorder,
+    headerFontStyle: 'normal 12px',
+    linkColor: appTheme.surfaceOn,
+    textBubble: appTheme.surfaceBorderStrong,
+    textDark: appTheme.surfaceOnWeak,
+    textHeader: appTheme.surfaceOnWeak,
+  };
+};
+
+export interface GlideTableProps<T, ContextAction extends string, ContextActionData> {
   colorMap: MapOfIdsToColors;
-  columns: ColumnDef[];
+  columns: ColumnDef<T>[];
   columnWidths: Record<string, number>;
   rowIdPath?: string;
-  renderContextMenuComponent?: (props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => JSX.Element;
+  renderContextMenuComponent?: (props: ContextMenuComponentProps<T, ContextAction, ContextActionData>) => JSX.Element;
   comparisonViewOpen?: boolean;
-  data: Loadable<ExperimentWithTrial>[];
+  data: Loadable<T>[];
   dataTotal: number;
   formStore: FilterFormStore;
   heatmapOn: boolean;
   heatmapSkipped: string[];
   height: number;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
-  onContextMenuComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
+  onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
   onHeatmapSelection?: (selection: string[]) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
@@ -87,6 +104,7 @@ export interface GlideTableProps {
   onSortableColumnChange?: (newColumns: string[]) => void;
   onSortChange?: (sorts: Sort[]) => void;
   page: number;
+  pageSize: number;
   pinnedColumnsCount: number;
   projectColumns: Loadable<ProjectColumn[]>;
   projectHeatmap: ProjectMetricsRange[];
@@ -98,6 +116,12 @@ export interface GlideTableProps {
   sorts: Sort[];
   staticColumns: string[];
 }
+
+export type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
+export type HandleSelectionChangeType = (
+  selectionType: SelectionType,
+  range: [number, number],
+) => void;
 
 export type TableViewMode = 'scroll' | 'paged';
 
@@ -125,7 +149,7 @@ const rowHeightMap: Record<RowHeight, number> = {
   [RowHeight.SHORT]: 32,
 };
 
-export const GlideTable: React.FC<GlideTableProps> = ({
+export function GlideTable<T, ContextAction extends string, ContextActionData>({
   colorMap,
   columns,
   columnWidths,
@@ -146,6 +170,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   onSortableColumnChange,
   onSortChange,
   page,
+  pageSize,
   pinnedColumnsCount,
   projectColumns,
   rowIdPath,
@@ -156,7 +181,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   sortableColumnIds,
   sorts,
   staticColumns,
-}) => {
+}: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
@@ -164,7 +189,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
     if (gridRef.current !== null) {
-      const rowOffset = Math.max(page * PAGE_SIZE, 0);
+      const rowOffset = Math.max(page * pageSize, 0);
       gridRef.current.scrollTo(0, rowOffset);
       scrollPositionSetCount.update((x) => x + 1);
     }
@@ -185,7 +210,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
   const contextMenuIsOpen = useObservable(contextMenuOpen);
 
   const [contextMenuProps, setContextMenuProps] = useState<null | Omit<
-    ContextMenuProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>,
+    ContextMenuProps<T, ContextAction, ContextActionData>,
     'open'
   >>(null);
 
@@ -199,7 +224,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
 
   const headerIcons = useMemo(() => getHeaderIcons(appTheme), [appTheme]);
 
-  const { tooltip, onItemHovered, closeTooltip } = useTableTooltip({
+  const { tooltip, onItemHovered, closeTooltip } = useTableTooltip<T>({
     columns,
     data,
   });
@@ -678,7 +703,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
       </div>
       <TableActionMenu {...menuProps} open={menuIsOpen} />
       {contextMenuProps && (
-        <ContextMenu<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+        <ContextMenu<T, ContextAction, ContextActionData>
           {...contextMenuProps}
           open={contextMenuIsOpen}
           onComplete={onContextMenuComplete}

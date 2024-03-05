@@ -42,6 +42,7 @@ import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 
 import ComparisonView from './ComparisonView';
+import { Error, NoExperiments } from './exceptions';
 import {
   ExperimentColumn,
   experimentColumns,
@@ -66,8 +67,7 @@ import {
   NO_PINS_WIDTH,
 } from './glide-table/columns';
 import { ContextMenuCompleteHandlerProps, ContextMenuComponentProps } from './glide-table/contextMenu';
-import { Error, NoExperiments } from './glide-table/exceptions';
-import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
+import GlideTable, { HandleSelectionChangeType, SCROLL_SET_COUNT_NEEDED, SelectionType, TableViewMode } from './glide-table/GlideTable';
 import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
 import { RowHeight } from './glide-table/OptionsMenu';
 import TableActionBar from './TableActionBar';
@@ -75,12 +75,6 @@ import TableActionBar from './TableActionBar';
 interface Props {
   project: Project;
 }
-
-type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
-export type HandleSelectionChangeType = (
-  selectionType: SelectionType,
-  range: [number, number],
-) => void;
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -753,7 +747,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const users = useObservable(usersStore.getUsers());
 
-  const columns: ColumnDef[] = useMemo(() => {
+  const columns: ColumnDef<ExperimentWithTrial>[] = useMemo(() => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(projectColumns, (columns) => {
       return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
     });
@@ -924,7 +918,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <GlideTable
+              <GlideTable<ExperimentWithTrial, ExperimentAction, ExperimentItem>
                 colorMap={colorMap}
                 columns={columns}
                 columnWidths={settings.columnWidths}
@@ -936,6 +930,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 heatmapSkipped={settings.heatmapSkipped}
                 height={height}
                 page={page}
+                pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 projectColumns={projectColumns}
                 projectHeatmap={projectHeatmap}
