@@ -38,7 +38,7 @@ get-deps:
 
 .PHONY: build
 build:
-	go build \
+	CGO_ENABLED=0 go build \
 		-ldflags "-X main.version=$(VERSION)" \
 		-o build/determined-agent \
 		./cmd/determined-agent
