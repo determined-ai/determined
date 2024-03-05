@@ -54,7 +54,7 @@ Version 0.29.0
 
 .. important::
 
-   For any publicly-accessible cluster, you should ensure all users have a password set.
+   For any publicly accessible cluster, you should ensure all users have a password set.
 
 **************
  Version 0.28
