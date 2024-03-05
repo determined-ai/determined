@@ -319,39 +319,38 @@ func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgent
 	return p.disableNode(msg.AgentId, msg.Drain)
 }
 
-// TODO(!!!): extract k8s client construction.
-func (p *pods) readClientConfig() (*rest.Config, error) {
-	if len(p.kubeconfigPath) > 0 {
-		if parts := strings.Split(p.kubeconfigPath, string(os.PathSeparator)); parts[0] == "~" {
-			parts[0] = homedir.HomeDir()
-			kubeconfigPath := filepath.Join(parts...)
-			p.syslog.Infof("expanding kubeconfig path from %s to %s", p.kubeconfigPath, kubeconfigPath)
-			p.kubeconfigPath = kubeconfigPath
-		}
-
-		bs, err := os.ReadFile(p.kubeconfigPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading kubeconfig at %s: %w", p.kubeconfigPath, err)
-		}
-		cl, err := clientcmd.RESTConfigFromKubeConfig(bs)
-		if err != nil {
-			return nil, fmt.Errorf("building rest.Config from kubeconfig at %s: %w", p.kubeconfigPath, err)
-		}
-		return cl, nil
+func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
+	if len(kubeconfigPath) == 0 {
+		// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
+		// environment variables:
+		//   - KUBERNETES_SERVICE_HOST
+		//   - KUBERNETES_SERVICE_PORT
+		// and it expects to find files:
+		//   - /var/run/secrets/kubernetes.io/serviceaccount/token
+		//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+		return rest.InClusterConfig()
 	}
 
-	// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
-	// environment variables:
-	//   - KUBERNETES_SERVICE_HOST
-	//   - KUBERNETES_SERVICE_PORT
-	// and it expects to find files:
-	//   - /var/run/secrets/kubernetes.io/serviceaccount/token
-	//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-	return rest.InClusterConfig()
+	if parts := strings.Split(kubeconfigPath, string(os.PathSeparator)); parts[0] == "~" {
+		logrus.Infof("expanding kubeconfig path from %s to %s", kubeconfigPath, kubeconfigPath)
+		parts[0] = homedir.HomeDir()
+		kubeconfigPath = filepath.Join(parts...)
+	}
+
+	bs, err := os.ReadFile(kubeconfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading kubeconfig at %s: %w", kubeconfigPath, err)
+	}
+
+	cl, err := clientcmd.RESTConfigFromKubeConfig(bs)
+	if err != nil {
+		return nil, fmt.Errorf("building rest.Config from kubeconfig at %s: %w", kubeconfigPath, err)
+	}
+	return cl, nil
 }
 
 func (p *pods) startClientSet() error {
-	config, err := p.readClientConfig()
+	config, err := readClientConfig(p.kubeconfigPath)
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
