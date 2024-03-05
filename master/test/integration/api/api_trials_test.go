@@ -101,9 +101,10 @@ func trialDetailAPITests(
 		t.Run(tc.name, func(t *testing.T) {
 			_, activeConfig, trial := setupTrial(t, pgDB)
 
+			step := int32(id * activeConfig.SchedulingUnit())
 			metrics := trialv1.TrialMetrics{
 				TrialId:        int32(trial.ID),
-				StepsCompleted: int32(id * activeConfig.SchedulingUnit()),
+				StepsCompleted: &step,
 			}
 
 			m := structpb.Struct{}
@@ -169,9 +170,10 @@ func trialWorkloadsAPIHugeMetrics(
 		batchMetrics = append(batchMetrics, makeMetrics())
 	}
 
+	step := int32(1)
 	metrics := trialv1.TrialMetrics{
 		TrialId:        int32(trial.ID),
-		StepsCompleted: stepSize,
+		StepsCompleted: &step,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics:   makeMetrics(),
 			BatchMetrics: batchMetrics,
