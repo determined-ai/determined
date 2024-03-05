@@ -103,14 +103,15 @@ const ResourceAllocationModalComponent: React.FC<Props> = ({
     }
   }, [agents, nodes, isRunning]);
 
+  // (on line 114) using idx as additional key info due to an occurrence where two nodes had the same name/id...
   return (
     <Modal cancel footer={footer} size="medium" title="Resource Allocation">
       <div className={css.base}>
         <div className={css.nodesContainer}>{renderNodes}</div>
         <InfoContainer info={<Link onClick={handleClick}>{rpName}</Link>} label="Resource Pool" />
         <InfoContainer info={accelerator} label="Accelerator" />
-        {nodes.map(({ nodeName, slotsIds }) => (
-          <div className={css.slotsContainer} key={`info_${nodeName}`}>
+        {nodes.map(({ nodeName, slotsIds }, idx) => (
+          <div className={css.slotsContainer} key={`info_${nodeName}_${idx}`}>
             <InfoContainer info={nodeName} label="Node ID" />
             {slotsIds
               .filter((id) => id.container !== undefined)
