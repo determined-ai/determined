@@ -11,6 +11,7 @@ import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
 import { List } from 'immutable';
+import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -71,15 +72,38 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     projectStore.getProjectsByWorkspace(id),
   );
 
+  const sortProjects = useCallback(
+    (arr: Project[]) => {
+      switch (settings.sortKey) {
+        case V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME:
+          return arr.sort((a, b) => {
+            if (!a.lastExperimentStartedAt && !b.lastExperimentStartedAt) return b.id - a.id;
+            if (a.lastExperimentStartedAt && b.lastExperimentStartedAt)
+              return new Date(a.lastExperimentStartedAt) < new Date(b.lastExperimentStartedAt)
+                ? 1
+                : -1;
+            return a.lastExperimentStartedAt ? -1 : 1;
+          });
+        case V1GetWorkspaceProjectsRequestSortBy.NAME:
+          return sortBy(arr, 'name');
+        case V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME:
+          return sortBy(arr, 'id').reverse();
+        default:
+          return arr;
+      }
+    },
+    [settings.sortKey],
+  );
+
   const [projects, isLoading] = useMemo(
     () =>
       loadableProjects
         .map((p): [Project[], boolean] => [
-          p.toJSON().filter((p) => (settings.archived ? p : !p.archived)),
+          sortProjects(p.toJSON().filter((p) => (settings.archived ? p : !p.archived))),
           false,
         ])
         .getOrElse([[], true]),
-    [loadableProjects, settings.archived],
+    [loadableProjects, settings.archived, sortProjects],
   );
 
   const handleProjectCreateClick = useCallback(() => {
