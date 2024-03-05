@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/pkg/errors"
 
@@ -220,18 +219,9 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
-	var checkKubeconfig error
-	if k.KubeconfigPath != "" {
-		_, err := os.Stat(k.KubeconfigPath)
-		if err != nil {
-			checkKubeconfig = fmt.Errorf("could not find kubeconfig at %s: %w", k.KubeconfigPath, err)
-		}
-	}
-
 	return []error{
 		checkSlotType,
 		checkCPUResource,
-		checkKubeconfig,
 		check.NotEmpty(k.Name, "name is required"),
 	}
 }

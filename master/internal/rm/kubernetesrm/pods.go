@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +25,7 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -318,7 +321,14 @@ func (p *pods) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgent
 
 // TODO(!!!): extract k8s client construction.
 func (p *pods) readClientConfig() (*rest.Config, error) {
-	if p.kubeconfigPath != "" {
+	if len(p.kubeconfigPath) > 0 {
+		if parts := strings.Split(p.kubeconfigPath, string(os.PathSeparator)); parts[0] == "~" {
+			parts[0] = homedir.HomeDir()
+			kubeconfigPath := filepath.Join(parts...)
+			p.syslog.Infof("expanding kubeconfig path from %s to %s", p.kubeconfigPath, kubeconfigPath)
+			p.kubeconfigPath = kubeconfigPath
+		}
+
 		bs, err := os.ReadFile(p.kubeconfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("reading kubeconfig at %s: %w", p.kubeconfigPath, err)
