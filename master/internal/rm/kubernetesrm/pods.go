@@ -337,7 +337,7 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 		kubeconfigPath = filepath.Join(parts...)
 	}
 
-	bs, err := os.ReadFile(kubeconfigPath)
+	bs, err := os.ReadFile(kubeconfigPath) // #nosec G304 // User must have fs access to set this config var anyway.
 	if err != nil {
 		return nil, fmt.Errorf("reading kubeconfig at %s: %w", kubeconfigPath, err)
 	}

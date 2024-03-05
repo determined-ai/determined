@@ -112,7 +112,6 @@ const fakeKubeconfig = `
 apiVersion: v1
 clusters:
 - cluster:
-    certificate-authority: /Users/bradleylaney/.minikube/ca.crt
     extensions:
     - extension:
         last-update: Mon, 04 Mar 2024 18:53:00 EST
@@ -136,16 +135,11 @@ contexts:
 current-context: minikube
 kind: Config
 preferences: {}
-users:
-- name: minikube
-  user:
-    client-certificate: /Users/bradleylaney/.minikube/profiles/minikube/client.crt
-    client-key: /Users/bradleylaney/.minikube/profiles/minikube/client.key
 `
 
 func Test_readClientConfig(t *testing.T) {
 	customPath := "test_kube.config"
-	err := os.WriteFile(customPath, []byte(fakeKubeconfig), 0666)
+	err := os.WriteFile(customPath, []byte(fakeKubeconfig), 0o600)
 	require.NoError(t, err)
 	defer func() {
 		if err := os.Remove(customPath); err != nil {
