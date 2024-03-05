@@ -37,7 +37,7 @@ Version 0.29.0
 **Improvements**
 
 -  Configure log settings for the Determined agent in the configuration file used to launch
-   Determined clusters by setting ``log.level``and ``log.color`` appropriately.
+   Determined clusters by setting ``log.level`` and ``log.color`` appropriately.
 
 **Bug Fixes**
 
