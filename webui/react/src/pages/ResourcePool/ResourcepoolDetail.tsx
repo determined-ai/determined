@@ -6,6 +6,7 @@ import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { ShirtSize } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
+import { isEmpty } from 'lodash';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -142,24 +143,23 @@ const ResourcepoolDetailInner: React.FC = () => {
 
   const renderPoolConfig = useCallback(() => {
     if (!pool) return;
-    const { details, stats, resourceManagerName, resourceManagerMetadata, ...mainSection } =
-      structuredClone(pool);
+    const { details, stats, resourceManagerMetadata, ...mainSection } = structuredClone(pool);
     for (const key in details) {
       if (details[key as keyof V1ResourcePoolDetail] === null) {
         delete details[key as keyof V1ResourcePoolDetail];
       }
     }
 
-    const resourceManager = { Name: resourceManagerName, ...resourceManagerMetadata };
-
     return (
       <>
         <JsonGlossary alignValues="right" json={mainSection} translateLabel={camelCaseToSentence} />
-        <Fragment>
-          <Divider />
-          <div className={css.subTitle}>Resource Manager</div>
-          <JsonGlossary json={resourceManager} translateLabel={camelCaseToSentence} />
-        </Fragment>
+        {!isEmpty(resourceManagerMetadata) && (
+          <Fragment>
+            <Divider />
+            <div className={css.subTitle}>Resource Manager Metadata</div>
+            <JsonGlossary json={resourceManagerMetadata} translateLabel={camelCaseToSentence} />
+          </Fragment>
+        )}
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
             <Divider />
