@@ -27,11 +27,11 @@ Version 0.29.0
 
 **Removed Features**
 
--  Removed the accidentally exposed ``Session`` object from the ``det.experimental.client`` namespace.
-   It was never meant to be a public API and it was not documented in :ref:`python-sdk`, but was
-   nonetheless exposed in that namespace. It was also available as a deprecated legacy alias,
-   ``det.experimental.Session``. It is expected that most users use the Python SDK normally and are
-   unaffected by this change, since the ``det.experimental.client``'s ``login()`` and
+-  Removed the accidentally exposed ``Session`` object from the ``det.experimental.client``
+   namespace. It was never meant to be a public API and it was not documented in :ref:`python-sdk`,
+   but was nonetheless exposed in that namespace. It was also available as a deprecated legacy
+   alias, ``det.experimental.Session``. It is expected that most users use the Python SDK normally
+   and are unaffected by this change, since the ``det.experimental.client``'s ``login()`` and
    ``Determined()`` are unaffected.
 
 **Improvements**
