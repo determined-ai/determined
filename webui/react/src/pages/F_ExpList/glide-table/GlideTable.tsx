@@ -37,7 +37,6 @@ import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
   ProjectColumn,
-  ProjectMetricsRange,
 } from 'types';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 import { AnyMouseEvent } from 'utils/routes';
@@ -107,7 +106,6 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   pageSize: number;
   pinnedColumnsCount: number;
   projectColumns: Loadable<ProjectColumn[]>;
-  projectHeatmap: ProjectMetricsRange[];
   rowHeight: RowHeight;
   scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;

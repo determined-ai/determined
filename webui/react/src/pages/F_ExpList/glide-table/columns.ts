@@ -7,7 +7,7 @@ import {
 } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
 
-import { ProjectColumn, RawJson } from 'types';
+import { RawJson } from 'types';
 import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 
@@ -31,12 +31,13 @@ export interface HeatmapProps {
 }
 
 export function defaultTextColumn<T extends RawJson>(
-  column: ProjectColumn,
+  columnId: string,
+  columnTitle: string,
   columnWidth?: number,
   dataPath?: string,
 ): ColumnDef<T> {
   return {
-    id: column.column,
+    id: columnId,
     renderer: (record) => {
       const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
       return {
@@ -46,7 +47,7 @@ export function defaultTextColumn<T extends RawJson>(
         kind: GridCellKind.Custom,
       };
     },
-    title: column.displayName || column.column,
+    title: columnTitle,
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };
@@ -69,13 +70,14 @@ export const getHeatmapColor = (min: number, max: number, value: number): string
 };
 
 export function defaultNumberColumn<T extends RawJson>(
-  column: ProjectColumn,
+  columnId: string,
+  columnTitle: string,
   columnWidth?: number,
   dataPath?: string,
   heatmapProps?: HeatmapProps,
 ): ColumnDef<T> {
   return {
-    id: column.column,
+    id: columnId,
     renderer: (record) => {
       const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
       let theme: Partial<GTheme> = {};
@@ -95,19 +97,20 @@ export function defaultNumberColumn<T extends RawJson>(
         themeOverride: theme,
       };
     },
-    title: column.displayName || column.column,
+    title: columnTitle,
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };
 }
 
 export function defaultDateColumn<T extends RawJson>(
-  column: ProjectColumn,
+  columnId: string,
+  columnTitle: string,
   columnWidth?: number,
   dataPath?: string,
 ): ColumnDef<T> {
   return {
-    id: column.column,
+    id: columnId,
     renderer: (record) => {
       const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
       return {
@@ -117,7 +120,7 @@ export function defaultDateColumn<T extends RawJson>(
         kind: GridCellKind.Custom,
       };
     },
-    title: column.displayName || column.column,
+    title: columnTitle,
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
   };

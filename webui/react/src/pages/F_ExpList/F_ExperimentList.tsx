@@ -801,7 +801,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
             if (heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)) {
               columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn,
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column],
                 dataPath,
                 {
@@ -811,7 +812,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               );
             } else {
               columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn,
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column],
                 dataPath,
               );
@@ -820,7 +822,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
-              currentColumn,
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
             );
@@ -829,7 +832,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           case V1ColumnType.UNSPECIFIED:
           default:
             columnDefs[currentColumn.column] = defaultTextColumn(
-              currentColumn,
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
             );
@@ -933,7 +937,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 projectColumns={projectColumns}
-                projectHeatmap={projectHeatmap}
                 renderContextMenuComponent={(props: ContextMenuComponentProps<ExperimentWithTrial, ExperimentAction, ExperimentItem>) => {
                   return (
                     <ExperimentActionDropdown
