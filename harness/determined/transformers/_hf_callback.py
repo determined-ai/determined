@@ -3,19 +3,19 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
-from transformers.trainer_utils import get_last_checkpoint
+import transformers
+from transformers import trainer_utils
 
 import determined as det
 
 logger = logging.getLogger("determined.transformers")
 
 
-class DetCallback(TrainerCallback):  # type: ignore
+class DetCallback(transformers.TrainerCallback):  # type: ignore
     def __init__(
         self,
         core_context: det.core.Context,
-        args: TrainingArguments,
+        args: transformers.TrainingArguments,
         filter_metrics: Optional[List[str]] = None,
         user_data: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -49,9 +49,9 @@ class DetCallback(TrainerCallback):  # type: ignore
 
     def on_log(
         self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
+        args: transformers.TrainingArguments,
+        state: transformers.TrainerState,
+        control: transformers.TrainerControl,
         logs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> None:
@@ -110,9 +110,9 @@ class DetCallback(TrainerCallback):  # type: ignore
 
     def on_save(
         self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
+        args: transformers.TrainingArguments,
+        state: transformers.TrainerState,
+        control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
         info = det.get_cluster_info()
@@ -148,7 +148,7 @@ class DetCallback(TrainerCallback):  # type: ignore
         with open(os.path.join(save_path, "my_data.json"), "w") as f:
             json.dump(self.user_data, f)
 
-    def load_last_checkpoint(self, args: TrainingArguments) -> None:
+    def load_last_checkpoint(self, args: transformers.TrainingArguments) -> None:
         info = det.get_cluster_info()
         assert info
 
@@ -165,16 +165,16 @@ class DetCallback(TrainerCallback):  # type: ignore
             # so we can skip using selector and just download all files.
             self.core_context.checkpoint.download(latest_checkpoint, args.output_dir)
 
-            checkpoint_path = get_last_checkpoint(args.output_dir)
+            checkpoint_path = trainer_utils.get_last_checkpoint(args.output_dir)
             args.resume_from_checkpoint = checkpoint_path
 
             logger.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
 
     def on_step_end(
         self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
+        args: transformers.TrainingArguments,
+        state: transformers.TrainerState,
+        control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
         # state.epoch is not None only during training.
@@ -191,9 +191,9 @@ class DetCallback(TrainerCallback):  # type: ignore
 
     def on_epoch_end(
         self,
-        args: TrainingArguments,
-        state: TrainerState,
-        control: TrainerControl,
+        args: transformers.TrainingArguments,
+        state: transformers.TrainerState,
+        control: transformers.TrainerControl,
         **kwargs: Any,
     ) -> None:
         # state.epoch is not None only during training.
@@ -208,7 +208,9 @@ class DetCallback(TrainerCallback):  # type: ignore
                 )
                 self._update_searcher(state, control)
 
-    def _update_searcher(self, state: TrainerState, control: TrainerControl) -> None:
+    def _update_searcher(
+        self, state: transformers.TrainerState, control: transformers.TrainerControl
+    ) -> None:
         if self._metrics_reported(state.global_step) is False:
             self._wait_for_metrics(control)
             return
@@ -247,8 +249,8 @@ class DetCallback(TrainerCallback):  # type: ignore
     def _metrics_reported(self, step: int) -> bool:
         return self.last_metrics["eval_step"] == step and self.last_metrics["train_step"] == step
 
-    def _wait_for_metrics(self, control: TrainerControl) -> None:
-        # Notify Trainer (via TrainerControl) to:
+    def _wait_for_metrics(self, control: transformers.TrainerControl) -> None:
+        # Notify Trainer (via transformers.TrainerControl) to:
         # (1) log current training metrics,
         # (2) evaluate the model and log evaluation metrics,
         # (3) save the checkpoint.
@@ -259,7 +261,7 @@ class DetCallback(TrainerCallback):  # type: ignore
         control.should_save = True
         self.updating_searcher = True
 
-    def _check_searcher_compatibility(self, args: TrainingArguments) -> None:
+    def _check_searcher_compatibility(self, args: transformers.TrainingArguments) -> None:
         if self.searcher_unit == "batches":
             if args.max_steps == -1:
                 self._log_config_mismatch("epochs", args.num_train_epochs)

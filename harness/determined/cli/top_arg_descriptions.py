@@ -1,6 +1,6 @@
-from determined.common.declarative_argparse import Cmd
+from determined import cli
 
-deploy_cmd = Cmd(
+deploy_cmd = cli.Cmd(
     "d|eploy",
     None,
     "manage deployments",

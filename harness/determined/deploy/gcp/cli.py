@@ -1,17 +1,17 @@
 import argparse
 import getpass
 import os
+import pathlib
 import sys
-from pathlib import Path
 from typing import Any, Callable, Tuple
 
 import pkg_resources
-from termcolor import colored
+import termcolor
 
-import determined.deploy
-from determined.cli.errors import CliError
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group, string_to_bool
-from determined.deploy.errors import MasterTimeoutExpired, warn_version_mismatch
+import determined
+from determined import cli
+from determined.cli import errors
+from determined.deploy import errors as deploy_errors
 from determined.deploy.gcp import constants, gcp
 
 
@@ -38,7 +38,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
 
-    warn_version_mismatch(args.det_version)
+    deploy_errors.warn_version_mismatch(args.det_version)
     if args.det_version is None:
         # keep the existing default value behavior of the cli.
         args.det_version = determined.__version__
@@ -102,7 +102,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     # Handle down subcommand.
     if command == "down" and args.cluster_id:
         if not args.project_id:
-            raise CliError(
+            raise errors.CliError(
                 "Error: --project-id not provided. Please provide both project id"
                 + " and cluster id to delete the cluster."
             )
@@ -211,9 +211,9 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     if not args.no_wait_for_master:
         try:
             gcp.wait_for_master(det_configs, env, timeout=5 * 60)
-        except MasterTimeoutExpired:
+        except deploy_errors.MasterTimeoutExpired:
             print(
-                colored(
+                termcolor.colored(
                     "Determined cluster has been deployed, but master health check has failed.",
                     "red",
                 )
@@ -275,66 +275,66 @@ def parse_add_label() -> Callable:
     return parse
 
 
-args_description = Cmd(
+args_description = cli.Cmd(
     "gcp",
     None,
     "GCP help",
     [
-        Cmd(
+        cli.Cmd(
             "list ls",
             handle_list,
             "list gcp cluster",
             [
-                Arg(
+                cli.Arg(
                     "--project-id",
                     type=str,
                     default=None,
                     required=True,
                     help="project id to list clusters from",
                 ),
-                Arg(
+                cli.Arg(
                     "--tf-state-gcs-bucket-name",
                     type=str,
                     help="use a particular GCS bucket to retreive clusters "
                     "instead of the default GCS bucket",
                 ),
-                Group(
-                    Arg("--json", action="store_true", help="print as CSV"),
-                    Arg("--yaml", action="store_true", help="print as JSON"),
+                cli.Group(
+                    cli.Arg("--json", action="store_true", help="print as CSV"),
+                    cli.Arg("--yaml", action="store_true", help="print as JSON"),
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "down",
             handle_down,
             "delete gcp cluster",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "optional named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=str,
                             help="cluster id of the cluster to be deleted",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--project-id",
                             type=str,
                             help="project id that the cluster belongs to",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--local-state-path",
                             type=str,
                             default=os.getcwd(),
                             help="local directory for storing cluster state",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--yes",
                             action="store_true",
                             help="no prompt when deleting resources",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--no-prompt",
                             dest="yes",
                             action="store_true",
@@ -344,23 +344,23 @@ args_description = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "up",
             handle_up,
             "create gcp cluster",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "required named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=validate_cluster_id(),
                             default=None,
                             required=True,
                             help="unique identifier to name and tag resources",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--project-id",
                             type=str,
                             default=None,
@@ -369,30 +369,30 @@ args_description = Cmd(
                         ),
                     ],
                 ),
-                ArgGroup(
+                cli.ArgGroup(
                     "optional named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--dry-run",
                             action="store_true",
                             help="return the infrastructure plan to be executed "
                             "based on your arguments",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--keypath",
                             type=str,
                             default=None,
                             help="path to service account key if not using default credentials",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--network",
                             type=str,
                             default="det-default",
                             help="network name to create "
                             "(the network should not already exist in the project)",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--filestore-address",
                             type=str,
                             default="",
@@ -400,92 +400,92 @@ args_description = Cmd(
                             "'ip-address:/file-share'; if not provided and the no-filestore "
                             "flag is not set, a new Filestore instance will be created",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--no-filestore",
                             help="whether to create a new Filestore if filestore-address "
                             "parameter is not set",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--det-version",
                             type=str,
                             help=argparse.SUPPRESS,
                         ),
-                        Arg(
+                        cli.Arg(
                             "--region",
                             type=str,
                             default=constants.defaults.REGION,
                             help="region to create the cluster in (defaults to us-west1)",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--zone",
                             type=str,
                             default=None,
                             help="zone to create the cluster in (defaults to `region`-b)",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--disk-size",
                             type=int,
                             default=constants.defaults.BOOT_DISK_SIZE,
                             help="Boot disk size for cluster agents, in GB",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--disk-type",
                             type=str,
                             default=constants.defaults.BOOT_DISK_TYPE,
                             help="Boot disk type for cluster agents",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--environment-image",
                             type=str,
                             default=constants.defaults.ENVIRONMENT_IMAGE,
                             help=argparse.SUPPRESS,
                         ),
-                        Arg(
+                        cli.Arg(
                             "--local-state-path",
                             type=str,
                             default=os.getcwd(),
                             help="local directory for storing cluster state",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--preemptible",
-                            type=string_to_bool,
+                            type=cli.string_to_bool,
                             default=False,
                             help="whether to use preemptible instances for dynamic agents",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--operation-timeout-period",
                             type=str,
                             default=constants.defaults.OPERATION_TIMEOUT_PERIOD,
                             help="operation timeout before retrying, e.g. 5m for 5 minutes",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--master-instance-type",
                             type=str,
                             default=constants.defaults.MASTER_INSTANCE_TYPE,
                             help="instance type for master",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--compute-agent-instance-type",
                             "--gpu-agent-instance-type",
                             type=str,
                             default=constants.defaults.COMPUTE_AGENT_INSTANCE_TYPE,
                             help="instance type for agents in the compute resource pool",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--aux-agent-instance-type",
                             "--cpu-agent-instance-type",
                             type=str,
                             default=constants.defaults.AUX_AGENT_INSTANCE_TYPE,
                             help="instance type for agents in the auxiliary resource pool",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--db-password",
                             type=str,
                             default=constants.defaults.DB_PASSWORD,
                             help="password for master database",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-aux-containers-per-agent",
                             "--max-cpu-containers-per-agent",
                             type=int,
@@ -493,101 +493,101 @@ args_description = Cmd(
                             help="maximum number of containers on agents in the "
                             "auxiliary resource pool",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-idle-agent-period",
                             type=str,
                             default=constants.defaults.MAX_IDLE_AGENT_PERIOD,
                             help="max agent idle time before it is shut down, "
                             "e.g. 30m for 30 minutes",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-agent-starting-period",
                             type=str,
                             default=constants.defaults.MAX_AGENT_STARTING_PERIOD,
                             help="max agent starting time before retrying, e.g. 30m for 30 minutes",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--port",
                             type=int,
                             default=constants.defaults.PORT,
                             help="port to use for communication on master instance",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpu-type",
                             type=str,
                             default=constants.defaults.GPU_TYPE,
                             help="type of GPU to use on agents",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpu-num",
                             type=int,
                             default=constants.defaults.GPU_NUM,
                             help="number of GPUs per agent instance",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--min-dynamic-agents",
                             type=int,
                             default=constants.defaults.MIN_DYNAMIC_AGENTS,
                             help="minimum number of dynamic agent instances at one time",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-dynamic-agents",
                             type=int,
                             default=constants.defaults.MAX_DYNAMIC_AGENTS,
                             help="maximum number of dynamic agent instances at one time",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--min-cpu-platform-master",
                             type=str,
                             default=constants.defaults.MIN_CPU_PLATFORM_MASTER,
                             help="minimum cpu platform for master instances",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--min-cpu-platform-agent",
                             type=str,
                             default=constants.defaults.MIN_CPU_PLATFORM_AGENT,
                             help="minimum cpu platform for agent instances",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--scheduler-type",
                             type=str,
                             choices=["fair_share", "priority", "round_robin"],
                             default=constants.defaults.SCHEDULER_TYPE,
                             help="scheduler to use",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--preemption-enabled",
-                            type=string_to_bool,
+                            type=cli.string_to_bool,
                             default=constants.defaults.PREEMPTION_ENABLED,
                             help="whether task preemption is supported in the scheduler "
                             "(only configurable for priority scheduler).",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--cpu-env-image",
                             type=str,
                             default="",
                             help="Docker image for CPU tasks",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpu-env-image",
                             type=str,
                             default="",
                             help="Docker image for GPU tasks",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--master-config-template-path",
-                            type=Path,
+                            type=pathlib.Path,
                             default=None,
                             help="path to master yaml template",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--tf-state-gcs-bucket-name",
                             type=str,
                             default=None,
                             help="use the GCS bucket to store the terraform state "
                             "instead of a local directory",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--add-label",
                             type=parse_add_label(),
                             action="append",
@@ -595,7 +595,7 @@ args_description = Cmd(
                             help="apply label to master instance in key=value format, "
                             "can be repeated",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--initial-user-password",
                             type=str,
                             help="Password for the default 'determined' and 'admin' users.",
@@ -604,7 +604,7 @@ args_description = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "dump-master-config-template",
             handle_dump_master_config_template,
             "dump default master config template",

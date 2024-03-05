@@ -8,29 +8,27 @@ import shutil
 import subprocess
 import sys
 import typing
-from argparse import Namespace
-from collections.abc import Sequence
+from collections import abc
 from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union, get_args, get_origin
 from urllib import parse
 
-from termcolor import colored
+import termcolor
 
 from determined import cli
 from determined.cli import errors, render
-from determined.common.api import bindings
+from determined.common import api
 from determined.common.api import errors as api_errors
-from determined.common.declarative_argparse import Arg, Cmd
 
 
-def token(args: Namespace) -> None:
+def token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     print(sess.token)
 
 
-def curl(args: Namespace) -> None:
+def curl(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     if shutil.which("curl") is None:
-        print(colored("curl is not installed on this machine", "red"))
+        print(termcolor.colored("curl is not installed on this machine", "red"))
         sys.exit(1)
 
     parsed = parse.urlparse(args.path)
@@ -102,7 +100,7 @@ def unwrap_optional(annotation: Any) -> Any:
         "Optional": Optional,
         "Union": Union,
         "List": List,
-        "Sequence": Sequence,
+        "Sequence": abc.Sequence,
         "Dict": Dict,
         "NoneType": type(None),
     }
@@ -135,7 +133,7 @@ def is_supported_annotation(annot: Any) -> bool:
     origin = get_origin(annot)
     args = get_args(annot)
 
-    if origin in [list, Sequence]:
+    if origin in [list, abc.Sequence]:
         if args is not None:
             return all(is_supported_annotation(arg) for arg in args)
 
@@ -158,7 +156,7 @@ def get_available_bindings(
     return a dictionary of available bindings and their parameters.
     """
     rv: List[Tuple[str, List[inspect.Parameter]]] = []
-    for name, obj in inspect.getmembers(bindings):
+    for name, obj in inspect.getmembers(api.bindings):
         if not inspect.isfunction(obj):
             continue
         name, params = bindings_sig(obj)
@@ -221,7 +219,7 @@ def parse_args_to_kwargs(args: List[str], params: List[inspect.Parameter]) -> Di
             raise ValueError(f"Unknown argument {key}")
         value = parse_param_value(param, value)
         if key in kwargs:
-            raise ValueError(f"Argument {key} specified twice")
+            raise ValueError(f"cli.Argument {key} specified twice")
         kwargs[key] = value
 
     assert len(kwargs) <= len(params), "too many arguments"
@@ -240,7 +238,7 @@ def print_response(data: Any) -> None:
         print(data)
 
 
-def list_bindings(args: Namespace) -> None:
+def list_bindings(args: argparse.Namespace) -> None:
     for name, params in get_available_bindings(show_unusable=args.show_unusable).items():
         print(bindings_sig_str(name, params))
 
@@ -277,7 +275,7 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     return fn_name
 
 
-def call_bindings(args: Namespace) -> None:
+def call_bindings(args: argparse.Namespace) -> None:
     """
     support calling some bindings with primitive arguments via the cli
     """
@@ -285,7 +283,7 @@ def call_bindings(args: Namespace) -> None:
     fn_name: str = args.name
     fns = get_available_bindings(show_unusable=False)
     fn_name = auto_complete_binding(list(fns.keys()), fn_name)
-    fn = getattr(bindings, fn_name)
+    fn = getattr(api.bindings, fn_name)
     params = fns[fn_name]
     try:
         kwargs = parse_args_to_kwargs(args.args, params)
@@ -307,35 +305,35 @@ def call_bindings(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "dev",
         None,
         argparse.SUPPRESS,
         [
-            Cmd("auth-token", token, "print the active user's auth token", []),
-            Cmd(
+            cli.Cmd("auth-token", token, "print the active user's auth token", []),
+            cli.Cmd(
                 "c|url",
                 curl,
                 "invoke curl",
                 [
-                    Arg(
+                    cli.Arg(
                         "-x", help="display the curl command that will be run", action="store_true"
                     ),
-                    Arg("path", help="relative path to curl (e.g. /api/v1/experiments?x=z)"),
-                    Arg("curl_args", nargs=argparse.REMAINDER, help="curl arguments"),
+                    cli.Arg("path", help="relative path to curl (e.g. /api/v1/experiments?x=z)"),
+                    cli.Arg("curl_args", nargs=argparse.REMAINDER, help="curl arguments"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "b|indings",
                 None,
                 "print the active user's auth token",
                 [
-                    Cmd(
+                    cli.Cmd(
                         "list ls",
                         list_bindings,
                         "list available api bindings to call",
                         [
-                            Arg(
+                            cli.Arg(
                                 "--show-unusable",
                                 action="store_true",
                                 help="shows all bindings, even those that"
@@ -344,13 +342,13 @@ args_description = [
                         ],
                         is_default=True,
                     ),
-                    Cmd(
+                    cli.Cmd(
                         "c|all",
                         call_bindings,
                         "call a function from bindings",
                         [
-                            Arg("name", help="name of the function to call"),
-                            Arg(
+                            cli.Arg("name", help="name of the function to call"),
+                            cli.Arg(
                                 "args",
                                 nargs=argparse.REMAINDER,
                                 help="arguments to pass to the function, positional or kw=value",

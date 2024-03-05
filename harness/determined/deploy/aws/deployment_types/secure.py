@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from termcolor import colored
+import termcolor
 
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
@@ -9,16 +9,16 @@ from determined.deploy.aws.deployment_types import base
 class Secure(base.DeterminedDeployment):
     bastion_info = (
         "To View Determined UI:\n"
-        "Add Keypair: " + colored("ssh-add <keypair>", "yellow") + "\n"
+        "Add Keypair: " + termcolor.colored("ssh-add <keypair>", "yellow") + "\n"
         "Open SSH Tunnel through Bastion: "
-        + colored("ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}", "yellow")
+        + termcolor.colored("ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}", "yellow")
     )
 
-    master_info = "Configure the Determined CLI: " + colored(
+    master_info = "Configure the Determined CLI: " + termcolor.colored(
         "export DET_MASTER=localhost:8080", "yellow"
     )
-    ui_info = "View the Determined UI: " + colored("http://localhost:8080", "blue")
-    ssh_info = "SSH to Determined Master: " + colored(
+    ui_info = "View the Determined UI: " + termcolor.colored("http://localhost:8080", "blue")
+    ssh_info = "SSH to Determined Master: " + termcolor.colored(
         "ssh -i  <keypair> ubuntu@{master_ip} -o "
         '"proxycommand ssh -W %h:%p -i <keypair> ubuntu@{bastion_ip}"',
         "yellow",

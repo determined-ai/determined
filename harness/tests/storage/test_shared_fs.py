@@ -1,21 +1,21 @@
 import os
+import pathlib
 import shutil
 import unittest.mock
 import uuid
-from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
 
 from determined.common import check, storage
 from determined.common.storage import shared
-from determined.tensorboard.fetchers.shared import SharedFSFetcher
+from determined.tensorboard.fetchers import shared as shared_fetcher
 from tests import parallel
 from tests.storage import util
 
 
 @pytest.fixture()
-def manager(tmp_path: Path) -> storage.SharedFSStorageManager:
+def manager(tmp_path: pathlib.Path) -> storage.SharedFSStorageManager:
     return storage.SharedFSStorageManager(str(tmp_path))
 
 
@@ -77,7 +77,7 @@ def test_validate_read_only_dir(manager: storage.SharedFSStorageManager) -> None
 
 
 @pytest.mark.cloud
-def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: Path) -> None:
+def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: pathlib.Path) -> None:
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_dir = os.path.join(tmp_path, "storage_dir")
     storage_relpath = local_sync_dir
@@ -87,7 +87,7 @@ def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: Path) -> No
         os.path.join(storage_dir, "test_dir", str(uuid.uuid4()), "subdir") for _ in range(2)
     ]
 
-    fetcher = SharedFSFetcher({}, paths_to_sync, local_sync_dir)
+    fetcher = shared_fetcher.SharedFSFetcher({}, paths_to_sync, local_sync_dir)
 
     def put_files(filepath_content: Dict[str, bytes]) -> None:
         for filepath, content in filepath_content.items():
@@ -110,7 +110,7 @@ def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None
 
 
 def test_checkpoint_sharded_upload_download(
-    tmp_path: Path, manager: storage.SharedFSStorageManager
+    tmp_path: pathlib.Path, manager: storage.SharedFSStorageManager
 ) -> None:
     with parallel.Execution(4, local_size=2) as pex:
 
@@ -127,7 +127,7 @@ def test_checkpoint_sharded_store_restore(manager: storage.SharedFSStorageManage
             util.run_storage_store_restore_sharded_test(pex, manager, clean_up)
 
 
-def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> None:
+def test_copytree(tmp_path: pathlib.Path, manager: storage.SharedFSStorageManager) -> None:
     src_dir = tmp_path.joinpath("src")
     util.create_checkpoint(src_dir, util.EXPECTED_FILES)
 

@@ -1,13 +1,12 @@
-from argparse import ONE_OR_MORE, Namespace
+import argparse
 from typing import Any, List
 
 from determined import cli
 from determined.cli import render
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd
 
 
-def add_binding(args: Namespace) -> None:
+def add_binding(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     body = bindings.v1BindRPToWorkspaceRequest(
         resourcePoolName=args.pool_name, workspaceNames=args.workspace_names
@@ -21,7 +20,7 @@ def add_binding(args: Namespace) -> None:
     return
 
 
-def remove_binding(args: Namespace) -> None:
+def remove_binding(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     body = bindings.v1UnbindRPFromWorkspaceRequest(
         resourcePoolName=args.pool_name,
@@ -36,7 +35,7 @@ def remove_binding(args: Namespace) -> None:
     return
 
 
-def replace_bindings(args: Namespace) -> None:
+def replace_bindings(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     body = bindings.v1OverwriteRPWorkspaceBindingsRequest(
         resourcePoolName=args.pool_name,
@@ -51,7 +50,7 @@ def replace_bindings(args: Namespace) -> None:
     return
 
 
-def list_workspaces(args: Namespace) -> None:
+def list_workspaces(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     resp = bindings.get_ListWorkspacesBoundToRP(sess, resourcePoolName=args.pool_name)
     workspace_names = ""
@@ -74,67 +73,73 @@ def list_workspaces(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "resource-pool rp",
         None,
         "manage resource pools",
         [
-            Cmd(
+            cli.Cmd(
                 "bindings",
                 None,
                 "manage resource pool bindings",
                 [
-                    Cmd(
+                    cli.Cmd(
                         "add",
                         add_binding,
                         "add a resource-pool-to-workspace binding",
                         [
-                            Arg("pool_name", type=str, help="name of the resource pool to bind"),
-                            Arg(
+                            cli.Arg(
+                                "pool_name", type=str, help="name of the resource pool to bind"
+                            ),
+                            cli.Arg(
                                 "workspace_names",
-                                nargs=ONE_OR_MORE,
+                                nargs=argparse.ONE_OR_MORE,
                                 type=str,
                                 default=None,
                                 help="the workspace to bind to",
                             ),
                         ],
                     ),
-                    Cmd(
+                    cli.Cmd(
                         "remove",
                         remove_binding,
                         "remove a resource-pool-to-workspace binding",
                         [
-                            Arg("pool_name", type=str, help="name of the resource pool to unbind"),
-                            Arg(
+                            cli.Arg(
+                                "pool_name", type=str, help="name of the resource pool to unbind"
+                            ),
+                            cli.Arg(
                                 "workspace_names",
-                                nargs=ONE_OR_MORE,
+                                nargs=argparse.ONE_OR_MORE,
                                 type=str,
                                 default=None,
                                 help="the workspace to unbind from",
                             ),
                         ],
                     ),
-                    Cmd(
+                    cli.Cmd(
                         "replace",
                         replace_bindings,
                         "replace all existing resource-pool-to-workspace bindings",
                         [
-                            Arg("pool_name", type=str, help="name of the resource pool to bind"),
-                            Arg(
+                            cli.Arg(
+                                "pool_name", type=str, help="name of the resource pool to bind"
+                            ),
+                            cli.Arg(
                                 "workspace_names",
-                                nargs=ONE_OR_MORE,
+                                nargs=argparse.ONE_OR_MORE,
                                 type=str,
                                 default=None,
                                 help="the workspaces to bind to",
                             ),
                         ],
                     ),
-                    Cmd(
+                    cli.Cmd(
                         "list-workspaces",
                         list_workspaces,
                         "list all workspaces bound to the pool",
                         [
-                            Arg("pool_name", type=str, help="name of the resource pool"),
+                            cli.Arg("pool_name", type=str, help="name of the resource pool"),
                         ],
                     ),
                 ],

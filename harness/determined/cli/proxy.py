@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 import contextlib
+import dataclasses
 import io
 import os
 import socket
@@ -8,8 +7,7 @@ import socketserver
 import sys
 import threading
 import time
-from dataclasses import dataclass
-from typing import Iterator, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 import lomond
 
@@ -17,7 +15,7 @@ from determined.common import api, detlomond
 from determined.common.api import bindings, certs
 
 
-@dataclass
+@dataclasses.dataclass
 class ListenerConfig:
     service_id: str
     local_port: int
@@ -185,7 +183,7 @@ def http_tunnel_listener(
 
 
 @contextlib.contextmanager
-def _tunnel_task(sess: api.Session, task_id: str, port_map: dict[int, int]) -> Iterator[None]:
+def _tunnel_task(sess: api.Session, task_id: str, port_map: "Dict[int, int]") -> Iterator[None]:
     # Args:
     #   port_map: dict of local port => task port.
     #   task_id: tunneled task_id.
@@ -200,7 +198,7 @@ def _tunnel_task(sess: api.Session, task_id: str, port_map: dict[int, int]) -> I
 
 
 @contextlib.contextmanager
-def _tunnel_trial(sess: api.Session, trial_id: int, port_map: dict[int, int]) -> Iterator[None]:
+def _tunnel_trial(sess: api.Session, trial_id: int, port_map: "Dict[int, int]") -> Iterator[None]:
     # TODO(DET-9000): perhaps the tunnel should be able to probe master for service status,
     # instead of us explicitly polling for task/trial status.
     while True:
@@ -227,7 +225,7 @@ def _tunnel_trial(sess: api.Session, trial_id: int, port_map: dict[int, int]) ->
 
 @contextlib.contextmanager
 def tunnel_experiment(
-    sess: api.Session, experiment_id: int, port_map: dict[int, int]
+    sess: api.Session, experiment_id: int, port_map: "Dict[int, int]"
 ) -> Iterator[None]:
     while True:
         trials = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id).trials
@@ -242,8 +240,8 @@ def tunnel_experiment(
         yield
 
 
-def parse_port_map_flag(publish_arg: list[str]) -> dict[int, int]:
-    result = {}  # type: dict[int, int]
+def parse_port_map_flag(publish_arg: "list[str]") -> "Dict[int, int]":
+    result = {}  # type: Dict[int, int]
 
     for e in publish_arg:
         try:

@@ -9,27 +9,22 @@ from determined.cli._util import (
     wait_ntsc_ready,
     warn,
 )
-from determined.cli import (
-    agent,
-    checkpoint,
-    cli,
-    ntsc,
-    command,
-    experiment,
-    master,
-    model,
-    notebook,
-    project,
-    rbac,
-    render,
-    resources,
-    shell,
-    template,
-    tensorboard,
-    trial,
-    user,
-    workspace,
+from determined.cli._declarative_argparse import (
+    Arg,
+    ArgsDescription,
+    ArgGroup,
+    BoolOptArg,
+    Cmd,
+    Group,
+    add_args,
+    deprecation_warning,
+    help_func,
+    generate_aliases,
+    make_prefixes,
+    string_to_bool,
+    wrap_func,
 )
+from determined.cli.errors import CliError
 
 from determined.common.api import certs as _certs
 from typing import Optional as _Optional

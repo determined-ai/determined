@@ -1,16 +1,15 @@
+import argparse
+import collections
 import getpass
-from argparse import Namespace
-from collections import namedtuple
 from typing import Any, List
 
 from determined import cli
 from determined.cli import errors, render
 from determined.common import api
 from determined.common.api import authentication, bindings
-from determined.common.declarative_argparse import Arg, Cmd, string_to_bool
 from determined.experimental import client
 
-FullUser = namedtuple(
+FullUser = collections.namedtuple(
     "FullUser",
     [
         "user_id",
@@ -25,7 +24,7 @@ FullUser = namedtuple(
         "agent_group",
     ],
 )
-FullUserNoAdmin = namedtuple(
+FullUserNoAdmin = collections.namedtuple(
     "FullUserNoAdmin",
     [
         "user_id",
@@ -41,7 +40,7 @@ FullUserNoAdmin = namedtuple(
 )
 
 
-def list_users(args: Namespace) -> None:
+def list_users(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     resp = bindings.get_GetMaster(sess)
@@ -52,21 +51,21 @@ def list_users(args: Namespace) -> None:
     render.render_objects(renderer, users_list)
 
 
-def activate_user(args: Namespace) -> None:
+def activate_user(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     user_obj = d.get_user_by_name(args.username)
     user_obj.activate()
 
 
-def deactivate_user(args: Namespace) -> None:
+def deactivate_user(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     user_obj = d.get_user_by_name(args.username)
     user_obj.deactivate()
 
 
-def log_in_user(args: Namespace) -> None:
+def log_in_user(args: argparse.Namespace) -> None:
     if args.username is None:
         username = input("Username: ")
     else:
@@ -81,7 +80,7 @@ def log_in_user(args: Namespace) -> None:
     token_store.set_active(sess.username)
 
 
-def log_out_user(args: Namespace) -> None:
+def log_out_user(args: argparse.Namespace) -> None:
     token_store = authentication.TokenStore(args.master)
     if args.all:
         authentication.logout_all(args.master, cli.cert)
@@ -93,14 +92,14 @@ def log_out_user(args: Namespace) -> None:
             token_store.clear_active()
 
 
-def rename(args: Namespace) -> None:
+def rename(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     user_obj = d.get_user_by_name(args.target_user)
     user_obj.rename(new_username=args.new_username)
 
 
-def change_password(args: Namespace) -> None:
+def change_password(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     if args.target_user:
@@ -132,7 +131,7 @@ def change_password(args: Namespace) -> None:
         token_store.set_active(sess.username)
 
 
-def link_with_agent_user(args: Namespace) -> None:
+def link_with_agent_user(args: argparse.Namespace) -> None:
     if args.agent_uid is None:
         raise api.errors.BadRequestException("agent-uid argument required")
     elif args.agent_user is None:
@@ -153,7 +152,7 @@ def link_with_agent_user(args: Namespace) -> None:
     )
 
 
-def create_user(args: Namespace) -> None:
+def create_user(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     username = args.username
@@ -162,14 +161,14 @@ def create_user(args: Namespace) -> None:
     d.create_user(username=username, admin=admin, remote=remote)
 
 
-def whoami(args: Namespace) -> None:
+def whoami(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     user = d.whoami()
     print("You are logged in as user '{}'".format(user.username))
 
 
-def edit(args: Namespace) -> None:
+def edit(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     user_obj = d.get_user_by_name(args.target_user)
@@ -203,90 +202,94 @@ def edit(args: Namespace) -> None:
 
 
 AGENT_USER_GROUP_ARGS = [
-    Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
-    Arg("--agent-user", help="user on the agent to run tasks as"),
-    Arg("--agent-gid", type=int, help="GID on agent to run tasks as"),
-    Arg("--agent-group", help="group on the agent to run tasks as"),
+    cli.Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
+    cli.Arg("--agent-user", help="user on the agent to run tasks as"),
+    cli.Arg("--agent-gid", type=int, help="GID on agent to run tasks as"),
+    cli.Arg("--agent-group", help="group on the agent to run tasks as"),
 ]
 
 # fmt: off
 
 args_description = [
-    Cmd("u|ser", None, "manage users", [
-        Cmd("list ls", list_users, "list users", [
-            Arg(
+    cli.Cmd("u|ser", None, "manage users", [
+        cli.Cmd("list ls", list_users, "list users", [
+            cli.Arg(
                 "--all",
                 "-a",
                 action="store_true",
                 help="List all active and inactive users.",
             ),
         ], is_default=True),
-        Cmd("login", log_in_user, "log in user", [
-            Arg("username", nargs="?", default=None, help="name of user to log in as")
+        cli.Cmd("login", log_in_user, "log in user", [
+            cli.Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),
-        Cmd("rename", rename, "change username for user", [
-            Arg("target_user", default=None, help="name of user whose username should be changed"),
-            Arg("new_username", default=None, help="new username for target_user"),
+        cli.Cmd("rename", rename, "change username for user", [
+            cli.Arg(
+                "target_user", default=None, help="name of user whose username should be changed"
+            ),
+            cli.Arg("new_username", default=None, help="new username for target_user"),
         ], deprecation_message="Please use 'det user edit <target_user> --username <username>'"),
-        Cmd("change-password", change_password, "change password for user", [
-            Arg("target_user", nargs="?", default=None, help="name of user to change password of")
+        cli.Cmd("change-password", change_password, "change password for user", [
+            cli.Arg(
+                "target_user", nargs="?", default=None, help="name of user to change password of"
+            )
         ]),
-        Cmd("logout", log_out_user, "log out user", [
-            Arg(
+        cli.Cmd("logout", log_out_user, "log out user", [
+            cli.Arg(
                 "--all",
                 "-a",
                 action="store_true",
                 help="log out of all cached sessions for the current master",
             ),
         ]),
-        Cmd("activate", activate_user, "activate user", [
-            Arg("username", help="name of user to activate")
+        cli.Cmd("activate", activate_user, "activate user", [
+            cli.Arg("username", help="name of user to activate")
         ], deprecation_message="Please use 'det user edit <target_user> --activate'"),
-        Cmd("deactivate", deactivate_user, "deactivate user", [
-            Arg("username", help="name of user to deactivate")
+        cli.Cmd("deactivate", deactivate_user, "deactivate user", [
+            cli.Arg("username", help="name of user to deactivate")
         ], deprecation_message="Please use 'det user edit <target_user> --deactivate'"),
-        Cmd("create", create_user, "create user", [
-            Arg("username", help="name of new user"),
-            Arg("--admin", action="store_true", help="give new user admin rights"),
-            Arg(
+        cli.Cmd("create", create_user, "create user", [
+            cli.Arg("username", help="name of new user"),
+            cli.Arg("--admin", action="store_true", help="give new user admin rights"),
+            cli.Arg(
                 "--remote",
                 action="store_true",
                 help="disallow using passwords, user must use the configured external IdP",
             ),
         ]),
-        Cmd("link-with-agent-user", link_with_agent_user, "link a user with UID/GID on agent", [
-            Arg("det_username", help="name of Determined user to link"),
+        cli.Cmd("link-with-agent-user", link_with_agent_user, "link a user with UID/GID on agent", [
+            cli.Arg("det_username", help="name of Determined user to link"),
             *AGENT_USER_GROUP_ARGS,
         ]),
-        Cmd("whoami", whoami, "print the active user", []),
-        Cmd("edit", edit, "edit user fields", [
-            Arg(
+        cli.Cmd("whoami", whoami, "print the active user", []),
+        cli.Cmd("edit", edit, "edit user fields", [
+            cli.Arg(
                 "target_user",
                 default=None,
                 help="name of user that should be edited"
             ),
-            Arg("--display-name", default=None, help="new display name for target_user"),
-            Arg("--username", default=None, help="new username for target_user"),
-            Arg(
+            cli.Arg("--display-name", default=None, help="new display name for target_user"),
+            cli.Arg("--username", default=None, help="new username for target_user"),
+            cli.Arg(
                 "--remote",
                 dest="remote",
-                type=string_to_bool,
+                type=cli.string_to_bool,
                 metavar="(true|false)",
                 default=None,
                 help="set user as remote",
             ),
-            Arg(
+            cli.Arg(
                 "--active",
                 dest="activate",
-                type=string_to_bool,
+                type=cli.string_to_bool,
                 metavar="(true|false)",
                 default=None,
                 help="set user as active/inactive",
             ),
-            Arg(
+            cli.Arg(
                 "--admin",
                 dest="admin",
-                type=string_to_bool,
+                type=cli.string_to_bool,
                 metavar="(true|false)",
                 default=None,
                 help="grant/remove user admin permissions",

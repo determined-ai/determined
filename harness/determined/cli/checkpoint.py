@@ -5,7 +5,6 @@ from typing import Any, List, Optional
 from determined import cli, errors, experimental
 from determined.cli import render
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
 
@@ -156,30 +155,30 @@ def checkpoints_file_rm(args: argparse.Namespace) -> None:
         print("Stopping removal of files from checkpoints.")
 
 
-main_cmd = Cmd(
+main_cmd = cli.Cmd(
     "c|heckpoint",
     None,
     "manage checkpoints",
     [
-        Cmd(
+        cli.Cmd(
             "download",
             download,
             "download checkpoint from persistent storage",
             [
-                Arg("uuid", type=str, help="Download a checkpoint by specifying its UUID."),
-                Arg(
+                cli.Arg("uuid", type=str, help="Download a checkpoint by specifying its UUID."),
+                cli.Arg(
                     "-o",
                     "--output-dir",
                     type=str,
                     help="Desired output directory for the checkpoint.",
                 ),
-                Arg(
+                cli.Arg(
                     "-q",
                     "--quiet",
                     action="store_true",
                     help="Only print the path to the checkpoint.",
                 ),
-                Arg(
+                cli.Arg(
                     "--mode",
                     choices=list(client.DownloadMode),
                     default=client.DownloadMode.AUTO,
@@ -194,19 +193,19 @@ main_cmd = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "describe",
             describe,
             "describe checkpoint",
-            [Arg("uuid", type=str, help="checkpoint uuid to describe")],
+            [cli.Arg("uuid", type=str, help="checkpoint uuid to describe")],
         ),
-        Cmd(
+        cli.Cmd(
             "delete",
             delete_checkpoints,
             "delete checkpoints",
             [
-                Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
-                Arg(
+                cli.Arg("checkpoints_uuids", help="comma-separated list of checkpoints to delete"),
+                cli.Arg(
                     "--yes",
                     action="store_true",
                     default=False,
@@ -214,16 +213,16 @@ main_cmd = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "rm",
             checkpoints_file_rm,
             "remove files from checkpoints",
             [
-                Arg(
+                cli.Arg(
                     "checkpoints_uuids",
                     help="comma-separated list of checkpoints to remove files from",
                 ),
-                Arg(
+                cli.Arg(
                     "--glob",
                     action="append",
                     default=[],
@@ -231,7 +230,7 @@ main_cmd = Cmd(
                     + "will be deleted and checkpoint resources will "
                     + "be read from storage and refreshed",
                 ),
-                Arg(
+                cli.Arg(
                     "--yes",
                     action="store_true",
                     default=False,

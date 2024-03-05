@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Any, List, Optional
 
-from determined.common.storage.s3 import normalize_prefix
+from determined.common import storage
 from determined.tensorboard import base
 
 logger = logging.getLogger("determined.tensorboard.s3")
@@ -40,7 +40,7 @@ class S3TensorboardManager(base.TensorboardManager):
             aws_secret_access_key=secret_key,
         )
 
-        self.prefix = normalize_prefix(prefix)
+        self.prefix = storage.normalize_prefix(prefix)
 
     def _sync_impl(
         self,

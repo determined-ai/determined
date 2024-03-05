@@ -10,7 +10,6 @@ import determined as det
 from determined import cli
 from determined.cli import render
 from determined.common import api
-from determined.common.declarative_argparse import Cmd
 
 
 def get_version(sess: api.BaseSession) -> Dict[str, Any]:
@@ -76,5 +75,5 @@ def describe_version(args: argparse.Namespace) -> None:
 
 
 args_description = [
-    Cmd("version", describe_version, "show version information", [])
+    cli.Cmd("version", describe_version, "show version information", [])
 ]  # type: List[Any]

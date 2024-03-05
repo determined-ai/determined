@@ -17,14 +17,8 @@ from typing import (
 import numpy as np
 import torch
 from packaging import version
-from torch.utils.data import (
-    BatchSampler,
-    Dataset,
-    RandomSampler,
-    Sampler,
-    SequentialSampler,
-    _utils,
-)
+from torch.utils import data
+from torch.utils.data._utils import collate
 
 from determined.pytorch import samplers
 
@@ -57,7 +51,7 @@ def _dataset_repro_warning(fn: str, data_obj: Any, is_deepspeed_trial: bool = Fa
 
 class DataLoader:
     """
-    DataLoader is meant to contain a user's ``Dataset``, configuration for
+    DataLoader is meant to contain a user's ``data.Dataset``, configuration for
     sampling data in batches, and performance configuration like
     multiprocessing.
 
@@ -112,11 +106,11 @@ class DataLoader:
 
     def __init__(
         self,
-        dataset: Dataset,
+        dataset: data.Dataset,
         batch_size: Optional[int] = 1,
         shuffle: bool = False,
-        sampler: Optional[Sampler] = None,
-        batch_sampler: Optional[BatchSampler] = None,
+        sampler: Optional[data.Sampler] = None,
+        batch_sampler: Optional[data.BatchSampler] = None,
         num_workers: int = 0,
         collate_fn: _collate_fn_t = None,
         pin_memory: bool = False,
@@ -130,13 +124,13 @@ class DataLoader:
         persistent_workers: bool = False,
     ):
         # Don't allow IterableDatasets in our DataLoader.
-        if isinstance(dataset, torch.utils.data.IterableDataset):
+        if isinstance(dataset, data.IterableDataset):
             raise ValueError(
-                "IterableDatasets are not supported through det.pytorch.DataLoader().  Read about "
-                "the difference between IterableDatasets and MapDatasets at: "
+                "IterableDatasets are not supported through det.pytorch.DataLoader().  Read "
+                "about the difference between IterableDatasets and Mapdata.Datasets at: "
                 "pytorch.org/docs/stable/data. "
-                "You can use an IterableDataset in Determined, but you will be responsible for "
-                "shuffling, sharding, repeating, and skipping to ensure reproducibility and "
+                "You can use an IterableDataset in Determined, but you will be responsible"
+                " for shuffling, sharding, repeating, and skipping to ensure reproducibility and "
                 "correctness of training.  See the in-depth guide at: "
                 "https://docs.determined.ai/latest/training-apis/api-pytorch-advanced.html"
             )
@@ -207,15 +201,15 @@ class DataLoader:
         if sampler is None:  # give default samplers
             if shuffle:
                 if version.parse(torch.__version__) >= version.parse("1.6.0"):
-                    sampler = RandomSampler(dataset, generator=generator)  # type: ignore
+                    sampler = data.RandomSampler(dataset, generator=generator)  # type: ignore
                 else:
-                    sampler = RandomSampler(dataset)  # type: ignore
+                    sampler = data.RandomSampler(dataset)  # type: ignore
             else:
-                sampler = SequentialSampler(dataset)  # type: ignore
+                sampler = data.SequentialSampler(dataset)  # type: ignore
 
         if batch_size is not None and batch_sampler is None:
             # auto_collation without custom batch_sampler
-            batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+            batch_sampler = data.BatchSampler(sampler, batch_size, drop_last)
 
         self.batch_size = batch_size
         self.drop_last = drop_last
@@ -225,9 +219,9 @@ class DataLoader:
 
         if collate_fn is None:
             if self._auto_collation:
-                collate_fn = _utils.collate.default_collate
+                collate_fn = collate.default_collate
             else:
-                collate_fn = _utils.collate.default_convert
+                collate_fn = collate.default_convert
 
         self.collate_fn = collate_fn
         self.persistent_workers = persistent_workers
@@ -243,8 +237,8 @@ class DataLoader:
 
     def get_data_loader(
         self, repeat: bool = False, skip: int = 0, num_replicas: int = 1, rank: int = 0
-    ) -> torch.utils.data.DataLoader:
-        batch_sampler = cast(BatchSampler, self.batch_sampler)
+    ) -> data.DataLoader:
+        batch_sampler = cast(data.BatchSampler, self.batch_sampler)
         batch_sampler = adapt_batch_sampler(
             batch_sampler, repeat=repeat, skip=skip, num_replicas=num_replicas, rank=rank
         )
@@ -264,7 +258,7 @@ class DataLoader:
             extra_kwargs["prefetch_factor"] = self.prefetch_factor
             extra_kwargs["persistent_workers"] = self.persistent_workers
 
-        return torch.utils.data.DataLoader(
+        return data.DataLoader(
             self.dataset,
             batch_sampler=batch_sampler,
             num_workers=self.num_workers,
@@ -281,17 +275,17 @@ class DataLoader:
 
     def __len__(self) -> int:
         """Compatibility with the real DataLoader when using a PyTorchTrial outside Determined."""
-        batch_sampler = cast(BatchSampler, self.batch_sampler)
+        batch_sampler = cast(data.BatchSampler, self.batch_sampler)
         return len(batch_sampler)
 
 
 def adapt_batch_sampler(
-    batch_sampler: torch.utils.data.BatchSampler,
+    batch_sampler: data.BatchSampler,
     repeat: bool = False,
     skip: int = 0,
     num_replicas: int = 1,
     rank: int = 0,
-) -> torch.utils.data.BatchSampler:
+) -> data.BatchSampler:
     """
     Modify the underlying BatchSampler of a constructed DataLoader to account
     for repeating on training datasets, skipping when continuing training, and
@@ -303,10 +297,10 @@ def adapt_batch_sampler(
     if num_replicas > 1:
         batch_sampler = samplers.DistributedBatchSampler(batch_sampler, num_replicas, rank)
 
-    # SkipBatchSampler is used when we are continuing training. SkipBatchSampler must be applied
-    # after DistributedBatchSampler, since the number of batches to skip is based on how many
-    # global batches should be skipped, which corresponds with how many batches are emitted by the
-    # DistributedBatchSampler, not the initial BatchSampler.
+    # SkipBatchSampler is used when we are continuing training. SkipBatchSampler must be
+    # applied after DistributedBatchSampler, since the number of batches to skip is based on
+    # how many global batches should be skipped, which corresponds with how many batches are emitted
+    # by the DistributedBatchSampler, not the initial BatchSampler.
     if skip > 0:
         batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip)
 

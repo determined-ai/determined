@@ -2,6 +2,7 @@ import copy
 import uuid
 from typing import Any, Dict, Optional, Type
 
+from determined.common.storage._util import normalize_prefix
 from determined.common.storage.base import StorageManager, Paths, Selector, from_string
 from determined.common.storage.cloud import CloudStorageManager
 from determined.common.storage.azure import AzureStorageManager
@@ -12,6 +13,7 @@ from determined.common.storage.directory import DirectoryStorageManager
 
 __all__ = [
     "AzureStorageManager",
+    "CloudStorageManager",
     "DirectoryStorageManager",
     "GCSStorageManager",
     "S3StorageManager",

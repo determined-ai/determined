@@ -1,6 +1,6 @@
 import argparse
 import json
-from pathlib import Path
+import pathlib
 from typing import Dict, Iterable, List, Tuple
 
 import boto3
@@ -41,7 +41,7 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("output_fn", type=Path, help="output filename")
+    parser.add_argument("output_fn", type=pathlib.Path, help="output filename")
 
     args = parser.parse_args()
     main(args)

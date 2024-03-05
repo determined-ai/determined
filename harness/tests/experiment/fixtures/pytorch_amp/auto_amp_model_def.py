@@ -11,12 +11,14 @@ context during the forward pass.
 
 import typing
 
-from train import MNistTrial
+import train
 
-from determined.pytorch import PyTorchTrialContext
+from determined import pytorch
 
 
-class MNistAutoAMPTrial(MNistTrial):
-    def __init__(self, context: PyTorchTrialContext, hparams: typing.Optional[typing.Dict]) -> None:
+class MNistAutoAMPTrial(train.MNistTrial):
+    def __init__(
+        self, context: pytorch.PyTorchTrialContext, hparams: typing.Optional[typing.Dict]
+    ) -> None:
         context.experimental.use_amp()
         super().__init__(context=context, hparams=hparams)
