@@ -3,27 +3,15 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Select from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
-import * as io from 'io-ts';
 
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 
+import { DirectionType, Sort, validSort } from './glide-table/GlideTable';
 import css from './MultiSortMenu.module.scss';
 
 // in the list of columns from the api but not supported by the sort functionality
 export const BANNED_SORT_COLUMNS = new Set(['tags']);
-
-const directionType = io.keyof({ asc: null, desc: null });
-export type DirectionType = io.TypeOf<typeof directionType>;
-
-export const validSort = io.type({
-  column: io.string,
-  direction: directionType,
-});
-export type ValidSort = io.TypeOf<typeof validSort>;
-
-const sort = io.partial(validSort.props);
-export type Sort = io.TypeOf<typeof sort>;
 
 export const EMPTY_SORT: Sort = { column: undefined, direction: undefined };
 
@@ -125,9 +113,9 @@ export const sortMenuItemsForColumn = (
             s.column !== column.column
               ? s
               : {
-                  ...s,
-                  direction: option.value as DirectionType,
-                },
+                ...s,
+                direction: option.value as DirectionType,
+              },
           );
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];

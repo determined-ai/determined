@@ -15,32 +15,16 @@ import DataEditor, {
 } from '@glideapps/glide-data-grid';
 import { DrawHeaderCallback } from '@glideapps/glide-data-grid/dist/dts/internal/data-grid/data-grid-types';
 import { DropdownEvent, MenuItem } from 'hew/Dropdown';
-import Icon from 'hew/Icon';
 import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
+import * as io from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
-import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
-import {
-  AvailableOperators,
-  FormKind,
-  Operator,
-  SpecialColumnNames,
-} from 'components/FilterForm/components/type';
 import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
-import { Sort, sortMenuItemsForColumn } from 'pages/F_ExpList/MultiSortMenu';
-import { handlePath } from 'routes/utils';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import {
-  ProjectColumn,
-} from 'types';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
-import { AnyMouseEvent } from 'utils/routes';
-import { pluralizer } from 'utils/string';
 
 import {
   ColumnDef,
@@ -55,6 +39,18 @@ import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
 import { useTableTooltip } from './tooltip';
+
+const directionType = io.keyof({ asc: null, desc: null });
+export type DirectionType = io.TypeOf<typeof directionType>;
+
+export const validSort = io.type({
+  column: io.string,
+  direction: directionType,
+});
+export type ValidSort = io.TypeOf<typeof validSort>;
+
+const sort = io.partial(validSort.props);
+export type Sort = io.TypeOf<typeof sort>;
 
 /**
  * Glide Table Theme Reference
@@ -82,29 +78,25 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   colorMap: MapOfIdsToColors;
   columns: ColumnDef<T>[];
   columnWidths: Record<string, number>;
-  rowIdPath?: string;
+  /** field to use as unique identifier for each element in data */
+  rowIdPath: string;
   renderContextMenuComponent?: (props: ContextMenuComponentProps<T, ContextAction, ContextActionData>) => JSX.Element;
   comparisonViewOpen?: boolean;
   data: Loadable<T>[];
   dataTotal: number;
-  formStore: FilterFormStore;
-  heatmapOn: boolean;
-  heatmapSkipped: string[];
+  getHeaderMenuItems?: (columnId: string, colIdx: number, setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>) => MenuItem[];
   height: number;
   onColumnResize?: (newColumnWidths: Record<string, number>) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
-  onHeatmapSelection?: (selection: string[]) => void;
-  onIsOpenFilterChange?: (value: boolean) => void;
+  onLinkClick?: (href: string) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
   onSortableColumnChange?: (newColumns: string[]) => void;
-  onSortChange?: (sorts: Sort[]) => void;
   page: number;
   pageSize: number;
   pinnedColumnsCount: number;
-  projectColumns: Loadable<ProjectColumn[]>;
-  rowHeight: number;
+  rowHeight?: number;
   scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
   selection: GridSelection;
@@ -141,23 +133,18 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   comparisonViewOpen = false,
   data,
   dataTotal,
-  formStore,
-  heatmapOn,
-  heatmapSkipped,
+  getHeaderMenuItems,
   height,
   onColumnResize,
   onContextMenuComplete,
-  onHeatmapSelection,
-  onIsOpenFilterChange,
+  onLinkClick,
   onPinnedColumnsCountChange,
   onScroll,
   onSelectionChange,
   onSortableColumnChange,
-  onSortChange,
   page,
   pageSize,
   pinnedColumnsCount,
-  projectColumns,
   rowIdPath,
   renderContextMenuComponent,
   rowHeight,
@@ -235,7 +222,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       const rowColorTheme = Loadable.match(data[row], {
         _: () => ({}),
         Loaded: (record) =>
-          colorMap[_.get(record, rowIdPath ?? '')] ? { accentColor: colorMap[_.get(record, rowIdPath ?? '')] } : {},
+          colorMap[_.get(record, rowIdPath)] ? { accentColor: colorMap[_.get(record, rowIdPath)] } : {},
       });
 
       return { ...rowColorTheme, ...hoverStyle };
@@ -250,16 +237,6 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       onColumnResize?.({ ...columnWidths, [columnId]: width });
     },
     [columnWidths, onColumnResize],
-  );
-
-  const toggleHeatmap = useCallback(
-    (col: string) =>
-      onHeatmapSelection?.(
-        heatmapSkipped.includes(col)
-          ? heatmapSkipped.filter((p) => p !== col)
-          : [...heatmapSkipped, col],
-      ),
-    [heatmapSkipped, onHeatmapSelection],
   );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(
@@ -304,148 +281,16 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
         setMenuIsOpen(true);
         return;
       }
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-      if (!column) {
-        return;
-      }
-
-      const filterCount = formStore.getFieldCount(column.column).get();
-
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
-      const loadableFormset = formStore.formset.get();
-      const filterMenuItemsForColumn = () => {
-        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
-          column.column,
-        );
-        formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: Loadable.match(loadableFormset, {
-            _: () => 0,
-            Loaded: (formset) => formset.filterGroup.children.length,
-          }),
-          item: {
-            columnName: column.column,
-            id: uuidv4(),
-            kind: FormKind.Field,
-            location: column.location,
-            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
-            type: column.type,
-            value: null,
-          },
-        });
-        onIsOpenFilterChange?.(true);
-        setMenuIsOpen(false);
-      };
-      const clearFilterForColumn = () => {
-        formStore.removeByField(column.column);
-      };
-
-      const isPinned = col <= pinnedColumnsCount + staticColumns.length - 1;
-      const items: MenuItem[] = [
-        // Column is pinned if the index is inside of the frozen columns
-        col < staticColumns.length || isMobile
-          ? null
-          : !isPinned
-            ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(
-                  Math.min(pinnedColumnsCount + 1, sortableColumnIds.length),
-                );
-                setMenuIsOpen(false);
-              },
-            }
-            : {
-              disabled: pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-                newSortableColumns.splice(pinnedColumnsCount - 1, 0, column.column);
-                onSortableColumnChange?.(newSortableColumns);
-                onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-                setMenuIsOpen(false);
-              },
-            },
-        {
-          icon: <Icon decorative name="eye-close" />,
-          key: 'hide',
-          label: 'Hide column',
-          onClick: () => {
-            const newSortableColumns = sortableColumnIds.filter((c) => c !== column.column);
-            onSortableColumnChange?.(newSortableColumns);
-            if (isPinned) {
-              onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
-            }
-          },
-        },
-        { type: 'divider' as const },
-        ...(BANNED_FILTER_COLUMNS.includes(column.column)
-          ? []
-          : [
-            ...sortMenuItemsForColumn(column, sorts, onSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Add Filter',
-              onClick: () => {
-                setTimeout(filterMenuItemsForColumn, 5);
-              },
-            },
-          ]),
-        filterCount > 0
-          ? {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          }
-          : null,
-        heatmapOn &&
-          (column.column === 'searcherMetricsVal' ||
-            (column.type === V1ColumnType.NUMBER &&
-              (column.location === V1LocationType.VALIDATIONS ||
-                column.location === V1LocationType.TRAINING)))
-          ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !heatmapSkipped.includes(column.column) ? 'Cancel heatmap' : 'Apply heatmap',
-            onClick: () => {
-              toggleHeatmap(column.column);
-            },
-          }
-          : null,
-      ];
+      const items = getHeaderMenuItems?.(columnId, col, setMenuIsOpen);
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
     [
       columns,
       data.length,
-      projectColumns,
-      formStore,
-      sorts,
-      onSortChange,
-      staticColumns.length,
-      isMobile,
-      pinnedColumnsCount,
       selection.rows.length,
-      onIsOpenFilterChange,
-      onPinnedColumnsCountChange,
       onSelectionChange,
-      onSortableColumnChange,
-      sortableColumnIds,
-      heatmapSkipped,
-      toggleHeatmap,
-      heatmapOn,
+      getHeaderMenuItems,
     ],
   );
 
@@ -504,7 +349,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
         const cell = columns[col].renderer(rowData, row);
 
         if (isLinkCell(cell)) {
-          handlePath(event as unknown as AnyMouseEvent, { path: cell.data.link.href });
+          onLinkClick?.(cell.data.link.href);
         } else {
           if (event.shiftKey) {
             if (clickedCellRef.current !== null) {
@@ -525,7 +370,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
         }
       });
     },
-    [data, columns, onSelectionChange, selection],
+    [data, columns, onLinkClick, onSelectionChange, selection],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(

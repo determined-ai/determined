@@ -45,7 +45,8 @@ import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
-import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { Sort } from './glide-table/GlideTable';
+import MultiSortMenu from './MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
