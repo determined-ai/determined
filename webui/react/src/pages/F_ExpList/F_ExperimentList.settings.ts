@@ -4,8 +4,7 @@ import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
-import { ioTableViewMode, TableViewMode } from './glide-table/GlideTable';
-import { ioRowHeight, RowHeight } from './glide-table/OptionsMenu';
+import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from './OptionsMenu';
 
 export interface F_ExperimentListSettings {
   columns: string[];

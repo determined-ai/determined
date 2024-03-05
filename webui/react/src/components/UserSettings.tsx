@@ -37,8 +37,7 @@ import {
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
-import { RowHeight, rowHeightItems } from 'pages/F_ExpList/glide-table/OptionsMenu';
+import { RowHeight, rowHeightItems, TableViewMode } from 'pages/F_ExpList/OptionsMenu';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

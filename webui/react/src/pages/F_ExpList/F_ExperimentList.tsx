@@ -67,9 +67,9 @@ import {
   NO_PINS_WIDTH,
 } from './glide-table/columns';
 import { ContextMenuCompleteHandlerProps, ContextMenuComponentProps } from './glide-table/contextMenu';
-import GlideTable, { HandleSelectionChangeType, SCROLL_SET_COUNT_NEEDED, SelectionType, TableViewMode } from './glide-table/GlideTable';
-import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
-import { RowHeight } from './glide-table/OptionsMenu';
+import GlideTable, { HandleSelectionChangeType, SCROLL_SET_COUNT_NEEDED, SelectionType } from './glide-table/GlideTable';
+import { EMPTY_SORT, Sort, validSort, ValidSort } from './MultiSortMenu';
+import { RowHeight, TableViewMode } from './OptionsMenu';
 import TableActionBar from './TableActionBar';
 
 interface Props {
@@ -874,6 +874,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
+  const rowHeightMap: Record<RowHeight, number> = {
+    [RowHeight.EXTRA_TALL]: 44,
+    [RowHeight.TALL]: 40,
+    [RowHeight.MEDIUM]: 36,
+    [RowHeight.SHORT]: 32,
+  };
+
   return (
     <>
       <TableActionBar
@@ -951,7 +958,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                     </ExperimentActionDropdown>
                   );
                 }}
-                rowHeight={globalSettings.rowHeight}
+                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
                 rowIdPath={'experiment.id'}
                 scrollPositionSetCount={scrollPositionSetCount}
                 selectAll={selectAll}

@@ -45,9 +45,8 @@ import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import ColumnPickerMenu from './ColumnPickerMenu';
-import { TableViewMode } from './glide-table/GlideTable';
-import MultiSortMenu, { Sort } from './glide-table/MultiSortMenu';
-import { OptionsMenu, RowHeight } from './glide-table/OptionsMenu';
+import MultiSortMenu, { Sort } from './MultiSortMenu';
+import { OptionsMenu, RowHeight, TableViewMode } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [

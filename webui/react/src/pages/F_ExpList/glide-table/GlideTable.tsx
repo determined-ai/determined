@@ -18,7 +18,6 @@ import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
-import { literal, union } from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,6 +32,7 @@ import {
 import useUI from 'components/ThemeProvider';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
+import { Sort, sortMenuItemsForColumn } from 'pages/F_ExpList/MultiSortMenu';
 import { handlePath } from 'routes/utils';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
@@ -54,8 +54,6 @@ import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { TableActionMenu, TableActionMenuProps } from './menu';
-import { Sort, sortMenuItemsForColumn } from './MultiSortMenu';
-import { RowHeight } from './OptionsMenu';
 import { useTableTooltip } from './tooltip';
 
 /**
@@ -106,7 +104,7 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   pageSize: number;
   pinnedColumnsCount: number;
   projectColumns: Loadable<ProjectColumn[]>;
-  rowHeight: RowHeight;
+  rowHeight: number;
   scrollPositionSetCount: WritableObservable<number>;
   selectAll: boolean;
   selection: GridSelection;
@@ -121,10 +119,6 @@ export type HandleSelectionChangeType = (
   range: [number, number],
 ) => void;
 
-export type TableViewMode = 'scroll' | 'paged';
-
-export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
-
 /**
  * Number of renders with gridRef.current !== null
  * needed for the table to be properly initialized.
@@ -138,13 +132,6 @@ export const SCROLL_SET_COUNT_NEEDED = 3;
 
 const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
-};
-
-const rowHeightMap: Record<RowHeight, number> = {
-  [RowHeight.EXTRA_TALL]: 44,
-  [RowHeight.TALL]: 40,
-  [RowHeight.MEDIUM]: 36,
-  [RowHeight.SHORT]: 32,
 };
 
 export function GlideTable<T, ContextAction extends string, ContextActionData>({
@@ -682,7 +669,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
           height={height}
           minColumnWidth={MIN_COLUMN_WIDTH}
           ref={gridRef}
-          rowHeight={rowHeightMap[rowHeight]}
+          rowHeight={rowHeight}
           rows={dataTotal}
           smoothScrollX
           smoothScrollY
