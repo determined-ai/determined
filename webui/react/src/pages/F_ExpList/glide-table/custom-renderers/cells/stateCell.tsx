@@ -1,21 +1,20 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
 
-import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
-import { CompoundRunState, JobState, RunState } from 'types';
+import { CellState, roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
-interface ExperimentStateCellProps {
+interface StateCellProps {
   readonly appTheme: Theme;
-  readonly kind: 'experiment-state-cell';
-  readonly state: CompoundRunState;
+  readonly kind: 'state-cell';
+  readonly state: CellState;
 }
 
 const PI = Math.PI;
 const QUADRANT = PI / 2;
 
-export type ExperimentStateCell = CustomCell<ExperimentStateCellProps>;
+export type StateCell = CustomCell<StateCellProps>;
 
-const renderer: CustomRenderer<ExperimentStateCell> = {
+const renderer: CustomRenderer<StateCell> = {
   draw: (args, cell) => {
     const { ctx, rect, theme, requestAnimationFrame } = args;
     const { state, appTheme } = cell.data;
@@ -33,10 +32,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
     ctx.save();
 
     switch (state) {
-      case JobState.SCHEDULED:
-      case JobState.SCHEDULEDBACKFILLED:
-      case JobState.QUEUED:
-      case RunState.Queued: {
+      case CellState.QUEUED: {
         const innnerCircleFill = appTheme.stageBorderWeak;
         const outerCircleFill = appTheme.stageStrong;
         const growth = 0.3 * r;
@@ -64,8 +60,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.lineWidth = 1;
         break;
       }
-      case RunState.Starting:
-      case RunState.Pulling: {
+      case CellState.STARTING: {
         const darkSegmentStroke = appTheme.stageOn;
         const lightSegmentStroke = appTheme.stageBorderWeak;
         const periodInMilliseconds = 1000;
@@ -89,7 +84,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.stroke();
         break;
       }
-      case RunState.Running: {
+      case CellState.RUNNING: {
         const progress = (window.performance.now() % 1000) / 1000;
 
         const startAngle = PI * 2 * progress;
@@ -108,7 +103,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.lineWidth = 1;
         break;
       }
-      case RunState.Paused: {
+      case CellState.PAUSED: {
         const barWidth = r * 0.6;
         const barHeight = r * 1.3;
         ctx.beginPath();
@@ -118,7 +113,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.fill();
         break;
       }
-      case RunState.Completed: {
+      case CellState.SUCCESS: {
         const x0 = x - 0.3 * r;
         const r0 = 0.85 * r;
         ctx.beginPath();
@@ -130,10 +125,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.stroke();
         break;
       }
-      case RunState.Error:
-      case RunState.Deleted:
-      case RunState.Deleting:
-      case RunState.DeleteFailed: {
+      case CellState.ERROR: {
         const k = 0.4;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * PI);
@@ -147,9 +139,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.stroke();
         break;
       }
-      case RunState.Active:
-      case RunState.Unspecified:
-      case JobState.UNSPECIFIED: {
+      case CellState.ACTIVE: {
         const periodInMilliseconds = 3000;
         const numFrames = 60;
         const ratio = (window.performance.now() % periodInMilliseconds) / periodInMilliseconds;
@@ -179,7 +169,7 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
         ctx.fill();
         break;
       }
-      default: {
+      case CellState.STOPPED: {
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * PI);
         ctx.moveTo(x - r * 0.7, y - r * 0.7);
@@ -196,8 +186,8 @@ const renderer: CustomRenderer<ExperimentStateCell> = {
 
     return true;
   },
-  isMatch: (cell: CustomCell): cell is ExperimentStateCell =>
-    (cell.data as ExperimentStateCellProps).kind === 'experiment-state-cell',
+  isMatch: (cell: CustomCell): cell is StateCell =>
+    (cell.data as StateCellProps).kind === 'state-cell',
   kind: GridCellKind.Custom,
   measure: () => 60,
   provideEditor: () => undefined,

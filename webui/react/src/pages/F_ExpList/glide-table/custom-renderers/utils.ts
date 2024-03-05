@@ -1,3 +1,5 @@
+import { ValueOf } from 'hew/utils/types';
+
 interface CornerRadius {
   tl: number;
   tr: number;
@@ -100,3 +102,16 @@ export function drawTextWithEllipsis(
   const ellipsisText = truncate(ctx, text, x, maxWidth);
   ctx.fillText(ellipsisText, x, y);
 }
+
+export const CellState = {
+  ACTIVE: 'ACTIVE',
+  ERROR: 'ERROR',
+  PAUSED: 'PAUSED',
+  QUEUED: 'QUEUED',
+  RUNNING: 'RUNNING',
+  STARTING: 'STARTING',
+  STOPPED: 'STOPPED',
+  SUCCESS: 'SUCCESS',
+} as const;
+
+export type CellState = ValueOf<typeof CellState>;

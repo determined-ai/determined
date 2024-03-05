@@ -4,7 +4,7 @@ import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { paths } from 'routes/utils';
-import { DetailedUser, ExperimentWithTrial } from 'types';
+import { CompoundRunState, DetailedUser, ExperimentWithTrial, JobState, RunState } from 'types';
 import { humanReadableNumber } from 'utils/number';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
@@ -17,6 +17,7 @@ import {
   HeatmapProps,
   MULTISELECT,
 } from './glide-table/columns';
+import { CellState } from './glide-table/custom-renderers/utils';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
@@ -64,6 +65,44 @@ export const defaultExperimentColumns: ExperimentColumn[] = [
   'checkpointCount',
   'checkpointSize',
 ];
+
+function getCellStateFromExperimentState(expState: CompoundRunState) {
+  switch (expState) {
+    case JobState.SCHEDULED:
+    case JobState.SCHEDULEDBACKFILLED:
+    case JobState.QUEUED:
+    case RunState.Queued: {
+      return CellState.QUEUED;
+    }
+    case RunState.Starting:
+    case RunState.Pulling: {
+      return CellState.STARTING;
+    }
+    case RunState.Running: {
+      return CellState.RUNNING;
+    }
+    case RunState.Paused: {
+      return CellState.PAUSED;
+    }
+    case RunState.Completed: {
+      return CellState.SUCCESS;
+    }
+    case RunState.Error:
+    case RunState.Deleted:
+    case RunState.Deleting:
+    case RunState.DeleteFailed: {
+      return CellState.ERROR;
+    }
+    case RunState.Active:
+    case RunState.Unspecified:
+    case JobState.UNSPECIFIED: {
+      return CellState.ACTIVE;
+    }
+    default: {
+      return CellState.STOPPED;
+    }
+  }
+}
 
 interface Params {
   appTheme: Theme;
@@ -351,8 +390,8 @@ export const getColumnDefs = ({
       copyData: record.experiment.state.toLocaleLowerCase(),
       data: {
         appTheme,
-        kind: 'experiment-state-cell',
-        state: record.experiment.state,
+        kind: 'state-cell',
+        state: getCellStateFromExperimentState(record.experiment.state),
       },
       kind: GridCellKind.Custom,
     }),
