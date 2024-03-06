@@ -214,6 +214,15 @@ def test_master_restart_continued_experiment(
     assert "resources exited successfully with a zero exit code" in "".join(log.log for log in logs)
 
 
+def experiment_who_cancels_itself_then_waits(sess: api.Session) -> int:
+    return exp.create_experiment(
+        sess,
+        conf.fixtures_path("core_api/sleep.yaml"),
+        conf.fixtures_path("core_api"),
+        ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
+    )
+
+
 @pytest.mark.managed_devcluster
 def test_master_restart_stopping(
     restartable_managed_cluster: managed_cluster.ManagedCluster,
@@ -226,15 +235,6 @@ def test_master_restart_stopping_k8s(
     k8s_managed_cluster: managed_cluster_k8s.ManagedK8sCluster,
 ) -> None:
     _test_master_restart_stopping(k8s_managed_cluster)
-
-
-def experiment_who_cancels_itself_then_waits(sess: api.Session) -> int:
-    return exp.create_experiment(
-        sess,
-        conf.fixtures_path("core_api/sleep.yaml"),
-        conf.fixtures_path("core_api"),
-        ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
-    )
 
 
 def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Cluster) -> None:
