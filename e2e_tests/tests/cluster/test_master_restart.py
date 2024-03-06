@@ -274,8 +274,8 @@ def test_master_restart_stopping_ignore_preemption_still_gets_killed(
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
         managed_cluster_restarts.restart_master()
         exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=600
-        )  # REMOVE 600
+            sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=60
+        )
     finally:
         exp.kill_experiments(sess, [exp_id])
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
@@ -303,7 +303,7 @@ def test_master_restart_stopping_container_gone(
     managed_cluster_restarts.restart_master()
     managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
 
-    # TODO(rm-!!!) make this error.
+    # TODO(RM-70) make this state be an error.
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 
