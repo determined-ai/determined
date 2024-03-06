@@ -148,7 +148,7 @@ const ProjectDetails: React.FC = () => {
     project.workspaceId !== 1
       ? [
           {
-            breadcrumbName: project.workspaceName,
+            breadcrumbName: project.workspaceName || '',
             path: paths.workspaceDetails(project.workspaceId),
           },
 

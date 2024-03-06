@@ -39,8 +39,11 @@ func Route(handler func(c echo.Context) (interface{}, error)) echo.HandlerFunc {
 }
 
 // WebSocketRoute upgrades incoming requests to websocket requests.
-func WebSocketRoute(handler func(socket *websocket.Conn, c echo.Context) error) echo.HandlerFunc {
+func WebSocketRoute(handler func(socket *websocket.Conn, c echo.Context) error, enableCORS bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		if enableCORS {
+			upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+		}
 		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			c.Logger().Error("websocket connection error: ", err)
