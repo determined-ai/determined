@@ -123,7 +123,7 @@ export type HandleSelectionChangeType = (
  * Otherwise `onScroll` would erroneously set the page to 0
  * when the table is first initialized.
  */
-export const SCROLL_SET_COUNT_NEEDED = 3;
+export const SCROLL_SET_COUNT_NEEDED = 1;
 
 const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
