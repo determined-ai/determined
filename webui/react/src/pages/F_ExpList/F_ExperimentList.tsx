@@ -37,6 +37,7 @@ import {
   RunState,
 } from 'types';
 import handleError from 'utils/error';
+import { eagerSubscribe } from 'utils/observable';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
@@ -180,41 +181,33 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   useEffect(() => {
     let cleanup: () => void;
-    // we only want to init the filterset state from settings once and only when
-    // the settings have finished loading. subscribing to the project settings
-    // observable only works on initial loads -- the settings store will be
-    // fully loaded when navigating to the page in-router, so we check if we
-    // need to subscribe at all.
-    const initFormset = (ps: Loadable<ProjectSettings | null>) => {
-      ps.forEach((s) => {
-        if (!s?.filterset) return;
-        const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
-        if (isLeft(formSetValidation)) {
-          handleError(formSetValidation.left, {
-            publicSubject: 'Unable to initialize filterset from settings',
+    // eagerSubscribe is like subscribe but it runs once before the observed value changes.
+    cleanup = eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      // init formset once from settings when loaded, then flip the sync
+      // direction -- formset sets settings
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          cleanup?.();
+          // init formset
+          if (!s?.filterset) return;
+          const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+          if (isLeft(formSetValidation)) {
+            handleError(formSetValidation.left, {
+              publicSubject: 'Unable to initialize filterset from settings',
+            });
+          } else {
+            formStore.init(formSetValidation.right);
+          }
+          cleanup = formStore.asJsonString.subscribe(() => {
+            resetPagination();
+            const loadableFormset = formStore.formset.get();
+            Loadable.forEach(loadableFormset, (formSet) =>
+              updateSettings({ filterset: JSON.stringify(formSet) }),
+            );
           });
-        } else {
-          formStore.init(formSetValidation.right);
-        }
-        cleanup = formStore.asJsonString.subscribe(() => {
-          resetPagination();
-          const loadableFormset = formStore.formset.get();
-          Loadable.forEach(loadableFormset, (formSet) =>
-            updateSettings({ filterset: JSON.stringify(formSet) }),
-          );
         });
-      });
-    };
-    if (projectSettingsObs.get().isLoaded) {
-      initFormset(projectSettingsObs.get());
-    } else {
-      cleanup = projectSettingsObs.subscribe((ps) => {
-        if (ps.isLoaded) {
-          cleanup();
-          initFormset(ps);
-        }
-      });
-    }
+      }
+    });
     return () => cleanup?.();
   }, [projectSettingsObs, resetPagination, updateSettings]);
 
@@ -317,33 +310,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [isLoadingSettings]);
 
   useEffect(() => {
-    let cleanup: () => void;
-    // wait until settings is loaded before messing with it
-    const handCompareOffToSettings = (ps: Loadable<ProjectSettings | null>) => {
-      ps.forEach(() => {
-        if (params.compare !== undefined) {
-          updateSettings({ compare: params.compare });
-        }
-        cleanup = projectSettingsObs.subscribe((ps) => {
-          ps.forEach((s) => {
-            if (s) {
-              updateParams({ compare: s.compare || undefined });
-            }
-          });
+    return eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach(() => {
+          if (params.compare !== undefined) {
+            updateSettings({ compare: params.compare });
+          }
         });
-      });
-    };
-    if (projectSettingsObs.get().isLoaded) {
-      handCompareOffToSettings(projectSettingsObs.get());
-    } else {
-      cleanup = projectSettingsObs.subscribe((ps) => {
-        if (ps.isLoaded) {
-          cleanup();
-          handCompareOffToSettings(ps);
-        }
-      });
-    }
-    return () => cleanup?.();
+      } else {
+        ps.forEach((s) => {
+          if (s) {
+            updateParams({ compare: s.compare || undefined });
+          }
+        });
+      }
+    });
   }, [params.compare, updateSettings, updateParams, projectSettingsObs]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {

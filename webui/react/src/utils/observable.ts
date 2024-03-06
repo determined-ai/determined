@@ -71,6 +71,15 @@ const useValueMemoizedObservable = <T>(o: Observable<T>): T => {
   return value;
 };
 
+const eagerSubscribe = <T>(
+  o: Observable<T>,
+  fn: (curVal: T, prevVal?: T) => void,
+): (() => void) => {
+  const retVal = o.subscribe(fn);
+  fn(o.get());
+  return retVal;
+};
+
 export {
   observable,
   Observable,
@@ -79,4 +88,5 @@ export {
   useValueMemoizedObservable,
   deepObservable,
   immutableObservable,
+  eagerSubscribe,
 };
