@@ -43,8 +43,15 @@ def login(
     """
     Log in without considering or affecting the TokenStore on the file system.
 
+    This sends a login request to the master in order to obtain a new token that can sign future
+    requests to the master. This token is then baked into a new api.Session object for those future
+    communications.
+
     Used as part of login_with_cache, and also useful in tests where you wish to not affect the
     TokenStore.
+
+    Returns:
+        A new, logged-in api.Session (one that has a valid token).
     """
     password = api.salt_and_hash(password)
     unauth_session = api.UnauthSession(master=master_address, cert=cert, max_retries=0)
@@ -110,13 +117,18 @@ def login_with_cache(
 
     This is the login path for nearly all user-facing cases.
 
+    Unlike ``login``, this function may not send a login request to the master. It will instead
+    first attempt to find a valid token in the TokenStore, and only if that fails will it post a
+    login request to the master to generate a new one. As with ``login``, the token is then baked
+    into a new api.Session object to sign future communication with master.
+
     There is also a special case for checking if the DET_USER_TOKEN is set in the environment (by
     the determined-master).  That must happen in this function because it is only used when no other
     login tokens are active, but it must be considered before asking the user for a password.
 
-    As a somewhat surprising side-effect re-using an existing token from the cache, it is actually
-    possible in cache hit scenarios for an invalid password here to result in a valid login since
-    the password is only used in a cache miss.
+    As a somewhat surprising side-effect of re-using an existing token from the cache, it is
+    actually possible in cache hit scenarios for an invalid password here to result in a valid login
+    since the password is only used in a cache miss.
 
     Returns:
         A new, logged-in Session (one that has a valid token).

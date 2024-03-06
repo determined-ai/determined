@@ -98,6 +98,11 @@ class Determined:
         return self._session.username
 
     def logout(self) -> None:
+        """Log out of the current session.
+
+        This results in dropping any cached credentials and sending a request to master to
+        invalidate the session's token.
+        """
         authentication.logout(self._session.master, self._session.username, self._session.cert)
 
     def list_users(self, active: Optional[bool] = None) -> List[user.User]:
