@@ -305,6 +305,9 @@ def test_master_restart_stopping_container_gone(
 
     # TODO(RM-70) make this state be an error.
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+    trials = exp.experiment_trials(sess, exp_id)
+    assert len(trials) == 1
+    assert trials[0].trial.state == bindings.trialv1State.ERROR
 
 
 @pytest.mark.managed_devcluster
