@@ -37,6 +37,8 @@ stages:
             pool_name: default
             provider: null
             task_container_defaults: null
+        __internal:
+          preemption_timeout: 30
 
   - custom:
       name: proxy

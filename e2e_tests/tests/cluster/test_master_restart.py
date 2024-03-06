@@ -228,21 +228,28 @@ def test_master_restart_stopping_k8s(
     _test_master_restart_stopping(k8s_managed_cluster)
 
 
-def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Cluster) -> None:
-    sess = api_utils.user_session()
-    sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
-
-    exp_id = exp.create_experiment(
+def experiment_who_cancels_itself_then_waits(sess: api.Session) -> int:
+    return exp.create_experiment(
         sess,
         conf.fixtures_path("core_api/sleep.yaml"),
         conf.fixtures_path("core_api"),
         ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
     )
 
+
+def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Cluster) -> None:
+    sess = api_utils.user_session()
+    sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
+
+    exp_id = experiment_who_cancels_itself_then_waits(sess)
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
         managed_cluster_restarts.restart_master()
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+
+        # Short wait so that we know it was killed by us and not preemption.
+        exp.wait_for_experiment_state(
+            sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED, max_wait_secs=10
+        )
     finally:
         exp.kill_experiments(sess, [exp_id])
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
@@ -256,16 +263,30 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
 
 
 @pytest.mark.managed_devcluster
+def test_master_restart_stopping_ignore_preemption_still_gets_killed(
+    managed_cluster_restarts: managed_cluster.ManagedCluster,
+) -> None:
+    sess = api_utils.user_session()
+    sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
+
+    exp_id = experiment_who_cancels_itself_then_waits(sess)
+    try:
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+        managed_cluster_restarts.restart_master()
+        exp.wait_for_experiment_state(
+            sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=600
+        )  # REMOVE 600
+    finally:
+        exp.kill_experiments(sess, [exp_id])
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+
+
+@pytest.mark.managed_devcluster
 def test_master_restart_stopping_container_gone(
     managed_cluster_restarts: managed_cluster.ManagedCluster,
 ) -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("core_api/sleep.yaml"),
-        conf.fixtures_path("core_api"),
-        ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
-    )
+    exp_id = experiment_who_cancels_itself_then_waits(sess)
 
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
 

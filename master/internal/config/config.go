@@ -422,6 +422,7 @@ type InternalConfig struct {
 	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
 	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
 	ProxiedServers      []ProxiedServerConfig  `json:"proxied_servers"`
+	PreemptionTimeout   *int                   `json:"preemption_timeout"`
 }
 
 // Validate implements the check.Validatable interface.
