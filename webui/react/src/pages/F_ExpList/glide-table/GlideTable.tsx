@@ -74,7 +74,6 @@ export const getTheme = (appTheme: HewTheme): DataEditorProps['theme'] => {
 
 export interface GlideTableProps<T, ContextAction extends string, ContextActionData> {
   columns: ColumnDef<T>[];
-  columnWidths: Record<string, number>;
   renderContextMenuComponent?: (
     props: ContextMenuComponentProps<T, ContextAction, ContextActionData>,
   ) => JSX.Element;
@@ -90,7 +89,7 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   ) => MenuItem[];
   height: number;
   hideUnpinned?: boolean;
-  onColumnResize?: (newColumnWidths: Record<string, number>) => void;
+  onColumnResize?: (columnId: string, width: number) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
   onLinkClick?: (href: string) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
@@ -131,7 +130,6 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 
 export function GlideTable<T, ContextAction extends string, ContextActionData>({
   columns,
-  columnWidths,
   data,
   numRows,
   getHeaderMenuItems,
@@ -247,9 +245,9 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
     (column: GridColumn, width: number) => {
       const columnId = column.id;
       if (columnId === undefined) return;
-      onColumnResize?.({ ...columnWidths, [columnId]: width });
+      onColumnResize?.(columnId, width);
     },
-    [columnWidths, onColumnResize],
+    [onColumnResize],
   );
 
   const onHeaderClicked: DataEditorProps['onHeaderClicked'] = React.useCallback(

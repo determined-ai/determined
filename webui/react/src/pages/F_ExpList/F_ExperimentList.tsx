@@ -414,7 +414,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
+              experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -701,10 +701,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       // Negative widthDifference: Table pane shrinking/compare pane growing
       const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
       pinnedColumns
-        .filter(
-          (col) =>
-            (widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH),
-        )
+        .filter((col) => widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH)
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
@@ -719,10 +716,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleColumnWidthChange = useCallback(
-    (newWidths: Record<string, number>) => {
-      updateSettings({ columnWidths: newWidths });
+    (columnId: string, width: number) => {
+      updateSettings({
+        columnWidths: {
+          ...settings.columnWidths,
+          [columnId]: width,
+        },
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.columnWidths],
   );
 
   const handleHeatmapToggle = useCallback(
@@ -797,10 +799,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return columnDefs[columnName] = defaultSelectionColumn(
-            selection.rows,
-            selectAll,
-          );
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
         }
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
@@ -932,13 +931,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const items: MenuItem[] = [
         selection.rows.length > 0
           ? {
-            key: 'select-none',
-            label: 'Clear selected',
-            onClick: () => {
-              handleSelectionChange?.('remove-all', [0, selectionRange]);
-              setMenuIsOpen(false);
-            },
-          }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all', [0, selectionRange]);
+                setMenuIsOpen(false);
+              },
+            }
           : null,
         ...[5, 10, 25].map((n) => ({
           key: `select-${n}`,
@@ -1000,32 +999,32 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-            icon: <Icon decorative name="pin" />,
-            key: 'pin',
-            label: 'Pin column',
-            onClick: () => {
-              const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
-              newSortableColumns.splice(settings.pinnedColumnsCount, 0, column.column);
-              handleVisibleColumnChange?.(newSortableColumns);
-              handlePinnedColumnsCountChange?.(
-                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-              );
-              setMenuIsOpen(false);
-            },
-          }
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
+                newSortableColumns.splice(settings.pinnedColumnsCount, 0, column.column);
+                handleVisibleColumnChange?.(newSortableColumns);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
+                setMenuIsOpen(false);
+              },
+            }
           : {
-            disabled: settings.pinnedColumnsCount <= 1,
-            icon: <Icon decorative name="pin" />,
-            key: 'unpin',
-            label: 'Unpin column',
-            onClick: () => {
-              const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
-              newSortableColumns.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-              handleVisibleColumnChange?.(newSortableColumns);
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-              setMenuIsOpen(false);
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newSortableColumns = columnsIfLoaded.filter((c) => c !== column.column);
+                newSortableColumns.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                handleVisibleColumnChange?.(newSortableColumns);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                setMenuIsOpen(false);
+              },
             },
-          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -1042,46 +1041,46 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-          { type: 'divider' as const },
-          {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter',
-            label: 'Add Filter',
-            onClick: () => {
-              setTimeout(filterMenuItemsForColumn, 5);
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
+              },
             },
-          },
-        ]),
+          ]),
       filterCount > 0
         ? {
-          icon: <Icon decorative name="filter" />,
-          key: 'filter-clear',
-          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-          onClick: () => {
-            setTimeout(clearFilterForColumn, 5);
-          },
-        }
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
         : null,
       settings.heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
+      (column.column === 'searcherMetricsVal' ||
+        (column.type === V1ColumnType.NUMBER &&
+          (column.location === V1LocationType.VALIDATIONS ||
+            column.location === V1LocationType.TRAINING)))
         ? {
-          icon: <Icon decorative name="heatmap" />,
-          key: 'heatmap',
-          label: !settings.heatmapSkipped.includes(column.column)
-            ? 'Cancel heatmap'
-            : 'Apply heatmap',
-          onClick: () => {
-            handleHeatmapSelection?.(
-              settings.heatmapSkipped.includes(column.column)
-                ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                : [...settings.heatmapSkipped, column.column],
-            );
-          },
-        }
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !settings.heatmapSkipped.includes(column.column)
+              ? 'Cancel heatmap'
+              : 'Apply heatmap',
+            onClick: () => {
+              handleHeatmapSelection?.(
+                settings.heatmapSkipped.includes(column.column)
+                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                  : [...settings.heatmapSkipped, column.column],
+              );
+            },
+          }
         : null,
     ];
     return items;
@@ -1141,7 +1140,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onWidthChange={handleCompareWidthChange}>
               <GlideTable<ExperimentWithTrial, ExperimentAction, ExperimentItem>
                 columns={columns}
-                columnWidths={settings.columnWidths}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}
                 getRowAccentColor={getRowAccentColor}
