@@ -140,10 +140,10 @@ const ResourcePoolCard: React.FC<Props> = ({
         : processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
-      if (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') {
-        delete acc[attribute.label];
-      }
-      if (attribute.key === 'resourceManagerName' && !multiResourceManagers.getOrElse(false)) {
+      if (
+        (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') ||
+        (attribute.key === 'resourceManagerName' && !multiResourceManagers.getOrElse(false))
+      ) {
         delete acc[attribute.label];
       }
       return acc;

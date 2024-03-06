@@ -154,11 +154,11 @@ const ResourcepoolDetailInner: React.FC = () => {
       <>
         <JsonGlossary alignValues="right" json={mainSection} translateLabel={camelCaseToSentence} />
         {!isEmpty(resourceManagerMetadata) && (
-          <Fragment>
+          <>
             <Divider />
             <div className={css.subTitle}>Resource Manager Metadata</div>
             <JsonGlossary json={resourceManagerMetadata} translateLabel={camelCaseToSentence} />
-          </Fragment>
+          </>
         )}
         {Object.keys(details).map((key) => (
           <Fragment key={key}>

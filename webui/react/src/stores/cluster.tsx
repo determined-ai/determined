@@ -1,6 +1,5 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map, OrderedSet } from 'immutable';
-import { uniq } from 'lodash';
 
 import {
   addResourcePoolBindings,
@@ -111,7 +110,6 @@ const clusterStatusText = (
 class ClusterStore extends PollingStore {
   #agents = deepObservable<Loadable<Agent[]>>(NotLoaded);
   #resourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
-  #multiResourceManagers = deepObservable<Loadable<boolean>>(NotLoaded);
   #unboundResourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
   #resourcePoolBindings = immutableObservable<Map<string, OrderedSet<number>>>(Map());
 
@@ -119,7 +117,9 @@ class ClusterStore extends PollingStore {
   public readonly resourcePoolBindings = this.#resourcePoolBindings.select((bindings) =>
     bindings.map((workspaceIds) => workspaceIds.toJS()),
   );
-  public readonly multiResourceManagers = this.#multiResourceManagers.readOnly();
+  public readonly multiResourceManagers = this.#resourcePools.select((pools) =>
+    pools.map((p) => new Set(p.map((pp) => pp.resourceManagerName)).size > 1),
+  );
 
   public readonly resourcePools = this.#resourcePools.select((loadable) => {
     return Loadable.map(loadable, (pools) => {
@@ -186,9 +186,6 @@ class ClusterStore extends PollingStore {
     getResourcePools({}, { signal: signal ?? canceler.signal })
       .then((response) => {
         this.#resourcePools.set(Loaded(response));
-        this.#multiResourceManagers.set(
-          Loaded(uniq(response.map((p) => p.resourceManagerName)).length > 1),
-        );
       })
       .catch(handleError);
 
@@ -212,9 +209,6 @@ class ClusterStore extends PollingStore {
     const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
     const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
     this.#resourcePools.set(Loaded(resourcePools));
-    this.#multiResourceManagers.set(
-      Loaded(uniq(resourcePools.map((p) => p.resourceManagerName)).length > 1),
-    );
     this.#agents.set(Loaded(agents));
   }
 
