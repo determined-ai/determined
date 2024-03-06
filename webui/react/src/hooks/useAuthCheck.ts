@@ -1,4 +1,4 @@
-import { Observable, useObservable } from 'micro-observables';
+import { useObservable } from 'micro-observables';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -53,11 +53,9 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
       try {
         await getCurrentUser({});
         updateBearerToken(authToken);
-        Observable.batch(() => {
-          authStore.setAuth({ isAuthenticated: true, token: authToken });
-        });
+        authStore.setAuth({ isAuthenticated: true, token: authToken });
       } catch (e) {
-        // If an invalid auth token is detected we need to properl handle the auth error
+        // If an invalid auth token is detected we need to properly handle the auth error
         handleError(e);
       }
       authStore.setAuthChecked();
