@@ -18,6 +18,30 @@ set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 set +x
 
+if [ "$PACHD_ADDRESS" != "" ] && [ "$SKIP_PACHYDERM_INSTALL" != "true" ]; then
+    version=$(echo $(curl -s -X POST -H "Content-Type: application/json" pachyderm-proxy:80/api/versionpb_v2.API/GetVersion) | sed -n 's/.*"major":\([0-9]*\), "minor":\([0-9]*\), "micro":\([0-9]*\).*/\1.\2.\3/p')
+
+    pip install jupyterlab-pachyderm==$version
+
+    # Detect the architecture
+    architecture=$(uname -m)
+
+    case $architecture in
+        x86_64)
+            echo "Detected AMD64 architecture"
+            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_amd64.tar.gz" | tar -xzv --strip-components=1 -C .
+            ;;
+        arm64|aarch64)
+            echo "Detected ARM64 architecture"
+            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_arm64.tar.gz" | tar -xzv --strip-components=1 -C .
+            ;;
+        *)
+            echo "Unsupported architecture: $architecture"
+            exit 1
+            ;;
+    esac
+fi
+
 "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 
 JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
