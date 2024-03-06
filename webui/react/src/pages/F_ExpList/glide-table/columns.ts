@@ -1,4 +1,5 @@
 import {
+  CompactSelection,
   DataEditorProps,
   GridCell,
   GridCellKind,
@@ -100,6 +101,30 @@ export function defaultNumberColumn<T extends RawJson>(
     title: columnTitle,
     tooltip: () => undefined,
     width: columnWidth ?? columnWidthsFallback,
+  };
+}
+
+export function defaultSelectionColumn<T>(
+  rowSelection: CompactSelection,
+  selectAll: boolean,
+): ColumnDef<T> {
+  return {
+    icon: selectAll ? 'allSelected' : rowSelection.length ? 'someSelected' : 'noneSelected',
+    id: MULTISELECT,
+    renderer: (_, idx) => ({
+      allowOverlay: false,
+      contentAlign: 'left',
+      copyData: String(rowSelection.hasIndex(idx)),
+      data: {
+        checked: rowSelection.hasIndex(idx),
+        kind: 'checkbox-cell',
+      },
+      kind: GridCellKind.Custom,
+    }),
+    themeOverride: { cellHorizontalPadding: 10 },
+    title: '',
+    tooltip: () => undefined,
+    width: 40,
   };
 }
 

@@ -1,4 +1,4 @@
-import { CompactSelection, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
+import { GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
@@ -15,14 +15,12 @@ import {
   columnWidthsFallback,
   getHeatmapColor,
   HeatmapProps,
-  MULTISELECT,
 } from './glide-table/columns';
 import { CellState } from './glide-table/custom-renderers/utils';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
 export const experimentColumns = [
-  MULTISELECT,
   'id',
   'name',
   'state',
@@ -107,17 +105,13 @@ function getCellStateFromExperimentState(expState: CompoundRunState) {
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
-  rowSelection: CompactSelection;
   themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
-  selectAll: boolean;
 }
 export const getColumnDefs = ({
   columnWidths,
-  rowSelection,
   themeIsDark,
   users,
-  selectAll,
   appTheme,
 }: Params): ColumnDefs<ExperimentWithTrial> => ({
   archived: {
@@ -351,24 +345,6 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherType,
   },
-  selected: {
-    icon: selectAll ? 'allSelected' : rowSelection.length ? 'someSelected' : 'noneSelected',
-    id: MULTISELECT,
-    renderer: (_: ExperimentWithTrial, idx) => ({
-      allowOverlay: false,
-      contentAlign: 'left',
-      copyData: String(rowSelection.hasIndex(idx)),
-      data: {
-        checked: rowSelection.hasIndex(idx),
-        kind: 'checkbox-cell',
-      },
-      kind: GridCellKind.Custom,
-    }),
-    themeOverride: { cellHorizontalPadding: 10 },
-    title: '',
-    tooltip: () => undefined,
-    width: columnWidths.selected,
-  },
   startTime: {
     id: 'startTime',
     isNumerical: true,
@@ -501,7 +477,6 @@ export const defaultColumnWidths: Record<ExperimentColumn, number> = {
   searcherMetric: 120,
   searcherMetricsVal: 120,
   searcherType: 120,
-  selected: 40,
   startTime: 118,
   state: 60,
   tags: 106,

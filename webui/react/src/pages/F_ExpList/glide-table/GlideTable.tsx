@@ -24,7 +24,7 @@ import useUI from 'components/ThemeProvider';
 import useMobile from 'hooks/useMobile';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
-import { ColumnDef, getHeaderIcons, MIN_COLUMN_WIDTH, MULTISELECT } from './columns';
+import { ColumnDef, getHeaderIcons, MIN_COLUMN_WIDTH } from './columns';
 import {
   ContextMenu,
   ContextMenuCompleteHandlerProps,
@@ -85,6 +85,8 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
     columnId: string,
     colIdx: number,
     setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    scrollToTop: () => void,
+    selectionRange: number,
   ) => MenuItem[];
   height: number;
   hideUnpinned?: boolean;
@@ -204,6 +206,12 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
     data,
   });
 
+  const scrollToTop = useCallback(() => {
+    if (gridRef.current) {
+      gridRef.current.scrollTo(0, 0);
+    }
+  }, [gridRef]);
+
   const getRowThemeOverride: DataEditorProps['getRowThemeOverride'] = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
       // to put a border on the bottom row (actually the top of the row below it)
@@ -238,7 +246,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   const handleColumnResize: DataEditorProps['onColumnResize'] = useCallback(
     (column: GridColumn, width: number) => {
       const columnId = column.id;
-      if (columnId === undefined || columnId === MULTISELECT) return;
+      if (columnId === undefined) return;
       onColumnResize?.({ ...columnWidths, [columnId]: width });
     },
     [columnWidths, onColumnResize],
@@ -248,49 +256,11 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
       const columnId = columns[col].id;
-
-      if (columnId === MULTISELECT) {
-        const items: MenuItem[] = [
-          selection.rows.length > 0
-            ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                onSelectionChange?.('remove-all', [0, data.length]);
-                setMenuIsOpen(false);
-              },
-            }
-            : null,
-          ...[5, 10, 25].map((n) => ({
-            key: `select-${n}`,
-            label: `Select first ${n}`,
-            onClick: () => {
-              onSelectionChange?.('set', [0, n]);
-              if (gridRef.current) {
-                // scroll first row into view for feedback
-                gridRef.current.scrollTo(0, 0);
-              }
-              setMenuIsOpen(false);
-            },
-          })),
-          {
-            key: 'select-all',
-            label: 'Select all',
-            onClick: () => {
-              onSelectionChange?.('add-all', [0, data.length]);
-              setMenuIsOpen(false);
-            },
-          },
-        ];
-        setMenuProps((prev) => ({ ...prev, bounds, items, title: 'Selection menu' }));
-        setMenuIsOpen(true);
-        return;
-      }
-      const items = getHeaderMenuItems?.(columnId, col, setMenuIsOpen);
+      const items = getHeaderMenuItems?.(columnId, col, setMenuIsOpen, scrollToTop, data.length);
       setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
       setMenuIsOpen(true);
     },
-    [columns, data.length, selection.rows.length, onSelectionChange, getHeaderMenuItems],
+    [columns, data.length, scrollToTop, getHeaderMenuItems],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -466,7 +436,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
 
   const drawHeader: DrawHeaderCallback = useCallback(
     ({ ctx, column, rect, theme }) => {
-      if (!column.id || column.id === MULTISELECT) return false;
+      if (!column.id) return false;
 
       const sortDirection = column.id && sortMap[column.id];
       if (sortDirection) {

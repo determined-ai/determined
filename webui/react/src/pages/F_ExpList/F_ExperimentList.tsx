@@ -71,6 +71,7 @@ import {
   columnWidthsFallback,
   defaultDateColumn,
   defaultNumberColumn,
+  defaultSelectionColumn,
   defaultTextColumn,
   MIN_COLUMN_WIDTH,
   MULTISELECT,
@@ -702,7 +703,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       pinnedColumns
         .filter(
           (col) =>
-            col !== MULTISELECT &&
             (widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH),
         )
         .forEach((col, _, arr) => {
@@ -787,8 +787,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     const columnDefs = getColumnDefs({
       appTheme,
       columnWidths: settings.columnWidths,
-      rowSelection: selection.rows,
-      selectAll,
       themeIsDark: isDarkMode,
       users,
     });
@@ -798,6 +796,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         : [...STATIC_COLUMNS, ...columnsIfLoaded]
     )
       .map((columnName) => {
+        if (columnName === MULTISELECT) {
+          return columnDefs[columnName] = defaultSelectionColumn(
+            selection.rows,
+            selectAll,
+          );
+        }
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
         const currentColumn = projectColumnsMap.data[columnName];
@@ -921,7 +925,41 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     columnId: string,
     colIdx: number,
     setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    scrollToTop: () => void,
+    selectionRange: number,
   ): MenuItem[] => {
+    if (columnId === MULTISELECT) {
+      const items: MenuItem[] = [
+        selection.rows.length > 0
+          ? {
+            key: 'select-none',
+            label: 'Clear selected',
+            onClick: () => {
+              handleSelectionChange?.('remove-all', [0, selectionRange]);
+              setMenuIsOpen(false);
+            },
+          }
+          : null,
+        ...[5, 10, 25].map((n) => ({
+          key: `select-${n}`,
+          label: `Select first ${n}`,
+          onClick: () => {
+            handleSelectionChange?.('set', [0, n]);
+            scrollToTop();
+            setMenuIsOpen(false);
+          },
+        })),
+        {
+          key: 'select-all',
+          label: 'Select all',
+          onClick: () => {
+            handleSelectionChange?.('add-all', [0, selectionRange]);
+            setMenuIsOpen(false);
+          },
+        },
+      ];
+      return items;
+    }
     const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
     if (!column) {
       return [];
