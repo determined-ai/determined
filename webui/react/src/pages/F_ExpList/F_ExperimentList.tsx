@@ -69,6 +69,8 @@ interface Props {
   project: Project;
 }
 
+type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+
 type RangelessSelectionType = 'add-all' | 'remove-all';
 type SelectionType = 'add' | 'remove' | 'set';
 export interface HandleSelectionChangeType {
@@ -184,7 +186,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eagerSubscribe is like subscribe but it runs once before the observed value changes.
     cleanup = eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
       // init formset once from settings when loaded, then flip the sync
-      // direction -- formset sets settings
+      // direction -- when formset changes, update settings
       if (!prevPs?.isLoaded) {
         ps.forEach((s) => {
           cleanup?.();
@@ -216,19 +218,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
 
   // partition experiment list into not selected/selected with indices and experiments so we only iterate the result list once
-  const [excludedExperimentIds, selectedExperimentIds]: [
-    Map<number, { index: number; experiment: ExperimentItem }>,
-    Map<number, { index: number; experiment: ExperimentItem }>,
-  ] = useMemo(() => {
+  const [excludedExperimentIds, selectedExperimentIds] = useMemo(() => {
+    const selectedMap = new Map<number, ExperimentWithIndex>();
+    const excludedMap = new Map<number, ExperimentWithIndex>();
     if (isLoadingSettings) {
-      return [new Map(), new Map()];
+      return [excludedMap, selectedMap];
     }
-    const selectedMap = new Map();
-    const excludedMap = new Map();
-    const selectedIdSet =
-      settings.selection.type === 'ONLY_IN' ? new Set(settings.selection.selections) : new Set();
-    const excludedIdSet =
-      settings.selection.type === 'ALL_EXCEPT' ? new Set(settings.selection.exclusions) : new Set();
+    const selectedIdSet = new Set(
+      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
+    );
+    const excludedIdSet = new Set(
+      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
+    );
     experiments.forEach((e, index) => {
       Loadable.forEach(e, ({ experiment }) => {
         const mapToAdd =
