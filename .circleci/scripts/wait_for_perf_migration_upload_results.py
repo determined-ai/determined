@@ -17,14 +17,18 @@ def _wait_for_master() -> None:
     print("Checking for master")
     cert = certs.Cert(noverify=True)
     sess = api.UnauthSession("http://127.0.0.1:8080", cert)
-    for _ in range(2 * 60 * 60):
+
+    # 2 hours is the most a migration can take, with this setup.
+    # If a migration takes longer than that we have hit an issue a customer will likely hit too.
+    for i in range(2 * 60 * 60):
         try:
             r = sess.get("info")
             if r.status_code == requests.codes.ok:
                 return
         except api.errors.MasterNotFoundException:
             pass
-        print("Waiting for master to be available...")
+        if i % 60 == 0:
+            print("Waiting for master to be available...")
         time.sleep(1)
     raise ConnectionError("Timed out connecting to Master")
 
