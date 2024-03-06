@@ -43,6 +43,11 @@ vi.mock('services/api', () => ({
   getWorkspaces: vi.fn().mockResolvedValue({ workspaces: [] }),
 }));
 
+vi.mock('routes/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('routes/utils')>()),
+  serverAddress: () => 'http://localhost',
+}));
+
 /**
  * TODO: Temporarily mock ExperimentVisualization module.
  * This is a challenging module to test as it has `readStream` calls.

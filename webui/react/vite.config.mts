@@ -13,6 +13,7 @@ import { cspHtml } from './vite-plugin-csp';
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
+const websocketProxyUrl = process.env.DET_WEBSOCKET_PROXY_URL || 'ws://localhost:8080';
 
 const publicUrlBaseHref = (): Plugin => {
   let config: UserConfig;
@@ -144,6 +145,10 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       '/api': { target: webpackProxyUrl },
       '/proxy': { target: webpackProxyUrl },
+      '/stream': {
+        target: websocketProxyUrl,
+        ws: true,
+      },
     },
     strictPort: true,
   },
