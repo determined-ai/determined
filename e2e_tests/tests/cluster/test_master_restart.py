@@ -4,6 +4,7 @@ import time
 import docker
 import pytest
 import requests
+import urllib3
 
 from determined.common import api
 from determined.common.api import bindings
@@ -211,6 +212,78 @@ def test_master_restart_continued_experiment(
 
     logs = api.task_logs(sess, task_ids[-1])
     assert "resources exited successfully with a zero exit code" in "".join(log.log for log in logs)
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_stopping(
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
+) -> None:
+    _test_master_restart_stopping(restartable_managed_cluster)
+
+
+@pytest.mark.e2e_k8s
+def test_master_restart_stopping_k8s(
+    k8s_managed_cluster: managed_cluster_k8s.ManagedK8sCluster,
+) -> None:
+    _test_master_restart_stopping(k8s_managed_cluster)
+
+
+def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Cluster) -> None:
+    sess = api_utils.user_session()
+    sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
+
+    exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("core_api/sleep.yaml"),
+        conf.fixtures_path("core_api"),
+        ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
+    )
+
+    try:
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+        managed_cluster_restarts.restart_master()
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+    finally:
+        exp.kill_experiments(sess, [exp_id])
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+
+    # All slots are empty, we don't leave a hanging container.
+    agentsResp = bindings.get_GetAgents(sess)
+    for a in agentsResp.agents:
+        if a.slots is not None:
+            for s in a.slots.values():
+                assert s.container is None, s.container.to_json()
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_stopping_container_gone(
+    managed_cluster_restarts: managed_cluster.ManagedCluster,
+) -> None:
+    sess = api_utils.user_session()
+    exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("core_api/sleep.yaml"),
+        conf.fixtures_path("core_api"),
+        ["--config", "entrypoint='det e cancel $DET_EXPERIMENT_ID && sleep 500'"],
+    )
+
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+
+    client = docker.from_env()
+    containers = client.containers.list()
+
+    label = "ai.determined.container.description"
+    containers = [c for c in containers if f"exp-{exp_id}" in c.labels.get(label, "")]
+    assert len(containers) == 1
+
+    managed_cluster_restarts.kill_agent()
+    managed_cluster_restarts.kill_master()
+    containers[0].kill()
+    managed_cluster_restarts.restart_master()
+    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
+
+    # TODO(rm-!!!) make this error.
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 
 @pytest.mark.managed_devcluster
