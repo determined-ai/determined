@@ -13,9 +13,10 @@ setuptools.setup(
     # Use find_namespace_packages because it will include data-only packages (that is, directories
     # containing only non-python files, like our gcp terraform directory).
     packages=setuptools.find_namespace_packages(include=["determined*"]),
-    # Technically, we haven't supported 3.6 or tested against it since it went EOL. But some users
-    # are still using it successfully so there's hardly a point in breaking them.
-    python_requires=">=3.6",
+    # Technically, we don't support 3.7 or test against it.
+    # But until we end up incidentally relying on 3.8 or higher, let users try
+    # to install on 3.7.
+    python_requires=">=3.7",
     include_package_data=True,
     install_requires=[
         "matplotlib",
