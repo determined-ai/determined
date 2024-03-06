@@ -444,60 +444,7 @@ task_container_defaults:
 }
 
 func TestMaxSlotsPerPodConfigMultiRM(t *testing.T) {
-	t.Run("valid RMs", func(t *testing.T) {
-		config := `
-db:
-  user: config_file_user
-  password: password
-  host: hostname
-  port: "3000"
-
-resource_manager:
-  type: kubernetes
-  max_slots_per_pod: 5
-
-additional_resource_managers:
- - resource_manager:
-     name: test
-     type: kubernetes
-     max_slots_per_pod: 65
-`
-		var unmarshaled Config
-		expected := [2]int{5, 65}
-		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
-		require.NoError(t, err)
-		require.NoError(t, unmarshaled.Resolve())
-		for i, r := range unmarshaled.ResourceConfig.ResourceManagers() {
-			require.Equal(t, expected[i], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
-		}
-	})
-
-	t.Run("negative max for RM", func(t *testing.T) {
-		config := `
-db:
-  user: config_file_user
-  password: password
-  host: hostname
-  port: "3000"
-
-resource_manager:
-  type: kubernetes
-  max_slots_per_pod: 5
-
-additional_resource_managers:
- - resource_manager:
-     name: test
-     type: kubernetes
-     max_slots_per_pod: -65
-`
-		var unmarshaled Config
-		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
-		require.NoError(t, err)
-		require.Error(t, unmarshaled.Resolve(), ">= 0")
-	})
-
-	t.Run("max not defined for RM", func(t *testing.T) {
-		config := `
+	baseConfig := `
 db:
   user: config_file_user
   password: password
@@ -513,43 +460,57 @@ additional_resource_managers:
      name: test
      type: kubernetes
 `
-		var unmarshaled Config
-		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
-		require.NoError(t, err)
-		require.Error(t, unmarshaled.Resolve(), "must provide resource_manager.max_slots_per_pod")
-	})
 
-	t.Run("RM and global task max slots defined", func(t *testing.T) {
-		config := `
-db:
-  user: config_file_user
-  password: password
-  host: hostname
-  port: "3000"
-
-resource_manager:
-  type: kubernetes
-  max_slots_per_pod: 5
-
-additional_resource_managers:
- - resource_manager:
-     name: test
-     type: kubernetes
-     max_slots_per_pod: 65
-
+	taskContainerDefaultsConfig := `
 task_container_defaults:
   kubernetes:
     max_slots_per_pod: 0
 `
-		var unmarshaled Config
-		expected := [2]int{5, 65}
-		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
-		require.NoError(t, err)
-		require.NoError(t, unmarshaled.Resolve())
-		for i, r := range unmarshaled.ResourceConfig.ResourceManagers() {
-			require.Equal(t, expected[i], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
-		}
-	})
+
+	expectedMaxSlots := map[string]int{
+		"default": 5,
+		"test":    65,
+	}
+
+	testCases := map[string]struct {
+		additionalMaxSlots string
+		expectedError      string
+	}{
+		"valid config": {
+			additionalMaxSlots: "     max_slots_per_pod: 65\n",
+			expectedError:      "",
+		},
+		"negative max_slots": {
+			additionalMaxSlots: "     max_slots_per_pod: -5\n",
+			expectedError:      ">= 0",
+		},
+		"max_slots not defined": {
+			additionalMaxSlots: "",
+			expectedError:      "must provide resource_manager.max_slots_per_pod",
+		},
+		"global task max_slots also defined": {
+			additionalMaxSlots: "     max_slots_per_pod: 65\n" + taskContainerDefaultsConfig,
+			expectedError:      "",
+		},
+	}
+
+	for name, test := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var unmarshaled Config
+			testConfig := baseConfig + test.additionalMaxSlots
+			err := yaml.Unmarshal([]byte(testConfig), &unmarshaled, yaml.DisallowUnknownFields)
+			require.NoError(t, err)
+			if test.expectedError == "" { // no error is expected; this is a valid config
+				require.NoError(t, unmarshaled.Resolve())
+				actualRMs := unmarshaled.ResourceConfig.ResourceManagers()
+				for _, r := range actualRMs {
+					require.Equal(t, expectedMaxSlots[r.ResourceManager.Name()], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+				}
+			} else {
+				require.Error(t, unmarshaled.Resolve(), test.expectedError)
+			}
+		})
+	}
 }
 
 //nolint:gosec // These are not potential hardcoded credentials.
