@@ -38,7 +38,7 @@ stages:
             provider: null
             task_container_defaults: null
         __internal:
-          preemption_timeout: 30
+          preemption_timeout: 60s
 
   - custom:
       name: proxy

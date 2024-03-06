@@ -87,7 +87,7 @@ func (p *Preemptible) Preempt(timeoutCallback TimeoutFn) {
 			// don't acquire a lock in here without changing close to not lock while it waits.
 			timeout := DefaultTimeout
 			if debugTimeout := config.GetMasterConfig().InternalConfig.PreemptionTimeout; debugTimeout != nil {
-				timeout = time.Second * time.Duration(*debugTimeout)
+				timeout = time.Duration(*debugTimeout)
 			}
 
 			t := time.NewTimer(timeout)
