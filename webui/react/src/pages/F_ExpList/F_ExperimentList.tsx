@@ -1143,11 +1143,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 columns={columns}
                 columnWidths={settings.columnWidths}
                 data={experiments}
-                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
                 getHeaderMenuItems={getHeaderMenuItems}
                 getRowAccentColor={getRowAccentColor}
                 height={height}
                 hideUnpinned={settings.compare}
+                numRows={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
                 page={page}
                 pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
