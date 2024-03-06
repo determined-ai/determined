@@ -1583,18 +1583,6 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage
 
-  test-unit-react-quarantined:
-    docker:
-      - image: cimg/node:20.9.0
-        environment:
-          CI: "true"
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
-      - react-get-deps
-      - run: make -C webui/react test-ci-flaky
-
   test-intg-downstream:
     docker:
       - image: cimg/node:20.9.0
@@ -3141,12 +3129,6 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
-
-  test-e2e-quarantined:
-    jobs:
-      - build-react:
-          dev-mode: true
-      - test-unit-react-quarantined
 
   test-e2e-longrunning:
     jobs:
