@@ -58,9 +58,15 @@ def my_permissions(args: Namespace) -> None:
         return
 
     role_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
+    all_perms = set()
     for r in resp.roles:
         if r.permissions is not None and r.roleId is not None:
-            role_id_to_permissions[r.roleId] = set(r.permissions)
+            perms_for_role = set()
+            for p in r.permissions:
+                if p.id not in all_perms:
+                    perms_for_role.add(p)
+                    all_perms.add(p.id)
+            role_id_to_permissions[r.roleId] = perms_for_role
 
     scope_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
     for a in resp.assignments:
