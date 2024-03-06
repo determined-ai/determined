@@ -1,9 +1,9 @@
+import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
-import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
@@ -412,8 +412,9 @@ const ExperimentContinueModalComponent = ({
       title={type}
       onClose={handleModalClose}>
       <>
+        {modalState.error && <Alert message={modalState.error} showIcon type="error" />}
         {modalState.configError && modalIsInAdvancedMode && (
-          <Message icon="error" title={modalState.configError} />
+          <Alert message={modalState.configError} showIcon type="error" />
         )}
         {modalIsInAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
