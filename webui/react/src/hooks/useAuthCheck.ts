@@ -9,6 +9,7 @@ import { updateDetApi } from 'services/apiConfig';
 import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
+import handleError from 'utils/error';
 import { isAuthFailure } from 'utils/service';
 
 const useAuthCheck = (): (() => Promise<boolean>) => {
@@ -42,18 +43,24 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
 
     /*
-     * If auth token found, update the API bearer token and validate it with the current user API.
+     * If an auth token is found, validate it with the current user API, then update
+     * the API bearer token and set the user as authenticated.
      * If an external login URL is provided, redirect there.
      * Otherwise mark that we checked the auth and skip auth token validation.
      */
 
     if (authToken) {
-      updateBearerToken(authToken);
-
-      Observable.batch(() => {
-        authStore.setAuth({ isAuthenticated: true, token: authToken });
-        authStore.setAuthChecked();
-      });
+      try {
+        await getCurrentUser({});
+        updateBearerToken(authToken);
+        Observable.batch(() => {
+          authStore.setAuth({ isAuthenticated: true, token: authToken });
+        });
+      } catch (e) {
+        // If an invalid auth token is detected we need to properl handle the auth error
+        handleError(e);
+      }
+      authStore.setAuthChecked();
     } else if (info.externalLoginUri) {
       try {
         await getCurrentUser({});
