@@ -332,9 +332,10 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 	}
 
 	if parts := strings.Split(kubeconfigPath, string(os.PathSeparator)); parts[0] == "~" {
-		logrus.Infof("expanding kubeconfig path from %s to %s", kubeconfigPath, kubeconfigPath)
 		parts[0] = homedir.HomeDir()
-		kubeconfigPath = filepath.Join(parts...)
+		expanded := filepath.Join(parts...)
+		logrus.Infof("expanding kubeconfig path from %s to %s", kubeconfigPath, expanded)
+		kubeconfigPath = expanded
 	}
 
 	bs, err := os.ReadFile(kubeconfigPath) // #nosec G304 // User must have fs access to set this config var anyway.
