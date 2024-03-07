@@ -34,7 +34,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -56,18 +55,27 @@ func MockRM() *mocks.ResourceManager {
 	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
 		return sproto.EmptyDeleteJobResponse()
 	}, nil)
-	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything).Return(
-		mock.Anything, mock.Anything, nil)
-	mockRM.On("ValidateResources", mock.Anything, mock.Anything).Return([]command.LaunchWarning{}, nil)
-	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything, mock.Anything).Return(
-		model.TaskContainerDefaultsConfig{}, nil)
-	mockRM.On("ValidateResourcePoolAvailability", mock.Anything).Return(nil, nil)
-	mockRM.On("SetGroupMaxSlots", mock.Anything, mock.Anything).Return()
-	mockRM.On("SetGroupWeight", mock.Anything, mock.Anything).Return(nil)
-	mockRM.On("Allocate", mock.Anything, mock.Anything).Return(
-		func(name string, msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
-			return rmevents.Subscribe(msg.AllocationID)
-		}, nil)
+	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything).Return(
+		func(name string, _, _ int) string {
+			return name
+		},
+		nil,
+	)
+	mockRM.On("ValidateResources", mock.Anything).Return(
+		func(sproto.ValidateResourcesRequest) sproto.ValidateResourcesResponse {
+			return sproto.ValidateResourcesResponse{}
+		}, nil, nil)
+	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
+		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
+			return def
+		},
+		nil,
+	)
+	mockRM.On("SetGroupMaxSlots", mock.Anything).Return()
+	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
+	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
+		return rmevents.Subscribe(msg.AllocationID)
+	}, nil)
 	return &mockRM
 }
 

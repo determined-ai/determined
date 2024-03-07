@@ -1560,12 +1560,6 @@ export interface V1BindRPToWorkspaceRequest {
      * @memberof V1BindRPToWorkspaceRequest
      */
     workspaceNames?: Array<string>;
-    /**
-     * The resource manager name for the request.
-     * @type {string}
-     * @memberof V1BindRPToWorkspaceRequest
-     */
-    resourceManagerName?: string;
 }
 /**
  * Bind a resource pool to workspaces response.
@@ -2574,12 +2568,6 @@ export interface V1DisableAgentRequest {
      * @memberof V1DisableAgentRequest
      */
     drain?: boolean;
-    /**
-     * The resource manager for the request.
-     * @type {string}
-     * @memberof V1DisableAgentRequest
-     */
-    resourceManager?: string;
 }
 /**
  * Response to DisableAgentRequest.
@@ -2618,12 +2606,6 @@ export interface V1DisableSlotRequest {
      * @memberof V1DisableSlotRequest
      */
     drain?: boolean;
-    /**
-     * The resource manager for the request.
-     * @type {string}
-     * @memberof V1DisableSlotRequest
-     */
-    resourceManager?: string;
 }
 /**
  * Response to DisableSlotRequest.
@@ -2958,12 +2940,6 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     modelDefinitionSize?: number;
-    /**
-     * The resource manager the experiment was created in
-     * @type {string}
-     * @memberof V1Experiment
-     */
-    resourceManager?: string;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -5015,12 +4991,6 @@ export interface V1Job {
      * @memberof V1Job
      */
     workspaceId: number;
-    /**
-     * Associated resource manager.
-     * @type {string}
-     * @memberof V1Job
-     */
-    resourceManager?: string;
 }
 /**
  * Job summary.
@@ -5526,12 +5496,6 @@ export interface V1LimitedJob {
      * @memberof V1LimitedJob
      */
     workspaceId: number;
-    /**
-     * Associated resource manager.
-     * @type {string}
-     * @memberof V1LimitedJob
-     */
-    resourceManager?: string;
 }
 /**
  * ListRolesRequest is the body of the request for the call to search for a role.
@@ -6463,12 +6427,6 @@ export interface V1OverwriteRPWorkspaceBindingsRequest {
      * @memberof V1OverwriteRPWorkspaceBindingsRequest
      */
     workspaceNames?: Array<string>;
-    /**
-     * The resource manager name for the request.
-     * @type {string}
-     * @memberof V1OverwriteRPWorkspaceBindingsRequest
-     */
-    resourceManagerName?: string;
 }
 /**
  * Overwrite and replace the workspaces bound to an RP response.
@@ -7995,12 +7953,6 @@ export interface V1QueueControl {
      * @memberof V1QueueControl
      */
     weight?: number;
-    /**
-     * Name of the target resource_manager & resource_pool to move the job to.
-     * @type {V1ResourcePoolQualifier}
-     * @memberof V1QueueControl
-     */
-    resources?: V1ResourcePoolQualifier;
 }
 /**
  * Statistics for a queue.
@@ -8834,25 +8786,6 @@ export interface V1ResourcePoolPrioritySchedulerDetail {
      * @memberof V1ResourcePoolPrioritySchedulerDetail
      */
     k8Priorities?: Array<V1K8PriorityClass>;
-}
-/**
- * Describes a resource manager and resource pool, for use in multi-Resource Manager environments.
- * @export
- * @interface V1ResourcePoolQualifier
- */
-export interface V1ResourcePoolQualifier {
-    /**
-     * Name of the target resource_manager.
-     * @type {string}
-     * @memberof V1ResourcePoolQualifier
-     */
-    resourceManager?: string;
-    /**
-     * Name of the target resource_pool
-     * @type {string}
-     * @memberof V1ResourcePoolQualifier
-     */
-    resourcePool?: string;
 }
 /**
  * The type of the ResourcePool.   - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.  - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.  - RESOURCE_POOL_TYPE_STATIC: A static resource pool.  - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
@@ -12155,11 +12088,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, resourceManager?: string, options: any = {}): FetchArgs {
+        getAgent(agentId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getAgent.');
@@ -12177,10 +12109,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12304,11 +12232,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, resourceManager?: string, options: any = {}): FetchArgs {
+        getSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlot.');
@@ -12333,10 +12260,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
-            }
-            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -12350,11 +12273,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, resourceManager?: string, options: any = {}): FetchArgs {
+        getSlots(agentId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlots.');
@@ -12372,10 +12294,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12724,12 +12642,11 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent(agentId, resourceManager, options);
+        getAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent(agentId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12804,12 +12721,11 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot(agentId, slotId, resourceManager, options);
+        getSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot(agentId, slotId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12824,12 +12740,11 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, resourceManager, options);
+        getSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13006,12 +12921,11 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * 
          * @summary Get the requested agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, resourceManager?: string, options?: any) {
-            return ClusterApiFp(configuration).getAgent(agentId, resourceManager, options)(fetch, basePath);
+        getAgent(agentId: string, options?: any) {
+            return ClusterApiFp(configuration).getAgent(agentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -13050,23 +12964,21 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, resourceManager?: string, options?: any) {
-            return ClusterApiFp(configuration).getSlot(agentId, slotId, resourceManager, options)(fetch, basePath);
+        getSlot(agentId: string, slotId: string, options?: any) {
+            return ClusterApiFp(configuration).getSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get all the slots for an agent.
          * @param {string} agentId The id of the agent.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, resourceManager?: string, options?: any) {
-            return ClusterApiFp(configuration).getSlots(agentId, resourceManager, options)(fetch, basePath);
+        getSlots(agentId: string, options?: any) {
+            return ClusterApiFp(configuration).getSlots(agentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -13200,13 +13112,12 @@ export class ClusterApi extends BaseAPI {
      * 
      * @summary Get the requested agent.
      * @param {string} agentId The id of the agent.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgent(agentId: string, resourceManager?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAgent(agentId, resourceManager, options)(this.fetch, this.basePath)
+    public getAgent(agentId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getAgent(agentId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -13252,26 +13163,24 @@ export class ClusterApi extends BaseAPI {
      * @summary Get the requested slot for an agent.
      * @param {string} agentId The id of the agent.
      * @param {string} slotId The id of the slot.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getSlot(agentId: string, slotId: string, resourceManager?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getSlot(agentId, slotId, resourceManager, options)(this.fetch, this.basePath)
+    public getSlot(agentId: string, slotId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getSlot(agentId, slotId, options)(this.fetch, this.basePath)
     }
     
     /**
      * 
      * @summary Get all the slots for an agent.
      * @param {string} agentId The id of the agent.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getSlots(agentId: string, resourceManager?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getSlots(agentId, resourceManager, options)(this.fetch, this.basePath)
+    public getSlots(agentId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getSlots(agentId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -18456,11 +18365,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, resourceManager?: string, options: any = {}): FetchArgs {
+        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues/stats`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -18477,10 +18385,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (resourcePools) {
                 localVarQueryParameter['resourcePools'] = resourcePools
-            }
-            
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -18500,11 +18404,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options: any = {}): FetchArgs {
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -18539,10 +18442,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarQueryParameter['states'] = states
             }
             
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
-            }
-            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -18560,11 +18459,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options: any = {}): FetchArgs {
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues-v2`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -18597,10 +18495,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (states) {
                 localVarQueryParameter['states'] = states
-            }
-            
-            if (resourceManager !== undefined) {
-                localVarQueryParameter['resourceManager'] = resourceManager
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -21041,12 +20935,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, resourceManager, options);
+        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21065,12 +20958,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(offset, limit, resourcePool, orderBy, states, resourceManager, options);
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21089,12 +20981,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsV2Response> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, resourceManager, options);
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsV2Response> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22255,12 +22146,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get job queue stats for a resource pool.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, resourceManager?: string, options?: any) {
-            return InternalApiFp(configuration).getJobQueueStats(resourcePools, resourceManager, options)(fetch, basePath);
+        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+            return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
         },
         /**
          * 
@@ -22270,12 +22160,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any) {
-            return InternalApiFp(configuration).getJobs(offset, limit, resourcePool, orderBy, states, resourceManager, options)(fetch, basePath);
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+            return InternalApiFp(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -22285,12 +22174,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} [resourcePool] The target resource-pool for agent resource manager.
          * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-         * @param {string} [resourceManager] The resource manager for the request.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any) {
-            return InternalApiFp(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, resourceManager, options)(fetch, basePath);
+        getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+            return InternalApiFp(configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -23093,13 +22981,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Get job queue stats for a resource pool.
      * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobQueueStats(resourcePools?: Array<string>, resourceManager?: string, options?: any) {
-        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, resourceManager, options)(this.fetch, this.basePath)
+    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -23110,13 +22997,12 @@ export class InternalApi extends BaseAPI {
      * @param {string} [resourcePool] The target resource-pool for agent resource manager.
      * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any) {
-        return InternalApiFp(this.configuration).getJobs(offset, limit, resourcePool, orderBy, states, resourceManager, options)(this.fetch, this.basePath)
+    public getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+        return InternalApiFp(this.configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -23127,13 +23013,12 @@ export class InternalApi extends BaseAPI {
      * @param {string} [resourcePool] The target resource-pool for agent resource manager.
      * @param {V1OrderBy} [orderBy] Order results in either ascending or descending order by the number of jobs ahead.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {Array<Jobv1State>} [states] Filter to jobs with states among those given.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
-     * @param {string} [resourceManager] The resource manager for the request.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, resourceManager?: string, options?: any) {
-        return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, resourceManager, options)(this.fetch, this.basePath)
+    public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
+        return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
     }
     
     /**

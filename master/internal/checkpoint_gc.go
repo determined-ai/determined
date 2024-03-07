@@ -99,12 +99,7 @@ func runCheckpointGCTask(
 		return nil
 	}
 
-	resolvedRM, rp, err := rm.ResolveResourcePool("",
-		sproto.ResolveResourcesRequest{
-			ResourcePool: "",
-			Workspace:    -1,
-			Slots:        0,
-		})
+	rp, err := rm.ResolveResourcePool("", -1, 0)
 	if err != nil {
 		return fmt.Errorf("resolving resource pool: %w", err)
 	}
@@ -112,7 +107,7 @@ func runCheckpointGCTask(
 	// t.Base is just a shallow copy of the m.taskSpec on the master, so
 	// use caution when mutating it.
 	tcd, err := rm.TaskContainerDefaults(
-		resolvedRM, rp,
+		rp,
 		config.GetMasterConfig().TaskContainerDefaults)
 	if err != nil {
 		return fmt.Errorf("creating task container defaults: %v", err)
@@ -187,8 +182,7 @@ func runCheckpointGCTask(
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: true,
 		},
-		ResourceManager: resolvedRM,
-		ResourcePool:    rp,
+		ResourcePool: rp,
 	}, pgDB, rm, gcSpec, onExit)
 	if err != nil {
 		return err

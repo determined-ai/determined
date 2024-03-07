@@ -59,11 +59,11 @@ func JobStats(taskList *TaskList) *jobv1.QueueStats {
 }
 
 // JobStatsByPool returns quick job-related stats about the TaskList, by resource pool.
-func JobStatsByPool(taskList *TaskList, resourceManager string, resourcePool string) *jobv1.QueueStats {
+func JobStatsByPool(taskList *TaskList, resourcePool string) *jobv1.QueueStats {
 	reqs := make(AllocReqs, 0)
 	for it := taskList.Iterator(); it.Next(); {
 		req := it.Value()
-		if !req.IsUserVisible || req.ResourcePool != resourcePool || req.ResourceManager != resourceManager {
+		if !req.IsUserVisible || req.ResourcePool != resourcePool {
 			continue
 		}
 		reqs = append(reqs, req)

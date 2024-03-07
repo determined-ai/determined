@@ -107,31 +107,26 @@ func newExperiment(
 		return nil, nil, err
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
-	managerName, poolName, err := m.rm.ResolveResourcePool(resources.ResourceManager(),
-		sproto.ResolveResourcesRequest{
-			ResourcePool: resources.ResourcePool(),
-			Workspace:    workspaceID,
-			Slots:        resources.SlotsPerTrial(),
-		})
+	poolName, err := m.rm.ResolveResourcePool(
+		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
+	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
 	}
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		if launchWarnings, err = m.rm.ValidateResources(managerName,
-			sproto.ValidateResourcesRequest{
-				ResourcePool: poolName,
-				Slots:        resources.SlotsPerTrial(),
-				IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
-			}); err != nil {
+		if _, launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+			ResourcePool: poolName,
+			Slots:        resources.SlotsPerTrial(),
+			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
+		}); err != nil {
 			return nil, nil, fmt.Errorf("validating resources: %v", err)
 		}
 		if m.config.LaunchError && len(launchWarnings) > 0 {
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")
 		}
 	}
-	resources.SetResourceManager(managerName)
 	resources.SetResourcePool(poolName)
 
 	activeConfig.SetResources(resources)
@@ -257,12 +252,11 @@ func (e *internalExperiment) start() error {
 		return err
 	}
 
-	e.rm.SetGroupMaxSlots(e.activeConfig.Resources().ResourceManager(),
-		sproto.SetGroupMaxSlots{
-			MaxSlots:     e.activeConfig.Resources().MaxSlots(),
-			ResourcePool: e.activeConfig.Resources().ResourcePool(),
-			JobID:        e.JobID,
-		})
+	e.rm.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
+		MaxSlots:     e.activeConfig.Resources().MaxSlots(),
+		ResourcePool: e.activeConfig.Resources().ResourcePool(),
+		JobID:        e.JobID,
+	})
 	if err := e.setWeight(e.activeConfig.Resources().Weight()); err != nil {
 		e.updateState(model.StateWithReason{
 			State:               model.StoppingErrorState,
@@ -291,12 +285,11 @@ func (e *internalExperiment) start() error {
 		}
 
 		if j.QPos.GreaterThan(decimal.Zero) {
-			e.rm.RecoverJobPosition(e.activeConfig.Resources().ResourceManager(),
-				sproto.RecoverJobPosition{
-					JobID:        e.JobID,
-					JobPosition:  j.QPos,
-					ResourcePool: e.activeConfig.Resources().ResourcePool(),
-				})
+			e.rm.RecoverJobPosition(sproto.RecoverJobPosition{
+				JobID:        e.JobID,
+				JobPosition:  j.QPos,
+				ResourcePool: e.activeConfig.Resources().ResourcePool(),
+			})
 		}
 
 		e.restoreTrials()
@@ -413,7 +406,7 @@ func (e *internalExperiment) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	e.activeConfig.SetResources(resources)
 	msg.JobID = e.JobID
 	msg.ResourcePool = e.activeConfig.Resources().ResourcePool()
-	e.rm.SetGroupMaxSlots(e.activeConfig.Resources().ResourceManager(), msg)
+	e.rm.SetGroupMaxSlots(msg)
 }
 
 func (e *internalExperiment) SetGroupWeight(weight float64) error {
@@ -1053,12 +1046,11 @@ func (e *internalExperiment) setPriority(priority *int, forward bool) (err error
 	}
 
 	if forward {
-		switch err := e.rm.SetGroupPriority(e.activeConfig.Resources().ResourceManager(),
-			sproto.SetGroupPriority{
-				Priority:     *priority,
-				ResourcePool: e.activeConfig.Resources().ResourcePool(),
-				JobID:        e.JobID,
-			}).(type) {
+		switch err := e.rm.SetGroupPriority(sproto.SetGroupPriority{
+			Priority:     *priority,
+			ResourcePool: e.activeConfig.Resources().ResourcePool(),
+			JobID:        e.JobID,
+		}).(type) {
 		case nil:
 		case rmerrors.UnsupportedError:
 			e.syslog.WithError(err).Debug("ignoring unsupported call to set group priority")
@@ -1081,12 +1073,11 @@ func (e *internalExperiment) setWeight(weight float64) error {
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 
-	switch err := e.rm.SetGroupWeight(e.activeConfig.Resources().ResourceManager(),
-		sproto.SetGroupWeight{
-			Weight:       weight,
-			ResourcePool: e.activeConfig.Resources().ResourcePool(),
-			JobID:        e.JobID,
-		}).(type) {
+	switch err := e.rm.SetGroupWeight(sproto.SetGroupWeight{
+		Weight:       weight,
+		ResourcePool: e.activeConfig.Resources().ResourcePool(),
+		JobID:        e.JobID,
+	}).(type) {
 	case nil:
 	case rmerrors.UnsupportedError:
 		e.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
@@ -1098,7 +1089,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	return nil
 }
 
-func (e *internalExperiment) setRP(resourceManager string, resourcePool string) error {
+func (e *internalExperiment) setRP(resourcePool string) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), e.ProjectID)
@@ -1106,12 +1097,9 @@ func (e *internalExperiment) setRP(resourceManager string, resourcePool string) 
 		return err
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
-	rm, rp, err := e.rm.ResolveResourcePool(resourceManager,
-		sproto.ResolveResourcesRequest{
-			ResourcePool: resourcePool,
-			Workspace:    workspaceID,
-			Slots:        resources.SlotsPerTrial(),
-		})
+	rp, err := e.rm.ResolveResourcePool(
+		resourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+	)
 	switch {
 	case err != nil:
 		return fmt.Errorf("invalid resource pool name %s", resourcePool)
@@ -1119,7 +1107,6 @@ func (e *internalExperiment) setRP(resourceManager string, resourcePool string) 
 		return fmt.Errorf("resource pool is unchanged (%s == %s)", oldRP, rp)
 	}
 
-	resources.SetResourceManager(rm)
 	resources.SetResourcePool(rp)
 	e.activeConfig.SetResources(resources)
 
@@ -1134,7 +1121,7 @@ func (e *internalExperiment) setRP(resourceManager string, resourcePool string) 
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
-			t.PatchRP(rm, rp)
+			t.PatchRP(rp)
 			return nil
 		})
 	}

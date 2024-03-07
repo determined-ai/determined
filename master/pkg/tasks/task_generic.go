@@ -90,7 +90,7 @@ func (s GenericTaskSpec) ToV1Job() (*jobv1.Job, error) {
 		j.Weight = *s.Base.ResourcesConfig.RawWeight
 	}
 
-	j.ResourcePool, _ = s.ResourcePool()
+	j.ResourcePool = s.ResourcePool()
 	return &j, nil
 }
 
@@ -104,9 +104,7 @@ func (s GenericTaskSpec) SetWeight(weight float64) error {
 }
 
 // SetResourcePool todo.
-func (s GenericTaskSpec) SetResourcePool(resourceManager, resourcePool string) error { return nil }
+func (s GenericTaskSpec) SetResourcePool(resourcePool string) error { return nil }
 
 // ResourcePool - returns resource pool.
-func (s GenericTaskSpec) ResourcePool() (string, string) {
-	return s.GenericTaskConfig.Resources.ResourceManager(), s.GenericTaskConfig.Resources.ResourcePool()
-}
+func (s GenericTaskSpec) ResourcePool() string { return s.GenericTaskConfig.Resources.ResourcePool() }
