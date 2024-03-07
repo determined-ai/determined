@@ -423,7 +423,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   );
 
   const verticalBorder: DataEditorProps['verticalBorder'] = useCallback(
-    (col: number) => hideUnpinned && col === staticColumns.length + pinnedColumnsCount,
+    (col: number) => !hideUnpinned && col === staticColumns.length + pinnedColumnsCount,
     [hideUnpinned, pinnedColumnsCount, staticColumns.length],
   );
 
