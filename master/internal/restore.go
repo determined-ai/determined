@@ -14,9 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -64,23 +62,8 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Errorf("cannot restore experiment %d with unparsable config", expModel.ID)
 	}
-	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
-		if err = m.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
-			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
-		}
-		expModel.State = terminal
-		telemetry.ReportExperimentStateChanged(m.db, expModel)
-		if err := webhooks.ReportExperimentStateChanged(
-			context.TODO(), *expModel, activeConfig,
-		); err != nil {
-			log.WithError(err).Error("failed to send experiment state change webhook in restore")
-		}
-		return nil
-	} else if _, ok := model.RunningStates[expModel.State]; !ok {
-		return errors.Errorf(
-			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
-		)
-	} else if err = activeConfig.Searcher().AssertCurrent(); err != nil {
+
+	if err := activeConfig.Searcher().AssertCurrent(); err != nil {
 		return errors.Errorf(
 			"cannot restore experiment %d with legacy searcher", expModel.ID,
 		)
@@ -175,9 +158,6 @@ func (e *internalExperiment) restoreTrial(
 		l = l.WithField("trial-id", trial.ID)
 		if model.TerminalStates[trial.State] {
 			l.Debugf("trial was in terminal state in restore: %s", trial.State)
-			terminal = true
-		} else if !model.RunningStates[trial.State] {
-			l.Debugf("cannot restore trial in state: %s", trial.State)
 			terminal = true
 		}
 	}

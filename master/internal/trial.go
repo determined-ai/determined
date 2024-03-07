@@ -362,13 +362,15 @@ func (t *trial) continueSetup(continueFromTrialID *int) error {
 
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask() error {
-	if !(t.allocationID == nil &&
-		!t.searcher.Complete &&
-		t.state == model.ActiveState) {
+	// Only allocate for active trials, or trials that have been restored and are stopping.
+	// We need to allocate for stopping because we need to reattach the allocation.
+	shouldAllocateState := t.state == model.ActiveState || (t.restored && model.StoppingStates[t.state])
+	if t.allocationID != nil || t.searcher.Complete || !shouldAllocateState {
 		t.syslog.WithFields(logrus.Fields{
 			"allocation-id":    t.allocationID,
 			"sercher-complete": t.searcher.Complete,
 			"trial-state":      t.state,
+			"restored":         t.restored,
 		}).Trace("decided not to allocate trial")
 		return nil
 	}
