@@ -72,7 +72,7 @@ export const getTheme = (appTheme: HewTheme): DataEditorProps['theme'] => {
   };
 };
 
-export interface GlideTableProps<T, ContextAction extends string, ContextActionData> {
+export interface GlideTableProps<T, ContextAction = void | string, ContextActionData = void> {
   columns: ColumnDef<T>[];
   renderContextMenuComponent?: (
     props: ContextMenuComponentProps<T, ContextAction, ContextActionData>,
@@ -95,14 +95,14 @@ export interface GlideTableProps<T, ContextAction extends string, ContextActionD
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
-  onSortableColumnChange?: (newColumns: string[]) => void;
+  onColumnsOrderChange?: (newColumns: string[]) => void;
   page: number;
   pageSize: number;
   pinnedColumnsCount: number;
   rowHeight?: number;
   scrollPositionSetCount: WritableObservable<number>;
   selection: GridSelection;
-  sortableColumnIds: string[];
+  columnsOrder: string[];
   sorts: Sort[];
   staticColumns: string[];
 }
@@ -128,7 +128,7 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
 };
 
-export function GlideTable<T, ContextAction extends string, ContextActionData>({
+export function GlideTable<T, ContextAction = void | string, ContextActionData = void>({
   columns,
   data,
   numRows,
@@ -142,7 +142,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   onPinnedColumnsCountChange,
   onScroll,
   onSelectionChange,
-  onSortableColumnChange,
+  onColumnsOrderChange,
   page,
   pageSize,
   pinnedColumnsCount,
@@ -150,7 +150,7 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
   rowHeight,
   scrollPositionSetCount,
   selection,
-  sortableColumnIds,
+  columnsOrder,
   sorts,
   staticColumns,
 }: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
@@ -393,19 +393,18 @@ export function GlideTable<T, ContextAction extends string, ContextActionData>({
       if (isIntoPinned) onPinnedColumnsCountChange?.(pinnedColumnsCount + 1);
       if (isOutOfPinned) onPinnedColumnsCountChange?.(pinnedColumnsCount - 1);
 
-      // Update the column list with the updated column.
-      const sortableColumnIdsStartIdx = columnIdsStartIdx - staticColumns.length;
-      const sortableColumnIdsEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
-      const newCols = [...sortableColumnIds];
-      const [toMove] = newCols.splice(sortableColumnIdsStartIdx, 1);
-      newCols.splice(sortableColumnIdsEndIdx, 0, toMove);
-      onSortableColumnChange?.(newCols);
+      const columnsOrderStartIdx = columnIdsStartIdx - staticColumns.length;
+      const columnsOrderEndIdx = Math.max(columnIdsEndIdx - staticColumns.length, 0);
+      const newCols = [...columnsOrder];
+      const [toMove] = newCols.splice(columnsOrderStartIdx, 1);
+      newCols.splice(columnsOrderEndIdx, 0, toMove);
+      onColumnsOrderChange?.(newCols);
     },
     [
       onPinnedColumnsCountChange,
-      onSortableColumnChange,
+      onColumnsOrderChange,
       pinnedColumnsCount,
-      sortableColumnIds,
+      columnsOrder,
       staticColumns.length,
     ],
   );
