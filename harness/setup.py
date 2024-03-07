@@ -1,13 +1,18 @@
 import setuptools
 
+# open README.md from parent folder and read it into a string
+with open("../README.md", "r") as readme:
+    markdown_description = "".join(readme.readlines())
+
 setuptools.setup(
     name="determined",
     version="0.29.0-dev0",
     author="Determined AI",
-    author_email="hello@determined.ai",
+    author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
-    description="Determined Deep Learning Training Platform",
-    long_description="See https://docs.determined.ai/ for more information.",
+    description="Determined AI: The fastest and easiest way to build deep learning models.",
+    long_description=markdown_description,
+    long_description_content_type="text/markdown",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
     # Use find_namespace_packages because it will include data-only packages (that is, directories
@@ -15,7 +20,7 @@ setuptools.setup(
     packages=setuptools.find_namespace_packages(include=["determined*"]),
     # Technically, we haven't supported 3.6 or tested against it since it went EOL. But some users
     # are still using it successfully so there's hardly a point in breaking them.
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     include_package_data=True,
     install_requires=[
         "matplotlib",
