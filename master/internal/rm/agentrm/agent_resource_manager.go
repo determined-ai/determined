@@ -278,7 +278,7 @@ func (a *ResourceManager) GetJobQ(rpName string) (map[model.JobID]*sproto.RMJobI
 	if err != nil {
 		return nil, err
 	}
-	return pool.GetJobQ(rpName), nil
+	return pool.GetJobQ(), nil
 }
 
 // GetJobQueueStatsRequest implements rm.ResourceManager.

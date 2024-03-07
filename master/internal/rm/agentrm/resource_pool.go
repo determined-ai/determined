@@ -778,7 +778,7 @@ func (rp *resourcePool) GetJobQStats() *jobv1.QueueStats {
 	return tasklist.JobStats(rp.taskList)
 }
 
-func (rp *resourcePool) GetJobQ(rpName string) map[model.JobID]*sproto.RMJobInfo {
+func (rp *resourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return rp.scheduler.JobQInfo(rp)
