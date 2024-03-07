@@ -1,5 +1,6 @@
 import DataEditor, {
   CellClickedEventArgs,
+  CompactSelection,
   DataEditorProps,
   DataEditorRef,
   getMiddleCenterBias,
@@ -87,7 +88,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
     scrollToTop: () => void,
     selectionRange: number,
   ) => MenuItem[];
-  height: number;
+  height?: number;
   hideUnpinned?: boolean;
   onColumnResize?: (columnId: string, width: number) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
@@ -98,13 +99,13 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   onColumnsOrderChange?: (newColumns: string[]) => void;
   page: number;
   pageSize: number;
-  pinnedColumnsCount: number;
+  pinnedColumnsCount?: number;
   rowHeight?: number;
   scrollPositionSetCount: WritableObservable<number>;
-  selection: GridSelection;
-  columnsOrder: string[];
-  sorts: Sort[];
-  staticColumns: string[];
+  selection?: GridSelection;
+  columnsOrder?: string[];
+  sorts?: Sort[];
+  staticColumns?: string[];
 }
 
 export type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
@@ -145,14 +146,17 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   onColumnsOrderChange,
   page,
   pageSize,
-  pinnedColumnsCount,
+  pinnedColumnsCount = 0,
   renderContextMenuComponent,
   rowHeight,
   scrollPositionSetCount,
-  selection,
-  columnsOrder,
-  sorts,
-  staticColumns,
+  selection = {
+    columns: CompactSelection.empty(),
+    rows: CompactSelection.empty(),
+  },
+  columnsOrder = [],
+  sorts = [],
+  staticColumns = [],
 }: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
@@ -491,8 +495,8 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           width="100%"
           onCellClicked={onCellClicked}
           onCellContextMenu={onCellContextMenu}
-          onColumnMoved={onColumnMoved}
-          onColumnResize={handleColumnResize}
+          onColumnMoved={onColumnsOrderChange ? onColumnMoved : undefined}
+          onColumnResize={onColumnResize ? handleColumnResize : undefined}
           onHeaderClicked={onHeaderClicked}
           onHeaderContextMenu={onHeaderClicked} // right-click
           onItemHovered={onColumnHovered}
