@@ -105,7 +105,7 @@ func (r ResourceConfig) Validate() []error {
 	poolNames := make(map[string]bool)
 	var errs []error
 	for _, r := range r.ResourceManagers() {
-		// All non slurm resource managers must have a resource pol.
+		// All non slurm resource managers must have a resource pool.
 		if len(r.ResourcePools) == 0 &&
 			(r.ResourceManager.AgentRM != nil || r.ResourceManager.KubernetesRM != nil) {
 			errs = append(errs, fmt.Errorf(
