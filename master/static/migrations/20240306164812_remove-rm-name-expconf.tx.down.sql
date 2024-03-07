@@ -1,2 +1,2 @@
 UPDATE experiments
-SET config = config #+ '{resources,resource_manager}'
+SET config = config #- '{resource_manager}'
