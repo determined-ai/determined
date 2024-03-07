@@ -621,8 +621,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleColumnsOrderChange = useCallback(
-    (newColumns: string[]) => {
-      updateSettings({ columns: newColumns });
+    (newColumnsOrder: string[]) => {
+      updateSettings({ columns: newColumnsOrder });
     },
     [updateSettings],
   );

@@ -96,7 +96,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
-  onColumnsOrderChange?: (newColumns: string[]) => void;
+  onColumnsOrderChange?: (newColumnsOrder: string[]) => void;
   page: number;
   pageSize: number;
   pinnedColumnsCount?: number;
@@ -105,7 +105,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   selection?: GridSelection;
   columnsOrder?: string[];
   sorts?: Sort[];
-  staticColumns?: string[];
+  staticColumns: string[];
 }
 
 export type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
@@ -156,7 +156,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   },
   columnsOrder = [],
   sorts = [],
-  staticColumns = [],
+  staticColumns,
 }: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
