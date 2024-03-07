@@ -264,7 +264,7 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
 
 @pytest.mark.managed_devcluster
 def test_master_restart_stopping_ignore_preemption_still_gets_killed(
-    managed_cluster_restarts: managed_cluster.ManagedCluster,
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
 ) -> None:
     sess = api_utils.user_session()
     sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
@@ -272,7 +272,7 @@ def test_master_restart_stopping_ignore_preemption_still_gets_killed(
     exp_id = experiment_who_cancels_itself_then_waits(sess)
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
-        managed_cluster_restarts.restart_master()
+        restartable_managed_cluster.restart_master()
         exp.wait_for_experiment_state(
             sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=90
         )
@@ -286,7 +286,7 @@ def test_master_restart_stopping_ignore_preemption_still_gets_killed(
 
 @pytest.mark.managed_devcluster
 def test_master_restart_stopping_container_gone(
-    managed_cluster_restarts: managed_cluster.ManagedCluster,
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
 ) -> None:
     sess = api_utils.user_session()
     exp_id = experiment_who_cancels_itself_then_waits(sess)
@@ -300,11 +300,11 @@ def test_master_restart_stopping_container_gone(
     containers = [c for c in containers if f"exp-{exp_id}" in c.labels.get(label, "")]
     assert len(containers) == 1
 
-    managed_cluster_restarts.kill_agent()
-    managed_cluster_restarts.kill_master()
+    restartable_managed_cluster.kill_agent()
+    restartable_managed_cluster.kill_master()
     containers[0].kill()
-    managed_cluster_restarts.restart_master()
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
+    restartable_managed_cluster.restart_master()
+    restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
     # TODO(RM-70) make this state be an error.
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
