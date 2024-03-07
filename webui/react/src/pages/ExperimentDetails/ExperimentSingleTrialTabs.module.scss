@@ -1,4 +1,6 @@
 .pivoter {
+  height: 100%;
+
   [role='tablist'] > div {
     &:global(.ant-tabs-nav-wrap)::before {
       box-shadow: none;
