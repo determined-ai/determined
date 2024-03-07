@@ -221,7 +221,7 @@ func (as *allocationService) Signal(
 	sig AllocationSignal,
 	reason string,
 ) error {
-	ref, err := as.waitForRestore(ctx, id)
+	ref, err := as.waitForRestore(context.TODO(), id)
 	if err != nil {
 		return err
 	}
