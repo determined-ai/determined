@@ -239,12 +239,9 @@ class TrialReference:
                 offset=offset,
             )
 
-        resps = api.read_paginated(get_trial_checkpoints)
-
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)
-            for r in resps
-            for c in r.checkpoints
+            for c in api.read_paginated(get_trial_checkpoints, smart_flatten=True)
         ]
 
         # If sort_by was a defined field, we already sorted and ordered.

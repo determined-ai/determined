@@ -79,12 +79,10 @@ class ResourcePool:
                 resourcePoolName=self.name,
             )
 
-        resps = api.read_paginated(get_with_offset)
+        bindings_workspaces = api.read_paginated(get_with_offset, smart_flatten=True)
         workspace_names = [
             workspace.Workspace(session=self._session, workspace_id=w).name
-            for r in resps
-            if r.workspaceIds is not None
-            for w in r.workspaceIds
+            for w in bindings_workspaces
         ]
 
         return workspace_names

@@ -406,8 +406,7 @@ def describe(args: Namespace) -> None:
                 experimentId=exp_id,
             )
 
-        resps = api.read_paginated(get_with_offset)
-        return [t for r in resps for t in r.trials]
+        return list(api.read_paginated(get_with_offset, smart_flatten=True))
 
     trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
@@ -442,8 +441,7 @@ def describe(args: Namespace) -> None:
                 limit=500,
             )
 
-        resps = api.read_paginated(get_with_offset)
-        return [w for r in resps for w in r.workloads]
+        return list(api.read_paginated(get_with_offset, smart_flatten=True))
 
     all_workloads = {
         exp.id: {t.id: get_all_workloads(t.id) for t in trials_for_experiment[exp.id]}
@@ -685,8 +683,9 @@ def list_experiments(args: Namespace) -> None:
             users=None if args.all else [authentication.must_cli_auth().get_session_user()],
         )
 
-    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-    all_experiments = [e for r in resps for e in r.experiments]
+    all_experiments = api.read_paginated(
+        get_with_offset, offset=args.offset, pages=args.pages, smart_flatten=True
+    )
 
     def format_experiment(e: bindings.v1Experiment) -> List[Any]:
         result = [
@@ -776,8 +775,9 @@ def list_trials(args: Namespace) -> None:
             limit=args.limit,
         )
 
-    resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-    all_trials = [t for r in resps for t in r.trials]
+    all_trials = api.read_paginated(
+        get_with_offset, offset=args.offset, pages=args.pages, smart_flatten=True
+    )
 
     headers = ["Trial ID", "State", "H-Params", "Started", "Ended", "# of Batches"]
     values = [

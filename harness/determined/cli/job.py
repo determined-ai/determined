@@ -1,6 +1,6 @@
 import datetime
 from argparse import ONE_OR_MORE, Namespace
-from typing import Any, List, Union
+from typing import Any, List
 
 from determined import cli
 from determined.cli import render
@@ -8,17 +8,6 @@ from determined.common import api, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.util import parse_protobuf_timestamp
-
-
-def parse_jobv2_resp(
-    resp: bindings.v1GetJobsV2Response,
-) -> List[Union[bindings.v1Job, bindings.v1LimitedJob]]:
-    jobs_nullable = [j.full if j.full is not None else j.limited for j in resp.jobs]
-    jobs: List[Union[bindings.v1Job, bindings.v1LimitedJob]] = []
-    for j in jobs_nullable:
-        if j is not None:
-            jobs.append(j)
-    return jobs
 
 
 @authentication.required
@@ -38,8 +27,13 @@ def ls(args: Namespace) -> None:
             orderBy=order_by,
         )
 
-    paginated_resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
-    jobs = [j for r in paginated_resps for j in parse_jobv2_resp(r)]
+    jobs = (
+        j.full or j.limited
+        for j in api.read_paginated(
+            get_with_offset, offset=args.offset, pages=args.pages, smart_flatten=True
+        )
+    )
+    jobs = (j for j in jobs if j is not None)
 
     if args.yaml or args.json:
         data = {
