@@ -16,7 +16,7 @@ import {
   getHeatmapColor,
   HeatmapProps,
 } from './glide-table/columns';
-import { CellState } from './glide-table/custom-renderers/utils';
+import { State } from './glide-table/custom-renderers/cells/stateCell';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
@@ -70,34 +70,34 @@ function getCellStateFromExperimentState(expState: CompoundRunState) {
     case JobState.SCHEDULEDBACKFILLED:
     case JobState.QUEUED:
     case RunState.Queued: {
-      return CellState.QUEUED;
+      return State.QUEUED;
     }
     case RunState.Starting:
     case RunState.Pulling: {
-      return CellState.STARTING;
+      return State.STARTING;
     }
     case RunState.Running: {
-      return CellState.RUNNING;
+      return State.RUNNING;
     }
     case RunState.Paused: {
-      return CellState.PAUSED;
+      return State.PAUSED;
     }
     case RunState.Completed: {
-      return CellState.SUCCESS;
+      return State.SUCCESS;
     }
     case RunState.Error:
     case RunState.Deleted:
     case RunState.Deleting:
     case RunState.DeleteFailed: {
-      return CellState.ERROR;
+      return State.ERROR;
     }
     case RunState.Active:
     case RunState.Unspecified:
     case JobState.UNSPECIFIED: {
-      return CellState.ACTIVE;
+      return State.ACTIVE;
     }
     default: {
-      return CellState.STOPPED;
+      return State.STOPPED;
     }
   }
 }

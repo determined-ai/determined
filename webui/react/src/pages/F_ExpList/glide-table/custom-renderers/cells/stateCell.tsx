@@ -1,12 +1,26 @@
 import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
+import { ValueOf } from 'hew/utils/types';
 
-import { CellState, roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
+import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
+
+export const State = {
+  ACTIVE: 'ACTIVE',
+  ERROR: 'ERROR',
+  PAUSED: 'PAUSED',
+  QUEUED: 'QUEUED',
+  RUNNING: 'RUNNING',
+  STARTING: 'STARTING',
+  STOPPED: 'STOPPED',
+  SUCCESS: 'SUCCESS',
+} as const;
+
+export type State = ValueOf<typeof State>;
 
 interface StateCellProps {
   readonly appTheme: Theme;
   readonly kind: 'state-cell';
-  readonly state: CellState;
+  readonly state: State;
 }
 
 const PI = Math.PI;
@@ -32,7 +46,7 @@ const renderer: CustomRenderer<StateCell> = {
     ctx.save();
 
     switch (state) {
-      case CellState.QUEUED: {
+      case State.QUEUED: {
         const innnerCircleFill = appTheme.stageBorderWeak;
         const outerCircleFill = appTheme.stageStrong;
         const growth = 0.3 * r;
@@ -60,7 +74,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.lineWidth = 1;
         break;
       }
-      case CellState.STARTING: {
+      case State.STARTING: {
         const darkSegmentStroke = appTheme.stageOn;
         const lightSegmentStroke = appTheme.stageBorderWeak;
         const periodInMilliseconds = 1000;
@@ -84,7 +98,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.stroke();
         break;
       }
-      case CellState.RUNNING: {
+      case State.RUNNING: {
         const progress = (window.performance.now() % 1000) / 1000;
 
         const startAngle = PI * 2 * progress;
@@ -103,7 +117,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.lineWidth = 1;
         break;
       }
-      case CellState.PAUSED: {
+      case State.PAUSED: {
         const barWidth = r * 0.6;
         const barHeight = r * 1.3;
         ctx.beginPath();
@@ -113,7 +127,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.fill();
         break;
       }
-      case CellState.SUCCESS: {
+      case State.SUCCESS: {
         const x0 = x - 0.3 * r;
         const r0 = 0.85 * r;
         ctx.beginPath();
@@ -125,7 +139,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.stroke();
         break;
       }
-      case CellState.ERROR: {
+      case State.ERROR: {
         const k = 0.4;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * PI);
@@ -139,7 +153,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.stroke();
         break;
       }
-      case CellState.ACTIVE: {
+      case State.ACTIVE: {
         const periodInMilliseconds = 3000;
         const numFrames = 60;
         const ratio = (window.performance.now() % periodInMilliseconds) / periodInMilliseconds;
@@ -169,7 +183,7 @@ const renderer: CustomRenderer<StateCell> = {
         ctx.fill();
         break;
       }
-      case CellState.STOPPED: {
+      case State.STOPPED: {
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * PI);
         ctx.moveTo(x - r * 0.7, y - r * 0.7);
