@@ -30,8 +30,9 @@ import (
 
 const (
 	//nolint:gosec // These are not potential hardcoded credentials.
+	GrpcMetadataPrefix    = "Grpc-Metadata-"
 	gatewayTokenHeader    = "grpcgateway-authorization"
-	allocationTokenHeader = "x-allocation-token"
+	AllocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"
 	cookieName            = "auth"
 )
@@ -86,7 +87,7 @@ func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, err
 	if !ok {
 		return nil, ErrTokenMissing
 	}
-	tokens := md[allocationTokenHeader]
+	tokens := md[AllocationTokenHeader]
 	if len(tokens) == 0 {
 		return nil, ErrTokenMissing
 	}
