@@ -164,7 +164,8 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			err := user.GetService().ProcessAuthentication(next)(c)
+			_, _, err := grpcutil.GetUser(c.Request().Context()) // accounts for other token headers the bottom one does not.
+			// err := user.GetService().ProcessAuthentication(next)(c)
 			if err == nil {
 				return nil
 			}
