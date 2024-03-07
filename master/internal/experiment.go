@@ -116,7 +116,7 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		if _, launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+		if launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
 			ResourcePool: poolName,
 			Slots:        resources.SlotsPerTrial(),
 			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),

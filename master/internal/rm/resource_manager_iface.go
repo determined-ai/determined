@@ -11,10 +11,10 @@ import (
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
-	GetAllocationSummaries(sproto.GetAllocationSummaries) (map[model.AllocationID]sproto.AllocationSummary, error)
+	GetAllocationSummaries() (map[model.AllocationID]sproto.AllocationSummary, error)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
 	Release(sproto.ResourcesReleased)
-	ValidateResources(sproto.ValidateResourcesRequest) (sproto.ValidateResourcesResponse, []command.LaunchWarning, error)
+	ValidateResources(sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
 	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
 
@@ -26,11 +26,9 @@ type ResourceManager interface {
 	IsReattachableOnlyAfterStarted() bool
 
 	// Resource pool stuff.
-	GetResourcePools(*apiv1.GetResourcePoolsRequest) (*apiv1.GetResourcePoolsResponse, error)
-	GetDefaultComputeResourcePool(
-		sproto.GetDefaultComputeResourcePoolRequest,
-	) (sproto.GetDefaultComputeResourcePoolResponse, error)
-	GetDefaultAuxResourcePool(sproto.GetDefaultAuxResourcePoolRequest) (sproto.GetDefaultAuxResourcePoolResponse, error)
+	GetResourcePools() (*apiv1.GetResourcePoolsResponse, error)
+	GetDefaultComputeResourcePool() (string, error)
+	GetDefaultAuxResourcePool() (string, error)
 	ValidateResourcePool(name string) error
 	ResolveResourcePool(name string, workspace, slots int) (string, error)
 	TaskContainerDefaults(
@@ -39,14 +37,14 @@ type ResourceManager interface {
 	) (model.TaskContainerDefaultsConfig, error)
 
 	// Job queue
-	GetJobQ(sproto.GetJobQ) (map[model.JobID]*sproto.RMJobInfo, error)
+	GetJobQ(string) (map[model.JobID]*sproto.RMJobInfo, error)
 	GetJobQueueStatsRequest(*apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
 	MoveJob(sproto.MoveJob) error
 	RecoverJobPosition(sproto.RecoverJobPosition)
-	GetExternalJobs(sproto.GetExternalJobs) ([]*jobv1.Job, error)
+	GetExternalJobs(string) ([]*jobv1.Job, error)
 
 	// Cluster Management APIs
-	GetAgents(*apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)
+	GetAgents() (*apiv1.GetAgentsResponse, error)
 	GetAgent(*apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error)
 	EnableAgent(*apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error)
 	DisableAgent(*apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error)

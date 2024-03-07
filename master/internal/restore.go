@@ -82,7 +82,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
-	if _, _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+	if _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
 		ResourcePool: poolName,
 		Slots:        activeConfig.Resources().SlotsPerTrial(),
 		IsSingleNode: false,

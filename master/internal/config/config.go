@@ -477,15 +477,28 @@ func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 // TODO(Brad): Move these to a resource pool level API.
 func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
-	return readRMPreemptionStatus(config, rpName)
+
+	for _, r := range config.ResourceManagers() {
+		for _, rpConfig := range r.ResourcePools {
+			if rpConfig.PoolName == rpName {
+				if rpConfig.Scheduler == nil {
+					return rpConfig.Scheduler.GetPreemption()
+				}
+				// if not found, fall back to resource manager config
+				return readRMPreemptionStatus(r, rpName)
+			}
+		}
+	}
+
+	// if not found in any RMs, return default RM config
+	if len(config.ResourceManagers()) != 0 {
+		return readRMPreemptionStatus(config.ResourceManagers()[0], rpName)
+	}
+	panic("unexpected resource configuration")
 }
 
-func readRMPreemptionStatus(config *Config, rpName string) bool {
-	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
-	// a resource manager name too.
-	r := config.ResourceManagers()[0]
-
-	for _, rpConfig := range r.ResourcePools {
+func readRMPreemptionStatus(config *ResourceManagerWithPoolsConfig, rpName string) bool {
+	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.PoolName != rpName {
 			continue
 		}
@@ -497,13 +510,13 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 
 	// if not found, fall back to resource manager config
 	switch {
-	case r.ResourceManager.AgentRM != nil:
-		if r.ResourceManager.AgentRM.Scheduler == nil {
+	case config.ResourceManager.AgentRM != nil:
+		if config.ResourceManager.AgentRM.Scheduler == nil {
 			panic("scheduler not configured")
 		}
-		return r.ResourceManager.AgentRM.Scheduler.GetPreemption()
-	case r.ResourceManager.KubernetesRM != nil:
-		return r.ResourceManager.KubernetesRM.GetPreemption()
+		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
+	case config.ResourceManager.KubernetesRM != nil:
+		return config.ResourceManager.KubernetesRM.GetPreemption()
 	default:
 		panic("unexpected resource configuration")
 	}
@@ -513,7 +526,7 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 func ReadPriority(rpName string, jobConf interface{}) int {
 	config := GetMasterConfig()
 	var prio *int
-	// look at the idividual job config
+	// look at the individual job config
 	switch conf := jobConf.(type) {
 	case *expconf.ExperimentConfig:
 		prio = conf.Resources().Priority()
@@ -524,35 +537,32 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 		return *prio
 	}
 
-	var schedulerConf *SchedulerConfig
-
 	// if not found, fall back to the resource pools config
-	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
-	// a resource manager name too.
-	r := config.ResourceManagers()[0]
+	for _, rm := range config.ResourceManagers() {
+		for _, rpConfig := range rm.ResourcePools {
+			if rpConfig.PoolName == rpName {
+				schedulerConf := rpConfig.Scheduler
+				prio = readPriorityFromScheduler(schedulerConf)
+				if prio != nil {
+					return *prio
+				}
 
-	for _, rpConfig := range r.ResourcePools {
-		if rpConfig.PoolName != rpName {
-			continue
+				// if not found, fall back to resource manager config
+				if rm.ResourceManager.AgentRM != nil {
+					schedulerConf = rm.ResourceManager.AgentRM.Scheduler
+					prio = readPriorityFromScheduler(schedulerConf)
+					if prio != nil {
+						return *prio
+					}
+				}
+
+				if rm.ResourceManager.KubernetesRM != nil {
+					return KubernetesDefaultPriority
+				}
+
+				break
+			}
 		}
-		schedulerConf = rpConfig.Scheduler
-	}
-	prio = readPriorityFromScheduler(schedulerConf)
-	if prio != nil {
-		return *prio
-	}
-
-	// if not found, fall back to resource manager config
-	if r.ResourceManager.AgentRM != nil {
-		schedulerConf = r.ResourceManager.AgentRM.Scheduler
-		prio = readPriorityFromScheduler(schedulerConf)
-		if prio != nil {
-			return *prio
-		}
-	}
-
-	if r.ResourceManager.KubernetesRM != nil {
-		return KubernetesDefaultPriority
 	}
 
 	return DefaultSchedulingPriority

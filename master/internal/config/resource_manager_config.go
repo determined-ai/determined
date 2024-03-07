@@ -27,7 +27,7 @@ func (r ResourceManagerConfig) Name() string {
 	if k8RM := r.KubernetesRM; k8RM != nil {
 		return k8RM.Name
 	}
-	// TODO dispatcher.
+	// TODO (multirm) dispatcher.
 
 	panic(fmt.Sprintf("unknown rm type %+v", r))
 }

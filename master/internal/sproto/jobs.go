@@ -34,11 +34,6 @@ type RMJobInfo struct { // rename ?
 	AllocatedSlots int
 }
 
-// GetJobQ is used to get all job information in one go to avoid any inconsistencies.
-type GetJobQ struct {
-	ResourcePool string
-}
-
 // DeleteJob instructs the RM to clean up all metadata associated with a job external to
 // Determined.
 type DeleteJob struct {
@@ -100,11 +95,6 @@ type RecoverJobPosition struct {
 
 // SchedulingState denotes the scheduling state of a job and in order of its progression value.
 type SchedulingState uint8 // CHECK perhaps could be defined in resource manager. cyclic import
-
-// GetExternalJobs requests details for External jobs.
-type GetExternalJobs struct {
-	ResourcePool string
-}
 
 const (
 	// SchedulingStateQueued denotes a queued job waiting to be scheduled.
