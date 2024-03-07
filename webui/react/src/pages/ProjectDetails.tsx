@@ -25,6 +25,7 @@ import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
+import FlatTrials from './FlatTrials/FlatTrials';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 
@@ -94,7 +95,9 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              {f_explist ? (
+              {f_flat_trials ? (
+                <FlatTrials project={project} />
+              ) : f_explist ? (
                 <F_ExperimentList key={projectId} project={project} />
               ) : (
                 <ExperimentList project={project} />
