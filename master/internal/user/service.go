@@ -112,6 +112,7 @@ func GetService() *Service {
 // 1. The HTTP Authorization header.
 // 2. A cookie named "auth".
 func (s *Service) extractToken(r *http.Request) (string, error) {
+	fmt.Println("headers", r.Header)
 	authRaw := r.Header.Get("Authorization")
 	if authRaw != "" {
 		// We attempt to parse out the token, which should be

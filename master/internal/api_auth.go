@@ -164,11 +164,24 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			_, _, err := grpcutil.GetUser(c.Request().Context()) // accounts for other token headers the bottom one does not.
-			// err := user.GetService().ProcessAuthentication(next)(c)
+			err := user.GetService().ProcessAuthentication(next)(c)
 			if err == nil {
 				return nil
 			}
+
+			// grpcutil.AllocationSessionByTokenBun
+			// check if err is pointer to echo.HTTPError and the status code
+			// is 401, in which case it's an unauthorized error.
+			if httpErr, ok := err.(*echo.HTTPError); ok && httpErr.Code == http.StatusUnauthorized {
+				fmt.Println("http unauthorized")
+				_, _, err = grpcutil.GetUserCompat(c.Request().Context(), c.Request().Header)
+				if err == nil {
+					fmt.Println("grpc getuser passed")
+					return next(c)
+				}
+				fmt.Println("grpc unauthorized", err)
+			}
+
 			// No web page redirects for programmatic requests.
 			for _, accept := range c.Request().Header["Accept"] {
 				if strings.Contains(accept, "application/json") {

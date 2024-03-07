@@ -3,15 +3,17 @@ package grpcutil
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/o1egl/paseto"
+
 	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -30,10 +32,11 @@ import (
 
 const (
 	//nolint:gosec // These are not potential hardcoded credentials.
-	gatewayTokenHeader    = "grpcgateway-authorization"
-	allocationTokenHeader = "x-allocation-token"
-	userTokenHeader       = "x-user-token"
-	cookieName            = "auth"
+	gatewayTokenHeader     = "grpcgateway-authorization"
+	allocationTokenHeader  = "x-allocation-token"
+	allocationTokenHeader2 = "X-Allocation-Token"
+	userTokenHeader        = "x-user-token"
+	cookieName             = "auth"
 )
 
 type (
@@ -81,17 +84,8 @@ func allocationSessionByTokenBun(token string) (*model.AllocationSession, error)
 	return &session, nil
 }
 
-func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, ErrTokenMissing
-	}
-	tokens := md[allocationTokenHeader]
-	if len(tokens) == 0 {
-		return nil, ErrTokenMissing
-	}
-
-	token := tokens[0]
+func getAllocationSessionBunHeader(allocationHeaderVal string) (*model.AllocationSession, error) {
+	token := allocationHeaderVal
 	if !strings.HasPrefix(token, "Bearer ") {
 		return nil, ErrInvalidCredentials
 	}
@@ -107,27 +101,36 @@ func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, err
 	}
 }
 
-// GetUser returns the currently logged in user.
-func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
-	if user, ok := ctx.Value(userContextKey{}).(*model.User); ok {
-		if session, ok := ctx.Value(userSessionContextKey{}).(*model.UserSession); ok {
-			return user, session, nil // User token cache hit.
+func getAllocationSessionBun(md map[string][]string) (*model.AllocationSession, error) {
+	keys := make([]string, 0)
+	for k := range md {
+		keys = append(keys, k)
+	}
+	fmt.Println("getAllocationSessionBun", keys)
+	tokens := []string{}
+	// pick key with allocation in it lowercase
+	for _, k := range keys {
+		if strings.Contains(strings.ToLower(k), "allocation") {
+			tokens = md[k]
+			break
 		}
-		return user, nil, nil // Allocation token cache hit.
+	}
+	// FIXME: the header case sensitivity and grpcmetadata prefix cutoff
+	if len(tokens) == 0 {
+		return nil, ErrTokenMissing
 	}
 
-	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
+	token := tokens[0]
+	return getAllocationSessionBunHeader(token)
+}
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, nil, ErrTokenMissing
-	}
+func GetUserCompat(ctx context.Context, md map[string][]string) (*model.User, *model.UserSession, error) {
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
 		tokens = md[gatewayTokenHeader]
 	}
 	if len(tokens) == 0 {
-		allocationSession, err := getAllocationSessionBun(ctx)
+		allocationSession, err := getAllocationSessionBun(md)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -151,6 +154,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var userModel *model.User
 	var session *model.UserSession
 	var err error
+	extConfig := config.GetMasterConfig().InternalConfig.ExternalSessions
 	userModel, session, err = user.ByToken(ctx, token, &extConfig)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) ||
@@ -165,6 +169,28 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 		return nil, nil, ErrPermissionDenied
 	}
 	return userModel, session, nil
+}
+
+// GetUser returns the currently logged in user.
+func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
+	if user, ok := ctx.Value(userContextKey{}).(*model.User); ok {
+		if session, ok := ctx.Value(userSessionContextKey{}).(*model.UserSession); ok {
+			return user, session, nil // User token cache hit.
+		}
+		return user, nil, nil // Allocation token cache hit.
+	}
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	fmt.Println(md)
+	if !ok {
+		return nil, nil, ErrTokenMissing
+	}
+	// lowercase map keys
+	for k, v := range md {
+		delete(md, k)
+		md[strings.ToLower(k)] = v
+	}
+	return GetUserCompat(ctx, md)
 }
 
 // GetUserExternalToken returns the external token for the currently logged in user.
