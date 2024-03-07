@@ -76,8 +76,6 @@ type (
 		ResourcesID  *ResourcesID
 		ResourcePool string
 	}
-	// GetAllocationSummaries returns the summaries of all the tasks in the cluster.
-	GetAllocationSummaries struct{}
 	// AllocationSummary contains information about a task for external display.
 	AllocationSummary struct {
 		TaskID         model.TaskID       `json:"task_id"`

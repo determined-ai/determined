@@ -805,7 +805,7 @@ func (t *trial) maybeRestoreAllocation() (*model.Allocation, error) {
 }
 
 func (t *trial) checkResourcePoolRemainingCapacity() error {
-	_, launchWarnings, err := t.rm.ValidateResources(
+	launchWarnings, err := t.rm.ValidateResources(
 		sproto.ValidateResourcesRequest{
 			ResourcePool: t.config.Resources().ResourcePool(),
 			Slots:        t.config.Resources().SlotsPerTrial(),
