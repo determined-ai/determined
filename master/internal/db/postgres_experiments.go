@@ -718,13 +718,7 @@ WHERE unmanaged = false AND state IN (
 			}
 			continue
 		}
-		if model.StoppingStates[exp.State] {
-			finalState := model.StoppingToTerminalStates[exp.State]
-			if err := db.TerminateExperimentInRestart(exp.ID, finalState); err != nil {
-				log.WithError(err).Errorf("finalizing %v on restart", exp)
-			}
-			continue
-		}
+
 		exps = append(exps, &exp)
 	}
 	return exps, nil
