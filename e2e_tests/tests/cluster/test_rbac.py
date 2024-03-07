@@ -10,6 +10,16 @@ from tests.cluster import test_workspace_org
 
 PermCase = NamedTuple("PermCase", [("sess", api.Session), ("raises", Optional[Any])])
 
+viewerPerms = [
+    "PERMISSION_TYPE_VIEW_PROJECT",
+    "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS",
+    "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA",
+    "PERMISSION_TYPE_VIEW_WORKSPACE",
+    "PERMISSION_TYPE_VIEW_MODEL_REGISTRY",
+    "PERMISSION_TYPE_VIEW_NSC",
+    "PERMISSION_TYPE_VIEW_TEMPLATES",
+]
+
 
 @contextlib.contextmanager
 def create_workspaces_with_users(
@@ -378,6 +388,32 @@ def test_rbac_permission_assignment_errors() -> None:
         ],
         "Not Found",
     )
+
+
+@pytest.mark.e2e_cpu_rbac
+@api_utils.skipif_rbac_not_enabled()
+def test_rbac_permission_assignment_no_dups() -> None:
+    admin = api_utils.admin_session()
+    sess, _ = api_utils.create_test_user()
+
+    # Verify user has no permissions.
+    assert "no permissions" in detproc.check_output(sess, ["det", "rbac", "my-permissions"])
+
+    # Assign Viewer and Editor roles to the user.
+    detproc.check_call(
+        admin,
+        ["det", "rbac", "assign-role", "Viewer", "--username-to-assign", sess.username],
+    )
+    detproc.check_call(
+        admin,
+        ["det", "rbac", "assign-role", "Editor", "--username-to-assign", sess.username],
+    )
+
+    # Check that listed permissions do not contain any duplicates of overlapping permissions
+    # between Viewer and Editor roles.
+    res = detproc.check_output(sess, ["det", "rbac", "my-permissions"])
+    for p in viewerPerms:
+        assert res.count(p) == 1
 
 
 @pytest.mark.e2e_cpu_rbac
