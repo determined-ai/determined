@@ -244,6 +244,7 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
     exp_id = experiment_who_cancels_itself_then_waits(sess)
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+        managed_cluster_restarts.kill_master()
         managed_cluster_restarts.restart_master()
 
         # Short wait so that we know it was killed by us and not preemption.
@@ -272,6 +273,7 @@ def test_master_restart_stopping_ignore_preemption_still_gets_killed(
     exp_id = experiment_who_cancels_itself_then_waits(sess)
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+        restartable_managed_cluster.kill_master()
         restartable_managed_cluster.restart_master()
         exp.wait_for_experiment_state(
             sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=90
