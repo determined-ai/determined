@@ -87,21 +87,13 @@ func (r *ResourceConfig) ResolveResource() error {
 		r.RootManagerInternal.setName(DefaultRMName)
 	}
 
-	// Add a default resource pool for all non resource managers.
+	// Add a default resource pool for nonslurm default resource managers.
 	if r.RootPoolsInternal == nil &&
 		(r.RootManagerInternal.AgentRM != nil || r.RootManagerInternal.KubernetesRM != nil) {
 		defaultPool := defaultRPConfig()
 
 		defaultPool.PoolName = defaultResourcePoolName
 		r.RootPoolsInternal = []ResourcePoolConfig{defaultPool}
-	}
-	for _, c := range r.AdditionalResourceManagersInternal {
-		if c.ResourcePools == nil &&
-			(c.ResourceManager.AgentRM != nil || c.ResourceManager.KubernetesRM != nil) {
-			defaultPool := defaultRPConfig()
-			defaultPool.PoolName = defaultResourcePoolName
-			c.ResourcePools = []ResourcePoolConfig{defaultPool}
-		}
 	}
 
 	return nil
@@ -110,22 +102,36 @@ func (r *ResourceConfig) ResolveResource() error {
 // Validate implements the check.Validatable interface.
 func (r ResourceConfig) Validate() []error {
 	seenResourceManagerNames := make(map[string]bool)
+	poolNames := make(map[string]bool)
 	var errs []error
 	for _, r := range r.ResourceManagers() {
+		// All non slurm resource managers must have a resource pol.
+		if len(r.ResourcePools) == 0 &&
+			(r.ResourceManager.AgentRM != nil || r.ResourceManager.KubernetesRM != nil) {
+			errs = append(errs, fmt.Errorf(
+				"for additional_resource_managers, you must specify at least one resource pool"))
+		}
+
 		name := r.ResourceManager.Name()
 		if _, ok := seenResourceManagerNames[name]; ok {
 			errs = append(errs, fmt.Errorf("resource manager has a duplicate name: %s", name))
 		}
 		seenResourceManagerNames[name] = true
 
-		poolNames := make(map[string]bool)
+		rmPoolNames := make(map[string]bool)
 		for _, rp := range r.ResourcePools {
 			if _, ok := poolNames[rp.PoolName]; ok {
-				errs = append(errs, fmt.Errorf(
-					"resource pool has a duplicate name: %s", rp.PoolName))
-			} else {
-				poolNames[rp.PoolName] = true
+				if _, ok := rmPoolNames[rp.PoolName]; ok {
+					errs = append(errs, fmt.Errorf(
+						"resource pool has a duplicate name: %s", rp.PoolName))
+				} else {
+					errs = append(errs, fmt.Errorf("resource pool has a duplicate name: %s "+
+						"They must be unique across even different resource managers", rp.PoolName))
+				}
 			}
+
+			rmPoolNames[rp.PoolName] = true
+			poolNames[rp.PoolName] = true
 		}
 	}
 
