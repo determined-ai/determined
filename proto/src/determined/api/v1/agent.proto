@@ -47,8 +47,6 @@ message GetAgentsResponse {
 message GetAgentRequest {
   // The id of the agent.
   string agent_id = 1;
-  // The resource manager for the request.
-  string resource_manager = 2;
 }
 // Response to GetAgentRequest.
 message GetAgentResponse {
@@ -63,8 +61,6 @@ message GetAgentResponse {
 message GetSlotsRequest {
   // The id of the agent.
   string agent_id = 1;
-  // The resource manager for the request.
-  string resource_manager = 2;
 }
 // Response to GetSlotsRequest.
 message GetSlotsResponse {
@@ -78,8 +74,6 @@ message GetSlotRequest {
   string agent_id = 1;
   // The id of the slot.
   string slot_id = 2;
-  // The resource manager for the request.
-  string resource_manager = 3;
 }
 // Response to GetSlotRequest.
 message GetSlotResponse {
@@ -91,8 +85,6 @@ message GetSlotResponse {
 message EnableAgentRequest {
   // The id of the agent.
   string agent_id = 1;
-  // The resource manager for the request.
-  string resource_manager = 2;
 }
 // Response to EnableAgentRequest.
 message EnableAgentResponse {
@@ -106,8 +98,6 @@ message DisableAgentRequest {
   string agent_id = 1;
   // If true, wait for running tasks to finish.
   bool drain = 2;
-  // The resource manager for the request.
-  string resource_manager = 3;
 }
 // Response to DisableAgentRequest.
 message DisableAgentResponse {
@@ -121,8 +111,6 @@ message EnableSlotRequest {
   string agent_id = 1;
   // The id of the slot.
   string slot_id = 2;
-  // The resource manager for the request.
-  string resource_manager = 3;
 }
 // Response to EnableSlotRequest.
 message EnableSlotResponse {
@@ -138,8 +126,6 @@ message DisableSlotRequest {
   string slot_id = 2;
   // If true, wait for running task to finish.
   bool drain = 3;
-  // The resource manager for the request.
-  string resource_manager = 4;
 }
 // Response to DisableSlotRequest.
 message DisableSlotResponse {

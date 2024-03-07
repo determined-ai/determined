@@ -1930,8 +1930,6 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 		errC <- errors.New("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}
 	}, nil)
-	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything).Return(
-		mock.Anything, mock.Anything, nil)
 
 	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
 

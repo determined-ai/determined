@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -488,7 +489,7 @@ func TestGetResourcePools(t *testing.T) {
 		},
 	}
 
-	resp, err := kubernetesRM.GetResourcePools()
+	resp, err := kubernetesRM.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
 	require.NoError(t, err)
 	actual, err := json.MarshalIndent(resp.ResourcePools, "", "  ")
 	require.NoError(t, err)

@@ -103,9 +103,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, fmt.Errorf("resource slots must be >= 0")
 	}
 	isSingleNode := resources.IsSingleNode != nil && *resources.IsSingleNode
-	managerName, poolName, launchWarnings, err := a.m.ResolveResources(
-		resources.ResourceManager,
-		resources.ResourcePool,
+	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool,
 		resources.Slots,
 		int(proj.WorkspaceId),
 		isSingleNode)
@@ -113,7 +111,7 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, err
 	}
 	// Get the base TaskSpec.
-	taskSpec, err := a.m.fillTaskSpec(managerName, poolName, agentUserGroup, userModel)
+	taskSpec, err := a.m.fillTaskSpec(poolName, agentUserGroup, userModel)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -128,7 +126,6 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Copy discovered (default) resource pool name and slot count.
 
 	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
-	taskConfig.Resources.RawResourceManager = &resources.ResourceManager
 	taskConfig.Resources.RawResourcePool = &poolName
 	taskConfig.Resources.RawSlots = &resources.Slots
 
@@ -359,9 +356,8 @@ func (a *apiServer) CreateGenericTask(
 		IsUserVisible:     true,
 		Name:              fmt.Sprintf("Generic Task %s", taskID),
 
-		SlotsNeeded:     *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
-		ResourceManager: genericTaskSpec.GenericTaskConfig.Resources.ResourceManager(),
-		ResourcePool:    genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
+		SlotsNeeded:  *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
+		ResourcePool: genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: isSingleNode,
 		},
@@ -664,7 +660,6 @@ func (a *apiServer) UnpauseGenericTask(
 				IsUserVisible:     true,
 				Name:              fmt.Sprintf("Generic Task %s", resumingTask.TaskID),
 				SlotsNeeded:       *genericTaskSpec.GenericTaskConfig.Resources.Slots(),
-				ResourceManager:   genericTaskSpec.GenericTaskConfig.Resources.ResourceManager(),
 				ResourcePool:      genericTaskSpec.GenericTaskConfig.Resources.ResourcePool(),
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: isSingleNode,

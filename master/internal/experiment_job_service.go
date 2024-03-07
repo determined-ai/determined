@@ -36,12 +36,11 @@ func (e *internalExperiment) ToV1Job() (*jobv1.Job, error) {
 		WorkspaceId:    int32(workspace.ID),
 	}
 
-	rmName := e.activeConfig.Resources().ResourceManager()
-	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
-
-	j.IsPreemptible = config.ReadRMPreemptionStatus(rmName, j.ResourcePool)
-	j.Priority = int32(config.ReadPriority(rmName, j.ResourcePool, &e.activeConfig))
+	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
+	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.activeConfig))
 	j.Weight = config.ReadWeight(j.ResourcePool, &e.activeConfig)
+
+	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
 
 	return &j, nil
 }
@@ -74,17 +73,17 @@ func (e *internalExperiment) SetWeight(weight float64) error {
 }
 
 // SetResourcePool sets the experiment's resource pool.
-func (e *internalExperiment) SetResourcePool(resourceManager, resourcePool string) error {
+func (e *internalExperiment) SetResourcePool(resourcePool string) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	return e.setRP(resourceManager, resourcePool)
+	return e.setRP(resourcePool)
 }
 
 // ResourcePool gets the experiment's resource pool.
-func (e *internalExperiment) ResourcePool() (string, string) {
+func (e *internalExperiment) ResourcePool() string {
 	e.mu.Lock()
 	defer e.mu.Lock()
 
-	return e.activeConfig.Resources().ResourceManager(), e.activeConfig.Resources().ResourcePool()
+	return e.activeConfig.Resources().ResourcePool()
 }

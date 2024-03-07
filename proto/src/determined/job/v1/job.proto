@@ -88,8 +88,6 @@ message LimitedJob {
   float progress = 14;
   // Job's workspace id.
   int32 workspace_id = 16;
-  // Associated resource manager.
-  string resource_manager = 17;
 }
 
 // Job represents a user submitted work that is not in a terminal
@@ -144,8 +142,6 @@ message Job {
   float progress = 14;
   // Job's workspace id.
   int32 workspace_id = 16;
-  // Associated resource manager.
-  string resource_manager = 17;
 }
 
 // RBACJob is a job that can have either a limited or a full
@@ -179,18 +175,7 @@ message QueueControl {
     int32 priority = 5;
     // The desired job weight in fairshare scheduler.
     float weight = 6;
-    // Name of the target resource_manager & resource_pool to move the job to.
-    ResourcePoolQualifier resources = 7;
   }
-}
-
-// Describes a resource manager and resource pool, for use in multi-Resource
-// Manager environments.
-message ResourcePoolQualifier {
-  // Name of the target resource_manager.
-  string resource_manager = 1;
-  // Name of the target resource_pool
-  string resource_pool = 2;
 }
 
 // Statistics for a queue.

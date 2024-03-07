@@ -37,7 +37,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 
 	rm := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
 
-	taskSummary, err := rm.GetAllocationSummaries()
+	taskSummary, err := rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
 	assert.NilError(t, err)
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
 	rm.stop()

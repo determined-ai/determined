@@ -18,7 +18,6 @@ func (a *apiServer) GetJobs(
 	ctx context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
 	jobs, err := jobservice.DefaultService.GetJobs(
-		req.ResourceManager,
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -50,7 +49,6 @@ func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
 	jobs, err := jobservice.DefaultService.GetJobs(
-		req.ResourceManager,
 		req.ResourcePool,
 		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
 		req.States,
@@ -99,7 +97,7 @@ func (a *apiServer) GetJobsV2(
 func (a *apiServer) GetJobQueueStats(
 	_ context.Context, req *apiv1.GetJobQueueStatsRequest,
 ) (*apiv1.GetJobQueueStatsResponse, error) {
-	resp, err := a.m.rm.GetJobQueueStatsRequest(req.ResourceManager, req)
+	resp, err := a.m.rm.GetJobQueueStatsRequest(req)
 	if err != nil {
 		return nil, err
 	}

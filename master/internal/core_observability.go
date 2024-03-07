@@ -7,10 +7,11 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/prom"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (m *Master) getPrometheusTargets(c echo.Context) (interface{}, error) {
-	resp, err := m.rm.GetAgents()
+	resp, err := m.rm.GetAgents(&apiv1.GetAgentsRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("gather agent statuses: %w", err)
 	}
