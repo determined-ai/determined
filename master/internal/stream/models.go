@@ -1,9 +1,20 @@
 package stream
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
+	"slices"
+	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/stream"
 )
 
 const (
@@ -38,4 +49,217 @@ type ModelMsg struct {
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
+}
+
+// SeqNum gets the SeqNum from a ModelMsg.
+func (pm *ModelMsg) SeqNum() int64 {
+	return pm.Seq
+}
+
+// UpsertMsg creates a model stream upsert message.
+func (pm *ModelMsg) UpsertMsg() stream.UpsertMsg {
+	return stream.UpsertMsg{
+		JSONKey: ModelsUpsertKey,
+		Msg:     pm,
+	}
+}
+
+// DeleteMsg creates a model stream delete message.
+func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
+	deleted := strconv.FormatInt(int64(pm.ID), 10)
+	return stream.DeleteMsg{
+		Key:     ModelsDeleteKey,
+		Deleted: deleted,
+	}
+}
+
+// ModelSubscriptionSpec is what a user submits to define a Model subscription.
+type ModelSubscriptionSpec struct {
+	WorkspaceIDs []int `json:"workspace_ids"`
+	ModelIDs     []int `json:"Model_ids"`
+	Since        int64 `json:"since"`
+}
+
+// createFilteredModelIDQuery creates a select query that
+// pulls all relevant model ids based on permission scope and
+// subscription spec filters.
+func createFilteredModelIDQuery(
+	globalAccess bool,
+	accessScopes []model.AccessScopeID,
+	spec ModelSubscriptionSpec,
+) *bun.SelectQuery {
+	q := db.Bun().NewSelect().
+		TableExpr("models m").
+		Column("m.id").
+		OrderExpr("m.id ASC")
+
+	// add permission scope filter in event of non-global access
+	if !globalAccess {
+		q = permFilterQuery(q, accessScopes)
+	}
+
+	q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		if len(spec.ModelIDs) > 0 {
+			q.WhereOr("m.id in (?)", bun.In(spec.ModelIDs))
+		}
+		if len(spec.WorkspaceIDs) > 0 {
+			q.WhereOr("m.workspace_id in (?)", bun.In(spec.WorkspaceIDs))
+		}
+		return q
+	})
+	return q
+}
+
+// ModelCollectStartupMsgs collects ModelMsg's that were missed prior to startup.
+func ModelCollectStartupMsgs(
+	ctx context.Context,
+	user model.User,
+	known string,
+	spec ModelSubscriptionSpec,
+) (
+	[]stream.MarshallableMsg, error,
+) {
+	var out []stream.MarshallableMsg
+
+	if len(spec.ModelIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
+		// empty subscription: everything known should be returned as deleted
+		out = append(out, stream.DeleteMsg{
+			Key:     ModelsDeleteKey,
+			Deleted: known,
+		})
+		return out, nil
+	}
+	// step 0: get user's permitted access scopes
+	accessMap, err := AuthZProvider.Get().GetModelStreamableScopes(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	_, globalAccess := accessMap[model.GlobalAccessScopeID]
+	var accessScopes []model.AccessScopeID
+	// only populate accessScopes if user doesn't have global access
+	if !globalAccess {
+		for id, isPermitted := range accessMap {
+			if isPermitted {
+				accessScopes = append(accessScopes, id)
+			}
+		}
+	}
+
+	// step 1: calculate all ids matching this subscription
+	oldEventsQuery := createFilteredModelIDQuery(
+		globalAccess,
+		accessScopes,
+		spec,
+	)
+	newEventsQuery := createFilteredModelIDQuery(
+		globalAccess,
+		accessScopes,
+		spec,
+	)
+
+	// get events that happened prior to since that are relevant (appearance)
+	oldEventsQuery.Where("m.seq <= ?", spec.Since)
+	var exist []int64
+	err = oldEventsQuery.Scan(ctx, &exist)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error when scanning for old offline events: %v\n", err)
+		return nil, err
+	}
+	// and events that happened since the last time this streamer checked
+	newEventsQuery.Where("m.seq > ?", spec.Since)
+	var newEntities []int64
+	err = newEventsQuery.Scan(ctx, &newEntities)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error when scanning for new offline events: %v\n", err)
+		return nil, err
+	}
+
+	exist = append(exist, newEntities...)
+	slices.Sort(exist)
+
+	// step 2: figure out what was missing and what has appeared
+	missing, appeared, err := stream.ProcessKnown(known, exist)
+	if err != nil {
+		return nil, err
+	}
+
+	// step 3: hydrate appeared IDs into full ModelMsgs
+	var modelMsgs []*ModelMsg
+	if len(appeared) > 0 {
+		query := db.Bun().NewSelect().Model(&modelMsgs).Where("model_msg.id in (?)", bun.In(appeared))
+		if !globalAccess {
+			query = permFilterQuery(query, accessScopes)
+		}
+		err := query.Scan(ctx, &modelMsgs)
+		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+			log.Errorf("error: %v\n", err)
+			return nil, err
+		}
+	}
+
+	// step 4: emit deletions and updates to the client
+	out = append(out, stream.DeleteMsg{
+		Key:     ModelsDeleteKey,
+		Deleted: missing,
+	})
+	for _, msg := range modelMsgs {
+		out = append(out, msg.UpsertMsg())
+	}
+	return out, nil
+}
+
+// ModelMakeFilter creates a ModelMsg filter based on the given ModelSubscriptionSpec.
+func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) {
+	// should this filter even run?
+	if len(spec.WorkspaceIDs) == 0 && len(spec.ModelIDs) == 0 {
+		return nil, errors.Errorf("invalid subscription spec arguments: %v %v", spec.WorkspaceIDs, spec.ModelIDs)
+	}
+
+	// create sets based on subscription spec
+	workspaceIDs := make(map[int]struct{})
+	for _, id := range spec.WorkspaceIDs {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid workspace id: %d", id)
+		}
+		workspaceIDs[id] = struct{}{}
+	}
+	modelIDs := make(map[int]struct{})
+	for _, id := range spec.ModelIDs {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid model id: %d", id)
+		}
+		modelIDs[id] = struct{}{}
+	}
+
+	// return a closure around our copied maps
+	return func(msg *ModelMsg) bool {
+		// subscribed to model by this model_id?
+		if _, ok := modelIDs[msg.ID]; ok {
+			return true
+		}
+		// subscribed to this model by workspace_id?
+		if _, ok := workspaceIDs[msg.WorkspaceID]; ok {
+			return true
+		}
+		return false
+	}, nil
+}
+
+// ModelMakePermissionFilter returns a function that checks if a ModelMsg
+// is in scope of the user permissions.
+func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*ModelMsg) bool, error) {
+	accessScopeSet, err := AuthZProvider.Get().GetModelStreamableScopes(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case accessScopeSet[model.GlobalAccessScopeID]:
+		// user has global access for viewing models
+		return func(msg *ModelMsg) bool { return true }, nil
+	default:
+		return func(msg *ModelMsg) bool {
+			return accessScopeSet[model.AccessScopeID(msg.WorkspaceID)]
+		}, nil
+	}
 }

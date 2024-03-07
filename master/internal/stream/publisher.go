@@ -25,6 +25,7 @@ import (
 type PublisherSet struct {
 	DBAddress  string
 	Projects   *stream.Publisher[*ProjectMsg]
+	Models     *stream.Publisher[*ModelMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
 	readyCond  sync.Cond
@@ -37,6 +38,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 	return &PublisherSet{
 		DBAddress:  dbAddress,
 		Projects:   stream.NewPublisher[*ProjectMsg](),
+		Models:     stream.NewPublisher[*ModelMsg](),
 		bootemChan: make(chan struct{}),
 		readyCond:  *sync.NewCond(&lock),
 	}

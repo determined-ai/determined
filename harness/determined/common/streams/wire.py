@@ -51,6 +51,40 @@ class ClientMsg:
         return isinstance(other, type(self)) and self.to_json() == other.to_json()
 
 
+class ModelMsg(ServerMsg):
+    def __init__(
+        self,
+        id: "int",
+        name: "str",
+        description: "str",
+        archived: "bool",
+        creation_time: "float",
+        notes: "typing.Any",
+        workspace_id: "int",
+        user_id: "int",
+        last_updated_time: "float",
+        metadata: "typing.Any",
+        labels: "typing.Any",
+        seq: "int",
+    ) -> None:
+        self.id = id
+        self.name = name
+        self.description = description
+        self.archived = archived
+        self.creation_time = creation_time
+        self.notes = notes
+        self.workspace_id = workspace_id
+        self.user_id = user_id
+        self.last_updated_time = last_updated_time
+        self.metadata = metadata
+        self.labels = labels
+        self.seq = seq
+
+
+class ModelsDeleted(DeleteMsg):
+    pass
+
+
 class ProjectMsg(ServerMsg):
     def __init__(
         self,
