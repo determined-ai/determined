@@ -150,7 +150,7 @@ const ExperimentContinueModalComponent = ({
 
       // Validate the yaml syntax by attempting to load it.
       try {
-        newModalState.config = yaml.load(newConfigString) as RawJson;
+        newModalState.config = (yaml.load(newConfigString) || {}) as RawJson;
         newModalState.configError = undefined;
         newModalState.error = undefined;
       } catch (e) {
