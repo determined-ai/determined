@@ -294,14 +294,13 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+	poolName, _, err := m.ResolveResources(
+		rm.ResourcePoolName(resources.ResourcePool()), resources.SlotsPerTrial(),
+		workspaceID, isSingleNode)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
-	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		rm.ResourcePoolName(poolName),
-		m.config.TaskContainerDefaults,
-	)
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(poolName, m.config.TaskContainerDefaults)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}

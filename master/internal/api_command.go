@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -97,7 +98,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 
 	poolName, launchWarnings, err := a.m.ResolveResources(
-		resources.ResourcePool,
+		rm.ResourcePoolName(resources.ResourcePool),
 		resources.Slots,
 		int(cmdSpec.Metadata.WorkspaceID),
 		true,
@@ -133,7 +134,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	// Copy discovered (default) resource pool name and slot count.
 	fillTaskConfig(resources.Slots, taskSpec, &config.Environment)
-	config.Resources.ResourcePool = poolName
+	config.Resources.ResourcePool = string(poolName)
 	config.Resources.Slots = resources.Slots
 
 	var contextDirectory []byte

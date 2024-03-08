@@ -31,13 +31,12 @@ import (
 
 // ResolveResources - Validate ResoucePool and check for availability.
 func (m *Master) ResolveResources(
-	resourcePool string,
+	resourcePool rm.ResourcePoolName,
 	slots int,
 	workspaceID int,
 	isSingleNode bool,
-) (string, []pkgCommand.LaunchWarning, error) {
-	poolName, err := m.rm.ResolveResourcePool(
-		rm.ResourcePoolName(resourcePool), workspaceID, slots)
+) (rm.ResourcePoolName, []pkgCommand.LaunchWarning, error) {
+	poolName, err := m.rm.ResolveResourcePool(resourcePool, workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -53,17 +52,16 @@ func (m *Master) ResolveResources(
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
-	return string(poolName), launchWarnings, nil
+	return poolName, launchWarnings, nil
 }
 
 // Fill and return TaskSpec.
 func (m *Master) fillTaskSpec(
-	poolName string,
+	poolName rm.ResourcePoolName,
 	agentUserGroup *model.AgentUserGroup,
 	userModel *model.User,
 ) (tasks.TaskSpec, error) {
-	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		rm.ResourcePoolName(poolName),
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -103,7 +104,8 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 		return nil, nil, nil, fmt.Errorf("resource slots must be >= 0")
 	}
 	isSingleNode := resources.IsSingleNode != nil && *resources.IsSingleNode
-	poolName, launchWarnings, err := a.m.ResolveResources(resources.ResourcePool,
+	poolName, launchWarnings, err := a.m.ResolveResources(
+		rm.ResourcePoolName(resources.ResourcePool),
 		resources.Slots,
 		int(proj.WorkspaceId),
 		isSingleNode)
@@ -126,7 +128,8 @@ func (a *apiServer) getGenericTaskLaunchParameters(
 	// Copy discovered (default) resource pool name and slot count.
 
 	fillTaskConfig(resources.Slots, taskSpec, &taskConfig.Environment)
-	taskConfig.Resources.RawResourcePool = &poolName
+	rawResourcePool := string(poolName)
+	taskConfig.Resources.RawResourcePool = &rawResourcePool
 	taskConfig.Resources.RawSlots = &resources.Slots
 
 	var contextDirectoryBytes []byte

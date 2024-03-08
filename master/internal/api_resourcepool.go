@@ -89,7 +89,7 @@ func (a *apiServer) GetResourcePools(
 func (a *apiServer) BindRPToWorkspace(
 	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
 ) (*apiv1.BindRPToWorkspaceResponse, error) {
-	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
+	err := a.checkIfPoolIsDefault(rm.ResourcePoolName(req.ResourcePoolName))
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (a *apiServer) BindRPToWorkspace(
 func (a *apiServer) OverwriteRPWorkspaceBindings(
 	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
 ) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {
-	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
+	err := a.checkIfPoolIsDefault(rm.ResourcePoolName(req.ResourcePoolName))
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	}, nil
 }
 
-func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
+func (a *apiServer) checkIfPoolIsDefault(poolName rm.ResourcePoolName) error {
 	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool()
 	if err != nil {
 		return err
@@ -222,8 +222,8 @@ func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
 		return err
 	}
 
-	isDefaultCompute := poolName == string(defaultComputePool)
-	isDefaultAux := poolName == string(defaultAuxPool)
+	isDefaultCompute := poolName == defaultComputePool
+	isDefaultAux := poolName == defaultAuxPool
 	if isDefaultCompute || isDefaultAux {
 		return fmt.Errorf(
 			"default resource pool %s cannot be bound to any workspace",

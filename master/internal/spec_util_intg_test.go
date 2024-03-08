@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -19,11 +20,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func getMockResourceManager(poolName string) *mocks.ResourceManager {
+func getMockResourceManager(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	rm := &mocks.ResourceManager{}
 	rm.On("ResolveResourcePool", "/", 0, 1).Return(poolName, nil)
 	rm.On("ValidateResources", sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
+		ResourcePool: string(poolName),
 		Slots:        1,
 		IsSingleNode: true,
 	}).Return(nil, nil)
@@ -32,8 +33,8 @@ func getMockResourceManager(poolName string) *mocks.ResourceManager {
 
 func TestResolveResources(t *testing.T) {
 	tests := map[string]struct {
-		expectedPoolName string
-		resourcePool     string
+		expectedPoolName rm.ResourcePoolName
+		resourcePool     rm.ResourcePoolName
 		slots            int
 		workspaceID      int
 	}{
@@ -61,7 +62,7 @@ func TestResolveResources(t *testing.T) {
 
 func TestFillTaskSpec(t *testing.T) {
 	tests := map[string]struct {
-		poolName       string
+		poolName       rm.ResourcePoolName
 		agentUserGroup *model.AgentUserGroup
 		userModel      *model.User
 		workDir        string
