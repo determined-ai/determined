@@ -162,8 +162,8 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
         expected = DOCKER_ARTIFACTS
 
     found = set(artifacts.keys())
-    assert expected.issubset(
-        found
+    assert (
+        expected == found
     ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
