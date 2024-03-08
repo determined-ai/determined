@@ -168,6 +168,8 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 			err := user.GetService().ProcessAuthentication(next)(c)
 			if err == nil {
 				return nil
+			} else if httpErr, ok := err.(*echo.HTTPError); !ok || httpErr.Code != http.StatusUnauthorized {
+				return err
 			}
 
 			isProxiedPath := false
@@ -177,25 +179,23 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 					isProxiedPath = true
 				}
 			}
-
-			if httpErr, ok := err.(*echo.HTTPError); ok && httpErr.Code == http.StatusUnauthorized && isProxiedPath {
-				md := metadata.MD{}
-				for k, v := range c.Request().Header {
-					if strings.HasPrefix(k, "Grpc-Metadata-") {
-						k = k[len("Grpc-Metadata-"):]
-					}
-					md.Append(k, v...)
-				}
-				_, _, err = grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
-				if err == nil {
-					return next(c)
-				}
-			}
-
 			if !isProxiedPath {
 				return err
 			}
 
+			md := metadata.MD{}
+			for k, v := range c.Request().Header {
+				if strings.HasPrefix(k, "Grpc-Metadata-") {
+					k = k[len("Grpc-Metadata-"):]
+				}
+				md.Append(k, v...)
+			}
+			_, _, err = grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
+			if err == nil {
+				return next(c)
+			}
+
+			// TODO: reverse this logic to redirect only if accept is empty or specifies text/html.
 			// No web page redirects for programmatic requests.
 			for _, accept := range c.Request().Header["Accept"] {
 				if strings.Contains(accept, "application/json") {
