@@ -19,7 +19,8 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 set +x
 
 if [ "$PACHD_ADDRESS" != "" ] && [ "$SKIP_PACHYDERM_INSTALL" != "true" ]; then
-    version=$(echo $(curl -s -X POST -H "Content-Type: application/json" pachyderm-proxy:80/api/versionpb_v2.API/GetVersion) | sed -n 's/.*"major":\([0-9]*\), "minor":\([0-9]*\), "micro":\([0-9]*\).*/\1.\2.\3/p')
+    proxy_dns=$(echo $PACHD_ADDRESS | sed 's/grpc:\/\/pachd/pachyderm-proxy/' | sed 's/:30650//') 
+    version=$(echo $(curl -skLX POST -H "Content-Type: application/json" $proxy_dns/api/versionpb_v2.API/GetVersion) | sed -n 's/.*"major":\([0-9]*\), "minor":\([0-9]*\), "micro":\([0-9]*\).*/\1.\2.\3/p')
 
     pip install jupyterlab-pachyderm==$version
 
