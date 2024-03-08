@@ -203,7 +203,7 @@ func TestAuthMiddleware(t *testing.T) {
 				req.Header.Set("Accept", tc.acceptHeader)
 			}
 
-			middleware := processAuthWithRedirect(proxies)
+			middleware := processAuthWithProxies(proxies)
 			fn := middleware(func(c echo.Context) error { return c.NoContent(http.StatusUnauthorized) })
 
 			err := fn(c)
