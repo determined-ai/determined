@@ -42,7 +42,7 @@ editorPerms = [
     "PERMISSION_TYPE_UPDATE_TEMPLATES",
     "PERMISSION_TYPE_CREATE_TEMPLATES",
     "PERMISSION_TYPE_DELETE_TEMPLATES",
-    "PERMISSION_TYPE_DELETE_MODEL_VERSION"
+    "PERMISSION_TYPE_DELETE_MODEL_VERSION",
 ]
 
 
@@ -439,9 +439,10 @@ def test_rbac_permission_assignment_no_dups() -> None:
     res = detproc.check_output(sess, ["det", "rbac", "my-permissions"])
     for p in editorPerms:
         assert res.count(p) == 1
-        
+
+
 @pytest.mark.e2e_cpu_rbac
-@api_utils.skipif_rbac_not_enabled()  
+@api_utils.skipif_rbac_not_enabled()
 def test_rbac_list_all_perms_single_role() -> None:
     sess, _ = api_utils.create_test_user()
     # Assign Viewer role in one workspace and Editor role in another and verify that correct number
@@ -460,6 +461,7 @@ def test_rbac_list_all_perms_single_role() -> None:
             assert res.count(p) == 1
         for p in editorPerms:
             assert res.count(p) == 1
+
 
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()

@@ -95,9 +95,7 @@ def my_permissions(args: Namespace) -> None:
             if p.id not in perms_added:
                 perms_added.add(p.id)
                 perms_to_render.append(render.unmarshal(v1PermissionHeaders, p.to_json()))
-        render.render_objects(
-            v1PermissionHeaders, perms_to_render
-        )
+        render.render_objects(v1PermissionHeaders, perms_to_render)
         print()
 
 
