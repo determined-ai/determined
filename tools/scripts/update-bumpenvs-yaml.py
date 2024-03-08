@@ -61,20 +61,28 @@ JOB_SUFFIXES_NO_MPI = [
 
 PACKER_JOBS = {"publish-cloud-images"}
 
-DOCKER_JOBS = {
-    f"build-and-publish-docker-{suffix}-{mpi}"
-    for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-} | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI} \
-| {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_NO_MPI if "hpc" not in suffix}
+DOCKER_JOBS = (
+    {
+        f"build-and-publish-docker-{suffix}-{mpi}"
+        for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
+    }
+    | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+    | {
+        f"build-and-publish-docker-{suffix}-0"
+        for suffix in JOB_SUFFIXES_NO_MPI
+        if "hpc" not in suffix
+    }
+)
 
 PACKER_ARTIFACTS = {
     "packer-log",
 }
 
-DOCKER_ARTIFACTS = {
-    f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-} | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI} \
-| {f"publish-{suffix}" for suffix in JOB_SUFFIXES_NO_MPI}
+DOCKER_ARTIFACTS = (
+    {f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])}
+    | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+    | {f"publish-{suffix}" for suffix in JOB_SUFFIXES_NO_MPI}
+)
 
 
 class Build:
@@ -154,8 +162,8 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
         expected = DOCKER_ARTIFACTS
 
     found = set(artifacts.keys())
-    assert (
-        expected.issubset(found)
+    assert expected.issubset(
+        found
     ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
