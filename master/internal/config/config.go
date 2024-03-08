@@ -481,7 +481,7 @@ func ReadRMPreemptionStatus(rpName string) bool {
 	for _, r := range config.ResourceManagers() {
 		for _, rpConfig := range r.ResourcePools {
 			if rpConfig.PoolName == rpName {
-				if rpConfig.Scheduler == nil {
+				if rpConfig.Scheduler != nil {
 					return rpConfig.Scheduler.GetPreemption()
 				}
 				// if not found, fall back to resource manager config
