@@ -170,7 +170,15 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 				return nil
 			}
 
-			if httpErr, ok := err.(*echo.HTTPError); ok && httpErr.Code == http.StatusUnauthorized {
+			isProxiedPath := false
+			path := c.Request().RequestURI
+			for _, p := range redirectPaths {
+				if strings.HasPrefix(path, p) {
+					isProxiedPath = true
+				}
+			}
+
+			if httpErr, ok := err.(*echo.HTTPError); ok && httpErr.Code == http.StatusUnauthorized && isProxiedPath {
 				md := metadata.MD{}
 				for k, v := range c.Request().Header {
 					if strings.HasPrefix(k, "Grpc-Metadata-") {
@@ -184,19 +192,18 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 				}
 			}
 
+			if !isProxiedPath {
+				return err
+			}
+
 			// No web page redirects for programmatic requests.
 			for _, accept := range c.Request().Header["Accept"] {
 				if strings.Contains(accept, "application/json") {
 					return err
 				}
 			}
-			path := c.Request().RequestURI
-			for _, p := range redirectPaths {
-				if strings.HasPrefix(path, p) {
-					return redirectToLogin(c)
-				}
-			}
-			return err
+
+			return redirectToLogin(c)
 		}
 	}
 }
