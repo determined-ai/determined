@@ -20,6 +20,31 @@ viewerPerms = [
     "PERMISSION_TYPE_VIEW_TEMPLATES",
 ]
 
+editorPerms = [
+    "PERMISSION_TYPE_VIEW_PROJECT",
+    "PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS",
+    "PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA",
+    "PERMISSION_TYPE_VIEW_WORKSPACE",
+    "PERMISSION_TYPE_VIEW_MODEL_REGISTRY",
+    "PERMISSION_TYPE_VIEW_NSC",
+    "PERMISSION_TYPE_VIEW_TEMPLATES",
+    "PERMISSION_TYPE_CREATE_EXPERIMENT",
+    "PERMISSION_TYPE_UPDATE_EXPERIMENT",
+    "PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA",
+    "PERMISSION_TYPE_UPDATE_PROJECT",
+    "PERMISSION_TYPE_DELETE_EXPERIMENT",
+    "PERMISSION_TYPE_CREATE_PROJECT",
+    "PERMISSION_TYPE_EDIT_MODEL_REGISTRY",
+    "PERMISSION_TYPE_CREATE_MODEL_REGISTRY",
+    "PERMISSION_TYPE_CREATE_NSC",
+    "PERMISSION_TYPE_UPDATE_NSC",
+    "PERMISSION_TYPE_DELETE_MODEL_REGISTRY",
+    "PERMISSION_TYPE_UPDATE_TEMPLATES",
+    "PERMISSION_TYPE_CREATE_TEMPLATES",
+    "PERMISSION_TYPE_DELETE_TEMPLATES",
+    "PERMISSION_TYPE_DELETE_MODEL_VERSION"
+]
+
 
 @contextlib.contextmanager
 def create_workspaces_with_users(
@@ -412,9 +437,28 @@ def test_rbac_permission_assignment_no_dups() -> None:
     # Check that listed permissions do not contain any duplicates of overlapping permissions
     # between Viewer and Editor roles.
     res = detproc.check_output(sess, ["det", "rbac", "my-permissions"])
-    for p in viewerPerms:
+    for p in editorPerms:
         assert res.count(p) == 1
-
+        
+@pytest.mark.e2e_cpu_rbac
+@api_utils.skipif_rbac_not_enabled()  
+def test_rbac_list_all_perms_single_role() -> None:
+    # Assign Viewer role in one workspace and Editor role in another and verify that correct number
+    # of permissions are listed within each respective workspace.
+    perm_assigments = [
+        [
+            (1, ["Editor"]),
+        ],
+        [
+            (1, ["Viewer"]),
+        ],
+    ]
+    with create_workspaces_with_users(perm_assigments) as (workspaces, rid_to_sess):
+        res = detproc.check_output(sess, ["det", "rbac", "my-permissions"])
+        for p in viewerPerms:
+            assert res.count(p) == 1
+        for p in editorPerms:
+            assert res.count(p) == 1
 
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()

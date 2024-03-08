@@ -58,15 +58,9 @@ def my_permissions(args: Namespace) -> None:
         return
 
     role_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
-    all_perms = set()
     for r in resp.roles:
         if r.permissions is not None and r.roleId is not None:
-            perms_for_role = set()
-            for p in r.permissions:
-                if p.id not in all_perms:
-                    perms_for_role.add(p)
-                    all_perms.add(p.id)
-            role_id_to_permissions[r.roleId] = perms_for_role
+            role_id_to_permissions[r.roleId] = set(r.permissions)
 
     scope_id_to_permissions: Dict[int, Set[bindings.v1Permission]] = {}
     for a in resp.assignments:
@@ -95,8 +89,14 @@ def my_permissions(args: Namespace) -> None:
             workspace_name = bindings.get_GetWorkspace(sess, id=wid).workspace.name
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
 
+        perms_to_render = []
+        perms_added = set()
+        for p in perms:
+            if p.id not in perms_added:
+                perms_added.add(p.id)
+                perms_to_render.append(render.unmarshal(v1PermissionHeaders, p.to_json()))
         render.render_objects(
-            v1PermissionHeaders, [render.unmarshal(v1PermissionHeaders, p.to_json()) for p in perms]
+            v1PermissionHeaders, perms_to_render
         )
         print()
 
