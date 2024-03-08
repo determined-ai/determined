@@ -3,7 +3,6 @@ package grpcutil
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -84,8 +83,28 @@ func allocationSessionByTokenBun(token string) (*model.AllocationSession, error)
 	return &session, nil
 }
 
-func getAllocationSessionBunHeader(allocationHeaderVal string) (*model.AllocationSession, error) {
-	token := allocationHeaderVal
+func getAllocationSessionBun(md metadata.MD) (*model.AllocationSession, error) {
+	tokens := []string{}
+
+	keys := make([]string, 0)
+	for k := range md {
+		keys = append(keys, k)
+	}
+	// fmt.Println("getAllocationSessionBun", keys)
+	// FIXME: the header case sensitivity and grpcmetadata prefix cutoff
+	// pick key with allocation in it lowercase
+	for _, k := range keys {
+		if strings.Contains(strings.ToLower(k), "allocation") {
+			tokens = md[k]
+			break
+		}
+	}
+
+	if len(tokens) == 0 {
+		return nil, ErrTokenMissing
+	}
+
+	token := tokens[0]
 	if !strings.HasPrefix(token, "Bearer ") {
 		return nil, ErrInvalidCredentials
 	}
@@ -101,30 +120,7 @@ func getAllocationSessionBunHeader(allocationHeaderVal string) (*model.Allocatio
 	}
 }
 
-func getAllocationSessionBun(md map[string][]string) (*model.AllocationSession, error) {
-	keys := make([]string, 0)
-	for k := range md {
-		keys = append(keys, k)
-	}
-	fmt.Println("getAllocationSessionBun", keys)
-	tokens := []string{}
-	// pick key with allocation in it lowercase
-	for _, k := range keys {
-		if strings.Contains(strings.ToLower(k), "allocation") {
-			tokens = md[k]
-			break
-		}
-	}
-	// FIXME: the header case sensitivity and grpcmetadata prefix cutoff
-	if len(tokens) == 0 {
-		return nil, ErrTokenMissing
-	}
-
-	token := tokens[0]
-	return getAllocationSessionBunHeader(token)
-}
-
-func GetUserCompat(ctx context.Context, md map[string][]string) (*model.User, *model.UserSession, error) {
+func GetUserCompat(ctx context.Context, md metadata.MD) (*model.User, *model.UserSession, error) {
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
 		tokens = md[gatewayTokenHeader]
@@ -181,15 +177,14 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	}
 
 	md, ok := metadata.FromIncomingContext(ctx)
-	fmt.Println(md)
 	if !ok {
 		return nil, nil, ErrTokenMissing
 	}
-	// lowercase map keys
-	for k, v := range md {
-		delete(md, k)
-		md[strings.ToLower(k)] = v
-	}
+	// // lowercase map keys
+	// for k, v := range md {
+	// 	delete(md, k)
+	// 	md[strings.ToLower(k)] = v
+	// }
 	return GetUserCompat(ctx, md)
 }
 

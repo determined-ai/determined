@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/labstack/echo/v4"
@@ -169,17 +170,18 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 				return nil
 			}
 
-			// grpcutil.AllocationSessionByTokenBun
-			// check if err is pointer to echo.HTTPError and the status code
-			// is 401, in which case it's an unauthorized error.
 			if httpErr, ok := err.(*echo.HTTPError); ok && httpErr.Code == http.StatusUnauthorized {
-				fmt.Println("http unauthorized")
-				_, _, err = grpcutil.GetUserCompat(c.Request().Context(), c.Request().Header)
+				md := metadata.MD{}
+				for k, v := range c.Request().Header {
+					if strings.HasPrefix(k, "Grpc-Metadata-") {
+						k = k[len("Grpc-Metadata-"):]
+					}
+					md.Append(k, v...)
+				}
+				_, _, err = grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
 				if err == nil {
-					fmt.Println("grpc getuser passed")
 					return next(c)
 				}
-				fmt.Println("grpc unauthorized", err)
 			}
 
 			// No web page redirects for programmatic requests.
