@@ -88,6 +88,7 @@ func (r *ResourceConfig) ResolveResource() error {
 	}
 
 	// Add a default resource pool for nonslurm default resource managers.
+	// TODO(multirm-slurm) rethink pool discovery.
 	if r.RootPoolsInternal == nil &&
 		(r.RootManagerInternal.AgentRM != nil || r.RootManagerInternal.KubernetesRM != nil) {
 		defaultPool := defaultRPConfig()
