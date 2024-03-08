@@ -443,6 +443,7 @@ def test_rbac_permission_assignment_no_dups() -> None:
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()  
 def test_rbac_list_all_perms_single_role() -> None:
+    sess, _ = api_utils.create_test_user()
     # Assign Viewer role in one workspace and Editor role in another and verify that correct number
     # of permissions are listed within each respective workspace.
     perm_assigments = [
