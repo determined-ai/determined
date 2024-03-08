@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -36,12 +37,12 @@ func (m *Master) ResolveResources(
 	isSingleNode bool,
 ) (string, []pkgCommand.LaunchWarning, error) {
 	poolName, err := m.rm.ResolveResourcePool(
-		resourcePool, workspaceID, slots)
+		rm.ResourcePoolName(resourcePool), workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	launchWarnings, err := m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
+		ResourcePool: string(poolName),
 		Slots:        slots,
 		IsSingleNode: isSingleNode,
 	})
@@ -52,7 +53,7 @@ func (m *Master) ResolveResources(
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
-	return poolName, launchWarnings, nil
+	return string(poolName), launchWarnings, nil
 }
 
 // Fill and return TaskSpec.
@@ -62,7 +63,7 @@ func (m *Master) fillTaskSpec(
 	userModel *model.User,
 ) (tasks.TaskSpec, error) {
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		poolName,
+		rm.ResourcePoolName(poolName),
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

@@ -108,7 +108,7 @@ func newExperiment(
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
+		rm.ResourcePoolName(resources.ResourcePool()), workspaceID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -117,7 +117,7 @@ func newExperiment(
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
 		if launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-			ResourcePool: poolName,
+			ResourcePool: string(poolName),
 			Slots:        resources.SlotsPerTrial(),
 			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
 		}); err != nil {
@@ -127,7 +127,7 @@ func newExperiment(
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")
 		}
 	}
-	resources.SetResourcePool(poolName)
+	resources.SetResourcePool(string(poolName))
 
 	activeConfig.SetResources(resources)
 
@@ -1110,16 +1110,16 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		resourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		rm.ResourcePoolName(resourcePool), workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
 		return fmt.Errorf("invalid resource pool name %s", resourcePool)
-	case oldRP == rp:
+	case oldRP == string(rp):
 		return fmt.Errorf("resource pool is unchanged (%s == %s)", oldRP, rp)
 	}
 
-	resources.SetResourcePool(rp)
+	resources.SetResourcePool(string(rp))
 	e.activeConfig.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
@@ -1133,7 +1133,7 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
-			t.PatchRP(rp)
+			t.PatchRP(string(rp))
 			return nil
 		})
 	}

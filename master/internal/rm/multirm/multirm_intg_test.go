@@ -285,7 +285,7 @@ func TestGetDefaultResourcePools(t *testing.T) {
 func TestValidateResourcePool(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -304,7 +304,7 @@ func TestValidateResourcePool(t *testing.T) {
 func TestResolveResourcePool(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -324,7 +324,7 @@ func TestResolveResourcePool(t *testing.T) {
 func TestTaskContainerDefaults(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -343,7 +343,7 @@ func TestTaskContainerDefaults(t *testing.T) {
 func TestGetJobQ(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -400,7 +400,7 @@ func TestMoveJob(t *testing.T) {
 func TestGetExternalJobs(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -620,7 +620,7 @@ func TestGetRMName(t *testing.T) {
 
 	cases := []struct {
 		name           string
-		rpName         string
+		rpName         rm.ResourcePoolName
 		err            error
 		expectedRMName string
 	}{

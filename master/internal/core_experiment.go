@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -298,7 +299,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		poolName,
+		rm.ResourcePoolName(poolName),
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

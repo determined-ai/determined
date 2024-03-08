@@ -57,12 +57,6 @@ func DeleteJobResponseOf(input error) DeleteJobResponse {
 	return DeleteJobResponse{Err: respC}
 }
 
-// GetJobQStats requests stats for a queue.
-// Expected response: jobv1.QueueStats.
-type GetJobQStats struct {
-	ResourcePool string
-}
-
 type (
 	// SetGroupWeight sets the weight of a group in the fair share scheduler.
 	SetGroupWeight struct {

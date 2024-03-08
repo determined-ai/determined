@@ -8,6 +8,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// ResourcePoolName holds the name of the resource pool, and describes the input/output
+// of several ResourceManager methods.
+type ResourcePoolName string
+
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
@@ -27,21 +31,20 @@ type ResourceManager interface {
 
 	// Resource pool stuff.
 	GetResourcePools() (*apiv1.GetResourcePoolsResponse, error)
-	GetDefaultComputeResourcePool() (string, error)
-	GetDefaultAuxResourcePool() (string, error)
-	ValidateResourcePool(name string) error
-	ResolveResourcePool(name string, workspace, slots int) (string, error)
+	GetDefaultComputeResourcePool() (ResourcePoolName, error)
+	GetDefaultAuxResourcePool() (ResourcePoolName, error)
+	ValidateResourcePool(ResourcePoolName) error
+	ResolveResourcePool(name ResourcePoolName, workspace, slots int) (ResourcePoolName, error)
 	TaskContainerDefaults(
-		resourcePoolName string,
-		fallbackConfig model.TaskContainerDefaultsConfig,
+		ResourcePoolName, model.TaskContainerDefaultsConfig,
 	) (model.TaskContainerDefaultsConfig, error)
 
 	// Job queue
-	GetJobQ(string) (map[model.JobID]*sproto.RMJobInfo, error)
+	GetJobQ(ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error)
 	GetJobQueueStatsRequest(*apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
 	MoveJob(sproto.MoveJob) error
 	RecoverJobPosition(sproto.RecoverJobPosition)
-	GetExternalJobs(string) ([]*jobv1.Job, error)
+	GetExternalJobs(ResourcePoolName) ([]*jobv1.Job, error)
 
 	// Cluster Management APIs
 	GetAgents() (*apiv1.GetAgentsResponse, error)

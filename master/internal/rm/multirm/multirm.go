@@ -17,7 +17,7 @@ import (
 )
 
 // ErrRPNotDefined returns a detailed error if a resource pool isn't found.
-func ErrRPNotDefined(rp string) error {
+func ErrRPNotDefined(rp rm.ResourcePoolName) error {
 	return fmt.Errorf("could not find resource pool %s", rp)
 }
 
@@ -58,7 +58,7 @@ func (m *MultiRMRouter) GetAllocationSummaries() (
 
 // Allocate routes an AllocateRequest to the specified RM.
 func (m *MultiRMRouter) Allocate(req sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (m *MultiRMRouter) Allocate(req sproto.AllocateRequest) (*sproto.ResourcesS
 
 // Release routes an allocation release request.
 func (m *MultiRMRouter) Release(req sproto.ResourcesReleased) {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		m.syslog.WithError(err)
 		return
@@ -79,7 +79,7 @@ func (m *MultiRMRouter) Release(req sproto.ResourcesReleased) {
 
 // ValidateResources routes a validation request for a specified resource manager/pool.
 func (m *MultiRMRouter) ValidateResources(req sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error) {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (m *MultiRMRouter) NotifyContainerRunning(req sproto.NotifyContainerRunning
 
 // SetGroupMaxSlots routes a SetGroupMaxSlots request to a specified resource manager/pool.
 func (m *MultiRMRouter) SetGroupMaxSlots(req sproto.SetGroupMaxSlots) {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		m.syslog.WithError(err)
 		return
@@ -113,7 +113,7 @@ func (m *MultiRMRouter) SetGroupMaxSlots(req sproto.SetGroupMaxSlots) {
 
 // SetGroupWeight routes a SetGroupWeight request to a specified resource manager/pool.
 func (m *MultiRMRouter) SetGroupWeight(req sproto.SetGroupWeight) error {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (m *MultiRMRouter) SetGroupWeight(req sproto.SetGroupWeight) error {
 
 // SetGroupPriority routes a SetGroupPriority request to a specified resource manager/pool.
 func (m *MultiRMRouter) SetGroupPriority(req sproto.SetGroupPriority) error {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (m *MultiRMRouter) GetResourcePools() (*apiv1.GetResourcePoolsResponse, err
 }
 
 // GetDefaultComputeResourcePool routes a GetDefaultComputeResourcePool to the specified resource manager.
-func (m *MultiRMRouter) GetDefaultComputeResourcePool() (string, error) {
+func (m *MultiRMRouter) GetDefaultComputeResourcePool() (rm.ResourcePoolName, error) {
 	resolvedRMName, err := m.getRM("")
 	if err != nil {
 		return "", err
@@ -176,7 +176,7 @@ func (m *MultiRMRouter) GetDefaultComputeResourcePool() (string, error) {
 }
 
 // GetDefaultAuxResourcePool routes a GetDefaultAuxResourcePool to the specified resource manager.
-func (m *MultiRMRouter) GetDefaultAuxResourcePool() (string, error) {
+func (m *MultiRMRouter) GetDefaultAuxResourcePool() (rm.ResourcePoolName, error) {
 	resolvedRMName, err := m.getRM("")
 	if err != nil {
 		return "", err
@@ -186,7 +186,7 @@ func (m *MultiRMRouter) GetDefaultAuxResourcePool() (string, error) {
 }
 
 // ValidateResourcePool routes a ValidateResourcePool call to the specified resource manager.
-func (m *MultiRMRouter) ValidateResourcePool(rpName string) error {
+func (m *MultiRMRouter) ValidateResourcePool(rpName rm.ResourcePoolName) error {
 	resolvedRMName, err := m.getRM(rpName)
 	if err != nil {
 		return err
@@ -196,7 +196,8 @@ func (m *MultiRMRouter) ValidateResourcePool(rpName string) error {
 }
 
 // ResolveResourcePool routes a ResolveResourcePool request for a specific resource manager/pool.
-func (m *MultiRMRouter) ResolveResourcePool(rpName string, workspace, slots int) (resourcePool string, err error,
+func (m *MultiRMRouter) ResolveResourcePool(rpName rm.ResourcePoolName, workspace, slots int) (
+	rm.ResourcePoolName, error,
 ) {
 	resolvedRMName, err := m.getRM(rpName)
 	if err != nil {
@@ -208,7 +209,7 @@ func (m *MultiRMRouter) ResolveResourcePool(rpName string, workspace, slots int)
 
 // TaskContainerDefaults routes a TaskContainerDefaults call to a specific resource manager/pool.
 func (m *MultiRMRouter) TaskContainerDefaults(
-	rpName string,
+	rpName rm.ResourcePoolName,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
 	resolvedRMName, err := m.getRM(rpName)
@@ -220,7 +221,7 @@ func (m *MultiRMRouter) TaskContainerDefaults(
 }
 
 // GetJobQ routes a GetJobQ call to a specified resource manager/pool.
-func (m *MultiRMRouter) GetJobQ(rpName string) (map[model.JobID]*sproto.RMJobInfo, error) {
+func (m *MultiRMRouter) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error) {
 	resolvedRMName, err := m.getRM(rpName)
 	if err != nil {
 		return nil, err
@@ -233,7 +234,7 @@ func (m *MultiRMRouter) GetJobQ(rpName string) (map[model.JobID]*sproto.RMJobInf
 func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsRequest) (
 	*apiv1.GetJobQueueStatsResponse, error,
 ) {
-	resolvedRMName, err := m.getRM(req.ResourcePools[0])
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePools[0]))
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +244,7 @@ func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsReque
 
 // MoveJob routes a MoveJob call to a specified resource manager/pool.
 func (m *MultiRMRouter) MoveJob(req sproto.MoveJob) error {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		return err
 	}
@@ -253,7 +254,7 @@ func (m *MultiRMRouter) MoveJob(req sproto.MoveJob) error {
 
 // RecoverJobPosition routes a RecoverJobPosition call to a specified resource manager/pool.
 func (m *MultiRMRouter) RecoverJobPosition(req sproto.RecoverJobPosition) {
-	resolvedRMName, err := m.getRM(req.ResourcePool)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePool))
 	if err != nil {
 		m.syslog.WithError(err)
 		return
@@ -263,7 +264,7 @@ func (m *MultiRMRouter) RecoverJobPosition(req sproto.RecoverJobPosition) {
 }
 
 // GetExternalJobs routes a GetExternalJobs request to a specified resource manager.
-func (m *MultiRMRouter) GetExternalJobs(rpName string) ([]*jobv1.Job, error) {
+func (m *MultiRMRouter) GetExternalJobs(rpName rm.ResourcePoolName) ([]*jobv1.Job, error) {
 	resolvedRMName, err := m.getRM(rpName)
 	if err != nil {
 		return nil, err
@@ -290,7 +291,7 @@ func (m *MultiRMRouter) GetAgents() (*apiv1.GetAgentsResponse, error) {
 
 // GetAgent routes a GetAgent request to the specified resource manager & agent.
 func (m *MultiRMRouter) GetAgent(req *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +301,7 @@ func (m *MultiRMRouter) GetAgent(req *apiv1.GetAgentRequest) (*apiv1.GetAgentRes
 
 // EnableAgent routes an EnableAgent request to the specified resource manager & agent.
 func (m *MultiRMRouter) EnableAgent(req *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +313,7 @@ func (m *MultiRMRouter) EnableAgent(req *apiv1.EnableAgentRequest) (*apiv1.Enabl
 func (m *MultiRMRouter) DisableAgent(req *apiv1.DisableAgentRequest) (
 	*apiv1.DisableAgentResponse, error,
 ) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +323,7 @@ func (m *MultiRMRouter) DisableAgent(req *apiv1.DisableAgentRequest) (
 
 // GetSlots routes an GetSlots request to the specified resource manager & agent.
 func (m *MultiRMRouter) GetSlots(req *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +333,7 @@ func (m *MultiRMRouter) GetSlots(req *apiv1.GetSlotsRequest) (*apiv1.GetSlotsRes
 
 // GetSlot routes an GetSlot request to the specified resource manager & agent.
 func (m *MultiRMRouter) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +343,7 @@ func (m *MultiRMRouter) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotRespon
 
 // EnableSlot routes an EnableSlot request to the specified resource manager & agent.
 func (m *MultiRMRouter) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +353,7 @@ func (m *MultiRMRouter) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.EnableS
 
 // DisableSlot routes an DisableSlot request to the specified resource manager & agent.
 func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
-	resolvedRMName, err := m.getRM(req.AgentId)
+	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.AgentId))
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +361,7 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 	return m.rms[resolvedRMName].DisableSlot(req)
 }
 
-func (m *MultiRMRouter) getRM(rpName string) (string, error) {
+func (m *MultiRMRouter) getRM(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
 		m.syslog.Infof("RM undefined, routing to default resource manager")
@@ -373,7 +374,7 @@ func (m *MultiRMRouter) getRM(rpName string) (string, error) {
 			return name, fmt.Errorf("could not get resource pools for %s", r)
 		}
 		for _, p := range rps.ResourcePools {
-			if p.Name == rpName {
+			if p.Name == string(rpName) {
 				m.syslog.Infof("RM defined as %s, %s", name, p.Name)
 				return name, nil
 			}

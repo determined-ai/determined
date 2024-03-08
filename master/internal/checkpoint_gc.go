@@ -182,7 +182,7 @@ func runCheckpointGCTask(
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: true,
 		},
-		ResourcePool: rp,
+		ResourcePool: string(rp),
 	}, pgDB, rm, gcSpec, onExit)
 	if err != nil {
 		return err

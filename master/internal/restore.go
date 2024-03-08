@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/workspace"
 
@@ -75,7 +76,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		activeConfig.Resources().ResourcePool(),
+		rm.ResourcePoolName(activeConfig.Resources().ResourcePool()),
 		workspaceID,
 		activeConfig.Resources().SlotsPerTrial(),
 	)
@@ -83,7 +84,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
 	if _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
+		ResourcePool: string(poolName),
 		Slots:        activeConfig.Resources().SlotsPerTrial(),
 		IsSingleNode: false,
 	}); err != nil {

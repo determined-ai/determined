@@ -222,8 +222,8 @@ func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
 		return err
 	}
 
-	isDefaultCompute := poolName == defaultComputePool
-	isDefaultAux := poolName == defaultAuxPool
+	isDefaultCompute := poolName == string(defaultComputePool)
+	isDefaultAux := poolName == string(defaultAuxPool)
 	if isDefaultCompute || isDefaultAux {
 		return fmt.Errorf(
 			"default resource pool %s cannot be bound to any workspace",
