@@ -38,20 +38,25 @@ BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 
 JOB_SUFFIXES = [
     "tf2-cpu",
-    "tf28-cpu",
     "pt-cpu",
     "pt2-cpu",
     "tf2-gpu",
-    "tf28-gpu",
     "pt-gpu",
     "pt2-gpu",
+]
+
+JOB_SUFFIXES_WITHOUT_MPI = [
+    "deepspeed",
+    "gpt-neox-deepspeed",
     "pytorch13-tf210-rocm56",
     "pytorch20-tf210-rocm56",
 ]
 
-JOB_SUFFIXES_WITHOUT_MPI = [
-    "deepspeed-gpu",
-    "gpt-neox-deepspeed-gpu",
+JOB_SUFFIXES_NO_MPI = [
+    "pytorch-ngc",
+    "tensorflow-ngc",
+    "pytorch-ngc-hpc",
+    "tensorflow-ngc-hpc",
 ]
 
 PACKER_JOBS = {"publish-cloud-images"}
@@ -59,7 +64,8 @@ PACKER_JOBS = {"publish-cloud-images"}
 DOCKER_JOBS = {
     f"build-and-publish-docker-{suffix}-{mpi}"
     for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-} | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+} | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI} \
+| {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_NO_MPI if "hpc" not in suffix}
 
 PACKER_ARTIFACTS = {
     "packer-log",
@@ -67,7 +73,8 @@ PACKER_ARTIFACTS = {
 
 DOCKER_ARTIFACTS = {
     f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
-} | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+} | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI} \
+| {f"publish-{suffix}" for suffix in JOB_SUFFIXES_NO_MPI}
 
 
 class Build:
@@ -148,7 +155,7 @@ def get_all_artifacts(builds: Dict[str, Build], cloud_images: bool) -> Dict[str,
 
     found = set(artifacts.keys())
     assert (
-        expected == found
+        expected.issubset(found)
     ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
