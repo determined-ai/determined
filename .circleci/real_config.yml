@@ -577,10 +577,12 @@ commands:
               exit 1
             fi
             
-            cat /tmp/all-relevant-files | circleci tests run --command="xargs \
-            DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
-            DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            pytest -vv -s \
+            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_SITE='datadoghq.com' \
+            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
+            DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
+            xargs pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
@@ -589,8 +591,7 @@ commands:
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>> \
-            $(< /tmp/tests-to-run)" \
+            <<parameters.extra-pytest-flags>>" \
             --verbose --split-by=timings
       - upload-test-job:
           only_on_branch: main
