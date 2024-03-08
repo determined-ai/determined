@@ -123,6 +123,25 @@ resource_pools:
 				"a duplicate name: a",
 		},
 
+		{
+			"dupe pools in additional rm", `
+resource_manager:
+  type: agent
+  name: a
+resource_pools:
+  - pool_name: a
+additional_resource_managers:
+  - resource_manager:
+      type: kubernetes
+      max_slots_per_pod: 2
+      name: b
+    resource_pools:
+      - pool_name: a`, nil, "Check Failed! 2 errors found:\n\terror found at root.ResourceConfig: " +
+				"resource pool has a duplicate name: a They must be unique across even different " +
+				"resource managers\n\terror found at root: resource pool has a duplicate name: a " +
+				"They must be unique across even different resource managers",
+		},
+
 		{"dupe rm names", `
 resource_manager:
   type: agent
@@ -131,7 +150,9 @@ additional_resource_managers:
   - resource_manager:
       type: kubernetes
       name: a
-      max_slots_per_pod: 2`, nil, "Check Failed! 2 errors found:\n\terror found at " +
+      max_slots_per_pod: 2
+    resource_pools:
+    - pool_name: a`, nil, "Check Failed! 2 errors found:\n\terror found at " +
 			"root.ResourceConfig: resource manager has a duplicate name: a\n\terror " +
 			"found at root: resource manager has a duplicate name: a"},
 
@@ -142,7 +163,9 @@ resource_manager:
 additional_resource_managers:
   - resource_manager:
       type: agent
-      name: b`, nil, "Check Failed! 2 errors found:\n\terror found at root.ResourceConfig: " +
+      name: b
+    resource_pools:
+    - pool_name: a`, nil, "Check Failed! 2 errors found:\n\terror found at root.ResourceConfig: " +
 			"additional_resource_managers only supports resource managers of type: " +
 			"kubernetes\n\terror found at root: additional_resource_managers only supports " +
 			"resource managers of type: kubernetes"},
@@ -154,9 +177,24 @@ resource_manager:
 additional_resource_managers:
   - resource_manager:
       type: kubernetes
-      max_slots_per_pod: 12`, nil, "Check Failed! 1 errors found:\n\terror found at " +
+      max_slots_per_pod: 12
+    resource_pools:
+    - pool_name: a`, nil, "Check Failed! 1 errors found:\n\terror found at " +
 			"root.ResourceConfig.AdditionalResourceManagersInternal[0]." +
 			"ResourceManager.KubernetesRM: name is required:  must be non-empty"},
+
+		{"additional rm not giving pools", `
+resource_manager:
+  type: agent
+  name: a
+additional_resource_managers:
+  - resource_manager:
+      type: kubernetes
+      name: test
+      max_slots_per_pod: 12`, nil, "Check Failed! 2 errors found:\n\terror found at " +
+			"root.ResourceConfig: for additional_resource_managers, you must specify at " +
+			"least one resource pool\n\terror found at root: for additional_resource_managers, " +
+			"you must specify at least one resource pool"},
 
 		{"k8s rocm config", `
 resource_manager:
@@ -198,9 +236,6 @@ resource_manager:
 }
 
 func TestResolveConfig(t *testing.T) {
-	// defaultRPConf := defaultRPConfig()
-	// defaultRPConf.PoolName = defaultRPName
-
 	cases := []struct {
 		name     string
 		yaml     string
@@ -318,67 +353,6 @@ resource_manager:
   type: agent
   metadata:
     region: "nw"
-additional_resource_managers:
- - resource_manager:
-     name: test
-     type: kubernetes
-     metadata:
-       test: "y"
-       name: k8s
-     max_slots_per_pod: 65`, Config{
-			ResourceConfig: ResourceConfig{
-				RootManagerInternal: &ResourceManagerConfig{
-					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
-						DefaultAuxResourcePool:     "default",
-						DefaultComputeResourcePool: "default",
-						Scheduler:                  DefaultSchedulerConfig(),
-						Metadata: map[string]string{
-							"region": "nw",
-						},
-					},
-				},
-				RootPoolsInternal: []ResourcePoolConfig{
-					{
-						PoolName:                 "default",
-						MaxAuxContainersPerAgent: 100,
-						AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
-						MaxCPUContainersPerAgent: -1,
-					},
-				},
-				AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
-					{
-						ResourceManager: &ResourceManagerConfig{
-							KubernetesRM: &KubernetesResourceManagerConfig{
-								Name:                       "test",
-								SlotType:                   "cuda",
-								DefaultAuxResourcePool:     "default",
-								MaxSlotsPerPod:             ptrs.Ptr(65),
-								DefaultComputeResourcePool: "default",
-								Metadata: map[string]string{
-									"test": "y",
-									"name": "k8s",
-								},
-							},
-						},
-						ResourcePools: []ResourcePoolConfig{
-							{
-								PoolName:                 "default",
-								MaxAuxContainersPerAgent: 100,
-								MaxCPUContainersPerAgent: -1,
-								AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
-							},
-						},
-					},
-				},
-			},
-		}},
-
-		{"two resource managers with pools", `
-resource_manager:
-  type: agent
-  metadata:
-    region: "nw"
 resource_pools:
  - pool_name: a
  - pool_name: b
@@ -391,8 +365,8 @@ additional_resource_managers:
        name: k8s
      max_slots_per_pod: 65
    resource_pools:
-    - pool_name: b
-    - pool_name: c`, Config{
+    - pool_name: c
+    - pool_name: d`, Config{
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
@@ -434,12 +408,12 @@ additional_resource_managers:
 						},
 						ResourcePools: []ResourcePoolConfig{
 							{
-								PoolName:                 "b",
+								PoolName:                 "c",
 								MaxAuxContainersPerAgent: 100,
 								AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 							},
 							{
-								PoolName:                 "c",
+								PoolName:                 "d",
 								MaxAuxContainersPerAgent: 100,
 								AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 							},
