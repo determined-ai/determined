@@ -160,8 +160,8 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	return err != nil, authz.SubIfUnauthorized(err, serviceNotFoundErr)
 }
 
-// processAuthWithProxies is an auth middleware that redirects browser requests
-// to login page for a set of given paths in case of authentication errors.
+// processAuthWithProxies is an auth middleware that directs unauthorized
+// browser requests to the login page.
 func processAuthWithProxies(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -195,15 +195,17 @@ func processAuthWithProxies(redirectPaths []string) echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			// TODO: reverse this logic to redirect only if accept is empty or specifies text/html.
-			// No web page redirects for programmatic requests.
-			for _, accept := range c.Request().Header["Accept"] {
-				if strings.Contains(accept, "application/json") {
-					return err
+			header := c.Request().Header
+			if header.Get("Accept") == "" {
+				return redirectToLogin(c)
+			}
+			for _, accept := range header.Values("Accept") {
+				if strings.Contains(accept, "text/html") {
+					return redirectToLogin(c)
 				}
 			}
 
-			return redirectToLogin(c)
+			return err
 		}
 	}
 }
