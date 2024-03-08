@@ -17,6 +17,7 @@ import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getTaskTemplates } from 'services/api';
+import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { RawJson, ResourcePool, Template, Workspace } from 'types';
@@ -91,6 +92,7 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
   const { canCreateWorkspaceNSC } = usePermissions();
+  const isAuthenticated = useObservable(authStore.isAuthenticated);
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces)).filter(
     (workspace) => canCreateWorkspaceNSC({ workspace }),
   );
@@ -99,10 +101,12 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const validateFullConfigForm = useCallback(() => {
+    if (!showFullConfig) return;
+
     const fields = fullConfigForm.getFieldsError();
     const hasError = fields.some((f) => f.errors.length) || !currentWorkspace;
     setFullConfigFormInvalid(hasError);
-  }, [currentWorkspace, fullConfigForm]);
+  }, [currentWorkspace, fullConfigForm, showFullConfig]);
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
@@ -173,7 +177,11 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
 
   useEffect(validateFullConfigForm, [currentWorkspace, validateFullConfigForm]);
 
-  useEffect(() => workspaceStore.fetch(), []);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    workspaceStore.fetch();
+  }, [isAuthenticated]);
 
   // Fetch full config when showing advanced mode.
   useEffect(() => {
