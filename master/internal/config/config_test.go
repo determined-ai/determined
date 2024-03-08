@@ -839,6 +839,13 @@ func TestMultiRMPreemptionAndPriority(t *testing.T) {
 					DefaultPriority: &prio1,
 				}},
 			}}},
+			// nil preemption case
+			{
+				ResourceManager: &ResourceManagerConfig{KubernetesRM: &KubernetesResourceManagerConfig{
+					Name: "nil-rm", DefaultScheduler: "not-preemption-scheduler",
+				}},
+				ResourcePools: []ResourcePoolConfig{{PoolName: "nil-rp"}},
+			},
 		},
 	}
 
@@ -867,4 +874,12 @@ func TestMultiRMPreemptionAndPriority(t *testing.T) {
 
 	priority = ReadPriority("default234", model.CommandConfig{})
 	require.Equal(t, prio1, priority)
+
+	// 'nil-rp' RP exists under 'nil-rm' RM, so the preemption
+	// & priority default to the RMs.
+	status = ReadRMPreemptionStatus("nil-rp")
+	require.False(t, status)
+
+	priority = ReadPriority("nil-rp", model.CommandConfig{})
+	require.Equal(t, KubernetesDefaultPriority, priority)
 }
