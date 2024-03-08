@@ -156,7 +156,7 @@ const ExperimentContinueModalComponent = ({
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }
-
+      setDisabled(newModalState.configError !== undefined);
       return newModalState;
     });
   }, []);
