@@ -165,11 +165,11 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 func processAuthWithProxies(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			err := user.GetService().ProcessAuthentication(next)(c)
-			if err == nil {
+			echoErr := user.GetService().ProcessAuthentication(next)(c)
+			if echoErr == nil {
 				return nil
-			} else if httpErr, ok := err.(*echo.HTTPError); !ok || httpErr.Code != http.StatusUnauthorized {
-				return err
+			} else if httpErr, ok := echoErr.(*echo.HTTPError); !ok || httpErr.Code != http.StatusUnauthorized {
+				return echoErr
 			}
 
 			isProxiedPath := false
@@ -180,19 +180,27 @@ func processAuthWithProxies(redirectPaths []string) echo.MiddlewareFunc {
 				}
 			}
 			if !isProxiedPath {
-				return err
+				// GRPC-backed routes are authenticated by grpcutil.*AuthInterceptor.
+				return echoErr
 			}
 
 			md := metadata.MD{}
+			mdPrefix := "Grpc-Metadata-"
 			for k, v := range c.Request().Header {
-				if strings.HasPrefix(k, "Grpc-Metadata-") {
-					k = k[len("Grpc-Metadata-"):]
+				if strings.HasPrefix(k, mdPrefix) {
+					k = k[len(mdPrefix):]
 				}
 				md.Append(k, v...)
 			}
-			_, _, err = grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
+			_, _, err := grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
 			if err == nil {
 				return next(c)
+			} else {
+				errStatus := status.Convert(err)
+				if errStatus.Code() != codes.PermissionDenied && errStatus.Code() != codes.Unauthenticated {
+					fmt.Println("getuser err is not auth", err, errStatus.Code())
+					return err
+				}
 			}
 
 			header := c.Request().Header
@@ -205,7 +213,7 @@ func processAuthWithProxies(redirectPaths []string) echo.MiddlewareFunc {
 				}
 			}
 
-			return err
+			return echoErr
 		}
 	}
 }
