@@ -31,12 +31,12 @@ import (
 
 // ResolveResources - Validate ResoucePool and check for availability.
 func (m *Master) ResolveResources(
-	resourcePool rm.ResourcePoolName,
+	resourcePool string,
 	slots int,
 	workspaceID int,
 	isSingleNode bool,
 ) (rm.ResourcePoolName, []pkgCommand.LaunchWarning, error) {
-	poolName, err := m.rm.ResolveResourcePool(resourcePool, workspaceID, slots)
+	poolName, err := m.rm.ResolveResourcePool(rm.ResourcePoolName(resourcePool), workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -61,7 +61,8 @@ func (m *Master) fillTaskSpec(
 	agentUserGroup *model.AgentUserGroup,
 	userModel *model.User,
 ) (tasks.TaskSpec, error) {
-	taskContainerDefaults, err := m.rm.TaskContainerDefaults(poolName,
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
+		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

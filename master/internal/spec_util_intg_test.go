@@ -21,20 +21,20 @@ import (
 )
 
 func getMockResourceManager(poolName rm.ResourcePoolName) *mocks.ResourceManager {
-	rm := &mocks.ResourceManager{}
-	rm.On("ResolveResourcePool", "/", 0, 1).Return(poolName, nil)
-	rm.On("ValidateResources", sproto.ValidateResourcesRequest{
+	r := &mocks.ResourceManager{}
+	r.On("ResolveResourcePool", rm.ResourcePoolName("/"), 0, 1).Return(poolName, nil)
+	r.On("ValidateResources", sproto.ValidateResourcesRequest{
 		ResourcePool: string(poolName),
 		Slots:        1,
 		IsSingleNode: true,
 	}).Return(nil, nil)
-	return rm
+	return r
 }
 
 func TestResolveResources(t *testing.T) {
 	tests := map[string]struct {
 		expectedPoolName rm.ResourcePoolName
-		resourcePool     rm.ResourcePoolName
+		resourcePool     string
 		slots            int
 		workspaceID      int
 	}{

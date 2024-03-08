@@ -31,8 +31,8 @@ func TestMain(m *testing.M) {
 	testMultiRM = &MultiRMRouter{
 		defaultRMName: defaultRMName,
 		rms: map[string]rm.ResourceManager{
-			defaultRMName:   mockRM(defaultRMName),
-			"additional-rm": mockRM(additionalRMName),
+			defaultRMName:   mockRM(rm.ResourcePoolName(defaultRMName)),
+			"additional-rm": mockRM(rm.ResourcePoolName(additionalRMName)),
 		},
 		syslog: logrus.WithField("component", "resource-router"),
 	}
@@ -639,10 +639,10 @@ func TestGetRMName(t *testing.T) {
 	}
 }
 
-func mockRM(poolName string) *mocks.ResourceManager {
+func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM := mocks.ResourceManager{}
 	mockRM.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
-		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: poolName}},
+		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: string(poolName)}},
 	}, nil)
 	mockRM.On("Allocate", mock.Anything).Return(&sproto.ResourcesSubscription{}, nil)
 	mockRM.On("ValidateResources", mock.Anything).Return(nil, nil)
