@@ -20,7 +20,7 @@ set +x
 
 if [ "$PACHD_ADDRESS" != "" ] && [ "$SKIP_PACHYDERM_INSTALL" != "true" ]; then
     proxy_dns=$(echo $PACHD_ADDRESS | sed 's/grpc:\/\/pachd/pachyderm-proxy/' | sed 's/:30650//') 
-    version=$(echo $(curl -skLX POST -H "Content-Type: application/json" $proxy_dns/api/versionpb_v2.API/GetVersion) | sed -n 's/.*"major":\([0-9]*\), "minor":\([0-9]*\), "micro":\([0-9]*\).*/\1.\2.\3/p')
+    version=$(curl -skLX POST -H "Content-Type: application/json" $proxy_dns/api/versionpb_v2.API/GetVersion) | sed -n 's/.*"major":\([0-9]*\), "minor":\([0-9]*\), "micro":\([0-9]*\).*/\1.\2.\3/p'
 
     pip install jupyterlab-pachyderm==$version
 
@@ -30,14 +30,14 @@ if [ "$PACHD_ADDRESS" != "" ] && [ "$SKIP_PACHYDERM_INSTALL" != "true" ]; then
     case $architecture in
         x86_64)
             echo "Detected AMD64 architecture"
-            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_amd64.tar.gz" | tar -xzv --strip-components=1 -C .
+            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_amd64.tar.gz" | tar -xzv --strip-components=1 -C ../
             ;;
-        arm64|aarch64)
+        arm64 | aarch64)
             echo "Detected ARM64 architecture"
-            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_arm64.tar.gz" | tar -xzv --strip-components=1 -C .
+            curl -L "https://github.com/pachyderm/pachyderm/releases/download/v${version}/pachctl_${version}_linux_arm64.tar.gz" | tar -xzv --strip-components=1 -C ../
             ;;
         *)
-            echo "Unsupported architecture: $architecture"
+            echo "Unsupported architecture: $architecture, set SKIP_PACHYDERM_INSTALL=true to skip pachyderm installation"
             exit 1
             ;;
     esac
