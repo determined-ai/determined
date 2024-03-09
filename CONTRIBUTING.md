@@ -180,7 +180,7 @@ Run `make test`.
 
 ```bash
 # Run a Determined cluster
-make -C tools run
+make devcluster
 
 # Run integration tests locally.
 pytest -m "e2e_cpu" e2e_tests/tests
