@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,23 +11,23 @@ import (
 
 // GetOrCreateClusterID queries the master uuid in the database, adding one if it doesn't exist.
 // If a nonempty telemetryID is provided, it will be the one added, otherwise a uuid is generated.
-func (db *PgDB) GetOrCreateClusterID(telemetryID string) (string, error) {
+func GetOrCreateClusterID(telemetryID string) (string, error) {
 	var newUUID string
 	if telemetryID != "" {
 		newUUID = telemetryID
 	} else {
 		newUUID = uuid.New().String()
 	}
-	if _, err := db.sql.Exec(`
-INSERT INTO cluster_id (cluster_id) SELECT ($1)
+	if _, err := Bun().NewRaw(`
+INSERT INTO cluster_id (cluster_id) SELECT (?)
 WHERE NOT EXISTS ( SELECT * FROM cluster_id );
-`, newUUID); err != nil {
+`, newUUID).Exec(context.Background()); err != nil {
 		return "", errors.Wrapf(err, "error initializing cluster_id in cluster_id table")
 	}
 
 	var uuidVal []string
 
-	if err := db.sql.Select(&uuidVal, `SELECT cluster_id FROM cluster_id`); err != nil {
+	if err := Bun().NewSelect().Table("cluster_id").Column("cluster_id").Scan(context.Background(), &uuidVal); err != nil {
 		return "", errors.Wrapf(err, "error reading cluster_id from cluster_id table")
 	}
 	if len(uuidVal) != 1 {

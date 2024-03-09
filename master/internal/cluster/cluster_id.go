@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -21,6 +22,8 @@ type clusterID struct {
 var (
 	theLastBootMutex            sync.Mutex
 	theLastBootClusterHeartbeat *time.Time
+	singleClusterID             *string
+	singleClusterIDOnce         sync.Once
 )
 
 // InitTheLastBootClusterHeartbeat preserves the last boot heartbeat for applications that need
@@ -46,4 +49,24 @@ func InitTheLastBootClusterHeartbeat() {
 // TheLastBootClusterHeartbeat returns the last known heartbeat time from the previous master boot.
 func TheLastBootClusterHeartbeat() *time.Time {
 	return theLastBootClusterHeartbeat
+}
+
+// ClusterID obtains a copy of the global singleton cluster ID.
+func ClusterID() string {
+	var err error
+	singleClusterIDOnce.Do(func() {
+		var id string
+		id, err = db.GetOrCreateClusterID("")
+		singleClusterID = &id
+	})
+	if err != nil {
+		panic(errors.Wrap(err, "error initializing singleton with default values"))
+	}
+	return *singleClusterID
+}
+
+// SetClusterID attempts to initialize the global singleton cluster ID with a set value.
+func SetClusterID(id string) error {
+	_, err := db.GetOrCreateClusterID(id)
+	return errors.Wrap(err, "error initializing singleton with set cluster id")
 }

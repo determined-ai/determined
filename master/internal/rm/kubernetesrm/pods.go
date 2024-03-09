@@ -27,6 +27,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
+	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -923,17 +924,8 @@ func (p *pods) podStatusCallback(event watch.Event) {
 	}
 }
 
-var clusterID string
-
-func setClusterID(s string) {
-	if clusterID != "" {
-		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
-	}
-	clusterID = s
-}
-
 func clusterIDNodeLabel() string {
-	return fmt.Sprintf("determined.ai/cluster-id-%s", clusterID)
+	return fmt.Sprintf("determined.ai/cluster-id-%s", cluster.ClusterID())
 }
 
 const (
