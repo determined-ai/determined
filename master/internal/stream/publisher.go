@@ -48,6 +48,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
 		ps.Projects: make(chan bool),
+		ps.Models:   make(chan bool),
 	}
 
 	eg := errgroupx.WithContext(ctx)
@@ -62,6 +63,21 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 			)
 			if err != nil {
 				return fmt.Errorf("project publishLoop failed: %s", err.Error())
+			}
+			return nil
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			err := publishLoop(
+				c,
+				ps.DBAddress,
+				modelChannel,
+				ps.Models,
+				readyChannels[ps.Models],
+			)
+			if err != nil {
+				return fmt.Errorf("models publishLoop failed: %s", err.Error())
 			}
 			return nil
 		},

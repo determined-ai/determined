@@ -21,6 +21,7 @@ import (
 
 const (
 	projects = "projects"
+	models   = "models"
 )
 
 func TestMockSocket(t *testing.T) {
@@ -78,6 +79,7 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 	_, err := db.Bun().NewRaw(
 		`INSERT INTO workspaces (name) VALUES ('test_workspace');
 		INSERT INTO projects (name, workspace_id) VALUES ('test_project_1', 2);
+		INSERT INTO models (name, workspace_id, creation_time, user_id) VALUES ('test_model_1', 2, NOW(), 1);
 		`,
 	).Exec(ctx)
 	if err != nil {
@@ -175,6 +177,8 @@ func buildStartupMsg(
 		switch knownType {
 		case projects:
 			knownKeySet.Projects = known
+		case models:
+			knownKeySet.Models = known
 		}
 	}
 
@@ -184,6 +188,12 @@ func buildStartupMsg(
 		case projects:
 			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
 				ProjectIDs:   subscriptionIDs[projects],
+				WorkspaceIDs: subscriptionIDs["workspaces"],
+				Since:        0,
+			}
+		case models:
+			subscriptionSpecSet.Models = &ModelSubscriptionSpec{
+				ModelIDs:     subscriptionIDs[models],
 				WorkspaceIDs: subscriptionIDs["workspaces"],
 				Since:        0,
 			}
@@ -459,5 +469,43 @@ func TestOnlineChanges(t *testing.T) {
 		},
 	}
 
+	runUpdateTest(t, pgDB, testCases)
+}
+
+func TestMultipleSubscriptions(t *testing.T) {
+	pgDB := initializeStreamDB(context.Background(), t)
+	testProject := model.Project{
+		Name:        uuid.NewString(),
+		CreatedAt:   time.Now(),
+		Archived:    false,
+		WorkspaceID: 2,
+		UserID:      1,
+		State:       "UNSPECIFIED",
+	}
+	testModel := ModelMsg{
+		ID:           2,
+		Name:         uuid.NewString(),
+		CreationTime: time.Now(),
+		WorkspaceID:  2,
+		UserID:       1,
+	}
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: multiple subscriptions",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{projects: "2", models: "1"},
+					map[string]map[string][]int{projects: {"workspaces": {2}}, models: {"workspaces": {2}}},
+				),
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
+			},
+			description:       "multiple subscriptions",
+			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject), db.Bun().NewInsert().Model(&testModel)},
+			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2", "key: model, model_id: 2, workspace_id: 2"},
+			expectedDeletions: []string{},
+		},
+	}
 	runUpdateTest(t, pgDB, testCases)
 }
