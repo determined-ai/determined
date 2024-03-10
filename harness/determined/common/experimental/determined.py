@@ -138,7 +138,7 @@ class Determined:
             parent_id(int, optional): The id of the parent experiment. (default: ``None``)
             project_id(int, optional): The id of the project this experiment should belong to.
             (default: ``None``)
-            template(string, optional): The name of the tamplate for the experiment.
+            template(string, optional): The name of the template for the experiment.
             (default: ``None``)
         """
         if isinstance(config, str):

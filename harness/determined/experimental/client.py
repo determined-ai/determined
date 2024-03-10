@@ -180,7 +180,7 @@ def create_experiment(
         includes: Additional files or directories to include in the model definition.
         parent_id: The id of the parent experiment.
         project_id: The id of the project this experiment should belong to.
-        template: The name of the tamplate for the experiment.
+        template: The name of the template for the experiment.
 
     Returns:
         An :class:`~determined.experimental.client.Experiment` of the created experiment.

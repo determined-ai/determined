@@ -220,3 +220,8 @@ def collect_trial_profiles(record_property: Callable[[str, object], None]) -> Ca
     """
 
     return record_profiling.profile_test(record_property=record_property)
+
+
+@pytest.fixture(scope="session")
+def create_empty_dir(tmp_path_factory):
+    return tmp_path_factory.getbasetemp()
