@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -138,48 +137,17 @@ func ProjectCollectStartupMsgs(
 	if err != nil {
 		return nil, err
 	}
-	_, globalAccess := accessMap[model.GlobalAccessScopeID]
-	var accessScopes []model.AccessScopeID
-	// only populate accessScopes if user doesn't have global access
-	if !globalAccess {
-		for id, isPermitted := range accessMap {
-			if isPermitted {
-				accessScopes = append(accessScopes, id)
-			}
-		}
-	}
+	globalAccess, accessScopes := getStreamableScopes(accessMap)
 
 	// step 1: calculate all ids matching this subscription
-	oldEventsQuery := createFilteredProjectIDQuery(
-		globalAccess,
-		accessScopes,
-		spec,
-	)
-	newEventsQuery := createFilteredProjectIDQuery(
-		globalAccess,
-		accessScopes,
-		spec,
-	)
-
-	// get events that happened prior to since that are relevant (appearance)
-	oldEventsQuery.Where("p.seq <= ?", spec.Since)
-	var exist []int64
-	err = oldEventsQuery.Scan(ctx, &exist)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error when scanning for old offline events: %v\n", err)
-		return nil, err
+	createQuery := func() *bun.SelectQuery {
+		return createFilteredProjectIDQuery(
+			globalAccess,
+			accessScopes,
+			spec,
+		)
 	}
-	// and events that happened since the last time this streamer checked
-	newEventsQuery.Where("p.seq > ?", spec.Since)
-	var newEntities []int64
-	err = newEventsQuery.Scan(ctx, &newEntities)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error when scanning for new offline events: %v\n", err)
-		return nil, err
-	}
-
-	exist = append(exist, newEntities...)
-	slices.Sort(exist)
+	exist, err := findExist(ctx, createQuery, spec.Since)
 
 	// step 2: figure out what was missing and what has appeared
 	missing, appeared, err := stream.ProcessKnown(known, exist)

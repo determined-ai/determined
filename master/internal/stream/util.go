@@ -2,9 +2,12 @@ package stream
 
 import (
 	"context"
+	"database/sql"
+	"slices"
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -80,4 +83,43 @@ func newFilter[S any, T stream.Msg](
 		return nil
 	}
 	return out
+}
+
+func getStreamableScopes(accessMap map[model.AccessScopeID]bool) (bool, []model.AccessScopeID) {
+	_, globalAccess := accessMap[model.GlobalAccessScopeID]
+	var accessScopes []model.AccessScopeID
+	// only populate accessScopes if user doesn't have global access
+	if !globalAccess {
+		for id, isPermitted := range accessMap {
+			if isPermitted {
+				accessScopes = append(accessScopes, id)
+			}
+		}
+	}
+	return globalAccess, accessScopes
+}
+
+func findExist(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuery, since int64) ([]int64, error) {
+	oldEventsQuery := createFilteredIDQuery()
+	newEventsQuery := createFilteredIDQuery()
+	// get events that happened prior to since that are relevant (appearance)
+	oldEventsQuery.Where("seq <= ?", since)
+	var exist []int64
+	err := oldEventsQuery.Scan(ctx, &exist)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error when scanning for old offline events: %v\n", err)
+		return nil, err
+	}
+	// and events that happened since the last time this streamer checked
+	newEventsQuery.Where("seq > ?", since)
+	var newEntities []int64
+	err = newEventsQuery.Scan(ctx, &newEntities)
+	if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		log.Errorf("error when scanning for new offline events: %v\n", err)
+		return nil, err
+	}
+
+	exist = append(exist, newEntities...)
+	slices.Sort(exist)
+	return exist, nil
 }
