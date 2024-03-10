@@ -114,6 +114,7 @@ func createFilteredProjectIDQuery(
 }
 
 // ProjectCollectStartupMsgs collects ProjectMsg's that were missed prior to startup.
+// nolint: dupl
 func ProjectCollectStartupMsgs(
 	ctx context.Context,
 	user model.User,
@@ -121,7 +122,7 @@ func ProjectCollectStartupMsgs(
 	spec ProjectSubscriptionSpec,
 ) (
 	[]stream.MarshallableMsg, error,
-) { //nolint: dupl
+) {
 	var out []stream.MarshallableMsg
 
 	if len(spec.ProjectIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
