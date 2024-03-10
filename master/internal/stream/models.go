@@ -117,7 +117,7 @@ func ModelCollectStartupMsgs(
 	spec ModelSubscriptionSpec,
 ) (
 	[]stream.MarshallableMsg, error,
-) {
+) { //nolint: dupl
 	var out []stream.MarshallableMsg
 
 	if len(spec.ModelIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
@@ -144,6 +144,9 @@ func ModelCollectStartupMsgs(
 		)
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	if err != nil {
+		return nil, err
+	}
 
 	// step 2: hydrate appeared IDs into full ModelMsgs
 	var modelMsgs []*ModelMsg

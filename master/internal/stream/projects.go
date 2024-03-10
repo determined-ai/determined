@@ -121,7 +121,7 @@ func ProjectCollectStartupMsgs(
 	spec ProjectSubscriptionSpec,
 ) (
 	[]stream.MarshallableMsg, error,
-) {
+) { //nolint: dupl
 	var out []stream.MarshallableMsg
 
 	if len(spec.ProjectIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
@@ -148,6 +148,9 @@ func ProjectCollectStartupMsgs(
 		)
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	if err != nil {
+		return nil, err
+	}
 
 	// step 2: hydrate appeared IDs into full ProjectMsgs
 	var projMsgs []*ProjectMsg

@@ -501,9 +501,15 @@ func TestMultipleSubscriptions(t *testing.T) {
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
 			},
-			description:       "multiple subscriptions",
-			queries:           []streamdata.ExecutableQuery{streamdata.GetAddProjectQuery(testProject), db.Bun().NewInsert().Model(&testModel)},
-			expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2", "key: model, model_id: 2, workspace_id: 2"},
+			description: "multiple subscriptions",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddProjectQuery(testProject),
+				db.Bun().NewInsert().Model(&testModel),
+			},
+			expectedUpserts: []string{
+				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2",
+				"key: model, model_id: 2, workspace_id: 2",
+			},
 			expectedDeletions: []string{},
 		},
 	}

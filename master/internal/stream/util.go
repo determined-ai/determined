@@ -99,7 +99,11 @@ func getStreamableScopes(accessMap map[model.AccessScopeID]bool) (bool, []model.
 	return globalAccess, accessScopes
 }
 
-func processQuery(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuery, since int64, known string) (string, []int64, error) {
+func processQuery(
+	ctx context.Context,
+	createFilteredIDQuery func() *bun.SelectQuery,
+	since int64, known string,
+) (string, []int64, error) {
 	// step 1: calculate all ids matching this subscription
 	oldEventsQuery := createFilteredIDQuery()
 	newEventsQuery := createFilteredIDQuery()
