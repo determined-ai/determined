@@ -135,7 +135,7 @@ func ModelCollectStartupMsgs(
 	}
 	globalAccess, accessScopes := getStreamableScopes(accessMap)
 
-	// step 1: calculate all ids matching this subscription
+	// step 1: figure out what was missing and what has appeared given model subscription
 	createQuery := func() *bun.SelectQuery {
 		return createFilteredModelIDQuery(
 			globalAccess,
@@ -143,18 +143,12 @@ func ModelCollectStartupMsgs(
 			spec,
 		)
 	}
-	exist, err := findExist(ctx, createQuery, spec.Since)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
 
-	// step 2: figure out what was missing and what has appeared
-	missing, appeared, err := stream.ProcessKnown(known, exist)
-	if err != nil {
-		return nil, err
-	}
-
-	// step 3: hydrate appeared IDs into full ModelMsgs
+	// step 2: hydrate appeared IDs into full ModelMsgs
 	var modelMsgs []*ModelMsg
 	if len(appeared) > 0 {
-		query := db.Bun().NewSelect().Model(&modelMsgs).Where("model_msg.id in (?)", bun.In(appeared))
+		query := db.Bun().NewSelect().Model(&modelMsgs).Where("id in (?)", bun.In(appeared))
 		if !globalAccess {
 			query = permFilterQuery(query, accessScopes)
 		}
@@ -165,7 +159,7 @@ func ModelCollectStartupMsgs(
 		}
 	}
 
-	// step 4: emit deletions and updates to the client
+	// step 3: emit deletions and updates to the client
 	out = append(out, stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: missing,

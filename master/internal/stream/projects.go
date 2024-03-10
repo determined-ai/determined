@@ -147,15 +147,9 @@ func ProjectCollectStartupMsgs(
 			spec,
 		)
 	}
-	exist, err := findExist(ctx, createQuery, spec.Since)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
 
-	// step 2: figure out what was missing and what has appeared
-	missing, appeared, err := stream.ProcessKnown(known, exist)
-	if err != nil {
-		return nil, err
-	}
-
-	// step 3: hydrate appeared IDs into full ProjectMsgs
+	// step 2: hydrate appeared IDs into full ProjectMsgs
 	var projMsgs []*ProjectMsg
 	if len(appeared) > 0 {
 		query := db.Bun().NewSelect().Model(&projMsgs).Where("project_msg.id in (?)", bun.In(appeared))
@@ -169,7 +163,7 @@ func ProjectCollectStartupMsgs(
 		}
 	}
 
-	// step 4: emit deletions and updates to the client
+	// step 3: emit deletions and updates to the client
 	out = append(out, stream.DeleteMsg{
 		Key:     ProjectsDeleteKey,
 		Deleted: missing,

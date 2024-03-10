@@ -99,7 +99,8 @@ func getStreamableScopes(accessMap map[model.AccessScopeID]bool) (bool, []model.
 	return globalAccess, accessScopes
 }
 
-func findExist(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuery, since int64) ([]int64, error) {
+func processQuery(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuery, since int64, known string) (string, []int64, error) {
+	// step 1: calculate all ids matching this subscription
 	oldEventsQuery := createFilteredIDQuery()
 	newEventsQuery := createFilteredIDQuery()
 	// get events that happened prior to since that are relevant (appearance)
@@ -108,7 +109,7 @@ func findExist(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuer
 	err := oldEventsQuery.Scan(ctx, &exist)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		log.Errorf("error when scanning for old offline events: %v\n", err)
-		return nil, err
+		return "", nil, err
 	}
 	// and events that happened since the last time this streamer checked
 	newEventsQuery.Where("seq > ?", since)
@@ -116,10 +117,16 @@ func findExist(ctx context.Context, createFilteredIDQuery func() *bun.SelectQuer
 	err = newEventsQuery.Scan(ctx, &newEntities)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		log.Errorf("error when scanning for new offline events: %v\n", err)
-		return nil, err
+		return "", nil, err
 	}
 
 	exist = append(exist, newEntities...)
 	slices.Sort(exist)
-	return exist, nil
+
+	// step 2: figure out what was missing and what has appeared
+	missing, appeared, err := stream.ProcessKnown(known, exist)
+	if err != nil {
+		return "", nil, err
+	}
+	return missing, appeared, nil
 }
