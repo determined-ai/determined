@@ -138,7 +138,7 @@ class Determined:
             parent_id(int, optional): The id of the parent experiment. (default: ``None``)
             project_id(int, optional): The id of the project this experiment should belong to.
             (default: ``None``)
-            template(string, optional): The name of the template for the experiment.
+            template(string, optional): The name of the template for the experiment. For more details, please refer to https://docs.determined.ai/latest/model-dev-guide/dtrain/config-templates.html.
             (default: ``None``)
         """
         if isinstance(config, str):
