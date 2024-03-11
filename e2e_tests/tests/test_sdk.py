@@ -470,22 +470,26 @@ def test_rp_workspace_mapping() -> None:
 def test_create_experiment_w_template(create_empty_dir) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
-    # create template
-    tpl = bindings.v1Template(
-        name=api_utils.get_random_string(),
-        config=conf.load_config(conf.fixtures_path("templates/template.yaml")),
-        workspaceId=1,
-    )
-    tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
-    # create experiment with template
-    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = util.yaml_safe_load(f)
-    emptydir = create_empty_dir
-    model_def = conf.fixtures_path("no_op/model_def.py")
-    exp = detobj.create_experiment(
-        config, emptydir, includes=[model_def], template=tpl_resp.template.name
-    )
-    exp.await_first_trial()
+    template_name = "test_template"
+    try:
+        # create template
+        tpl = bindings.v1Template(
+            name=template_name,
+            config=conf.load_config(conf.fixtures_path("templates/template.yaml")),
+            workspaceId=1,
+        )
+        tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
+        # create experiment with template
+        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+            config = util.yaml_safe_load(f)
+        emptydir = create_empty_dir
+        model_def = conf.fixtures_path("no_op/model_def.py")
+        exp = detobj.create_experiment(
+            config, emptydir, includes=[model_def], template=tpl_resp.template.name
+        )
+        exp.await_first_trial()
 
-    trials = exp.get_trials()
-    assert len(trials) == 1, trials
+        trials = exp.get_trials()
+        assert len(trials) == 1, trials
+    finally:
+        bindings.delete_DeleteTemplate(sess, templateName=template_name)
