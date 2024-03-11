@@ -48,3 +48,5 @@ stages:
             kubeconfig_path: /tmp/additionalrm-kubeconf
             determined_master_ip: $DOCKER_LOCALHOST
             determined_master_port: 8080
+          resource_pools:
+            - pool_name: additional_pool
