@@ -90,7 +90,7 @@ def my_permissions(args: Namespace) -> None:
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
 
         perms_to_render = []
-        perms_added = set()
+        perms_added: set[bindings.v1PermissionType] = set()
         for p in perms:
             if p.id not in perms_added:
                 perms_added.add(p.id)
