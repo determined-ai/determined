@@ -642,7 +642,7 @@ func TestGetRMName(t *testing.T) {
 func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM := mocks.ResourceManager{}
 	mockRM.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
-		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: string(poolName)}},
+		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: poolName.String()}},
 	}, nil)
 	mockRM.On("Allocate", mock.Anything).Return(&sproto.ResourcesSubscription{}, nil)
 	mockRM.On("ValidateResources", mock.Anything).Return(nil, nil)

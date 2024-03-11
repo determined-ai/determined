@@ -275,7 +275,7 @@ func (a *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*
 		rpName = rm.ResourcePoolName(a.config.DefaultComputeResourcePool)
 	}
 
-	pool, err := a.poolByName(string(rpName))
+	pool, err := a.poolByName(rpName.String())
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +447,7 @@ func (a *ResourceManager) ResolveResourcePool(name rm.ResourcePoolName, workspac
 	}
 	found := false
 	for _, poolName := range poolNames {
-		if string(name) == poolName {
+		if name.String() == poolName {
 			found = true
 			break
 		}
@@ -506,7 +506,7 @@ func (a *ResourceManager) TaskContainerDefaults(
 	result := fallbackConfig
 	// Iterate through configured pools looking for a TaskContainerDefaults setting.
 	for _, pool := range a.poolsConfig {
-		if string(resourcePoolName) == pool.PoolName {
+		if resourcePoolName.String() == pool.PoolName {
 			if pool.TaskContainerDefaults == nil {
 				break
 			}
@@ -550,7 +550,7 @@ func (a *ResourceManager) ValidateResources(
 
 // ValidateResourcePool implements rm.ResourceManager.
 func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
-	_, err := a.poolByName(string(name))
+	_, err := a.poolByName(name.String())
 	if err != nil {
 		return err
 	}

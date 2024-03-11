@@ -24,7 +24,7 @@ func getMockResourceManager(poolName rm.ResourcePoolName) *mocks.ResourceManager
 	r := &mocks.ResourceManager{}
 	r.On("ResolveResourcePool", rm.ResourcePoolName("/"), 0, 1).Return(poolName, nil)
 	r.On("ValidateResources", sproto.ValidateResourcesRequest{
-		ResourcePool: string(poolName),
+		ResourcePool: poolName.String(),
 		Slots:        1,
 		IsSingleNode: true,
 	}).Return(nil, nil)

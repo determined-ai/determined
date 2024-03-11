@@ -8,10 +8,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// ResourcePoolName holds the name of the resource pool, and describes the input/output
-// of several ResourceManager methods.
-type ResourcePoolName string
-
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
@@ -55,4 +51,13 @@ type ResourceManager interface {
 	GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)
 	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
+}
+
+// ResourcePoolName holds the name of the resource pool, and describes the input/output
+// of several ResourceManager methods.
+type ResourcePoolName string
+
+// String converts a ResourcePoolName to String.
+func (r ResourcePoolName) String() string {
+	return string(r)
 }

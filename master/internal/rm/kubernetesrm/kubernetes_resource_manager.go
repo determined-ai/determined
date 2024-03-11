@@ -219,7 +219,7 @@ func (k *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*
 		rpName = rm.ResourcePoolName(k.config.DefaultComputeResourcePool)
 	}
 
-	rp, err := k.poolByName(string(rpName))
+	rp, err := k.poolByName(rpName.String())
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +432,7 @@ func (k ResourceManager) ResolveResourcePool(
 	}
 	found := false
 	for _, poolName := range poolNames {
-		if string(name) == poolName {
+		if name.String() == poolName {
 			found = true
 			break
 		}
@@ -451,7 +451,7 @@ func (k ResourceManager) ResolveResourcePool(
 
 // ValidateResourcePool validates that the named resource pool exists.
 func (k ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
-	return k.resourcePoolExists(string(name))
+	return k.resourcePoolExists(name.String())
 }
 
 // NotifyContainerRunning receives a notification from the container to let
@@ -478,7 +478,7 @@ func (k ResourceManager) TaskContainerDefaults(
 ) (result model.TaskContainerDefaultsConfig, err error) {
 	return k.getTaskContainerDefaults(taskContainerDefaults{
 		fallbackDefault: fallbackConfig,
-		resourcePool:    string(pool),
+		resourcePool:    pool.String(),
 	}), nil
 }
 

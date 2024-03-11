@@ -117,7 +117,7 @@ func newExperiment(
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
 		if launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-			ResourcePool: string(poolName),
+			ResourcePool: poolName.String(),
 			Slots:        resources.SlotsPerTrial(),
 			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
 		}); err != nil {
@@ -127,7 +127,7 @@ func newExperiment(
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")
 		}
 	}
-	resources.SetResourcePool(string(poolName))
+	resources.SetResourcePool(poolName.String())
 
 	activeConfig.SetResources(resources)
 
@@ -1115,11 +1115,11 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	switch {
 	case err != nil:
 		return fmt.Errorf("invalid resource pool name %s", resourcePool)
-	case oldRP == string(rp):
+	case oldRP == rp.String():
 		return fmt.Errorf("resource pool is unchanged (%s == %s)", oldRP, rp)
 	}
 
-	resources.SetResourcePool(string(rp))
+	resources.SetResourcePool(rp.String())
 	e.activeConfig.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
@@ -1133,7 +1133,7 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
-			t.PatchRP(string(rp))
+			t.PatchRP(rp.String())
 			return nil
 		})
 	}
