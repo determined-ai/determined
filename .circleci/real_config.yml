@@ -2089,6 +2089,9 @@ jobs:
       wait-for-master:
         type: boolean
         default: true
+      run-minikubes:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2108,6 +2111,21 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
+
+      - when:
+          condition: <<parameters.run-minikubes>>
+          steps:
+            - kubernetes/install-kubectl
+            - run:
+                name: Install minikube
+                command: |
+                  curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+            - run:
+                name: Start defaultrm minikube
+                command: minikube start --profile defaultrm
+            - run:
+                name: Start additionalrm minikube
+                command: minikube start --profile additionalrm
 
       - install-devcluster
       - unless:
@@ -2881,6 +2899,17 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          requires:
+            - build-go
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
 
       - test-e2e:
           name: test-e2e-port-registry
