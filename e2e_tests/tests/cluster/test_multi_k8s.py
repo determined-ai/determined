@@ -55,3 +55,10 @@ def test_run_command_multi_k8s(resource_pool: Optional[str], expected_node: str)
     logs = api.task_logs(sess, command_id)
     str_logs = "".join(log.log for log in logs)
     assert f"RunningOnNode={expected_node}" in str_logs, str_logs
+
+
+@pytest.mark.e2e_multi_k8s
+def test_get_agents_multi_k8s() -> None:
+    sess = api_utils.user_session()
+    resp = bindings.get_GetAgents(sess)
+    assert {agent.id for agent in resp.agents} == {"defaultrm", "additionalrm"}
