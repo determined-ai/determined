@@ -923,13 +923,15 @@ func (p *pods) podStatusCallback(event watch.Event) {
 	}
 }
 
-var clusterID string
+var (
+	clusterID string
+	once      sync.Once
+)
 
 func setClusterID(s string) {
-	if clusterID != "" {
-		panic(fmt.Sprintf("set cluster ID again new %s old %s", s, clusterID))
-	}
-	clusterID = s
+	once.Do(func() {
+		clusterID = s
+	})
 }
 
 func clusterIDNodeLabel() string {

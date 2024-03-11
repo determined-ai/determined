@@ -113,8 +113,8 @@ func New(
 
 	for _, poolConfig := range k.poolsConfig {
 		maxSlotsPerPod := 0
-		if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
-			maxSlotsPerPod = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+		if m := k.config.MaxSlotsPerPod; m != nil {
+			maxSlotsPerPod = *m
 		}
 		if poolConfig.TaskContainerDefaults != nil &&
 			poolConfig.TaskContainerDefaults.Kubernetes != nil &&
@@ -509,8 +509,8 @@ func (k *ResourceManager) createResourcePoolSummary(
 
 	// TODO actor refactor, this is just getting resourcePool[poolName].maxSlotsPerPod
 	slotsPerAgent := 0
-	if k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod != nil {
-		slotsPerAgent = *k.taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+	if m := k.config.MaxSlotsPerPod; m != nil {
+		slotsPerAgent = *m
 	}
 	if pool.TaskContainerDefaults != nil &&
 		pool.TaskContainerDefaults.Kubernetes != nil &&
