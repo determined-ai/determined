@@ -963,7 +963,7 @@ func buildRM(
 	tcd *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) rm.ResourceManager {
+) (rm.ResourceManager, error) {
 	if len(rmConfigs) <= 1 {
 		config := rmConfigs[0]
 		switch {
@@ -972,7 +972,7 @@ func buildRM(
 		case config.ResourceManager.KubernetesRM != nil:
 			return kubernetesrm.New(db, config, tcd, opts, cert)
 		default:
-			panic("no expected resource manager config is defined")
+			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
 	}
 
@@ -984,15 +984,23 @@ func buildRM(
 		c := cfg.ResourceManager
 		switch {
 		case c.AgentRM != nil:
-			rms[c.Name()] = agentrm.New(db, echo, cfg, opts, cert)
+			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = agentRM
 		case c.KubernetesRM != nil:
-			rms[c.Name()] = kubernetesrm.New(db, cfg, tcd, opts, cert)
+			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = k8sRM
 		default:
-			panic("no expected resource manager config is defined")
+			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
 	}
 
-	return multirm.New(defaultRMName, rms)
+	return multirm.New(defaultRMName, rms), nil
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
@@ -1183,14 +1191,16 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	m.rm = buildRM(m.db, m.echo, m.config.ResourceManagers(),
+	if m.rm, err = buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
 		},
 		cert,
-	)
+	); err != nil {
+		return fmt.Errorf("could not initialize resource manager(s): %w", err)
+	}
 
 	jobservice.SetDefaultService(m.rm)
 
