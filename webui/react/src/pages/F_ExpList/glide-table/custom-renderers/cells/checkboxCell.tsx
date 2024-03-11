@@ -3,6 +3,23 @@ import { BaseDrawArgs, CustomRenderer } from '@glideapps/glide-data-grid/dist/dt
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
+export function getCheckboxDimensions(rectX: number, rectY: number, rectWidth: number, rectHeight: number, empty?: boolean): { x: number, y: number, size: number } {
+  const centerX = rectX + (0.5 * rectWidth);
+  const centerY = rectY + (0.5 * rectHeight);
+  if (empty) {
+    const size = 0.375 * rectHeight;
+    const posHelper = 0.19 * rectHeight;
+    const x = centerX - posHelper;
+    const y = centerY - posHelper;
+    return { size, x, y };
+  } else {
+    const size = 0.4 * rectHeight; // checkbox width proportional to cell height
+    const x = centerX - 0.5 * size;
+    const y = centerY - 0.5 * size;
+    return { size, x, y };
+  }
+}
+
 function drawCheckbox(
   ctx: CanvasRenderingContext2D,
   theme: Theme,
@@ -18,9 +35,6 @@ function drawCheckbox(
   const centerX = x + 0.5 * width;
   const centerY = y + 0.5 * height;
 
-  const checkBoxWidth = 0.4 * height; // checkbox width proportional to cell height
-  const emptyCheckBoxWidth = 0.375 * height;
-
   const hoverHelper = 0.29 * height;
   const hovered =
     Math.abs(hoverX - 0.5 * width) < hoverHelper && Math.abs(hoverY - 0.5 * height) < hoverHelper;
@@ -29,13 +43,14 @@ function drawCheckbox(
   const posHelper = 0.19 * height;
 
   if (checked) {
+    const checkbox = getCheckboxDimensions(x, y, width, height);
     ctx.beginPath();
     roundedRect(
       ctx,
-      centerX - 0.5 * checkBoxWidth,
-      centerY - 0.5 * checkBoxWidth,
-      checkBoxWidth,
-      checkBoxWidth,
+      checkbox.x,
+      checkbox.y,
+      checkbox.size,
+      checkbox.size,
       rectBordRadius,
     );
 
@@ -57,13 +72,14 @@ function drawCheckbox(
     ctx.lineWidth = 1.5;
     ctx.stroke();
   } else {
+    const checkbox = getCheckboxDimensions(x, y, width, height, true);
     ctx.beginPath();
     roundedRect(
       ctx,
-      centerX - posHelper,
-      centerY - posHelper,
-      emptyCheckBoxWidth,
-      emptyCheckBoxWidth,
+      checkbox.x,
+      checkbox.y,
+      checkbox.size,
+      checkbox.size,
       rectBordRadius,
     );
 

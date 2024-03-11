@@ -25,7 +25,7 @@ import useUI from 'components/ThemeProvider';
 import useMobile from 'hooks/useMobile';
 import { observable, useObservable, WritableObservable } from 'utils/observable';
 
-import { ColumnDef, getHeaderIcons, MIN_COLUMN_WIDTH } from './columns';
+import { ColumnDef, MIN_COLUMN_WIDTH } from './columns';
 import {
   ContextMenu,
   ContextMenuCompleteHandlerProps,
@@ -33,10 +33,12 @@ import {
   ContextMenuProps,
 } from './contextMenu';
 import { customRenderers } from './custom-renderers';
+import { getCheckboxDimensions } from './custom-renderers/cells/checkboxCell';
 import { LinkCell } from './custom-renderers/cells/linkCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
-import { TableActionMenu, TableActionMenuProps } from './menu';
+import { getHeaderIcons } from './icons';
+import { HeaderMenu, HeaderMenuProps } from './menu';
 import { useTableTooltip } from './tooltip';
 
 const directionType = io.keyof({ asc: null, desc: null });
@@ -84,7 +86,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   getHeaderMenuItems?: (
     columnId: string,
     colIdx: number,
-    setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    setHeaderMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
     scrollToTop: () => void,
     selectionRange: number,
   ) => MenuItem[];
@@ -148,7 +150,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   pageSize,
   pinnedColumnsCount = 0,
   renderContextMenuComponent,
-  rowHeight,
+  rowHeight = 36,
   scrollPositionSetCount,
   selection = {
     columns: CompactSelection.empty(),
@@ -174,15 +176,15 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     }
   });
 
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const [menuProps, setMenuProps] = useState<Omit<TableActionMenuProps, 'open'>>({
+  const [headerMenuIsOpen, setHeaderMenuIsOpen] = useState(false);
+  const [headerMenuProps, setHeaderMenuProps] = useState<Omit<HeaderMenuProps, 'open'>>({
     bounds: {
       height: 0,
       width: 0,
       x: 0,
       y: 0,
     },
-    handleClose: () => setMenuIsOpen(false),
+    handleClose: () => setHeaderMenuIsOpen(false),
   });
 
   const [contextMenuOpen] = useState(observable(false));
@@ -258,10 +260,10 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
       const columnId = columns[col].id;
-      const items = getHeaderMenuItems?.(columnId, col, setMenuIsOpen, scrollToTop, data.length);
+      const items = getHeaderMenuItems?.(columnId, col, setHeaderMenuIsOpen, scrollToTop, data.length);
       if (items?.length) {
-        setMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
-        setMenuIsOpen(true);
+        setHeaderMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
+        setHeaderMenuIsOpen(true);
       }
     },
     [columns, data.length, scrollToTop, getHeaderMenuItems],
@@ -438,9 +440,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   }, [sorts]);
 
   const drawHeader: DrawHeaderCallback = useCallback(
-    ({ ctx, column, rect, theme }) => {
-      if (!column.id) return false;
-
+    ({ ctx, column, rect, theme, spriteManager }) => {
       const sortDirection = column.id && sortMap[column.id];
       if (sortDirection) {
         const arrowDirection = sortDirection === 'asc' ? 'up' : 'down';
@@ -448,17 +448,19 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         drawArrow(ctx, arrowDirection, rect.x + rect.width - 16, 12);
       }
 
-      const xPad = theme.cellHorizontalPadding;
-      const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
-      const middleCenterBias = getMiddleCenterBias(ctx, font);
-      const x = rect.x + xPad;
-      const y = rect.y + rect.height / 2 + middleCenterBias;
-      const maxWidth = rect.width - (sortDirection ? 12 : 0) - 2 * theme.cellHorizontalPadding;
-
-      ctx.fillStyle = theme.textHeader;
-      drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
-
-      return true;
+      if (column.icon === 'allSelected' || column.icon === 'noneSelected' || column.icon === 'someSelected') {
+        const checkbox = getCheckboxDimensions(rect.x, rect.y, rect.width, rect.height);
+        spriteManager.drawSprite(column.icon, 'normal', ctx, checkbox.x - 0.8, checkbox.y, checkbox.size, theme);
+      } else if (column.title) {
+        const xPad = theme.cellHorizontalPadding;
+        const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
+        const middleCenterBias = getMiddleCenterBias(ctx, font);
+        const x = rect.x + xPad;
+        const y = rect.y + rect.height / 2 + middleCenterBias;
+        const maxWidth = rect.width - (sortDirection ? 12 : 0) - 2 * theme.cellHorizontalPadding;
+        ctx.fillStyle = theme.textHeader;
+        drawTextWithEllipsis(ctx, column.title, x, y, maxWidth);
+      }
     },
     [sortMap],
   );
@@ -481,7 +483,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           getCellsForSelection // `getCellsForSelection` is required for double click column resize to content.
           getRowThemeOverride={getRowThemeOverride}
           gridSelection={selection}
-          headerHeight={36}
+          headerHeight={rowHeight}
           headerIcons={headerIcons}
           height={height}
           minColumnWidth={MIN_COLUMN_WIDTH}
@@ -503,7 +505,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           onVisibleRegionChanged={onScroll}
         />
       </div>
-      <TableActionMenu {...menuProps} open={menuIsOpen} />
+      <HeaderMenu {...headerMenuProps} open={headerMenuIsOpen} />
       {contextMenuProps && (
         <ContextMenu<T, ContextAction, ContextActionData>
           {...contextMenuProps}

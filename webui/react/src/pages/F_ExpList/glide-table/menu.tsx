@@ -22,14 +22,14 @@ function useOutsideClickHandler(ref: MutableRefObject<any>, handler: () => void)
   }, [ref, handler]);
 }
 
-export interface TableActionMenuProps {
+export interface HeaderMenuProps {
   bounds: Rectangle;
   open: boolean;
   handleClose: () => void;
   items?: MenuItem[];
 }
 
-export const TableActionMenu: React.FC<TableActionMenuProps> = ({
+export const HeaderMenu: React.FC<HeaderMenuProps> = ({
   bounds,
   open,
   handleClose,
@@ -44,12 +44,12 @@ export const TableActionMenu: React.FC<TableActionMenuProps> = ({
         style={
           open
             ? {
-                height: bounds.height,
-                left: bounds.x,
-                position: 'fixed',
-                top: bounds.y,
-                width: bounds.width,
-              }
+              height: bounds.height,
+              left: bounds.x,
+              position: 'fixed',
+              top: bounds.y,
+              width: bounds.width,
+            }
             : {}
         }
         onClick={handleClose}
