@@ -14,12 +14,12 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-2196775"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-2196775"
-DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-cpu-2196775"
-DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-2196775"
-DEFAULT_PT2_CPU_IMAGE = "determinedai/environments:py-3.10-pytorch-2.0-cpu-2196775"
-DEFAULT_PT2_GPU_IMAGE = "determinedai/environments:cuda-11.8-pytorch-2.0-gpu-2196775"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-03ae7d7"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-03ae7d7"
+DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-cpu-03ae7d7"
+DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-03ae7d7"
+DEFAULT_PT2_CPU_IMAGE = "determinedai/environments:py-3.10-pytorch-2.0-cpu-03ae7d7"
+DEFAULT_PT2_GPU_IMAGE = "determinedai/environments:cuda-11.8-pytorch-2.0-gpu-03ae7d7"
 
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
