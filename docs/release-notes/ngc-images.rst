@@ -14,5 +14,5 @@
 
 **Improvements**
 
--  Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain 
+-  Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain
    available for TensorFlow users.
