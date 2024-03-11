@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
@@ -192,33 +193,33 @@ func (k *ResourceManager) GetAllocationSummaries() (map[model.AllocationID]sprot
 }
 
 // GetDefaultAuxResourcePool implements rm.ResourceManager.
-func (k *ResourceManager) GetDefaultAuxResourcePool() (string, error) {
+func (k *ResourceManager) GetDefaultAuxResourcePool() (rm.ResourcePoolName, error) {
 	if k.config.DefaultComputeResourcePool == "" {
 		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return k.config.DefaultAuxResourcePool, nil
+	return rm.ResourcePoolName(k.config.DefaultAuxResourcePool), nil
 }
 
 // GetDefaultComputeResourcePool implements rm.ResourceManager.
-func (k *ResourceManager) GetDefaultComputeResourcePool() (string, error) {
+func (k *ResourceManager) GetDefaultComputeResourcePool() (rm.ResourcePoolName, error) {
 	if k.config.DefaultComputeResourcePool == "" {
 		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return k.config.DefaultComputeResourcePool, nil
+	return rm.ResourcePoolName(k.config.DefaultComputeResourcePool), nil
 }
 
 // GetExternalJobs implements rm.ResourceManager.
-func (ResourceManager) GetExternalJobs(string) ([]*jobv1.Job, error) {
+func (ResourceManager) GetExternalJobs(rm.ResourcePoolName) ([]*jobv1.Job, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // GetJobQ implements rm.ResourceManager.
-func (k *ResourceManager) GetJobQ(rpName string) (map[model.JobID]*sproto.RMJobInfo, error) {
+func (k *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error) {
 	if rpName == "" {
-		rpName = k.config.DefaultComputeResourcePool
+		rpName = rm.ResourcePoolName(k.config.DefaultComputeResourcePool)
 	}
 
-	rp, err := k.poolByName(rpName)
+	rp, err := k.poolByName(rpName.String())
 	if err != nil {
 		return nil, err
 	}
@@ -371,9 +372,7 @@ func (k *ResourceManager) ValidateResources(
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
-func (k ResourceManager) resourcePoolExists(
-	name string,
-) error {
+func (k ResourceManager) resourcePoolExists(name string) error {
 	resp, err := k.GetResourcePools()
 	if err != nil {
 		return err
@@ -389,10 +388,10 @@ func (k ResourceManager) resourcePoolExists(
 
 // ResolveResourcePool resolves the resource pool completely.
 func (k ResourceManager) ResolveResourcePool(
-	name string,
+	name rm.ResourcePoolName,
 	workspaceID int,
 	slots int,
-) (string, error) {
+) (rm.ResourcePoolName, error) {
 	ctx := context.TODO()
 	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -407,7 +406,7 @@ func (k ResourceManager) ResolveResourcePool(
 			}
 			return resp, nil
 		}
-		name = defaultAuxPool
+		name = rm.ResourcePoolName(defaultAuxPool)
 	}
 
 	if name == "" && slots >= 0 {
@@ -418,7 +417,7 @@ func (k ResourceManager) ResolveResourcePool(
 			}
 			return resp, nil
 		}
-		name = defaultComputePool
+		name = rm.ResourcePoolName(defaultComputePool)
 	}
 
 	resp, err := k.GetResourcePools()
@@ -433,7 +432,7 @@ func (k ResourceManager) ResolveResourcePool(
 	}
 	found := false
 	for _, poolName := range poolNames {
-		if name == poolName {
+		if name.String() == poolName {
 			found = true
 			break
 		}
@@ -451,8 +450,8 @@ func (k ResourceManager) ResolveResourcePool(
 }
 
 // ValidateResourcePool validates that the named resource pool exists.
-func (k ResourceManager) ValidateResourcePool(name string) error {
-	return k.resourcePoolExists(name)
+func (k ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
+	return k.resourcePoolExists(name.String())
 }
 
 // NotifyContainerRunning receives a notification from the container to let
@@ -474,10 +473,13 @@ func (k ResourceManager) IsReattachableOnlyAfterStarted() bool {
 
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
 func (k ResourceManager) TaskContainerDefaults(
-	pool string,
+	pool rm.ResourcePoolName,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (result model.TaskContainerDefaultsConfig, err error) {
-	return k.getTaskContainerDefaults(taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}), nil
+	return k.getTaskContainerDefaults(taskContainerDefaults{
+		fallbackDefault: fallbackConfig,
+		resourcePool:    pool.String(),
+	}), nil
 }
 
 func (k *ResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {

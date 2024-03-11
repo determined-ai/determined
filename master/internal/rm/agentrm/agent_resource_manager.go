@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
@@ -247,33 +248,33 @@ func (a *ResourceManager) GetAllocationSummaries() (map[model.AllocationID]sprot
 }
 
 // GetDefaultAuxResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) GetDefaultAuxResourcePool() (string, error) {
+func (a *ResourceManager) GetDefaultAuxResourcePool() (rm.ResourcePoolName, error) {
 	if a.config.DefaultAuxResourcePool == "" {
 		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return a.config.DefaultAuxResourcePool, nil
+	return rm.ResourcePoolName(a.config.DefaultAuxResourcePool), nil
 }
 
 // GetDefaultComputeResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) GetDefaultComputeResourcePool() (string, error) {
+func (a *ResourceManager) GetDefaultComputeResourcePool() (rm.ResourcePoolName, error) {
 	if a.config.DefaultComputeResourcePool == "" {
 		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return a.config.DefaultComputeResourcePool, nil
+	return rm.ResourcePoolName(a.config.DefaultComputeResourcePool), nil
 }
 
 // GetExternalJobs implements rm.ResourceManager.
-func (*ResourceManager) GetExternalJobs(string) ([]*jobv1.Job, error) {
+func (*ResourceManager) GetExternalJobs(rm.ResourcePoolName) ([]*jobv1.Job, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // GetJobQ implements rm.ResourceManager.
-func (a *ResourceManager) GetJobQ(rpName string) (map[model.JobID]*sproto.RMJobInfo, error) {
+func (a *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error) {
 	if rpName == "" {
-		rpName = a.config.DefaultComputeResourcePool
+		rpName = rm.ResourcePoolName(a.config.DefaultComputeResourcePool)
 	}
 
-	pool, err := a.poolByName(rpName)
+	pool, err := a.poolByName(rpName.String())
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +403,9 @@ func (a *ResourceManager) Release(msg sproto.ResourcesReleased) {
 }
 
 // ResolveResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slots int) (string, error) {
+func (a *ResourceManager) ResolveResourcePool(name rm.ResourcePoolName, workspaceID int, slots int) (
+	rm.ResourcePoolName, error,
+) {
 	ctx := context.TODO()
 	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
@@ -417,7 +420,7 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 			}
 			return resp, nil
 		}
-		name = defaultAuxPool
+		name = rm.ResourcePoolName(defaultAuxPool)
 	}
 
 	if name == "" && slots >= 0 {
@@ -428,7 +431,7 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 			}
 			return resp, nil
 		}
-		name = defaultComputePool
+		name = rm.ResourcePoolName(defaultComputePool)
 	}
 
 	resp, err := a.GetResourcePools()
@@ -443,7 +446,7 @@ func (a *ResourceManager) ResolveResourcePool(name string, workspaceID int, slot
 	}
 	found := false
 	for _, poolName := range poolNames {
-		if name == poolName {
+		if name.String() == poolName {
 			found = true
 			break
 		}
@@ -496,13 +499,13 @@ func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 
 // TaskContainerDefaults implements rm.ResourceManager.
 func (a *ResourceManager) TaskContainerDefaults(
-	resourcePoolName string,
+	resourcePoolName rm.ResourcePoolName,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
 	result := fallbackConfig
 	// Iterate through configured pools looking for a TaskContainerDefaults setting.
 	for _, pool := range a.poolsConfig {
-		if resourcePoolName == pool.PoolName {
+		if resourcePoolName.String() == pool.PoolName {
 			if pool.TaskContainerDefaults == nil {
 				break
 			}
@@ -545,8 +548,8 @@ func (a *ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) ValidateResourcePool(name string) error {
-	_, err := a.poolByName(name)
+func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
+	_, err := a.poolByName(name.String())
 	if err != nil {
 		return err
 	}
