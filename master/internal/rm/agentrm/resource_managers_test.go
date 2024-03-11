@@ -35,7 +35,8 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 		},
 	}
 
-	rm := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
+	rm, err := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
+	assert.NilError(t, err, "error initializing resource manager")
 
 	taskSummary, err := rm.GetAllocationSummaries()
 	assert.NilError(t, err)
