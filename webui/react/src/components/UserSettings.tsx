@@ -17,6 +17,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import Grid from 'components/Grid';
+import { RowHeight, rowHeightItems, TableViewMode } from 'components/OptionsMenu';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -37,7 +38,6 @@ import {
   experimentListGlobalSettingsDefaults,
   experimentListGlobalSettingsPath,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { RowHeight, rowHeightItems, TableViewMode } from 'pages/F_ExpList/OptionsMenu';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';

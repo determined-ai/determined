@@ -1,10 +1,10 @@
 import { array, boolean, number, partial, record, string } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
+import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import { SettingsConfig } from 'hooks/useSettings';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
-import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from './OptionsMenu';
 
 export interface F_ExperimentListSettings {
   columns: string[];

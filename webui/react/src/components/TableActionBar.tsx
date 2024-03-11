@@ -16,6 +16,8 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import TableFilter from 'components/FilterForm/TableFilter';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import ColumnPickerMenu from 'pages/F_ExpList/ColumnPickerMenu';
+import { Sort } from 'pages/F_ExpList/glide-table/GlideTable';
 import {
   activateExperiments,
   archiveExperiments,
@@ -44,8 +46,6 @@ import {
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
-import ColumnPickerMenu from './ColumnPickerMenu';
-import { Sort } from './glide-table/GlideTable';
 import MultiSortMenu from './MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from './OptionsMenu';
 import css from './TableActionBar.module.scss';

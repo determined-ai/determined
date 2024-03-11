@@ -4,10 +4,10 @@ import Icon from 'hew/Icon';
 import Select from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 
+import { DirectionType, Sort, validSort } from 'pages/F_ExpList/glide-table/GlideTable';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 
-import { DirectionType, Sort, validSort } from './glide-table/GlideTable';
 import css from './MultiSortMenu.module.scss';
 
 // in the list of columns from the api but not supported by the sort functionality
