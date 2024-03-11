@@ -56,16 +56,16 @@ func New(
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) *ResourceManager {
+) (*ResourceManager, error) {
 	tlsConfig, err := model.MakeTLSConfig(cert)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to set up TLS config"))
+		return nil, fmt.Errorf("failed to set up TLS config: %w", err)
 	}
 
 	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
 	clusterID, err := db.GetOrCreateClusterID("")
 	if err != nil {
-		panic(fmt.Errorf("getting clusterID: %w", err))
+		return nil, fmt.Errorf("getting clusterID: %w", err)
 	}
 	setClusterID(clusterID)
 
@@ -132,7 +132,7 @@ func New(
 		}()
 		k.pools[poolConfig.PoolName] = rp
 	}
-	return k
+	return k, nil
 }
 
 // Allocate implements rm.ResourceManager.

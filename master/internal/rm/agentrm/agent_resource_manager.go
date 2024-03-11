@@ -38,7 +38,7 @@ func New(
 	config *config.ResourceManagerWithPoolsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) *ResourceManager {
+) (*ResourceManager, error) {
 	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
 
 	e.GET("/agents", func(c echo.Context) error {
@@ -69,7 +69,7 @@ func newAgentResourceManager(
 	db *db.PgDB, config *config.ResourceManagerWithPoolsConfig,
 	cert *tls.Certificate, agentService *agents,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
-) *ResourceManager {
+) (*ResourceManager, error) {
 	a := &ResourceManager{
 		syslog: logrus.WithField("component", "agentrm"),
 
@@ -85,9 +85,8 @@ func newAgentResourceManager(
 	for ix, config := range a.poolsConfig {
 		rp, err := a.createResourcePool(a.db, a.poolsConfig[ix], a.cert)
 		if err != nil {
-			// TODO(DET-9975): Don't panic.
-			a.syslog.WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
-			panic(err)
+			return nil, fmt.Errorf("failed to create resource pool: %s: %w",
+				a.poolsConfig[ix].PoolName, err)
 		}
 		a.pools[config.PoolName] = rp
 	}
@@ -103,7 +102,7 @@ func newAgentResourceManager(
 		}
 	}()
 
-	return a
+	return a, nil
 }
 
 // Allocate implements rm.ResourceManager.
