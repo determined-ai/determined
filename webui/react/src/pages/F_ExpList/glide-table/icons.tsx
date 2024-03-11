@@ -1,6 +1,4 @@
-import {
-  DataEditorProps,
-} from '@glideapps/glide-data-grid';
+import { DataEditorProps } from '@glideapps/glide-data-grid';
 import { Theme } from 'hew/Theme';
 
 // TODO: use theme here

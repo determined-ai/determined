@@ -3,9 +3,15 @@ import { BaseDrawArgs, CustomRenderer } from '@glideapps/glide-data-grid/dist/dt
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
-export function getCheckboxDimensions(rectX: number, rectY: number, rectWidth: number, rectHeight: number, empty?: boolean): { x: number, y: number, size: number } {
-  const centerX = rectX + (0.5 * rectWidth);
-  const centerY = rectY + (0.5 * rectHeight);
+export function getCheckboxDimensions(
+  rectX: number,
+  rectY: number,
+  rectWidth: number,
+  rectHeight: number,
+  empty?: boolean,
+): { x: number; y: number; size: number } {
+  const centerX = rectX + 0.5 * rectWidth;
+  const centerY = rectY + 0.5 * rectHeight;
   if (empty) {
     const size = 0.375 * rectHeight;
     const posHelper = 0.19 * rectHeight;
@@ -45,14 +51,7 @@ function drawCheckbox(
   if (checked) {
     const checkbox = getCheckboxDimensions(x, y, width, height);
     ctx.beginPath();
-    roundedRect(
-      ctx,
-      checkbox.x,
-      checkbox.y,
-      checkbox.size,
-      checkbox.size,
-      rectBordRadius,
-    );
+    roundedRect(ctx, checkbox.x, checkbox.y, checkbox.size, checkbox.size, rectBordRadius);
 
     ctx.fillStyle = highlighted ? theme.accentColor : theme.textMedium;
     ctx.fill();
@@ -74,14 +73,7 @@ function drawCheckbox(
   } else {
     const checkbox = getCheckboxDimensions(x, y, width, height, true);
     ctx.beginPath();
-    roundedRect(
-      ctx,
-      checkbox.x,
-      checkbox.y,
-      checkbox.size,
-      checkbox.size,
-      rectBordRadius,
-    );
+    roundedRect(ctx, checkbox.x, checkbox.y, checkbox.size, checkbox.size, rectBordRadius);
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = hovered ? theme.textDark : theme.textMedium;

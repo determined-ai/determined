@@ -260,7 +260,13 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
       const columnId = columns[col].id;
-      const items = getHeaderMenuItems?.(columnId, col, setHeaderMenuIsOpen, scrollToTop, data.length);
+      const items = getHeaderMenuItems?.(
+        columnId,
+        col,
+        setHeaderMenuIsOpen,
+        scrollToTop,
+        data.length,
+      );
       if (items?.length) {
         setHeaderMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
         setHeaderMenuIsOpen(true);
@@ -448,9 +454,21 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         drawArrow(ctx, arrowDirection, rect.x + rect.width - 16, 12);
       }
 
-      if (column.icon === 'allSelected' || column.icon === 'noneSelected' || column.icon === 'someSelected') {
+      if (
+        column.icon === 'allSelected' ||
+        column.icon === 'noneSelected' ||
+        column.icon === 'someSelected'
+      ) {
         const checkbox = getCheckboxDimensions(rect.x, rect.y, rect.width, rect.height);
-        spriteManager.drawSprite(column.icon, 'normal', ctx, checkbox.x - 0.8, checkbox.y, checkbox.size, theme);
+        spriteManager.drawSprite(
+          column.icon,
+          'normal',
+          ctx,
+          checkbox.x - 0.8,
+          checkbox.y,
+          checkbox.size,
+          theme,
+        );
       } else if (column.title) {
         const xPad = theme.cellHorizontalPadding;
         const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
