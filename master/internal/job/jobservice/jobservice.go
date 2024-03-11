@@ -92,7 +92,7 @@ func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) (map[model.Jo
 
 // GetJobs returns a list of jobs for a resource pool.
 func (s *Service) GetJobs(
-	resourcePool string,
+	resourcePool rm.ResourcePoolName,
 	desc bool,
 	states []jobv1.State,
 ) ([]*jobv1.Job, error) {
@@ -160,7 +160,7 @@ func (s *Service) GetJobs(
 }
 
 // GetJobSummary returns a summary of the job given an id and resource pool.
-func (s *Service) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
+func (s *Service) GetJobSummary(id model.JobID, resourcePool rm.ResourcePoolName) (*jobv1.JobSummary, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

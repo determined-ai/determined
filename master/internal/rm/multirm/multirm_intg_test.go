@@ -31,8 +31,8 @@ func TestMain(m *testing.M) {
 	testMultiRM = &MultiRMRouter{
 		defaultRMName: defaultRMName,
 		rms: map[string]rm.ResourceManager{
-			defaultRMName:   mockRM(defaultRMName),
-			"additional-rm": mockRM(additionalRMName),
+			defaultRMName:   mockRM(rm.ResourcePoolName(defaultRMName)),
+			"additional-rm": mockRM(rm.ResourcePoolName(additionalRMName)),
 		},
 		syslog: logrus.WithField("component", "resource-router"),
 	}
@@ -285,7 +285,7 @@ func TestGetDefaultResourcePools(t *testing.T) {
 func TestValidateResourcePool(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -304,7 +304,7 @@ func TestValidateResourcePool(t *testing.T) {
 func TestResolveResourcePool(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -324,7 +324,7 @@ func TestResolveResourcePool(t *testing.T) {
 func TestTaskContainerDefaults(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -343,7 +343,7 @@ func TestTaskContainerDefaults(t *testing.T) {
 func TestGetJobQ(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -400,7 +400,7 @@ func TestMoveJob(t *testing.T) {
 func TestGetExternalJobs(t *testing.T) {
 	cases := []struct {
 		name   string
-		rpName string
+		rpName rm.ResourcePoolName
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
@@ -620,7 +620,7 @@ func TestGetRMName(t *testing.T) {
 
 	cases := []struct {
 		name           string
-		rpName         string
+		rpName         rm.ResourcePoolName
 		err            error
 		expectedRMName string
 	}{
@@ -639,10 +639,10 @@ func TestGetRMName(t *testing.T) {
 	}
 }
 
-func mockRM(poolName string) *mocks.ResourceManager {
+func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM := mocks.ResourceManager{}
 	mockRM.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
-		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: poolName}},
+		ResourcePools: []*resourcepoolv1.ResourcePool{{Name: poolName.String()}},
 	}, nil)
 	mockRM.On("Allocate", mock.Anything).Return(&sproto.ResourcesSubscription{}, nil)
 	mockRM.On("ValidateResources", mock.Anything).Return(nil, nil)
