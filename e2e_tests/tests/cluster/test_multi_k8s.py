@@ -6,6 +6,7 @@ from determined.common import api
 from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
 from tests.cluster import utils
 
@@ -55,6 +56,16 @@ def test_run_command_multi_k8s(resource_pool: Optional[str], expected_node: str)
     logs = api.task_logs(sess, command_id)
     str_logs = "".join(log.log for log in logs)
     assert f"RunningOnNode={expected_node}" in str_logs, str_logs
+
+
+@pytest.mark.e2e_multi_k8s
+def test_not_found_pool_multi_k8s() -> None:
+    sess = api_utils.user_session()
+    detproc.check_error(
+        sess,
+        ["det", "cmd", "run", "--config", "resources.resource_pool=missing", "echo"],
+        "could not find resource pool missing",
+    )
 
 
 @pytest.mark.e2e_multi_k8s
