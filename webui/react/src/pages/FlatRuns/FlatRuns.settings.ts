@@ -6,11 +6,11 @@ import { SettingsConfig } from 'hooks/useSettings';
 //import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
 //import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from './OptionsMenu';
 
-export interface FlatTrialsSettings {
+export interface FlatRunsSettings {
   columns: string[];
   columnWidths: Record<string, number>;
   compare: boolean;
-  excludedExperiments: number[];
+  excludedRuns: number[];
   filterset: string; // save FilterFormSet as string
   sortString: string;
   pageLimit: number;
@@ -18,12 +18,12 @@ export interface FlatTrialsSettings {
   heatmapSkipped: string[];
   heatmapOn: boolean;
   selectAll: boolean;
-  selectedExperiments: Array<number>;
+  selectedRuns: Array<number>;
 }
-export const settingsConfigForProject = (id: number): SettingsConfig<FlatTrialsSettings> => ({
+export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSettings> => ({
   settings: {
     columns: {
-      defaultValue: defaultExperimentColumns,
+      defaultValue: defaultRunColumns,
       skipUrlEncoding: true,
       storageKey: 'columns',
       type: array(string),
@@ -39,7 +39,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatTrialsS
       storageKey: 'compare',
       type: boolean,
     },
-    excludedExperiments: {
+    excludedRuns: {
       defaultValue: [],
       skipUrlEncoding: true,
       storageKey: 'excludedExperiments',
@@ -81,7 +81,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatTrialsS
       storageKey: 'selectAll',
       type: boolean,
     },
-    selectedExperiments: {
+    selectedRuns: {
       defaultValue: [],
       skipUrlEncoding: true,
       storageKey: 'selectedExperiments',
@@ -94,27 +94,27 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatTrialsS
       type: string,
     },
   },
-  storagePath: `flatTrialsForProject${id}`,
+  storagePath: `flatRunsForProject${id}`,
 });
 
-export interface FlatTrialsGlobalSettings {
+export interface FlatRunsGlobalSettings {
   rowHeight: RowHeight;
   tableViewMode: TableViewMode;
 }
 
-export const flatTrialsGlobalSettingsConfig = partial({
+export const flatRunsGlobalSettingsConfig = partial({
   rowHeight: ioRowHeight,
   tableViewMode: ioTableViewMode,
 });
 
-export const flatTrialsGlobalSettingsDefaults = {
+export const flatRunsGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,
   tableViewMode: 'scroll',
 } as const;
 
-export const flatTrialsGlobalSettingsPath = 'globalTableSettings';
+export const flatRunsGlobalSettingsPath = 'globalTableSettings';
 
-export const settingsConfigGlobal: SettingsConfig<FlatTrialsGlobalSettings> = {
+export const settingsConfigGlobal: SettingsConfig<FlatRunsGlobalSettings> = {
   settings: {
     rowHeight: {
       defaultValue: RowHeight.MEDIUM,
@@ -129,5 +129,5 @@ export const settingsConfigGlobal: SettingsConfig<FlatTrialsGlobalSettings> = {
       type: ioTableViewMode,
     },
   },
-  storagePath: flatTrialsGlobalSettingsPath,
+  storagePath: flatRunsGlobalSettingsPath,
 };
