@@ -73,6 +73,8 @@ func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
 }
 
 // ModelSubscriptionSpec is what a user submits to define a Model subscription.
+//
+// determined:stream-gen source=client
 type ModelSubscriptionSpec struct {
 	WorkspaceIDs []int `json:"workspace_ids"`
 	ModelIDs     []int `json:"Model_ids"`

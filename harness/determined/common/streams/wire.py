@@ -85,6 +85,18 @@ class ModelsDeleted(DeleteMsg):
     pass
 
 
+class ModelSubscriptionSpec(ClientMsg):
+    def __init__(
+        self,
+        workspace_ids: "typing.Optional[typing.List[int]]" = None,
+        Model_ids: "typing.Optional[typing.List[int]]" = None,
+        since: "typing.Optional[int]" = None,
+    ) -> None:
+        self.workspace_ids = workspace_ids
+        self.Model_ids = Model_ids
+        self.since = since
+
+
 class ProjectMsg(ServerMsg):
     def __init__(
         self,
