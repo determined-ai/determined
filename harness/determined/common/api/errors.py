@@ -116,3 +116,8 @@ class DeleteFailedException(APIException):
     def __init__(self, error_message: str) -> None:
         self.message = error_message
         self.status_code = 200
+
+
+class InvalidCredentialsException(BadRequestException):
+    def __init__(self) -> None:
+        super().__init__(message="Invalid username/password combination. Please try again.")

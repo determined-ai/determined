@@ -76,7 +76,11 @@ def log_in_user(args: Namespace) -> None:
     password = getpass.getpass(message)
 
     token_store = authentication.TokenStore(args.master)
-    utp = authentication.login(args.master, username, password, cli.cert)
+    try:
+        utp = authentication.login(args.master, username, password, cli.cert)
+    except api.errors.UnauthenticatedException:
+        raise api.errors.InvalidCredentialsException()
+
     token_store.set_token(utp.username, utp.token)
     token_store.set_active(utp.username)
 
