@@ -79,6 +79,8 @@ linters-settings:
       - 'fmt\.Print.*'
       - 'metaV1.NamespaceAll' # Will error if someone has namespace restricted permissions.
       - 'bundebug.WithVerbose'
+      - 'http.Client{' # Instead, we encourage use of cleanhttp.
+      - 'http.Transport{' # Instead, we encourage use of cleanhttp.
   staticcheck:
     go: "1.20"
 

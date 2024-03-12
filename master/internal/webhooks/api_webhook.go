@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
@@ -189,7 +190,7 @@ func (a *WebhooksAPIServer) TestWebhook(
 	}
 
 	log.Infof("creating webhook request for event %v", eventID)
-	c := http.Client{}
+	c := cleanhttp.DefaultClient()
 	resp, err := c.Do(tReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,

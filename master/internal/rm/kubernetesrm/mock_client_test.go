@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -222,10 +223,9 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 }
 
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
-	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{},
-		&http.Client{
-			Transport: &mockRoundTripInterface{message: m.logMessage},
-		})
+	client := cleanhttp.DefaultClient()
+	client.Transport = &mockRoundTripInterface{message: m.logMessage}
+	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{}, cleanhttp.DefaultClient())
 }
 
 func (m *mockPodInterface) ProxyGet(
