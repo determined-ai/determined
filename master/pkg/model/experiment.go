@@ -531,7 +531,7 @@ type RunHparam struct {
 
 	RunID     int        `bun:"run_id"`
 	HParam    string     `bun:"hparam"`
-	NumberVal *int       `bun:"number_val"`
+	NumberVal *float64   `bun:"number_val"`
 	TextVal   *string    `bun:"text_val"`
 	DateVal   *time.Time `bun:"date_val"`
 }

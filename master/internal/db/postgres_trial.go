@@ -81,8 +81,11 @@ func AddRunHParams(ctx context.Context, runID int, hparams map[string]any,
 			HParam: parentName + hpName,
 		}
 		switch val := v.(type) {
-		case int:
+		case float64:
 			hp.NumberVal = &val
+		case int:
+			conv := float64(val)
+			hp.NumberVal = &conv
 		case string:
 			hp.TextVal = &val
 		case time.Time:
