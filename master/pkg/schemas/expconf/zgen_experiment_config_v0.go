@@ -46,15 +46,12 @@ func (e *ExperimentConfigV0) SetData(val map[string]interface{}) {
 	e.RawData = val
 }
 
-func (e ExperimentConfigV0) Integration() IntegrationConfigV0 {
-	if e.RawIntegration == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .Integration")
-	}
-	return *e.RawIntegration
+func (e ExperimentConfigV0) Integration() *IntegrationConfigV0 {
+	return e.RawIntegration
 }
 
-func (e *ExperimentConfigV0) SetIntegration(val IntegrationConfigV0) {
-	e.RawIntegration = &val
+func (e *ExperimentConfigV0) SetIntegration(val *IntegrationConfigV0) {
+	e.RawIntegration = val
 }
 
 func (e ExperimentConfigV0) Debug() bool {

@@ -7,19 +7,21 @@
     "required": [],
     "eventuallyRequired": [],
     "properties": {
-        "port": {
+        "pachd": {
             "type": [
-                "string",
+                "object",
                 "null"
             ],
-            "default": ""
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
-        "host": {
+        "proxy": {
             "type": [
-                "string",
+                "object",
                 "null"
             ],
-            "default": ""
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "branch": {
             "type": [
@@ -43,13 +45,6 @@
             "default": ""
         },
         "repo": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": ""
-        },
-        "token": {
             "type": [
                 "string",
                 "null"

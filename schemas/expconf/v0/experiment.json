@@ -49,7 +49,7 @@
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/integration.json"
         },
         "data_layer": {

@@ -12,7 +12,7 @@
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
         }
     }

@@ -3042,14 +3042,14 @@ func (a *apiServer) DeleteTensorboardFiles(
 }
 
 func getPachydermConfig(config map[string]interface{}, experimentID int32) (map[string]interface{}, error) {
-	dataConfig, ok := config["data"].(map[string]interface{})
+	integrationConfig, ok := config["integration"].(map[string]interface{})
 	if !ok {
-		return nil, api.NotFoundErrs("'data' config for experiment", fmt.Sprint(experimentID), true)
+		return nil, api.NotFoundErrs("'integration' config for experiment", fmt.Sprint(experimentID), true)
 	}
 
-	pachydermConfig, ok := dataConfig["pachyderm"].(map[string]interface{})
+	pachydermConfig, ok := integrationConfig["pachyderm"].(map[string]interface{})
 	if !ok {
-		return nil, api.NotFoundErrs("'pachyderm' config for experiment", fmt.Sprint(experimentID), true)
+		return nil, api.NotFoundErrs("'pachyderm' integration config for experiment", fmt.Sprint(experimentID), true)
 	}
 	return pachydermConfig, nil
 }
@@ -3068,41 +3068,57 @@ func (a *apiServer) GetPachydermRepoURL(
 		return nil, err
 	}
 
+	// extract configs from experiment response
 	pachydermConfig, err := getPachydermConfig(getResp.Config.AsMap(), req.ExperimentId)
 	if err != nil {
 		return nil, err
 	}
-
-	pachydermAddress := a.m.config.Integrations.Pachyderm.Address
-	host, _ := pachydermConfig["host"].(string)
-	port, _ := pachydermConfig["port"].(string)
-	if host != "" && port != "" {
-		// if TLS is being used & host doesn't include the scheme, then this maybe be incorrect
-		pachydermAddress = fmt.Sprintf("%s:%s", host, port)
-	}
-	if pachydermAddress == "" {
-		return nil, errors.New("pachyderm address not provided in master config")
+	proxyConfig, ok := pachydermConfig["proxy"].(map[string]interface{})
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
 	}
 
+	// get pachyderm console proxy address
+	host, ok := proxyConfig["host"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy.host' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+	port, ok := proxyConfig["port"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy.port' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+	pachydermAddress := fmt.Sprintf("%s:%s", host, port)
+
+	// get input dataset information
 	project, ok := pachydermConfig["project"].(string)
 	if !ok {
 		return nil, api.NotFoundErrs(
-			"'project' in pachyderm integration config for experiment",
+			"'pachyderm.project' integration config for experiment",
 			fmt.Sprint(req.ExperimentId),
 			true,
 		)
 	}
-
 	repo, ok := pachydermConfig["repo"].(string)
 	if !ok {
 		return nil, api.NotFoundErrs(
-			"'repo' in pachyderm integration config for experiment",
+			"'pachyderm.repo' integration config for experiment",
 			fmt.Sprint(req.ExperimentId),
 			true,
 		)
 	}
 
-	// TODO (ET-9): validate construct pachyderm URL to ensure repository exists and user has access to it.
 	pachydermURL := fmt.Sprintf(
 		"%s/lineage/%s/repos/%s",
 		pachydermAddress,
@@ -3128,5 +3144,6 @@ func (a *apiServer) GetPachydermRepoURL(
 		)
 	}
 
+	// TODO (ET-9): validate construct pachyderm URL to ensure repository exists and user has access to it.
 	return &apiv1.GetPachydermRepoURLResponse{PachydermInputRepoUrl: pachydermURL}, nil
 }

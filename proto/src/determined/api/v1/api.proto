@@ -1546,7 +1546,8 @@ service Determined {
     };
   }
 
-  // Get pachyderm input repo URL based on experiment config, if present.
+  // Get pachyderm input repo URL based on experiment integration config, if
+  // present.
   rpc GetPachydermRepoURL(GetPachydermRepoURLRequest)
       returns (GetPachydermRepoURLResponse) {
     option (google.api.http) = {
