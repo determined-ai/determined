@@ -29,9 +29,11 @@ import (
 )
 
 const (
+	// GrpcMetadataPrefix is the prefix used for gRPC metadata headers.
+	GrpcMetadataPrefix = "Grpc-Metadata-"
 	//nolint:gosec // These are not potential hardcoded credentials.
-	GrpcMetadataPrefix    = "Grpc-Metadata-"
-	gatewayTokenHeader    = "grpcgateway-authorization"
+	gatewayTokenHeader = "grpcgateway-authorization"
+	// AllocationTokenHeader is the header used to pass the allocation token.
 	AllocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"
 	cookieName            = "auth"

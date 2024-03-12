@@ -263,7 +263,8 @@ func TestAuthMiddleware(t *testing.T) {
 
 			err := fn(c)
 
-			if tc.expectedCode == http.StatusUnauthorized {
+			switch tc.expectedCode {
+			case http.StatusUnauthorized:
 				require.Error(t, err, "Expected an error but got none")
 				httpError, ok := err.(*echo.HTTPError) // Cast error to *echo.HTTPError to check code
 				if ok && httpError != nil {
@@ -271,15 +272,16 @@ func TestAuthMiddleware(t *testing.T) {
 				} else {
 					require.Fail(t, "Error is not an HTTPError as expected")
 				}
-			} else if tc.expectedCode == http.StatusSeeOther {
+			case http.StatusSeeOther:
 				require.Equal(t, tc.expectedCode, rec.Code, "HTTP status code does not match expected")
 				require.NoError(t, err, "Did not expect an error but got one")
 				require.Contains(t, rec.Header().Get("Location"), tc.expectedLoc,
 					"Location header does not match expected redirect")
-			} else if tc.expectedCode == http.StatusOK {
+			case http.StatusOK:
 				require.Equal(t, tc.expectedCode, rec.Code, "HTTP status code does not match expected")
 				require.NoError(t, err, "Did not expect an error but got one")
-			} else {
+
+			default:
 				require.Fail(t, "Unsupported branch")
 			}
 		})

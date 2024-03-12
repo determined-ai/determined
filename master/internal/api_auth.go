@@ -192,11 +192,10 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 			_, _, err := grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
 			if err == nil {
 				return next(c)
-			} else {
-				errStatus := status.Convert(err)
-				if errStatus.Code() != codes.PermissionDenied && errStatus.Code() != codes.Unauthenticated {
-					return err
-				}
+			}
+			errStatus := status.Convert(err)
+			if errStatus.Code() != codes.PermissionDenied && errStatus.Code() != codes.Unauthenticated {
+				return err
 			}
 
 			// TODO: reverse this logic to redirect only if accept is empty or specifies text/html.
