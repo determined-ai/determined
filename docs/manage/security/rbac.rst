@@ -450,18 +450,24 @@ To list all existing cluster roles and the concrete permissions they include:
 
    det rbac list-roles
 
+``ModelRegistryViewer``
+=======================
+
+The ``ModelRegistryViewer`` role contains the sole permission to view the Model Registry within its
+scope.
+
 ``Viewer``
 ==========
 
-The ``Viewer`` role allows a user to see workspaces, projects, notebooks, TensorBoards, shells,
-commands (NTSC), and experiments, as well as experiment metadata and artifacts within its scope.
+The ``Viewer`` role supersedes the ``ModelRegistryViewer`` role, and includes permissions to see
+workspaces, projects, notebooks, TensorBoards, shells, commands (NTSC), and experiments, as well as
+experiment metadata and artifacts within its scope.
 
 ``EditorRestricted``
 ====================
 
 The ``EditorRestricted`` role supersedes the ``Viewer`` role, and includes permissions to view NTSC
 tasks and create, edit, or delete projects and experiments within its scope.
-
 ``Editor``
 ==========
 
