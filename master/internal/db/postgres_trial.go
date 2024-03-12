@@ -55,8 +55,10 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("getting run hyperparameters: %w", err)
 		}
 
-		if err := tx.NewInsert().Model(&hparams).Scan(ctx); err != nil {
-			return fmt.Errorf("inserting run hyperparameters: %w", err)
+		if len(hparams) > 0 {
+			if err := tx.NewInsert().Model(&hparams).Scan(ctx); err != nil {
+				return fmt.Errorf("inserting run hyperparameters: %w", err)
+			}
 		}
 
 		return nil
