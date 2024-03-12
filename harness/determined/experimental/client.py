@@ -180,7 +180,7 @@ def create_experiment(
         includes: Additional files or directories to include in the model definition.
         parent_id: The id of the parent experiment.
         project_id: The id of the project this experiment should belong to.
-        template: The name of the template for the experiment. For more details, please refer to https://docs.determined.ai/latest/model-dev-guide/dtrain/config-templates.html.
+        template: The name of the template for the experiment. See :ref:`config-template` for more details.
 
     Returns:
         An :class:`~determined.experimental.client.Experiment` of the created experiment.
