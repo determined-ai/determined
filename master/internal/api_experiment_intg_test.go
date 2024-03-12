@@ -2013,6 +2013,28 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 func TestGetPachydermRepoURL(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
+	t.Cleanup(
+		func() {
+			// Delete user and all experiments.
+			if _, err := db.Bun().NewDelete().Table("experiments").
+				Where("owner_id = ?", curUser.ID).Exec(ctx); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Bun().NewDelete().Table("jobs").
+				Where("owner_id = ?", curUser.ID).Exec(ctx); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Bun().NewDelete().Table("user_sessions").
+				Where("user_id = ?", curUser.ID).Exec(ctx); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Bun().NewDelete().Table("users").
+				Where("id = ?", curUser.ID).Exec(ctx); err != nil {
+				t.Fatal(err)
+			}
+		},
+	)
+
 	cases := []struct {
 		name              string
 		integrationConfig *expconf.IntegrationConfig
@@ -2153,7 +2175,6 @@ func TestGetPachydermRepoURL(t *testing.T) {
 			}
 			activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
 			exp := createTestExpWithActiveConfig(t, api, curUser, 1, activeConfig)
-
 			resp, err := api.GetPachydermRepoURL(ctx, &apiv1.GetPachydermRepoURLRequest{ExperimentId: int32(exp.ID)})
 
 			expectedError := c.funcExpectedError(strconv.Itoa(exp.ID))
