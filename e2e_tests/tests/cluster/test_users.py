@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import getpass
 import logging
@@ -6,7 +7,6 @@ import pathlib
 import shutil
 import subprocess
 import time
-from argparse import Namespace
 from typing import Generator, List, Tuple
 
 import appdirs
@@ -781,7 +781,7 @@ class GetpassLike:
 def test_login_wrong_password_error_message() -> None:
     sess, _ = api_utils.create_test_user()
     master_url = conf.make_master_url()
-    args = Namespace(username=sess.username, master=master_url)
+    args = argparse.Namespace(username=sess.username, master=master_url)
 
     with GetpassLike("password"):
         with pytest.raises(errors.InvalidCredentialsException):
@@ -791,7 +791,7 @@ def test_login_wrong_password_error_message() -> None:
 @pytest.mark.e2e_cpu
 def test_login_as_non_existent_user_error_message() -> None:
     master_url = conf.make_master_url()
-    args = Namespace(username="nOtArEaLuSeR", master=master_url)
+    args = argparse.Namespace(username="nOtArEaLuSeR", master=master_url)
 
     with GetpassLike("password"):
         with pytest.raises(errors.InvalidCredentialsException):
