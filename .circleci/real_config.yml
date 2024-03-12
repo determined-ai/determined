@@ -1555,6 +1555,7 @@ jobs:
       - skip-if-github-only
       - run: apt-get update && apt-get -y install make
       - react-get-deps
+      - set-slack-user-id
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
@@ -2139,7 +2140,7 @@ jobs:
 
       - pull-task-images:
           tf2: <<parameters.tf2>>
-
+      - set-slack-user-id
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
