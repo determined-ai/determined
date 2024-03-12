@@ -1848,7 +1848,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-github-only
       - skip-if-webui-only
-      - run: pip install mypy pytest coverage
+      - run: pip install mypy pytest coverage ddtrace
       - install-codecov
       - setup-paths
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
