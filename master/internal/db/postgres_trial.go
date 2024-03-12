@@ -90,6 +90,8 @@ func AddRunHParams(ctx context.Context, runID int, hparams map[string]any,
 			hp.TextVal = &val
 		case time.Time:
 			hp.DateVal = &val
+		case bool:
+			hp.BoolVal = &val
 		case map[string]any:
 			nestedHParams, err := AddRunHParams(ctx, runID, v.(map[string]any), hpName+".")
 			if err != nil {

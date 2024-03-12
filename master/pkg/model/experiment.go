@@ -534,6 +534,7 @@ type RunHparam struct {
 	NumberVal *float64   `bun:"number_val"`
 	TextVal   *string    `bun:"text_val"`
 	DateVal   *time.Time `bun:"date_val"`
+	BoolVal   *bool      `bun:"bool_val"`
 }
 
 // NewTrial creates a new trial in the specified state.  Note that the trial ID

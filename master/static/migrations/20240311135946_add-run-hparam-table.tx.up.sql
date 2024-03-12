@@ -3,5 +3,6 @@ CREATE TABLE run_hparams (
     hparam text NOT NULL,
     number_val float NULL,
     text_val text NULL,
-    date_val timestamp with time zone NULL
+    date_val timestamp with time zone NULL,
+    bool_val boolean NULL
 );
