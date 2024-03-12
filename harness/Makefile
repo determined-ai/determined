@@ -27,12 +27,12 @@ check: check-gen
 
 .PHONY: test-cpu
 test-cpu:
-	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
+	DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='test-cpu' coverage run -m pytest -v --ddtrace --runslow --durations=0 -m "not gpu or cpu" tests
 
 .PHONY: test-gpu
 test-gpu:
 	# Since integration tests are image-specific, they must be excluded and run separately
-	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
+	DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='test-gpu' coverage run -m pytest -v --ddtrace --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
 
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
@@ -52,7 +52,7 @@ test-pytorch-gpu:
 
 .PHONY: test
 test:
-	coverage run -m pytest -v --runslow --durations=0 tests
+	DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='harness-tests' coverage run -m pytest -v --runslow --durations=0 tests
 
 .PHONY: test-tf2
 test-tf2:
