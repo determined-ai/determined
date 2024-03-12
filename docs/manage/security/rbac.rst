@@ -468,6 +468,7 @@ experiment metadata and artifacts within its scope.
 
 The ``EditorRestricted`` role supersedes the ``Viewer`` role, and includes permissions to view NTSC
 tasks and create, edit, or delete projects and experiments within its scope.
+
 ``Editor``
 ==========
 
