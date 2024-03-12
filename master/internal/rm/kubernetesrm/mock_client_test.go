@@ -225,7 +225,7 @@ func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction
 func (m *mockPodInterface) GetLogs(name string, opts *k8sV1.PodLogOptions) *rest.Request {
 	client := cleanhttp.DefaultClient()
 	client.Transport = &mockRoundTripInterface{message: m.logMessage}
-	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{}, cleanhttp.DefaultClient())
+	return rest.NewRequestWithClient(&url.URL{}, "", rest.ClientContentConfig{}, client)
 }
 
 func (m *mockPodInterface) ProxyGet(

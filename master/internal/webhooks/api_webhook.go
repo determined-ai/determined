@@ -8,16 +8,14 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-cleanhttp"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 )
