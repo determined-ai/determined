@@ -10,7 +10,11 @@ export class ProjectSpec extends StreamSpec {
   #project_ids: Array<number>;
   #since: number;
 
-  constructor(workspace_ids?: Array<number>, project_ids?: Array<number>, since?: number) {
+  constructor(
+    workspace_ids?: Array<number>,
+    project_ids?: Array<number>,
+    since?: number,
+  ) {
     super();
     this.#workspace_ids = workspace_ids || [];
     this.#project_ids = project_ids || [];
@@ -21,8 +25,10 @@ export class ProjectSpec extends StreamSpec {
     if (!sp) return false;
     if (sp instanceof ProjectSpec) {
       return (
-        isEqual(sp.#workspace_ids, this.#workspace_ids) &&
-        isEqual(sp.#project_ids, this.#project_ids) &&
+        isEqual(sp.#workspace_ids, this.#workspace_ids)
+        &&
+        isEqual(sp.#project_ids, this.#project_ids)
+        &&
         isEqual(sp.#since, this.#since)
       );
     }
@@ -34,10 +40,10 @@ export class ProjectSpec extends StreamSpec {
   };
 
   public toWire = (): Record<string, any> => {
-    return {
+    return { 
+      workspace_ids: this.#workspace_ids,
       project_ids: this.#project_ids,
       since: this.#since,
-      workspace_ids: this.#workspace_ids,
     };
   };
 }
