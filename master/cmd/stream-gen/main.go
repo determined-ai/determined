@@ -322,7 +322,7 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 			b.Writef("  };\n")
 			b.Writef("\n")
 			b.Writef("  public toWire = (): Record<string, any> => {\n")
-			b.Writef("    return { \n")
+			b.Writef("    return {\n")
 			for _, f := range s.Fields {
 				b.Writef("      %v: this.#%v,\n", f.JSONTag, f.JSONTag)
 			}

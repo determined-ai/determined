@@ -40,7 +40,7 @@ export class ProjectSpec extends StreamSpec {
   };
 
   public toWire = (): Record<string, any> => {
-    return { 
+    return {
       workspace_ids: this.#workspace_ids,
       project_ids: this.#project_ids,
       since: this.#since,
