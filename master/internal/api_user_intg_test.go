@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -172,37 +173,93 @@ func TestProcessAuth(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, httpError.Code)
 }
 
+func setupNewAllocation(t *testing.T, dbPtr *db.PgDB) *model.Allocation {
+	ctx := context.TODO()
+
+	tIn := db.RequireMockTask(t, dbPtr, nil)
+	a := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tIn.TaskID)),
+		TaskID:       tIn.TaskID,
+		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
+		State:        ptrs.Ptr(model.AllocationStateTerminated),
+	}
+
+	err := db.AddAllocation(ctx, &a)
+	require.NoError(t, err, "failed to add allocation")
+
+	res, err := db.AllocationByID(ctx, a.AllocationID)
+	require.NoError(t, err)
+	return res
+}
+
 func TestAuthMiddleware(t *testing.T) {
 	proxies := []string{"/proxied-path-a"}
-	api, _, _ := setupAPITest(t, nil)
+	api, _, ctx := setupAPITest(t, nil)
 	extConfig := model.ExternalSessions{}
 	user.InitService(api.m.db, &extConfig)
 
+	username := uuid.New().String()
+	resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
+		User: &userv1.User{
+			Username: username,
+			Active:   true,
+		},
+		Password: "testpassword",
+	})
+	require.NoError(t, err)
+
+	user := model.User{Username: username, ID: model.UserID(resp.User.Id)}
+	require.NoError(t, err)
+
+	allocation := setupNewAllocation(t, api.m.db)
+	allocationToken, err := db.StartAllocationSession(ctx, allocation.AllocationID, &user)
+	require.NoError(t, err)
+	allocationHeader := grpcutil.GrpcMetadataPrefix + grpcutil.AllocationTokenHeader
+
+	proxiedSubRoute := "/proxied-path-a/anysubroute"
+	redirectedSubRoute := "/det/login?redirect=/proxied-path-a/anysubroute"
+
 	tests := []struct {
 		path         string
-		acceptHeader string
 		expectedCode int
-		expectedLoc  string // Expected location header, empty if no redirect expected
+		expectedLoc  string // Expected location, empty if no redirect expected
+		headers      map[string]string
 	}{
-		{"/proxied-path-a/anysubroute", "", http.StatusSeeOther, "/det/login?redirect=/proxied-path-a/anysubroute"},
-		{"/proxied-path-a", "application/json", http.StatusUnauthorized, ""},
-		{"/non-proxied-path", "", http.StatusUnauthorized, ""},
-		{"/non-proxied-path", "application/json", http.StatusUnauthorized, ""},
+		{proxiedSubRoute, http.StatusSeeOther, redirectedSubRoute, map[string]string{}},
+		{"/proxied-path-a", http.StatusUnauthorized, "", map[string]string{
+			"Accept": "application/json",
+		}},
+		{proxiedSubRoute, http.StatusOK, "", map[string]string{
+			allocationHeader: fmt.Sprintf("Bearer %s", allocationToken),
+		}},
+		{proxiedSubRoute, http.StatusSeeOther, redirectedSubRoute, map[string]string{
+			allocationHeader: fmt.Sprintf("Bearer %s", "invalid-token"),
+		}},
+		{proxiedSubRoute, http.StatusUnauthorized, "", map[string]string{
+			"Accept":         "application/json",
+			allocationHeader: fmt.Sprintf("Bearer %s", "invalid-token"),
+		}},
+		{"/non-proxied-path", http.StatusUnauthorized, "", map[string]string{}},
+		{"/non-proxied-path", http.StatusUnauthorized, "", map[string]string{
+			"Accept": "application/json",
+		}},
 	}
 
 	e := echo.New()
 	for _, tc := range tests {
-		t.Run(fmt.Sprintf("Path: %s, Accept: %s", tc.path, tc.acceptHeader), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Path: %s, Accept: %s", tc.path, tc.headers), func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
-			if tc.acceptHeader != "" {
-				req.Header.Set("Accept", tc.acceptHeader)
+			if len(tc.headers) > 0 {
+				for k, v := range tc.headers {
+					req.Header.Set(k, v)
+				}
 			}
 
 			middleware := processAuthWithRedirect(proxies)
-			fn := middleware(func(c echo.Context) error { return c.NoContent(http.StatusUnauthorized) })
+			fn := middleware(func(ctx echo.Context) error { return ctx.NoContent(http.StatusOK) })
 
 			err := fn(c)
 
@@ -214,12 +271,16 @@ func TestAuthMiddleware(t *testing.T) {
 				} else {
 					require.Fail(t, "Error is not an HTTPError as expected")
 				}
-			} else {
-				require.Equal(t, tc.expectedCode, http.StatusSeeOther)
+			} else if tc.expectedCode == http.StatusSeeOther {
 				require.Equal(t, tc.expectedCode, rec.Code, "HTTP status code does not match expected")
 				require.NoError(t, err, "Did not expect an error but got one")
 				require.Contains(t, rec.Header().Get("Location"), tc.expectedLoc,
 					"Location header does not match expected redirect")
+			} else if tc.expectedCode == http.StatusOK {
+				require.Equal(t, tc.expectedCode, rec.Code, "HTTP status code does not match expected")
+				require.NoError(t, err, "Did not expect an error but got one")
+			} else {
+				require.Fail(t, "Unsupported branch")
 			}
 		})
 	}
