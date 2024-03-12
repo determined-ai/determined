@@ -184,52 +184,49 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	if filterColumnType != nil {
 		queryColumnType = *filterColumnType
 	}
-	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
-	for i := 0; i < len(hp); i++ {
-		// for last element
-		if i == len(hp)-1 {
-			hp[i] = fmt.Sprintf(`>'%s'`, hp[i])
-		} else {
-			hp[i] = fmt.Sprintf(`'%s'`, hp[i])
-		}
-	}
-	hpQuery := strings.Join(hp, "->")
+
 	oSQL, err := o.toSQL()
 	if err != nil {
 		return nil, err
 	}
+
+	hparamCol := "number_val"
+	if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+		hparamCol = "text_val"
+	} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
+		hparamCol = "date_val"
+	}
+
 	var queryArgs []interface{}
-	var queryString string
+	queryString := fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams AS rhp WHERE rhp.hparam = '%s' AND `,
+		strings.TrimPrefix(c, "hp."))
 	switch o {
 	case empty:
-		queryString = fmt.Sprintf(`r.hparams->%s IS NULL`, hpQuery)
+		queryString += fmt.Sprintf(`rhp.%s IS NULL`, hparamCol)
 	case notEmpty:
-		queryString = fmt.Sprintf(`r.hparams->%s IS NOT NULL`, hpQuery)
+		queryString += fmt.Sprintf(`rhp.%s IS NOT NULL`, hparamCol)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
 			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s LIKE %s`, hpQuery, "?")
+			queryString += fmt.Sprintf(`rhp.%s LIKE %s`, hparamCol, "?")
 		} else {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 = %s`, hpQuery, "?")
+			queryString += fmt.Sprintf(`rhp.%s = %s`, hparamCol, "?")
 		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
 			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s NOT LIKE %s`, hpQuery, "?")
+			queryString += fmt.Sprintf(`rhp.%s NOT LIKE %s`, hparamCol, "?")
 		} else {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 != %s`, hpQuery, "?")
+			queryString += fmt.Sprintf(`rhp.%s != %s`, hparamCol, "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
-			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s %s %s`, hpQuery, "?", "?")
-		} else {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 %s %s`, hpQuery, "?", "?")
-		}
+		queryString += fmt.Sprintf(`rhp.%s %s %s`, hparamCol, "?", "?")
 	}
+
+	queryString += ")"
 
 	if fc != nil && *fc == or {
 		return q.WhereOr(queryString, queryArgs...), nil
