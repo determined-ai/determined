@@ -211,7 +211,7 @@ commands:
               echo "export SLACK_NAME=\"${SLACK_NAME}\"" >> $BASH_ENV
               echo "export SLACK_USER_ID=\"${SLACK_USER_ID}\"" >> $BASH_ENV
               npm install -g @datadog/datadog-ci
-              DD_ENV=ci datadog-ci --level=pipeline --tags="slack_name:${SLACK_NAME}" --tags="slack_user_id:${SLACK_USER_ID}"
+              DD_ENV=ci datadog-ci tag --level=pipeline --tags="slack_name:${SLACK_NAME}" --tags="slack_user_id:${SLACK_USER_ID}"
             else
               echo "Unable to find Slack user ID for  \"${AUTHOR_EMAIL}\"."
             fi
