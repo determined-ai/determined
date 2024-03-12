@@ -1,5 +1,5 @@
 CREATE TABLE run_hparams (
-    run_id int REFERENCES runs(id),
+    run_id int REFERENCES runs(id) ON DELETE CASCADE,
     hparam text NOT NULL,
     number_val float NULL,
     text_val text NULL,
