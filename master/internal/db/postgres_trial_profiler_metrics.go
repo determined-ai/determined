@@ -55,6 +55,18 @@ func groupFromLabelName(n string) string {
 // GetTrialProfilerMetricsBatches gets a batch of profiler metric batches from the database.
 // This method is for backwards compatibility and should be deprecated in the future in favor of
 // generics metrics APIs.
+// Profiler metrics are stored in the metrics table as a nested JSON mapping of labels to values.
+// All profiler metrics are associated with an agent ID, but certain metrics (i.e. gpu_util) may
+// be associated with other labels. For example:
+//
+//	{
+//		"agent-ID-1": {
+//			"GPU-UUID-1": {
+//				"gpu_util": 0.12,
+//				"gpu_free_memory": 0.34,
+//			}
+//		}
+//	}
 func (db *PgDB) GetTrialProfilerMetricsBatches(
 	labels *trialv1.TrialProfilerMetricLabels, offset, limit int,
 ) (model.TrialProfilerMetricsBatchBatch, error) {
