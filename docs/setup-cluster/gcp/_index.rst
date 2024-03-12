@@ -13,11 +13,11 @@ This page describes how Determined runs on Google Cloud Platform (GCP). For inst
    use Kubernetes, please refer to :ref:`setup-gke-cluster`.
 
 Determined uses Google Compute Engine (GCE) instances as its base unit. The cluster is managed by a
-`master` node (a single, non-GPU instance), which in turn provisions and deprovisions other `agent`
+*master* node (a single non-GPU instance), which in turn provisions and deprovisions other *agent*
 nodes (GPU instances) depending on the current volume of experiments being run on the cluster.
 
-For instance, if only a `master` node is running, charges are incurred solely for the master. When
-an experiment starts, the master dynamically provisions GPU instances as `agents`. Once the
+For instance, if only a *master* node is running, charges are incurred solely for the master. When
+an experiment starts, the master dynamically provisions GPU instances as *agents*. Once the
 experiment concludes, these agents are deactivated to avoid unnecessary charges.
 
 In addition, the master maintains experiment metadata in a dedicated database accessible via the
