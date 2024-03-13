@@ -90,10 +90,14 @@ class ModelSubscriptionSpec(ClientMsg):
         self,
         workspace_ids: "typing.Optional[typing.List[int]]" = None,
         model_ids: "typing.Optional[typing.List[int]]" = None,
+        model_names: "typing.Optional[typing.List[str]]" = None,
+        user_ids: "typing.Optional[typing.List[int]]" = None,
         since: "typing.Optional[int]" = None,
     ) -> None:
         self.workspace_ids = workspace_ids
         self.model_ids = model_ids
+        self.model_names = model_names
+        self.user_ids = user_ids
         self.since = since
 
 

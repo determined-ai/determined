@@ -76,9 +76,11 @@ func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
 //
 // determined:stream-gen source=client
 type ModelSubscriptionSpec struct {
-	WorkspaceIDs []int `json:"workspace_ids"`
-	ModelIDs     []int `json:"model_ids"`
-	Since        int64 `json:"since"`
+	WorkspaceIDs []int    `json:"workspace_ids"`
+	ModelIDs     []int    `json:"model_ids"`
+	ModelNames   []string `json:"model_names"`
+	UserIDs      []int    `json:"user_ids"`
+	Since        int64    `json:"since"`
 }
 
 // createFilteredModelIDQuery creates a select query that
@@ -106,6 +108,12 @@ func createFilteredModelIDQuery(
 		if len(spec.WorkspaceIDs) > 0 {
 			q.WhereOr("m.workspace_id in (?)", bun.In(spec.WorkspaceIDs))
 		}
+		if len(spec.ModelNames) > 0 {
+			q.WhereOr("m.name in (?)", bun.In(spec.ModelNames))
+		}
+		if len(spec.UserIDs) > 0 {
+			q.WhereOr("m.user_id in (?)", bun.In(spec.UserIDs))
+		}
 		return q
 	})
 	return q
@@ -123,7 +131,7 @@ func ModelCollectStartupMsgs(
 ) {
 	var out []stream.MarshallableMsg
 
-	if len(spec.ModelIDs) == 0 && len(spec.WorkspaceIDs) == 0 {
+	if len(spec.ModelIDs) == 0 && len(spec.WorkspaceIDs) == 0 && len(spec.ModelNames) == 0 && len(spec.UserIDs) == 0 {
 		// empty subscription: everything known should be returned as deleted
 		out = append(out, stream.DeleteMsg{
 			Key:     ModelsDeleteKey,
@@ -179,7 +187,7 @@ func ModelCollectStartupMsgs(
 // ModelMakeFilter creates a ModelMsg filter based on the given ModelSubscriptionSpec.
 func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) {
 	// should this filter even run?
-	if len(spec.WorkspaceIDs) == 0 && len(spec.ModelIDs) == 0 {
+	if len(spec.WorkspaceIDs) == 0 && len(spec.ModelIDs) == 0 && len(spec.ModelNames) == 0 && len(spec.UserIDs) == 0 {
 		return nil, errors.Errorf("invalid subscription spec arguments: %v %v", spec.WorkspaceIDs, spec.ModelIDs)
 	}
 
@@ -198,6 +206,17 @@ func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) 
 		}
 		modelIDs[id] = struct{}{}
 	}
+	modelNames := make(map[string]struct{})
+	for _, name := range spec.ModelNames {
+		modelNames[name] = struct{}{}
+	}
+	userIDs := make(map[int]struct{})
+	for _, id := range spec.UserIDs {
+		if id <= 0 {
+			return nil, fmt.Errorf("invalid user id: %d", id)
+		}
+		userIDs[id] = struct{}{}
+	}
 
 	// return a closure around our copied maps
 	return func(msg *ModelMsg) bool {
@@ -207,6 +226,14 @@ func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) 
 		}
 		// subscribed to this model by workspace_id?
 		if _, ok := workspaceIDs[msg.WorkspaceID]; ok {
+			return true
+		}
+		// subscribed to this model by name?
+		if _, ok := modelNames[msg.Name]; ok {
+			return true
+		}
+		// subscribed to this model by user_id?
+		if _, ok := userIDs[msg.UserID]; ok {
 			return true
 		}
 		return false
