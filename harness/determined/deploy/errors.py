@@ -1,6 +1,6 @@
 from typing import Optional
 
-from termcolor import colored
+import termcolor
 
 import determined as det
 
@@ -21,7 +21,7 @@ def warn_version_mistmatch(requestd_version: Optional[str]) -> None:
     if not requestd_version:
         return
     print(
-        colored(
+        termcolor.colored(
             f"Warning: The specified --det-version ({requestd_version}) does not match the "
             f"the current `det` CLI version ({det.__version__}), proceed with caution.",
             "You should use a matching version of det CLI. ",
