@@ -179,7 +179,32 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
         be the aggregation method for most if not all metrics, but individual metric group
         collectors should override this method should they need an alternate aggregation method.
         """
-        return _average_dicts_by_keys(self.metric_samples)
+        return self._average_metric_samples()
+
+    def _average_metric_samples(self) -> Dict[str, Any]:
+        """Helper method to merge a list of dictionary averaging their values by their keys.
+
+        Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
+        averaged across all dictionaries in the given list by key.
+        """
+        aggregated_metrics = {}
+        for sample in self.metric_samples:
+            for k, v in sample.items():
+                if isinstance(v, dict):
+                    aggregated_metrics[k] = {}
+                    for k1, v1 in v.items():
+                        aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
+                else:
+                    aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
+
+        for k, v in aggregated_metrics.items():
+            if isinstance(v, dict):
+                for k1, v1 in v.items():
+                    aggregated_metrics[k][k1] = v1 / len(self.metric_samples)
+            else:
+                aggregated_metrics[k] = v / len(self.metric_samples)
+
+        return aggregated_metrics
 
     def reset(self) -> None:
         self.metric_samples = []
@@ -207,32 +232,6 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
             }
         """
         pass
-
-
-def _average_dicts_by_keys(dicts: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Helper method to merge a list of dictionary averaging their values by their keys.
-
-    Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
-    averaged across all dictionaries in the given list by key.
-    """
-    aggregated_metrics = {}
-    for sample in dicts:
-        for k, v in sample.items():
-            if isinstance(v, dict):
-                aggregated_metrics[k] = {}
-                for k1, v1 in v.items():
-                    aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
-            else:
-                aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
-
-    for k, v in aggregated_metrics.items():
-        if isinstance(v, dict):
-            for k1, v1 in v.items():
-                aggregated_metrics[k][k1] = v1 / len(dicts)
-        else:
-            aggregated_metrics[k] = v / len(dicts)
-
-    return aggregated_metrics
 
 
 class _Network(_MetricGroupCollector):
