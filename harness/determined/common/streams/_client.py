@@ -112,6 +112,25 @@ class ProjectSpec:
         ).to_json()
 
 
+class ModelSpec:
+    def __init__(
+        self,
+        workspace_id: Optional[Union[int, Sequence[int]]] = None,
+        model_id: Optional[Union[int, Sequence[int]]] = None,
+    ) -> None:
+        self.workspace_id = workspace_id
+        self.model_id = model_id
+
+    def _copy(self) -> "ModelSpec":
+        return ModelSpec(self.workspace_id, self.model_id)
+
+    def _to_wire(self, since: int) -> Dict[str, Any]:
+        return wire.ModelSubscriptionSpec(
+            workspace_ids=int_or_list(self.workspace_id),
+            model_ids=int_or_list(self.model_id),
+        ).to_json()
+
+
 class Sync:
     def __init__(self, sync_id: Any, complete: bool) -> None:
         self.sync_id = sync_id
@@ -228,6 +247,7 @@ class Stream:
         self._ws = ws
         # Our stream-level in-memory cache: just enough to handle automatic reconnects.
         self._projects = KeyCache()
+        self._models = KeyCache()
         # The websocket events.  We'll connect (and reconnect) lazily.
         self._ws_iter: Optional[Iterable] = None
         self._closed = False
@@ -259,6 +279,8 @@ class Stream:
         self.handlers: Dict[str, MsgHandler] = {
             "project": self._make_upsertion_handler(wire.ProjectMsg, self._projects),
             "projects_deleted": self._make_deletion_handler(wire.ProjectsDeleted, self._projects),
+            "model": self._make_upsertion_handler(wire.ModelMsg, self._models),
+            "models_deleted": self._make_deletion_handler(wire.ModelsDeleted, self._models),
         }
 
         self._retries = 0
@@ -295,7 +317,7 @@ class Stream:
         # build our startup message
         since = {
             "projects": self._projects.maxseq,
-            # "experiments": self._experiments.maxseq,
+            "models": self._models.maxseq,
         }
         subscribe = {k: v._to_wire(since[k]) for k, v in spec.items()}
         # add since info to our initial subscriptions
@@ -317,7 +339,7 @@ class Stream:
                 k: v
                 for k, v in {
                     "projects": self._projects.known(),
-                    # "experiments": self._experiments.known(),
+                    "models": self._models.known(),
                 }.items()
                 if v
             },
@@ -466,13 +488,15 @@ class Stream:
         sync_id: Any = None,
         *,
         projects: Optional[ProjectSpec] = None,
-        # experiments: Optional[ExperimentSpec] = None,
+        models: Optional[ModelSpec] = None,
     ) -> "Stream":
         # Capture what the user asked for immediately, but we won't fill since or known values until
         # we send it.
         spec = {}
         if projects:
             spec["projects"] = projects._copy()
+        if models:
+            spec["models"] = models._copy()
         self._specs.append((sync_id, spec))
         # Adding a spec can trigger sending a subscription.
         self._advance_subscription()

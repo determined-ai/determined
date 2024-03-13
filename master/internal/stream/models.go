@@ -77,7 +77,7 @@ func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
 // determined:stream-gen source=client
 type ModelSubscriptionSpec struct {
 	WorkspaceIDs []int `json:"workspace_ids"`
-	ModelIDs     []int `json:"Model_ids"`
+	ModelIDs     []int `json:"model_ids"`
 	Since        int64 `json:"since"`
 }
 
