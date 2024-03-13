@@ -514,7 +514,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           verticalBorder={verticalBorder}
           width="100%"
           onCellClicked={onCellClicked}
-          onCellContextMenu={onCellContextMenu}
+          onCellContextMenu={renderContextMenuComponent ? onCellContextMenu : undefined}
           onColumnMoved={onColumnsOrderChange ? onColumnMoved : undefined}
           onColumnResize={onColumnResize ? handleColumnResize : undefined}
           onHeaderClicked={onHeaderClicked}
