@@ -1084,7 +1084,7 @@ commands:
           version: v3.2.4
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${NAMESPACE}" --wait
           name: Helm Install
       - run:
           command: |
