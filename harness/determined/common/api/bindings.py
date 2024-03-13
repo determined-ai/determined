@@ -21479,7 +21479,7 @@ def post_SearchRolesAssignableToScope(
     raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
 def get_SearchRuns(
-    session: "api.Session",
+    session: "api.BaseSession",
     *,
     filter: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
