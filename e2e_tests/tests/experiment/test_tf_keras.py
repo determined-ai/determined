@@ -1,5 +1,4 @@
 import multiprocessing
-from typing import Callable
 
 import pytest
 

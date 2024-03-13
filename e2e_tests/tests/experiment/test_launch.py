@@ -1,5 +1,3 @@
-from typing import Callable
-
 import pytest
 
 from determined.experimental import client

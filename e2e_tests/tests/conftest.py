@@ -3,7 +3,7 @@ import os
 import pathlib
 import subprocess
 import time
-from typing import Any, Callable, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast
 
 import _pytest.config.argparsing
 import _pytest.fixtures
