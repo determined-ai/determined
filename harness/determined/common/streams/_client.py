@@ -492,7 +492,7 @@ class Stream:
     ) -> "Stream":
         # Capture what the user asked for immediately, but we won't fill since or known values until
         # we send it.
-        spec = {}
+        spec: Tuple[Any, Dict[str, Any]] = {}
         if projects:
             spec["projects"] = projects._copy()
         if models:
