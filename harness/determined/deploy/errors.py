@@ -18,7 +18,7 @@ def warn_version_mistmatch(requestd_version: Optional[str]) -> None:
     check for and warn about version compatibility between the `det` CLI and
     the requested det version.
     """
-    if not requestd_version:
+    if not requestd_version or requestd_version == det.__version__:
         return
     print(
         termcolor.colored(
