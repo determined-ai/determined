@@ -7,8 +7,6 @@ import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
 
 import SystemMetricChart from './Charts/SystemMetricChart';
-import ThroughputMetricChart from './Charts/ThroughputMetricChart';
-import TimingMetricChart from './Charts/TimingMetricChart';
 import css from './Profiler.module.scss';
 
 export interface Props {
@@ -58,8 +56,6 @@ export const getSeriesForSeriesName = (name: string, index: number): uPlot.Serie
 const Profiler: React.FC<Props> = ({ trial }) => {
   return (
     <SyncProvider>
-      <ThroughputMetricChart trial={trial} />
-      <TimingMetricChart trial={trial} />
       <SystemMetricChart trial={trial} />
     </SyncProvider>
   );
