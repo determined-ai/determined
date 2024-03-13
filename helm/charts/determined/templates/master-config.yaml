@@ -74,11 +74,7 @@ stringData:
         {{- toYaml .Values.security.authz | nindent 8}}
       {{- end }}
       {{- end }}
-    {{- if .Values.masterPort }}
-    port: {{ .Values.masterPort }}
-    {{- else}}
     port: {{ include "determined.masterPort" . }}
-    {{- end}}
     {{- if .Values.enterpriseEdition }}
     {{- if .Values.oidc }}
     oidc:

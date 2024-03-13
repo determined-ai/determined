@@ -1254,14 +1254,7 @@ commands:
       - run:
           no_output_timeout: 30m
           command: make package
-  
-  make-package-small:
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          no_output_timeout: 30m
-          command: make -C master package-small
+
 
   install-devcluster:
     steps:
@@ -1457,33 +1450,6 @@ jobs:
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
-
-  # package-and-push-system-dev-small:
-  #   docker:
-  #     - image: <<pipeline.parameters.docker-image>>
-  #       environment:
-  #         GO111MODULE: "on"
-  #   resource_class: xlarge
-  #   steps:
-  #     - checkout
-  #     - skip-if-docs-only
-  #     - skip-if-github-only
-  #     - skip-if-webui-only
-  #     - attach_workspace:
-  #         at: .
-  #     - reinstall-go
-  #     - setup_remote_docker:
-  #         version: 20.10.18
-  #     - login-docker:
-  #         username: ${DOCKER_USER}
-  #         password: ${DOCKER_PASS}
-  #     - pre-package-and-push-system:
-  #         check: false
-  #     - make-package-small
-  #     - run: tools/scripts/retry.sh make -C master publish-dev-small
-  #     - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-  #     - store_artifacts:
-  #         path: /tmp/pkgs
 
   package-and-push-system-rc:
     docker:
@@ -2738,7 +2704,7 @@ jobs:
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
-          det-version: ${CIRCLE_SHA1}-shared-cluster
+          det-version: b13afeb71a6f1bf96ada714fa1f1d8ea35794d31-shared-cluster
           labels: test-mark=<<parameters.mark>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
@@ -3028,11 +2994,6 @@ workflows:
             branches:
               only:
                 - main
-
-      # - package-and-push-system-dev-small:
-      #     requires:
-      #       - build-react
-      #       - build-docs
 
       - upload-docs-search-index:
           requires:
