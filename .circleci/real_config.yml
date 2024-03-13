@@ -2735,7 +2735,7 @@ jobs:
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
-          det-version: ${CIRCLE_SHA1}-amd64-shared-cluster
+          det-version: e1586bd764b9155f77de673f7db5c4b00f232861
           labels: test-mark=<<parameters.mark>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
