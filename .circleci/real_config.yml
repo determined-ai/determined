@@ -2704,14 +2704,13 @@ jobs:
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
-          det-version: ${CIRCLE_SHA1}-shared-cluster
+          det-version: b13afeb71a6f1bf96ada714fa1f1d8ea35794d31-shared-cluster
           labels: test-mark=<<parameters.mark>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
       - set-google-application-credentials
       - run-e2e-tests:
-          mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
           master-scheme: ${MASTER_SCHEME:-http}
           master-port: ${MASTER_PORT:-8080}
@@ -3267,6 +3266,11 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
+      - test-e2e-shared-cluster:
+          name: test-e2e-shared-cluster-cpu
+          context: gcp-shared-cluster
+          parallelism: 1
+          mark: "e2e_gpu and not gpu_required"
 
   test-e2e-quarantined:
     jobs:
@@ -3388,14 +3392,6 @@ workflows:
               mark: ["e2e_gpu"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context: gcp-shared-cluster
-          requires:
-            - package-and-push-system-dev
-          parallelism: 1
-          mark: "e2e_gpu and not gpu_required"
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
