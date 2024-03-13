@@ -1458,32 +1458,32 @@ jobs:
       - store_artifacts:
           path: /tmp/pkgs
 
-  package-and-push-system-dev-small:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    resource_class: xlarge
-    steps:
-      - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
-      - attach_workspace:
-          at: .
-      - reinstall-go
-      - setup_remote_docker:
-          version: 20.10.18
-      - login-docker:
-          username: ${DOCKER_USER}
-          password: ${DOCKER_PASS}
-      - pre-package-and-push-system:
-          check: false
-      - make-package-small
-      - run: tools/scripts/retry.sh make -C master publish-dev-small
-      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
+  # package-and-push-system-dev-small:
+  #   docker:
+  #     - image: <<pipeline.parameters.docker-image>>
+  #       environment:
+  #         GO111MODULE: "on"
+  #   resource_class: xlarge
+  #   steps:
+  #     - checkout
+  #     - skip-if-docs-only
+  #     - skip-if-github-only
+  #     - skip-if-webui-only
+  #     - attach_workspace:
+  #         at: .
+  #     - reinstall-go
+  #     - setup_remote_docker:
+  #         version: 20.10.18
+  #     - login-docker:
+  #         username: ${DOCKER_USER}
+  #         password: ${DOCKER_PASS}
+  #     - pre-package-and-push-system:
+  #         check: false
+  #     - make-package-small
+  #     - run: tools/scripts/retry.sh make -C master publish-dev-small
+  #     - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+  #     - store_artifacts:
+  #         path: /tmp/pkgs
 
   package-and-push-system-rc:
     docker:
@@ -3029,10 +3029,10 @@ workflows:
               only:
                 - main
 
-      - package-and-push-system-dev-small:
-          requires:
-            - build-react
-            - build-docs
+      # - package-and-push-system-dev-small:
+      #     requires:
+      #       - build-react
+      #       - build-docs
 
       - upload-docs-search-index:
           requires:
@@ -3311,7 +3311,7 @@ workflows:
           name: test-e2e-shared-cluster-cpu
           context: gcp-shared-cluster
           requires:
-            - package-and-push-system-dev-small
+            - package-and-push-system-dev
           parallelism: 1
           mark: "e2e_gpu and not gpu_required"
 
