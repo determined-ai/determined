@@ -64,9 +64,8 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
 
-    if args.det_version:
-        warn_version_mistmatch(args.det_version)
-    else:
+    warn_version_mistmatch(args.det_version)
+    if args.det_version is None:
         # keep the existing default value behavior of the cli.
         args.det_version = determined.__version__
 
