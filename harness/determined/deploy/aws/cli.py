@@ -10,6 +10,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from termcolor import colored
 
+import determined as det
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.aws import aws, constants
@@ -154,6 +155,17 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"The agent-subnet-id was set to '{args.agent_subnet_id}', but the "
                 f"deployment-type={args.deployment_type}."
             )
+
+    if args.det_version and args.det_version != det.__version__:
+        print(
+            colored(
+                f"Warning: The specified --det-version ({args.det_version}) does not match the "
+                f"the current `det` CLI version ({det.__version__}), proceed with caution.",
+                "You should use a matching version of det CLI. ",
+                "https://docs.determined.ai/latest/tools/cli/cli-ug.html#determined-cli",
+                "yellow",
+            )
+        )
 
     if args.deployment_type == constants.deployment_types.GOVCLOUD:
         if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
