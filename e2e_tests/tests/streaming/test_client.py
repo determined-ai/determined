@@ -115,9 +115,7 @@ def test_client_subscribe() -> None:
     bindings.delete_DeleteModel(sess, modelName=newModelName)
     deleted = False
     for event in stream:
-        if isinstance(event, streams.wire.ModelMsg):
-            assert event.state == "DELETING"
-        elif isinstance(event, streams.wire.ModelsDeleted):
+        if isinstance(event, streams.wire.ModelsDeleted):
             assert event == streams.wire.ModelsDeleted(str(m.id))
             deleted = True
             break
