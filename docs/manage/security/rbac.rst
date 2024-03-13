@@ -459,26 +459,26 @@ scope.
 ``Viewer``
 ==========
 
-The ``Viewer`` role supersedes the ``ModelRegistryViewer`` role, and includes permissions to see
+The ``Viewer`` role supersedes the ``ModelRegistryViewer`` role and includes permissions to see
 workspaces, projects, notebooks, TensorBoards, shells, commands (NTSC), and experiments, as well as
 experiment metadata and artifacts within its scope.
 
 ``EditorRestricted``
 ====================
 
-The ``EditorRestricted`` role supersedes the ``Viewer`` role, and includes permissions to view NTSC
-tasks and create, edit, or delete projects and experiments within its scope.
+The ``EditorRestricted`` role supersedes the ``Viewer`` role and includes permissions to create,
+edit, or delete projects and experiments within its scope.
 
 ``Editor``
 ==========
 
-The ``Editor`` role supersedes the ``EditorRestricted`` role, and includes permissions to create or
+The ``Editor`` role supersedes the ``EditorRestricted`` role and includes permissions to create or
 update NTSC tasks within its scope.
 
 ``WorkspaceAdmin``
 ==================
 
-The ``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or
+The ``WorkspaceAdmin`` role supersedes the ``Editor`` role and includes permissions to edit or
 delete workspaces, and modify role assignments within its scope.
 
 Users who take this role on a particular workspace can assign roles to other users on this
