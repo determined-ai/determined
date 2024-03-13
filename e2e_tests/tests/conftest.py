@@ -3,7 +3,7 @@ import os
 import pathlib
 import subprocess
 import time
-from typing import Any, Callable, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast
 
 import _pytest.config.argparsing
 import _pytest.fixtures
@@ -14,7 +14,6 @@ from botocore import exceptions as boto_exc
 from tests import api_utils, cluster_log_manager
 from tests import config as conf
 from tests import detproc
-from tests.experiment import record_profiling
 from tests.nightly import compute_stats
 
 _INTEG_MARKERS = {
@@ -206,18 +205,3 @@ def test_start_timer(request: _pytest.fixtures.SubRequest) -> Iterator[None]:
         # This ends up concatenated to the line pytest prints containing the test file and name.
         print("starting at", time.strftime("%Y-%m-%d %H:%M:%S"))
     yield
-
-
-@pytest.fixture
-def collect_trial_profiles(record_property: Callable[[str, object], None]) -> Callable[[int], None]:
-    """
-    Returns a method that allows profiling of test run for certain system metrics
-    and records to JUnit report.
-
-    Currently retrieves metrics by trial (assumes one trial per experiment) using
-    profiler API.
-
-    Note: this must be a fixture in order to use the record_property fixture provided by pytest.
-    """
-
-    return record_profiling.profile_test(record_property=record_property)

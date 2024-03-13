@@ -7,7 +7,7 @@ import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.utils import tf_utils
 
-from determined import profiler, tensorboard
+from determined import tensorboard
 
 logger = logging.getLogger("determined.keras")
 
@@ -711,33 +711,3 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
     def on_train_workload_end(self, total_batches_trained: int, logs: Dict) -> None:
         tf.keras.callbacks.TensorBoard.on_epoch_end(self, self.workload_end_count, logs)
         self.workload_end_count += 1
-
-
-class _DeterminedProfiler(Callback):
-    """Hooks Keras into the profiler agent lifecycle"""
-
-    def __init__(self, prof: profiler.ProfilerAgent, batch_size: int) -> None:
-        super().__init__()
-        self.total_batch = 0
-        self.prof = prof
-        self.batch_start = None  # type: Optional[float]
-        self.batch_size = batch_size
-
-    def get_state(self) -> Dict:
-        return {"total_batch": self.total_batch}
-
-    def load_state(self, state: Any) -> None:
-        self.total_batch = state["total_batch"]
-
-    def on_train_batch_begin(self, batch: int, _: Optional[Dict] = None) -> None:
-        self.total_batch += 1
-        self.batch_start = time.time()
-        self.prof.update_batch_idx(self.total_batch)
-
-    def on_train_batch_end(self, _: int, logs: Optional[Dict] = None) -> None:
-        if not logs or not self.batch_start:
-            return
-
-        samples = logs.get("size", self.batch_size)
-        samples_per_second = samples / (time.time() - self.batch_start)
-        self.prof.record_metric("samples_per_second", samples_per_second)

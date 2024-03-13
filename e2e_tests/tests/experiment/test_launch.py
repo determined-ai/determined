@@ -1,5 +1,3 @@
-from typing import Callable
-
 import pytest
 
 from determined.experimental import client
@@ -11,7 +9,7 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_launch_layer_mnist() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -25,7 +23,6 @@ def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> No
         sess, config, conf.tutorials_path("mnist_pytorch"), 1
     )
     trials = exp.experiment_trials(sess, experiment_id)
-    collect_trial_profiles(trials[0].trial.id)
 
     assert exp.check_if_string_present_in_trial_logs(
         sess,
@@ -37,7 +34,7 @@ def test_launch_layer_mnist(collect_trial_profiles: Callable[[int], None]) -> No
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> None:
+def test_launch_layer_exit() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_entrypoint(config, "python3 -m nonexistent_launch_module python3 train.py")
@@ -48,8 +45,6 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
     )
     trials = exp.experiment_trials(sess, experiment_id)
     client.Determined._from_session(sess).get_trial(trials[0].trial.id)
-
-    collect_trial_profiles(trials[0].trial.id)
 
     slurm_run = exp.check_if_string_present_in_trial_logs(
         sess, trials[0].trial.id, "Exited with exit code 1"

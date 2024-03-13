@@ -49,9 +49,7 @@ class DeepSpeedTrialController(det.TrialController):
             assert (
                 searcher_name == "custom"
             ), "`_dsat_mode` can only be set to true for Custom Searcher trials."
-        self.context._set_determined_profiler(self.prof)
-        if torch.cuda.is_available():
-            self.prof._set_sync_device(self._sync_device)
+
         self.callbacks = self.trial.build_callbacks()
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
@@ -249,15 +247,11 @@ class DeepSpeedTrialController(det.TrialController):
         # don't bind the loop iteration variable `callback`, which would likely cause us to call
         # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
         def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
-            with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
-                on_trial_shutdown()
+            on_trial_shutdown()
 
         with contextlib.ExitStack() as exit_stack:
             for callback in self.callbacks.values():
-                with self.prof.record_timing(
-                    f"callbacks.{callback.__class__.__name__}.on_trial_startup"
-                ):
-                    callback.on_trial_startup(self.steps_completed, self.env.latest_checkpoint)
+                callback.on_trial_startup(self.steps_completed, self.env.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -291,13 +285,14 @@ class DeepSpeedTrialController(det.TrialController):
                 ) as load_path:
                     self._load(load_path)
 
-            with self.prof:
-                for callback in self.callbacks.values():
-                    with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_start"
-                    ):
-                        callback.on_training_start()
-                self._run()
+            for callback in self.callbacks.values():
+                callback.on_training_start()
+
+            # Start Determined system metrics profiling if enabled.
+            if self.profiling_enabled:
+                self.context._core.profiler.on()
+
+            self._run()
 
     def _run(self) -> None:
         # Special code path only used for DeepSpeed Autotuning.
@@ -389,7 +384,6 @@ class DeepSpeedTrialController(det.TrialController):
         at a given batch idx. This can be turned off by setting
         context.disable_auto_grad_accumulation.
         """
-        self.prof.set_training(True)
         assert step_id > 0, "step_id should be greater than 0"
         step_start_time = time.time()
         self.context.reset_reducers()
@@ -407,15 +401,11 @@ class DeepSpeedTrialController(det.TrialController):
 
         for batch_idx in range(start, end):
             self.steps_completed += 1
-            self.prof.update_batch_idx(batch_idx)
             batch_start_time = time.time()
             self.context._current_batch_idx = batch_idx
             if self.context.is_epoch_start():
                 for callback in self.callbacks.values():
-                    with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
-                    ):
-                        callback.on_training_epoch_start(self.get_epoch_idx(batch_idx))
+                    callback.on_training_epoch_start(self.get_epoch_idx(batch_idx))
             # This can be inaccurate if the user's data loader does not return batches with
             # the micro batch size.  It is also slightly inaccurate if the data loader can return
             # partial batches.  The same sort of assumptions is made in the DeepSpeed
@@ -431,9 +421,6 @@ class DeepSpeedTrialController(det.TrialController):
             self.context._loss_ids = {}
             for _ in range(num_train_batch_calls):
                 with contextlib.ExitStack() as exit_stack:
-                    exit_stack.enter_context(
-                        self.prof.record_timing("train_batch", requires_sync=False, accumulate=True)
-                    )
                     if self.context.profiler:
                         exit_stack.enter_context(self.context.profiler)
 
@@ -474,35 +461,28 @@ class DeepSpeedTrialController(det.TrialController):
             batch_dur = time.time() - batch_start_time
             samples_per_second = batch_inputs / batch_dur
             samples_per_second *= self.context._mpu.data_parallel_world_size
-            self.prof.record_metric("samples_per_second", samples_per_second)
 
             if self.context.is_epoch_end():
                 for callback in self.callbacks.values():
-                    with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"
-                    ):
-                        callback.on_training_epoch_end(self.get_epoch_idx(batch_idx))
+                    callback.on_training_epoch_end(self.get_epoch_idx(batch_idx))
 
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1 and self.context._average_training_metrics:
-            with self.prof.record_timing("average_training_metrics"):
-                per_batch_metrics = pytorch._combine_and_average_training_metrics(
-                    self.context.distributed, per_batch_metrics
-                )
+            per_batch_metrics = pytorch._combine_and_average_training_metrics(
+                self.context.distributed, per_batch_metrics
+            )
         num_inputs *= self.context._mpu.data_parallel_world_size
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
         # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
         # metrics are even logical for a custom reducer.
-        with self.prof.record_timing("reduce_metrics"):
-            metrics["avg_metrics"].update(
-                pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
-            )
+        metrics["avg_metrics"].update(
+            pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
+        )
 
         if self.is_chief:
             step_duration = time.time() - step_start_time
             logger.info(det.util.make_timing_log("trained", step_duration, num_inputs, num_batches))
-            self.prof.set_training(False)
 
             if self.context.get_enable_tensorboard_logging():
                 det.pytorch._log_tb_metrics(

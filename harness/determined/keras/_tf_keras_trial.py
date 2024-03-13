@@ -459,13 +459,6 @@ class TFKerasTrialController(det.TrialController):
             # Our implementation of verbose=True.
             callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
 
-        profiler = keras.callbacks._DeterminedProfiler(
-            self.prof,
-            self.context.get_global_batch_size(),
-        )
-
-        callbacks = callbacks + [profiler]
-
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
         # each batch on each worker in order to trigger on_epoch_end callbacks correctly.
@@ -630,13 +623,15 @@ class TFKerasTrialController(det.TrialController):
                 self.wlsq.load_state(pickle.load(f))
 
     def run(self) -> None:
-        with self.prof:
-            try:
-                self._launch_fit()
-            except det.errors.WorkerFinishedGracefully:
-                pass
-            finally:
-                self._stop_enqueuers()
+        # Start Determined system metrics profiling if enabled.
+        if self.profiling_enabled:
+            self.context._core.profiler.on()
+        try:
+            self._launch_fit()
+        except det.errors.WorkerFinishedGracefully:
+            pass
+        finally:
+            self._stop_enqueuers()
 
     def _launch_fit(self) -> None:
         training_data = self.training_data

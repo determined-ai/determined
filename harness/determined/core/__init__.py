@@ -29,6 +29,7 @@ from determined.core._preempt import (
     _PreemptionWatcher,
     PreemptMode,
 )
+from determined.core._profiler import ProfilerContext, DummyProfilerContext
 from determined.core._experimental import (
     ExperimentalCoreContext,
     DummyExperimentalCoreContext,
