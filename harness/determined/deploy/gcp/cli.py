@@ -11,7 +11,7 @@ from termcolor import colored
 import determined.deploy
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group, string_to_bool
-from determined.deploy.errors import MasterTimeoutExpired
+from determined.deploy.errors import MasterTimeoutExpired, warn_version_mistmatch
 from determined.deploy.gcp import constants, gcp
 
 
@@ -63,6 +63,12 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
+
+    if args.det_version:
+        warn_version_mistmatch(args.det_version)
+    else:
+        # keep the existing default value behavior of the cli.
+        args.det_version = determined.__version__
 
     # Initialize determined configurations.
     det_configs = {}
@@ -404,7 +410,6 @@ args_description = Cmd(
                         Arg(
                             "--det-version",
                             type=str,
-                            default=determined.__version__,
                             help=argparse.SUPPRESS,
                         ),
                         Arg(
