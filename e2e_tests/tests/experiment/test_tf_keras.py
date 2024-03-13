@@ -1,5 +1,4 @@
 import multiprocessing
-from typing import Callable
 
 import pytest
 
@@ -37,9 +36,7 @@ def export_and_load_model(sess: api.Session, experiment_id: int) -> None:
 
 @pytest.mark.parallel
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])
-def test_tf_keras_parallel(
-    aggregation_frequency: int, collect_trial_profiles: Callable[[int], None]
-) -> None:
+def test_tf_keras_parallel(aggregation_frequency: int) -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
@@ -56,11 +53,9 @@ def test_tf_keras_parallel(
 
     # Test exporting a checkpoint.
     export_and_load_model(sess, experiment_id)
-    collect_trial_profiles(trials[0].trial.id)
 
     # Check on record/batch counts we emitted in logs.
     validation_size = 30
-    global_batch_size = config["hyperparameters"]["global_batch_size"]
     num_workers = config.get("resources", {}).get("slots_per_trial", 1)
     global_batch_size = config["hyperparameters"]["global_batch_size"]
     scheduling_unit = config.get("scheduling_unit", 100)
