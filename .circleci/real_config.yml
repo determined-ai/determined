@@ -3306,14 +3306,6 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
               accel-node-taints: ["accel=truth:NoSchedule"]
-              
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context: gcp-shared-cluster
-          requires:
-            - package-and-push-system-dev
-          parallelism: 1
-          mark: "e2e_gpu and not gpu_required"
 
   test-e2e-quarantined:
     jobs:
@@ -3435,6 +3427,14 @@ workflows:
               mark: ["e2e_gpu"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-shared-cluster:
+          name: test-e2e-shared-cluster-cpu
+          context: gcp-shared-cluster
+          requires:
+            - package-and-push-system-dev
+          parallelism: 1
+          mark: "e2e_gpu and not gpu_required"
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
