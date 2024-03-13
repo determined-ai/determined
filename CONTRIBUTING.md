@@ -46,9 +46,8 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 
 #### Prerequisites
 
-- Go (>= 1.20)
-- Python (>= 3.7.4, <= 3.9), including:
-  - python3-venv
+- Go (>= 1.22)
+- Python 3.8. Newer Python versions are partially supported, but some components may not work (e.g., docs build).
   - python3-wheel
   - python3-dev
 - Node (>= 20.9.0, < 21)
@@ -118,7 +117,6 @@ source $HOME/.profile
 cd determined
 python3 -m venv $HOME/.virtualenvs/determined
 . $HOME/.virtualenvs/determined/bin/activate
-$HOME/.virtualenvs/determined/bin/python3.9 -m pip install --upgrade pip
 export PATH=$PATH:$HOME/go/bin
 make all
 ```
@@ -182,7 +180,7 @@ Run `make test`.
 
 ```bash
 # Run a Determined cluster
-make -C tools run
+make devcluster
 
 # Run integration tests locally.
 pytest -m "e2e_cpu" e2e_tests/tests

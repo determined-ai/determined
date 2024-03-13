@@ -50,7 +50,7 @@ import pathlib
 import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, TypeVar, Union
 
-from determined.common.api import Session  # noqa: F401
+from determined.common import api as _api
 from determined.common.experimental._util import OrderBy
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
@@ -67,7 +67,12 @@ from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentState,
 )
 from determined.common.experimental.metrics import TrainingMetrics, TrialMetrics, ValidationMetrics
-from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy  # noqa: F401
+from determined.common.experimental.model import (  # noqa: F401
+    Model,
+    ModelOrderBy,
+    ModelSortBy,
+    ModelVersion,
+)
 from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.project import Project  # noqa: F401
 from determined.common.experimental.resource_pool import ResourcePool  # noqa: F401
@@ -631,6 +636,6 @@ def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[Validatio
 
 
 @_require_singleton
-def _get_singleton_session() -> Session:
+def _get_singleton_session() -> _api.Session:
     assert _determined is not None
     return _determined._session

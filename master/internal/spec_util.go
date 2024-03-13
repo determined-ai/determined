@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -34,28 +35,20 @@ func (m *Master) ResolveResources(
 	slots int,
 	workspaceID int,
 	isSingleNode bool,
-) (string, []pkgCommand.LaunchWarning, error) {
-	poolName, err := m.rm.ResolveResourcePool(
-		resourcePool, workspaceID, slots)
+) (rm.ResourcePoolName, []pkgCommand.LaunchWarning, error) {
+	poolName, err := m.rm.ResolveResourcePool(rm.ResourcePoolName(resourcePool), workspaceID, slots)
 	if err != nil {
 		return "", nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err = m.rm.ValidateResources(poolName, slots, isSingleNode); err != nil {
+	launchWarnings, err := m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+		ResourcePool: poolName.String(),
+		Slots:        slots,
+		IsSingleNode: isSingleNode,
+	})
+	if err != nil {
 		return "", nil, fmt.Errorf("validating resources: %v", err)
 	}
-
-	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
-		&sproto.ValidateResourcePoolAvailabilityRequest{
-			Name:  poolName,
-			Slots: slots,
-		},
-	)
-	if err != nil {
-		return "", launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
-	}
-	if m.config.ResourceManager.AgentRM != nil &&
-		m.config.LaunchError &&
-		len(launchWarnings) > 0 {
+	if m.config.LaunchError && len(launchWarnings) > 0 {
 		return "", nil, errors.New("slots requested exceeds cluster capacity")
 	}
 
@@ -64,7 +57,7 @@ func (m *Master) ResolveResources(
 
 // Fill and return TaskSpec.
 func (m *Master) fillTaskSpec(
-	poolName string,
+	poolName rm.ResourcePoolName,
 	agentUserGroup *model.AgentUserGroup,
 	userModel *model.User,
 ) (tasks.TaskSpec, error) {

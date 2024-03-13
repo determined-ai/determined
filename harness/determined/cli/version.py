@@ -6,20 +6,20 @@ import requests
 import termcolor
 from packaging import version
 
-import determined
-import determined.cli
+import determined as det
+from determined import cli
 from determined.cli import render
 from determined.common import api
 from determined.common.declarative_argparse import Cmd
 
 
-def get_version(host: str) -> Dict[str, Any]:
-    client_info = {"version": determined.__version__}
+def get_version(sess: api.BaseSession) -> Dict[str, Any]:
+    client_info = {"version": det.__version__}
 
     master_info = {"cluster_id": "", "master_id": "", "version": ""}
 
     try:
-        master_info = api.get(host, "info", authenticated=False).json()
+        master_info = sess.get("info").json()
         # Most connection errors mean that the master is unreachable, which this function handles.
         # An SSL error, however, means it was reachable but something went wrong, so let that error
         # propagate out.
@@ -28,11 +28,11 @@ def get_version(host: str) -> Dict[str, Any]:
     except api.errors.MasterNotFoundException:
         pass
 
-    return {"client": client_info, "master": master_info, "master_address": host}
+    return {"client": client_info, "master": master_info, "master_address": sess.master}
 
 
-def check_version(parsed_args: argparse.Namespace) -> None:
-    info = get_version(parsed_args.master)
+def check_version(sess: api.BaseSession, args: argparse.Namespace) -> None:
+    info = get_version(sess)
 
     master_version = info["master"]["version"]
     client_version = info["client"]["version"]
@@ -42,7 +42,7 @@ def check_version(parsed_args: argparse.Namespace) -> None:
                 "Master not found at {}. "
                 "Hint: Remember to set the DET_MASTER environment variable "
                 "to the correct Determined master IP and port or use the '-m' flag.".format(
-                    parsed_args.master
+                    args.master
                 ),
                 "yellow",
             ),
@@ -68,8 +68,9 @@ def check_version(parsed_args: argparse.Namespace) -> None:
         )
 
 
-def describe_version(parsed_args: argparse.Namespace) -> None:
-    info = get_version(parsed_args.master)
+def describe_version(args: argparse.Namespace) -> None:
+    sess = cli.unauth_session(args)
+    info = get_version(sess)
 
     print(render.format_object_as_yaml(info))
 

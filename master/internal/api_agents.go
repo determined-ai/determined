@@ -19,7 +19,7 @@ import (
 func (a *apiServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
 ) (*apiv1.GetAgentsResponse, error) {
-	resp, err := a.m.rm.GetAgents(req)
+	resp, err := a.m.rm.GetAgents()
 	if err != nil {
 		return nil, err
 	}

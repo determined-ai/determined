@@ -92,14 +92,14 @@ func (s *Service) jobQRefs(jobQ map[model.JobID]*sproto.RMJobInfo) (map[model.Jo
 
 // GetJobs returns a list of jobs for a resource pool.
 func (s *Service) GetJobs(
-	resourcePool string,
+	resourcePool rm.ResourcePoolName,
 	desc bool,
 	states []jobv1.State,
 ) ([]*jobv1.Job, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	jobQ, err := s.rm.GetJobQ(sproto.GetJobQ{ResourcePool: resourcePool})
+	jobQ, err := s.rm.GetJobQ(resourcePool)
 	if err != nil {
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
@@ -113,9 +113,7 @@ func (s *Service) GetJobs(
 	// If the GetExternalJobs call is supported, RM returns a list of external jobs or
 	// an error if there is any problem. Otherwise, RM returns rmerrors.ErrNotSupported
 	// error. In this case, continue without the External jobs.
-	externalJobs, err := s.rm.GetExternalJobs(sproto.GetExternalJobs{
-		ResourcePool: resourcePool,
-	})
+	externalJobs, err := s.rm.GetExternalJobs(resourcePool)
 	if err != nil {
 		// If the error is not 'ErrNotSupported' error, propagate the error upwards.
 		if err != rmerrors.ErrNotSupported {
@@ -162,11 +160,11 @@ func (s *Service) GetJobs(
 }
 
 // GetJobSummary returns a summary of the job given an id and resource pool.
-func (s *Service) GetJobSummary(id model.JobID, resourcePool string) (*jobv1.JobSummary, error) {
+func (s *Service) GetJobSummary(id model.JobID, resourcePool rm.ResourcePoolName) (*jobv1.JobSummary, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	jobQ, err := s.rm.GetJobQ(sproto.GetJobQ{ResourcePool: resourcePool})
+	jobQ, err := s.rm.GetJobQ(resourcePool)
 	if err != nil {
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err

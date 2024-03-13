@@ -19,9 +19,8 @@ The steps to set up Zapier webhook are:
  Creating a Zap with Webhook
 *****************************
 
-First, you need to create a Zap with webhook. Visit the `Zapier Website
-<https://zapier.com/app/zaps>`_, signup if you haven't already, and click on the **Create Zap**
-button.
+First, you need to create a Zap with webhook. Visit `Zapier <https://zapier.com/>`_, signup if you
+haven't already, and click on the **Create Zap** button.
 
 Select **Webhooks by Zapier** as trigger **Catch Raw Hook** as event. Using **Catch Raw Hook**
 intead of **Catch Hook** because headers are needed to verify each webhook request.

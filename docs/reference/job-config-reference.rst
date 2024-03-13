@@ -45,9 +45,9 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1`` for NVIDIA GPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1`` for NVIDIA GPUs.
       -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
-      -  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.27.1`` for CPUs.
+      -  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.29.1`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.
@@ -61,9 +61,9 @@ The following configuration settings are supported:
    -  ``pod_spec``: Only applicable when running Determined on Kubernetes. Applies a pod spec to the
       pods that are launched by Determined for this task. See :ref:`custom-pod-specs` for details.
 
-   -  ``registry_auth``: Specifies the `Docker registry credentials
-      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a
-      Docker image, if needed.
+   -  ``registry_auth``: Defines the default `Docker registry credentials
+      <https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when
+      pulling a custom base Docker image, if needed.
 
       -  ``username`` (required)
       -  ``password`` (required)

@@ -4,18 +4,9 @@ source /run/determined/task-setup.sh
 
 set -e
 
-STARTUP_HOOK="startup-hook.sh"
-export PATH="/run/determined/pythonuserbase/bin:$PATH"
-if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
-    export DET_PYTHON_EXECUTABLE="python3"
-fi
-
-# Unlike trial and notebook entrypoints, the HOME directory does not need to be
-# modified in this entrypoint because the HOME in the user's ssh session is set
-# by sshd at a later time.
-
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy --download_context_directory
 
+STARTUP_HOOK="startup-hook.sh"
 set -x
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 set +x

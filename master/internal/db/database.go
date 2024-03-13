@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -16,11 +15,9 @@ import (
 
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
-	Migrate(migrationURL string, actions []string) error
+	Migrate(migrationURL string, actions []string) (isNew bool, err error)
 	Close() error
 	GetOrCreateClusterID(telemetryID string) (string, error)
-	CheckExperimentExists(id int) (bool, error)
-	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	AddExperiment(experiment *model.Experiment, modelDef []byte, activeConfig expconf.ExperimentConfig) error
 	ExperimentIDByTrialID(trialID int) (int, error)
@@ -61,8 +58,6 @@ type DB interface {
 	GetTrialProfilerMetricsBatches(
 		labelsJSON []byte, offset, limit int,
 	) (model.TrialProfilerMetricsBatchBatch, error)
-	ProjectByName(workspaceName string, projectName string) (projectID int, err error)
-	ProjectExperiments(id int) (experiments []*model.Experiment, err error)
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,
 		err error)
@@ -95,7 +90,6 @@ type DB interface {
 	RecordInstanceStats(a *model.InstanceStats) error
 	EndInstanceStats(a *model.InstanceStats) error
 	EndAllInstanceStats() error
-	UpdateJobPosition(jobID model.JobID, position decimal.Decimal) error
 }
 
 var (

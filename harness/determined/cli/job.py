@@ -5,7 +5,7 @@ from typing import Any, List, Union
 from determined import cli
 from determined.cli import render
 from determined.common import api, util
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.util import parse_protobuf_timestamp
 
@@ -21,17 +21,16 @@ def parse_jobv2_resp(
     return jobs
 
 
-@authentication.required
 def ls(args: Namespace) -> None:
-    session = cli.setup_session(args)
-    pools = bindings.get_GetResourcePools(cli.setup_session(args))
+    sess = cli.setup_session(args)
+    pools = bindings.get_GetResourcePools(sess)
     is_priority = check_is_priority(pools, args.resource_pool)
 
     order_by = bindings.v1OrderBy.ASC if not args.reverse else bindings.v1OrderBy.DESC
 
     def get_with_offset(offset: int) -> bindings.v1GetJobsV2Response:
         return bindings.get_GetJobsV2(
-            session,
+            sess,
             resourcePool=args.resource_pool,
             offset=offset,
             limit=args.limit,
@@ -88,8 +87,8 @@ def ls(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
 
-@authentication.required
 def update(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     update = bindings.v1QueueControl(
         jobId=args.job_id,
         priority=args.priority,
@@ -98,22 +97,19 @@ def update(args: Namespace) -> None:
         behindOf=args.behind_of,
         aheadOf=args.ahead_of,
     )
-    bindings.post_UpdateJobQueue(
-        cli.setup_session(args), body=bindings.v1UpdateJobQueueRequest(updates=[update])
-    )
+    bindings.post_UpdateJobQueue(sess, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
 
-@authentication.required
 def process_updates(args: Namespace) -> None:
-    session = cli.setup_session(args)
+    sess = cli.setup_session(args)
     for arg in args.operation:
         inputs = validate_operation_args(arg)
-        _single_update(session=session, **inputs)
+        _single_update(sess, **inputs)
 
 
 def _single_update(
-    job_id: str,
     session: api.Session,
+    job_id: str,
     priority: str = "",
     weight: str = "",
     resource_pool: str = "",

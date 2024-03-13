@@ -14,8 +14,7 @@ import appdirs
 import docker
 
 from determined.common import constants, util
-from determined.deploy.errors import MasterTimeoutExpired
-from determined.deploy.healthcheck import wait_for_master
+from determined.deploy import errors, healthcheck
 
 AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
 MASTER_PORT_DEFAULT = 8080
@@ -110,11 +109,11 @@ def get_proxy_addr() -> str:
         return ""
 
 
-def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
+def _wait_for_master(master: str, cluster_name: str) -> None:
     try:
-        wait_for_master(master_host, master_port)
+        healthcheck.wait_for_master(master)
         return
-    except MasterTimeoutExpired:
+    except errors.MasterTimeoutExpired:
         print("Timed out connecting to master, but attempting to dump logs from cluster...")
         logs(cluster_name=cluster_name, follow=False)
         raise ConnectionError("Timed out connecting to master")
@@ -273,7 +272,7 @@ def master_up(
             hostname="determined-master",
         )
 
-        _wait_for_master("localhost", port, cluster_name)
+        _wait_for_master(f"http://localhost:{port}", cluster_name)
 
         # Remove all cleanup methods from ExitStack.
         exit_stack.pop_all()
@@ -449,7 +448,7 @@ def agent_up(
     if agent_resource_pool is not None:
         environment["DET_RESOURCE_POOL"] = agent_resource_pool
 
-    _wait_for_master(master_host, master_port, cluster_name)
+    _wait_for_master(f"http://{master_host}:{master_port}", cluster_name)
 
     if master_host == "localhost":
         master_host = get_proxy_addr()

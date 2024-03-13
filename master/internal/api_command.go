@@ -133,7 +133,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	// Copy discovered (default) resource pool name and slot count.
 	fillTaskConfig(resources.Slots, taskSpec, &config.Environment)
-	config.Resources.ResourcePool = poolName
+	config.Resources.ResourcePool = poolName.String()
 	config.Resources.Slots = resources.Slots
 
 	var contextDirectory []byte

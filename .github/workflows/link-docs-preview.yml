@@ -27,7 +27,7 @@ jobs:
           echo "branch: $BRANCH"
           SUM="$(echo -n "$BRANCH" | md5sum | awk '{print $1}')" && echo $SUM
           echo "SUM=${SUM}" >> $GITHUB_OUTPUT
-      - uses: peter-evans/create-or-update-comment@v3
+      - uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.DETERMINED_TOKEN }}
           issue-number: ${{ github.event.number }}

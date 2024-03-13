@@ -15,9 +15,9 @@ In this guide, you'll learn how to use the DeepSpeed API.
 | :ref:`deepspeed-reference`                                            |
 +-----------------------------------------------------------------------+
 
-`DeepSpeed <https://deepspeed.ai/>`_ is a Microsoft library that supports large-scale, distributed
-learning with sharded optimizer state training and pipeline parallelism. Determined supports
-DeepSpeed with the :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` API.
+`DeepSpeed <https://www.deepspeed.ai/>`_ is a Microsoft library that supports large-scale,
+distributed learning with sharded optimizer state training and pipeline parallelism. Determined
+supports DeepSpeed with the :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` API.
 :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` provides a way to use an automated training
 loop with DeepSpeed.
 

@@ -4,8 +4,9 @@ import time
 
 import pytest
 
-from determined.common import check, yaml
+from determined.common import yaml
 from determined.common.api import bindings
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -14,6 +15,8 @@ from tests import experiment as exp
 @pytest.mark.e2e_pbs
 @pytest.mark.timeout(20 * 60)
 def test_noop_pause_hpc() -> None:
+    sess = api_utils.user_session()
+
     # The original configuration file, which we will need to modify for HPC
     # clusters. We choose a configuration file that will create an experiment
     # that runs long enough to allow us to pause it after the first check
@@ -23,14 +26,14 @@ def test_noop_pause_hpc() -> None:
     config_file = conf.fixtures_path("no_op/single-hpc.yaml")
 
     # Walk through starting, pausing, and resuming a single no-op experiment.
-    experiment_id = exp.create_experiment(config_file, conf.fixtures_path("no_op"), None)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.RUNNING)
+    experiment_id = exp.create_experiment(sess, config_file, conf.fixtures_path("no_op"), None)
+    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.RUNNING)
 
     # Wait for the only trial to get scheduled.
-    exp.wait_for_experiment_active_workload(experiment_id)
+    exp.wait_for_experiment_active_workload(sess, experiment_id)
 
     # Wait for the only trial to show progress, indicating the image is built and running.
-    exp.wait_for_experiment_workload_progress(experiment_id)
+    exp.wait_for_experiment_workload_progress(sess, experiment_id)
 
     # If we pause the experiment before it gets to write at least one checkpoint,
     # then we're really not testing whether the experiment can pick up from where
@@ -38,30 +41,28 @@ def test_noop_pause_hpc() -> None:
     # starts from the beginning upon finding that are no checkpoints to start
     # from.  Therefore, wait a while to give the experiment a chance to write at
     # least one checkpoint.
-    exp.wait_for_at_least_one_checkpoint(experiment_id)
+    exp.wait_for_at_least_one_checkpoint(sess, experiment_id)
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
-    exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.PAUSED)
+    exp.pause_experiment(sess, experiment_id)
+    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
 
     # Wait at most 420 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
     for _ in range(420):
-        workload_active = exp.experiment_has_active_workload(experiment_id)
+        workload_active = exp.experiment_has_active_workload(sess, experiment_id)
         if not workload_active:
             break
         else:
             time.sleep(1)
-    check.true(
-        not workload_active,
-        "The experiment cannot be paused within 420 seconds.",
-    )
+    else:
+        raise ValueError("The experiment cannot be paused within 420 seconds.")
 
     # Resume the experiment and wait for completion.
-    exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.COMPLETED)
+    exp.activate_experiment(sess, experiment_id)
+    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
 
 
 def remove_item_from_yaml_file(filename: str, item_name: str) -> str:

@@ -530,6 +530,14 @@ func TestRestore(t *testing.T) {
 	db, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
 		*ar = restoredAr
 	})
+
+	rID, resources := requireAssigned(t, pgDB, restoredAr.AllocationID, q)
+	q.Put(&sproto.ResourcesAllocated{
+		ID:           restoredAr.AllocationID,
+		ResourcePool: restoredAr.ResourcePool,
+		Resources:    map[sproto.ResourcesID]sproto.Resources{rID: resources},
+		Recovered:    true,
+	})
 	defer requireKilled(t, db, id, q, exitFuture)
 }
 

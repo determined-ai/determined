@@ -65,9 +65,6 @@ class Cert:
         return self._name
 
 
-cli_cert = None  # type: Optional[Cert]
-
-
 class CertStore:
     """
     CertStore represents a persistent file-based record of certificates, each associated with a

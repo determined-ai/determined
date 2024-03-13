@@ -46,8 +46,8 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/host/>`__ will be used instead. Defaults to
-``bridge``.
+host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
 
@@ -89,9 +89,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1`` for NVIDIA GPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.27.1`` for CPUs.
+-  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.29.1`` for CPUs.
 
 ``environment_variables``
 =========================
@@ -123,8 +123,8 @@ Defaults to ``false``.
 =================
 
 Defines the default `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a custom
-base Docker image, if needed. If credentials are specified in the :ref:`experiment config
+<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
+custom base Docker image, if needed. If credentials are specified in the :ref:`experiment config
 <exp-environment-image>` this default value is overridden. Credentials are specified as the
 following nested fields:
 
@@ -841,8 +841,8 @@ to ``determinedai/determined-agent:<master version>``.
 ------------------------
 
 The Docker network to use for the Determined agent and task containers. If this is set to ``host``,
-`Docker host-mode networking <https://docs.docker.com/network/host/>`__ will be used instead. The
-default value is ``determined``.
+`Docker host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used
+instead. The default value is ``determined``.
 
 ``agent_docker_runtime``
 ------------------------
@@ -1182,11 +1182,10 @@ inside Google Compute Engine (GCE), the simplest approach is to ensure that the 
 Determined are running in a service account that has the "Storage Object Admin" role on the GCS
 bucket being used for checkpoints. As an alternative (or when running outside of GCE), you can add
 the appropriate `service account credentials
-<https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
-to your container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS``
-environment variable to the container path where the credentials are located. See
-:ref:`environment-variables` for more information on how to set environment variables in trial
-environments.
+<https://cloud.google.com/docs/authentication/provide-credentials-adc#attached-sa>`__ to your
+container (e.g., via a bind-mount), and then set the ``GOOGLE_APPLICATION_CREDENTIALS`` environment
+variable to the container path where the credentials are located. See :ref:`environment-variables`
+for more information on how to set environment variables in trial environments.
 
 ``bucket``
 ----------
@@ -1439,6 +1438,12 @@ Whether this feature is enabled. Defaults to ``true``.
 Integer identifier of a role to be assigned. Defaults to ``2``, which is the role id of
 ``WorkspaceAdmin`` role.
 
+``initial_user_password``
+=========================
+
+Initial password for the built-in ``determined`` and ``admin`` users. Applies on first launch when a
+cluster's database is bootstrapped, otherwise it is ignored.
+
 **************
  ``webhooks``
 **************
@@ -1497,8 +1502,7 @@ Trial logs are shipped to the master and stored in Postgres. If nothing is set, 
 =================
 
 Trial logs are shipped to the Elasticsearch cluster described by the configuration settings in the
-section. See :ref:`the topic guide <elasticsearch-logging-backend>` for a more detailed explanation
-of how and when to use Elasticsearch.
+section.
 
 ``host``
 --------

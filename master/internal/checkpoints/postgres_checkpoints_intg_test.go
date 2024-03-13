@@ -246,8 +246,8 @@ func TestUpdateCheckpointSize(t *testing.T) {
 	user := db.RequireMockUser(t, db.SingleDB())
 
 	var resources []map[string]int64
-	for i := 0; i < 8; i++ {
-		resources = append(resources, map[string]int64{"TEST": int64(i) + 1})
+	for i := 1; i <= 8; i++ {
+		resources = append(resources, map[string]int64{"TEST": int64(i)})
 	}
 
 	// Create two experiments with two trials each with two checkpoints.
@@ -366,7 +366,7 @@ func TestUpdateCheckpointSize(t *testing.T) {
 	verifySizes(e)
 }
 
-func TestDeleteCheckpoints(t *testing.T) {
+func TestUpdateCheckpointStateToDeleted(t *testing.T) {
 	ctx := context.Background()
 
 	user := db.RequireMockUser(t, db.SingleDB())
@@ -385,73 +385,64 @@ func TestDeleteCheckpoints(t *testing.T) {
 	err = db.AddCheckpointMetadata(ctx, &checkpoint2, tr.ID)
 	require.NoError(t, err)
 
-	ckpt3 := uuid.New()
-	checkpoint3 := db.MockModelCheckpoint(ckpt3, allocation)
-	err = db.AddCheckpointMetadata(ctx, &checkpoint3, tr.ID)
-	require.NoError(t, err)
-
-	// Insert a model.
-	now := time.Now()
-	mdl := db.Model{
-		Name:            uuid.NewString(),
-		Description:     "some important model",
-		CreationTime:    now,
-		LastUpdatedTime: now,
-		Labels:          []string{"some other label"},
-		UserID:          user.ID,
-		WorkspaceID:     1,
-	}
-	mdlNotes := "some notes3"
-	pmdl, err := db.InsertModel(ctx, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
-	)
-
-	require.NoError(t, err)
-
-	// Register checkpoint_1 and checkpoint_2 in ModelRegistry
-	retCkpt1, err := db.GetCheckpoint(ctx, checkpoint1.UUID.String())
-	require.NoError(t, err)
-
-	retCkpt2, err := db.GetCheckpoint(ctx, checkpoint2.UUID.String())
-	require.NoError(t, err)
-
-	mv := modelv1.ModelVersion{
-		Model:      pmdl,
-		Checkpoint: retCkpt1,
-		Name:       "checkpoint 1",
-		Comment:    "empty",
-	}
-	_, err = db.InsertModelVersion(ctx, pmdl.Id, retCkpt1.Uuid, mv.Name, mv.Comment,
-		emptyMetadata, strings.Join(mv.Labels, ","), mv.Notes, user.ID,
-	)
-	require.NoError(t, err)
-
-	mv = modelv1.ModelVersion{
-		Model:      pmdl,
-		Checkpoint: retCkpt2,
-		Name:       "checkpoint 2",
-		Comment:    "empty",
-	}
-	_, err = db.InsertModelVersion(ctx, pmdl.Id, retCkpt2.Uuid, mv.Name, mv.Comment,
-		emptyMetadata, strings.Join(mv.Labels, ","), mv.Notes, user.ID,
-	)
-	require.NoError(t, err)
-
-	validDeleteCheckpoint := checkpoint3.UUID
-	numValidDCheckpoints := 1
-
-	require.NoError(t, MarkCheckpointsDeleted(ctx, []uuid.UUID{validDeleteCheckpoint}))
+	require.NoError(t, MarkCheckpointsDeleted(ctx, []uuid.UUID{checkpoint1.UUID}))
 
 	var numDStateCheckpoints int
+
 	err = db.Bun().NewSelect().
 		TableExpr("checkpoints_view AS c").
 		ColumnExpr("count(c.uuid) AS numC").
-		Where("c.uuid::text = ? AND c.state = 'DELETED'", validDeleteCheckpoint).
+		Where("c.uuid::text = ? AND c.state = 'DELETED'", checkpoint1.UUID).
 		Scan(ctx, &numDStateCheckpoints)
 	require.NoError(t, err)
 
-	require.Equal(t, numValidDCheckpoints, numDStateCheckpoints,
-		"didn't correctly delete the valid checkpoints")
+	require.Equal(t, 1, numDStateCheckpoints, "didn't mark checkpoint as deleted")
+
+	err = db.Bun().NewSelect().
+		TableExpr("checkpoints_view AS c").
+		ColumnExpr("count(c.uuid) AS numC").
+		Where("c.uuid::text = ? AND c.state = 'DELETED'", checkpoint2.UUID).
+		Scan(ctx, &numDStateCheckpoints)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, numDStateCheckpoints)
+}
+
+func TestDeleteCheckpoints(t *testing.T) {
+	// Verify that checkpoints only get deleted when their state is 'DELETED', indicating that all
+	// corresponding checkpoint files were thoroughly removed from storage.
+	ctx := context.Background()
+
+	user := db.RequireMockUser(t, db.SingleDB())
+	exp := db.RequireMockExperiment(t, db.SingleDB(), user)
+	tr, task := db.RequireMockTrial(t, db.SingleDB(), exp)
+	allocation := db.RequireMockAllocation(t, db.SingleDB(), task.TaskID)
+
+	// Create checkpoints
+	ckpt1 := uuid.New()
+	checkpoint1 := db.MockModelCheckpoint(ckpt1, allocation)
+	err := db.AddCheckpointMetadata(ctx, &checkpoint1, tr.ID)
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewDelete().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Exec(ctx)
+	require.NoError(t, err)
+
+	// Verify that checkpoint wasn't deleted since its state is not 'DELETED'.
+	ct, err := db.Bun().NewSelect().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, ct)
+
+	_, err = db.Bun().NewUpdate().Model(&model.CheckpointV2{}).Set("state = ?", "DELETED").
+		Where("uuid = ?", ckpt1).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewDelete().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Exec(ctx)
+	require.NoError(t, err)
+
+	// Verify that checkpoint was deleted once its state was marked 'DELETED'.
+	ct, err = db.Bun().NewSelect().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, ct)
 }
 
 func BenchmarkUpdateCheckpointSize(b *testing.B) {

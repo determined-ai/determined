@@ -4,21 +4,28 @@
  Deploy on GCP
 ###############
 
-This document describes how Determined runs on Google Cloud Platform (GCP). For installation, see
+This page describes how Determined runs on Google Cloud Platform (GCP). For installation, see
 :ref:`install-gcp`.
 
-At a high level, Determined uses Google Compute Engine (GCE) instances as the base unit. The cluster
-is managed by a `master` node (a single, non-GPU instance), which in turn provisions and
-deprovisions other `agent` nodes (GPU instances) depending on the current volume of experiments
-being run on the cluster. As an example, if only a `master` node is running, then you are only being
-charged for the master. When an experiment is started, the master creates GPU instances as `agents`,
-and when the experiment is done the master will turn off the `agents` so you are not charged for
-them when no experiments are using them. The master also keeps all experiment metadata in a separate
-database, which can be queried by the user via the Determined WebUI or CLI. All nodes in the cluster
-communicate with each other internally within the Virtual Private Cloud (VPC) and the user interacts
-with the master via a designated port configured during installation.
+.. important::
 
-The diagram below outlines the high level architecture of a Determined cluster in GCP.
+   This does not automatically provision a Google Kubernetes Engine (GKE) cluster. If you intend to
+   use Kubernetes, please refer to :ref:`setup-gke-cluster`.
+
+Determined uses Google Compute Engine (GCE) instances as its base unit. The cluster is managed by a
+*master* node (a single non-GPU instance), which in turn provisions and deprovisions other *agent*
+nodes (GPU instances) depending on the current volume of experiments being run on the cluster.
+
+For instance, if only a *master* node is running, charges are incurred solely for the master. When
+an experiment starts, the master dynamically provisions GPU instances as *agents*. Once the
+experiment concludes, these agents are deactivated to avoid unnecessary charges.
+
+In addition, the master maintains experiment metadata in a dedicated database accessible via the
+Determined WebUI or CLI. All nodes in the cluster communicate with each other internally within the
+Virtual Private Cloud (VPC) and the user interacts with the master via a designated port configured
+during installation.
+
+The diagram below depicts a Determined cluster in GCP.
 
 .. image:: /assets/images/det-cloud-architecture.png
    :alt: Diagram showing Determined Cloud Deployment Architecture on GCP

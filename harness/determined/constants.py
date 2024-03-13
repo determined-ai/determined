@@ -27,9 +27,6 @@ DEFAULT_EXP_CFG = {
 
 DTRAIN_SSH_PORT = int(str(os.getenv("DTRAIN_SSH_PORT", "12350")))
 
-# GLOO port used by Horovod for the Gloo controller.
-HOROVOD_GLOO_RENDEZVOUS_PORT = int(str(os.getenv("HOROVOD_GLOO_RENDEZVOUS_PORT", "12355")))
-
 # Port for communicating between training processes. Used for reducing
 # validation metrics.
 INTER_TRAIN_PROCESS_COMM_PORT_1 = int(str(os.getenv("INTER_TRAIN_PROCESS_COMM_PORT_1", "12360")))

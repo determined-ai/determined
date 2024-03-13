@@ -1,4 +1,8 @@
 .pivoter {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+
   [role='tablist'] > div {
     &:global(.ant-tabs-nav-wrap)::before {
       box-shadow: none;

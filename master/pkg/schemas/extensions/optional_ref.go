@@ -1,4 +1,19 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// optionalRef behaves like $ref, except that it also allows the value to be null.
+//
+// This is logically equivalent to an anyOf with a {"type": "null"} element, but it has better
+// error messages.
+//
+// Example: The "internal" property of the experiment config may be a literal null:
+//
+//     "internal": {
+//         "type": [
+//             "object",
+//             "null"
+//         ],
+//         "optionalRef": "http://determined.ai/schemas/expconf/v0/internal.json",
+//         "default": null
+//     }
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions

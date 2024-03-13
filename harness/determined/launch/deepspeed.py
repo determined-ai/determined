@@ -22,7 +22,7 @@ import determined as det
 import determined.common
 from determined import constants, util
 from determined.common import api
-from determined.common.api import certs
+from determined.common.api import authentication, certs
 
 hostfile_path = None
 deepspeed_version = version.parse(deepspeed.__version__)
@@ -245,10 +245,6 @@ def main(script: List[str]) -> int:
     resources_id = os.environ.get("DET_RESOURCES_ID")
     assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 
-    # TODO: refactor websocket and profiling to to not use the cli_cert.
-    cert = certs.default_load(info.master_url)
-    certs.cli_cert = cert
-
     # The launch layer should provide the chief_ip to the training code, so that the training code
     # can function with a different launch layer in a different environment.  Inside Determined, the
     # easiest way to get the chief_ip is with container_addrs.
@@ -290,11 +286,10 @@ def main(script: List[str]) -> int:
 
         # Mark sshd containers as daemon containers that the master should kill when all non-daemon
         # containers (deepspeed launcher, in this case) have exited.
-        api.post(
-            info.master_url,
-            path=f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon",
-            cert=cert,
-        )
+        cert = certs.default_load(info.master_url)
+        utp = authentication.login_with_cache(info.master_url, cert=cert)
+        sess = api.Session(info.master_url, utp, cert)
+        sess.post(f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon")
 
         # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
         # This is useful for deepspeed which does not have good error handling for remote processes

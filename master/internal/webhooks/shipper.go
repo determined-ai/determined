@@ -101,7 +101,7 @@ func newWorker(id int) *worker {
 type worker struct {
 	// System dependencies.
 	log *log.Entry
-	cl  *http.Client
+	cl  *http.Client //nolint:forbidigo
 }
 
 func (w *worker) work(ctx context.Context, wake <-chan struct{}) {

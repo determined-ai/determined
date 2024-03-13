@@ -88,7 +88,7 @@ interacts with Slurm, we recommend the following steps:
 
 -  Enable Slurm for GPU Scheduling.
 
-   Configure Slurm with `SelectType=select/cons_tres <https://slurm.schedmd.com/cons_res.html>`__.
+   Configure Slurm with `SelectType=select/cons_tres <https://slurm.schedmd.com/cons_tres.html>`__.
    This enables Slurm to track GPU allocation instead of tracking only CPUs. When enabled,
    Determined submits batch jobs by specifying ``--gpus={slots_per_trial}``. If this is not
    available, you must change the :ref:`slurm section <cluster-configuration-slurm>`
@@ -510,7 +510,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-f66cbce
+      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-03ae7d7
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

@@ -4,25 +4,28 @@ from typing import Callable
 import pytest
 
 from determined import keras
+from determined.common import api
 from determined.experimental import client
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
 
-def _export_and_load_model(experiment_id: int, master_url: str) -> None:
+def _export_and_load_model(sess: api.Session, experiment_id: int, master_url: str) -> None:
     # Normally verifying that we can load a model would be a good unit test, but making this an e2e
     # test ensures that our model saving and loading works with all the versions of tf that we test.
-    ckpt = client.Determined(master_url).get_experiment(experiment_id).top_checkpoint()
+    ckpt = client.Determined._from_session(sess).get_experiment(experiment_id).top_checkpoint()
     _ = keras.load_model_from_checkpoint_path(ckpt.download())
 
 
-def export_and_load_model(experiment_id: int) -> None:
+def export_and_load_model(sess: api.Session, experiment_id: int) -> None:
     # We run this in a subprocess to avoid module name collisions
     # when performing checkpoint export of different models.
     ctx = multiprocessing.get_context("spawn")
     p = ctx.Process(
         target=_export_and_load_model,
         args=(
+            sess,
             experiment_id,
             conf.make_master_url(),
         ),
@@ -37,6 +40,7 @@ def export_and_load_model(experiment_id: int) -> None:
 def test_tf_keras_parallel(
     aggregation_frequency: int, collect_trial_profiles: Callable[[int], None]
 ) -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
@@ -45,13 +49,13 @@ def test_tf_keras_parallel(
     config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("iris_tf_keras"), 1
+        sess, config, conf.cv_examples_path("iris_tf_keras"), 1
     )
-    trials = exp.experiment_trials(experiment_id)
+    trials = exp.experiment_trials(sess, experiment_id)
     assert len(trials) == 1
 
     # Test exporting a checkpoint.
-    export_and_load_model(experiment_id)
+    export_and_load_model(sess, experiment_id)
     collect_trial_profiles(trials[0].trial.id)
 
     # Check on record/batch counts we emitted in logs.
@@ -68,4 +72,4 @@ def test_tf_keras_parallel(
         f"trained: {scheduling_unit * global_batch_size} records.*in {scheduling_unit} batches",
         f"validated: {validation_size} records.*in {exp_val_batches} batches",
     ]
-    exp.assert_patterns_in_trial_logs(trials[0].trial.id, patterns)
+    exp.assert_patterns_in_trial_logs(sess, trials[0].trial.id, patterns)

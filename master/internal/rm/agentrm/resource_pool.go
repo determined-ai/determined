@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -55,7 +55,7 @@ type resourcePool struct {
 	saveNotifications bool
 	notifications     []<-chan struct{}
 
-	db db.DB
+	db internaldb.DB
 }
 
 // actionCoolDown is the rate limit for scheduler action.
@@ -64,7 +64,7 @@ const actionCoolDown = 500 * time.Millisecond
 // newResourcePool initializes a new empty default resource provider.
 func newResourcePool(
 	config *config.ResourcePoolConfig,
-	db db.DB,
+	db internaldb.DB,
 	cert *tls.Certificate,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
@@ -178,7 +178,7 @@ func (rp *resourcePool) restoreResources(
 	allocationID := req.AllocationID
 
 	containerSnapshots := []containerSnapshot{}
-	err := db.Bun().NewSelect().Model(&containerSnapshots).
+	err := internaldb.Bun().NewSelect().Model(&containerSnapshots).
 		Relation("ResourcesWithState").
 		Where("resources_with_state.allocation_id = ?", allocationID).
 		Scan(context.TODO())
@@ -559,17 +559,15 @@ func (rp *resourcePool) NotifyAgentUpdated() {
 	rp.reschedule = true
 }
 
-func (rp *resourcePool) GetAllocationSummaries(
-	msg sproto.GetAllocationSummaries,
-) map[model.AllocationID]sproto.AllocationSummary {
+func (rp *resourcePool) GetAllocationSummaries() map[model.AllocationID]sproto.AllocationSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return rp.taskList.TaskSummaries(rp.groups, rp.config.Scheduler.GetType())
 }
 
-func (rp *resourcePool) ValidateCommandResources(
-	msg sproto.ValidateCommandResourcesRequest,
-) sproto.ValidateCommandResourcesResponse {
+func (rp *resourcePool) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) sproto.ValidateResourcesResponse {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
@@ -591,7 +589,7 @@ func (rp *resourcePool) ValidateCommandResources(
 		fulfillable = maxSlots >= msg.Slots
 	}
 
-	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
+	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
 // GetResourceSummary requests a summary of the resources used by the resource pool (agents, slots, cpu containers).
@@ -759,7 +757,7 @@ func (rp *resourcePool) moveJob(
 	if err != nil {
 		return err
 	}
-	if err := rp.db.UpdateJobPosition(jobID, jobPosition); err != nil {
+	if err := internaldb.UpdateJobPosition(context.TODO(), jobID, jobPosition); err != nil {
 		return err
 	}
 
@@ -774,13 +772,13 @@ func (rp *resourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	rp.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
-func (rp *resourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats {
+func (rp *resourcePool) GetJobQStats() *jobv1.QueueStats {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return tasklist.JobStats(rp.taskList)
 }
 
-func (rp *resourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
+func (rp *resourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 	return rp.scheduler.JobQInfo(rp)

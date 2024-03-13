@@ -8651,6 +8651,18 @@ export interface V1ResourcePool {
      * @memberof V1ResourcePool
      */
     stats?: V1QueueStats;
+    /**
+     * Resource manager name.
+     * @type {string}
+     * @memberof V1ResourcePool
+     */
+    resourceManagerName: string;
+    /**
+     * Resource manager's metadata.
+     * @type {{ [key: string]: string; }}
+     * @memberof V1ResourcePool
+     */
+    resourceManagerMetadata: { [key: string]: string; };
 }
 /**
  * 

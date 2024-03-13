@@ -62,29 +62,33 @@ class APIException(BadRequestException):
 
 
 class NotFoundException(APIException):
+    """The internal API's analog to a 404 Not Found HTTP status code."""
+
     def __init__(self, error_message: str) -> None:
         self.message = error_message
         self.status_code = 404
 
 
 class ForbiddenException(BadRequestException):
-    def __init__(self, username: str, message: str = ""):
+    """The internal API's analog to a 403 Forbidden HTTP status code."""
+
+    def __init__(self, message: str = ""):
         err_message = f"Forbidden({message})"
         if not (message == "invalid credentials" or message == "user not found"):
             err_message += ": Please contact your administrator in order to access this resource."
 
         super().__init__(message=err_message)
-        self.username = username
 
 
 class UnauthenticatedException(BadRequestException):
-    def __init__(self, username: str):
+    """The internal API's analog to a 401 Unauthorized HTTP status code."""
+
+    def __init__(self) -> None:
         super().__init__(
             message="Unauthenticated: Please use 'det user login <username>' for password login, or"
             " for Enterprise users logging in with an SSO provider,"
             " use 'det auth login --provider=<provider>'."
         )
-        self.username = username
 
 
 class CorruptTokenCacheException(Exception):

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"crypto/sha512"
 	"database/sql"
 	"fmt"
 	"net/http"
@@ -24,20 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
-
-const clientSidePasswordSalt = "GubPEmmotfiK9TMD6Zdw" // #nosec G101
-
-// replicateClientSideSaltAndHash replicates the password salt and hash done on the client side.
-// We need this because we hash passwords on the client side, but when SCIM posts a user with
-// a password to password sync, it doesn't - so when we try to log in later, we get a weird,
-// unrecognizable sha512 hash from the frontend.
-func replicateClientSideSaltAndHash(password string) string {
-	if password == "" {
-		return password
-	}
-	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
-	return fmt.Sprintf("%x", sum)
-}
 
 func (a *apiServer) Login(
 	ctx context.Context, req *apiv1.LoginRequest,
@@ -67,7 +52,7 @@ func (a *apiServer) Login(
 	if req.IsHashed {
 		hashedPassword = req.Password
 	} else {
-		hashedPassword = replicateClientSideSaltAndHash(req.Password)
+		hashedPassword = user.ReplicateClientSideSaltAndHash(req.Password)
 	}
 
 	if !userModel.ValidatePassword(hashedPassword) {

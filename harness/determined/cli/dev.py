@@ -7,57 +7,54 @@ import shlex
 import shutil
 import subprocess
 import sys
+import typing
 from argparse import Namespace
 from collections.abc import Sequence
-from typing import Any, Dict, List, OrderedDict, Tuple
+from typing import Any, Dict, List, Optional, OrderedDict, Tuple, Union, get_args, get_origin
 from urllib import parse
 
 from termcolor import colored
 
-import determined.cli.render
 from determined import cli
-from determined.cli import errors
-from determined.common.api import authentication, bindings
+from determined.cli import errors, render
+from determined.common.api import bindings
 from determined.common.api import errors as api_errors
-from determined.common.api import request
 from determined.common.declarative_argparse import Arg, Cmd
 
 
-@authentication.required
-def token(_: Namespace) -> None:
-    token = authentication.must_cli_auth().get_session_token()
-    print(token)
+def token(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    print(sess.token)
 
 
-@authentication.required
 def curl(args: Namespace) -> None:
-    assert authentication.cli_auth is not None
+    sess = cli.setup_session(args)
     if shutil.which("curl") is None:
         print(colored("curl is not installed on this machine", "red"))
         sys.exit(1)
 
     parsed = parse.urlparse(args.path)
-    if parsed.scheme:
+    if parsed.scheme or parsed.netloc:
         raise errors.CliError(
             "path argument does not support absolute URLs."
             + " Set the host path through `det` command"
         )
 
+    relpath = args.path.lstrip("/")
+
     cmd: List[str] = [
         "curl",
-        request.make_url_new(args.master, args.path),
+        f"{args.master}/{relpath}",
         "-H",
-        f"Authorization: Bearer {authentication.cli_auth.get_session_token()}",
+        f"Authorization: Bearer {sess.token}",
         "-s",
+        "--globoff",
     ]
     if args.curl_args:
         cmd += args.curl_args
 
     if args.x:
-        if hasattr(shlex, "join"):  # added in py 3.8
-            print(shlex.join(cmd))  # type: ignore
-        else:
-            print(" ".join(shlex.quote(arg) for arg in cmd))
+        print(shlex.join(cmd))
 
     if not sys.stdout.isatty():
         output = subprocess.run(cmd)
@@ -66,7 +63,7 @@ def curl(args: Namespace) -> None:
     output = subprocess.run(cmd, stdout=subprocess.PIPE)
     try:
         out = output.stdout.decode("utf8")
-        determined.cli.render.print_json(out)
+        render.print_json(out)
     except UnicodeDecodeError:
         print(
             "Failed to decode response as utf8. Redirect output to capture it.",
@@ -100,20 +97,13 @@ def unwrap_optional(annotation: Any) -> Any:
     """
     evaluates and unwraps a typing.Optional annotation to its inner type.
     """
-    import typing
-
-    try:
-        from typing import get_args, get_origin  # type: ignore
-    except ImportError:
-        raise errors.CliError("python >= 3.8 is required to use this feature")
-
     local_context = {
         "typing": typing,
-        "Optional": typing.Optional,
-        "Union": typing.Union,
-        "List": typing.List,
-        "Sequence": typing.Sequence,
-        "Dict": typing.Dict,
+        "Optional": Optional,
+        "Union": Union,
+        "List": List,
+        "Sequence": Sequence,
+        "Dict": Dict,
         "NoneType": type(None),
     }
     if isinstance(annotation, str):
@@ -124,10 +114,10 @@ def unwrap_optional(annotation: Any) -> Any:
     origin = get_origin(annotation)
     args = get_args(annotation)
 
-    if origin is typing.Union:
+    if origin is Union:
         if len(args) == 2 and type(None) in args:
             return args[0]
-    elif origin is typing.Optional:
+    elif origin is Optional:
         return args[0]
     return annotation
 
@@ -137,11 +127,6 @@ def is_supported_annotation(annot: Any) -> bool:
     determines if a our CLI deserializer supports a given type annotation
     and subsequently a binding's parameter.
     """
-    try:
-        from typing import get_args, get_origin  # type: ignore
-    except ImportError:
-        raise errors.CliError("python >= 3.8 is required to use this feature")
-
     annot = unwrap_optional(annot)
     supported_types = [str, int, float, type(None), bool]
     if annot in supported_types:
@@ -292,7 +277,6 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     return fn_name
 
 
-@authentication.required
 def call_bindings(args: Namespace) -> None:
     """
     support calling some bindings with primitive arguments via the cli

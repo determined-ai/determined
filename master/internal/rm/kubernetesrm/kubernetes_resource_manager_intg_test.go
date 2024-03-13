@@ -4,6 +4,7 @@
 package kubernetesrm
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -18,8 +19,12 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
+	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
@@ -437,6 +442,93 @@ func TestGetSlot(t *testing.T) {
 			require.Equal(t, test.wantedSlotNum, slotResp.Slot.Id)
 		})
 	}
+}
+
+func TestGetResourcePools(t *testing.T) {
+	expectedName := "testname"
+	expectedMetadata := map[string]string{"x": "y*y"}
+	cfg := &config.ResourceConfig{
+		RootManagerInternal: &config.ResourceManagerConfig{
+			KubernetesRM: &config.KubernetesResourceManagerConfig{
+				Name:                       expectedName,
+				Metadata:                   expectedMetadata,
+				MaxSlotsPerPod:             ptrs.Ptr(5),
+				DefaultAuxResourcePool:     "cpu-pool",
+				DefaultComputeResourcePool: "gpu-pool",
+			},
+		},
+		RootPoolsInternal: []config.ResourcePoolConfig{
+			{PoolName: "cpu-pool"},
+			{PoolName: "gpu-pool"},
+		},
+	}
+
+	mockPods := createMockPodsService(make(map[string]*k8sV1.Node), device.CUDA, true)
+	cpuPoolRef := &kubernetesResourcePool{
+		poolConfig:  &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+		podsService: mockPods,
+		reqList:     tasklist.New(),
+	}
+	gpuPoolRef := &kubernetesResourcePool{
+		poolConfig:  &config.ResourcePoolConfig{PoolName: "gpu-pool"},
+		podsService: mockPods,
+		reqList:     tasklist.New(),
+	}
+	kubernetesRM := &ResourceManager{
+		config:      cfg.ResourceManagers()[0].ResourceManager.KubernetesRM,
+		poolsConfig: cfg.ResourceManagers()[0].ResourcePools,
+		taskContainerDefaults: &model.TaskContainerDefaultsConfig{
+			Kubernetes: &model.KubernetesTaskContainerDefaults{
+				MaxSlotsPerPod: ptrs.Ptr(5),
+			},
+		},
+		pools: map[string]*kubernetesResourcePool{
+			"cpu-pool": cpuPoolRef,
+			"gpu-pool": gpuPoolRef,
+		},
+	}
+
+	resp, err := kubernetesRM.GetResourcePools()
+	require.NoError(t, err)
+	actual, err := json.MarshalIndent(resp.ResourcePools, "", "  ")
+	require.NoError(t, err)
+
+	expectedPools := []*resourcepoolv1.ResourcePool{
+		{
+			Name:                    "cpu-pool",
+			Type:                    resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
+			AuxContainerCapacity:    1,
+			SlotsPerAgent:           5,
+			DefaultAuxPool:          true,
+			SchedulerType:           resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
+			SchedulerFittingPolicy:  resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
+			Location:                "n/a",
+			InstanceType:            "n/a",
+			Details:                 &resourcepoolv1.ResourcePoolDetail{},
+			Stats:                   &jobv1.QueueStats{},
+			ResourceManagerName:     expectedName,
+			ResourceManagerMetadata: expectedMetadata,
+		},
+		{
+			Name:                    "gpu-pool",
+			Type:                    resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
+			SlotsPerAgent:           5,
+			AuxContainerCapacity:    1,
+			DefaultComputePool:      true,
+			SchedulerType:           resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
+			SchedulerFittingPolicy:  resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
+			Location:                "n/a",
+			InstanceType:            "n/a",
+			Details:                 &resourcepoolv1.ResourcePoolDetail{},
+			Stats:                   &jobv1.QueueStats{},
+			ResourceManagerName:     expectedName,
+			ResourceManagerMetadata: expectedMetadata,
+		},
+	}
+	expected, err := json.MarshalIndent(expectedPools, "", "  ")
+	require.NoError(t, err)
+
+	require.Equal(t, string(expected), string(actual))
 }
 
 func TestROCmPodsService(t *testing.T) {

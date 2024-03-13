@@ -1,0 +1,24 @@
+name: iris_tf_keras_cancelable
+data:
+  train_url: http://download.tensorflow.org/data/iris_training.csv
+  test_url: http://download.tensorflow.org/data/iris_test.csv
+resources:
+  slots_per_trial: 8
+  resource_pool: defq_GPU_cancelable
+hyperparameters:
+  learning_rate: 1.0e-4
+  learning_rate_decay: 1.0e-6
+  layer1_dense_size: 16
+  global_batch_size: 32
+searcher:
+  name: single
+  metric: val_categorical_accuracy
+  smaller_is_better: false
+  max_length:
+    batches: 500
+entrypoint: model_def:IrisTrial
+min_validation_period:
+  batches: 50
+min_checkpoint_period:
+  batches: 50
+max_restarts: 0

@@ -23,6 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -53,6 +56,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
@@ -638,15 +642,16 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 		var clientCAs *x509.CertPool
 		clientAuthMode := tls.NoClientCert
 
-		if agentRM := m.config.ResourceManager.AgentRM; agentRM != nil && agentRM.RequireAuthentication {
+		c, ok := m.config.GetAgentRMConfig()
+		if ok && c.ResourceManager.AgentRM.RequireAuthentication {
 			// Most connections don't require client certificates, but we do want to make sure that any that
 			// are provided are valid, so individual handlers that care can just check for the presence of
 			// certificates.
 			clientAuthMode = tls.VerifyClientCertIfGiven
 
-			if agentRM.ClientCA != "" {
+			if c.ResourceManager.AgentRM.ClientCA != "" {
 				clientCAs = x509.NewCertPool()
-				clientRootCA, iErr := os.ReadFile(agentRM.ClientCA)
+				clientRootCA, iErr := os.ReadFile(c.ResourceManager.AgentRM.ClientCA)
 				if iErr != nil {
 					return errors.Wrap(err, "failed to read agent CA file")
 				}
@@ -951,6 +956,53 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
+func buildRM(
+	db *db.PgDB,
+	echo *echo.Echo,
+	rmConfigs []*config.ResourceManagerWithPoolsConfig,
+	tcd *model.TaskContainerDefaultsConfig,
+	opts *aproto.MasterSetAgentOptions,
+	cert *tls.Certificate,
+) (rm.ResourceManager, error) {
+	if len(rmConfigs) <= 1 {
+		config := rmConfigs[0]
+		switch {
+		case config.ResourceManager.AgentRM != nil:
+			return agentrm.New(db, echo, config, opts, cert)
+		case config.ResourceManager.KubernetesRM != nil:
+			return kubernetesrm.New(db, config, tcd, opts, cert)
+		default:
+			return nil, fmt.Errorf("no expected resource manager config is defined")
+		}
+	}
+
+	// Set the default RM name for the multi-rm, from the default RM index.
+	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
+	rms := map[string]rm.ResourceManager{}
+
+	for _, cfg := range rmConfigs {
+		c := cfg.ResourceManager
+		switch {
+		case c.AgentRM != nil:
+			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = agentRM
+		case c.KubernetesRM != nil:
+			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = k8sRM
+		default:
+			return nil, fmt.Errorf("no expected resource manager config is defined")
+		}
+	}
+
+	return multirm.New(defaultRMName, rms), nil
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 //
 // gRPCLogInitDone is closed when the grpclog package's logger singletons are set. This is just
@@ -965,7 +1017,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	m.db, err = db.Setup(&m.config.DB)
+	var isBrandNewCluster bool
+	m.db, isBrandNewCluster, err = db.Setup(&m.config.DB)
 	if err != nil {
 		return err
 	}
@@ -974,6 +1027,21 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+
+	if isBrandNewCluster {
+		if password := m.config.Security.InitialUserPassword; password == "" {
+			log.Warn("This cluster was deployed without a default password for the built-in `determined` " +
+				"and `admin` users. You should set one using `det user change-password`. New clusters can be " +
+				"deployed with default passwords set using the `security.initial_user_password` setting.")
+		} else {
+			for _, username := range user.BuiltInUsers {
+				err := user.SetUserPassword(ctx, username, password)
+				if err != nil {
+					return fmt.Errorf("could not update default user password: %w", err)
+				}
+			}
+		}
 	}
 
 	webhookManager, err := webhooks.New(ctx)
@@ -988,9 +1056,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 	logpattern.SetDefault(l)
 
-	err = m.checkIfRMDefaultsAreUnbound(m.config.ResourceManager)
-	if err != nil {
-		return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
+	for _, r := range m.config.ResourceManagers() {
+		err = m.checkIfRMDefaultsAreUnbound(r.ResourceManager)
+		if err != nil {
+			return fmt.Errorf("could not validate cluster default resource pools: %s", err.Error())
+		}
 	}
 
 	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
@@ -1121,17 +1191,17 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	m.rm = rm.New(
-		m.db,
-		m.echo,
-		&m.config.ResourceConfig,
+	if m.rm, err = buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
 		},
 		cert,
-	)
+	); err != nil {
+		return fmt.Errorf("could not initialize resource manager(s): %w", err)
+	}
+
 	jobservice.SetDefaultService(m.rm)
 
 	tasksGroup := m.echo.Group("/tasks")
@@ -1334,7 +1404,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	go func() {
 		_ = ssup.Run(ctx)
 	}()
-	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket))
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
 
 	return m.startServers(ctx, cert, gRPCLogInitDone)
 }

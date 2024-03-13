@@ -193,7 +193,7 @@ large range of ports, as it does not require network address translation (NAT) a
 The host networking driver only works on Linux hosts, and is not supported on Docker Desktop for
 Mac, Docker Desktop for Windows, or Docker EE for Windows Server.
 
-See `Docker's documentation <https://docs.docker.com/network/host/>`_ for more details.
+See `Docker's documentation <https://docs.docker.com/network/drivers/host/>`_ for more details.
 
 .. note::
 
@@ -209,6 +209,7 @@ See `Docker's documentation <https://docs.docker.com/network/host/>`_ for more d
 
 By default, ``docker run`` will run in the foreground, so that a container can be stopped simply by
 pressing Control-C. If you wish to keep Determined running for the long term, consider running the
-containers `detached <https://docs.docker.com/engine/reference/run/#detached--d>`_ and/or with
-`restart policies <https://docs.docker.com/config/containers/start-containers-automatically/>`_.
-Using :ref:`our deployment tool <install-using-deploy>` is also an option.
+containers `detached <ttps://docs.docker.com/engine/reference/commandline/container_run/#detach>`_
+and/or with `restart policies
+<https://docs.docker.com/config/containers/start-containers-automatically/>`_. Using :ref:`our
+deployment tool <install-using-deploy>` is also an option.

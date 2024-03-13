@@ -17,6 +17,6 @@ Find resources and operations for preparing your container environment.
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :glob:
 
-   ./*
+   Set Environment Images <set-environment-images>
+   Customize Your Environment <custom-env>

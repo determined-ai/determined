@@ -9,7 +9,7 @@ Algorithm (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable fo
 experiments with hundreds or thousands of trials.
 
 *************
- Quick start
+ Quick Start
 *************
 
 Here are some suggested initial settings for ``adaptive_asha`` that typically work well.

@@ -10,7 +10,7 @@
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
-            <a class="tile" href="python-sdk.html">
+            <a class="tile" href="python-sdk/_index.html">
                  <h2 class="tile-title">Python SDK</h2>
                  <p class="tile-description">You can interact with a Determined cluster with the Python SDK.</p>
              </a>
@@ -46,9 +46,9 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="searcher/custom-searcher-reference.html">
-                 <h2 class="tile-title">Custom Searcher Reference</h2>
-                 <p class="tile-description">Reference documentation for custom search methods.</p>
+             <a class="tile" href="experiment-config-reference.html">
+                 <h2 class="tile-title">Experiment Configuration Reference</h2>
+                 <p class="tile-description">Reference documentation for the experiment config file.</p>
              </a>
          </div>
          <div class="tile-container">
@@ -67,8 +67,15 @@
    </div>
 
 .. toctree::
+   :maxdepth: 1
    :hidden:
-   :glob:
 
-   ./*
-   ./*/_index
+   Experiment Configuration Reference <experiment-config-reference>
+   Job Configuration Reference <job-config-reference>
+   Deployment Reference <deploy/_index>
+   Training Reference <training/_index>
+   Python SDK <python-sdk/_index>
+   REST API <rest-api>
+   Determined CLI Reference <cli-reference>
+   Model Hub APIs <model-hub/_index>
+   Customer Searcher Reference <custom-searcher-reference>

@@ -1,66 +1,44 @@
-from typing import List, NamedTuple
-
 import pytest
 
-from determined.common.api import request
-
-Case = NamedTuple("Case", [("base", str), ("path", str), ("expected", str)])
+from determined.common import api
 
 
-def gen_make_url_new_cases() -> List[Case]:
-    host = "http://localhost:8080"
-    path = "api/v1/experiments"
-    cases: List[Case] = [
-        Case("http://localhost:8080/", "", f"{host}/"),
-        Case("http://localhost:8080", "", f"{host}"),
-        Case("http://localhost:8080", "/api/v1/experiments", f"{host}/{path}"),
-        Case("http://localhost:8080", "api/v1/experiments/", f"{host}/{path}/"),
-        Case("http://localhost:8080/", "/api/v1/experiments", f"{host}/{path}"),
-        Case("http://localhost:8080/", "api/v1/experiments/", f"{host}/{path}/"),
-        Case("http://localhost:8080/proxied/", "", f"{host}/proxied/"),
-        Case("http://localhost:8080/proxied", "", f"{host}/proxied"),
-        Case("http://localhost:8080/proxied", f"/{path}", f"{host}/proxied/{path}"),
-        Case("http://localhost:8080/proxied", f"{path}/", f"{host}/proxied/{path}/"),
-        Case("http://localhost:8080/proxied/", f"/{path}", f"{host}/proxied/{path}"),
-        Case("http://localhost:8080/proxied/", f"{path}/", f"{host}/proxied/{path}/"),
-        Case(
-            "http://localhost:8080", f"{host}/{path}/", f"{host}/{path}/"
-        ),  # invalid path. unexpected case supported through (deprecated) make_url.
-    ]
-    return cases
+@pytest.mark.parametrize(
+    "url,exp",
+    [
+        # Bare hostname[:port] is converted to http [and port 8080].
+        ("host", "http://host:8080"),
+        ("host:99", "http://host:99"),
+        # Scheme-specific defaults are applied.
+        ("http://host", "http://host:80"),
+        ("https://host", "https://host:443"),
+        # Path is allowed, but trailing "/" is removed.
+        ("http://host/", "http://host:80"),
+        ("http://host:99/", "http://host:99"),
+        ("http://host:99/path", "http://host:99/path"),
+        ("http://host:99/path/", "http://host:99/path"),
+        # I guess if user and password are empty, we should remove the "@" and accept it.
+        ("http://@host:8080", "http://host:8080"),
+    ],
+)
+def test_canonicalize_master_url_valid(url: str, exp: str) -> None:
+    got = api.canonicalize_master_url(url)
+    assert got == exp
 
 
-@pytest.mark.parametrize("base, path, expected", gen_make_url_new_cases())
-def test_make_url_new(base: str, path: str, expected: str) -> None:
-    actual = request.make_url_new(base, path)
-    assert actual == expected, f"base: {base}, path: {path}"
-
-
-def gen_make_url_cases() -> List[Case]:
-    host = "http://localhost:8080"
-    path = "api/v1/experiments"
-    cases: List[Case] = [
-        Case("http://localhost:8080/", "", f"{host}/"),
-        Case("http://localhost:8080", "", f"{host}"),
-        Case("http://localhost:8080", "/api/v1/experiments", f"{host}/{path}"),
-        Case("http://localhost:8080", "api/v1/experiments/", f"{host}/{path}/"),
-        Case("http://localhost:8080/", "/api/v1/experiments", f"{host}/{path}"),
-        Case("http://localhost:8080/", "api/v1/experiments/", f"{host}/{path}/"),
-        Case("http://localhost:8080/proxied/", "", f"{host}/proxied/"),
-        Case("http://localhost:8080/proxied", "", f"{host}/proxied"),
-        Case("http://localhost:8080/proxied/", f"{path}/", f"{host}/proxied/{path}/"),
-        Case(
-            "http://localhost:8080", f"{host}/{path}/", f"{host}/{path}/"
-        ),  # invalid path. unexpected case.
-        # unsupported cases
-        # Case("http://localhost:8080/proxied", f"/{path}", f"{host}/proxied/{path}"),
-        # Case("http://localhost:8080/proxied", f"{path}/", f"{host}/proxied/{path}/"),
-        # Case("http://localhost:8080/proxied/", f"/{path}", f"{host}/proxied/{path}"),
-    ]
-    return cases
-
-
-@pytest.mark.parametrize("base, path, expected", gen_make_url_cases())
-def test_make_url(base: str, path: str, expected: str) -> None:
-    actual = request.make_url(base, path)
-    assert actual == expected, f"base: {base}, path: {path}"
+@pytest.mark.parametrize(
+    "url,exp",
+    [
+        # Reject user, password, query, or fragment.
+        ("http://user@host:8080", "must not contain username, password, query, or fragment"),
+        ("http://user:pass@host:8080", "must not contain username, password, query, or fragment"),
+        ("http://host?query=bad", "must not contain username, password, query, or fragment"),
+        ("http://host#fragment", "must not contain username, password, query, or fragment"),
+        # Reject empty hostname.
+        ("http://:8080", "must contain a nonempty hostname"),
+        ("http://", "must contain a nonempty hostname"),
+    ],
+)
+def test_canonicalize_master_url_invalid(url: str, exp: str) -> None:
+    with pytest.raises(ValueError, match=exp):
+        api.canonicalize_master_url(url)

@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -56,19 +57,18 @@ func MockRM() *mocks.ResourceManager {
 		return sproto.EmptyDeleteJobResponse()
 	}, nil)
 	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything).Return(
-		func(name string, _, _ int) string {
+		func(name rm.ResourcePoolName, _, _ int) rm.ResourcePoolName {
 			return name
 		},
 		nil,
 	)
-	mockRM.On("ValidateResources", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	mockRM.On("ValidateResources", mock.Anything).Return(nil, nil)
 	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
-		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
+		func(name rm.ResourcePoolName, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
 			return def
 		},
 		nil,
 	)
-	mockRM.On("ValidateResourcePoolAvailability", mock.Anything).Return(nil, nil)
 	mockRM.On("SetGroupMaxSlots", mock.Anything).Return()
 	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
 	mockRM.On("Allocate", mock.Anything).Return(func(msg sproto.AllocateRequest) *sproto.ResourcesSubscription {
@@ -114,9 +114,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 					ExternalSessions: model.ExternalSessions{},
 				},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
-				ResourceConfig: config.ResourceConfig{
-					ResourceManager: &config.ResourceManagerConfig{},
-				},
+				ResourceConfig:        *config.DefaultResourceConfig(),
 			},
 			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
 		},
@@ -501,7 +499,7 @@ func TestPatchUser(t *testing.T) {
 		UserId: int32(userID),
 		User: &userv1.PatchUser{
 			DisplayName: ptrs.Ptr(displayName),
-			Password:    ptrs.Ptr(replicateClientSideSaltAndHash(password)),
+			Password:    ptrs.Ptr(user.ReplicateClientSideSaltAndHash(password)),
 			IsHashed:    true,
 		},
 	})

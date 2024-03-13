@@ -129,7 +129,12 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	// Here, we just have to check that there are any certificates at all, since the top-level TLS
 	// config verifies that any certificates that are provided are valid.
 	if tlsConn, ok := cmuxConn.Conn.(*tls.Conn); ok {
-		requireAuth := config.GetMasterConfig().ResourceManager.AgentRM.RequireAuthentication
+		r, ok := config.GetMasterConfig().GetAgentRMConfig()
+		if !ok {
+			return fmt.Errorf("can't read agent config")
+		}
+		requireAuth := r.ResourceManager.AgentRM.RequireAuthentication
+
 		missingAuth := len(tlsConn.ConnectionState().PeerCertificates) == 0
 		if requireAuth && missingAuth {
 			a.syslog.WithField("remote-addr", tlsConn.RemoteAddr()).
@@ -151,8 +156,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	existingRef, ok := a.agents.Load(agentID(id))
 	if ok {
 		a.syslog.WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
-		existingRef.HandleWebsocketConnection(msg)
-		return nil
+		return existingRef.HandleWebsocketConnection(msg)
 	}
 
 	// If the agent actor is _not_ alive on our side and the agent is trying to reconnect,
@@ -173,11 +177,10 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	if err != nil {
 		return fmt.Errorf("adding agent because of incoming websocket: %w", err)
 	}
-	ref.HandleWebsocketConnection(msg)
-	return nil
+	return ref.HandleWebsocketConnection(msg)
 }
 
-func (a *agents) getAgents(msg *apiv1.GetAgentsRequest) *apiv1.GetAgentsResponse {
+func (a *agents) getAgents() *apiv1.GetAgentsResponse {
 	var response apiv1.GetAgentsResponse
 	for _, a := range a.summarize() {
 		response.Agents = append(response.Agents, a.ToProto())

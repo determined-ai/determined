@@ -7,7 +7,7 @@ from typing import Iterator, Optional, Type
 
 import determined as det
 from determined import core, horovod, load
-from determined.common.api import analytics, certs
+from determined.common.api import analytics
 
 logger = logging.getLogger("determined")
 
@@ -27,9 +27,6 @@ def main(train_entrypoint: str) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
-
-    # TODO: refactor profiling to to not use the cli_cert.
-    certs.cli_cert = certs.default_load(info.master_url)
 
     trial_class = load.trial_class_from_entrypoint(train_entrypoint)
 

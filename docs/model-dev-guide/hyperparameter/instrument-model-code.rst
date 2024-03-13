@@ -7,7 +7,7 @@ object in the Trial base class. This :class:`~determined.TrialContext` object ex
 :func:`~determined.TrialContext.get_hparam` method that takes the hyperparameter name. For example,
 to inject the value of the ``dropout_probability`` hyperparameter defined in the experiment
 configuration into the constructor of a PyTorch `Dropout
-<https://pytorch.org/docs/stable/nn.html#dropout>`_ layer:
+<https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html>`_ layer:
 
 .. code:: python
 

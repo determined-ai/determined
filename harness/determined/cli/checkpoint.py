@@ -4,9 +4,9 @@ from typing import Any, List, Optional
 
 from determined import cli, errors, experimental
 from determined.cli import render
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental.client import DownloadMode
+from determined.experimental import client
 
 
 def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] = None) -> None:
@@ -38,14 +38,14 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
     render.tabulate_or_csv(headers, [values], False)
 
 
-@authentication.required
 def list_checkpoints(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
     if args.best:
         sorter = bindings.checkpointv1SortBy.SEARCHER_METRIC
     else:
         sorter = bindings.checkpointv1SortBy.END_TIME
     r = bindings.get_GetExperimentCheckpoints(
-        cli.setup_session(args),
+        sess,
         id=args.experiment_id,
         limit=args.best,
         sortByAttr=sorter,
@@ -92,7 +92,9 @@ def list_checkpoints(args: argparse.Namespace) -> None:
 
 
 def download(args: argparse.Namespace) -> None:
-    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    checkpoint = d.get_checkpoint(args.uuid)
 
     try:
         path = checkpoint.download(path=args.output_dir, mode=args.mode)
@@ -106,26 +108,28 @@ def download(args: argparse.Namespace) -> None:
 
 
 def describe(args: argparse.Namespace) -> None:
-    checkpoint = experimental.Determined(args.master, args.user).get_checkpoint(args.uuid)
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    checkpoint = d.get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 
-@authentication.required
 def delete_checkpoints(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
     if args.yes or render.yes_or_no(
         "Deleting checkpoints will result in deletion of all data associated\n"
         "with each checkpoint in the checkpoint storage. Do you still want to proceed?"
     ):
         c_uuids = args.checkpoints_uuids.split(",")
         delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=c_uuids)
-        bindings.delete_DeleteCheckpoints(cli.setup_session(args), body=delete_body)
+        bindings.delete_DeleteCheckpoints(sess, body=delete_body)
         print("Deletion of checkpoints {} is in progress".format(args.checkpoints_uuids))
     else:
         print("Stopping deletion of checkpoints.")
 
 
-@authentication.required
 def checkpoints_file_rm(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
     if (
         args.yes
         or len(args.glob) == 0
@@ -139,7 +143,7 @@ def checkpoints_file_rm(args: argparse.Namespace) -> None:
             checkpointGlobs=args.glob,
             checkpointUuids=c_uuids,
         )
-        bindings.post_CheckpointsRemoveFiles(cli.setup_session(args), body=remove_body)
+        bindings.post_CheckpointsRemoveFiles(sess, body=remove_body)
 
         if len(args.glob) == 0:
             print(
@@ -177,15 +181,15 @@ main_cmd = Cmd(
                 ),
                 Arg(
                     "--mode",
-                    choices=list(DownloadMode),
-                    default=DownloadMode.AUTO,
-                    type=DownloadMode,
+                    choices=list(client.DownloadMode),
+                    default=client.DownloadMode.AUTO,
+                    type=client.DownloadMode,
                     help=(
                         "Select different download modes: "
-                        f"'{DownloadMode.DIRECT}' to directly download from checkpoint storage; "
-                        f"'{DownloadMode.MASTER}' to download via the master; "
-                        f"'{DownloadMode.AUTO}' to first attempt a direct download and fall "
-                        f"back to '{DownloadMode.MASTER}'."
+                        f"'{client.DownloadMode.DIRECT}' to directly download from checkpoint "
+                        f" storage; '{client.DownloadMode.MASTER}' to download via the master; "
+                        f"'{client.DownloadMode.AUTO}' to first attempt a direct download and fall "
+                        f"back to '{client.DownloadMode.MASTER}'."
                     ),
                 ),
             ],
