@@ -83,9 +83,18 @@ function truncate(
   if (textWidth <= maxWidth || textWidth <= ellipsisWidth) {
     return text;
   } else {
-    while (newText.length > 0 && textWidth + ellipsisWidth > maxWidth) {
-      newText = newText.substring(0, newText.length - 1);
+    // Binary search for the longest string below max width
+    let leftBound = 0;
+    let rightBound = text.length;
+    while (leftBound < rightBound) {
+      const subLength = Math.floor((leftBound + rightBound) / 2);
+      newText = text.substring(0, subLength);
       textWidth = ctx.measureText(newText).width;
+      if (textWidth + ellipsisWidth < maxWidth) {
+        leftBound = subLength + 1;
+      } else {
+        rightBound = subLength;
+      }
     }
     return newText + suffix;
   }
