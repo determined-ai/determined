@@ -20,7 +20,8 @@ message FlatRun {
         "state",
         "tags",
         "checkpoint_size",
-        "checkpoint_count"
+        "checkpoint_count",
+        "is_exp_multitrial"
       ]
     }
   };
@@ -57,7 +58,7 @@ message FlatRun {
   // Original id of a forked or continued experiment.
   optional google.protobuf.Int32Value forked_from = 16;
   // The id of external experiment
-  optional int32 external_experiment_id = 17;
+  optional string external_experiment_id = 17;
   // The resource pool the experiment was created in.
   optional string resource_pool = 18;
   // The current progress of a running experiment.
@@ -86,5 +87,5 @@ message FlatRun {
   // Unmanaged experiments are detached.
   optional bool unmanaged = 30;
   // True if the associated experiment is a multitrial experiment
-  optional bool is_exp_multitrial = 31;
+  bool is_exp_multitrial = 31;
 }

@@ -3964,11 +3964,10 @@ class v1FlatRun(Printable):
     experimentId: "typing.Optional[int]" = None
     experimentName: "typing.Optional[str]" = None
     experimentProgress: "typing.Optional[float]" = None
-    externalExperimentId: "typing.Optional[int]" = None
+    externalExperimentId: "typing.Optional[str]" = None
     externalRunId: "typing.Optional[int]" = None
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
-    isExpMultitrial: "typing.Optional[bool]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
     projectId: "typing.Optional[int]" = None
@@ -3989,6 +3988,7 @@ class v1FlatRun(Printable):
         checkpointCount: int,
         checkpointSize: str,
         id: int,
+        isExpMultitrial: bool,
         startTime: str,
         state: "trialv1State",
         tags: str,
@@ -3999,11 +3999,10 @@ class v1FlatRun(Printable):
         experimentId: "typing.Union[int, None, Unset]" = _unset,
         experimentName: "typing.Union[str, None, Unset]" = _unset,
         experimentProgress: "typing.Union[float, None, Unset]" = _unset,
-        externalExperimentId: "typing.Union[int, None, Unset]" = _unset,
+        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
-        isExpMultitrial: "typing.Union[bool, None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -4021,6 +4020,7 @@ class v1FlatRun(Printable):
         self.checkpointCount = checkpointCount
         self.checkpointSize = checkpointSize
         self.id = id
+        self.isExpMultitrial = isExpMultitrial
         self.startTime = startTime
         self.state = state
         self.tags = tags
@@ -4046,8 +4046,6 @@ class v1FlatRun(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
-        if not isinstance(isExpMultitrial, Unset):
-            self.isExpMultitrial = isExpMultitrial
         if not isinstance(ownerId, Unset):
             self.ownerId = ownerId
         if not isinstance(parentArchived, Unset):
@@ -4081,6 +4079,7 @@ class v1FlatRun(Printable):
             "checkpointCount": obj["checkpointCount"],
             "checkpointSize": obj["checkpointSize"],
             "id": obj["id"],
+            "isExpMultitrial": obj["isExpMultitrial"],
             "startTime": obj["startTime"],
             "state": trialv1State(obj["state"]),
             "tags": obj["tags"],
@@ -4107,8 +4106,6 @@ class v1FlatRun(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
-        if "isExpMultitrial" in obj:
-            kwargs["isExpMultitrial"] = obj["isExpMultitrial"]
         if "ownerId" in obj:
             kwargs["ownerId"] = obj["ownerId"]
         if "parentArchived" in obj:
@@ -4142,6 +4139,7 @@ class v1FlatRun(Printable):
             "checkpointCount": self.checkpointCount,
             "checkpointSize": self.checkpointSize,
             "id": self.id,
+            "isExpMultitrial": self.isExpMultitrial,
             "startTime": self.startTime,
             "state": self.state.value,
             "tags": self.tags,
@@ -4168,8 +4166,6 @@ class v1FlatRun(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
-        if not omit_unset or "isExpMultitrial" in vars(self):
-            out["isExpMultitrial"] = self.isExpMultitrial
         if not omit_unset or "ownerId" in vars(self):
             out["ownerId"] = self.ownerId
         if not omit_unset or "parentArchived" in vars(self):
