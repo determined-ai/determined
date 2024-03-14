@@ -3968,6 +3968,7 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
+    labels: "typing.Optional[typing.Sequence[str]]" = None
     ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
     projectId: "typing.Optional[int]" = None
@@ -3991,7 +3992,6 @@ class v1FlatRun(Printable):
         isExpMultitrial: bool,
         startTime: str,
         state: "trialv1State",
-        tags: str,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -4003,6 +4003,7 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -4023,7 +4024,6 @@ class v1FlatRun(Printable):
         self.isExpMultitrial = isExpMultitrial
         self.startTime = startTime
         self.state = state
-        self.tags = tags
         if not isinstance(displayName, Unset):
             self.displayName = displayName
         if not isinstance(duration, Unset):
@@ -4046,6 +4046,8 @@ class v1FlatRun(Printable):
             self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
+        if not isinstance(labels, Unset):
+            self.labels = labels
         if not isinstance(ownerId, Unset):
             self.ownerId = ownerId
         if not isinstance(parentArchived, Unset):
@@ -4082,7 +4084,6 @@ class v1FlatRun(Printable):
             "isExpMultitrial": obj["isExpMultitrial"],
             "startTime": obj["startTime"],
             "state": trialv1State(obj["state"]),
-            "tags": obj["tags"],
         }
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
@@ -4106,6 +4107,8 @@ class v1FlatRun(Printable):
             kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
+        if "labels" in obj:
+            kwargs["labels"] = obj["labels"]
         if "ownerId" in obj:
             kwargs["ownerId"] = obj["ownerId"]
         if "parentArchived" in obj:
@@ -4142,7 +4145,6 @@ class v1FlatRun(Printable):
             "isExpMultitrial": self.isExpMultitrial,
             "startTime": self.startTime,
             "state": self.state.value,
-            "tags": self.tags,
         }
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
@@ -4166,6 +4168,8 @@ class v1FlatRun(Printable):
             out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
+        if not omit_unset or "labels" in vars(self):
+            out["labels"] = self.labels
         if not omit_unset or "ownerId" in vars(self):
             out["ownerId"] = self.ownerId
         if not omit_unset or "parentArchived" in vars(self):

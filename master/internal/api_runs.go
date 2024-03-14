@@ -130,7 +130,6 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("proto_time(r.end_time) AS end_time").
 		ColumnExpr(bunutils.ProtoStateDBCaseString(trialv1.State_value, "r.state", "state",
 			"STATE_")).
-		Column("r.tags").
 		Column("r.checkpoint_size").
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
@@ -146,6 +145,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.id AS experiment_id").
 		Column("e.owner_id").
 		ColumnExpr("e.config->>'description' AS experiment_description").
+		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
 		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").

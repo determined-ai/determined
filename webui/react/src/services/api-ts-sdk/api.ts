@@ -3183,11 +3183,11 @@ export interface V1FlatRun {
      */
     state: Trialv1State;
     /**
-     * The tags of the run.
-     * @type {string}
+     * The tags of the associated experiment. TODO(aaron.amanuel): Create add/remove tags for runs.
+     * @type {Array<string>}
      * @memberof V1FlatRun
      */
-    tags: string;
+    labels?: Array<string>;
     /**
      * The total size of checkpoints.
      * @type {string}
