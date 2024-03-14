@@ -2753,8 +2753,10 @@ workflows:
       - test-cli:
           matrix:
             parameters:
-              executor-name: ["python-38", "python-39", "win/default"]
-
+              executor-name:
+                - "python-38"
+                - "python-39"
+                - "win/default"
   test-unit:
     jobs:
       - test-unit-react
