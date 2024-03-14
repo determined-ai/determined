@@ -111,7 +111,7 @@ commands:
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
-  
+
   add-and-fetch-upstream:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
@@ -236,7 +236,6 @@ commands:
       - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
-
 
   install-protoc:
     steps:
@@ -565,7 +564,7 @@ commands:
               echo 'No test files found!'
               exit 1
             fi
-            
+
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_SITE='datadoghq.com' \
             DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
@@ -661,8 +660,7 @@ commands:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition:
-            << parameters.extra-tags >>
+          condition: << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -1095,7 +1093,6 @@ commands:
       - run:
           no_output_timeout: 30m
           command: make package
-
 
   install-devcluster:
     steps:
@@ -1827,7 +1824,6 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-
   test-unit-harness-gpu:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
@@ -1892,7 +1888,6 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
-
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2636,7 +2631,6 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
-
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
@@ -2756,8 +2750,7 @@ workflows:
       - test-cli:
           matrix:
             parameters:
-              executor-name:
-                ["python-38", "python-39", "win/default"]
+              executor-name: ["python-38", "python-39", "win/default"]
 
   test-unit:
     jobs:
