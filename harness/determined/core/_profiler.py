@@ -57,7 +57,7 @@ class ProfilerContext:
         self._collector: Optional[_Collector] = None
         self._shipper: Optional[_Shipper] = None
 
-    def on(self, interval: int = 1) -> None:
+    def on(self, sampling_interval: int = 1, samples_per_report: int = 10) -> None:
         """Turns system profiling functionality on.
 
         This method creates two threads, one that collects system metrics at specified time
@@ -72,14 +72,22 @@ class ProfilerContext:
             no-op.
 
         Arguments:
-            interval: time (in seconds) between each metric collection.
+            sampling_interval: time (in seconds) between each metric collection.
+            samples_per_report: number of samples to collect before aggregating for report.
 
         """
         if self._on:
             return
 
-        if interval <= 0:
-            raise ValueError(f"Interval to collect metrics must be > 0, got {interval}.")
+        if sampling_interval < 0.1:
+            raise ValueError(f"Sampling interval must be > 0.1, got {sampling_interval}.")
+
+        if not isinstance(samples_per_report, int) or samples_per_report < 1:
+            raise ValueError(
+                f"Samples per report specifies the number of samples to aggregate before "
+                f"reporting the metric. It must be an int > 1, but was specified as "
+                f"{samples_per_report}."
+            )
 
         # Currently, metrics collected are scoped at the machine level, so we only collect metrics
         # on the chief worker of each node.
@@ -91,7 +99,8 @@ class ProfilerContext:
         metrics_queue: queue.Queue = queue.Queue()
         self._collector = _Collector(
             metrics_queue=metrics_queue,
-            collection_interval=interval,
+            sampling_interval=sampling_interval,
+            aggregation_period=samples_per_report,
         )
         self._shipper = _Shipper(
             session=self._session,
@@ -139,7 +148,7 @@ class DummyProfilerContext(ProfilerContext):
     def __init__(self) -> None:
         pass
 
-    def on(self, interval: int = 1) -> None:
+    def on(self, sampling_interval: int = 1, samples_per_report: int = 10) -> None:
         pass
 
     def off(self) -> None:
@@ -149,6 +158,33 @@ class DummyProfilerContext(ProfilerContext):
         pass
 
 
+def _average_metric_samples_depth_one(metric_samples: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Helper method to merge a list of dictionary averaging their values by their keys.
+
+    Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
+    averaged across all dictionaries in the given list by key.
+    # TODO (anda): find a cleaner way to do this.
+    """
+    aggregated_metrics: Dict[str, Any] = {}
+    for sample in metric_samples:
+        for k, v in sample.items():
+            if isinstance(v, dict):
+                aggregated_metrics[k] = {}
+                for k1, v1 in v.items():
+                    aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
+            else:
+                aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
+
+    for k, v in aggregated_metrics.items():
+        if isinstance(v, dict):
+            for k1, v1 in v.items():
+                aggregated_metrics[k][k1] = v1 / len(metric_samples)
+        else:
+            aggregated_metrics[k] = v / len(metric_samples)
+
+    return aggregated_metrics
+
+
 class _MetricGroupCollector(metaclass=abc.ABCMeta):
     """Abstract class that samples and collects groups of system metrics.
 
@@ -156,19 +192,38 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
     logic.
     """
 
+    def __init__(self) -> None:
+        self.metric_samples: List[Dict[str, Any]] = []
+
     @property
     @abc.abstractmethod
     def group(self) -> str:
         pass
 
-    @abc.abstractmethod
-    def collect(self) -> Dict[str, Any]:
-        """Sample and collect all metrics for this group.
+    def aggregate(self) -> Dict[str, Any]:
+        """Merge the list of `self.metric_samples` into a single dictionary with aggregate values.
 
-        Returns metrics as a dictionary mapping each metric name to its metric value.
+        This method should return a single dictionary where the values represent meaningful
+        aggregation for this metric group.
+
+        By default, this averages all the values across `self.metric_samples` by keys. This should
+        be the aggregation method for most if not all metrics, but individual metric group
+        collectors should override this method should they need an alternate aggregation method.
+        """
+        return _average_metric_samples_depth_one(self.metric_samples)
+
+    def reset(self) -> None:
+        self.metric_samples = []
+
+    @abc.abstractmethod
+    def sample_metrics(self) -> None:
+        """Sample all metrics for this group.
+
+        Records metrics as a dictionary mapping each metric name to its metric value and appends
+        this value to the samples on this class (``self.metric_samples``).
 
         Certain metrics may be associated with additional labels (i.e. GPU UUIDs) in which case
-        the returned dictionary should be nested with the label as keys. For example:
+        the recorded dictionary should be nested with the label as keys. For example:
 
         .. code:: python
             {
@@ -195,7 +250,7 @@ class _Network(_MetricGroupCollector):
 
         super().__init__()
 
-    def collect(self) -> Dict[str, Any]:
+    def sample_metrics(self) -> None:
         ts = time.time()
         vals = psutil.net_io_counters()
 
@@ -208,10 +263,11 @@ class _Network(_MetricGroupCollector):
 
         self._interval_start_ts, self._interval_start_vals = ts, vals
 
-        return {
+        metrics = {
             "net_throughput_sent": sent_thru,
             "net_throughput_recv": recv_thru,
         }
+        self.metric_samples.append(metrics)
 
 
 class _Disk(_MetricGroupCollector):
@@ -235,7 +291,7 @@ class _Disk(_MetricGroupCollector):
 
         super().__init__()
 
-    def collect(self) -> Dict[str, Any]:
+    def sample_metrics(self) -> None:
         ts = time.time()
         vals = psutil.disk_io_counters()
 
@@ -259,27 +315,29 @@ class _Disk(_MetricGroupCollector):
         for path in self._paths:
             disk_usage = psutil.disk_usage(path)
             metrics.update({path: {"disk_util": disk_usage.percent}})
-        return metrics
+        self.metric_samples.append(metrics)
 
 
 class _Memory(_MetricGroupCollector):
     group = "memory"
 
-    def collect(self) -> Dict[str, Any]:
+    def sample_metrics(self) -> None:
         free_mem_bytes = psutil.virtual_memory().available
-        return {
-            "free_memory": free_mem_bytes / 1e9,
+        metrics = {
+            "memory_free": free_mem_bytes / 1e9,
         }
+        self.metric_samples.append(metrics)
 
 
 class _CPU(_MetricGroupCollector):
     group = "cpu"
 
-    def collect(self) -> Dict[str, Any]:
+    def sample_metrics(self) -> None:
         cpu_util = psutil.cpu_percent()
-        return {
+        metrics = {
             "cpu_util_simple": cpu_util,
         }
+        self.metric_samples.append(metrics)
 
 
 class _GPU(_MetricGroupCollector):
@@ -318,7 +376,7 @@ class _GPU(_MetricGroupCollector):
             self._pynvml_device_handles = {}
             logging.info(f"Error accessing NVML {ne}. GPU metrics will not be collected.")
 
-    def collect(self) -> Dict[str, Any]:
+    def sample_metrics(self) -> None:
         metrics = {}
 
         for uuid, handle in self._pynvml_device_handles.items():
@@ -332,7 +390,7 @@ class _GPU(_MetricGroupCollector):
                     }
                 }
             )
-        return metrics
+        self.metric_samples.append(metrics)
 
 
 class _Metric:
@@ -356,14 +414,12 @@ class _Collector(threading.Thread):
     def __init__(
         self,
         metrics_queue: queue.Queue,
-        collection_interval: int = 1,
-        # Default to 30 minutes. This is to limit load times on the web UI while still capturing
-        # value for most trials.
-        max_collection_s: int = 60 * 30,
+        sampling_interval: int = 1,
+        aggregation_period: int = 10,
     ):
-        self._collection_interval = collection_interval
+        self._sampling_interval = sampling_interval
+        self._aggregation_period = aggregation_period
         self._metrics_queue = metrics_queue
-        self._max_collection_s = max_collection_s
         self._metric_collectors = [
             _GPU(),
             _CPU(),
@@ -376,31 +432,39 @@ class _Collector(threading.Thread):
         super().__init__(daemon=True)
 
     def run(self) -> None:
-        collection_stop_ts = time.time() + self._max_collection_s
         try:
             while not self._should_exit.is_set():
-                if time.time() > collection_stop_ts:
-                    # Max collection time reached.
-                    break
+                # Collect number of samples the aggregation period calls for across all groups.
+                for _ in range(self._aggregation_period):
+                    next_collection_ts = time.time() + self._sampling_interval
+                    for collector in self._metric_collectors:
+                        collector.sample_metrics()
+                    wait_ts = max(next_collection_ts - time.time(), 0)
+                    self._should_exit.wait(timeout=wait_ts)
 
-                next_collection_ts = time.time() + self._collection_interval
-                self._collect_metrics()
-                wait_ts = max(next_collection_ts - time.time(), 0)
-                self._should_exit.wait(timeout=wait_ts)
+                self._aggregate_metrics()
         finally:
             self._metrics_queue.put(None)
 
     def stop(self) -> None:
         self._should_exit.set()
 
-    def _collect_metrics(self) -> None:
+    def _aggregate_metrics(self) -> None:
+        """Aggregate metrics across groups and put in outbound queue."""
         for collector in self._metric_collectors:
-            timestamp = datetime.datetime.now(datetime.timezone.utc)
-            metrics = collector.collect()
-            if not metrics:
+            aggregated_metrics = collector.aggregate()
+            if not aggregated_metrics:
                 continue
-            group_metrics = _Metric(group=collector.group, metrics=metrics, timestamp=timestamp)
+            timestamp = datetime.datetime.now(datetime.timezone.utc)
+            group_metrics = _Metric(
+                group=collector.group,
+                metrics=aggregated_metrics,
+                timestamp=timestamp,
+            )
             self._metrics_queue.put(group_metrics)
+
+            # Reset the aggregated metrics on each group collector for the next iteration.
+            collector.reset()
 
 
 class _Shipper(threading.Thread):
