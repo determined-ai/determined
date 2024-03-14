@@ -227,11 +227,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  const colorMap = useGlasbey(
-    experiments.map((loadable) => {
-      return Loadable.getOrElse(undefined, loadable)?.experiment.id ?? 0;
-    }),
-  );
+  const colorMap = useGlasbey(settings.selectedExperiments);
   const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
     containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
