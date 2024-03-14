@@ -72,7 +72,6 @@ def logs(args: Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
-@authentication.required
 def cleanup_logs(args: Namespace) -> None:
     response = bindings.post_CleanupLogs(cli.setup_session(args))
     print(f"Deleted {response.removedCount} rows of log entries.")
