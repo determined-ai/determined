@@ -137,7 +137,6 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr(
 			"((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) AS is_exp_multitrial").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
-		ColumnExpr("COALESCE(u.display_name, u.username) as display_name").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
 		ColumnExpr("e.parent_id AS forked_from").

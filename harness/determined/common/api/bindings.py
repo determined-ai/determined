@@ -3957,7 +3957,6 @@ class v1FittingPolicy(DetEnum):
 
 class v1FlatRun(Printable):
     """Flat run respresentation."""
-    displayName: "typing.Optional[str]" = None
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     experimentDescription: "typing.Optional[str]" = None
@@ -3991,7 +3990,6 @@ class v1FlatRun(Printable):
         isExpMultitrial: bool,
         startTime: str,
         state: "trialv1State",
-        displayName: "typing.Union[str, None, Unset]" = _unset,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experimentDescription: "typing.Union[str, None, Unset]" = _unset,
@@ -4022,8 +4020,6 @@ class v1FlatRun(Printable):
         self.isExpMultitrial = isExpMultitrial
         self.startTime = startTime
         self.state = state
-        if not isinstance(displayName, Unset):
-            self.displayName = displayName
         if not isinstance(duration, Unset):
             self.duration = duration
         if not isinstance(endTime, Unset):
@@ -4081,8 +4077,6 @@ class v1FlatRun(Printable):
             "startTime": obj["startTime"],
             "state": trialv1State(obj["state"]),
         }
-        if "displayName" in obj:
-            kwargs["displayName"] = obj["displayName"]
         if "duration" in obj:
             kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
@@ -4140,8 +4134,6 @@ class v1FlatRun(Printable):
             "startTime": self.startTime,
             "state": self.state.value,
         }
-        if not omit_unset or "displayName" in vars(self):
-            out["displayName"] = self.displayName
         if not omit_unset or "duration" in vars(self):
             out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):

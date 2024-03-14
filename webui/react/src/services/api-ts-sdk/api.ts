@@ -3285,12 +3285,6 @@ export interface V1FlatRun {
      */
     experimentName?: string;
     /**
-     * The display name of the user that created the experiment.
-     * @type {string}
-     * @memberof V1FlatRun
-     */
-    displayName?: string;
-    /**
      * Time in seconds which experiment ran or has been running.
      * @type {number}
      * @memberof V1FlatRun
