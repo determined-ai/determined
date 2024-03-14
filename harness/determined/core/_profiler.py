@@ -4,7 +4,7 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import psutil
 
@@ -84,8 +84,9 @@ class ProfilerContext:
 
         if not isinstance(samples_per_report, int) or samples_per_report < 1:
             raise ValueError(
-                f"Samples per report specifies the number of samples to aggregate before reporting the metric. "
-                f"It must be an int > 1, but was specified as {samples_per_report}"
+                f"Samples per report specifies the number of samples to aggregate before "
+                f"reporting the metric. It must be an int > 1, but was specified as "
+                f"{samples_per_report}."
             )
 
         # Currently, metrics collected are scoped at the machine level, so we only collect metrics
@@ -157,6 +158,36 @@ class DummyProfilerContext(ProfilerContext):
         pass
 
 
+_Sample = Union[Dict[str, Union[float, "_Sample"]]]
+
+
+def _average_metric_samples_depth_one(metric_samples: List["_Sample"]) -> "_Sample":
+    """Helper method to merge a list of dictionary averaging their values by their keys.
+
+    Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
+    averaged across all dictionaries in the given list by key.
+    # TODO (anda): find a cleaner way to do this.
+    """
+    aggregated_metrics = {}
+    for sample in metric_samples:
+        for k, v in sample.items():
+            if isinstance(v, dict):
+                aggregated_metrics[k] = {}
+                for k1, v1 in v.items():
+                    aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
+            else:
+                aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
+
+    for k, v in aggregated_metrics.items():
+        if isinstance(v, dict):
+            for k1, v1 in v.items():
+                aggregated_metrics[k][k1] = v1 / len(metric_samples)
+        else:
+            aggregated_metrics[k] = v / len(metric_samples)
+
+    return aggregated_metrics
+
+
 class _MetricGroupCollector(metaclass=abc.ABCMeta):
     """Abstract class that samples and collects groups of system metrics.
 
@@ -165,14 +196,14 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
     """
 
     def __init__(self):
-        self.metric_samples: List[Dict[str, Any]] = []
+        self.metric_samples: List[_Sample] = []
 
     @property
     @abc.abstractmethod
     def group(self) -> str:
         pass
 
-    def aggregate(self) -> Dict[str, Any]:
+    def aggregate(self) -> _Sample:
         """Merge the list of `self.metric_samples` into a single dictionary with aggregate values.
 
         This method should return a single dictionary where the values represent meaningful
@@ -182,32 +213,7 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
         be the aggregation method for most if not all metrics, but individual metric group
         collectors should override this method should they need an alternate aggregation method.
         """
-        return self._average_metric_samples()
-
-    def _average_metric_samples(self) -> Dict[str, Any]:
-        """Helper method to merge a list of dictionary averaging their values by their keys.
-
-        Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
-        averaged across all dictionaries in the given list by key.
-        """
-        aggregated_metrics = {}
-        for sample in self.metric_samples:
-            for k, v in sample.items():
-                if isinstance(v, dict):
-                    aggregated_metrics[k] = {}
-                    for k1, v1 in v.items():
-                        aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
-                else:
-                    aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
-
-        for k, v in aggregated_metrics.items():
-            if isinstance(v, dict):
-                for k1, v1 in v.items():
-                    aggregated_metrics[k][k1] = v1 / len(self.metric_samples)
-            else:
-                aggregated_metrics[k] = v / len(self.metric_samples)
-
-        return aggregated_metrics
+        return _average_metric_samples_depth_one(self.metric_samples)
 
     def reset(self) -> None:
         self.metric_samples = []
@@ -321,7 +327,7 @@ class _Memory(_MetricGroupCollector):
     def sample_metrics(self) -> None:
         free_mem_bytes = psutil.virtual_memory().available
         metrics = {
-            "free_memory": free_mem_bytes / 1e9,
+            "memory_free": free_mem_bytes / 1e9,
         }
         self.metric_samples.append(metrics)
 
@@ -394,7 +400,7 @@ class _Metric:
     def __init__(
         self,
         group: str,
-        metrics: Dict[str, Any],
+        metrics: _Sample,
         timestamp: datetime.datetime,
     ):
         self.group = group
