@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/determined-ai/determined/master/internal/rbac"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/usergroup"
@@ -17,4 +18,12 @@ type apiServer struct {
 	trials.TrialSourceInfoAPIServer
 	trials.TrialsAPIServer
 	templates.TemplateAPIServer
+	rm.NodesAPIServer
+}
+
+func newAPIServer(m *Master) *apiServer {
+	return &apiServer{
+		m:              m,
+		NodesAPIServer: rm.NewNodesAPIServer(m.rm),
+	}
 }
