@@ -120,7 +120,7 @@ def login_with_cache(
     Unlike ``login``, this function may not send a login request to the master. It will instead
     first attempt to find a valid token in the TokenStore, and only if that fails will it post a
     login request to the master to generate a new one. As with ``login``, the token is then baked
-    into a new api.Session object to sign future communication with master.
+    into a new ``api.Session`` object to sign future communication with master.
 
     There is also a special case for checking if the DET_USER_TOKEN is set in the environment (by
     the determined-master).  That must happen in this function because it is only used when no other
