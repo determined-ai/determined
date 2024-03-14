@@ -508,13 +508,57 @@ In the Determined WebUI, go to the **Cluster** pane.
 You should be able to see multiple slots active corresponding to the value you set for
 ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple ranks.
 
+.. _core-profiling:
+
 ***********
  Profiling
 ***********
 
-Profiling with native profilers such as can be configured as usual. If running on a Determined
-cluster, the profiling log output path can be configured for automatic upload to the Determined
-Tensorboard UI.
+There are two ways to profile the performance of your training job:
+
+#. Core API's built-in system metrics profiler
+
+#. Integration with profilers native to your training framework, such as the Tensorflow and PyTorch
+profilers
+
+.. _core-profiler:
+
+Core API Profiler
+=================
+
+Core API comes with profiling functionality that tracks system metrics throughout the training run.
+These metrics are recorded at specified intervals to the master and can be viewed in the Web UI
+under your experiment's "Profiling" tab.
+
+Use ``core_context.profiler`` to interact with the Core API profiler. It can be toggled on or off by
+calling ``core_context.profiler.on()`` and ``core_context.profiler.off()``.
+
+The following code snippet demonstrates how to enable profiling for only a portion of your training
+code, but the profiler can be turned on and off at any point within the ``core.Context``.
+
+.. code:: python
+
+   import determined as det
+
+
+   with det.core.init() as core_context:
+       ...
+       for batch_idx in range(1, 10):
+           # In this example we just want to profile the first 5 batches.
+           if batch_idx == 1:
+               core_context.profiler.on()
+           if batch_idx == 5:
+               core_context.profiler.off()
+           train_batch(...)
+
+.. _core-native-profilers:
+
+Native Profilers
+================
+
+Profiling with native profilers such as PyTorch profiler and TensorFlow profiler can be configured
+as usual. If running on a Determined cluster, the profiling log output path can be configured for
+automatic upload to the Determined Tensorboard UI.
 
 The following snippet initializes the PyTorch Profiler. It will profile GPU and CPU activities,
 skipping batch 1, warming up on batch 2, profiling batches 3 and 4, then repeating the cycle. Result
