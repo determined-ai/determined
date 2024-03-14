@@ -57,7 +57,7 @@ class ProfilerContext:
         self._collector: Optional[_Collector] = None
         self._shipper: Optional[_Shipper] = None
 
-    def on(self, sampling_interval: int = 1, aggregation_period: int = 10) -> None:
+    def on(self, sampling_interval: int = 1, samples_per_report: int = 10) -> None:
         """Turns system profiling functionality on.
 
         This method creates two threads, one that collects system metrics at specified time
@@ -73,7 +73,7 @@ class ProfilerContext:
 
         Arguments:
             sampling_interval: time (in seconds) between each metric collection.
-            aggregation_period: number of samples to collect before aggregating for report.
+            samples_per_report: number of samples to collect before aggregating for report.
 
         """
         if self._on:
@@ -82,8 +82,11 @@ class ProfilerContext:
         if sampling_interval < 0.1:
             raise ValueError(f"Sampling interval must be > 0.1, got {sampling_interval}.")
 
-        if aggregation_period < 1:
-            raise ValueError(f"Aggregation period must be > 1, got {aggregation_period}")
+        if not isinstance(samples_per_report, int) or samples_per_report < 1:
+            raise ValueError(
+                f"Samples per report specifies the number of samples to aggregate before reporting the metric. "
+                f"It must be an int > 1, but was specified as {samples_per_report}"
+            )
 
         # Currently, metrics collected are scoped at the machine level, so we only collect metrics
         # on the chief worker of each node.
@@ -96,7 +99,7 @@ class ProfilerContext:
         self._collector = _Collector(
             metrics_queue=metrics_queue,
             sampling_interval=sampling_interval,
-            aggregation_period=aggregation_period,
+            aggregation_period=samples_per_report,
         )
         self._shipper = _Shipper(
             session=self._session,
@@ -144,7 +147,7 @@ class DummyProfilerContext(ProfilerContext):
     def __init__(self) -> None:
         pass
 
-    def on(self, sampling_interval: int = 1, aggregation_period: int = 10) -> None:
+    def on(self, sampling_interval: int = 1, samples_per_report: int = 10) -> None:
         pass
 
     def off(self) -> None:
