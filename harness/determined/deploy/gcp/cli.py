@@ -38,6 +38,11 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
 
+    warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        # keep the existing default value behavior of the cli.
+        args.det_version = determined.__version__
+
     # Set default tf state gcs bucket as '$PROJECT_NAME-determined-deploy` if local tf
     # state doesn't exist and user has not provided a gcs bucket.
     if (
@@ -63,11 +68,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
-
-    warn_version_mismatch(args.det_version)
-    if args.det_version is None:
-        # keep the existing default value behavior of the cli.
-        args.det_version = determined.__version__
 
     # Initialize determined configurations.
     det_configs = {}

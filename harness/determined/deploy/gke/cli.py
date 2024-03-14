@@ -96,6 +96,7 @@ def validate_accelerator_zone(args: argparse.Namespace, zone: str) -> None:
 
 
 def validate_args(args: argparse.Namespace) -> None:
+    warn_version_mismatch(args.det_version)
     validate_location(args.zone, isZone=True)
     validate_accelerator_type(args.gpu_type)
 
@@ -225,7 +226,6 @@ def configure_helm(args: argparse.Namespace) -> None:
     helm_dir = Path(args.helm_dir)
     with (helm_dir / "Chart.yaml").open() as f:
         helm_chart = safe_load_yaml_with_exceptions(f)
-    warn_version_mismatch(args.det_version)
     if args.det_version:
         helm_chart["appVersion"] = args.det_version
     elif "dev" in helm_chart["appVersion"]:
