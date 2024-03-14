@@ -2710,6 +2710,10 @@ jobs:
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
       - set-google-application-credentials
+      - run:
+          name: Show public IP address
+          command: |
+            curl ifconfig.me
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
