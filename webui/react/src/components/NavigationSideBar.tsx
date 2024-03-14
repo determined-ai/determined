@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
+import LogoGenAI from 'assets/images/logo-genai.svg?url';
 import Link, { Props as LinkProps } from 'components/Link';
 import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
@@ -145,7 +146,7 @@ const NavigationSideBar: React.FC = () => {
   const pinnedWorkspaces = useObservable(workspaceStore.pinned);
 
   interface MenuItemProps {
-    icon: IconName;
+    icon: IconName | React.ReactElement;
     label: string;
     path: string;
     external?: boolean;
@@ -194,7 +195,7 @@ const NavigationSideBar: React.FC = () => {
     if (gasLinkOn) {
       bottomItems.push({
         external: true,
-        icon: 'cloud',
+        icon: <img alt="GenAI Studio" height={24} src={LogoGenAI} width={24} />,
         label: 'GenAI',
         path: serverAddress('/genai'),
         popout: true,
@@ -278,7 +279,7 @@ const NavigationSideBar: React.FC = () => {
             <section className={css.top}>
               {menuConfig.top.map((config) => (
                 <NavigationItem
-                  key={config.icon}
+                  key={config.label}
                   status={config.icon === 'cluster' ? clusterStatus : undefined}
                   tooltip={settings.navbarCollapsed}
                   {...config}
@@ -355,7 +356,7 @@ const NavigationSideBar: React.FC = () => {
             </section>
             <section className={css.bottom}>
               {menuConfig.bottom.map((config) => (
-                <NavigationItem key={config.icon} tooltip={settings.navbarCollapsed} {...config} />
+                <NavigationItem key={config.label} tooltip={settings.navbarCollapsed} {...config} />
               ))}
               <NavigationItem
                 icon={settings.navbarCollapsed ? 'expand' : 'collapse'}

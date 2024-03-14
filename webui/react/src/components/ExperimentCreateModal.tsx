@@ -7,7 +7,7 @@ import Spinner from 'hew/Spinner';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -88,7 +88,7 @@ const ExperimentCreateModalComponent = ({
 
   const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
 
-  const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
+  const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
 
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
@@ -139,7 +139,7 @@ const ExperimentCreateModalComponent = ({
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }
-
+      setDisabled(newModalState.configError !== undefined);
       return newModalState;
     });
   }, []);
@@ -171,8 +171,10 @@ const ExperimentCreateModalComponent = ({
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });
       }
+      await form.validateFields();
+    } else {
+      setDisabled(false);
     }
-    await form.validateFields();
   }, [form, modalState]);
 
   const getConfigFromForm = useCallback(
@@ -312,8 +314,8 @@ const ExperimentCreateModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isFork, form]);
+    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [experiment, trial, type, isFork, form, requiredFields]);
 
   if (!experiment || (!isFork && !trial)) return <></>;
 

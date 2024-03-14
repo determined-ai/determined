@@ -6,6 +6,7 @@ import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
+import { List } from 'immutable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
 
@@ -59,7 +60,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
     canMoveExperimentsTo({ destination: { id: w.id } }),
   );
-  const loadableProjects: Loadable<Project[]> = useObservable(
+  const loadableProjects: Loadable<List<Project>> = useObservable(
     projectStore.getProjectsByWorkspace(workspaceId),
   );
 
@@ -95,7 +96,8 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const numFailures = results.failed.length;
 
     const destinationProjectName =
-      Loadable.getOrElse([], loadableProjects).find((p) => p.id === projId)?.name ?? '';
+      Loadable.getOrElse(List<Project>(), loadableProjects).find((p) => p.id === projId)?.name ??
+      '';
 
     if (numSuccesses === 0 && numFailures === 0) {
       openToast({

@@ -10,7 +10,8 @@ import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
 import { Loadable } from 'hew/utils/loadable';
-import _ from 'lodash';
+import { List } from 'immutable';
+import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
@@ -34,13 +35,13 @@ import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getWorkspaceProjects, patchProject } from 'services/api';
+import { patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import projectStore from 'stores/projects';
 import userStore from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
-import { validateDetApiEnum } from 'utils/service';
 
 import css from './WorkspaceProjects.module.scss';
 import {
@@ -61,49 +62,49 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const loadableUsers = useObservable(userStore.getUsers());
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const { canCreateProject } = usePermissions();
   const ProjectCreateModal = useModal(ProjectCreateModalComponent);
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
 
-  const fetchProjects = useCallback(async () => {
-    if (!settings) return;
+  const loadableProjects: Loadable<List<Project>> = useObservable(
+    projectStore.getProjectsByWorkspace(id),
+  );
 
-    try {
-      const response = await getWorkspaceProjects(
-        {
-          archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
-          id,
-          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
-          name: settings.name,
-          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
-          users: settings.user,
-        },
-        { signal: canceler.signal },
-      );
-      setTotal(response.pagination.total ?? 0);
-      setProjects((prev) => {
-        if (_.isEqual(prev, response.projects)) return prev;
-        return response.projects;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch projects.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [canceler.signal, id, workspace, settings]);
+  const sortProjects = useCallback(
+    (arr: Project[]) => {
+      switch (settings.sortKey) {
+        case V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME:
+          return arr.sort((a, b) => {
+            if (!a.lastExperimentStartedAt && !b.lastExperimentStartedAt) return b.id - a.id;
+            if (a.lastExperimentStartedAt && b.lastExperimentStartedAt)
+              return new Date(a.lastExperimentStartedAt) < new Date(b.lastExperimentStartedAt)
+                ? 1
+                : -1;
+            return a.lastExperimentStartedAt ? -1 : 1;
+          });
+        case V1GetWorkspaceProjectsRequestSortBy.NAME:
+          return sortBy(arr, 'name');
+        case V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME:
+          return sortBy(arr, 'id').reverse();
+        default:
+          return arr;
+      }
+    },
+    [settings.sortKey],
+  );
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetchProjects().then(() => setIsLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [projects, isLoading] = useMemo(
+    () =>
+      loadableProjects
+        .map((p): [Project[], boolean] => [
+          sortProjects(p.toJSON().filter((p) => (settings.archived ? p : !p.archived))),
+          false,
+        ])
+        .getOrElse([[], true]),
+    [loadableProjects, settings.archived, sortProjects],
+  );
 
   const handleProjectCreateClick = useCallback(() => {
     ProjectCreateModal.open();
@@ -111,7 +112,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
-      setIsLoading(true);
       updateSettings({ whose: value as WhoseProjects | undefined });
     },
     [updateSettings],
@@ -172,34 +172,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     }
   }, []);
 
-  const onProjectRemove = useCallback(
-    (id: number) => {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
-    },
-    [setProjects],
-  );
-
-  const onProjectEdit = useCallback(
-    (id: number, name: string, archived: boolean) => {
-      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, archived, name } : p)));
-      fetchProjects();
-    },
-    [setProjects, fetchProjects],
-  );
-
   const columns = useMemo(() => {
     const projectNameRenderer = (value: string, record: Project) => (
       <Link path={paths.projectDetails(record.id)}>{value}</Link>
     );
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
-      <ProjectActionDropdown
-        project={record}
-        workspaceArchived={workspace?.archived}
-        onDelete={() => onProjectRemove(record.id)}
-        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
-        onMove={() => onProjectRemove(record.id)}
-      />
+      <ProjectActionDropdown project={record} workspaceArchived={workspace?.archived} />
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
@@ -283,7 +262,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [saveProjectDescription, workspace?.archived, users, onProjectEdit, onProjectRemove]);
+  }, [saveProjectDescription, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -324,13 +303,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const actionDropdown = useCallback(
     ({ record, children }: { children: React.ReactNode; record: Project }) => (
-      <ProjectActionDropdown
-        isContextMenu
-        project={record}
-        workspaceArchived={workspace?.archived}
-        onDelete={() => onProjectRemove(record.id)}
-        onEdit={(name: string, archived: boolean) => onProjectEdit(record.id, name, archived)}
-        onMove={() => onProjectRemove(record.id)}>
+      <ProjectActionDropdown isContextMenu project={record} workspaceArchived={workspace?.archived}>
         {children}
       </ProjectActionDropdown>
     ),
@@ -350,10 +323,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
-                onEdit={(name: string, archived: boolean) =>
-                  onProjectEdit(project.id, name, archived)
-                }
-                onRemove={() => onProjectRemove(project.id)}
               />
             ))}
           </Card.Group>
@@ -371,7 +340,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 limit: settings.tableLimit,
                 offset: settings.tableOffset,
               },
-              total,
+              projects.length,
             )}
             rowKey="id"
             settings={settings}
@@ -385,19 +354,16 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     columns,
     isLoading,
     loadableUsers,
-    onProjectEdit,
-    onProjectRemove,
     pageRef,
     projects,
     settings,
-    total,
     updateSettings,
     workspace?.archived,
   ]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    projectStore.fetch(id);
+  }, [id]);
 
   useEffect(() => {
     return () => canceler.abort();

@@ -137,22 +137,22 @@ const SignIn: React.FC = () => {
                   ) : null;
                   return (
                     <Form.Item key={key}>
-                      <Button type="primary">
-                        <a
-                          className={css.ssoButton}
-                          href={
-                            ssoProvider.type === 'OIDC'
-                              ? ssoProvider.ssoUrl
-                              : samlUrl(ssoProvider.ssoUrl, ssoQueries.toString())
-                          }>
+                      <a
+                        className={css.ssoButton}
+                        href={
+                          ssoProvider.type === 'OIDC'
+                            ? ssoProvider.ssoUrl
+                            : samlUrl(ssoProvider.ssoUrl, ssoQueries.toString())
+                        }>
+                        <Button type="primary">
                           <div className={css.ssoProviderInfo}>
                             {logo}
                             <span>
                               {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
                             </span>
                           </div>
-                        </a>
-                      </Button>
+                        </Button>
+                      </a>
                     </Form.Item>
                   );
                 })}

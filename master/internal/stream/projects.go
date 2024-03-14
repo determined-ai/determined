@@ -30,6 +30,8 @@ const (
 type JSONB interface{}
 
 // ProjectMsg is a stream.Msg.
+//
+// determined:stream-gen source=server delete_msg=ProjectsDeleted
 type ProjectMsg struct {
 	bun.BaseModel `bun:"table:projects"`
 
@@ -74,6 +76,8 @@ func (pm *ProjectMsg) DeleteMsg() stream.DeleteMsg {
 }
 
 // ProjectSubscriptionSpec is what a user submits to define a project subscription.
+//
+// determined:stream-gen source=client
 type ProjectSubscriptionSpec struct {
 	WorkspaceIDs []int `json:"workspace_ids"`
 	ProjectIDs   []int `json:"project_ids"`
@@ -136,7 +140,7 @@ func ProjectCollectStartupMsgs(
 	}
 	_, globalAccess := accessMap[model.GlobalAccessScopeID]
 	var accessScopes []model.AccessScopeID
-	// only populate accessScopes if user doesn' have global access
+	// only populate accessScopes if user doesn't have global access
 	if !globalAccess {
 		for id, isPermitted := range accessMap {
 			if isPermitted {
@@ -157,7 +161,7 @@ func ProjectCollectStartupMsgs(
 		spec,
 	)
 
-	// get events that happened prior to since that a relevant (appearance)
+	// get events that happened prior to since that are relevant (appearance)
 	oldEventsQuery.Where("p.seq <= ?", spec.Since)
 	var exist []int64
 	err = oldEventsQuery.Scan(ctx, &exist)

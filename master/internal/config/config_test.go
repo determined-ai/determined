@@ -443,6 +443,76 @@ task_container_defaults:
 	}
 }
 
+func TestMaxSlotsPerPodConfigMultiRM(t *testing.T) {
+	baseConfig := `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 5
+
+additional_resource_managers:
+ - resource_manager:
+     name: test
+     type: kubernetes
+`
+
+	taskContainerDefaultsConfig := `
+task_container_defaults:
+  kubernetes:
+    max_slots_per_pod: 0
+`
+
+	expectedMaxSlots := map[string]int{
+		"default": 5,
+		"test":    65,
+	}
+
+	testCases := map[string]struct {
+		additionalMaxSlots string
+		expectedError      string
+	}{
+		"valid config": {
+			additionalMaxSlots: "     max_slots_per_pod: 65\n",
+			expectedError:      "",
+		},
+		"negative max_slots": {
+			additionalMaxSlots: "     max_slots_per_pod: -5\n",
+			expectedError:      ">= 0",
+		},
+		"max_slots not defined": {
+			additionalMaxSlots: "",
+			expectedError:      "must provide resource_manager.max_slots_per_pod",
+		},
+		"global task max_slots also defined": {
+			additionalMaxSlots: "     max_slots_per_pod: 65\n" + taskContainerDefaultsConfig,
+			expectedError:      "",
+		},
+	}
+
+	for name, test := range testCases {
+		t.Run(name, func(t *testing.T) {
+			var unmarshaled Config
+			testConfig := baseConfig + test.additionalMaxSlots
+			err := yaml.Unmarshal([]byte(testConfig), &unmarshaled, yaml.DisallowUnknownFields)
+			require.NoError(t, err)
+			if test.expectedError == "" { // no error is expected; this is a valid config
+				require.NoError(t, unmarshaled.Resolve())
+				actualRMs := unmarshaled.ResourceConfig.ResourceManagers()
+				for _, r := range actualRMs {
+					require.Equal(t, expectedMaxSlots[r.ResourceManager.Name()], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+				}
+			} else {
+				require.Error(t, unmarshaled.Resolve(), test.expectedError)
+			}
+		})
+	}
+}
+
 //nolint:gosec // These are not potential hardcoded credentials.
 func TestPrintableConfig(t *testing.T) {
 	s3Key := "my_access_key_secret"
@@ -588,7 +658,7 @@ func TestRMPreemptionStatus(t *testing.T) {
 		err := yaml.Unmarshal([]byte(configRaw), unmarshaled, yaml.DisallowUnknownFields)
 		assert.NilError(t, unmarshaled.Resolve())
 		assert.NilError(t, err)
-		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled, rpName), expected)
+		assert.DeepEqual(t, readRMPreemptionStatus(unmarshaled.ResourceManagers()[0], rpName), expected)
 	}
 
 	testCases := []struct {
@@ -735,4 +805,81 @@ resource_manager:
 			test(t, tc.configRaw, tc.rpName, tc.preemptionEnabled)
 		})
 	}
+}
+
+func TestMultiRMPreemptionAndPriority(t *testing.T) {
+	prio1 := 3
+	prio2 := 30
+
+	cfg := DefaultConfig()
+	cfg.ResourceConfig = ResourceConfig{
+		RootManagerInternal: &ResourceManagerConfig{AgentRM: &AgentResourceManagerConfig{
+			Name: DefaultRMName, Scheduler: &SchedulerConfig{
+				Priority: &PrioritySchedulerConfig{
+					Preemption:      false,
+					DefaultPriority: &prio1,
+				},
+			},
+		}},
+		RootPoolsInternal: []ResourcePoolConfig{{
+			PoolName: "default123",
+			Scheduler: &SchedulerConfig{Priority: &PrioritySchedulerConfig{
+				Preemption:      true,
+				DefaultPriority: &prio2,
+			}},
+		}},
+		AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+			{ResourceManager: &ResourceManagerConfig{KubernetesRM: &KubernetesResourceManagerConfig{
+				Name:             "test",
+				DefaultScheduler: "not-preemption-scheduler",
+			}}, ResourcePools: []ResourcePoolConfig{{
+				PoolName: "default234",
+				Scheduler: &SchedulerConfig{Priority: &PrioritySchedulerConfig{
+					Preemption:      true,
+					DefaultPriority: &prio1,
+				}},
+			}}},
+			// nil preemption case
+			{
+				ResourceManager: &ResourceManagerConfig{KubernetesRM: &KubernetesResourceManagerConfig{
+					Name: "nil-rm", DefaultScheduler: "not-preemption-scheduler",
+				}},
+				ResourcePools: []ResourcePoolConfig{{PoolName: "nil-rp"}},
+			},
+		},
+	}
+
+	SetMasterConfig(cfg)
+
+	// 'default123' RP exists under 'default' RM, so the preemption will
+	// be 'True' & priority to prio2, like the RP.
+	status := ReadRMPreemptionStatus("default123")
+	require.True(t, status)
+
+	priority := ReadPriority("default123", model.CommandConfig{})
+	require.Equal(t, prio2, priority)
+
+	// 'test1' RP doesn't exist under any RM so the preemption and
+	// priority will default.
+	status = ReadRMPreemptionStatus("test1")
+	require.False(t, status)
+
+	priority = ReadPriority("test1", model.CommandConfig{})
+	require.Equal(t, DefaultSchedulingPriority, priority)
+
+	// 'default234' RP exists under 'test' RM, so the preemption
+	// & priority will default to the RP's.
+	status = ReadRMPreemptionStatus("default234")
+	require.True(t, status)
+
+	priority = ReadPriority("default234", model.CommandConfig{})
+	require.Equal(t, prio1, priority)
+
+	// 'nil-rp' RP exists under 'nil-rm' RM, so the preemption
+	// & priority default to the RMs.
+	status = ReadRMPreemptionStatus("nil-rp")
+	require.False(t, status)
+
+	priority = ReadPriority("nil-rp", model.CommandConfig{})
+	require.Equal(t, KubernetesDefaultPriority, priority)
 }

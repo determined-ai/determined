@@ -4,11 +4,11 @@ class defaults:
     DB_PASSWORD = "postgres"
     BOOT_DISK_SIZE = 200
     BOOT_DISK_TYPE = "pd-standard"
-    ENVIRONMENT_IMAGE = "det-environments-f66cbce"
+    ENVIRONMENT_IMAGE = "det-environments-03ae7d7"
     GPU_NUM = 4
     GPU_TYPE = "nvidia-tesla-t4"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
-    MAX_AUX_CONTAINERS_PER_AGENT = 100
+    MAX_AUX_CONTAINERS_PER_AGENT = 16
     MAX_IDLE_AGENT_PERIOD = "10m"
     MAX_AGENT_STARTING_PERIOD = "20m"
     OPERATION_TIMEOUT_PERIOD = "5m"

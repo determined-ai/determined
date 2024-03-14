@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 
@@ -56,17 +57,14 @@ func MockRM() *mocks.ResourceManager {
 		return sproto.EmptyDeleteJobResponse()
 	}, nil)
 	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything).Return(
-		func(name string, _, _ int) string {
+		func(name rm.ResourcePoolName, _, _ int) rm.ResourcePoolName {
 			return name
 		},
 		nil,
 	)
-	mockRM.On("ValidateResources", mock.Anything).Return(
-		func(sproto.ValidateResourcesRequest) sproto.ValidateResourcesResponse {
-			return sproto.ValidateResourcesResponse{}
-		}, nil, nil)
+	mockRM.On("ValidateResources", mock.Anything).Return(nil, nil)
 	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(
-		func(name string, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
+		func(name rm.ResourcePoolName, def model.TaskContainerDefaultsConfig) model.TaskContainerDefaultsConfig {
 			return def
 		},
 		nil,

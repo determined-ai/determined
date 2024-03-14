@@ -108,7 +108,7 @@ func newExperiment(
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	poolName, err := m.rm.ResolveResourcePool(
-		resources.ResourcePool(), workspaceID, resources.SlotsPerTrial(),
+		rm.ResourcePoolName(resources.ResourcePool()), workspaceID, resources.SlotsPerTrial(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
@@ -116,8 +116,8 @@ func newExperiment(
 
 	var launchWarnings []command.LaunchWarning
 	if expModel.ID == 0 {
-		if _, launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
-			ResourcePool: poolName,
+		if launchWarnings, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+			ResourcePool: poolName.String(),
 			Slots:        resources.SlotsPerTrial(),
 			IsSingleNode: resources.IsSingleNode() != nil && *resources.IsSingleNode(),
 		}); err != nil {
@@ -127,7 +127,7 @@ func newExperiment(
 			return nil, nil, errors.New("slots requested exceeds cluster capacity")
 		}
 	}
-	resources.SetResourcePool(poolName)
+	resources.SetResourcePool(poolName.String())
 
 	activeConfig.SetResources(resources)
 
@@ -293,6 +293,14 @@ func (e *internalExperiment) start() error {
 		}
 
 		e.restoreTrials()
+
+		// Resend stopping state to trials again so we can reregister preemption timeout and stuff.
+		if model.StoppingStates[e.State] && e.State != model.StoppingCompletedState {
+			e.patchTrialsState(model.StateWithReason{
+				State:               e.State,
+				InformationalReason: "resending stopping state signal on restore",
+			})
+		}
 		return nil
 	}
 
@@ -934,7 +942,22 @@ func (e *internalExperiment) updateState(state model.StateWithReason) bool {
 	}
 
 	e.syslog.Infof("updateState changed to %s", state.State)
+	e.patchTrialsState(state)
 
+	// The database error is explicitly ignored.
+	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
+		e.syslog.Errorf("error saving experiment state: %s", err)
+	}
+	if e.canTerminate() {
+		if err := e.stop(); err != nil {
+			e.syslog.WithError(err).Error("failed to stop experiment on updateState")
+		}
+	}
+
+	return true
+}
+
+func (e *internalExperiment) patchTrialsState(state model.StateWithReason) {
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
@@ -948,17 +971,6 @@ func (e *internalExperiment) updateState(state model.StateWithReason) bool {
 		})
 	}
 	_ = g.Wait() // Errors are handled in g.Go.
-
-	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
-		e.syslog.Errorf("error saving experiment state: %s", err)
-	}
-	if e.canTerminate() {
-		if err := e.stop(); err != nil {
-			e.syslog.WithError(err).Error("failed to stop experiment on updateState")
-		}
-	}
-	// The database error is explicitly ignored.
-	return true
 }
 
 func (e *internalExperiment) canTerminate() bool {
@@ -1098,16 +1110,16 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	rp, err := e.rm.ResolveResourcePool(
-		resourcePool, workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
+		rm.ResourcePoolName(resourcePool), workspaceID, e.activeConfig.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
 		return fmt.Errorf("invalid resource pool name %s", resourcePool)
-	case oldRP == rp:
+	case oldRP == rp.String():
 		return fmt.Errorf("resource pool is unchanged (%s == %s)", oldRP, rp)
 	}
 
-	resources.SetResourcePool(rp)
+	resources.SetResourcePool(rp.String())
 	e.activeConfig.SetResources(resources)
 
 	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
@@ -1121,7 +1133,7 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	for _, t := range e.trials {
 		t := t
 		g.Go(func() error {
-			t.PatchRP(rp)
+			t.PatchRP(rp.String())
 			return nil
 		})
 	}

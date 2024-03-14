@@ -35,9 +35,10 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 		},
 	}
 
-	rm := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
+	rm, err := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
+	assert.NilError(t, err, "error initializing resource manager")
 
-	taskSummary, err := rm.GetAllocationSummaries(sproto.GetAllocationSummaries{})
+	taskSummary, err := rm.GetAllocationSummaries()
 	assert.NilError(t, err)
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
 	rm.stop()

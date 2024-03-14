@@ -14,12 +14,15 @@ from determined.common.api import authentication, bindings, certs
 
 
 def _wait_for_master() -> None:
-    print("Checking for master at 127.0.0.1")
+    print("Checking for master")
+    cert = certs.Cert(noverify=True)
+    sess = api.UnauthSession("http://127.0.0.1:8080", cert)
+
     # 2 hours is the most a migration can take, with this setup.
     # If a migration takes longer than that we have hit an issue a customer will likely hit too.
     for i in range(2 * 60 * 60):
         try:
-            r = api.get("127.0.0.1", "info", authenticated=False)
+            r = sess.get("info")
             if r.status_code == requests.codes.ok:
                 return
         except api.errors.MasterNotFoundException:
@@ -31,12 +34,9 @@ def _wait_for_master() -> None:
 
 
 def _upload_migration_length(conn: extensions.connection) -> None:
-    authentication.cli_auth = authentication.Authentication(
-        "http://127.0.0.1:8080",
-        requested_user="admin",
-        password="",
-    )
-    sess = api.Session("http://127.0.0.1:8080", "admin", authentication.cli_auth, certs.cli_cert)
+    cert = certs.Cert(noverify=True)
+    utp = authentication.login("http://127.0.0.1:8080", "admin", "", cert)
+    sess = api.Session("http://127.0.0.1:8080", utp, cert)
 
     migration_start_log = None
     migration_end_log = None

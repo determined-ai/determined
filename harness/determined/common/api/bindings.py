@@ -11404,6 +11404,8 @@ class v1ResourcePool(Printable):
         name: str,
         numAgents: int,
         preemptible: bool,
+        resourceManagerMetadata: "typing.Dict[str, str]",
+        resourceManagerName: str,
         schedulerFittingPolicy: "v1FittingPolicy",
         schedulerType: "v1SchedulerType",
         slotType: "devicev1Type",
@@ -11439,6 +11441,8 @@ class v1ResourcePool(Printable):
         self.name = name
         self.numAgents = numAgents
         self.preemptible = preemptible
+        self.resourceManagerMetadata = resourceManagerMetadata
+        self.resourceManagerName = resourceManagerName
         self.schedulerFittingPolicy = schedulerFittingPolicy
         self.schedulerType = schedulerType
         self.slotType = slotType
@@ -11480,6 +11484,8 @@ class v1ResourcePool(Printable):
             "name": obj["name"],
             "numAgents": obj["numAgents"],
             "preemptible": obj["preemptible"],
+            "resourceManagerMetadata": obj["resourceManagerMetadata"],
+            "resourceManagerName": obj["resourceManagerName"],
             "schedulerFittingPolicy": v1FittingPolicy(obj["schedulerFittingPolicy"]),
             "schedulerType": v1SchedulerType(obj["schedulerType"]),
             "slotType": devicev1Type(obj["slotType"]),
@@ -11522,6 +11528,8 @@ class v1ResourcePool(Printable):
             "name": self.name,
             "numAgents": self.numAgents,
             "preemptible": self.preemptible,
+            "resourceManagerMetadata": self.resourceManagerMetadata,
+            "resourceManagerName": self.resourceManagerName,
             "schedulerFittingPolicy": self.schedulerFittingPolicy.value,
             "schedulerType": self.schedulerType.value,
             "slotType": self.slotType.value,

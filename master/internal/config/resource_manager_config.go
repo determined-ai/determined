@@ -27,7 +27,7 @@ func (r ResourceManagerConfig) Name() string {
 	if k8RM := r.KubernetesRM; k8RM != nil {
 		return k8RM.Name
 	}
-	// TODO dispatcher.
+	// TODO (multirm) dispatcher.
 
 	panic(fmt.Sprintf("unknown rm type %+v", r))
 }
@@ -144,9 +144,6 @@ func (a AgentResourceManagerConfig) Validate() []error {
 type KubernetesResourceManagerConfig struct {
 	Namespace string `json:"namespace"`
 
-	// Deprecated: this can be per resource pool now on taskContainerDefaults.
-	// This will always be the same as global
-	// task_container_defaults.kubernetes.max_slots_per_pod so use that.
 	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
 
 	MasterServiceName        string                  `json:"master_service_name"`
@@ -155,10 +152,10 @@ type KubernetesResourceManagerConfig struct {
 	SlotType                 device.Type             `json:"slot_type"`
 	SlotResourceRequests     PodSlotResourceRequests `json:"slot_resource_requests"`
 	// deprecated, no longer in use.
-	Fluent     FluentConfig `json:"fluent"`
-	CredsDir   string       `json:"_creds_dir,omitempty"`
-	MasterIP   string       `json:"_master_ip,omitempty"`
-	MasterPort int32        `json:"_master_port,omitempty"`
+	Fluent         FluentConfig `json:"fluent"`
+	KubeconfigPath string       `json:"kubeconfig_path"`
+	DetMasterIP    string       `json:"determined_master_ip,omitempty"`
+	DetMasterPort  int32        `json:"determined_master_port,omitempty"`
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
@@ -218,6 +215,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		checkCPUResource = check.GreaterThan(
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
+
 	return []error{
 		checkSlotType,
 		checkCPUResource,

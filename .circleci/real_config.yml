@@ -12,26 +12,23 @@ orbs:
   win: circleci/windows@5.0.0
 
 executors:
-  python-37:
-    docker:
-      - image: python:3.7-slim-buster
   python-38:
     docker:
-      - image: python:3.8-slim-buster
+      - image: python:3.8-slim-bookworm
   python-39:
     docker:
-      - image: python:3.9-slim-buster
+      - image: python:3.9-slim-bookworm
 
 parameters:
   det-version:
     type: string
-    default: 0.28.2-dev0
+    default: 0.29.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
   machine-image:
     type: string
-    default: ubuntu-2004:202201-02
+    default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
     default: ubuntu-2004-cuda-11.2:202103-01
@@ -40,7 +37,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-f66cbce
+    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-03ae7d7
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -51,7 +48,7 @@ parameters:
     default: v1dev25
   gke-version:
     type: string
-    default: "1.29.0"
+    default: "1.29"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -226,7 +223,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-f66cbce
+            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-03ae7d7
 
   login-docker:
     parameters:
@@ -247,7 +244,7 @@ commands:
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
-      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.21.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
 
@@ -570,47 +567,32 @@ commands:
                 port: <<parameters.master-port>>
 
       - run:
-          name: Split tests
-          working_directory: ~/project/e2e_tests
-          command: |
-            # Preselect the files that contain any matching tests to minimize how wrong CircleCI's
-            # splitting can get things. (The presence of files with no tests can cause the files
-            # with tests to be bunched up incorrectly, making the split suboptimal.)
-
-            # `--setup-plan` tells pytest to not run any tests but instead print out a description
-            # of the tests that would be run, along with some other stuff. Each file containing
-            # any selected tests is printed on a line by itself, except for (for some reason) a
-            # single trailing space.
-            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
-
-            echo 'All files with tests matching mark "<<parameters.mark>>":'
-            sed 's/^/- /' </tmp/all-relevant-files
-
-            circleci tests split --split-by=timings < /tmp/all-relevant-files > /tmp/tests-to-run
-            echo "Running tests from these files:"
-            sed 's/^/- /' </tmp/tests-to-run
-
-            if [ ! -s /tmp/tests-to-run ]; then
-              echo 'No test files found!'
-              exit 1
-            fi
-
-      - run:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
           no_output_timeout: 30m
           command: |
-            DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            pytest -vv -s \
+            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
+            if [ ! -s /tmp/all-relevant-files ]; then
+              echo 'No test files found!'
+              exit 1
+            fi
+            
+            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_SITE='datadoghq.com' \
+            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
+            DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
+            xargs pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
+            --ddtrace \
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>> \
-            $(< /tmp/tests-to-run)
+            <<parameters.extra-pytest-flags>>" \
+            --verbose --split-by=timings
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
@@ -1277,7 +1259,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - pre-package-and-push-system:
           check: false
       - make-package
@@ -1310,7 +1292,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1349,7 +1331,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1379,7 +1361,7 @@ jobs:
           at: .
       - reinstall-go
       - setup_remote_docker:
-          version: 20.10.18
+          version: previous
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1584,18 +1566,6 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage
 
-  test-unit-react-quarantined:
-    docker:
-      - image: cimg/node:20.9.0
-        environment:
-          CI: "true"
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
-      - react-get-deps
-      - run: make -C webui/react test-ci-flaky
-
   test-intg-downstream:
     docker:
       - image: cimg/node:20.9.0
@@ -1706,6 +1676,7 @@ jobs:
           root: .
           paths:
             - master/coverage.out
+            - master/internal/mocks
 
   test-intg-agent:
     machine:
@@ -1849,7 +1820,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1870,7 +1841,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-f66cbce
+      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-03ae7d7
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -1891,7 +1862,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-f66cbce
+      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-03ae7d7
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -1912,7 +1883,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
+      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2101,6 +2072,9 @@ jobs:
       wait-for-master:
         type: boolean
         default: true
+      run-minikubes:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2120,6 +2094,21 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
+
+      - when:
+          condition: <<parameters.run-minikubes>>
+          steps:
+            - kubernetes/install-kubectl
+            - run:
+                name: Install minikube
+                command: |
+                  curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+            - run:
+                name: Start defaultrm minikube
+                command: minikube start --profile defaultrm
+            - run:
+                name: Start additionalrm minikube
+                command: minikube start --profile additionalrm
 
       - install-devcluster
       - unless:
@@ -2498,7 +2487,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
         type: string
       accel-node-taints:
         type: string
@@ -2743,7 +2732,7 @@ workflows:
           matrix:
             parameters:
               executor-name:
-                ["python-37", "python-38", "python-39", "win/default"]
+                ["python-38", "python-39", "win/default"]
 
   test-unit:
     jobs:
@@ -2893,6 +2882,17 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          requires:
+            - build-go
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
 
       - test-e2e:
           name: test-e2e-port-registry
@@ -3132,32 +3132,6 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
 
-  test-e2e-quarantined:
-    jobs:
-      - build-proto
-      - build-helm
-      - build-react:
-          dev-mode: true
-      - build-docs:
-          requires:
-            - build-helm
-            - build-proto
-      - package-and-push-system-local:
-          requires:
-            - build-react
-            - build-docs
-
-      - test-stress:
-          name: test-stress
-          filters: *any-upstream
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [1]
-              mark: ["stress_test"]
-              det-version: [$CIRCLE_SHA1]
-
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
@@ -3167,8 +3141,6 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
-
-      - test-unit-react-quarantined
 
   test-e2e-longrunning:
     jobs:
@@ -3483,6 +3455,17 @@ workflows:
             - package-and-push-system-local
             - request-packaging-tests
 
+      # Local deployment
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+
       # Request AWS FS tests
       - request-aws-fs-tests:
           type: approval
@@ -3532,6 +3515,7 @@ workflows:
           context:
             - aws
             - hugging-face
+            - aws-ci-cluster-default-user-credentials
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]

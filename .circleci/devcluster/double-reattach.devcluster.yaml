@@ -12,6 +12,8 @@ stages:
           password: postgres
           user: postgres
           name: determined
+        __internal:
+          preemption_timeout: 60s
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp

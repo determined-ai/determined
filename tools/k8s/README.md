@@ -18,18 +18,11 @@ on some cloud machine.
 If you go the GKE cloude route, keep in mind that some GKE configurations
 create an API server that is not generally accessible.
 
-## Step 2: Install a suitable service account to your cluster
+## Step 2: Make sure your kubeconfig is correct.
 
-Read `tools/k8s/my-service-account.yaml` so you know what it's doing, then apply
-it:
+For example, when using Minikube everything should "just work" since `minikube start` mucks with your kubeconfig. When using GKE, you need to run something like `gcloud container clusters get-credentials ...`.
 
-```sh
-kubectl apply -f tools/k8s/my-service-account.yaml
-```
-
-This step is only required once after creating your cluster.
-
-## Step 3: Run `determined-master` with a special `devcluster.yaml`
+## Step 2: Run `determined-master` with a special `devcluster.yaml`
 
 Read `tools/k8s/devcluster.yaml` so you know what it's doing, then run it:
 
