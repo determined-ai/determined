@@ -3979,7 +3979,6 @@ class v1FlatRun(Printable):
     searcherType: "typing.Optional[str]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     unmanaged: "typing.Optional[bool]" = None
-    username: "typing.Optional[str]" = None
     workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
 
@@ -4014,7 +4013,6 @@ class v1FlatRun(Printable):
         searcherType: "typing.Union[str, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
-        username: "typing.Union[str, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -4068,8 +4066,6 @@ class v1FlatRun(Printable):
             self.summaryMetrics = summaryMetrics
         if not isinstance(unmanaged, Unset):
             self.unmanaged = unmanaged
-        if not isinstance(username, Unset):
-            self.username = username
         if not isinstance(workspaceId, Unset):
             self.workspaceId = workspaceId
         if not isinstance(workspaceName, Unset):
@@ -4129,8 +4125,6 @@ class v1FlatRun(Printable):
             kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "unmanaged" in obj:
             kwargs["unmanaged"] = obj["unmanaged"]
-        if "username" in obj:
-            kwargs["username"] = obj["username"]
         if "workspaceId" in obj:
             kwargs["workspaceId"] = obj["workspaceId"]
         if "workspaceName" in obj:
@@ -4190,8 +4184,6 @@ class v1FlatRun(Printable):
             out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "unmanaged" in vars(self):
             out["unmanaged"] = self.unmanaged
-        if not omit_unset or "username" in vars(self):
-            out["username"] = self.username
         if not omit_unset or "workspaceId" in vars(self):
             out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):

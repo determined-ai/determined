@@ -70,23 +70,21 @@ message FlatRun {
   optional string experiment_name = 21;
   // The display name of the user that created the experiment.
   optional string display_name = 22;
-  // The username of the user that created the experiment.
-  optional string username = 23;
   // Time in seconds which experiment ran or has been running.
-  optional int32 duration = 24;
+  optional int32 duration = 23;
   // The id of the project associated with this experiment.
-  optional int32 project_id = 25;
+  optional int32 project_id = 24;
   // The name of the project associated with this experiment.
-  optional string project_name = 26;
+  optional string project_name = 25;
   // The id of the workspace associated with this experiment.
-  optional int32 workspace_id = 27;
+  optional int32 workspace_id = 26;
   // The name of the workspace associated with this experiment.
-  optional string workspace_name = 28;
+  optional string workspace_name = 27;
   // The archived status of the parent project (can be inherited from
   // workspace).
-  optional bool parent_archived = 29;
+  optional bool parent_archived = 28;
   // Unmanaged experiments are detached.
-  optional bool unmanaged = 30;
+  optional bool unmanaged = 29;
   // True if the associated experiment is a multitrial experiment
-  bool is_exp_multitrial = 31;
+  bool is_exp_multitrial = 30;
 }
