@@ -1,0 +1,34 @@
+:orphan:
+
+:orphan:
+
+What is Determined?
+
+Determined is...
+
+First-time user?
+
+Explore these resources for first-time users:
+
+How does Determined work?
+
+Explore these resources.
+
+TOC Sections
+
+Quickstart
+Experiments
+Hyperparameter Tuning
+D Train
+Model Registry
+Using Determined
+- preparing data
+- doing something else
+- using a training API
+
+Reference link
+
+Integrations link
+
+Other resources
+
