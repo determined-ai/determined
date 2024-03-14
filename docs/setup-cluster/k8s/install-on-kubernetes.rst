@@ -32,6 +32,17 @@ When installing :ref:`Determined on Kubernetes <install-on-kubernetes>` using He
 should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in the
 :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
+**Additional Requirements for GenAI Integration**
+
+If you are installing GenAI Studio with your Determined cluster, additional requirements apply:
+
+-  **On-Prem Kubernetes:**
+
+   -  Install Docker, kubectl, and Helm.
+   -  Deploy Kubernetes on-premises and enable GPU support for one or more of the following GPU
+      types: AMD, Intel, NVIDIA.
+   -  Download the `values.yaml`` file.
+
 ***************
  Prerequisites
 ***************

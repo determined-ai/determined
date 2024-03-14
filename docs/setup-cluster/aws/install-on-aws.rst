@@ -41,6 +41,17 @@ to 5 ``g4dn.metal`` instances (which have 94 vCPUs each), which would exceed the
 instance limits can be increased by submitting a request to the `AWS Support Center
 <http://aws.amazon.com/support>`__.
 
+**Additional Requirements for GenAI Integration**
+
+If you are installing GenAI Studio with your Determined cluster, additional requirements apply:
+
+-  **AWS Account Prerequisites:**
+
+   -  You must have an AWS account and IAM credentials.
+   -  You must have the AWS CLI installed and configured.
+   -  You must know your EC2 key pair name or create one. Your key pair name should be short and
+      without capital letters.
+
 Installation
 ============
 

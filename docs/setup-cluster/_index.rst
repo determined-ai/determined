@@ -49,6 +49,11 @@ resources. Compatible with on-prem clusters and cloud auto-scaling (AWS and GCP)
 
 -  :ref:`topic_guide_gcp`
 
+**Determined Agent with GenAI Studio**
+
+-  Deploy Determined with GenAI Studio on AWS/GCP.
+-  Install Determined with GenAI Studio using Docker or Linux Packages.
+
 ************
  Kubernetes
 ************
@@ -62,6 +67,11 @@ clusters.
    -  :ref:`setup-aks-cluster`
    -  :ref:`setup-eks-cluster`
    -  :ref:`setup-gke-cluster`
+
+**Kubernetes with GenAI Studio**
+
+-  Deploy Determined with GenAI Studio on Kubernetes Clusters.
+-  Configure Kubernetes clusters to support GenAI Studio workloads.
 
 *******
  Slurm
@@ -83,6 +93,8 @@ Enable Determined to submit jobs to a Slurm cluster.
    Deploy on Prem <on-prem/_index>
    Deploy on AWS <aws/_index>
    Deploy on GCP <gcp/_index>
+   Deploy on GKE <gke/install-gke>
    Deploy on Kubernetes <k8s/_index>
+   Bring Your Own Cloud <managed-service/install-managed-service>
    Deploy on Slurm/PBS <slurm/_index>
    Cluster Configuration <cluster-configuration>
