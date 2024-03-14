@@ -25,3 +25,37 @@ message RunPrepareForReportingResponse {
   // returned always when checkpoint storage is set in the request.
   optional int32 storage_id = 1;
 }
+
+// Message for results of individual runs in a multi-run action.
+message RunActionResult {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "error", "id" ] }
+  };
+  // Optional error message.
+  string error = 1;
+  // run ID.
+  int32 id = 2;
+}
+
+// Request to move the run to a different project
+message MoveRunsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "destination_project_id", "run_ids" ] }
+  };
+
+  // The ids of the runs being moved.
+  repeated int32 run_ids = 1;
+  // The id of the new parent project.
+  int32 destination_project = 2;
+  // Filter expression
+  optional string filter = 3;
+}
+
+message MoveRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each experiment.
+  repeated RunActionResult results = 1;
+}

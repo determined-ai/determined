@@ -43,3 +43,9 @@ func (a *apiServer) RunPrepareForReporting(
 		StorageId: storageID,
 	}, nil
 }
+
+func (a *apiServer) MoveRuns(
+	ctx context.Context, req *apiv1.MoveRunsRequest,
+) (*apiv1.MoveRunsResponse, error) {
+	return nil, nil
+}
