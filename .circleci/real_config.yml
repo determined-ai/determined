@@ -1255,6 +1255,13 @@ commands:
           no_output_timeout: 30m
           command: make package
 
+  make-package-small:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          no_output_timeout: 30m
+          command: make -C master package-small
 
   install-devcluster:
     steps:
@@ -1447,6 +1454,33 @@ jobs:
                 make -C model_hub build-docker-dev
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
+  package-and-push-system-dev-small:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: xlarge
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-github-only
+      - skip-if-webui-only
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - setup_remote_docker:
+          version: 20.10.18
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system:
+          check: false
+      - make-package-small
+      - run: tools/scripts/retry.sh make -C master publish-dev-small
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -2998,6 +3032,11 @@ workflows:
             branches:
               only:
                 - main
+
+      - package-and-push-system-dev-small:
+          requires:
+            - build-react
+            - build-docs
 
       - upload-docs-search-index:
           requires:
