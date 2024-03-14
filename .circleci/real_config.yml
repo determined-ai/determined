@@ -118,15 +118,18 @@ commands:
       - run: tools/scripts/retry.sh git fetch upstream
 
   skip-if-dir:
+    # TODO review the commands
+    # We can combine them into one command and use bash to evaluate the parameter
+    # We should avoid *"wildcards like that with no delimiters"*
     parameters:
       dir:
         type: string
-      not:
+      negate:
         type: boolean
         default: false
     steps:
       - unless:
-          condition: << parameters.dir >>
+          condition: << parameters.negate >>
           steps:
             - run:
                 name: skip if << parameters.dir >>-only changes
@@ -140,7 +143,7 @@ commands:
                     echo "detected non-<< parameters.dir >>-only changes: $DIFF_DIRS"
                   fi
       - when:
-          condition: << parameters.dir >>
+          condition: << parameters.negate >>
           steps:
             - run:
                 name: skip if not << parameters.dir >> changes
