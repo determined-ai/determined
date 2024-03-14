@@ -4,7 +4,7 @@ import logging
 import queue
 import threading
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import psutil
 
@@ -158,17 +158,14 @@ class DummyProfilerContext(ProfilerContext):
         pass
 
 
-_Sample = Union[Dict[str, Union[float, "_Sample"]]]
-
-
-def _average_metric_samples_depth_one(metric_samples: List["_Sample"]) -> "_Sample":
+def _average_metric_samples_depth_one(metric_samples: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Helper method to merge a list of dictionary averaging their values by their keys.
 
     Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
     averaged across all dictionaries in the given list by key.
     # TODO (anda): find a cleaner way to do this.
     """
-    aggregated_metrics = {}
+    aggregated_metrics: Dict[str, Any] = {}
     for sample in metric_samples:
         for k, v in sample.items():
             if isinstance(v, dict):
@@ -195,15 +192,15 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
     logic.
     """
 
-    def __init__(self):
-        self.metric_samples: List[_Sample] = []
+    def __init__(self) -> None:
+        self.metric_samples: List[Dict[str, Any]] = []
 
     @property
     @abc.abstractmethod
     def group(self) -> str:
         pass
 
-    def aggregate(self) -> _Sample:
+    def aggregate(self) -> Dict[str, Any]:
         """Merge the list of `self.metric_samples` into a single dictionary with aggregate values.
 
         This method should return a single dictionary where the values represent meaningful
@@ -400,7 +397,7 @@ class _Metric:
     def __init__(
         self,
         group: str,
-        metrics: _Sample,
+        metrics: Dict[str, Any],
         timestamp: datetime.datetime,
     ):
         self.group = group
