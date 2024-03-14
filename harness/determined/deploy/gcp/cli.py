@@ -11,7 +11,7 @@ from termcolor import colored
 import determined.deploy
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group, string_to_bool
-from determined.deploy.errors import MasterTimeoutExpired, warn_version_mistmatch
+from determined.deploy.errors import MasterTimeoutExpired, warn_version_mismatch
 from determined.deploy.gcp import constants, gcp
 
 
@@ -64,7 +64,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
 
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
     if args.det_version is None:
         # keep the existing default value behavior of the cli.
         args.det_version = determined.__version__

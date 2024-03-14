@@ -13,7 +13,7 @@ class MasterTimeoutExpired(Exception):
     pass
 
 
-def warn_version_mistmatch(requestd_version: Optional[str]) -> None:
+def warn_version_mismatch(requestd_version: Optional[str]) -> None:
     """
     check for and warn about version compatibility between the `det` CLI and
     the requested det version.

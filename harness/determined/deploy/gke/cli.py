@@ -11,7 +11,7 @@ import determined
 from determined.common import yaml
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.common.util import safe_load_yaml_with_exceptions
-from determined.deploy.errors import warn_version_mistmatch
+from determined.deploy.errors import warn_version_mismatch
 from determined.deploy.gke.constants import defaults
 
 
@@ -225,7 +225,7 @@ def configure_helm(args: argparse.Namespace) -> None:
     helm_dir = Path(args.helm_dir)
     with (helm_dir / "Chart.yaml").open() as f:
         helm_chart = safe_load_yaml_with_exceptions(f)
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
     if args.det_version:
         helm_chart["appVersion"] = args.det_version
     elif "dev" in helm_chart["appVersion"]:

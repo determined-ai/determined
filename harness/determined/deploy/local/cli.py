@@ -5,7 +5,7 @@ from typing import Callable, Dict
 
 import determined
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
-from determined.deploy.errors import warn_version_mistmatch
+from determined.deploy.errors import warn_version_mismatch
 from determined.deploy.local import cluster_utils
 
 from .preflight import check_docker_install
@@ -15,7 +15,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
     if not args.no_preflight_checks:
         check_docker_install()
 
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
 
@@ -44,7 +44,7 @@ def handle_logs(args: argparse.Namespace) -> None:
 
 
 def handle_master_up(args: argparse.Namespace) -> None:
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
 
@@ -70,7 +70,7 @@ def handle_master_down(args: argparse.Namespace) -> None:
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
     cluster_utils.agent_up(

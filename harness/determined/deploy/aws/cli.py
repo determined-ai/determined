@@ -13,7 +13,7 @@ from termcolor import colored
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.aws import aws, constants
-from determined.deploy.errors import MasterTimeoutExpired, warn_version_mistmatch
+from determined.deploy.errors import MasterTimeoutExpired, warn_version_mismatch
 
 from .deployment_types import base, govcloud, secure, simple, vpc
 from .preflight import check_quotas, get_default_cf_parameter
@@ -155,7 +155,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"deployment-type={args.deployment_type}."
             )
 
-    warn_version_mistmatch(args.det_version)
+    warn_version_mismatch(args.det_version)
 
     if args.deployment_type == constants.deployment_types.GOVCLOUD:
         if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
