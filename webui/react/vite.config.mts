@@ -153,6 +153,11 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   test: {
+    coverage: {
+      ...configDefaults.coverage,
+      include: ['src'],
+      exclude: [...configDefaults.coverage.exclude, 'src/vendor/**/*', 'src/services/api-ts-sdk/*']
+    },
     css: {
       modules: {
         classNameStrategy: 'non-scoped',
