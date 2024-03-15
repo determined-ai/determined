@@ -35,7 +35,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const f_explist = useFeature().isOn('explist_v2');
-  const f_flat_trials = useFeature().isOn('flat_trials');
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -94,7 +94,7 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              {f_flat_trials ? (
+              {f_flat_runs ? (
                 <FlatRuns project={project} />
               ) : f_explist ? (
                 <F_ExperimentList key={projectId} project={project} />
@@ -124,7 +124,7 @@ const ProjectDetails: React.FC = () => {
     }
 
     return items;
-  }, [project, f_flat_trials, f_explist, projectId, id, fetchProject]);
+  }, [project, f_flat_runs, f_explist, projectId, id, fetchProject]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
 

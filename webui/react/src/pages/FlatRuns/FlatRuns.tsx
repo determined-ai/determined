@@ -9,25 +9,35 @@ import {
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
-import DataGrid, { Sort, ValidSort } from 'hew/DataGrid/DataGrid';
+import DataGrid, { Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
+import Link from 'hew/Link';
+import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { observable } from 'micro-observables';
+import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormSet, FormField, FormGroup } from 'components/FilterForm/components/type';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
+import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { searcherMetricsValColumn } from 'pages/F_ExpList/glide-table/columns';
-import { handlePath } from 'routes/utils';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import { Project } from 'types';
+import { Error } from 'pages/F_ExpList/glide-table/exceptions';
+import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
+import { handlePath, paths } from 'routes/utils';
+import { getProjectColumns } from 'services/api';
+import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import usersStore from 'stores/users';
+import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { AnyMouseEvent } from 'utils/routes';
 
+import { getColumnDefs, RunColumn, runColumns, searcherMetricsValColumn } from './columns';
+import css from './FlatRuns.module.scss';
 import {
   FlatRunsGlobalSettings,
   FlatRunsSettings,
@@ -36,9 +46,11 @@ import {
 } from './FlatRuns.settings';
 
 export const PAGE_SIZE = 100;
-const INITIAL_LOADING_RUNS: Loadable<unknown>[] = new Array(PAGE_SIZE).fill(NotLoaded);
+const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
 
 const STATIC_COLUMNS = [MULTISELECT];
+
+const formStore = new FilterFormStore();
 
 interface Props {
   project: Project;
@@ -68,14 +80,15 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     settings,
     updateSettings,
   } = useSettings<FlatRunsSettings>(settingsConfig);
-  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<FlatRunsGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings } = useSettings<FlatRunsGlobalSettings>(settingsConfigGlobal);
 
-  const [runs, setRuns] = useState<Loadable<unknown>[]>(INITIAL_LOADING_RUNS);
+  const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
+  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
+
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -83,7 +96,28 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     return [EMPTY_SORT];
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
+  //const filtersString = useObservable(formStore.asJsonString);
+  const loadableFormset = useObservable(formStore.formset);
+  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
+    _: () => [],
+    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
+  });
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
+  const isMobile = useMobile();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error] = useState(false);
+  const [canceler] = useState(new AbortController());
+  const users = useObservable(usersStore.getUsers());
+
+  const colorMap = useGlasbey(settings.selectedRuns);
+  //const { height: containerHeight, width: containerWidth } = useResize(contentRef);
+  //const height = containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
+  const [scrollPositionSetCount] = useState(observable(0));
+
+  const {
+    ui: { theme: appTheme },
+    isDarkMode,
+  } = useUI();
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -107,12 +141,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     () => !isLoadingSettings && settings.selectAll,
     [isLoadingSettings, settings.selectAll],
   );
-  const setSelectAll = useCallback(
-    (selectAll: boolean) => {
-      updateSettings({ selectAll });
-    },
-    [updateSettings],
-  );
 
   const selectedRunIds: Set<number> = useMemo(() => {
     return isLoadingSettings ? new Set() : new Set(settings.selectedRuns);
@@ -122,26 +150,37 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     return isLoadingSettings ? new Set() : new Set(settings.excludedRuns);
   }, [isLoadingSettings, settings.excludedRuns]);
 
-  const selectedRuns: unknown[] = useMemo(() => {
-    if (selectedRunIds.size === 0) return [];
-    return Loadable.filterNotLoaded(runs, (run) => selectedRunIds.has(run.id));
-  }, [runs, selectedRunIds]);
+  useEffect(() => {
+    if (isLoading) return;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error] = useState(false);
-  const [canceler] = useState(new AbortController());
+    const selectedIds = new Set(selectedRunIds);
 
-  const colorMap = useGlasbey(settings.selectedRuns);
-  //const { height: containerHeight, width: containerWidth } = useResize(contentRef);
-  //const height = containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
-  const [scrollPositionSetCount] = useState(observable(0));
+    if (selectAll) {
+      Loadable.filterNotLoaded(runs).forEach((run) => {
+        const id = run.id;
+        if (!excludedRunIds.has(id)) selectedIds.add(id);
+      });
+      updateSettings({ selectedRuns: Array.from(selectedIds) });
+    }
 
-  const {
-    ui: { theme: appTheme },
-    isDarkMode,
-  } = useUI();
+    /**
+     * Use settings info (selectionAll, selectedRunIds, excludedRunIds)
+     * to figure out and update list selections.
+     */
+    setSelection((prevSelection) => {
+      let rows = CompactSelection.empty();
+      runs.forEach((loadableRun, index) => {
+        if (!loadableRun.isLoaded) return;
+        const id = loadableRun.data.id;
+        if ((selectAll && !excludedRunIds.has(id)) || (!selectAll && selectedIds.has(id))) {
+          rows = rows.add(index);
+        }
+      });
+      return { ...prevSelection, rows };
+    });
+  }, [excludedRunIds, isLoading, runs, selectAll, selectedRunIds, total, updateSettings]);
 
-  const columns: ColumnDef<unknown>[] = useMemo(() => {
+  const columns: ColumnDef<FlatRun>[] = useMemo(() => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
       projectColumns,
       (columns) => {
@@ -151,6 +190,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     const columnDefs = getColumnDefs({
       appTheme,
       columnWidths: settings.columnWidths,
+      rowSelection: selection.rows,
+      selectAll,
       themeIsDark: isDarkMode,
       users,
     });
@@ -203,30 +244,30 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         }
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
-            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            if (
-              heatmap &&
-              settings.heatmapOn &&
-              !settings.heatmapSkipped.includes(currentColumn.column)
-            ) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
-                currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
-                dataPath,
-                {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                },
-              );
-            } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
-                currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
-                dataPath,
-              );
-            }
+            // const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+            // if (
+            //   heatmap &&
+            //   settings.heatmapOn &&
+            //   !settings.heatmapSkipped.includes(currentColumn.column)
+            // ) {
+            //   columnDefs[currentColumn.column] = defaultNumberColumn(
+            //     currentColumn.column,
+            //     currentColumn.displayName || currentColumn.column,
+            //     settings.columnWidths[currentColumn.column],
+            //     dataPath,
+            //     {
+            //       max: heatmap.max,
+            //       min: heatmap.min,
+            //     },
+            //   );
+            // } else {
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
+            // }
             break;
           }
           case V1ColumnType.DATE:
@@ -248,24 +289,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {
-          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-          if (
-            heatmap &&
-            settings.heatmapOn &&
-            !settings.heatmapSkipped.includes(currentColumn.column)
-          ) {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
-              {
-                max: heatmap.max,
-                min: heatmap.min,
-              },
-            );
-          } else {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
-            );
-          }
+          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+            settings.columnWidths[currentColumn.column],
+          );
         }
         return columnDefs[currentColumn.column];
       })
@@ -275,13 +301,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     appTheme,
     columnsIfLoaded,
     isDarkMode,
+    projectColumns,
     selectAll,
     selection.rows,
     settings.columnWidths,
     settings.compare,
-    settings.heatmapOn,
-    settings.heatmapSkipped,
     settings.pinnedColumnsCount,
+    users,
   ]);
 
   const onPageChange = useCallback(
@@ -344,23 +370,28 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+      handleError(e, { publicSubject: 'Unable to fetch runs.' });
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    experimentFilters,
-    filtersString,
-    isLoadingSettings,
-    isPagedView,
-    loadableFormset,
-    page,
-    sortString,
-    settings.pageLimit,
-  ]);
+  }, [isLoadingSettings, isPagedView, loadableFormset, page]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
+
+  const experimentFilters = useMemo(() => {
+    const filters: V1BulkExperimentFilters = {
+      projectId: project.id,
+    };
+    return filters;
+  }, [project.id]);
+
+  const numFilters = useMemo(() => {
+    return (
+      Object.values(experimentFilters).filter((x) => x !== undefined).length -
+      1 +
+      rootFilterChildren.length
+    );
+  }, [experimentFilters, rootFilterChildren.length]);
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
@@ -369,14 +400,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
   }, []);
 
-  const handleTableViewModeChange = useCallback(
-    (mode: TableViewMode) => {
-      // Reset page index when table view mode changes.
-      resetPagination();
-      updateGlobalSettings({ tableViewMode: mode });
-    },
-    [resetPagination, updateGlobalSettings],
-  );
+  useEffect(() => {
+    if (!isLoadingSettings && settings.sortString) {
+      setSorts(parseSortString(settings.sortString));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingSettings]);
 
   useEffect(() => {
     setSearchParams((params) => {
@@ -392,10 +421,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   const handleColumnWidthChange = useCallback(() => {}, []);
 
-  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<unknown, unknown> = useCallback(
-    (action: unknown, id: number, data?: Partial<unknown>) => {},
-    [],
-  );
+  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
+    useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
     (newColumnsOrder: string[]) => {
@@ -404,38 +431,107 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const getRowAccentColor = (rowData: FlatRun) => {
+    return colorMap[rowData.id];
+  };
+
+  // TODO: poll?
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const columns = await getProjectColumns({ id: project.id });
+        columns.sort((a, b) =>
+          a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
+            ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
+            : 0,
+        );
+
+        if (mounted) {
+          setProjectColumns(Loaded(columns));
+        }
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch project columns' });
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [project.id]);
+
+  useEffect(
+    () =>
+      formStore.asJsonString.subscribe(() => {
+        resetPagination();
+        const loadableFormset = formStore.formset.get();
+        Loadable.forEach(loadableFormset, (formSet) =>
+          updateSettings({ filterset: JSON.stringify(formSet) }),
+        );
+      }),
+    [resetPagination, updateSettings],
+  );
+
+  useEffect(() => {
+    return () => {
+      canceler.abort();
+      stopPolling();
+    };
+  }, [canceler, stopPolling]);
+
   return (
-    <>
-      <DataGrid
-        columns={columns}
-        data={runs}
-        numRows={isPagedView ? runs.length : Loadable.getOrElse(PAGE_SIZE, total)}
-        page={page}
-        pageSize={PAGE_SIZE}
-        scrollPositionSetCount={scrollPositionSetCount}
-        selection={selection}
-        staticColumns={STATIC_COLUMNS}
-        onColumnResize={handleColumnWidthChange}
-        onColumnsOrderChange={handleColumnsOrderChange}
-        onContextMenuComplete={handleContextMenuComplete}
-        onLinkClick={(href) => {
-          handlePath(event as unknown as AnyMouseEvent, { path: href });
-        }}
-      />
-      {showPagination && (
-        <Row>
-          <Column align="right">
-            <Pagination
-              current={page + 1}
-              pageSize={settings.pageLimit}
-              pageSizeOptions={[20, 40, 80]}
-              total={Loadable.getOrElse(0, total)}
-              onChange={onPageChange}
-            />
-          </Column>
-        </Row>
+    <div className={css.content} ref={contentRef}>
+      {!isLoading && runs.length === 0 ? (
+        numFilters === 0 ? (
+          <Message
+            action={
+              <Link external href={paths.docs('/get-started/webui-qs.html')}>
+                Quick Start Guide
+              </Link>
+            }
+            description="Keep track of runs in a project by connecting up your code."
+            icon="experiment"
+            title="No Runs"
+          />
+        ) : (
+          <Message description="No results matching your filters" icon="search" />
+        )
+      ) : error ? (
+        <Error fetchData={fetchRuns} />
+      ) : (
+        <>
+          <DataGrid
+            columns={columns}
+            data={runs}
+            getRowAccentColor={getRowAccentColor}
+            numRows={isPagedView ? runs.length : Loadable.getOrElse(PAGE_SIZE, total)}
+            page={page}
+            pageSize={PAGE_SIZE}
+            scrollPositionSetCount={scrollPositionSetCount}
+            selection={selection}
+            staticColumns={STATIC_COLUMNS}
+            onColumnResize={handleColumnWidthChange}
+            onColumnsOrderChange={handleColumnsOrderChange}
+            onContextMenuComplete={handleContextMenuComplete}
+            onLinkClick={(href) => {
+              handlePath(event as unknown as AnyMouseEvent, { path: href });
+            }}
+          />
+          {showPagination && (
+            <Row>
+              <Column align="right">
+                <Pagination
+                  current={page + 1}
+                  pageSize={settings.pageLimit}
+                  pageSizeOptions={[20, 40, 80]}
+                  total={Loadable.getOrElse(0, total)}
+                  onChange={onPageChange}
+                />
+              </Column>
+            </Row>
+          )}
+        </>
       )}
-    </>
+    </div>
   );
 };
 

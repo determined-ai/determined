@@ -7,7 +7,7 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
 
 // add new feature switches here
-export type ValidFeature = 'explist_v2' | 'rp_binding' | 'genai' | 'flat_trials';
+export type ValidFeature = 'explist_v2' | 'rp_binding' | 'genai' | 'flat_runs';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -21,7 +21,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     description: 'Enable improved experiment listing, filtering, and comparison',
     friendlyName: 'New Experiment List',
   },
-  flat_trials: {
+  flat_runs: {
     defaultValue: false,
     description:
       'Presents all trials in a project in a single view, rather than grouped into experiments',
