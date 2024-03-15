@@ -55,7 +55,7 @@ message FlatRun {
   // The id of the experiment linked to the run.
   optional int32 experiment_id = 14;
   // The id of the user who created the run.
-  optional int32 owner_id = 15;
+  optional int32 user_id = 15;
   // Original id of a forked or continued experiment.
   optional google.protobuf.Int32Value forked_from = 16;
   // The id of external experiment

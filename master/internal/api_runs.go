@@ -142,7 +142,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.parent_id AS forked_from").
 		ColumnExpr("e.progress AS experiment_progress").
 		ColumnExpr("e.id AS experiment_id").
-		Column("e.owner_id").
+		ColumnExpr("e.owner_id AS user_id").
 		ColumnExpr("e.config->>'description' AS experiment_description").
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").

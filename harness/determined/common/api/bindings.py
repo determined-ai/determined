@@ -3968,7 +3968,6 @@ class v1FlatRun(Printable):
     forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
-    ownerId: "typing.Optional[int]" = None
     parentArchived: "typing.Optional[bool]" = None
     projectId: "typing.Optional[int]" = None
     projectName: "typing.Optional[str]" = None
@@ -3978,6 +3977,7 @@ class v1FlatRun(Printable):
     searcherType: "typing.Optional[str]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     unmanaged: "typing.Optional[bool]" = None
+    userId: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
 
@@ -4001,7 +4001,6 @@ class v1FlatRun(Printable):
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        ownerId: "typing.Union[int, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
@@ -4011,6 +4010,7 @@ class v1FlatRun(Printable):
         searcherType: "typing.Union[str, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -4042,8 +4042,6 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
-        if not isinstance(ownerId, Unset):
-            self.ownerId = ownerId
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
         if not isinstance(projectId, Unset):
@@ -4062,6 +4060,8 @@ class v1FlatRun(Printable):
             self.summaryMetrics = summaryMetrics
         if not isinstance(unmanaged, Unset):
             self.unmanaged = unmanaged
+        if not isinstance(userId, Unset):
+            self.userId = userId
         if not isinstance(workspaceId, Unset):
             self.workspaceId = workspaceId
         if not isinstance(workspaceName, Unset):
@@ -4099,8 +4099,6 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
-        if "ownerId" in obj:
-            kwargs["ownerId"] = obj["ownerId"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
         if "projectId" in obj:
@@ -4119,6 +4117,8 @@ class v1FlatRun(Printable):
             kwargs["summaryMetrics"] = obj["summaryMetrics"]
         if "unmanaged" in obj:
             kwargs["unmanaged"] = obj["unmanaged"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
         if "workspaceId" in obj:
             kwargs["workspaceId"] = obj["workspaceId"]
         if "workspaceName" in obj:
@@ -4156,8 +4156,6 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
-        if not omit_unset or "ownerId" in vars(self):
-            out["ownerId"] = self.ownerId
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
         if not omit_unset or "projectId" in vars(self):
@@ -4176,6 +4174,8 @@ class v1FlatRun(Printable):
             out["summaryMetrics"] = self.summaryMetrics
         if not omit_unset or "unmanaged" in vars(self):
             out["unmanaged"] = self.unmanaged
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
         if not omit_unset or "workspaceId" in vars(self):
             out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):

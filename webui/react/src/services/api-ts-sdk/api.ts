@@ -3247,7 +3247,7 @@ export interface V1FlatRun {
      * @type {number}
      * @memberof V1FlatRun
      */
-    ownerId?: number;
+    userId?: number;
     /**
      * Original id of a forked or continued experiment.
      * @type {number}
