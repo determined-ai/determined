@@ -122,7 +122,7 @@ OFFSET $4 LIMIT $5`, labels.Name, labels.TrialId, metricGroup, offset, limit)
 
 // GetTrialProfilerAvailableSeries returns all available system profiling metric names.
 // This method is to be deprecated in the future in place of generic metrics APIs.
-func (db *PgDB) GetTrialProfilerAvailableSeries(
+func GetTrialProfilerAvailableSeries(
 	ctx context.Context, trialID int32,
 ) ([]*trialv1.TrialProfilerMetricLabels, error) {
 	out := []struct {

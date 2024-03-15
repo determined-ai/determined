@@ -1077,7 +1077,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		}
 
 		var labels apiv1.GetTrialProfilerAvailableSeriesResponse
-		res, err := a.m.db.GetTrialProfilerAvailableSeries(resp.Context(), req.TrialId)
+		res, err := db.GetTrialProfilerAvailableSeries(resp.Context(), req.TrialId)
 		if err != nil {
 			return nil, err
 		}

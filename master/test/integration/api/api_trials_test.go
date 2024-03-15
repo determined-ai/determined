@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"math"
 	"math/rand"
 	"sort"
 	"testing"
@@ -227,6 +228,9 @@ func trialProfilerMetricsTests(
 	})
 	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
 	reportTime := timestamppb.Now()
+	// Round off timestamps to milliseconds.
+	reportTime.Nanos = int32(math.Floor(float64(reportTime.Nanos)/float64(time.Millisecond)) *
+		float64(time.Millisecond))
 
 	for i := 0; i < 10; i++ {
 		// When we add some metrics that match our stream.
@@ -249,9 +253,6 @@ func trialProfilerMetricsTests(
 		recvMetricsBatch, metricErr := tlCl.Recv()
 		assert.NilError(t, metricErr, "failed to stream metrics")
 
-		// Round off timestamps to milliseconds.
-		reportTime.Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
-			float64(time.Millisecond))
 		expectedBatch := &trialv1.TrialProfilerMetricsBatch{
 			Values:     nil,
 			Timestamps: []*timestamp.Timestamp{reportTime},
