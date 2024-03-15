@@ -3319,7 +3319,7 @@ export interface V1FlatRun {
      * @type {boolean}
      * @memberof V1FlatRun
      */
-    parentArchived?: boolean;
+    parentArchived: boolean;
     /**
      * Unmanaged experiments are detached.
      * @type {boolean}

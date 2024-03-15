@@ -25,7 +25,8 @@ message FlatRun {
         "project_id",
         "project_name",
         "workspace_id",
-        "workspace_name"
+        "workspace_name",
+        "parent_archived"
       ]
     }
   };
@@ -84,7 +85,7 @@ message FlatRun {
   string workspace_name = 26;
   // The archived status of the parent project (can be inherited from
   // workspace).
-  optional bool parent_archived = 27;
+  bool parent_archived = 27;
   // Unmanaged experiments are detached.
   optional bool unmanaged = 28;
   // True if the associated experiment is a multitrial experiment
