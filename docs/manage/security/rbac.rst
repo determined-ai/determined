@@ -477,7 +477,7 @@ update NTSC tasks within its scope.
 
 -  ``EditorRestricted`` users can still open and use scoped JupyterLab notebooks and perform all
    experiment-related jobs, just like those with the ``Editor`` role. The only additional
-   permissions granted by the ``Editor`` role include the ability to create notebooks, Tensorboards,
+   permissions granted by the ``Editor`` role include the ability to create notebooks, TensorBoards,
    shells, and commands (NTSC tasks), as well as the permission to update these tasks, such as
    changing the task's priority or deleting it.
 
