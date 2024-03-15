@@ -131,7 +131,7 @@ commands:
             - run:
                 name: skip if << parameters.dir >>-only changes
                 command: |
-                  MERGE_BASE="$(git merge-base upstream/main HEAD)"
+                  MERGE_BASE="$(git merge-base upstream/jcom/INFENG-505/clarify-circleci-skip-title-messages HEAD)"
                   DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
                   if [ "$DIFF_DIRS" = "<< parameters.dir >>" ] ; then
                     echo "<< parameters.dir >>-only change detected, halting job now"
@@ -145,7 +145,7 @@ commands:
             - run:
                 name: skip if not << parameters.dir >> changes
                 command: |
-                  MERGE_BASE="$(git merge-base upstream/main HEAD)"
+                  MERGE_BASE="$(git merge-base upstream/jcom/INFENG-505/clarify-circleci-skip-title-messages HEAD)"
                   if [ git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>" ]; then
                     echo "<< parameters.dir >> change detected, running downstream steps"
                   else
