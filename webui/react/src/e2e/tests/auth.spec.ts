@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 
-import { test } from './global-fixtures';
+import { test } from '../fixtures/global-fixtures';
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ dev }) => {
