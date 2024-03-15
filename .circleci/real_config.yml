@@ -118,9 +118,6 @@ commands:
       - run: tools/scripts/retry.sh git fetch upstream
 
   skip-if-dir:
-    # TODO review the commands
-    # We can combine them into one command and use bash to evaluate the parameter
-    # We should avoid *"wildcards like that with no delimiters"*
     parameters:
       dir:
         type: string
@@ -149,8 +146,7 @@ commands:
                 name: skip if not << parameters.dir >> changes
                 command: |
                   MERGE_BASE="$(git merge-base upstream/main HEAD)"
-                  DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-                  if [[ "$DIFF_DIRS" == *"<< parameters.dir >>"* ]]; then
+                  if [ git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>" ]; then
                     echo "<< parameters.dir >> change detected, running downstream steps"
                     circleci-agent step halt
                   else
