@@ -138,7 +138,7 @@ commands:
     parameters:
       dir:
         type: string
-      steps:
+    steps:
         - run:
             name: continue if << parameters.dir >> changes
             command: |
