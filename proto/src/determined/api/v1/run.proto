@@ -45,10 +45,12 @@ message MoveRunsRequest {
 
   // The ids of the runs being moved.
   repeated int32 run_ids = 1;
+  // The id of the current parent project.
+  int32 source_project_id = 2;
   // The id of the new parent project.
-  int32 destination_project = 2;
+  int32 destination_project_id = 3;
   // Filter expression
-  optional string filter = 3;
+  optional string filter = 4;
 }
 
 message MoveRunsResponse {

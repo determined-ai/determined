@@ -5,11 +5,15 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (a *apiServer) RunPrepareForReporting(
@@ -47,5 +51,34 @@ func (a *apiServer) RunPrepareForReporting(
 func (a *apiServer) MoveRuns(
 	ctx context.Context, req *apiv1.MoveRunsRequest,
 ) (*apiv1.MoveRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if curUser == nil {
+		return nil, errors.Errorf("No user found")
+	}
+	// check that user can view source project
+	srcProject, err := a.GetProjectByID(ctx, req.SourceProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if srcProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot have runs moved from it",
+			srcProject.Id)
+	}
+
+	// check suitable destination project
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if destProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new runs",
+			req.DestinationProjectId)
+	}
+	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
 	return nil, nil
 }
