@@ -475,11 +475,11 @@ edit, or delete projects and experiments within its scope.
 The ``Editor`` role supersedes the ``EditorRestricted`` role and includes permissions to create or
 update NTSC tasks within its scope.
 
-- ``EditorRestricted`` users can still open and use scoped JupyterLab notebooks and perform all
-experiment-related jobs as those with the ``Editor`` role. The only additional permissions granted
-by the ``Editor`` role are the permission to create notebooks, tensorboards, shells, and commands
-(NTSC tasks) and the permssion to perform updates on those tasks (such as changing the task's
-priority or deleting it).
+**Note**: ``EditorRestricted`` users can still open and use scoped JupyterLab Notebooks and perform
+all experiment-related jobs as those with the ``Editor`` role. The only additional permissions
+granted by the ``Editor`` role are the permission to create Notebooks, Tensorboards, Shells, and
+Commands (NTSC tasks) and the permission to perform updates on those tasks (such as changing the
+task's priority or deleting it).
 
 ``WorkspaceAdmin``
 ==================
