@@ -1546,11 +1546,11 @@ class PyTorchTrial(det.LegacyTrial):
         """
         Defines the data loader to use during validation.
 
-        For full "determined" functionality, this must return an instance of
-        class:`determined.pytorch.DataLoader`. It can also return an unwrapped
-        class:`torch.utils.data.DataLoader` if you need more control over the underlying
-        DataLoader and are willing to sacrifice some Determined features (ex: automatic data
-        sharding).
+        Users with a MapDataset will normally return a :class:`determined.pytorch.DataLoader`, but
+        users with an IterableDataset or with other advanced needs may sacrifice some
+        Determined-managed functionality (ex: automatic data sharding) to return a bare
+        :class:`torch.utils.data.DataLoader` following the best-practices described in
+        :ref:`pytorch-reproducible-dataset`.
         """
         pass
 
