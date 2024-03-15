@@ -19,6 +19,23 @@ import (
 
 const keystr = "determined:stream-gen"
 
+type streamType string
+
+const (
+	JSON           streamType = "JSONB"
+	STRING         streamType = "string"
+	INT            streamType = "int"
+	INT64          streamType = "int64"
+	INT_ARR        streamType = "[]int"
+	BOOL           streamType = "bool"
+	TIME           streamType = "time.Time"
+	TIME_PTR       streamType = "*time.Time"
+	TASK_ID        streamType = "model.TaskID"
+	REQUEST_ID     streamType = "model.RequestID"
+	REQUEST_ID_PTR streamType = "*model.RequestID"
+	STATE          streamType = "model.State"
+)
+
 // Streamable represents the struct under a determined:stream-gen comment.
 type Streamable struct {
 	Name     string
@@ -30,7 +47,7 @@ type Streamable struct {
 // Field is a member of a Streamable.
 type Field struct {
 	Name    string
-	Type    string
+	Type    streamType
 	JSONTag string
 }
 
@@ -190,7 +207,7 @@ func (x *StreamableFinder) Visit(node ast.Node) ast.Visitor {
 			// Get the string representing this type.  We use the string because the ast
 			// representation of the type is a PITA to work with.
 			typestr := string(x.src[field.Type.Pos()-1 : field.Type.End()-1])
-			result.Fields = append(result.Fields, Field{field.Names[0].String(), typestr, v})
+			result.Fields = append(result.Fields, Field{field.Names[0].String(), streamType(typestr), v})
 		}
 	}
 
@@ -243,19 +260,19 @@ func (b *Builder) String() string {
 func genTypescript(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) ([2]string, error) {
-		x := map[string]([2]string){
-			"JSONB":            {"any", "{}"},
-			"string":           {"string", ""},
-			"bool":             {"bool", "false"},
-			"int":              {"number", "0"},
-			"int64":            {"number", "0"},
-			"[]int":            {"Array<number>", "[]"},
-			"time.Time":        {"string", ""},
-			"*time.Time":       {"string | undefined", "undefined"},
-			"model.TaskID":     {"string", ""},
-			"model.RequestID":  {"number", "0"},
-			"*model.RequestID": {"number | undefined", "undefined"},
-			"model.State":      {"string", ""},
+		x := map[streamType]([2]string){
+			JSON:           {"any", "{}"},
+			STRING:         {"string", ""},
+			BOOL:           {"bool", "false"},
+			INT:            {"number", "0"},
+			INT64:          {"number", "0"},
+			INT_ARR:        {"Array<number>", "[]"},
+			TIME:           {"string", ""},
+			TIME_PTR:       {"string | undefined", "undefined"},
+			TASK_ID:        {"string", ""},
+			REQUEST_ID:     {"number", "0"},
+			REQUEST_ID_PTR: {"number | undefined", "undefined"},
+			STATE:          {"string", ""},
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -321,7 +338,7 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 			b.Writef("    return this.#id;\n")
 			b.Writef("  };\n")
 			b.Writef("\n")
-			b.Writef("  public toWire = (): Record<string, any> => {\n")
+			b.Writef("  public toWire = (): Record<string, unknown> => {\n")
 			b.Writef("    return {\n")
 			for _, f := range s.Fields {
 				b.Writef("      %v: this.#%v,\n", f.JSONTag, f.JSONTag)
@@ -337,19 +354,19 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 func genPython(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) (string, error) {
-		x := map[string]string{
-			"JSONB":            "typing.Any",
-			"string":           "str",
-			"bool":             "bool",
-			"int":              "int",
-			"int64":            "int",
-			"[]int":            "typing.List[int]",
-			"time.Time":        "float",
-			"*time.Time":       "typing.Optional[float]",
-			"model.TaskID":     "str",
-			"model.RequestID":  "int",
-			"*model.RequestID": "typing.Optional[int]",
-			"model.State":      "str",
+		x := map[streamType]string{
+			JSON:           "typing.Any",
+			STRING:         "str",
+			BOOL:           "bool",
+			INT:            "int",
+			INT64:          "int",
+			INT_ARR:        "typing.List[int]",
+			TIME:           "float",
+			TIME_PTR:       "typing.Optional[float]",
+			TASK_ID:        "str",
+			REQUEST_ID:     "int",
+			REQUEST_ID_PTR: "typing.Optional[int]",
+			STATE:          "str",
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -473,12 +490,12 @@ func printHelp(output io.Writer) {
 		output,
 		`stream-gen generates bindings for determined streaming updates.
 
-usage: stream-gen IN.GO... --python [--output OUTPUT]
+usage: stream-gen IN.GO... --python/ts [--output OUTPUT]
 
 All structs in the input files IN.GO... which contain special 'determined:stream-gen' comments will
 be included in the generated output.
 
-Presently the only output language is --python.
+Presently the only output languages are python and typescript.
 
 Output will be written to stdout, or a location specified by --output.  The OUTPUT will only be
 overwritten if it would be modified.

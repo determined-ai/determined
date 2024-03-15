@@ -46,7 +46,7 @@ ungen:
 	rm -f `find ./internal/mocks -name '*.go'` build/mock_gen.stamp
 
 .PHONY: gen
-gen: $(LICENSE) build/schema_gen.stamp $(STREAM_PYTHON_CLIENT) $(LICENSE) build/schema_gen.stamp $(STREAM_TS_CLIENT)
+gen: $(LICENSE) build/schema_gen.stamp $(STREAM_PYTHON_CLIENT) build/schema_gen.stamp $(STREAM_TS_CLIENT)
 
 .PHONY: force-gen
 force-gen:

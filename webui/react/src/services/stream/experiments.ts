@@ -27,8 +27,7 @@ export class ExperimentSpec extends StreamSpec {
     return this.#id;
   };
 
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  public toWire = (): Record<string, any> => {
+  public toWire = (): Record<string, unknown> => {
     return { experiment_ids: this.#experiment_ids };
   };
 }

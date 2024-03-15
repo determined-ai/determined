@@ -11,6 +11,5 @@ export const StreamEntityMap: Record<string, Streamable> = {
 export abstract class StreamSpec {
   abstract equals: (sp?: StreamSpec) => boolean;
   abstract id: () => Streamable;
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  abstract toWire: () => Record<string, any>;
+  abstract toWire: () => Record<string, unknown>;
 }
