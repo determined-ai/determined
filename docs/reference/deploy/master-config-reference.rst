@@ -1553,8 +1553,9 @@ Specifies configuration settings for the logging retention of trial logs.
 
 Number of days to retain logs for by default. This can be overridden on a per-experiment basis in
 the :ref:`experiment configuration <log-retention-days>`. Values should be between ``-1`` and
-``32767``. The default value is ``-1`` and will retain logs indefinitely. If set to ``0``, logs will
-be deleted during the next cleanup.
+``32767``. The default value is ``-1``, retaining logs indefinitely. If set to ``0``, logs will be
+deleted during the next cleanup. If this value is not set, ``det master cleanup-logs`` can be called
+to manually run retention.
 
 ``schedule``
 ============

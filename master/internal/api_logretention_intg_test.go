@@ -13,6 +13,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/jonboulle/clockwork"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/logretention"
@@ -305,6 +306,11 @@ func TestScheduleRetention(t *testing.T) {
 	taskIDs = append(taskIDs, taskIDs2...)
 	taskIDs = append(taskIDs, taskIDs3...)
 
+	trialIDs := []int{}
+	trialIDs = append(trialIDs, trialIDs1...)
+	trialIDs = append(trialIDs, trialIDs2...)
+	trialIDs = append(trialIDs, trialIDs3...)
+
 	// Add logs for each task.
 	for _, taskID := range taskIDs {
 		task, err := db.TaskByID(ctx, taskID)
@@ -347,6 +353,19 @@ func TestScheduleRetention(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rows)
 	}
+
+	// Mark experiments and trials as completed.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In([]int32{experiment1.Id, experiment2.Id, experiment3.Id})).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+
 	// Advance time by 1 day.
 	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 1)
 	// Verify that the logs are still there.
