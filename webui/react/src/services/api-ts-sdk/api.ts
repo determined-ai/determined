@@ -4205,8 +4205,7 @@ export interface V1GetNotebooksResponse {
  */
 export interface V1GetPachydermRepoURLResponse {
     /**
-     * URL for pachyderm input repository associated
-     * URL for pachyderm input repository associated.
+     * URL for pachyderm input repository associated with given determined experiment.
      * @type {string}
      * @memberof V1GetPachydermRepoURLResponse
      */
@@ -14733,7 +14732,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get pachyderm input repo URL based on experiment config, if present.
+         * @summary Get pachyderm input repo URL based on experiment integration config, if present.
          * @param {number} experimentId ID of experiment to retrieve the URL.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16049,7 +16048,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get pachyderm input repo URL based on experiment config, if present.
+         * @summary Get pachyderm input repo URL based on experiment integration config, if present.
          * @param {number} experimentId ID of experiment to retrieve the URL.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -16718,7 +16717,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get pachyderm input repo URL based on experiment config, if present.
+         * @summary Get pachyderm input repo URL based on experiment integration config, if present.
          * @param {number} experimentId ID of experiment to retrieve the URL.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -17248,7 +17247,7 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get pachyderm input repo URL based on experiment config, if present.
+     * @summary Get pachyderm input repo URL based on experiment integration config, if present.
      * @param {number} experimentId ID of experiment to retrieve the URL.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

@@ -776,7 +776,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/integration.json"
         },
         "data_layer": {
@@ -1399,7 +1399,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
         }
     }
@@ -1671,7 +1671,7 @@ var (
         },
         "port": {
             "type": [
-                "string",
+                "integer",
                 "null"
             ],
             "default": ""
@@ -1704,7 +1704,7 @@ var (
         },
         "port": {
             "type": [
-                "string",
+                "integer",
                 "null"
             ],
             "default": ""
@@ -1726,7 +1726,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
@@ -1734,7 +1734,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": null,
+            "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "branch": {

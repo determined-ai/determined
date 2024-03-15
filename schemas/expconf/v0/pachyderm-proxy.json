@@ -16,7 +16,7 @@
         },
         "port": {
             "type": [
-                "string",
+                "integer",
                 "null"
             ],
             "default": ""

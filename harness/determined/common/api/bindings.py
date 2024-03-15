@@ -18069,7 +18069,8 @@ def get_GetPachydermRepoURL(
     *,
     experimentId: int,
 ) -> "v1GetPachydermRepoURLResponse":
-    """Get pachyderm input repo URL based on experiment config, if present.
+    """Get pachyderm input repo URL based on experiment integration config, if
+    present.
 
     - experimentId: ID of experiment to retrieve the URL.
     """
