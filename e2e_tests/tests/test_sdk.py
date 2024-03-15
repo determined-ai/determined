@@ -1,4 +1,5 @@
 import os
+import pathlib
 import random
 import time
 
@@ -12,7 +13,7 @@ from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
-def test_completed_experiment_and_checkpoint_apis(create_empty_dir) -> None:
+def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
 
@@ -20,7 +21,7 @@ def test_completed_experiment_and_checkpoint_apis(create_empty_dir) -> None:
         config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
     # Test the use of the includes parameter, by feeding the model definition file via includes.
-    emptydir = create_empty_dir
+    emptydir = tmp_path
     model_def = conf.fixtures_path("no_op/model_def.py")
     exp = detobj.create_experiment(config, emptydir, includes=[model_def])
     exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
@@ -89,7 +90,7 @@ def test_completed_experiment_and_checkpoint_apis(create_empty_dir) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_checkpoint_apis(create_empty_dir) -> None:
+def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
     with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
@@ -210,8 +211,7 @@ def test_checkpoint_apis(create_empty_dir) -> None:
     assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
 
     # Ensure we can download the partially deleted checkpoint.
-    temp_dir = create_empty_dir
-    downloaded_path = partially_deleted_checkpoints[0].download(path=os.path.join(temp_dir, "c"))
+    downloaded_path = partially_deleted_checkpoints[0].download(path=os.path.join(tmp_path, "c"))
     files = os.listdir(downloaded_path)
     assert "no_op_checkpoint" in files
     assert "workload_sequencer.pkl" not in files
@@ -467,7 +467,10 @@ def test_rp_workspace_mapping() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_create_experiment_w_template(create_empty_dir) -> None:
+def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
+    # Create a minimal experiment with a simple template
+    # Verify that after the first trial is started, the executed experiment has exactly one trial
+    # Verify that the content in template is indeed applied
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
     template_name = "test_template"
@@ -482,14 +485,16 @@ def test_create_experiment_w_template(create_empty_dir) -> None:
         # create experiment with template
         with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
             config = util.yaml_safe_load(f)
-        emptydir = create_empty_dir
         model_def = conf.fixtures_path("no_op/model_def.py")
         exp = detobj.create_experiment(
-            config, emptydir, includes=[model_def], template=tpl_resp.template.name
+            config, tmp_path, includes=[model_def], template=tpl_resp.template.name
         )
         exp.await_first_trial()
 
         trials = exp.get_trials()
         assert len(trials) == 1, trials
+        assert exp.config is not None
+        assert exp.config["reproducibility"]["experiment_seed"] == 999, exp.config
+
     finally:
         bindings.delete_DeleteTemplate(sess, templateName=template_name)
