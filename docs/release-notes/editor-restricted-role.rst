@@ -10,14 +10,14 @@
        ``EditorRestricted`` role lacks the permissions to create or update NTSC-type workloads.
 
        Therefore, a user with ``EditorRestricted`` privileges in a given scope is limited when
-       using the web UI within that scope since the option to launch JupyterLab notebooks and kill
+       using the WebUI within that scope since the option to launch JupyterLab notebooks and kill
        running tasks will be unavailable. The user will also be unable to run CLI commands that
-       create scoped Notebooks, Tensorboards, Shells, and Commands and will be unable to perform
+       create scoped notebooks, Tensorboards, shells, and commands and will be unable to perform
        updates on these tasks (such as changing the task's priority or deleting it).
        ``EditorRestricted`` users can still open and use scoped JupyterLab notebooks and
        perform all experiment-related jobs as those with the ``Editor`` role.
 
-    -  The ``EditorRestricted`` role was created to allow workspace and cluster editors and admins
-       to have more fine-grained control over GPU resources. Thus, users with this role cannot
-       launch or modify tasks that indefinitely consume slot-requesting resources within a given
-       scope.
+    -  The ``EditorRestricted`` role allows workspace and cluster editors and admins
+       to have more fine-grained control over GPU resources. Thus, users with this role lack the
+       ability to launch or modify tasks that indefinitely consume slot-requesting resources within
+       a given scope.
