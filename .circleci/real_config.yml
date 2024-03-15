@@ -139,16 +139,16 @@ commands:
       dir:
         type: string
     steps:
-        - run:
-            name: continue if << parameters.dir >> changes
-            command: |
-              MERGE_BASE="$(git merge-base upstream/main HEAD)"
-              if ! git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>"; then
-                echo "<< parameters.dir >> change detected, running downstream steps"
-              else
-                echo "<< parameters.dir >> code not affected, halting job now"
-                circleci-agent step halt
-              fi
+      - run:
+          name: continue if << parameters.dir >> changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            if ! git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>"; then
+              echo "<< parameters.dir >> change detected, running downstream steps"
+            else
+              echo "<< parameters.dir >> code not affected, halting job now"
+              circleci-agent step halt
+            fi
 
   skip-if-only-docs:
     steps:
