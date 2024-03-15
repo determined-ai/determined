@@ -162,7 +162,7 @@ commands:
     steps:
       - skip-if-dir:
           dir: docs
-          not: true
+          negate: true
 
   skip-if-webui-only:
     steps:
@@ -173,7 +173,7 @@ commands:
     steps:
       - skip-if-dir:
           dir: shared
-          not: true
+          negate: true
 
   skip-if-github-only:
     steps:
