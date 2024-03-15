@@ -5,28 +5,20 @@
 ###########
 
 Optimizing a model's performance is often a trade-off between accuracy, time, and resource
-requirements.
-
-Training deep learning models is a time and resource intensive process, where each iteration can
-take several hours and accumulate heavy hardware costs.
-
-Though sometimes this cost is inherent to the task, unnecessary resource consumption can be caused
-by suboptimal code or bugs.
-
-Achieving optimal model performance requires an understanding of how your model interacts with the
-system's computational resources.
+requirements. Training deep learning models is a time and resource intensive process, where each
+iteration can take several hours and accumulate heavy hardware costs. Though sometimes this cost is
+inherent to the task, unnecessary resource consumption can be caused by suboptimal code or bugs.
+Thus, achieving optimal model performance requires an understanding of how your model interacts with
+the system's computational resources.
 
 Profiling collects metrics on how computational resources like CPU, GPU, and memory are being
-utilized during a training job.
-
-It can reveal patterns in resource utilization that help identify performance bottlenecks and
-pinpoint areas of the code or pipeline that are causing slowdowns or inefficiencies.
+utilized during a training job. It can reveal patterns in resource utilization that indicate
+performance bottlenecks and pinpoint areas of the code or pipeline that are causing slowdowns or
+inefficiencies.
 
 Profiling a training job can be instrumented at many different layers, from generic system-level
-metrics to individual model operators and GPU kernels.
-
-Determined provides a few options for profiling, each targeting a different layer in a training job
-at various levels of detail:
+metrics to individual model operators and GPU kernels. Determined provides a few options for
+profiling, each targeting a different layer in a training job at various levels of detail:
 
 -  :ref:`Determined system metrics profiler <how-to-profiling-det-profiler>` collects general
    system-level metrics and provides an overview of hardware usage during an experiment.
