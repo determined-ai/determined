@@ -148,9 +148,9 @@ commands:
                   MERGE_BASE="$(git merge-base upstream/main HEAD)"
                   if [ git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>" ]; then
                     echo "<< parameters.dir >> change detected, running downstream steps"
-                    circleci-agent step halt
                   else
                     echo "<< parameters.dir >> code not affected, halting job now"
+                    circleci-agent step halt
                   fi
 
   skip-if-docs-only:
