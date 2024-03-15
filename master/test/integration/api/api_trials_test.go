@@ -249,13 +249,17 @@ func trialProfilerMetricsTests(
 		recvMetricsBatch, metricErr := tlCl.Recv()
 		assert.NilError(t, metricErr, "failed to stream metrics")
 
-		// Just nil the values since the floats lose a little precision getting thrown
-		// around so much.
+		// Round off timestamps to milliseconds.
+		reportTime.Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
+			float64(time.Millisecond))
 		expectedBatch := &trialv1.TrialProfilerMetricsBatch{
 			Values:     nil,
 			Timestamps: []*timestamp.Timestamp{reportTime},
 			Labels:     &labels,
 		}
+
+		// Just nil the values since the floats lose a little precision getting thrown
+		// around so much.
 		recvMetricsBatch.Batch.Values = nil
 
 		bOrig, b0Err := protojson.Marshal(expectedBatch)
