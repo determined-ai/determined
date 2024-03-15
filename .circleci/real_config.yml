@@ -169,12 +169,6 @@ commands:
       - skip-if-dir:
           dir: webui
 
-  skip-if-not-shared:
-    steps:
-      - skip-if-dir:
-          dir: shared
-          negate: true
-
   skip-if-github-only:
     steps:
       - skip-if-dir:
@@ -1561,17 +1555,6 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage
 
-  test-intg-downstream:
-    docker:
-      - image: cimg/node:20.9.0
-    steps:
-      - checkout-with-sm
-      - add-and-fetch-upstream
-      - skip-if-not-shared
-      - setup-python-venv:
-          executor: <<pipeline.parameters.machine-image>>
-      - run: make -C webui/react test-shared
-
   lint-sql:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2800,7 +2783,6 @@ workflows:
   test-go:
     jobs:
       # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
-      # - test-intg-downstream
       - test-intg-master:
           context: storage-unit-tests
       - test-intg-agent
