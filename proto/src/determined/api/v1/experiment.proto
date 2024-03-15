@@ -944,6 +944,7 @@ message GetPachydermRepoURLResponse {
     json_schema: { required: [ "pachyderm_input_repo_url" ] }
   };
 
-  // URL for pachyderm input repository associated with given determined experiment.
+  // URL for pachyderm input repository associated with given determined
+  // experiment.
   string pachyderm_input_repo_url = 1;
 }
