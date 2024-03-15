@@ -5,6 +5,7 @@ from typing import Callable, Dict
 
 import determined
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
+from determined.deploy.errors import warn_version_mismatch
 from determined.deploy.local import cluster_utils
 
 from .preflight import check_docker_install
@@ -13,6 +14,10 @@ from .preflight import check_docker_install
 def handle_cluster_up(args: argparse.Namespace) -> None:
     if not args.no_preflight_checks:
         check_docker_install()
+
+    warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        args.det_version = determined.__version__
 
     cluster_utils.cluster_up(
         num_agents=args.agents,
@@ -39,6 +44,10 @@ def handle_logs(args: argparse.Namespace) -> None:
 
 
 def handle_master_up(args: argparse.Namespace) -> None:
+    warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        args.det_version = determined.__version__
+
     cluster_utils.master_up(
         port=args.master_port,
         master_config_path=args.master_config_path,
@@ -61,6 +70,9 @@ def handle_master_down(args: argparse.Namespace) -> None:
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
+    warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        args.det_version = determined.__version__
     cluster_utils.agent_up(
         master_host=args.master_host,
         master_port=args.master_port,
@@ -141,7 +153,6 @@ args_description = Cmd(
                 Arg(
                     "--det-version",
                     type=str,
-                    default=determined.__version__,
                     help="version or commit to use",
                 ),
                 Arg(
@@ -228,7 +239,6 @@ args_description = Cmd(
                 Arg(
                     "--det-version",
                     type=str,
-                    default=determined.__version__,
                     help="version or commit to use",
                 ),
                 Arg(
@@ -326,7 +336,6 @@ args_description = Cmd(
                 Arg(
                     "--det-version",
                     type=str,
-                    default=determined.__version__,
                     help="version or commit to use",
                 ),
                 Arg(
