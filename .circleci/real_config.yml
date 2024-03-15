@@ -146,7 +146,7 @@ commands:
                 name: skip if not << parameters.dir >> changes
                 command: |
                   MERGE_BASE="$(git merge-base upstream/jcom/INFENG-505/clarify-circleci-skip-title-messages HEAD)"
-                  if [[ git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>" ]]; then
+                  if git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>"; then
                     echo "<< parameters.dir >> change detected, running downstream steps"
                   else
                     echo "<< parameters.dir >> code not affected, halting job now"
