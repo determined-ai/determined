@@ -95,7 +95,7 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              {f_flat_trials ? (
+              {f_flat_runs ? (
                 <FlatRuns project={project} />
               ) : f_explist ? (
                 <F_ExperimentList key={projectId} project={project} />
