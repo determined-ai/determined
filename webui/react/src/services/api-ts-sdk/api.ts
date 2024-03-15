@@ -3295,25 +3295,25 @@ export interface V1FlatRun {
      * @type {number}
      * @memberof V1FlatRun
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The name of the project associated with this experiment.
      * @type {string}
      * @memberof V1FlatRun
      */
-    projectName?: string;
+    projectName: string;
     /**
      * The id of the workspace associated with this experiment.
      * @type {number}
      * @memberof V1FlatRun
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * The name of the workspace associated with this experiment.
      * @type {string}
      * @memberof V1FlatRun
      */
-    workspaceName?: string;
+    workspaceName: string;
     /**
      * The archived status of the parent project (can be inherited from workspace).
      * @type {boolean}

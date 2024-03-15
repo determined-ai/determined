@@ -3969,8 +3969,6 @@ class v1FlatRun(Printable):
     hyperparameters: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     parentArchived: "typing.Optional[bool]" = None
-    projectId: "typing.Optional[int]" = None
-    projectName: "typing.Optional[str]" = None
     resourcePool: "typing.Optional[str]" = None
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -3978,8 +3976,6 @@ class v1FlatRun(Printable):
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     unmanaged: "typing.Optional[bool]" = None
     userId: "typing.Optional[int]" = None
-    workspaceId: "typing.Optional[int]" = None
-    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -3988,8 +3984,12 @@ class v1FlatRun(Printable):
         checkpointSize: str,
         id: int,
         isExpMultitrial: bool,
+        projectId: int,
+        projectName: str,
         startTime: str,
         state: "trialv1State",
+        workspaceId: int,
+        workspaceName: str,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experimentDescription: "typing.Union[str, None, Unset]" = _unset,
@@ -4002,8 +4002,6 @@ class v1FlatRun(Printable):
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
-        projectId: "typing.Union[int, None, Unset]" = _unset,
-        projectName: "typing.Union[str, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -4011,15 +4009,17 @@ class v1FlatRun(Printable):
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
-        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.checkpointCount = checkpointCount
         self.checkpointSize = checkpointSize
         self.id = id
         self.isExpMultitrial = isExpMultitrial
+        self.projectId = projectId
+        self.projectName = projectName
         self.startTime = startTime
         self.state = state
+        self.workspaceId = workspaceId
+        self.workspaceName = workspaceName
         if not isinstance(duration, Unset):
             self.duration = duration
         if not isinstance(endTime, Unset):
@@ -4044,10 +4044,6 @@ class v1FlatRun(Printable):
             self.labels = labels
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
-        if not isinstance(projectId, Unset):
-            self.projectId = projectId
-        if not isinstance(projectName, Unset):
-            self.projectName = projectName
         if not isinstance(resourcePool, Unset):
             self.resourcePool = resourcePool
         if not isinstance(searcherMetric, Unset):
@@ -4062,10 +4058,6 @@ class v1FlatRun(Printable):
             self.unmanaged = unmanaged
         if not isinstance(userId, Unset):
             self.userId = userId
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
-        if not isinstance(workspaceName, Unset):
-            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRun":
@@ -4074,8 +4066,12 @@ class v1FlatRun(Printable):
             "checkpointSize": obj["checkpointSize"],
             "id": obj["id"],
             "isExpMultitrial": obj["isExpMultitrial"],
+            "projectId": obj["projectId"],
+            "projectName": obj["projectName"],
             "startTime": obj["startTime"],
             "state": trialv1State(obj["state"]),
+            "workspaceId": obj["workspaceId"],
+            "workspaceName": obj["workspaceName"],
         }
         if "duration" in obj:
             kwargs["duration"] = obj["duration"]
@@ -4101,10 +4097,6 @@ class v1FlatRun(Printable):
             kwargs["labels"] = obj["labels"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
-        if "projectId" in obj:
-            kwargs["projectId"] = obj["projectId"]
-        if "projectName" in obj:
-            kwargs["projectName"] = obj["projectName"]
         if "resourcePool" in obj:
             kwargs["resourcePool"] = obj["resourcePool"]
         if "searcherMetric" in obj:
@@ -4119,10 +4111,6 @@ class v1FlatRun(Printable):
             kwargs["unmanaged"] = obj["unmanaged"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
-        if "workspaceName" in obj:
-            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -4131,8 +4119,12 @@ class v1FlatRun(Printable):
             "checkpointSize": self.checkpointSize,
             "id": self.id,
             "isExpMultitrial": self.isExpMultitrial,
+            "projectId": self.projectId,
+            "projectName": self.projectName,
             "startTime": self.startTime,
             "state": self.state.value,
+            "workspaceId": self.workspaceId,
+            "workspaceName": self.workspaceName,
         }
         if not omit_unset or "duration" in vars(self):
             out["duration"] = self.duration
@@ -4158,10 +4150,6 @@ class v1FlatRun(Printable):
             out["labels"] = self.labels
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
-        if not omit_unset or "projectId" in vars(self):
-            out["projectId"] = self.projectId
-        if not omit_unset or "projectName" in vars(self):
-            out["projectName"] = self.projectName
         if not omit_unset or "resourcePool" in vars(self):
             out["resourcePool"] = self.resourcePool
         if not omit_unset or "searcherMetric" in vars(self):
@@ -4176,10 +4164,6 @@ class v1FlatRun(Printable):
             out["unmanaged"] = self.unmanaged
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
-        if not omit_unset or "workspaceName" in vars(self):
-            out["workspaceName"] = self.workspaceName
         return out
 
 class v1GenericTaskState(DetEnum):

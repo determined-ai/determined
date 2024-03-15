@@ -21,7 +21,11 @@ message FlatRun {
         "tags",
         "checkpoint_size",
         "checkpoint_count",
-        "is_exp_multitrial"
+        "is_exp_multitrial",
+        "project_id",
+        "project_name",
+        "workspace_id",
+        "workspace_name"
       ]
     }
   };
@@ -71,13 +75,13 @@ message FlatRun {
   // Time in seconds which experiment ran or has been running.
   optional int32 duration = 22;
   // The id of the project associated with this experiment.
-  optional int32 project_id = 23;
+  int32 project_id = 23;
   // The name of the project associated with this experiment.
-  optional string project_name = 24;
+  string project_name = 24;
   // The id of the workspace associated with this experiment.
-  optional int32 workspace_id = 25;
+  int32 workspace_id = 25;
   // The name of the workspace associated with this experiment.
-  optional string workspace_name = 26;
+  string workspace_name = 26;
   // The archived status of the parent project (can be inherited from
   // workspace).
   optional bool parent_archived = 27;
