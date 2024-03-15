@@ -56,7 +56,7 @@ type DB interface {
 		values []float32, batches []int32, timestamps []time.Time, labels []byte,
 	) error
 	GetTrialProfilerMetricsBatches(
-		labelsJSON []byte, offset, limit int,
+		labels *trialv1.TrialProfilerMetricLabels, offset, limit int,
 	) (model.TrialProfilerMetricsBatchBatch, error)
 	ExperimentLabelUsage(projectID int32) (labelUsage map[string]int, err error)
 	GetExperimentStatus(experimentID int) (state model.State, progress float64,

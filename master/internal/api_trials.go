@@ -1019,11 +1019,6 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	req *apiv1.GetTrialProfilerMetricsRequest,
 	resp apiv1.Determined_GetTrialProfilerMetricsServer,
 ) error {
-	labelsJSON, err := protojson.Marshal(req.Labels)
-	if err != nil {
-		return fmt.Errorf("failed to marshal labels: %w", err)
-	}
-
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
@@ -1041,7 +1036,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		case lr.Limit <= 0:
 			return nil, nil
 		}
-		return a.m.db.GetTrialProfilerMetricsBatches(labelsJSON, lr.Offset, lr.Limit)
+		return a.m.db.GetTrialProfilerMetricsBatches(req.Labels, lr.Offset, lr.Limit)
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
@@ -1082,10 +1077,12 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		}
 
 		var labels apiv1.GetTrialProfilerAvailableSeriesResponse
-		return api.ToBatchOfOne(&labels), a.m.db.QueryProto(
-			"get_trial_available_series",
-			&labels, fmt.Sprintf(`{"trialId": %d}`, req.TrialId),
-		)
+		res, err := db.GetTrialProfilerAvailableSeries(resp.Context(), req.TrialId)
+		if err != nil {
+			return nil, err
+		}
+		labels.Labels = res
+		return api.ToBatchOfOne(&labels), nil
 	}
 
 	ctx, cancel := context.WithCancel(resp.Context())
