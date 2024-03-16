@@ -100,13 +100,15 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           },
         ]}>
         <Input
+          data-testid="username"
           autoFocus
           placeholder="username"
           prefix={<Icon name="user" size="small" title="Username" />}
-        />
+          />
       </Form.Item>
       <Form.Item name="password">
         <Input.Password
+          data-testid="password"
           placeholder="password"
           prefix={<Icon name="lock" size="small" title="Password" />}
         />
