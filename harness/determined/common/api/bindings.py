@@ -86,6 +86,96 @@ class Printable:
 
 
 
+class FlatRunFlatRunExperiment(Printable):
+    experimentDescription: "typing.Optional[str]" = None
+    experimentName: "typing.Optional[str]" = None
+    experimentProgress: "typing.Optional[float]" = None
+    externalExperimentId: "typing.Optional[str]" = None
+    forkedFrom: "typing.Optional[int]" = None
+    resourcePool: "typing.Optional[str]" = None
+    searcherMetric: "typing.Optional[str]" = None
+    searcherType: "typing.Optional[str]" = None
+    unmanaged: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentDescription: "typing.Union[str, None, Unset]" = _unset,
+        experimentName: "typing.Union[str, None, Unset]" = _unset,
+        experimentProgress: "typing.Union[float, None, Unset]" = _unset,
+        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
+        searcherType: "typing.Union[str, None, Unset]" = _unset,
+        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        if not isinstance(experimentDescription, Unset):
+            self.experimentDescription = experimentDescription
+        if not isinstance(experimentName, Unset):
+            self.experimentName = experimentName
+        if not isinstance(experimentProgress, Unset):
+            self.experimentProgress = experimentProgress
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
+        if not isinstance(searcherMetric, Unset):
+            self.searcherMetric = searcherMetric
+        if not isinstance(searcherType, Unset):
+            self.searcherType = searcherType
+        if not isinstance(unmanaged, Unset):
+            self.unmanaged = unmanaged
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "FlatRunFlatRunExperiment":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "experimentDescription" in obj:
+            kwargs["experimentDescription"] = obj["experimentDescription"]
+        if "experimentName" in obj:
+            kwargs["experimentName"] = obj["experimentName"]
+        if "experimentProgress" in obj:
+            kwargs["experimentProgress"] = float(obj["experimentProgress"]) if obj["experimentProgress"] is not None else None
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
+        if "searcherMetric" in obj:
+            kwargs["searcherMetric"] = obj["searcherMetric"]
+        if "searcherType" in obj:
+            kwargs["searcherType"] = obj["searcherType"]
+        if "unmanaged" in obj:
+            kwargs["unmanaged"] = obj["unmanaged"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "experimentDescription" in vars(self):
+            out["experimentDescription"] = self.experimentDescription
+        if not omit_unset or "experimentName" in vars(self):
+            out["experimentName"] = self.experimentName
+        if not omit_unset or "experimentProgress" in vars(self):
+            out["experimentProgress"] = None if self.experimentProgress is None else dump_float(self.experimentProgress)
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
+        if not omit_unset or "searcherMetric" in vars(self):
+            out["searcherMetric"] = self.searcherMetric
+        if not omit_unset or "searcherType" in vars(self):
+            out["searcherType"] = self.searcherType
+        if not omit_unset or "unmanaged" in vars(self):
+            out["unmanaged"] = self.unmanaged
+        return out
+
 class GetMasterResponseProduct(DetEnum):
     """Different kinds of Determined Cloud offerings
     - PRODUCT_UNSPECIFIED: Not a Cloud Community offering
@@ -3959,21 +4049,13 @@ class v1FlatRun(Printable):
     """Flat run respresentation."""
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
-    experimentDescription: "typing.Optional[str]" = None
+    experiment: "typing.Optional[FlatRunFlatRunExperiment]" = None
     experimentId: "typing.Optional[int]" = None
-    experimentName: "typing.Optional[str]" = None
-    experimentProgress: "typing.Optional[float]" = None
-    externalExperimentId: "typing.Optional[str]" = None
     externalRunId: "typing.Optional[int]" = None
-    forkedFrom: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
-    resourcePool: "typing.Optional[str]" = None
-    searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
-    searcherType: "typing.Optional[str]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    unmanaged: "typing.Optional[bool]" = None
     userId: "typing.Optional[int]" = None
 
     def __init__(
@@ -3992,21 +4074,13 @@ class v1FlatRun(Printable):
         workspaceName: str,
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
-        experimentDescription: "typing.Union[str, None, Unset]" = _unset,
+        experiment: "typing.Union[FlatRunFlatRunExperiment, None, Unset]" = _unset,
         experimentId: "typing.Union[int, None, Unset]" = _unset,
-        experimentName: "typing.Union[str, None, Unset]" = _unset,
-        experimentProgress: "typing.Union[float, None, Unset]" = _unset,
-        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
-        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        resourcePool: "typing.Union[str, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
-        searcherType: "typing.Union[str, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.checkpointCount = checkpointCount
@@ -4024,36 +4098,20 @@ class v1FlatRun(Printable):
             self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
-        if not isinstance(experimentDescription, Unset):
-            self.experimentDescription = experimentDescription
+        if not isinstance(experiment, Unset):
+            self.experiment = experiment
         if not isinstance(experimentId, Unset):
             self.experimentId = experimentId
-        if not isinstance(experimentName, Unset):
-            self.experimentName = experimentName
-        if not isinstance(experimentProgress, Unset):
-            self.experimentProgress = experimentProgress
-        if not isinstance(externalExperimentId, Unset):
-            self.externalExperimentId = externalExperimentId
         if not isinstance(externalRunId, Unset):
             self.externalRunId = externalRunId
-        if not isinstance(forkedFrom, Unset):
-            self.forkedFrom = forkedFrom
         if not isinstance(hyperparameters, Unset):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
-        if not isinstance(resourcePool, Unset):
-            self.resourcePool = resourcePool
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
         if not isinstance(searcherMetricValue, Unset):
             self.searcherMetricValue = searcherMetricValue
-        if not isinstance(searcherType, Unset):
-            self.searcherType = searcherType
         if not isinstance(summaryMetrics, Unset):
             self.summaryMetrics = summaryMetrics
-        if not isinstance(unmanaged, Unset):
-            self.unmanaged = unmanaged
         if not isinstance(userId, Unset):
             self.userId = userId
 
@@ -4076,36 +4134,20 @@ class v1FlatRun(Printable):
             kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
-        if "experimentDescription" in obj:
-            kwargs["experimentDescription"] = obj["experimentDescription"]
+        if "experiment" in obj:
+            kwargs["experiment"] = FlatRunFlatRunExperiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
         if "experimentId" in obj:
             kwargs["experimentId"] = obj["experimentId"]
-        if "experimentName" in obj:
-            kwargs["experimentName"] = obj["experimentName"]
-        if "experimentProgress" in obj:
-            kwargs["experimentProgress"] = float(obj["experimentProgress"]) if obj["experimentProgress"] is not None else None
-        if "externalExperimentId" in obj:
-            kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "externalRunId" in obj:
             kwargs["externalRunId"] = obj["externalRunId"]
-        if "forkedFrom" in obj:
-            kwargs["forkedFrom"] = obj["forkedFrom"]
         if "hyperparameters" in obj:
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
-        if "resourcePool" in obj:
-            kwargs["resourcePool"] = obj["resourcePool"]
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
         if "searcherMetricValue" in obj:
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
-        if "searcherType" in obj:
-            kwargs["searcherType"] = obj["searcherType"]
         if "summaryMetrics" in obj:
             kwargs["summaryMetrics"] = obj["summaryMetrics"]
-        if "unmanaged" in obj:
-            kwargs["unmanaged"] = obj["unmanaged"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
         return cls(**kwargs)
@@ -4128,36 +4170,20 @@ class v1FlatRun(Printable):
             out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
-        if not omit_unset or "experimentDescription" in vars(self):
-            out["experimentDescription"] = self.experimentDescription
+        if not omit_unset or "experiment" in vars(self):
+            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
         if not omit_unset or "experimentId" in vars(self):
             out["experimentId"] = self.experimentId
-        if not omit_unset or "experimentName" in vars(self):
-            out["experimentName"] = self.experimentName
-        if not omit_unset or "experimentProgress" in vars(self):
-            out["experimentProgress"] = None if self.experimentProgress is None else dump_float(self.experimentProgress)
-        if not omit_unset or "externalExperimentId" in vars(self):
-            out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "externalRunId" in vars(self):
             out["externalRunId"] = self.externalRunId
-        if not omit_unset or "forkedFrom" in vars(self):
-            out["forkedFrom"] = self.forkedFrom
         if not omit_unset or "hyperparameters" in vars(self):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
-        if not omit_unset or "resourcePool" in vars(self):
-            out["resourcePool"] = self.resourcePool
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
         if not omit_unset or "searcherMetricValue" in vars(self):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
-        if not omit_unset or "searcherType" in vars(self):
-            out["searcherType"] = self.searcherType
         if not omit_unset or "summaryMetrics" in vars(self):
             out["summaryMetrics"] = self.summaryMetrics
-        if not omit_unset or "unmanaged" in vars(self):
-            out["unmanaged"] = self.unmanaged
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
         return out

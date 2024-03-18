@@ -139,21 +139,23 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
-		ColumnExpr("e.parent_id AS forked_from").
-		ColumnExpr("e.progress AS experiment_progress").
 		ColumnExpr("e.id AS experiment_id").
 		ColumnExpr("e.owner_id AS user_id").
-		ColumnExpr("e.config->>'description' AS experiment_description").
 		ColumnExpr("e.config->>'labels' AS labels").
-		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
-		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
-		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").
-		ColumnExpr("e.config->>'name' as experiment_name").
 		ColumnExpr("w.id AS workspace_id").
 		ColumnExpr("w.name AS workspace_name").
 		ColumnExpr("(w.archived OR p.archived) AS parent_archived").
-		Column("e.unmanaged").
 		ColumnExpr("p.name AS project_name").
+		ColumnExpr(`jsonb_build_object(
+			'searcher_type', e.config->'searcher'->>'name',
+			'searcher_metric', e.config->'metric'->>'name',
+			'resource_pool', e.config->'resources'->>'resource_pool',
+			'experiment_name', e.config->>'name',
+			'experiment_description', e.config->>'description',
+			'unmanaged', e.unmanaged,
+			'experiment_progress', e.progress,
+			'forked_from', e.parent_id,
+			'external_experiment_id', e.external_experiment_id) AS experiment`).
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
