@@ -3,8 +3,9 @@ import { type Page } from '@playwright/test';
 import { canBeParent } from './BaseComponent';
 
 export abstract class BasePage extends canBeParent {
+
   readonly #page: Page;
-  readonly url: string | null = null;
+  readonly url: string | undefined;
 
   /**
    * Returns the representation of a Page.
@@ -29,7 +30,7 @@ export abstract class BasePage extends canBeParent {
    * @param {Page} page - The '@playwright/test' Page being used by a test
    */
   goto(waitFor: boolean = true): BasePage {
-    if (this.url == null) {
+    if (typeof this.url === "undefined") {
       throw new Error('URL is not set');
     }
     this.#page.goto(this.url);
