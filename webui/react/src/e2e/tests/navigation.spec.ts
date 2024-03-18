@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 
-import { test } from '../fixtures/global-fixtures';
+import { test } from 'e2e/fixtures/global-fixtures';
 
 test.describe('Navigation', () => {
   const USERNAME = process.env.PW_USER_NAME ?? '';

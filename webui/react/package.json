@@ -27,7 +27,7 @@
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
     "e2e": "playwright test",
-    "test:coverage": "vitest --run --coverage --silent",
+    "test:coverage": "vitest --run --coverage --silent --exclude \"src/e2e/test/**\"",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
     "unimported": "unimported"
   },
