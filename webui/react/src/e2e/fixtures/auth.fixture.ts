@@ -9,6 +9,8 @@ export class AuthFixture {
   }
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
+    // TODO document
+    // TODO implement this in a test
     await this.#page.getByPlaceholder('username').fill(this.#USERNAME);
     await this.#page.getByPlaceholder('password').fill(this.#PASSWORD);
     await this.#page.getByRole('button', { name: 'Sign In' }).click();
