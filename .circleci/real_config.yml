@@ -3041,7 +3041,6 @@ workflows:
       - package-and-push-system-dev-small:
           requires:
             - build-react
-            - build-docs
 
       - upload-docs-search-index:
           requires:
