@@ -292,10 +292,9 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 	b.Writef("import { isEqual } from 'lodash';\n")
 	b.Writef("\n")
 	b.Writef("import { Streamable, StreamSpec } from '.';\n")
-	b.Writef("import * as types from 'types';\n")
 	b.Writef("\n")
+	typesImported := false
 	for _, s := range streamables {
-
 		source := s.Args["source"]
 		entity := strings.ToLower(strings.TrimSuffix(s.Name, "SubscriptionSpec"))
 		caser := cases.Title(language.English)
@@ -304,13 +303,20 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 		case server:
 			continue
 		case client:
-			b.Writef("export class %vSpec extends StreamSpec {\n", caser.String(entity))
-			b.Writef("  readonly #id: Streamable = '%vs';\n", entity)
 			for _, f := range s.Fields {
 				anno, err := typeAnno(f)
 				if err != nil {
 					return nil, fmt.Errorf("struct %v, field %v: %v", s.Name, f.Name, err)
 				}
+				if strings.Contains(anno[0], "types") && !typesImported {
+					typesImported = true
+					b.Writef("import * as types from 'types';\n\n")
+				}
+			}
+			b.Writef("export class %vSpec extends StreamSpec {\n", caser.String(entity))
+			b.Writef("  readonly #id: Streamable = '%vs';\n", entity)
+			for _, f := range s.Fields {
+				anno, _ := typeAnno(f)
 				b.Writef("  #%v: %v;\n", f.JSONTag, anno[0])
 			}
 			b.Writef("\n")
@@ -441,7 +447,6 @@ func genPython(streamables []Streamable) ([]byte, error) {
 	b.Writef("        return isinstance(other, type(self)) and self.to_json() == other.to_json()\n")
 
 	for _, s := range streamables {
-
 		source := s.Args["source"]
 
 		switch source {
