@@ -3043,6 +3043,7 @@ func (a *apiServer) DeleteTensorboardFiles(
 
 func getPachydermConfig(config map[string]interface{}, experimentID int32) (map[string]interface{}, error) {
 	integrationConfig, ok := config["integration"].(map[string]interface{})
+	// this should not return if proper defaults are used.
 	if !ok {
 		return nil, api.NotFoundErrs("'integration' config for experiment", fmt.Sprint(experimentID), true)
 	}

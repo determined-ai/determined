@@ -2075,11 +2075,11 @@ func TestGetPachydermRepoURL(t *testing.T) {
 			func(string) error { return nil },
 		},
 		{
-			"Missing Integration Configuration",
+			"Missing Integration Configuration is Populated by Default",
 			nil,
 			"",
 			func(id string) error {
-				return apiPkg.NotFoundErrs("'integration' config for experiment", id, true)
+				return apiPkg.NotFoundErrs("'pachyderm' integration config for experiment", id, true)
 			},
 		},
 		{
