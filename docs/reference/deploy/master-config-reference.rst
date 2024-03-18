@@ -240,6 +240,12 @@ here, under the primary ``resource_manager`` key, is considered the default reso
 
 Optional. The resource manager name to use. Defaults to "default" if no name is specified.
 
+``metadata``
+============
+
+Optional. A place to store additional information on a resource manager, like the zone, region,
+location etc.
+
 ``type: agent``
 ===============
 
@@ -697,7 +703,7 @@ documentation on :ref:`resource-pools` for more information. Defaults to a resou
 ``pool_name``
 =============
 
-The name of the resource pool.
+The name of the resource pool, which must be unique among all resource pools defined.
 
 ``description``
 ===============
@@ -1178,39 +1184,46 @@ those partitions/queues.
 For Kubernetes, cluster administrators can define additional resource managers to connect the
 Determined master service to remote clusters. For a single resource manager or to define the default
 resource manager, do not define this under ``additional_resource_manager``; instead, use the primary
-``resource_manager`` heading.
+``resource_manager`` key.
 
 Resource manager names must be unique among all resource managers.
 
-Additional resource managers must have defined resource pools under them.
+Additional resource managers must have defined resource pools under them. Resource pool names must
+be defined and must be unique among all resource pools in all resource managers. Resource pools for
+each additional resource manager are not defined at the root level but rather their respective
+element in the resource manager list.
 
-For example, to define three resource managers (one default, two additional): .. code:: yaml
+For example, to define three resource managers (one default, two additional):
 
-   resource_manager: ... resource_pool: ...
+.. code:: yaml
+
+   resource_manager: # the default resource manager
+   resource_pool: # resource pools for the resource manager defined above.
+      pool_name: "foo"
 
    additional_resource_managers:
 
       -  resource_manager:
 
-      type: kubernetes # required, this feature is only for Kubernetes. name: "foo" # required ...
-      resource_pools: ...
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "bar" # required
+      resource_pools:
+         pool_name: "abc"
 
       -  resource_manager:
 
-      type: kubernetes # required, this feature is only for Kubernetes. name: "bar" # required ...
-      resource_pools: ...
-
-``name``
-========
-
-Required. The resource manager name to use.
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "baz" # required
+      resource_pools:
+         pool_name: "def"
 
 ``resource_manager``
 ====================
 
 Optional. Follows the existing resource manager configuration pattern, with ``resource_pools``
 nested. There can be 'n'-many resource managers defined under the ``additional_resource_manager``
-key, following this pattern.
+key, following this pattern. Additional resource managers defined here require a ``name`` and
+``resource_pools``.
 
 ************************
  ``checkpoint_storage``
