@@ -87,6 +87,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
 
   const loginForm = (
     <Form
+      data-test="authForm"
       initialValues={{ username: storage.getWithDefault(STORAGE_KEY_LAST_USERNAME, '') }}
       name="login"
       onFinish={onFinish}
@@ -114,10 +115,10 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         />
       </Form.Item>
       {isBadCredentials && (
-        <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
+        <p data-testid="error" className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
+        <Button data-testid="submit" disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
           Sign In
         </Button>
       </Form.Item>
@@ -129,7 +130,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link external path={paths.docs('/sysadmin-basics/users.html')} popout>
+        <Link data-testid="docs" external path={paths.docs('/sysadmin-basics/users.html')} popout>
           docs
         </Link>
       </p>

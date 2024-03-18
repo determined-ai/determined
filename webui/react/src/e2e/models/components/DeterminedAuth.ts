@@ -1,16 +1,20 @@
-import { type Locator } from '@playwright/test';
+import { BaseComponent, BaseComponentProps } from '../BaseComponent';
 
-export class DeterminedAuth {
-    readonly locator: Locator;
-    static defaultLocator: string = 'a';
-    readonly username: Locator
-    readonly password: Locator
-    readonly docs: Locator
-
-    constructor(locator: Locator) {
-        this.locator = locator;
-        this.username = this.locator.getByTestId('username')
-        this.password = this.locator.getByTestId('password')
-        this.docs = this.locator.getByRole('link')
+export class DeterminedAuth extends BaseComponent {
+    static defaultSelector: string = 'Form[data-test=authForm]';
+    override readonly defaultSelector: string = DeterminedAuth.defaultSelector;
+    readonly form: BaseComponent
+    readonly docs: BaseComponent
+    
+    constructor({parent, selector, subelements}: BaseComponentProps) {
+        super({parent: parent, selector: selector, subelements: subelements})
+        this.form = new BaseComponent({parent: this, selector: 'form', subelements: [
+            {name: 'username', type: BaseComponent, selector: 'input[data-testid=username]'},
+            {name: 'password', type: BaseComponent, selector: 'input[data-testid=password]'},
+            {name: 'submit', type: BaseComponent, selector: 'button[data-testid=submit]'},
+            {name: 'error', type: BaseComponent, selector: 'p[data-testid=error]'},
+        ]})
+        
+        this.docs = new BaseComponent({parent: this, selector: 'link[data-testid=docs]'})
     }
 }
