@@ -4087,109 +4087,65 @@ class v1FlatRun(Printable):
         return out
 
 class v1FlatRunExperiment(Printable):
-    description: "typing.Optional[str]" = None
-    externalExperimentId: "typing.Optional[str]" = None
-    forkedFrom: "typing.Optional[int]" = None
-    id: "typing.Optional[int]" = None
-    isMultitrial: "typing.Optional[bool]" = None
-    name: "typing.Optional[str]" = None
-    progress: "typing.Optional[float]" = None
-    resourcePool: "typing.Optional[str]" = None
-    searcherMetric: "typing.Optional[str]" = None
-    searcherType: "typing.Optional[str]" = None
-    unmanaged: "typing.Optional[bool]" = None
 
     def __init__(
         self,
         *,
-        description: "typing.Union[str, None, Unset]" = _unset,
-        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
-        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
-        id: "typing.Union[int, None, Unset]" = _unset,
-        isMultitrial: "typing.Union[bool, None, Unset]" = _unset,
-        name: "typing.Union[str, None, Unset]" = _unset,
-        progress: "typing.Union[float, None, Unset]" = _unset,
-        resourcePool: "typing.Union[str, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[str, None, Unset]" = _unset,
-        searcherType: "typing.Union[str, None, Unset]" = _unset,
-        unmanaged: "typing.Union[bool, None, Unset]" = _unset,
+        description: str,
+        externalExperimentId: str,
+        forkedFrom: int,
+        id: int,
+        isMultitrial: bool,
+        name: str,
+        progress: float,
+        resourcePool: str,
+        searcherMetric: str,
+        searcherType: str,
+        unmanaged: bool,
     ):
-        if not isinstance(description, Unset):
-            self.description = description
-        if not isinstance(externalExperimentId, Unset):
-            self.externalExperimentId = externalExperimentId
-        if not isinstance(forkedFrom, Unset):
-            self.forkedFrom = forkedFrom
-        if not isinstance(id, Unset):
-            self.id = id
-        if not isinstance(isMultitrial, Unset):
-            self.isMultitrial = isMultitrial
-        if not isinstance(name, Unset):
-            self.name = name
-        if not isinstance(progress, Unset):
-            self.progress = progress
-        if not isinstance(resourcePool, Unset):
-            self.resourcePool = resourcePool
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
-        if not isinstance(searcherType, Unset):
-            self.searcherType = searcherType
-        if not isinstance(unmanaged, Unset):
-            self.unmanaged = unmanaged
+        self.description = description
+        self.externalExperimentId = externalExperimentId
+        self.forkedFrom = forkedFrom
+        self.id = id
+        self.isMultitrial = isMultitrial
+        self.name = name
+        self.progress = progress
+        self.resourcePool = resourcePool
+        self.searcherMetric = searcherMetric
+        self.searcherType = searcherType
+        self.unmanaged = unmanaged
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "description": obj["description"],
+            "externalExperimentId": obj["externalExperimentId"],
+            "forkedFrom": obj["forkedFrom"],
+            "id": obj["id"],
+            "isMultitrial": obj["isMultitrial"],
+            "name": obj["name"],
+            "progress": float(obj["progress"]),
+            "resourcePool": obj["resourcePool"],
+            "searcherMetric": obj["searcherMetric"],
+            "searcherType": obj["searcherType"],
+            "unmanaged": obj["unmanaged"],
         }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
-        if "externalExperimentId" in obj:
-            kwargs["externalExperimentId"] = obj["externalExperimentId"]
-        if "forkedFrom" in obj:
-            kwargs["forkedFrom"] = obj["forkedFrom"]
-        if "id" in obj:
-            kwargs["id"] = obj["id"]
-        if "isMultitrial" in obj:
-            kwargs["isMultitrial"] = obj["isMultitrial"]
-        if "name" in obj:
-            kwargs["name"] = obj["name"]
-        if "progress" in obj:
-            kwargs["progress"] = float(obj["progress"]) if obj["progress"] is not None else None
-        if "resourcePool" in obj:
-            kwargs["resourcePool"] = obj["resourcePool"]
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
-        if "searcherType" in obj:
-            kwargs["searcherType"] = obj["searcherType"]
-        if "unmanaged" in obj:
-            kwargs["unmanaged"] = obj["unmanaged"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "description": self.description,
+            "externalExperimentId": self.externalExperimentId,
+            "forkedFrom": self.forkedFrom,
+            "id": self.id,
+            "isMultitrial": self.isMultitrial,
+            "name": self.name,
+            "progress": dump_float(self.progress),
+            "resourcePool": self.resourcePool,
+            "searcherMetric": self.searcherMetric,
+            "searcherType": self.searcherType,
+            "unmanaged": self.unmanaged,
         }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
-        if not omit_unset or "externalExperimentId" in vars(self):
-            out["externalExperimentId"] = self.externalExperimentId
-        if not omit_unset or "forkedFrom" in vars(self):
-            out["forkedFrom"] = self.forkedFrom
-        if not omit_unset or "id" in vars(self):
-            out["id"] = self.id
-        if not omit_unset or "isMultitrial" in vars(self):
-            out["isMultitrial"] = self.isMultitrial
-        if not omit_unset or "name" in vars(self):
-            out["name"] = self.name
-        if not omit_unset or "progress" in vars(self):
-            out["progress"] = None if self.progress is None else dump_float(self.progress)
-        if not omit_unset or "resourcePool" in vars(self):
-            out["resourcePool"] = self.resourcePool
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
-        if not omit_unset or "searcherType" in vars(self):
-            out["searcherType"] = self.searcherType
-        if not omit_unset or "unmanaged" in vars(self):
-            out["unmanaged"] = self.unmanaged
         return out
 
 class v1GenericTaskState(DetEnum):

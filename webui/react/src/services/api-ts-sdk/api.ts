@@ -3284,67 +3284,67 @@ export interface V1FlatRunExperiment {
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    searcherType?: string;
+    searcherType: string;
     /**
      * The searcher metric name for the experiment.
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    searcherMetric?: string;
+    searcherMetric: string;
     /**
      * Original id of a forked or continued experiment.
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    forkedFrom?: number;
+    forkedFrom: number;
     /**
      * The id of external experiment
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    externalExperimentId?: string;
+    externalExperimentId: string;
     /**
      * The resource pool the experiment was created in.
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * The current progress of a running experiment.
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    progress?: number;
+    progress: number;
     /**
      * The description of the experiment.
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    description?: string;
+    description: string;
     /**
      * The experiment name.
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    name?: string;
+    name: string;
     /**
      * Unmanaged experiments are detached.
      * @type {boolean}
      * @memberof V1FlatRunExperiment
      */
-    unmanaged?: boolean;
+    unmanaged: boolean;
     /**
      * True if the associated experiment is a multitrial experiment
      * @type {boolean}
      * @memberof V1FlatRunExperiment
      */
-    isMultitrial?: boolean;
+    isMultitrial: boolean;
     /**
      * The id of the experiment linked to the run.
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    id?: number;
+    id: number;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
