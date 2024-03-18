@@ -23,13 +23,13 @@ Version 0.29.1
    using these images, users acknowledge and agree to the terms and conditions of all third-party
    software licenses contained within, including the `NVIDIA Deep Learning Container License
    <https://developer.download.nvidia.com/licenses/NVIDIA_Deep_Learning_Container_License.pdf>`__.
-   Users can build their own images from a specified NGC container version by using the
+   Users can build their own images from a specified NGC container version using the
    ``build-pytorch-ngc`` or ``build-tensorflow-ngc`` targets in the makefile in our `environments
    repository <https://github.com/determined-ai/environments>`__.
 
 **Improvements**
 
--  Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain
+-  Images: Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain
    available for TensorFlow users.
 
 **Bug Fixes**
