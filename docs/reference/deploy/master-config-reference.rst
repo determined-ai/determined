@@ -230,16 +230,15 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
  ``resource_manager``
 **********************
 
-The resource manager used to acquire resources. Defaults to ``agent``. If not named, this defaults
-to "default".
+The resource manager used to acquire resources. Defaults to ``agent``.
 
 If additional resource managers are defined (only for Kubernetes), the resource manager defined
-here, under the primary ``resource_manager`` key is considered the default resource manager.
+here, under the primary ``resource_manager`` key, is considered the default resource manager.
 
 ``name``
 ========
 
-Optional. The resource manager name to use.
+Optional. The resource manager name to use. Defaults to "default" if no name is specified.
 
 ``type: agent``
 ===============
@@ -1172,9 +1171,9 @@ those partitions/queues.
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
 
-*********************************
- ``additional_resource_manager``
-*********************************
+**********************************
+ ``additional_resource_managers``
+**********************************
 
 For Kubernetes, cluster administrators can define additional resource managers to connect the
 Determined master service to remote clusters. For a single resource manager or to define the default
@@ -1184,6 +1183,22 @@ resource manager, do not define this under ``additional_resource_manager``; inst
 Resource manager names must be unique among all resource managers.
 
 Additional resource managers must have defined resource pools under them.
+
+For example, to define three resource managers (one default, two additional): .. code:: yaml
+
+   resource_manager: ... resource_pool: ...
+
+   additional_resource_managers:
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes. name: "foo" # required ...
+      resource_pools: ...
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes. name: "bar" # required ...
+      resource_pools: ...
 
 ``name``
 ========
