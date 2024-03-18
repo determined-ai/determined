@@ -22,18 +22,25 @@ const keystr = "determined:stream-gen"
 type streamType string
 
 const (
-	JSON            streamType = "JSONB"
-	STRING          streamType = "string"
-	INT             streamType = "int"
-	INT64           streamType = "int64"
-	INT_ARR         streamType = "[]int"
-	BOOL            streamType = "bool"
-	TIME            streamType = "time.Time"
-	TIME_PTR        streamType = "*time.Time"
-	TASK_ID         streamType = "model.TaskID"
-	REQUEST_ID      streamType = "model.RequestID"
-	REQUEST_ID_PTR  streamType = "*model.RequestID"
-	WORKSPACE_STATE streamType = "model.WorkspaceState"
+	json           streamType = "JSONB"
+	text           streamType = "string"
+	integer        streamType = "int"
+	integer64      streamType = "int64"
+	intArr         streamType = "[]int"
+	boolean        streamType = "bool"
+	time           streamType = "time.Time"
+	timePtr        streamType = "*time.Time"
+	taskID         streamType = "model.TaskID"
+	requestID      streamType = "model.RequestID"
+	requestIDPtr   streamType = "*model.RequestID"
+	workspaceState streamType = "model.WorkspaceState"
+)
+
+const (
+	server     = "server"
+	client     = "client"
+	python     = "python"
+	typescript = "typescript"
 )
 
 // Streamable represents the struct under a determined:stream-gen comment.
@@ -261,18 +268,18 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) ([2]string, error) {
 		x := map[streamType]([2]string){
-			JSON:            {"any", "{}"},
-			STRING:          {"string", ""},
-			BOOL:            {"bool", "false"},
-			INT:             {"number", "0"},
-			INT64:           {"number", "0"},
-			INT_ARR:         {"Array<number>", "[]"},
-			TIME:            {"string", ""},
-			TIME_PTR:        {"string | undefined", "undefined"},
-			TASK_ID:         {"string", ""},
-			REQUEST_ID:      {"number", "0"},
-			REQUEST_ID_PTR:  {"number | undefined", "undefined"},
-			WORKSPACE_STATE: {"types.WorkspaceState", "types.WorkspaceState.Unspecified"},
+			json:           {"any", "{}"},
+			text:           {"string", ""},
+			boolean:        {"bool", "false"},
+			integer:        {"number", "0"},
+			integer64:      {"number", "0"},
+			intArr:         {"Array<number>", "[]"},
+			time:           {"string", ""},
+			timePtr:        {"string | undefined", "undefined"},
+			taskID:         {"string", ""},
+			requestID:      {"number", "0"},
+			requestIDPtr:   {"number | undefined", "undefined"},
+			workspaceState: {"types.WorkspaceState", "types.WorkspaceState.Unspecified"},
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -294,9 +301,9 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 		caser := cases.Title(language.English)
 
 		switch source {
-		case "server":
+		case server:
 			continue
-		case "client":
+		case client:
 			b.Writef("export class %vSpec extends StreamSpec {\n", caser.String(entity))
 			b.Writef("  readonly #id: Streamable = '%vs';\n", entity)
 			for _, f := range s.Fields {
@@ -356,18 +363,18 @@ func genPython(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) (string, error) {
 		x := map[streamType]string{
-			JSON:            "typing.Any",
-			STRING:          "str",
-			BOOL:            "bool",
-			INT:             "int",
-			INT64:           "int",
-			INT_ARR:         "typing.List[int]",
-			TIME:            "float",
-			TIME_PTR:        "typing.Optional[float]",
-			TASK_ID:         "str",
-			REQUEST_ID:      "int",
-			REQUEST_ID_PTR:  "typing.Optional[int]",
-			WORKSPACE_STATE: "str",
+			json:           "typing.Any",
+			text:           "str",
+			boolean:        "bool",
+			integer:        "int",
+			integer64:      "int",
+			intArr:         "typing.List[int]",
+			time:           "float",
+			timePtr:        "typing.Optional[float]",
+			taskID:         "str",
+			requestID:      "int",
+			requestIDPtr:   "typing.Optional[int]",
+			workspaceState: "str",
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -438,7 +445,7 @@ func genPython(streamables []Streamable) ([]byte, error) {
 		source := s.Args["source"]
 
 		switch source {
-		case "server":
+		case server:
 			// Generate a subclass of a ServerMsg, all fields are always filled.
 			b.Writef("\n\n")
 			b.Writef("class %v(ServerMsg):\n", s.Name)
@@ -461,7 +468,7 @@ func genPython(streamables []Streamable) ([]byte, error) {
 				b.Writef("class %v(DeleteMsg):\n", deleter)
 				b.Writef("    pass\n")
 			}
-		case "client":
+		case client:
 			// Generate a subclass of a ClientMsg, all fields are always optional.
 			b.Writef("\n\n")
 			b.Writef("class %v(ClientMsg):\n", s.Name)
@@ -544,11 +551,11 @@ func main() {
 			os.Exit(0)
 		}
 		if arg == "--python" {
-			lang = "python"
+			lang = python
 			continue
 		}
 		if arg == "--ts" {
-			lang = "typescript"
+			lang = typescript
 			continue
 		}
 		if arg == "-o" || arg == "--output" {
@@ -588,13 +595,13 @@ func main() {
 	// generate the language bindings
 	var content []byte
 	switch lang {
-	case "python":
+	case python:
 		content, err = genPython(results)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
-	case "typescript":
+	case typescript:
 		content, err = genTypescript(results)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
