@@ -1217,7 +1217,7 @@ export interface FlatRun {
   projectName: string;
   workspaceId: number;
   workspaceName: string;
-  parentArchived?: boolean;
+  parentArchived: boolean;
   unmanaged?: boolean;
   isExpMultitrial: boolean;
 }

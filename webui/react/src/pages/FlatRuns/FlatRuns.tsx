@@ -1,4 +1,5 @@
 import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
+import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
@@ -20,7 +21,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { FilterFormSet, FormField, FormGroup } from 'components/FilterForm/components/type';
+import {
+  FilterFormSet,
+  FormField,
+  FormGroup,
+  IOFilterFormSet,
+} from 'components/FilterForm/components/type';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -110,8 +116,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const users = useObservable(usersStore.getUsers());
 
   const colorMap = useGlasbey(settings.selectedRuns);
-  //const { height: containerHeight, width: containerWidth } = useResize(contentRef);
-  //const height = containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
 
   const {
@@ -418,6 +422,21 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, sortString]);
+
+  useEffect(() => {
+    // useSettings load the default value first, and then load the data from DB
+    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
+    if (isLoadingSettings) return;
+    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
+    if (isLeft(formSetValidation)) {
+      handleError(formSetValidation.left, {
+        publicSubject: 'Unable to initialize filterset from settings',
+      });
+    } else {
+      const formset = formSetValidation.right;
+      formStore.init(formset);
+    }
+  }, [settings.filterset, isLoadingSettings]);
 
   const handleColumnWidthChange = useCallback(() => {}, []);
 

@@ -24,8 +24,8 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
   flat_runs: {
     defaultValue: false,
     description:
-      'Presents all trials in a project in a single view, rather than grouped into experiments',
-    friendlyName: 'Flat Trials View',
+      'Presents all runs in a project in a single view, rather than grouped into experiments',
+    friendlyName: 'Flat Runs View',
   },
   genai: {
     defaultValue: false,

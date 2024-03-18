@@ -28,31 +28,35 @@ export const MULTISELECT = 'selected';
 export const runColumns = [
   MULTISELECT,
   'id',
-  'name',
   'state',
   'startTime',
+  'endTime',
   'user',
   'searcherType',
   'searcherMetric',
   'searcherMetricsVal',
   'tags',
   'forkedFrom',
-  'progress',
   'duration',
+  'experimentProgress',
+  'experimentId',
+  'experimentName',
+  'experimentDescription',
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
+  'externalRunId',
   'externalExperimentId',
   'externalTrialId',
   'experimentDescription',
+  'isExpMultitrial',
   'parentArchived',
 ] as const;
 
 export type RunColumn = (typeof runColumns)[number];
 
-export const defaultExperimentColumns: RunColumn[] = [
+export const defaultRunColumns: RunColumn[] = [
   'id',
-  'name',
   'state',
   'startTime',
   'user',
@@ -60,7 +64,6 @@ export const defaultExperimentColumns: RunColumn[] = [
   'searcherMetric',
   'searcherMetricsVal',
   'tags',
-  'progress',
   'duration',
   'resourcePool',
   'checkpointCount',
@@ -536,18 +539,18 @@ export const defaultDateColumn = (
 
 export const columnWidthsFallback = 140;
 
-export const defaultColumnWidths: Record<RunColumn, number> = {
+export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
   checkpointCount: 120,
   checkpointSize: 110,
   duration: 86,
   experimentDescription: 148,
+  experimentName: 290,
+  experimentProgress: 65,
   externalExperimentId: 160,
   externalTrialId: 130,
   forkedFrom: 86,
   id: 50,
-  name: 290,
   parentArchived: 80,
-  progress: 65,
   resourcePool: 140,
   searcherMetric: 120,
   searcherMetricsVal: 120,

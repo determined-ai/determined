@@ -1,5 +1,6 @@
 import Accordion from 'hew/Accordion';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Drawer from 'hew/Drawer';
 import Icon from 'hew/Icon';
 import InlineForm from 'hew/InlineForm';
@@ -329,7 +330,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     label={
                       <Row>
                         {description.friendlyName}
-                        <Icon name="info" showTooltip title={description.description} />
+                        <Column align="right">
+                          <Icon name="info" showTooltip title={description.description} />
+                        </Column>
                       </Row>
                     }
                     valueFormatter={(value) => (value ? 'On' : 'Off')}
