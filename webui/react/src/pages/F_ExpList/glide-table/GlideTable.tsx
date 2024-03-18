@@ -19,7 +19,14 @@ import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import * as io from 'io-ts';
-import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import useUI from 'components/ThemeProvider';
 import useMobile from 'hooks/useMobile';
@@ -88,10 +95,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   data: Loadable<T>[];
   numRows: number;
   getRowAccentColor?: (rowData: T) => void;
-  getHeaderMenuItems?: (
-    columnId: string,
-    colIdx: number,
-  ) => MenuItem[];
+  getHeaderMenuItems?: (columnId: string, colIdx: number) => MenuItem[];
   height?: number;
   hideUnpinned?: boolean;
   onColumnResize?: (columnId: string, width: number) => void;
@@ -264,10 +268,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     (col: number, { bounds, preventDefault }: HeaderClickedEventArgs) => {
       preventDefault();
       const columnId = columns[col].id;
-      const items = getHeaderMenuItems?.(
-        columnId,
-        col,
-      );
+      const items = getHeaderMenuItems?.(columnId, col);
       if (items?.length) {
         setHeaderMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
         setHeaderMenuIsOpen(true);
@@ -484,12 +485,16 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     [sortMap],
   );
 
-  useImperativeHandle(imperativeRef, () => {
-    return {
-      gridRef: gridRef.current ?? undefined,
-      scrollToTop, // using gridRef.scrollTo directly adds an offset
-    };
-  }, [gridRef, scrollToTop]);
+  useImperativeHandle(
+    imperativeRef,
+    () => {
+      return {
+        gridRef: gridRef.current ?? undefined,
+        scrollToTop, // using gridRef.scrollTo directly adds an offset
+      };
+    },
+    [gridRef, scrollToTop],
+  );
 
   return (
     <div
