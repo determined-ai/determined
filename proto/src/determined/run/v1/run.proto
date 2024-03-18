@@ -10,6 +10,32 @@ import "google/protobuf/wrappers.proto";
 import "determined/trial/v1/trial.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+ // Minimal experiment object
+ message FlatRunExperiment {
+    // The type of searcher for the experiment.
+    optional string searcher_type = 1;
+    // The searcher metric name for the experiment.
+    optional string searcher_metric = 2;
+    // Original id of a forked or continued experiment.
+    optional google.protobuf.Int32Value forked_from = 3;
+    // The id of external experiment
+    optional string external_experiment_id = 4;
+    // The resource pool the experiment was created in.
+    optional string resource_pool = 5;
+    // The current progress of a running experiment.
+    optional float progress = 6;
+    // The description of the experiment.
+    optional string description = 7;
+    // The experiment name.
+    optional string name = 8;
+    // Unmanaged experiments are detached.
+    optional bool unmanaged = 9;
+    // True if the associated experiment is a multitrial experiment
+    optional bool is_multitrial = 20;
+    // The id of the experiment linked to the run.
+    optional int32 id = 12;
+  }
+
 // Flat run respresentation.
 message FlatRun {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -21,7 +47,6 @@ message FlatRun {
         "tags",
         "checkpoint_size",
         "checkpoint_count",
-        "is_exp_multitrial",
         "project_id",
         "project_name",
         "workspace_id",
@@ -53,47 +78,21 @@ message FlatRun {
   string hyperparameters = 10;
   // summary metrics.
   optional google.protobuf.Struct summary_metrics = 11;
-  // The id of the experiment linked to the run.
-  optional int32 experiment_id = 12;
   // The id of the user who created the run.
-  optional int32 user_id = 13;
+  optional int32 user_id = 12;
   // Time in seconds which experiment ran or has been running.
-  optional int32 duration = 14;
+  optional int32 duration = 13;
   // The id of the project associated with this experiment.
-  int32 project_id = 15;
+  int32 project_id = 14;
   // The name of the project associated with this experiment.
-  string project_name = 16;
+  string project_name = 15;
   // The id of the workspace associated with this experiment.
-  int32 workspace_id = 17;
+  int32 workspace_id = 16;
   // The name of the workspace associated with this experiment.
-  string workspace_name = 18;
+  string workspace_name = 17;
   // The archived status of the parent project (can be inherited from
   // workspace).
-  bool parent_archived = 19;
-  // True if the associated experiment is a multitrial experiment
-  bool is_exp_multitrial = 20;
-
-  // Minimal experiment object
-  message FlatRunExperiment {
-    // The type of searcher for the experiment.
-    optional string searcher_type = 1;
-    // The searcher metric name for the experiment.
-    optional string searcher_metric = 2;
-    // Original id of a forked or continued experiment.
-    optional google.protobuf.Int32Value forked_from = 3;
-    // The id of external experiment
-    optional string external_experiment_id = 4;
-    // The resource pool the experiment was created in.
-    optional string resource_pool = 5;
-    // The current progress of a running experiment.
-    optional float experiment_progress = 6;
-    // The description of the experiment.
-    optional string experiment_description = 7;
-    // The experiment name.
-    optional string experiment_name = 8;
-    // Unmanaged experiments are detached.
-    optional bool unmanaged = 9;
-  }
-
-  optional FlatRunExperiment experiment = 21;
+  bool parent_archived = 18;
+  // Data related the the experiment associated with this run.
+  optional FlatRunExperiment experiment = 19;
 }

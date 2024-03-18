@@ -134,12 +134,9 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
 		Column("r.project_id").
-		ColumnExpr(
-			"((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) AS is_exp_multitrial").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
-		ColumnExpr("e.id AS experiment_id").
 		ColumnExpr("e.owner_id AS user_id").
 		ColumnExpr("e.config->>'labels' AS labels").
 		ColumnExpr("w.id AS workspace_id").
@@ -150,12 +147,14 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'searcher_type', e.config->'searcher'->>'name',
 			'searcher_metric', e.config->'metric'->>'name',
 			'resource_pool', e.config->'resources'->>'resource_pool',
-			'experiment_name', e.config->>'name',
-			'experiment_description', e.config->>'description',
+			'name', e.config->>'name',
+			'description', e.config->>'description',
 			'unmanaged', e.unmanaged,
-			'experiment_progress', e.progress,
+			'progress', e.progress,
 			'forked_from', e.parent_id,
-			'external_experiment_id', e.external_experiment_id) AS experiment`).
+			'external_experiment_id', e.external_experiment_id,
+			'is_multitrial', ((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1),
+			'id', e.id) AS experiment`).
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
