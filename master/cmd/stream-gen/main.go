@@ -22,18 +22,18 @@ const keystr = "determined:stream-gen"
 type streamType string
 
 const (
-	JSON           streamType = "JSONB"
-	STRING         streamType = "string"
-	INT            streamType = "int"
-	INT64          streamType = "int64"
-	INT_ARR        streamType = "[]int"
-	BOOL           streamType = "bool"
-	TIME           streamType = "time.Time"
-	TIME_PTR       streamType = "*time.Time"
-	TASK_ID        streamType = "model.TaskID"
-	REQUEST_ID     streamType = "model.RequestID"
-	REQUEST_ID_PTR streamType = "*model.RequestID"
-	STATE          streamType = "model.State"
+	JSON            streamType = "JSONB"
+	STRING          streamType = "string"
+	INT             streamType = "int"
+	INT64           streamType = "int64"
+	INT_ARR         streamType = "[]int"
+	BOOL            streamType = "bool"
+	TIME            streamType = "time.Time"
+	TIME_PTR        streamType = "*time.Time"
+	TASK_ID         streamType = "model.TaskID"
+	REQUEST_ID      streamType = "model.RequestID"
+	REQUEST_ID_PTR  streamType = "*model.RequestID"
+	WORKSPACE_STATE streamType = "model.WorkspaceState"
 )
 
 // Streamable represents the struct under a determined:stream-gen comment.
@@ -261,18 +261,18 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) ([2]string, error) {
 		x := map[streamType]([2]string){
-			JSON:           {"any", "{}"},
-			STRING:         {"string", ""},
-			BOOL:           {"bool", "false"},
-			INT:            {"number", "0"},
-			INT64:          {"number", "0"},
-			INT_ARR:        {"Array<number>", "[]"},
-			TIME:           {"string", ""},
-			TIME_PTR:       {"string | undefined", "undefined"},
-			TASK_ID:        {"string", ""},
-			REQUEST_ID:     {"number", "0"},
-			REQUEST_ID_PTR: {"number | undefined", "undefined"},
-			STATE:          {"string", ""},
+			JSON:            {"any", "{}"},
+			STRING:          {"string", ""},
+			BOOL:            {"bool", "false"},
+			INT:             {"number", "0"},
+			INT64:           {"number", "0"},
+			INT_ARR:         {"Array<number>", "[]"},
+			TIME:            {"string", ""},
+			TIME_PTR:        {"string | undefined", "undefined"},
+			TASK_ID:         {"string", ""},
+			REQUEST_ID:      {"number", "0"},
+			REQUEST_ID_PTR:  {"number | undefined", "undefined"},
+			WORKSPACE_STATE: {"types.WorkspaceState", "types.WorkspaceState.Unspecified"},
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -285,6 +285,7 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 	b.Writef("import { isEqual } from 'lodash';\n")
 	b.Writef("\n")
 	b.Writef("import { Streamable, StreamSpec } from '.';\n")
+	b.Writef("import * as types from 'types';\n")
 	b.Writef("\n")
 	for _, s := range streamables {
 
@@ -355,18 +356,18 @@ func genPython(streamables []Streamable) ([]byte, error) {
 	b := Builder{}
 	typeAnno := func(f Field) (string, error) {
 		x := map[streamType]string{
-			JSON:           "typing.Any",
-			STRING:         "str",
-			BOOL:           "bool",
-			INT:            "int",
-			INT64:          "int",
-			INT_ARR:        "typing.List[int]",
-			TIME:           "float",
-			TIME_PTR:       "typing.Optional[float]",
-			TASK_ID:        "str",
-			REQUEST_ID:     "int",
-			REQUEST_ID_PTR: "typing.Optional[int]",
-			STATE:          "str",
+			JSON:            "typing.Any",
+			STRING:          "str",
+			BOOL:            "bool",
+			INT:             "int",
+			INT64:           "int",
+			INT_ARR:         "typing.List[int]",
+			TIME:            "float",
+			TIME_PTR:        "typing.Optional[float]",
+			TASK_ID:         "str",
+			REQUEST_ID:      "int",
+			REQUEST_ID_PTR:  "typing.Optional[int]",
+			WORKSPACE_STATE: "str",
 		}
 		out, ok := x[f.Type]
 		if !ok {

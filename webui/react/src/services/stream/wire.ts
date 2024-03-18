@@ -3,6 +3,7 @@
 import { isEqual } from 'lodash';
 
 import { Streamable, StreamSpec } from '.';
+import * as types from 'types';
 
 export class ProjectSpec extends StreamSpec {
   readonly #id: Streamable = 'projects';
