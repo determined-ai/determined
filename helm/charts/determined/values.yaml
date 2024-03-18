@@ -338,3 +338,20 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+additional_resource_managers:
+  - resource_manager:
+      type: kubernetes
+      name: "a"
+      kubeconfig_secret_name: kubeconfsecret
+      kubeconfig_secret_value: kubeconfigsecretvalue
+    resource_pools:
+      - pool_name: test_a
+  - resource_manager:
+      type: kubernetes
+      name: "b"
+      kubeconfig_secret_name: kubeconfsecret
+      kubeconfig_secret_value: kubeconfigsecretvalue
+      x: y
+    resource_pools:
+    - pool_name: test_b
