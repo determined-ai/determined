@@ -86,18 +86,27 @@ const ProjectDetails: React.FC = () => {
   });
 
   const tabItems: PivotProps['items'] = useMemo(() => {
-    if (!project) {
-      return [];
-    }
+    const items: PivotProps['items'] = [];
+    if (!project) return items;
 
-    const items: PivotProps['items'] = [
-      {
+    if (f_flat_runs) {
+      items.push({
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              {f_flat_runs ? (
-                <FlatRuns project={project} />
-              ) : f_explist ? (
+              <FlatRuns project={project} />
+            </div>
+          </div>
+        ),
+        key: 'runs',
+        label: id === 1 ? '' : 'Runs',
+      });
+    } else {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              {f_explist ? (
                 <F_ExperimentList key={projectId} project={project} />
               ) : (
                 <ExperimentList project={project} />
@@ -107,8 +116,8 @@ const ProjectDetails: React.FC = () => {
         ),
         key: 'experiments',
         label: id === 1 ? '' : 'Experiments',
-      },
-    ];
+      });
+    }
 
     if (f_flat_runs) {
       items.push({

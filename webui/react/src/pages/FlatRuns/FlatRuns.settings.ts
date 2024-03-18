@@ -2,9 +2,10 @@ import { array, boolean, number, partial, record, string } from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
+import { ioTableViewMode, TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
+import { ioRowHeight, RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
 
-//import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
-//import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from './OptionsMenu';
+import { defaultColumnWidths, defaultRunColumns } from './columns';
 
 export interface FlatRunsSettings {
   columns: string[];
@@ -15,8 +16,6 @@ export interface FlatRunsSettings {
   sortString: string;
   pageLimit: number;
   pinnedColumnsCount: number;
-  heatmapSkipped: string[];
-  heatmapOn: boolean;
   selectAll: boolean;
   selectedRuns: Array<number>;
 }
@@ -51,18 +50,6 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSet
       storageKey: 'filterset',
       type: string,
     },
-    heatmapOn: {
-      defaultValue: false,
-      skipUrlEncoding: true,
-      storageKey: 'heatmapOn',
-      type: boolean,
-    },
-    heatmapSkipped: {
-      defaultValue: [],
-      skipUrlEncoding: true,
-      storageKey: 'heatmapSkipped',
-      type: array(string),
-    },
     pageLimit: {
       defaultValue: 20,
       skipUrlEncoding: true,
@@ -84,7 +71,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSet
     selectedRuns: {
       defaultValue: [],
       skipUrlEncoding: true,
-      storageKey: 'selectedExperiments',
+      storageKey: 'selectedRuns',
       type: array(number),
     },
     sortString: {
