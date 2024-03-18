@@ -27,6 +27,6 @@ jobs:
       # switch to just running pre-commit locally when/if that happens that's
       # why this one specifies a full version; presumably there will be a
       # version bump when things change. :shrug:
-      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.1
       # with:
       #   extra_args: ""
