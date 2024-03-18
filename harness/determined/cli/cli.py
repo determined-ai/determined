@@ -11,6 +11,7 @@ from argparse import (
     Namespace,
 )
 from typing import List, Sequence, Union, cast
+from urllib import parse
 
 import argcomplete
 import argcomplete.completers
@@ -19,9 +20,10 @@ import tabulate
 from OpenSSL import SSL, crypto
 from termcolor import colored
 
-import determined
-import determined.cli
-from determined.cli import render
+import determined as det
+import determined.errors
+from determined import cli
+from determined.cli import errors, render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.checkpoint import args_description as checkpoint_args_description
 from determined.cli.command import args_description as command_args_description
@@ -48,9 +50,8 @@ from determined.cli.user_groups import args_description as user_groups_args_desc
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.cli.workspace import args_description as workspace_args_description
-from determined.common import api, yaml
-from determined.common.api import authentication, bindings, certs
-from determined.common.check import check_not_none
+from determined.common import api, util, yaml
+from determined.common.api import bindings, certs
 from determined.common.declarative_argparse import (
     Arg,
     ArgsDescription,
@@ -58,26 +59,17 @@ from determined.common.declarative_argparse import (
     add_args,
     generate_aliases,
 )
-from determined.common.util import (
-    chunks,
-    debug_mode,
-    get_default_master_address,
-    safe_load_yaml_with_exceptions,
-)
-from determined.errors import EnterpriseOnlyError
-
-from .errors import CliError, FeatureFlagDisabled
 
 
-@authentication.required
 def preview_search(args: Namespace) -> None:
-    experiment_config = safe_load_yaml_with_exceptions(args.config_file)
+    sess = cli.setup_session(args)
+    experiment_config = util.safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
 
     if "searcher" not in experiment_config:
         print("Experiment configuration must have 'searcher' section")
         sys.exit(1)
-    r = api.post(args.master, "searcher/preview", json=experiment_config)
+    r = sess.post("searcher/preview", json=experiment_config)
     j = r.json()
 
     def to_full_name(kind: str) -> str:
@@ -134,14 +126,15 @@ args_description = [
         "--master",
         help="master address",
         metavar="address",
-        default=get_default_master_address(),
+        type=api.canonicalize_master_url,
+        default=api.get_default_master_url(),
     ),
     Arg(
         "-v",
         "--version",
         action="version",
         help="print CLI version and exit",
-        version="%(prog)s {}".format(determined.__version__),
+        version="%(prog)s {}".format(det.__version__),
     ),
     Cmd(
         "preview-search",
@@ -188,7 +181,7 @@ def make_parser() -> ArgumentParser:
 
 
 def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) -> None:
-    if always_print_traceback or debug_mode():
+    if always_print_traceback or util.debug_mode():
         import traceback
 
         traceback.print_exc(file=sys.stderr)
@@ -233,18 +226,16 @@ def main(
                 return
 
             # Configure the CLI's Cert singleton.
-            certs.cli_cert = certs.default_load(parsed_args.master)
+            cli.cert = certs.default_load(parsed_args.master)
 
             try:
-                check_version(parsed_args)
+                check_version(cli.unauth_session(parsed_args), parsed_args)
             except requests.exceptions.SSLError:
                 # An SSLError usually means that we queried a master over HTTPS and got an untrusted
                 # cert, so allow the user to store and trust the current cert. (It could also mean
                 # that we tried to talk HTTPS on the HTTP port, but distinguishing that based on the
                 # exception is annoying, and we'll figure that out in the next step anyway.)
-                addr = api.parse_master_address(parsed_args.master)
-                check_not_none(addr.hostname)
-                check_not_none(addr.port)
+                addr = parse.urlparse(parsed_args.master)
                 try:
                     ctx = SSL.Context(SSL.TLSv1_2_METHOD)
                     conn = SSL.Connection(ctx, socket.socket())
@@ -269,7 +260,7 @@ def main(
                 # Compute the fingerprint of the certificate; this is the same as the output of
                 # `openssl x509 -fingerprint -sha256 -inform pem -noout -in <cert>`.
                 cert_hash = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert_pem_data[0])).hexdigest()
-                cert_fingerprint = ":".join(chunks(cert_hash, 2))
+                cert_fingerprint = ":".join(util.chunks(cert_hash, 2))
 
                 if not render.yes_or_no(
                     "The master sent an untrusted certificate chain with this SHA256 fingerprint:\n"
@@ -282,10 +273,10 @@ def main(
                 joined_certs = "".join(cert_pem_data)
                 certs.CertStore(certs.default_store()).set_cert(parsed_args.master, joined_certs)
                 # Reconfigure the CLI's Cert singleton, but preserve the certificate name.
-                old_cert_name = certs.cli_cert.name
-                certs.cli_cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
+                old_cert_name = cli.cert.name
+                cli.cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
 
-                check_version(parsed_args)
+                check_version(cli.unauth_session(parsed_args), parsed_args)
 
             parsed_args.func(parsed_args)
         except KeyboardInterrupt as e:
@@ -297,11 +288,11 @@ def main(
                 "Failed to login: Attempted to read a corrupted token cache. "
                 "The store has been deleted; please try again."
             )
-        except EnterpriseOnlyError as e:
+        except det.errors.EnterpriseOnlyError as e:
             die(f"Determined Enterprise Edition is required for this functionality: {e}")
-        except FeatureFlagDisabled as e:
+        except errors.FeatureFlagDisabled as e:
             die(f"Master does not support this operation: {e}")
-        except CliError as e:
+        except errors.CliError as e:
             die(e.message, exit_code=e.exit_code)
         except ArgumentError as e:
             die(e.message, exit_code=2)

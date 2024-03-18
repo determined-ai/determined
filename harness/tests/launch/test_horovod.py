@@ -6,7 +6,6 @@ import pytest
 
 import determined.launch.horovod  # noqa: F401
 from determined import constants, horovod, launch
-from determined.common.api import certs
 from tests.launch import test_util
 
 
@@ -84,6 +83,9 @@ def test_horovod_chief(
 
     mock_popen.return_value = mock_proc
 
+    os.environ.pop("DET_CHIEF_IP", None)
+    os.environ.pop("USE_HOROVOD", None)
+
     with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, autohorovod) == 99
 
@@ -96,6 +98,8 @@ def test_horovod_chief(
         mock_cluster_info.assert_called_once()
         assert os.environ["DET_CHIEF_IP"] == info.container_addrs[0]
         assert os.environ["USE_HOROVOD"] == "1"
+        del os.environ["DET_CHIEF_IP"]
+        del os.environ["USE_HOROVOD"]
 
         mock_popen.assert_has_calls([mock.call(launch_cmd)])
 
@@ -112,9 +116,11 @@ def test_horovod_chief(
 
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
-@mock.patch("determined.common.api.post")
+@mock.patch("determined.common.api.authentication.login_with_cache")
+@mock.patch("determined.common.api._session.Session.post")
 def test_sshd_worker(
-    mock_api_post: mock.MagicMock,
+    mock_post: mock.MagicMock,
+    mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,
     mock_popen: mock.MagicMock,
 ) -> None:
@@ -135,23 +141,20 @@ def test_sshd_worker(
 
     mock_popen.return_value = mock_proc
 
+    os.environ.pop("DET_CHIEF_IP", None)
+
     with test_util.set_resources_id_env_var():
         assert launch.horovod.main(hvd_args, script, True) == 99
 
     mock_cluster_info.assert_called_once()
     assert os.environ["DET_CHIEF_IP"] == info.container_addrs[0]
-    assert os.environ["USE_HOROVOD"] == "1"
+    del os.environ["DET_CHIEF_IP"]
 
     mock_popen.assert_has_calls([mock.call(launch_cmd)])
 
-    mock_api_post.assert_has_calls(
-        [
-            mock.call(
-                info.master_url,
-                path=f"/api/v1/allocations/{info.allocation_id}/resources/resourcesId/daemon",
-                cert=certs.cli_cert,
-            )
-        ]
+    mock_login.assert_called_once()
+    mock_post.assert_has_calls(
+        [mock.call(f"/api/v1/allocations/{info.allocation_id}/resources/resourcesId/daemon")]
     )
 
     mock_proc.wait.assert_called_once()

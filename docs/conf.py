@@ -149,5 +149,27 @@ autodoc_mock_imports = [
 # include that variant in the sitemap.
 sitemap_url_scheme = "latest/{link}"
 
+# ignore internal urls when running linkcheck
+# also ignore urls that have IP-checking measures in place that block aws
+# connections based on IP.
+linkcheck_ignore = [
+    r'^#',
+    r'^http://127.0.0.1',
+    r'^\.\./',
+    'https://www.hpe.com/us/en/hpe-machine-learning-development-environment.html'
+]
+
+linkcheck_timeout = 20
+
+# linkcheck gets confused by anchors sometimes
+linkcheck_anchors_ignore=[
+    'install-nvidia-device-plugin',
+    'tag/System/operation/SystemAuth',
+    'batch-size-related-parameters'
+]
+
+# Some pages block python requests. Set user-agent to appear as a browser.
+user_agent ="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+
 with open(".redirects/redirects.json") as f:
     redirects = json.load(f)

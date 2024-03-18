@@ -13,6 +13,7 @@ import { cspHtml } from './vite-plugin-csp';
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
+const websocketProxyUrl = process.env.DET_WEBSOCKET_PROXY_URL || 'ws://localhost:8080';
 
 const publicUrlBaseHref = (): Plugin => {
   let config: UserConfig;
@@ -87,7 +88,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.28.1-dev0"',
+    'process.env.VERSION': '"0.29.2-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
@@ -144,10 +145,19 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       '/api': { target: webpackProxyUrl },
       '/proxy': { target: webpackProxyUrl },
+      '/stream': {
+        target: websocketProxyUrl,
+        ws: true,
+      },
     },
     strictPort: true,
   },
   test: {
+    coverage: {
+      ...configDefaults.coverage,
+      include: ['src'],
+      exclude: [...configDefaults.coverage.exclude, 'src/vendor/**/*', 'src/services/api-ts-sdk/*']
+    },
     css: {
       modules: {
         classNameStrategy: 'non-scoped',

@@ -1,31 +1,27 @@
 import os
-from pathlib import Path
+import pathlib
 from typing import Any, Dict, List, Union
 
 from determined.common import api, util
-from determined.common.api import authentication
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"
 MASTER_PORT = "8080"
 DET_VERSION = None
+USER_PASSWORD = ""
 DEFAULT_MAX_WAIT_SECS = 1800
 MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF1_CPU_IMAGE = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca"
-DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-f66cbce"
-DEFAULT_TF1_GPU_IMAGE = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-f66cbce"
-DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-cpu-f66cbce"
-DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-f66cbce"
-DEFAULT_PT2_CPU_IMAGE = "determinedai/environments:py-3.10-pytorch-2.0-cpu-f66cbce"
-DEFAULT_PT2_GPU_IMAGE = "determinedai/environments:cuda-11.8-pytorch-2.0-gpu-f66cbce"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-03ae7d7"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-03ae7d7"
+DEFAULT_PT_CPU_IMAGE = "determinedai/environments:py-3.9-pytorch-1.12-cpu-03ae7d7"
+DEFAULT_PT_GPU_IMAGE = "determinedai/environments:cuda-11.3-pytorch-1.12-gpu-03ae7d7"
+DEFAULT_PT2_CPU_IMAGE = "determinedai/environments:py-3.10-pytorch-2.0-cpu-03ae7d7"
+DEFAULT_PT2_GPU_IMAGE = "determinedai/environments:cuda-11.8-pytorch-2.0-gpu-03ae7d7"
 
-TF1_CPU_IMAGE = os.environ.get("TF1_CPU_IMAGE") or DEFAULT_TF1_CPU_IMAGE
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
-TF1_GPU_IMAGE = os.environ.get("TF1_GPU_IMAGE") or DEFAULT_TF1_GPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
 PT_CPU_IMAGE = os.environ.get("PT_CPU_IMAGE") or DEFAULT_PT_CPU_IMAGE
 PT_GPU_IMAGE = os.environ.get("PT_GPU_IMAGE") or DEFAULT_PT_GPU_IMAGE
@@ -33,10 +29,8 @@ PT2_CPU_IMAGE = os.environ.get("PT2_CPU_IMAGE") or DEFAULT_PT2_CPU_IMAGE
 PT2_GPU_IMAGE = os.environ.get("PT2_GPU_IMAGE") or DEFAULT_PT2_GPU_IMAGE
 GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 
-PROJECT_ROOT_PATH = Path(__file__).resolve().parents[2]
+PROJECT_ROOT_PATH = pathlib.Path(__file__).resolve().parents[2]
 EXAMPLES_PATH = PROJECT_ROOT_PATH / "examples"
-
-ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 SCIM_USERNAME = "determined"
 SCIM_PASSWORD = "password"
@@ -83,8 +77,8 @@ def load_config(config_path: str) -> Any:
     return config
 
 
-def make_master_url(suffix: str = "") -> str:
-    return "{}://{}:{}/{}".format(MASTER_SCHEME, MASTER_IP, MASTER_PORT, suffix)
+def make_master_url() -> str:
+    return api.canonicalize_master_url(f"{MASTER_SCHEME}://{MASTER_IP}:{MASTER_PORT}")
 
 
 def set_global_batch_size(config: Dict[Any, Any], batch_size: int) -> Dict[Any, Any]:
@@ -143,10 +137,6 @@ def set_image(config: Dict[Any, Any], cpu_image: str, gpu_image: str) -> Dict[An
     config.setdefault("environment", {})
     config["environment"]["image"] = {"cpu": cpu_image, "gpu": gpu_image}
     return config
-
-
-def set_tf1_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    return set_image(config, TF1_CPU_IMAGE, TF1_GPU_IMAGE)
 
 
 def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:

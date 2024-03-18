@@ -118,7 +118,8 @@ Install on Linux
       docker run --gpus all --rm debian:10-slim nvidia-smi
 
 #. If you are using Enterprise Linux, `enable the journalctl log messages persistent storage
-   <https://unix.stackexchange.com/a/159390>`_ so logs are saved on machine reboot:
+   <https://unix.stackexchange.com/questions/159221/how-do-i-display-log-messages-from-previous-boots-under-centos-7/159390#159390>`_
+   so logs are saved on machine reboot:
 
    .. code:: bash
 
@@ -132,8 +133,8 @@ Install on macOS
 ================
 
 #. Install Docker for macOS by following the `Docker documentation
-   <https://docs.docker.com/desktop/mac/install/>`__. The Docker documentation describes system
-   requirements, chipset dependencies, and installation steps.
+   <https://docs.docker.com/desktop/install/mac-install/>`__. The Docker documentation describes
+   system requirements, chipset dependencies, and installation steps.
 
 #. Start Docker:
 

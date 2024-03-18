@@ -1,4 +1,3 @@
-import json
 import subprocess
 import tempfile
 
@@ -6,18 +5,20 @@ import pytest
 
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.experimental import Determined
+from determined.experimental import client
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
+from tests import detproc
 from tests import experiment as exp
-from tests.api_utils import determined_test_session
-from tests.cluster.test_checkpoints import wait_for_gc_to_finish
+from tests.cluster import test_checkpoints
 
 
 @pytest.mark.e2e_cpu
 def test_trial_error() -> None:
+    sess = api_utils.user_session()
     exp.run_failure_test(
+        sess,
         conf.fixtures_path("trial_error/const.yaml"),
         conf.fixtures_path("trial_error"),
         "NotImplementedError",
@@ -26,22 +27,22 @@ def test_trial_error() -> None:
 
 @pytest.mark.e2e_cpu
 def test_invalid_experiment() -> None:
+    sess = api_utils.user_session()
     completed_process = exp.maybe_create_experiment(
-        conf.fixtures_path("invalid_experiment/const.yaml"), conf.cv_examples_path("mnist_tf")
+        sess, conf.fixtures_path("invalid_experiment/const.yaml"), conf.cv_examples_path("mnist_tf")
     )
     assert completed_process.returncode != 0
 
 
 @pytest.mark.e2e_cpu
 def test_experiment_archive_unarchive() -> None:
+    sess = api_utils.user_session()
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
+        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
     )
 
     describe_args = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "experiment",
         "describe",
         "--json",
@@ -49,121 +50,114 @@ def test_experiment_archive_unarchive() -> None:
     ]
 
     # Check that the experiment is initially unarchived.
-    infos = json.loads(subprocess.check_output(describe_args))
+    infos = detproc.check_json(sess, describe_args)
     assert len(infos) == 1
     assert not infos[0]["experiment"]["archived"]
 
     # Check that archiving a non-terminal experiment fails, then terminate it.
     with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(
-            ["det", "-m", conf.make_master_url(), "experiment", "archive", str(experiment_id)]
-        )
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "experiment", "cancel", str(experiment_id)]
-    )
+        detproc.check_call(sess, ["det", "experiment", "archive", str(experiment_id)])
+    detproc.check_call(sess, ["det", "experiment", "cancel", str(experiment_id)])
 
     # Check that we can archive and unarchive the experiment and see the expected effects.
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "experiment", "archive", str(experiment_id)]
-    )
-    infos = json.loads(subprocess.check_output(describe_args))
+    detproc.check_call(sess, ["det", "experiment", "archive", str(experiment_id)])
+    infos = detproc.check_json(sess, describe_args)
     assert len(infos) == 1
     assert infos[0]["experiment"]["archived"]
 
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "experiment", "unarchive", str(experiment_id)]
-    )
-    infos = json.loads(subprocess.check_output(describe_args))
+    detproc.check_call(sess, ["det", "experiment", "unarchive", str(experiment_id)])
+    infos = detproc.check_json(sess, describe_args)
     assert len(infos) == 1
     assert not infos[0]["experiment"]["archived"]
 
 
 @pytest.mark.e2e_cpu
 def test_create_test_mode() -> None:
+    sess = api_utils.user_session()
     # test-mode should succeed with a valid experiment.
     command = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "experiment",
         "create",
         "--test-mode",
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     ]
-    output = subprocess.check_output(command, universal_newlines=True)
-    assert "Model definition test succeeded" in output
+    output = detproc.check_output(sess, command)
+    assert "Model definition test succeeded" in output, output
 
     # test-mode should fail when an error is introduced into the trial
     # implementation.
     command = [
         "det",
-        "-m",
-        conf.make_master_url(),
         "experiment",
         "create",
         "--test-mode",
         conf.fixtures_path("trial_error/const.yaml"),
         conf.fixtures_path("trial_error"),
     ]
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(command)
+    # We expect a failing exit code, but --test-mode doesn't actually emit to stderr.
+    p = detproc.check_error(sess, command, "")
+    assert p.stdout
+    stdout = p.stdout.decode("utf8")
+    assert "resources failed with non-zero exit code" in stdout, stdout
 
 
 @pytest.mark.e2e_cpu
 def test_trial_logs() -> None:
+    sess = api_utils.user_session()
     experiment_id = exp.run_basic_test(
-        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
     )
-    trial_id = exp.experiment_trials(experiment_id)[0].trial.id
-    subprocess.check_call(["det", "-m", conf.make_master_url(), "trial", "logs", str(trial_id)])
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "trial", "logs", "--head", "10", str(trial_id)],
+    trial_id = exp.experiment_trials(sess, experiment_id)[0].trial.id
+    detproc.check_call(sess, ["det", "trial", "logs", str(trial_id)])
+    detproc.check_call(
+        sess,
+        ["det", "trial", "logs", "--head", "10", str(trial_id)],
     )
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "trial", "logs", "--tail", "10", str(trial_id)],
+    detproc.check_call(
+        sess,
+        ["det", "trial", "logs", "--tail", "10", str(trial_id)],
     )
 
 
 @pytest.mark.e2e_cpu
 def test_labels() -> None:
+    sess = api_utils.user_session()
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None
+        sess,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
     )
 
     label = "__det_test_dummy_label__"
 
     # Add a label and check that it shows up.
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "e", "label", "add", str(experiment_id), label]
-    )
-    output = subprocess.check_output(
-        ["det", "-m", conf.make_master_url(), "e", "describe", str(experiment_id)]
-    ).decode()
+    detproc.check_call(sess, ["det", "e", "label", "add", str(experiment_id), label])
+    output = detproc.check_output(sess, ["det", "e", "describe", str(experiment_id)])
     assert label in output
 
     # Remove the label and check that it doesn't show up.
-    subprocess.check_call(
-        ["det", "-m", conf.make_master_url(), "e", "label", "remove", str(experiment_id), label]
-    )
-    output = subprocess.check_output(
-        ["det", "-m", conf.make_master_url(), "e", "describe", str(experiment_id)]
-    ).decode()
+    detproc.check_call(sess, ["det", "e", "label", "remove", str(experiment_id), label])
+    output = detproc.check_output(sess, ["det", "e", "describe", str(experiment_id)])
     assert label not in output
 
 
 @pytest.mark.e2e_cpu
 def test_end_to_end_adaptive() -> None:
+    sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
+        sess,
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
 
-    wait_for_gc_to_finish(experiment_ids=[exp_id])
+    test_checkpoints.wait_for_gc_to_finish(sess, experiment_ids=[exp_id])
 
     # Check that validation accuracy look sane (more than 93% on MNIST).
-    trials = exp.experiment_trials(exp_id)
+    trials = exp.experiment_trials(sess, exp_id)
     best = None
     for trial in trials:
         assert len(trial.workloads) > 0
@@ -178,7 +172,7 @@ def test_end_to_end_adaptive() -> None:
     # Check that the Experiment returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
-    d = Determined(conf.make_master_url())
+    d = client.Determined._from_session(sess)
     exp_ref = d.get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
@@ -252,46 +246,54 @@ def test_end_to_end_adaptive() -> None:
 
 @pytest.mark.e2e_cpu
 def test_log_null_bytes() -> None:
+    sess = api_utils.user_session()
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["write_null"] = True
     config_obj["max_restarts"] = 0
     config_obj["searcher"]["max_length"] = {"batches": 1}
-    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        sess, config_obj, conf.fixtures_path("no_op"), 1
+    )
 
-    trials = exp.experiment_trials(experiment_id)
+    trials = exp.experiment_trials(sess, experiment_id)
     assert len(trials) == 1
-    logs = exp.trial_logs(trials[0].trial.id)
+    logs = exp.trial_logs(sess, trials[0].trial.id)
     assert len(logs) > 0
 
 
 @pytest.mark.e2e_cpu
 def test_graceful_trial_termination() -> None:
+    sess = api_utils.user_session()
     config_obj = conf.load_config(conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"))
-    exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 2)
+    exp.run_basic_test_with_temp_config(sess, config_obj, conf.fixtures_path("no_op"), 2)
 
 
 @pytest.mark.e2e_cpu
 def test_kill_experiment_ignoring_preemption() -> None:
+    sess = api_utils.user_session()
     exp_id = exp.create_experiment(
+        sess,
         conf.fixtures_path("core_api/sleep.yaml"),
         conf.fixtures_path("core_api"),
         None,
     )
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.RUNNING)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
 
-    bindings.post_CancelExperiment(api_utils.determined_test_session(), id=exp_id)
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STOPPING_CANCELED)
+    bindings.post_CancelExperiment(sess, id=exp_id)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED)
 
-    bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.CANCELED)
+    bindings.post_KillExperiment(sess, id=exp_id)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 
 @pytest.mark.e2e_cpu
 def test_fail_on_first_validation() -> None:
+    sess = api_utils.user_session()
     error_log = "failed on first validation"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["fail_on_first_validation"] = error_log
     exp.run_failure_test_with_temp_config(
+        sess,
         config_obj,
         conf.fixtures_path("no_op"),
         error_log,
@@ -300,11 +302,12 @@ def test_fail_on_first_validation() -> None:
 
 @pytest.mark.e2e_cpu
 def test_perform_initial_validation() -> None:
+    sess = api_utils.user_session()
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
     config = conf.set_perform_initial_validation(config, True)
-    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("no_op"), 1)
-    exp.assert_performed_initial_validation(exp_id)
+    exp_id = exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("no_op"), 1)
+    exp.assert_performed_initial_validation(sess, exp_id)
 
 
 @pytest.mark.e2e_cpu_2a
@@ -338,6 +341,7 @@ def test_perform_initial_validation() -> None:
     ],
 )
 def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
+    sess = api_utils.user_session()
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-very-many-long-steps.yaml"))
     config_obj["name"] = f"{name} searcher max concurrent trials test"
     config_obj["searcher"] = searcher_cfg
@@ -351,35 +355,37 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), [])
+        experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), [])
 
     try:
-        exp.wait_for_experiment_active_workload(experiment_id)
-        trials = exp.wait_for_at_least_n_trials(experiment_id, 1)
+        exp.wait_for_experiment_active_workload(sess, experiment_id)
+        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 1)
         assert len(trials) == 1, trials
 
         for t in trials:
-            exp.kill_trial(t.trial.id)
+            exp.kill_trial(sess, t.trial.id)
 
         # Give the experiment time to refill max_concurrent_trials.
-        trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
+        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 2)
 
         # The experiment handling the cancel message and waiting for it to be cancelled slyly
         # (hackishly) allows us to synchronize with the experiment state after after canceling
         # the first two trials.
-        exp.cancel_single(experiment_id)
+        exp.cancel_single(sess, experiment_id)
 
         # Make sure that there were never more than 2 total trials created.
-        trials = exp.wait_for_at_least_n_trials(experiment_id, 2)
+        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 2)
         assert len(trials) == 2, trials
 
     finally:
-        exp.kill_single(experiment_id)
+        exp.kill_single(sess, experiment_id)
 
 
 @pytest.mark.e2e_cpu
 def test_experiment_list_columns() -> None:
+    sess = api_utils.user_session()
     exp.create_experiment(
+        sess,
         conf.fixtures_path("no_op/single-nested-hps.yaml"),
         conf.fixtures_path("no_op"),
         ["--project", "1"],
@@ -396,7 +402,7 @@ def test_experiment_list_columns() -> None:
         "validation.validation_error.last",
         "validation.validation_error.mean",
     ]
-    columns = bindings.get_GetProjectColumns(api_utils.determined_test_session(), id=1)
+    columns = bindings.get_GetProjectColumns(sess, id=1)
 
     column_values = {c.column for c in columns.columns}
     for hp in exp_hyperparameters:
@@ -407,14 +413,16 @@ def test_experiment_list_columns() -> None:
 
 @pytest.mark.e2e_cpu
 def test_metrics_range_by_project() -> None:
+    sess = api_utils.user_session()
     exp.run_basic_test(
+        sess,
         conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
         conf.fixtures_path("core_api"),
         1,
         expect_workloads=True,
         expect_checkpoints=True,
     )
-    ranges = bindings.get_GetProjectNumericMetricsRange(api_utils.determined_test_session(), id=1)
+    ranges = bindings.get_GetProjectNumericMetricsRange(sess, id=1)
 
     assert ranges.ranges is not None
     for r in ranges.ranges:
@@ -423,7 +431,9 @@ def test_metrics_range_by_project() -> None:
 
 @pytest.mark.e2e_cpu
 def test_core_api_arbitrary_workload_order() -> None:
+    sess = api_utils.user_session()
     experiment_id = exp.run_basic_test(
+        sess,
         conf.fixtures_path("core_api/arbitrary_workload_order.yaml"),
         conf.fixtures_path("core_api"),
         1,
@@ -431,7 +441,7 @@ def test_core_api_arbitrary_workload_order() -> None:
         expect_checkpoints=True,
     )
 
-    trials = exp.experiment_trials(experiment_id)
+    trials = exp.experiment_trials(sess, experiment_id)
     assert len(trials) == 1
     trial = trials[0]
 
@@ -456,7 +466,9 @@ def test_core_api_arbitrary_workload_order() -> None:
 def test_core_api_tutorials(
     stage: str, ntrials: int, expect_workloads: bool, expect_checkpoints: bool
 ) -> None:
+    sess = api_utils.user_session()
     exp.run_basic_test(
+        sess,
         conf.tutorials_path(f"core_api/{stage}.yaml"),
         conf.tutorials_path("core_api"),
         ntrials,
@@ -467,8 +479,9 @@ def test_core_api_tutorials(
 
 @pytest.mark.parallel
 def test_core_api_distributed_tutorial() -> None:
+    sess = api_utils.user_session()
     exp.run_basic_test(
-        conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
+        sess, conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
 
 
@@ -477,7 +490,9 @@ def test_core_api_pytorch_profiler_tensorboard() -> None:
     # Ensure tensorboard will load for an experiment which runs pytorch profiler,
     # and doesn't report metrics or checkpoints.
     # If the profiler trace file is not synced, the tensorboard will not load.
+    sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
+        sess,
         conf.fixtures_path("core_api/pytorch_profiler_sync.yaml"),
         conf.fixtures_path("core_api"),
         1,
@@ -492,7 +507,7 @@ def test_core_api_pytorch_profiler_tensorboard() -> None:
         "--no-browser",
     ]
 
-    with cmd.interactive_command(*command) as tensorboard:
+    with cmd.interactive_command(sess, command) as tensorboard:
         assert tensorboard.task_id is not None
-        err = api.task_is_ready(determined_test_session(), tensorboard.task_id)
+        err = api.wait_for_task_ready(sess, tensorboard.task_id)
         assert err is None, err

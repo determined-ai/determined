@@ -1,6 +1,7 @@
 package kubernetesrm
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -131,7 +132,7 @@ func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption)
 	return rmerrors.ErrNotSupported
 }
 
-func (k *kubernetesResourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sproto.RMJobInfo {
+func (k *kubernetesResourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
@@ -139,7 +140,7 @@ func (k *kubernetesResourcePool) GetJobQ(msg sproto.GetJobQ) map[model.JobID]*sp
 	return k.jobQInfo()
 }
 
-func (k *kubernetesResourcePool) GetJobQStats(msg sproto.GetJobQStats) *jobv1.QueueStats {
+func (k *kubernetesResourcePool) GetJobQStats() *jobv1.QueueStats {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
@@ -229,9 +230,7 @@ func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPositio
 	k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
 
-func (k *kubernetesResourcePool) GetAllocationSummaries(
-	msg sproto.GetAllocationSummaries,
-) map[model.AllocationID]sproto.AllocationSummary {
+func (k *kubernetesResourcePool) GetAllocationSummaries() map[model.AllocationID]sproto.AllocationSummary {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
@@ -262,15 +261,15 @@ func (k *kubernetesResourcePool) getResourceSummary(msg getResourceSummary) (*re
 	}, nil
 }
 
-func (k *kubernetesResourcePool) ValidateCommandResources(
-	msg sproto.ValidateCommandResourcesRequest,
-) sproto.ValidateCommandResourcesResponse {
+func (k *kubernetesResourcePool) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) sproto.ValidateResourcesResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable}
+	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
 func (k *kubernetesResourcePool) Schedule() {
@@ -399,7 +398,7 @@ func (k *kubernetesResourcePool) moveJob(
 	if err != nil {
 		return err
 	}
-	if err := k.db.UpdateJobPosition(jobID, jobPosition); err != nil {
+	if err := db.UpdateJobPosition(context.TODO(), jobID, jobPosition); err != nil {
 		return err
 	}
 

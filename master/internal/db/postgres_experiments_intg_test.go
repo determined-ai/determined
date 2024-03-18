@@ -15,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -216,7 +217,7 @@ func TestExperimentByIDs(t *testing.T) {
 	externalID := uuid.New().String()
 	exp := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		ExternalExperimentID: &externalID,
-	})
+	}, DefaultProjectID)
 	trial, task := RequireMockTrial(t, db, exp)
 
 	for _, c := range []struct {
@@ -390,15 +391,16 @@ func TestProjectHyperparameters(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
-	projectID := RequireMockProjectID(t, db)
+	workspaceID, _ := RequireMockWorkspaceID(t, db)
+	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
 	exp0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		HParamNames: &[]string{"a", "b", "c"},
 		ProjectID:   &projectID,
-	})
+	}, DefaultProjectID)
 	exp1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		HParamNames: &[]string{"b", "c", "d"},
 		ProjectID:   &projectID,
-	})
+	}, DefaultProjectID)
 
 	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
 		RequireGetProjectHParams(t, db, projectID))
@@ -491,21 +493,21 @@ func TestGetNonTerminalExperimentCount(t *testing.T) {
 
 	e0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		State: ptrs.Ptr(model.ActiveState),
-	})
+	}, DefaultProjectID)
 	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e0.ID)})
 	require.NoError(t, err)
 	require.Equal(t, 1, c)
 
 	e1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		State: ptrs.Ptr(model.CompletedState),
-	})
+	}, DefaultProjectID)
 	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e1.ID)})
 	require.NoError(t, err)
 	require.Equal(t, 0, c)
 
 	e2 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		State: ptrs.Ptr(model.PausedState),
-	})
+	}, DefaultProjectID)
 	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e2.ID)})
 	require.NoError(t, err)
 	require.Equal(t, 1, c)
@@ -729,6 +731,11 @@ func TestDeleteExperiments(t *testing.T) {
 			for k := 0; k < numChkpts; k++ { // Create checkpoints
 				ckpt := uuid.New()
 				checkpoint := MockModelCheckpoint(ckpt, allocation)
+
+				// Set checkpoint state to 'DELETED' (indicating that they cease to exist in
+				// storage) so that their deletion isn't blocked by the on_checkpoint_deletion
+				// trigger.
+				checkpoint.State = model.DeletedState
 				err := AddCheckpointMetadata(ctx, &checkpoint, tr.ID)
 				require.NoError(t, err)
 				checkpointIDs = append(checkpointIDs, checkpoint.ID)
@@ -893,4 +900,79 @@ func TestDeleteExperiments(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, oldAllocs, newAllocs)
+}
+
+func TestProjectExperiments(t *testing.T) {
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	// add a workspace, and project
+	workspaceID, _ := RequireMockWorkspaceID(t, db)
+	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
+	RequireMockUser(t, db)
+
+	t.Run("valid project with zero experiments", func(t *testing.T) {
+		actualExps, err := ProjectExperiments(context.Background(), projectID)
+		require.NoError(t, err)
+		assert.Equal(t, len(actualExps), 0)
+	})
+
+	t.Run("valid project with experiments", func(t *testing.T) {
+		// add 3 experiments
+		user := RequireMockUser(t, db)
+		expectedExps := make([]*model.Experiment, 0)
+		for i := 0; i < 3; i++ {
+			exp := RequireMockExperimentProject(t, db, user, projectID)
+			expectedExps = append(expectedExps, exp)
+		}
+		actualExps, err := ProjectExperiments(context.Background(), projectID)
+		require.NoError(t, err)
+		assert.Equal(t, len(expectedExps), len(actualExps))
+		validateExperimentMatch(t, expectedExps, actualExps)
+	})
+
+	t.Run("invalid project", func(t *testing.T) {
+		actualExps, err := ProjectExperiments(context.Background(), -11)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(actualExps))
+	})
+
+	t.Run("archived project", func(t *testing.T) {
+		// add archvied project to workspace
+		archivedProjectID, _ := RequireMockProjectID(t, db, workspaceID, true)
+		// add 3 experiments
+		user := RequireMockUser(t, db)
+		expectedExps := make([]*model.Experiment, 0)
+		for i := 0; i < 3; i++ {
+			exp := RequireMockExperimentProject(t, db, user, archivedProjectID)
+			expectedExps = append(expectedExps, exp)
+		}
+		actualExps, err := ProjectExperiments(context.Background(), archivedProjectID)
+		require.NoError(t, err)
+		assert.Equal(t, len(expectedExps), len(actualExps))
+		validateExperimentMatch(t, expectedExps, actualExps)
+	})
+}
+
+func validateExperimentMatch(t *testing.T, expected []*model.Experiment, actual []*model.Experiment) {
+	// validate that both sets of experiments are the same using jobID
+	// add all expected jobIDs to a map
+	m := make(map[string]*model.Experiment)
+	for _, exp := range expected {
+		m[string(exp.JobID)] = exp
+	}
+
+	// remove all actual jobIDs from map
+	for _, actual := range actual {
+		expected, ok := m[string(actual.JobID)]
+		require.True(t, ok)
+		require.Equal(t, expected.ProjectID, actual.ProjectID)
+		require.Equal(t, expected.Username, actual.Username)
+		require.Equal(t, expected.OwnerID, actual.OwnerID)
+		delete(m, string(actual.JobID))
+	}
+
+	// map should be empty
+	require.Equal(t, len(m), 0)
 }

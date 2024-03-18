@@ -31,7 +31,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-var errRecovering = errors.New("agent disconnected, wait for recovery")
+var (
+	errRecovering                = errors.New("agent disconnected, wait for recovery")
+	errWebsocketAlreadyConnected = errors.New("websocket already connected")
+)
 
 type (
 	agent struct {
@@ -294,7 +297,7 @@ func (a *agent) stop(cause error) {
 		}
 	}
 
-	a.syslog.Infof("removing agent: %s", a.agentState.agentID())
+	a.syslog.Infof("removing agent: %s", a.id)
 	err := a.updateAgentEndStats(string(a.id))
 	if err != nil {
 		a.syslog.WithError(err).Error("failed to update agent end stats")
@@ -302,20 +305,24 @@ func (a *agent) stop(cause error) {
 	a.notifyListeners()
 }
 
-func (a *agent) HandleWebsocketConnection(msg webSocketRequest) {
+func (a *agent) HandleWebsocketConnection(msg webSocketRequest) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	err := a.handleWebsocketConnection(msg)
 	if err != nil {
+		if errors.Is(err, errWebsocketAlreadyConnected) {
+			return fmt.Errorf("agent: %w", err)
+		}
 		a.stop(err)
-		return
+		return nil
 	}
+	return nil
 }
 
 func (a *agent) handleWebsocketConnection(msg webSocketRequest) error {
 	if a.socket != nil {
-		err := errors.New("websocket already connected")
+		err := errWebsocketAlreadyConnected
 		a.syslog.WithError(err).Error("socket not nil when WebSocketRequest received")
 		return err
 	}
@@ -878,16 +885,18 @@ func (a *agent) socketDisconnected() {
 	timer := time.AfterFunc(a.agentReconnectWait, a.HandleReconnectTimeout)
 	a.reconnectTimers = append(a.reconnectTimers, timer)
 
-	a.preDisconnectEnabled = a.agentState.enabled
-	a.preDisconnectDraining = a.agentState.draining
-	// Mark ourselves as draining to avoid action on ourselves while we recover. While the
-	// system is technically correct without this, it's better because we avoid any waste
-	// effort scheduling things only to have them suffer AgentErrors later.
-	a.agentState.disable(true)
-	a.agentState.patchAllSlotsState(patchAllSlotsState{
-		enabled: &a.agentState.enabled,
-		drain:   &a.agentState.draining,
-	})
+	if a.agentState != nil { // This is nil for a bit after `a.socket` is connected but before `a.started` is true.
+		a.preDisconnectEnabled = a.agentState.enabled
+		a.preDisconnectDraining = a.agentState.draining
+		// Mark ourselves as draining to avoid action on ourselves while we recover. While the
+		// system is technically correct without this, it's better because we avoid any waste
+		// effort scheduling things only to have them suffer AgentErrors later.
+		a.agentState.disable(true)
+		a.agentState.patchAllSlotsState(patchAllSlotsState{
+			enabled: &a.agentState.enabled,
+			drain:   &a.agentState.draining,
+		})
+	}
 	a.notifyListeners()
 }
 

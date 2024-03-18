@@ -1,21 +1,19 @@
 import os
+import shlex
 import subprocess
 import time
-from shlex import split as sh_split
 from typing import Any, Iterator
 
 import pytest
 
 from tests import config as conf
-
-from .abstract_cluster import Cluster
-from .utils import now_ts
+from tests.cluster import abstract_cluster, utils
 
 
 # ManagedSlurmCluster is an implementation of the abstract class Cluster, to suit a slurm based
 # devcluster instance. It is used as part of the e2e slurm tests that require the master to be
 # restarted.
-class ManagedSlurmCluster(Cluster):
+class ManagedSlurmCluster(abstract_cluster.Cluster):
     def __init__(self) -> None:
         self.is_circleci_job = os.getenv("IS_CIRCLECI_JOB")
         self.dc = None
@@ -33,7 +31,7 @@ class ManagedSlurmCluster(Cluster):
         if self.is_circleci_job:
             # Use the pre-installed determined master service when running the tests as part of a
             # CircleCI job.
-            subprocess.run(sh_split("sudo systemctl stop determined-master"))
+            subprocess.run(shlex.split("sudo systemctl stop determined-master"))
         else:
             # Use the local instance of devcluster.
             if self.dc:
@@ -54,7 +52,7 @@ class ManagedSlurmCluster(Cluster):
             if self.is_circleci_job:
                 # Use the pre-installed determined master service when running the tests as part
                 # of a CircleCI job.
-                subprocess.run(sh_split("sudo systemctl start determined-master"))
+                subprocess.run(shlex.split("sudo systemctl start determined-master"))
             else:
                 # Use a local instance of the devcluster.
                 master_config_file = os.getenv("MASTER_CONFIG_FILE")
@@ -107,6 +105,6 @@ def managed_slurm_cluster_restarts(
         # Local instance of devcluster is run on port 8081
         conf.MASTER_PORT = "8081"
     nodeid = request.node.nodeid
-    managed_slurm_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
+    managed_slurm_cluster_session.log_marker(f"pytest [{utils.now_ts()}] {nodeid} setup\n")
     yield managed_slurm_cluster_session
-    managed_slurm_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} teardown\n")
+    managed_slurm_cluster_session.log_marker(f"pytest [{utils.now_ts()}] {nodeid} teardown\n")

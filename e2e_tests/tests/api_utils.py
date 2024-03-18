@@ -1,5 +1,6 @@
+import functools
 import uuid
-from typing import Callable, Optional, Sequence, TypeVar
+from typing import Callable, Optional, Sequence, Tuple, TypeVar
 
 import pytest
 
@@ -7,41 +8,49 @@ from determined.common import api
 from determined.common.api import authentication, bindings, certs, errors
 from tests import config as conf
 
+_cert: Optional[certs.Cert] = None
+
+
+def cert() -> certs.Cert:
+    global _cert
+    if _cert is None:
+        _cert = certs.default_load(conf.make_master_url())
+    return _cert
+
+
+def make_session(username: str, password: str) -> api.Session:
+    master_url = conf.make_master_url()
+    # Use login instead of login_with_cache() to not touch auth.json on the filesystem.
+    utp = authentication.login(master_url, username, password, cert())
+    return api.Session(master_url, utp, cert(), max_retries=0)
+
+
+@functools.lru_cache(maxsize=1)
+def user_session() -> api.Session:
+    return make_session("determined", conf.USER_PASSWORD)
+
+
+@functools.lru_cache(maxsize=1)
+def admin_session() -> api.Session:
+    return make_session("admin", conf.USER_PASSWORD)
+
 
 def get_random_string() -> str:
     return str(uuid.uuid4())
 
 
-def determined_test_session(
-    credentials: Optional[authentication.Credentials] = None,
-    admin: Optional[bool] = None,
-) -> api.Session:
-    assert admin is None or credentials is None, "admin and credentials are mutually exclusive"
-
-    if credentials is None:
-        if admin:
-            credentials = conf.ADMIN_CREDENTIALS
-        else:
-            credentials = authentication.Credentials("determined", "")
-
-    murl = conf.make_master_url()
-    certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(
-        murl, requested_user=credentials.username, password=credentials.password
-    )
-    return api.Session(murl, credentials.username, authentication.cli_auth, certs.cli_cert)
-
-
 def create_test_user(
-    add_password: bool = False,
-    session: Optional[api.Session] = None,
     user: Optional[bindings.v1User] = None,
-) -> authentication.Credentials:
-    session = session or determined_test_session(admin=True)
+) -> Tuple[api.Session, str]:
+    """
+    Returns a tuple of (Session, password).
+    """
+    session = admin_session()
     user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
-    password = get_random_string() if add_password else ""
+    password = get_random_string()
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
-    return authentication.Credentials(user.username, password)
+    sess = make_session(user.username, password)
+    return sess, password
 
 
 def assign_user_role(session: api.Session, user: str, role: str, workspace: Optional[str]) -> None:
@@ -60,17 +69,6 @@ def assign_group_role(
     )
     req = bindings.v1AssignRolesRequest(userRoleAssignments=[], groupRoleAssignments=group_assign)
     bindings.post_AssignRoles(session, body=req)
-
-
-def configure_token_store(credentials: authentication.Credentials) -> None:
-    """Authenticate the user for CLI usage with the given credentials."""
-    token_store = authentication.TokenStore(conf.make_master_url())
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    token = authentication.do_login(
-        conf.make_master_url(), credentials.username, credentials.password, certs.cli_cert
-    )
-    token_store.set_token(credentials.username, token)
-    token_store.set_active(credentials.username)
 
 
 def launch_ntsc(
@@ -164,29 +162,46 @@ def list_ntsc(
         raise ValueError("unknown type")
 
 
-_scheduler_type: Optional[bindings.v1SchedulerType] = None
+F = TypeVar("F", bound=Callable)
+
+
+@functools.lru_cache(maxsize=1)
+def _get_is_k8s() -> Optional[bool]:
+    try:
+        admin_sess = admin_session()
+        resp = bindings.get_GetMasterConfig(admin_sess)
+        is_k8s = resp.config["resource_manager"]["type"] == "kubernetes"
+        assert isinstance(is_k8s, bool)
+        return is_k8s
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
+
+
+def skipif_not_k8s(reason: str = "test is k8s-specific") -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        is_k8s = _get_is_k8s()
+        if is_k8s is None:
+            return f
+        if not is_k8s:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
 
 
 # Queries the determined master for resource pool information to determine if agent is used
 # Currently we are assuming that all resource pools are of the same scheduler type
 # which is why only the first resource pool's type is checked.
+@functools.lru_cache(maxsize=1)
 def _get_scheduler_type() -> Optional[bindings.v1SchedulerType]:
-    global _scheduler_type
-    if _scheduler_type is None:
-        try:
-            sess = determined_test_session()
-            resourcePool = bindings.get_GetResourcePools(sess).resourcePools
-            if not resourcePool:
-                raise ValueError(
-                    "Resource Pool returned no value. Make sure the resource pool is set."
-                )
-            _scheduler_type = resourcePool[0].schedulerType
-        except (errors.APIException, errors.MasterNotFoundException):
-            pass
-    return _scheduler_type
-
-
-F = TypeVar("F", bound=Callable)
+    try:
+        sess = user_session()
+        resourcePool = bindings.get_GetResourcePools(sess).resourcePools
+        if not resourcePool:
+            raise ValueError("Resource Pool returned no value. Make sure the resource pool is set.")
+        return resourcePool[0].schedulerType
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
 
 
 def skipif_not_hpc(reason: str = "test is hpc-specific") -> Callable[[F], F]:
@@ -225,27 +240,22 @@ def skipif_not_pbs(reason: str = "test is slurm-specific") -> Callable[[F], F]:
     return decorator
 
 
-def is_hpc() -> bool:
-    st = _get_scheduler_type()
-    if st is None:
-        raise RuntimeError("unable to contact master to determine is_hpc()")
+def is_hpc(sess: api.Session) -> bool:
+    resourcePool = bindings.get_GetResourcePools(sess).resourcePools
+    if not resourcePool:
+        raise ValueError("Resource Pool returned no value. Make sure the resource pool is set.")
+    st = resourcePool[0].schedulerType
     return st in (bindings.v1SchedulerType.SLURM, bindings.v1SchedulerType.PBS)
 
 
-_is_ee: Optional[bool] = None
-
-
+@functools.lru_cache(maxsize=1)
 def _get_ee() -> Optional[bool]:
-    global _is_ee
-
-    if _is_ee is None:
-        try:
-            info = api.get(conf.make_master_url(), "info", authenticated=False).json()
-            _is_ee = "sso_providers" in info
-        except (errors.APIException, errors.MasterNotFoundException):
-            pass
-
-    return _is_ee
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
+    try:
+        info = sess.get("info").json()
+        return "sso_providers" in info
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
 
 
 def skipif_ee(reason: str = "test is oss-specific") -> Callable[[F], F]:
@@ -272,20 +282,14 @@ def skipif_not_ee(reason: str = "test is ee-specific") -> Callable[[F], F]:
     return decorator
 
 
-_scim_enabled: Optional[bool] = None
-
-
+@functools.lru_cache(maxsize=1)
 def _get_scim_enabled() -> Optional[bool]:
-    global _scim_enabled
-
-    if _scim_enabled is None:
-        try:
-            info = api.get(conf.make_master_url(), "info", authenticated=False).json()
-            _scim_enabled = bool(info.get("sso_providers") and len(info["sso_providers"]) > 0)
-        except (errors.APIException, errors.MasterNotFoundException):
-            pass
-
-    return _scim_enabled
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
+    try:
+        info = sess.get("info").json()
+        return bool(info.get("sso_providers") and len(info["sso_providers"]) > 0)
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
 
 
 def skipif_scim_not_enabled(reason: str = "scim is required for this test") -> Callable[[F], F]:
@@ -294,6 +298,51 @@ def skipif_scim_not_enabled(reason: str = "scim is required for this test") -> C
         if se is None:
             return f
         if not se:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+@functools.lru_cache(maxsize=1)
+def _get_rbac_enabled() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
+    try:
+        return bindings.get_GetMaster(sess).rbacEnabled
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
+
+
+def skipif_rbac_not_enabled(reason: str = "ee is required for this test") -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        re = _get_rbac_enabled()
+        if re is None:
+            return f
+        if not re:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+@functools.lru_cache(maxsize=1)
+def _get_strict_q() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
+    try:
+        resp = bindings.get_GetMaster(sess)
+        return resp.rbacEnabled and resp.strictJobQueueControl
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
+
+
+def skipif_strict_q_control_not_enabled(
+    reason: str = "rbac and strict queue control are required for this test",
+) -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        sq = _get_strict_q()
+        if sq is None:
+            return f
+        if not sq:
             return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
         return f
 

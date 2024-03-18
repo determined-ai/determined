@@ -15,7 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -59,9 +59,9 @@ func TestPostBindingFails(t *testing.T) {
 	// TODO (eliu): add some tests for workspaceIDs
 	// test resource pools on workspaces that do not exist
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	_, err := api.BindRPToWorkspace(ctx, &apiv1.BindRPToWorkspaceRequest{
 		ResourcePoolName: testPoolName,
 		WorkspaceNames:   []string{"nonexistent_workspace"},
@@ -70,9 +70,9 @@ func TestPostBindingFails(t *testing.T) {
 
 	// test resource pool doesn't exist
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Twice()
+		Return(rm.ResourcePoolName(""), nil).Twice()
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{},
@@ -86,7 +86,7 @@ func TestPostBindingFails(t *testing.T) {
 
 	// test resource pool is a default resource pool
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{PoolName: testPoolName}, nil).Twice()
+		Return(rm.ResourcePoolName(testPoolName), nil).Twice()
 
 	_, err = api.BindRPToWorkspace(ctx, &apiv1.BindRPToWorkspaceRequest{
 		ResourcePoolName: testPoolName,
@@ -96,7 +96,7 @@ func TestPostBindingFails(t *testing.T) {
 	require.ErrorContains(t, err, "default resource pool testRP cannot be bound to any workspace")
 
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{PoolName: testPoolName}, nil).Once()
+		Return(rm.ResourcePoolName(testPoolName), nil).Once()
 
 	_, err = api.BindRPToWorkspace(ctx, &apiv1.BindRPToWorkspaceRequest{
 		ResourcePoolName: testPoolName,
@@ -107,9 +107,9 @@ func TestPostBindingFails(t *testing.T) {
 
 	// test no resource pool specified
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{PoolName: testPoolName}, nil).Once()
+		Return(rm.ResourcePoolName(testPoolName), nil).Once()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{PoolName: testPoolName}, nil).Once()
+		Return(rm.ResourcePoolName(testPoolName), nil).Once()
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},
@@ -135,9 +135,9 @@ func TestPostBindingSucceeds(t *testing.T) {
 
 	// bind first resource pool
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Twice()
+		Return(rm.ResourcePoolName(""), nil).Twice()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Twice()
+		Return(rm.ResourcePoolName(""), nil).Twice()
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},
@@ -171,9 +171,9 @@ func TestListWorkspacesBoundToRPFails(t *testing.T) {
 
 	// bind first workspace
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},
@@ -208,9 +208,9 @@ func TestListWorkspacesBoundToRPSucceeds(t *testing.T) {
 
 	// test bind resource pool to workspace
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Once()
+		Return(rm.ResourcePoolName(""), nil).Once()
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},
@@ -257,9 +257,9 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 
 	// setup first binding
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Times(4)
+		Return(rm.ResourcePoolName(""), nil).Times(4)
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Times(4)
+		Return(rm.ResourcePoolName(""), nil).Times(4)
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},
@@ -329,9 +329,9 @@ func TestDeleteBindingsSucceeds(t *testing.T) {
 	// TODO: fix all comments
 	// setup first binding
 	mockRM.On("GetDefaultComputeResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultComputeResourcePoolResponse{}, nil).Times(1)
+		Return(rm.ResourcePoolName(""), nil).Times(1)
 	mockRM.On("GetDefaultAuxResourcePool", mock.Anything, mock.Anything).
-		Return(sproto.GetDefaultAuxResourcePoolResponse{}, nil).Times(1)
+		Return(rm.ResourcePoolName(""), nil).Times(1)
 	mockRM.On("GetResourcePools", mock.Anything, mock.Anything).
 		Return(&apiv1.GetResourcePoolsResponse{
 			ResourcePools: []*resourcepoolv1.ResourcePool{{Name: testPoolName}},

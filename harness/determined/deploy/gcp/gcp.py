@@ -364,7 +364,7 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
 
 def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
     master_url = terraform_output(configs, env, "Web-UI")
-    healthcheck.wait_for_master_url(master_url, timeout)
+    healthcheck.wait_for_master(master_url, timeout)
 
 
 def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:
@@ -381,6 +381,19 @@ def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) ->
             storage_service.buckets().insert(project=project_id, body=request_body).execute()
         else:
             raise
+
+
+def cluster_exists(bucket_name: str, project_id: str, cluster_id: str) -> bool:
+    set_validate_gcp_credentials()
+    storage_client = storage.Client(project=project_id)
+    blobs = storage_client.list_blobs(bucket_name)
+    for blob in blobs:
+        name = blob.name[:-16]
+        json_data_string = blob.download_as_string()
+        json_data = json.loads(json_data_string)
+        if json_data.get("resources") and name == cluster_id:
+            return True
+    return False
 
 
 def list_clusters(bucket_name: str, project_id: str, print_format: str = "table") -> None:

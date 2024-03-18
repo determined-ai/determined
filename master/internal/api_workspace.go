@@ -527,7 +527,7 @@ func (a *apiServer) deleteWorkspace(
 	log.Debugf("deleting workspace %d projects", workspaceID)
 	holder := &workspacev1.Workspace{}
 	for _, pj := range projects {
-		expList, err := a.m.db.ProjectExperiments(int(pj.Id))
+		expList, err := db.ProjectExperiments(context.TODO(), int(pj.Id))
 		if err != nil {
 			log.WithError(err).Errorf("error fetching experiments on project %d while deleting workspace %d",
 				pj.Id, workspaceID)

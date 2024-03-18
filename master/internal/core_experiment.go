@@ -21,7 +21,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/templates"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -78,7 +77,7 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	return &queries, nil
 }
 
-func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, m *Master,
+func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context,
 	expID int, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
@@ -112,7 +111,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	exp, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	)
 	if err != nil {
@@ -156,7 +155,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -184,7 +183,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -241,7 +240,7 @@ func getCreateExperimentsProject(
 			errProjectNotFound = api.NotFoundErrs("workspace/project",
 				config.Workspace()+"/"+config.Project(), true)
 
-			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
+			projectID, err = project.ProjectByName(context.TODO(), config.Workspace(), config.Project())
 			if errors.Is(err, db.ErrNotFound) {
 				return nil, errProjectNotFound
 			} else if err != nil {
@@ -262,10 +261,9 @@ func getCreateExperimentsProject(
 	return p, nil
 }
 
-func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner *model.User) (
+func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExperimentRequest, owner *model.User) (
 	*model.Experiment, []byte, expconf.ExperimentConfig, *projectv1.Project, *tasks.TaskSpec, error,
 ) {
-	ctx := context.TODO()
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(req.Config))
 	if err != nil {
@@ -298,9 +296,6 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
-	}
-	if err = m.rm.ValidateResources(poolName, resources.SlotsPerTrial(), isSingleNode); err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "error validating resources")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
@@ -366,7 +361,7 @@ func (m *Master) parseCreateExperiment(req *apiv1.CreateExperimentRequest, owner
 		}
 	}
 
-	token, createSessionErr := user.StartSession(ctx, owner)
+	token, createSessionErr := getTaskSessionToken(ctx, owner)
 	if createSessionErr != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")

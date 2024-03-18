@@ -11,7 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	workspaceauth "github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -50,7 +49,7 @@ func (a *apiServer) GetResourcePools(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := a.m.rm.GetResourcePools(req)
+	resp, err := a.m.rm.GetResourcePools()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +89,7 @@ func (a *apiServer) GetResourcePools(
 func (a *apiServer) BindRPToWorkspace(
 	ctx context.Context, req *apiv1.BindRPToWorkspaceRequest,
 ) (*apiv1.BindRPToWorkspaceResponse, error) {
-	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
+	err := a.checkIfPoolIsDefault(rm.ResourcePoolName(req.ResourcePoolName))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +120,7 @@ func (a *apiServer) BindRPToWorkspace(
 func (a *apiServer) OverwriteRPWorkspaceBindings(
 	ctx context.Context, req *apiv1.OverwriteRPWorkspaceBindingsRequest,
 ) (*apiv1.OverwriteRPWorkspaceBindingsResponse, error) {
-	err := a.checkIfPoolIsDefault(req.ResourcePoolName)
+	err := a.checkIfPoolIsDefault(rm.ResourcePoolName(req.ResourcePoolName))
 	if err != nil {
 		return nil, err
 	}
@@ -212,22 +211,19 @@ func (a *apiServer) ListWorkspacesBoundToRP(
 	}, nil
 }
 
-func (a *apiServer) checkIfPoolIsDefault(poolName string) error {
-	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool(
-		sproto.GetDefaultComputeResourcePoolRequest{})
+func (a *apiServer) checkIfPoolIsDefault(poolName rm.ResourcePoolName) error {
+	defaultComputePool, err := a.m.rm.GetDefaultComputeResourcePool()
 	if err != nil {
 		return err
 	}
 
-	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool(
-		sproto.GetDefaultAuxResourcePoolRequest{},
-	)
+	defaultAuxPool, err := a.m.rm.GetDefaultAuxResourcePool()
 	if err != nil {
 		return err
 	}
 
-	isDefaultCompute := poolName == defaultComputePool.PoolName
-	isDefaultAux := poolName == defaultAuxPool.PoolName
+	isDefaultCompute := poolName == defaultComputePool
+	isDefaultAux := poolName == defaultAuxPool
 	if isDefaultCompute || isDefaultAux {
 		return fmt.Errorf(
 			"default resource pool %s cannot be bound to any workspace",
@@ -254,7 +250,7 @@ func (a *apiServer) canUserModifyWorkspaces(ctx context.Context, ids []int32) er
 }
 
 func (a *apiServer) resourcePoolsAsConfigs() ([]config.ResourcePoolConfig, error) {
-	resp, err := a.m.rm.GetResourcePools(&apiv1.GetResourcePoolsRequest{})
+	resp, err := a.m.rm.GetResourcePools()
 	if err != nil {
 		return nil, err
 	}

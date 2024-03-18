@@ -6,6 +6,7 @@ import Icon from 'hew/Icon';
 import Row from 'hew/Row';
 import Tooltip from 'hew/Tooltip';
 import { Title, TypographySize } from 'hew/Typography';
+import { isUndefined } from 'lodash';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
@@ -62,23 +63,30 @@ const ProjectCard: React.FC<Props> = ({
             <div className={css.workspaceContainer}>
               {showWorkspace && (
                 <div className={css.workspaceIcon}>
-                  <Avatar palette="muted" size={Size.Small} square text={project.workspaceName} />
+                  <Avatar
+                    palette="muted"
+                    size={Size.Small}
+                    square
+                    text={project.workspaceName || ''}
+                  />
                 </div>
               )}
             </div>
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              <div className={css.experiments}>
-                <Tooltip
-                  content={
-                    `${project.numExperiments.toLocaleString()}` +
-                    ` experiment${project.numExperiments === 1 ? '' : 's'}`
-                  }>
-                  <Icon name="experiment" size="small" title="Number of experiments" />
-                  <span>{nearestCardinalNumber(project.numExperiments)}</span>
-                </Tooltip>
-              </div>
+              {!isUndefined(project.numExperiments) && (
+                <div className={css.experiments}>
+                  <Tooltip
+                    content={
+                      `${project.numExperiments?.toLocaleString()}` +
+                      ` experiment${project.numExperiments === 1 ? '' : 's'}`
+                    }>
+                    <Icon name="experiment" size="small" title="Number of experiments" />
+                    <span>{nearestCardinalNumber(project.numExperiments)}</span>
+                  </Tooltip>
+                </div>
+              )}
               {project.archived ? (
                 <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
               ) : (

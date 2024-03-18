@@ -190,15 +190,13 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [trial?.id, ui.isPageHidden]);
 
   const logFilters = (
-    <div className={css.filters}>
-      <LogViewerSelect
-        options={filterOptions}
-        showSearch={true}
-        values={filterValues}
-        onChange={handleFilterChange}
-        onReset={handleFilterReset}
-      />
-    </div>
+    <LogViewerSelect
+      options={filterOptions}
+      showSearch={true}
+      values={filterValues}
+      onChange={handleFilterChange}
+      onReset={handleFilterReset}
+    />
   );
 
   return (

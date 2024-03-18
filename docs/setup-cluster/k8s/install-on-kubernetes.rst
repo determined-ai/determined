@@ -42,8 +42,7 @@ are satisfied:
 -  The Kubernetes cluster should be running Kubernetes version >= 1.21 and <= 1.25, though later
    versions may work.
 
--  You should have access to the cluster via `kubectl
-   <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
+-  You should have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/>`_.
 
 -  `Helm 3 <https://helm.sh/docs/intro/install/>`_ should be installed.
 
@@ -132,7 +131,7 @@ Checkpoint Storage
 
 Checkpoints and TensorBoard events can be configured to be stored in ``shared_fs``, `AWS S3
 <https://aws.amazon.com/s3/>`__, `Microsoft Azure Blob Storage
-<https://azure.microsoft.com/en-us/services/storage/blobs>`__, or `GCS
+<https://azure.microsoft.com/en-us/products/storage/blobs/>`__, or `GCS
 <https://cloud.google.com/storage>`__. By default, checkpoints and TensorBoard events are stored
 using ``shared_fs``, which creates a `hostPath Volume
 <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`__ and saves to the host file
@@ -206,7 +205,7 @@ the master. You can then configure an `Ingress
 <https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>`__ that performs TLS
 termination in the load balancer and forwards plain text to the NodePort service, or forwards TLS
 encrypted data. Please note when configuring an Ingress that you need to have an `Ingress controller
-<https://github.com/bitnami/charts/tree/master/bitnami/nginx-ingress-controller>`__ running your
+<https://github.com/bitnami/charts/tree/main/bitnami/nginx-ingress-controller>`__ running your
 cluster.
 
 #. **TLS termination in a load-balancer (e.g., nginx).** This option will provide TLS encryption

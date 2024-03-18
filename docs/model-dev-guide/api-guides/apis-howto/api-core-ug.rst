@@ -66,7 +66,7 @@ Create a new directory.
 
 Access the tutorial files via the :download:`core_api_pytorch_mnist.tgz
 </examples/core_api_pytorch_mnist.tgz>` download link or directly from the `Github repository
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_pytorch_mnist>`_.
+<https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api_pytorch_mnist>`_.
 These scripts have already been modified to fit the steps outlined in this tutorial.
 
 In this initial step, we’ll run our experiment using the ``model_def.py`` script and its
@@ -521,7 +521,7 @@ skipping batch 1, warming up on batch 2, profiling batches 3 and 4, then repeati
 files will be uploaded to the experiment's TensorBoard path and can be viewed under the "PyTorch
 Profiler" tab in the Determined Tensorboard UI.
 
-See `PyTorch Profiler <https://github.com/pytorch/kineto/tree/master/tb_plugin>`_ documentation for
+See `PyTorch Profiler <https://github.com/pytorch/kineto/tree/main/tb_plugin>`_ documentation for
 details.
 
 .. code:: python

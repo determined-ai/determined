@@ -25,10 +25,10 @@ master and agent running on the same machine within WSL.
 
 -  An Ubuntu or an Enterprise Linux WSL distribution installed from the Microsoft Store, such as:
 
-      -  `Ubuntu 22.04 LTS <https://www.microsoft.com/store/productId/9PDXGNCFSCZV>`_
-      -  `AlmaLinux 9 <https://www.microsoft.com/store/productId/9P5RWLM70SN9>`_
-      -  `Oracle Linux 9 <https://www.microsoft.com/store/productId/9MXQ65HLMC27>`_
-      -  `Pengwin Enterprise <https://www.microsoft.com/store/productId/9P70GX2HQNHN>`_
+      -  `Ubuntu 22.04 LTS <https://apps.microsoft.com/detail/9PDXGNCFSCZV>`_
+      -  `AlmaLinux 9 <https://apps.microsoft.com/detail/9P5RWLM70SN9>`_
+      -  `Oracle Linux 9 <https://apps.microsoft.com/detail/9mxq65hlmc27>`_
+      -  `Pengwin Enterprise <https://apps.microsoft.com/detail/9P70GX2HQNHN>`_
 
 -  `systemd enabled <https://learn.microsoft.com/en-us/windows/wsl/wsl-config#systemd-support>`_
    within your chosen WSL distribution.
@@ -36,7 +36,7 @@ master and agent running on the same machine within WSL.
 **Recommended**
 
 -  Windows 11 version 22H2, or later.
--  `Windows Terminal <https://www.microsoft.com/store/productId/9N0DX20HK701>`_.
+-  `Windows Terminal <https://apps.microsoft.com/detail/9N0DX20HK701>`_.
 
 .. _enable_systemd:
 

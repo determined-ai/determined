@@ -12,7 +12,7 @@ such as language modeling, text classification, and question answering.
 **model-hub** makes it easy to train transformer models in Determined while keeping the developer
 experience as close as possible to working directly with **transformers**. The Determined library
 serves as an alternative to the Hugging Face `Trainer Class
-<https://huggingface.co/transformers/main_classes/trainer.html>`_ and provides access to the
+<https://huggingface.co/docs/transformers/main_classes/trainer>`_ and provides access to the
 benefits of using Determined, including:
 
 -  Easy multi-node distributed training with no code modifications. Determined automatically sets up

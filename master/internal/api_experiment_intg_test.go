@@ -1262,81 +1262,104 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 func TestAuthZCreateExperiment(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	forkFrom := createTestExp(t, api, curUser)
-	_, projectID := createProjectAndWorkspace(ctx, t, api)
+	workspaceID, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	// user is logged in again during experiment creation, meaning args don't match
 	mockUserArg := mock.MatchedBy(func(u model.User) bool {
 		return u.ID == curUser.ID
 	})
 
-	// Can't view forked experiment.
-	authZExp.On("CanGetExperiment", mock.Anything, mockUserArg,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		ParentId: int32(forkFrom.ID),
+	t.Run("can't view forked experiment", func(t *testing.T) {
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg,
+			mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			ParentId: int32(forkFrom.ID),
+		})
+		require.Equal(t, apiPkg.NotFoundErrs("experiment",
+			fmt.Sprint(forkFrom.ID), true), err)
 	})
-	require.Equal(t, apiPkg.NotFoundErrs("experiment",
-		fmt.Sprint(forkFrom.ID), true), err)
 
-	// Can't fork from experiment.
-	expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
-	authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
-	authZExp.On("CanForkFromExperiment", mock.Anything, mockUserArg, mock.Anything).
-		Return(fmt.Errorf("canForkExperimentError")).Once()
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		ParentId: int32(forkFrom.ID),
+	t.Run("can't fork from experiment", func(t *testing.T) {
+		expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
+		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
+		authZExp.On("CanForkFromExperiment", mock.Anything, mockUserArg, mock.Anything).
+			Return(fmt.Errorf("canForkExperimentError")).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			ParentId: int32(forkFrom.ID),
+		})
+		require.Equal(t, expectedErr, err)
 	})
-	require.Equal(t, expectedErr, err)
 
-	// Can't view project passed in.
-	pAuthZ.On("CanGetProject", mock.Anything, mockUserArg,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		ProjectId: int32(projectID),
-		Config:    minExpConfToYaml(t),
+	t.Run("can't view project passed in", func(t *testing.T) {
+		pAuthZ.On("CanGetProject", mock.Anything, mockUserArg,
+			mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			ProjectId: int32(projectID),
+			Config:    minExpConfToYaml(t),
+		})
+		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true), err)
 	})
-	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true), err)
 
-	// Can't view project passed in from config.
-	pAuthZ.On("CanGetProject", mock.Anything, mockUserArg,
-		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
+	t.Run("can't view project passed in from config", func(t *testing.T) {
+		pAuthZ.On("CanGetProject", mock.Anything, mockUserArg,
+			mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
+		})
+		require.Equal(t,
+			apiPkg.NotFoundErrs("workspace/project", "Uncategorized/Uncategorized", true), err)
 	})
-	require.Equal(t,
-		apiPkg.NotFoundErrs("workspace/project", "Uncategorized/Uncategorized", true), err)
-	// Same as passing in a non existent project.
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
-	})
-	require.Equal(t,
-		apiPkg.NotFoundErrs("workspace/project", "doesntexist123/doesntexist123", true), err)
 
-	// Can't create experiment deny.
-	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, mockUserArg, mock.Anything).
-		Return(fmt.Errorf("canCreateExperimentError")).Once()
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		ProjectId:       int32(projectID),
-		Config:          minExpConfToYaml(t),
-		ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
+	t.Run("can't view project; workspace does not exist", func(t *testing.T) {
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
+		})
+		require.Equal(t,
+			apiPkg.NotFoundErrs("workspace/project", "doesntexist123/doesntexist123", true), err)
 	})
-	require.Equal(t, expectedErr, err)
 
-	// Can't activate experiment deny.
-	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	pAuthZ.On("CanGetProject", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
-	authZExp.On("CanCreateExperiment", mock.Anything, mockUserArg, mock.Anything).
-		Return(nil).Once()
-	authZExp.On("CanEditExperiment", mock.Anything, mockUserArg, mock.Anything, mock.Anything).Return(
-		fmt.Errorf("canActivateExperimentError")).Once()
-	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
-		Activate:        true,
-		Config:          minExpConfToYaml(t),
-		ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
+	t.Run("can't view project; project does not exist", func(t *testing.T) {
+		var workspaceName string
+		err := db.Bun().NewSelect().
+			Table("workspaces").
+			Column("name").
+			Where("id = ?", workspaceID).
+			Scan(ctx, &workspaceName)
+		require.NoError(t, err)
+		_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: " + workspaceName,
+		})
+		require.Equal(t,
+			apiPkg.NotFoundErrs("workspace/project", workspaceName+"/doesntexist123", true), err)
 	})
-	require.Equal(t, expectedErr, err)
+
+	t.Run("can't create experiment deny", func(t *testing.T) {
+		expectedErr := status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
+		pAuthZ.On("CanGetProject", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
+		authZExp.On("CanCreateExperiment", mock.Anything, mockUserArg, mock.Anything).
+			Return(fmt.Errorf("canCreateExperimentError")).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			ProjectId:       int32(projectID),
+			Config:          minExpConfToYaml(t),
+			ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
+		})
+		require.Equal(t, expectedErr, err)
+	})
+
+	t.Run("can't activate experiment deny", func(t *testing.T) {
+		expectedErr := status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
+		pAuthZ.On("CanGetProject", mock.Anything, mockUserArg, mock.Anything).Return(nil).Once()
+		authZExp.On("CanCreateExperiment", mock.Anything, mockUserArg, mock.Anything).
+			Return(nil).Once()
+		authZExp.On("CanEditExperiment", mock.Anything, mockUserArg, mock.Anything, mock.Anything).Return(
+			fmt.Errorf("canActivateExperimentError")).Once()
+		_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+			Activate:        true,
+			Config:          minExpConfToYaml(t),
+			ModelDefinition: []*utilv1.File{{Content: []byte{1, 2, 3}}},
+		})
+		require.Equal(t, expectedErr, err)
+	})
 }
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {

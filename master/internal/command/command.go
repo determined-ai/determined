@@ -12,7 +12,7 @@ import (
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 
-	"github.com/determined-ai/determined/master/internal/db"
+	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
@@ -48,7 +48,7 @@ var queueStates = []model.AllocationState{
 type Command struct {
 	mu sync.Mutex
 
-	db *db.PgDB
+	db *internaldb.PgDB
 	rm rm.ResourceManager
 
 	tasks.GenericCommandSpec
@@ -76,7 +76,7 @@ type CreateGeneric struct {
 }
 
 func commandFromSnapshot(
-	db *db.PgDB,
+	db *internaldb.PgDB,
 	rm rm.ResourceManager,
 	snapshot *CommandSnapshot,
 ) (*Command, error) {
@@ -120,7 +120,7 @@ func (c *Command) Start(ctx context.Context) error {
 	c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 
 	if !c.restored {
-		if err := db.Bun().RunInTx(ctx, nil, c.registerJobAndTask); err != nil {
+		if err := internaldb.Bun().RunInTx(ctx, nil, c.registerJobAndTask); err != nil {
 			return err
 		}
 		if err := c.persistAndEvictContextDirectoryFromMemory(); err != nil {
@@ -178,7 +178,7 @@ func (c *Command) Start(ctx context.Context) error {
 // registerJobAndTask registers the command with the job service & adds the command to the job & task dbs.
 func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 	c.registeredTime = time.Now().Truncate(time.Millisecond)
-	if err := db.AddJobTx(ctx, tx, &model.Job{
+	if err := internaldb.AddJobTx(ctx, tx, &model.Job{
 		JobID:   c.jobID,
 		JobType: c.jobType,
 		OwnerID: &c.Base.Owner.ID,
@@ -186,7 +186,7 @@ func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 		return fmt.Errorf("persisting job %v: %w", c.taskID, err)
 	}
 
-	if err := db.AddTaskTx(ctx, tx, &model.Task{
+	if err := internaldb.AddTaskTx(ctx, tx, &model.Task{
 		TaskID:     c.taskID,
 		TaskType:   c.taskType,
 		StartTime:  c.registeredTime,
@@ -199,7 +199,7 @@ func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 }
 
 func (c *Command) persistAndEvictContextDirectoryFromMemory() error {
-	if err := db.AddNonExperimentTasksContextDirectory(
+	if err := internaldb.AddNonExperimentTasksContextDirectory(
 		context.TODO(), c.taskID, c.contextDirectory,
 	); err != nil {
 		return fmt.Errorf("saving NTSC context directory: %w", err)
@@ -216,7 +216,7 @@ func (c *Command) persist() error {
 		AllocationID:       c.allocationID,
 		GenericCommandSpec: c.GenericCommandSpec,
 	}
-	_, err := db.Bun().NewInsert().Model(snapshot).
+	_, err := internaldb.Bun().NewInsert().Model(snapshot).
 		On("CONFLICT (task_id) DO UPDATE").
 		Exec(context.TODO())
 	return err
@@ -230,7 +230,7 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 
 	c.exitStatus = ae
 
-	if err := db.CompleteTask(context.TODO(), c.taskID, time.Now().UTC()); err != nil {
+	if err := internaldb.CompleteTask(context.TODO(), c.taskID, time.Now().UTC()); err != nil {
 		c.syslog.WithError(err).Error("marking task complete")
 	}
 	if err := user.DeleteSessionByToken(context.TODO(), c.GenericCommandSpec.Base.UserSessionToken); err != nil {
@@ -251,7 +251,7 @@ func (c *Command) garbageCollect() {
 	}
 
 	if c.exitStatus == nil {
-		if err := db.CompleteTask(context.Background(), c.taskID, time.Now().UTC()); err != nil {
+		if err := internaldb.CompleteTask(context.Background(), c.taskID, time.Now().UTC()); err != nil {
 			c.syslog.WithError(err).Error("marking task complete")
 		}
 	}

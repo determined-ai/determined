@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net/http"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/elastic/go-elasticsearch/v7"
@@ -37,11 +37,12 @@ func Setup(conf model.ElasticLoggingConfig) (*Elastic, error) {
 	addr := fmt.Sprintf("%s%s:%d", scheme, conf.Host, conf.Port)
 	log.Infof("connecting to elasticsearch %s", addr)
 
+	transport := cleanhttp.DefaultTransport()
+	transport.TLSClientConfig = tlsCfg
+
 	cfg := elasticsearch.Config{
 		Addresses: []string{addr},
-		Transport: &http.Transport{
-			TLSClientConfig: tlsCfg,
-		},
+		Transport: transport,
 	}
 
 	if conf.Security.Username != nil && conf.Security.Password != nil {

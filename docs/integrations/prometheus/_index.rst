@@ -26,7 +26,7 @@ can be enabled in the master configuration file.
  Reference
 ***********
 
-`Grafana <https://grafana.com/docs/grafana/latest/installation/>`__
+`Grafana <https://grafana.com/docs/grafana/latest/setup-grafana/installation/>`__
 
 `Prometheus <https://prometheus.io/docs/prometheus/latest/installation/>`__
 
@@ -156,7 +156,7 @@ source. After the Grafana server is running and the Web UI is accessible, follow
    running Prometheus server address. By default, this is the machine address on port 9090.
 
 #. After the Prometheus data source connects, import the `Determined Hardware Metrics dashboard JSON
-   <https://github.com/determined-ai/works-with-determined/blob/master/observability/grafana/determined-hardware-grafana.json>`__
+   <https://github.com/determined-ai/works-with-determined/blob/main/observability/grafana/determined-hardware-grafana.json>`__
    file in **Grafana** -> **Create** -> **Import** -> **Import using panel JSON**.
 
 *********

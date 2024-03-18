@@ -15,7 +15,7 @@ from tests.cluster import utils
 def test_slack_webhook() -> None:
     port = 5005
     server = utils.WebhookServer(port, allow_dupes=True)
-    sess = api_utils.determined_test_session(admin=True)
+    sess = api_utils.admin_session()
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.EXPERIMENT_STATE_CHANGE,
@@ -32,15 +32,16 @@ def test_slack_webhook() -> None:
     assert result.webhook.url == webhook_request.url
 
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
+        sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
     )
 
     exp.wait_for_experiment_state(
+        sess,
         experiment_id,
         bindings.experimentv1State.COMPLETED,
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
-    exp_config = exp.experiment_config_json(experiment_id)
+    exp_config = exp.experiment_config_json(sess, experiment_id)
     expected_field = {"type": "mrkdwn", "text": "*Status*: Completed"}
     expected_payload = {
         "blocks": [
@@ -84,7 +85,7 @@ def test_slack_webhook() -> None:
 def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
-    sess = api_utils.determined_test_session(admin=True)
+    sess = api_utils.admin_session()
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
@@ -116,11 +117,12 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
 
     exp_id = exp.create_experiment(
+        sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
         ["--config", "hyperparameters.metrics_sigma=-1.0"],
     )
-    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.ERROR)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
     for _ in range(10):
         responses = server.return_responses()

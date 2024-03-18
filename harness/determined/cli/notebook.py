@@ -1,3 +1,4 @@
+import webbrowser
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
@@ -8,13 +9,13 @@ from termcolor import colored
 from determined import cli
 from determined.cli import ntsc, render, task
 from determined.common import api, context
-from determined.common.api import authentication, bindings, request
+from determined.common.api import bindings
 from determined.common.check import check_none
 from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
-@authentication.required
 def start_notebook(args: Namespace) -> None:
+    sess = cli.setup_session(args)
     config = ntsc.parse_config(args.config_file, None, args.config, args.volume)
 
     files = context.read_v1_context(args.context, args.include)
@@ -28,7 +29,7 @@ def start_notebook(args: Namespace) -> None:
         templateName=args.template,
         workspaceId=workspace_id,
     )
-    resp = bindings.post_LaunchNotebook(cli.setup_session(args), body=body)
+    resp = bindings.post_LaunchNotebook(sess, body=body)
 
     if args.preview:
         print(render.format_object_as_yaml(resp.config))
@@ -48,10 +49,10 @@ def start_notebook(args: Namespace) -> None:
         bindings.v1LaunchWarning.CURRENT_SLOTS_EXCEEDED in resp.warnings
     )
 
-    cli.wait_ntsc_ready(cli.setup_session(args), api.NTSC_Kind.notebook, nb.id)
+    cli.wait_ntsc_ready(sess, api.NTSC_Kind.notebook, nb.id)
 
     assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
-    nb_path = request.make_interactive_task_url(
+    nb_path = ntsc.make_interactive_task_url(
         task_id=nb.id,
         service_address=nb.serviceAddress,
         description=nb.description,
@@ -59,34 +60,32 @@ def start_notebook(args: Namespace) -> None:
         task_type="jupyter-lab",
         currentSlotsExceeded=currentSlotsExceeded,
     )
-    url = api.make_url(args.master, nb_path)
+    url = f"{args.master}/{nb_path}"
     if not args.no_browser:
-        api.browser_open(args.master, nb_path)
-    print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
+        webbrowser.open(url)
+    print(colored(f"Jupyter Notebook is running at: {url}", "green"))
 
 
-@authentication.required
 def open_notebook(args: Namespace) -> None:
-    notebook_id = cast(str, ntsc.expand_uuid_prefixes(args))
-
     sess = cli.setup_session(args)
+    notebook_id = cast(str, ntsc.expand_uuid_prefixes(sess, args))
+
     task = bindings.get_GetTask(sess, taskId=notebook_id).task
     check_none(task.endTime, "Notebook has ended")
 
     nb = bindings.get_GetNotebook(sess, notebookId=notebook_id).notebook
     assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
 
-    api.browser_open(
-        args.master,
-        request.make_interactive_task_url(
-            task_id=nb.id,
-            service_address=nb.serviceAddress,
-            description=nb.description,
-            resource_pool=nb.resourcePool,
-            task_type="jupyter-lab",
-            currentSlotsExceeded=False,
-        ),
+    nb_path = ntsc.make_interactive_task_url(
+        task_id=nb.id,
+        service_address=nb.serviceAddress,
+        description=nb.description,
+        resource_pool=nb.resourcePool,
+        task_type="jupyter-lab",
+        currentSlotsExceeded=False,
     )
+
+    webbrowser.open(f"{args.master}/{nb_path}")
 
 
 args_description: ArgsDescription = [

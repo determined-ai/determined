@@ -39,7 +39,7 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 	}
 
 	masterConfig := config.GetMasterConfig()
-	database, err := db.Setup(&masterConfig.DB)
+	database, _, err := db.Setup(&masterConfig.DB)
 	if err != nil {
 		return err
 	}

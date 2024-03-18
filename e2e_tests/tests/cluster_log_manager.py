@@ -1,5 +1,5 @@
 import multiprocessing
-from types import TracebackType
+from types import TracebackType  # noqa:I2041
 from typing import Any, Callable, Optional
 
 

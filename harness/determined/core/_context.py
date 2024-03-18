@@ -12,7 +12,7 @@ import appdirs
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, constants, storage, util
-from determined.common.api import bindings, certs
+from determined.common.api import authentication, bindings, certs
 from determined.common.storage import shared
 
 logger = logging.getLogger("determined.core")
@@ -226,9 +226,8 @@ def init(
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
-    session = api.Session(
-        info.master_url, None, None, cert, max_retries=util.get_max_retries_config()
-    )
+    utp = authentication.login_with_cache(info.master_url, cert=cert)
+    session = api.Session(info.master_url, utp, cert, max_retries=util.get_max_retries_config())
 
     if distributed is None:
         if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:

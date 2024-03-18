@@ -182,6 +182,7 @@ module "compute" {
   cpu_env_image = var.cpu_env_image
   gpu_env_image = var.gpu_env_image
   labels = var.labels
+  initial_user_password = var.initial_user_password
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name

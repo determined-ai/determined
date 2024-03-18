@@ -1,4 +1,45 @@
-// See determined/common/schemas/extensions.py for the explanation of this and other extensions.
+// union is for custom error messages with union types.  The built-in oneOf keyword has the same
+// validation behavior but awful error handling.  If you had the following invalid hyperparameter:
+//
+//     hyperparameters:
+//       - learning_rate:
+//           type: double
+//           min: 0.001
+//           max: 0.005
+//
+// would you return an error saying:
+//
+//     "your double hparam has invalid fields 'min' and 'max' but needs 'minval' and 'maxval'",
+//
+// or would you say:
+//
+//     "your int hparam has type=double but needs type=int and 'minval' and 'maxval'"?
+//
+// Obviously you want the first option, because we treat the "type" key as special, and we can
+// uniquely identify which subschema should match against the provided data based on the "type".
+//
+// The union extension provides this exact behavior.
+//
+// Example: The "additionalProperties" schema for the hyperparameters dict:
+//
+//     "union": {
+//         "items": [
+//             {
+//                 "unionKey": "const:type=int",
+//                 "$ref": ...
+//             },
+//             {
+//                 "unionKey": "const:type=double",
+//                 "$ref": ...
+//             },
+//             ...
+//         ]
+//     }
+//
+// When the oneOf validation logic is not met, the error chosen is based on the first unionKey to
+// evaluate to true.  In this case, the "const:" means a certain key ("type") must match a certain
+// value ("int" or "double") for that subschema's error message to be chosen.
+
 // See ./checks.go for notes on implementing extensions for the santhosh-tekuri/jsonschema package.
 
 package extensions
@@ -134,6 +175,10 @@ func UnionExtension() jsonschema.Extension {
 	}
 }
 
+// evaluateUnionKey: unionKey is part of the union extension.  It allows for concisely describing
+// when an instance of data "should" match a given portion of a subschema of a union type, even when
+// it doesn't fully match.  unionKey allows us to select the correct error message to show to the
+// user from the union type.
 func evaluateUnionKey(key JSON, instance JSON) bool {
 	switch tKey := key.(type) {
 	case string:

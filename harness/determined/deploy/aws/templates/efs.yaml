@@ -3,35 +3,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-00910ef9457f0df47
-      Agent: ami-0bffb351742e4d778
+      Agent: ami-0581f861a00dab473
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-035e3e44dc41db6a2
-    #   Agent: ami-0429ee62fc06a8019
+    #   Agent: ami-0ba8919c43d1d8cab
     # ap-southeast-1:
     #   Master: ami-0fd1ee6c8b656f020
-    #   Agent: ami-0aa9f5e7e1a9933f2
+    #   Agent: ami-08190d9f352e9157f
     # ap-southeast-2:
     #   Master: ami-0b62ecd3babd1c548
-    #   Agent: ami-01ae41ecfbb042eee
+    #   Agent: ami-0af8a0dc1582a1f3b
     eu-central-1:
       Master: ami-0abbe417ed83c0b29
-      Agent: ami-02a2a8e7cb59b8ca6
+      Agent: ami-09d66f5a074e983ca
     eu-west-1:
       Master: ami-0e3f7dd2dc743e48a
-      Agent: ami-04d4dd517927955bb
+      Agent: ami-027d2d1f92b4ba863
     # eu-west-2:
     #   Master: ami-0d78429fb6af30994
-    #   Agent: ami-00f4c4dc577d844bd
+    #   Agent: ami-0c1f3c5203afb4a8f
     us-east-1:
       Master: ami-0172070f66a8ebe63
-      Agent: ami-0cd3eb2e7394e6135
+      Agent: ami-053c295dd390f2a40
     us-east-2:
       Master: ami-0bafa3699418551cd
-      Agent: ami-092cd38207aded760
+      Agent: ami-07e0b9bf1ea2852d8
     us-west-2:
       Master: ami-0ceeab680f529cc36
-      Agent: ami-0ab46b9ac642fc297
+      Agent: ami-0f74a44ed4ce75025
 
 Parameters:
   VpcCIDR:
@@ -61,7 +61,7 @@ Parameters:
   AuxAgentInstanceType:
     Type: String
     Description: Instance Type of agents in the auxiliary resource pool
-    Default: t2.xlarge
+    Default: m5.xlarge
 
   ComputeAgentInstanceType:
     Type: String
@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.28.1-dev0
+    Default: 0.29.2-dev0
 
   DBPassword:
     Type: String
@@ -111,7 +111,7 @@ Parameters:
   MaxAuxContainersPerAgent:
     Type: Number
     Description: Maximum number of CPU containers to launch on agents in the default auxiliary resource pool.
-    Default: 100
+    Default: 16
 
   MaxIdleAgentPeriod:
     Type: String
@@ -221,6 +221,11 @@ Parameters:
     Description: preexisting EFS ID to mount
     Default: ""
 
+  InitialUserPassword:
+    Type: String
+    Description: Default password for the built-in 'determined' and 'admin' user.
+    Default: ""
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -279,12 +284,14 @@ Parameters:
             cpu_slots_allowed: true
             {{- toYaml .resource_pools.aws | nindent 6}}
 
-      {{ if eq .scheme "https" }}
+
       security:
+        initial_user_password: {{ .security.initial_user_password }}
+        {{- if eq .scheme "https" }}
         tls:
           cert: /etc/determined/master.crt
           key: /etc/determined/master.key
-      {{ end }}
+        {{- end }}
 
       {{ if and (ne .genai_version nil) (ne .genai_version "") }}
       feature_switches:
@@ -901,6 +908,9 @@ Resources:
             bind_mounts:
               - host_path: /mnt/efs
                 container_path: /run/determined/workdir/shared_fs
+
+            security:
+              initial_user_password: "${InitialUserPassword}"
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc
