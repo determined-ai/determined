@@ -13,7 +13,7 @@ import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComparisonView from 'components/ComparisonView';
@@ -39,7 +39,6 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
-import { handlePath } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
@@ -54,7 +53,6 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
-import { AnyMouseEvent } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 
 import { Error, NoExperiments } from './exceptions';
@@ -136,6 +134,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
+
+  const navigate = useNavigate();
 
   const {
     isLoading: isLoadingSettings,
@@ -1177,8 +1177,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onLinkClick={(href) => {
-                  handlePath(event as unknown as AnyMouseEvent, { path: href });
+                onNavigate={(path) => {
+                  navigate(path);
                 }}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onScroll={isPagedView ? undefined : handleScroll}

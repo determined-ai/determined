@@ -96,7 +96,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   hideUnpinned?: boolean;
   onColumnResize?: (columnId: string, width: number) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
-  onLinkClick?: (href: string) => void;
+  onNavigate?: (path: string) => void;
   onPinnedColumnsCountChange?: (count: number) => void;
   onScroll?: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
@@ -144,7 +144,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   height,
   onColumnResize,
   onContextMenuComplete,
-  onLinkClick,
+  onNavigate,
   onPinnedColumnsCountChange,
   onScroll,
   onSelectionChange,
@@ -331,7 +331,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         const cell = columns[col].renderer(rowData, row);
 
         if (isLinkCell(cell)) {
-          onLinkClick?.(cell.data.link.href);
+          onNavigate?.(cell.data.link.href);
         } else {
           if (event.shiftKey) {
             if (clickedCellRef.current !== null) {
@@ -352,7 +352,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         }
       });
     },
-    [data, columns, onLinkClick, onSelectionChange, selection],
+    [data, columns, onNavigate, onSelectionChange, selection],
   );
 
   const onCellContextMenu: DataEditorProps['onCellContextMenu'] = useCallback(
