@@ -117,17 +117,20 @@ class ModelSpec:
         self,
         workspace_id: Optional[Union[int, Sequence[int]]] = None,
         model_id: Optional[Union[int, Sequence[int]]] = None,
+        user_id: Optional[Union[int, Sequence[int]]] = None,
     ) -> None:
         self.workspace_id = workspace_id
         self.model_id = model_id
+        self.user_id = user_id
 
     def _copy(self) -> "ModelSpec":
-        return ModelSpec(self.workspace_id, self.model_id)
+        return ModelSpec(self.workspace_id, self.model_id, self.user_id)
 
     def _to_wire(self, since: int) -> Dict[str, Any]:
         return wire.ModelSubscriptionSpec(
             workspace_ids=int_or_list(self.workspace_id),
             model_ids=int_or_list(self.model_id),
+            user_ids=int_or_list(self.user_id)
         ).to_json()
 
 
