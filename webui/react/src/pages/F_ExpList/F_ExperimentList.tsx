@@ -1,4 +1,6 @@
-import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
+import {
+  CompactSelection, GridSelection, Rectangle,
+} from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import { MenuItem } from 'hew/Dropdown';
@@ -85,6 +87,7 @@ import {
   ContextMenuComponentProps,
 } from './glide-table/contextMenu';
 import GlideTable, {
+  DataGridHandle,
   HandleSelectionChangeType,
   SCROLL_SET_COUNT_NEEDED,
   SelectionType,
@@ -129,6 +132,7 @@ const rowHeightMap: Record<RowHeight, number> = {
 };
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
+  const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
@@ -414,7 +418,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -923,37 +927,31 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const getHeaderMenuItems = (
     columnId: string,
     colIdx: number,
-    setMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    scrollToTop: () => void,
-    selectionRange: number,
   ): MenuItem[] => {
     if (columnId === MULTISELECT) {
       const items: MenuItem[] = [
         selection.rows.length > 0
           ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove-all', [0, selectionRange]);
-                setMenuIsOpen(false);
-              },
-            }
+            key: 'select-none',
+            label: 'Clear selected',
+            onClick: () => {
+              handleSelectionChange?.('remove-all', [0, experiments.length]);
+            },
+          }
           : null,
         ...[5, 10, 25].map((n) => ({
           key: `select-${n}`,
           label: `Select first ${n}`,
           onClick: () => {
             handleSelectionChange?.('set', [0, n]);
-            scrollToTop();
-            setMenuIsOpen(false);
+            dataGridRef.current?.scrollToTop();
           },
         })),
         {
           key: 'select-all',
           label: 'Select all',
           onClick: () => {
-            handleSelectionChange?.('add-all', [0, selectionRange]);
-            setMenuIsOpen(false);
+            handleSelectionChange?.('add-all', [0, experiments.length]);
           },
         },
       ];
@@ -986,7 +984,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         },
       });
       handleIsOpenFilterChange?.(true);
-      setMenuIsOpen(false);
     };
     const clearFilterForColumn = () => {
       formStore.removeByField(column.column);
@@ -999,32 +996,30 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
-                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                );
-                setMenuIsOpen(false);
-              },
-            }
-          : {
-              disabled: settings.pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-                setMenuIsOpen(false);
-              },
+            icon: <Icon decorative name="pin" />,
+            key: 'pin',
+            label: 'Pin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(
+                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+              );
             },
+          }
+          : {
+            disabled: settings.pinnedColumnsCount <= 1,
+            icon: <Icon decorative name="pin" />,
+            key: 'unpin',
+            label: 'Unpin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            },
+          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -1041,46 +1036,46 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Add Filter',
-              onClick: () => {
-                setTimeout(filterMenuItemsForColumn, 5);
-              },
+          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
             },
-          ]),
+          },
+        ]),
       filterCount > 0
         ? {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          }
+          icon: <Icon decorative name="filter" />,
+          key: 'filter-clear',
+          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+          onClick: () => {
+            setTimeout(clearFilterForColumn, 5);
+          },
+        }
         : null,
       settings.heatmapOn &&
-      (column.column === 'searcherMetricsVal' ||
-        (column.type === V1ColumnType.NUMBER &&
-          (column.location === V1LocationType.VALIDATIONS ||
-            column.location === V1LocationType.TRAINING)))
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
         ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !settings.heatmapSkipped.includes(column.column)
-              ? 'Cancel heatmap'
-              : 'Apply heatmap',
-            onClick: () => {
-              handleHeatmapSelection?.(
-                settings.heatmapSkipped.includes(column.column)
-                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                  : [...settings.heatmapSkipped, column.column],
-              );
-            },
-          }
+          icon: <Icon decorative name="heatmap" />,
+          key: 'heatmap',
+          label: !settings.heatmapSkipped.includes(column.column)
+            ? 'Cancel heatmap'
+            : 'Apply heatmap',
+          onClick: () => {
+            handleHeatmapSelection?.(
+              settings.heatmapSkipped.includes(column.column)
+                ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                : [...settings.heatmapSkipped, column.column],
+            );
+          },
+        }
         : null,
     ];
     return items;
@@ -1146,6 +1141,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 getRowAccentColor={getRowAccentColor}
                 height={height}
                 hideUnpinned={settings.compare}
+                imperativeRef={dataGridRef}
                 numRows={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
                 page={page}
                 pageSize={PAGE_SIZE}

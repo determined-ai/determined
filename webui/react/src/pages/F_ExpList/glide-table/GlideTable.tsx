@@ -19,7 +19,7 @@ import { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import * as io from 'io-ts';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import useUI from 'components/ThemeProvider';
 import useMobile from 'hooks/useMobile';
@@ -75,6 +75,11 @@ export const getTheme = (appTheme: HewTheme): DataEditorProps['theme'] => {
   };
 };
 
+export interface DataGridHandle {
+  gridRef?: DataEditorRef;
+  scrollToTop: () => void;
+}
+
 export interface GlideTableProps<T, ContextAction = void | string, ContextActionData = void> {
   columns: ColumnDef<T>[];
   renderContextMenuComponent?: (
@@ -86,9 +91,6 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   getHeaderMenuItems?: (
     columnId: string,
     colIdx: number,
-    setHeaderMenuIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
-    scrollToTop: () => void,
-    selectionRange: number,
   ) => MenuItem[];
   height?: number;
   hideUnpinned?: boolean;
@@ -102,6 +104,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   page: number;
   pageSize: number;
   pinnedColumnsCount?: number;
+  imperativeRef?: React.Ref<DataGridHandle>;
   rowHeight?: number;
   scrollPositionSetCount: WritableObservable<number>;
   selection?: GridSelection;
@@ -157,6 +160,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     rows: CompactSelection.empty(),
   },
   columnsOrder = [],
+  imperativeRef,
   sorts = [],
   staticColumns,
 }: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
@@ -263,16 +267,13 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
       const items = getHeaderMenuItems?.(
         columnId,
         col,
-        setHeaderMenuIsOpen,
-        scrollToTop,
-        data.length,
       );
       if (items?.length) {
         setHeaderMenuProps((prev) => ({ ...prev, bounds, items, title: `${columnId} menu` }));
         setHeaderMenuIsOpen(true);
       }
     },
-    [columns, data.length, scrollToTop, getHeaderMenuItems],
+    [columns, getHeaderMenuItems],
   );
 
   const getCellContent: DataEditorProps['getCellContent'] = React.useCallback(
@@ -482,6 +483,13 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
     },
     [sortMap],
   );
+
+  useImperativeHandle(imperativeRef, () => {
+    return {
+      gridRef: gridRef.current ?? undefined,
+      scrollToTop, // using gridRef.scrollTo directly adds an offset
+    };
+  }, [gridRef, scrollToTop]);
 
   return (
     <div
