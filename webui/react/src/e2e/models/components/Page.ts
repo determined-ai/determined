@@ -1,4 +1,5 @@
 import { BaseComponent, BaseComponentProps, Subelement } from '../BaseComponent';
+// TODO Unit tests
 
 export class Page extends BaseComponent {
     override defaultSelector: string = '';
@@ -25,7 +26,10 @@ export class Page extends BaseComponent {
                     // In this example, `this._parent._initialize_subelements` ensures the elements are present
                     throw new Error(`subelement ${subelement.name} not present in parent object`)
                 }
-                Object.defineProperty(this, subelement.name, descriptor)
+                Object.defineProperty(this, subelement.name, {
+                    value: descriptor,
+                    writable: false // it's a good thing these are readonly because idk what would happen if we tried to delete one
+                })
             })
         }
     }

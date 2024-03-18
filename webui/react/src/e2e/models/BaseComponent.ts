@@ -1,8 +1,32 @@
-import { type Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { type Locator, Page } from '@playwright/test';
+
+type LocatorPage = Locator | Page
+
+export class hasSubelements {
+    _initialize_subelements(subelements: Subelement[]) {
+        subelements.forEach(subelement => {
+            Object.defineProperty(this, subelement.name, new BaseComponent({
+                parent: this,
+                selector: subelement.selector,
+                subelements: subelement.subelements
+            }))
+        });
+    }
+    
+    // idenity functions that should be reimplemented by BaseComponent and BasePage
+    static #notImplemented() : never {
+        throw new Error("not Implemented")
+    }
+    locate(): LocatorPage {return hasSubelements.#notImplemented()}
+
+    // shorthand functions
+
+    // `loc = this.locate` right here will bind it to the one in this class. we want to use the reimplementation
+    loc(): LocatorPage {return this.locate()}
+}
 
 export interface BaseComponentProps {
-    parent: BaseComponent | BasePage
+    parent: hasSubelements
     selector?: string
     subelements?: Subelement[]
 }
@@ -14,7 +38,7 @@ export interface Subelement {
     subelements?: Subelement[]
 }
 
-export class BaseComponent {
+export class BaseComponent extends hasSubelements {
     /*
     isDisplayed needs to check all parents, might need to find a way to play nice with expect.to.be.displayed somehow
     how to waitToBeDisplayed()?
@@ -26,10 +50,11 @@ export class BaseComponent {
     readonly defaultSelector: undefined | string;
     
     readonly _selector: string;
-    _parent: BaseComponent | BasePage;
+    _parent: hasSubelements;
     _locator: Locator | undefined;
 
     constructor({parent, selector, subelements}: BaseComponentProps) {
+        super()
         if (typeof this.defaultSelector === "undefined") {
             throw new Error('defaultSelector is undefined')
         }
@@ -41,27 +66,13 @@ export class BaseComponent {
         }
     }
 
-    _initialize_subelements(subelements: Subelement[]) {
-        if (typeof this._parent !== typeof BaseComponent) {
-            subelements.forEach(subelement => {
-                Object.defineProperty(this, subelement.name, new BaseComponent({
-                parent: this,
-                    selector: subelement.selector,
-                    subelements: subelement.subelements
-                }))
-            });
-        }
-    }
-
-    locate(): Locator {
+    override locate(): Locator {
         if (typeof this._selector === "undefined") {
             throw new Error('selector is undefined')
         }
         if (!this._locator) {
-            this._locator = this._parent.locate().getByTestId(this._selector);
+            this._locator = this._parent.locate().locator(this._selector);
         }
         return this._locator
     }
-
-    loc = this.locate
 }

@@ -1,23 +1,14 @@
 import { type Page } from '@playwright/test';
-import { BaseComponent, Subelement } from './BaseComponent';
+import { hasSubelements } from './BaseComponent';
 
 
-export class BasePage {
+export class BasePage extends hasSubelements {
     readonly _page: Page;
     readonly url: string | null = null;
 
     constructor(page: Page) {
+        super()
         this._page = page;
-    }
-
-    _initialize_subelements(subelements: Subelement[]) {
-        subelements.forEach(subelement => {
-            Object.defineProperty(this, subelement.name, new BaseComponent({
-                parent: this,
-                selector: subelement.selector,
-                subelements: subelement.subelements
-            }))
-        });
     }
 
     visit(waitFor: boolean = true) {
@@ -30,7 +21,7 @@ export class BasePage {
         }
     }
 
-    locate() {
+    override locate(): Page {
         return this._page
     }
 }
