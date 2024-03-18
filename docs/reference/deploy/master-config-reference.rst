@@ -230,7 +230,16 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
  ``resource_manager``
 **********************
 
-The resource manager used to acquire resources. Defaults to ``agent``.
+The resource manager used to acquire resources. Defaults to ``agent``. If not named, this defaults
+to "default".
+
+If additional resource managers are defined (only for Kubernetes), the resource manager defined
+here, under the primary ``resource_manager`` key is considered the default resource manager.
+
+``name``
+========
+
+Optional. The resource manager name to use.
 
 ``type: agent``
 ===============
@@ -1162,6 +1171,31 @@ those partitions/queues.
    In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be executed in
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
+
+*********************************
+ ``additional_resource_manager``
+*********************************
+
+For Kubernetes, cluster administrators can define additional resource managers to connect the
+Determined master service to remote clusters. For a single resource manager or to define the default
+resource manager, do not define this under ``additional_resource_manager``; instead, use the primary
+``resource_manager`` heading.
+
+Resource manager names must be unique among all resource managers.
+
+Additional resource managers must have defined resource pools under them.
+
+``name``
+========
+
+Required. The resource manager name to use.
+
+``resource_manager``
+====================
+
+Optional. Follows the existing resource manager configuration pattern, with ``resource_pools``
+nested. There can be 'n'-many resource managers defined under the ``additional_resource_manager``
+key, following this pattern.
 
 ************************
  ``checkpoint_storage``
