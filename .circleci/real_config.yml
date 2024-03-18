@@ -2641,8 +2641,8 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
         type: string
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
       accel-node-taints:
         type: string
         default: ""
@@ -2712,7 +2712,12 @@ jobs:
       parallelism:
         type: integer
         default: 1
+      environment-gpu-enabled:
+        type: string
+        default: "0"
     circleci_ip_ranges: true
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
       - image: <<pipeline.parameters.docker-image>>
     parallelism: <<parameters.parallelism>>
@@ -3316,7 +3321,7 @@ workflows:
           context: gcp-shared-cluster
           requires:
             - package-and-push-system-dev-small
-          parallelism: 1
+          parallelism: 4
           mark: "e2e_gpu and not gpu_required"
 
   test-e2e-quarantined:
