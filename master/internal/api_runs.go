@@ -2,8 +2,11 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"slices"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
@@ -12,9 +15,16 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+type archiveRunOKResult struct {
+	Archived bool
+	ID       int32
+}
 
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
@@ -80,5 +90,84 @@ func (a *apiServer) MoveRuns(
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
-	return nil, nil
+
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", bun.Safe(req.SourceProjectId))
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		return nil, errors.Errorf("Move with filter unimplemented")
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	var visibleIDs []int32
+	var validIDs []int32
+	for _, check := range runChecks {
+		visibleIDs = append(visibleIDs, check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+		} else {
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	if len(validIDs) > 0 {
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				logrus.WithError(txErr).Error("error rolling back transaction in MoveExperiments")
+			}
+		}()
+
+		var acceptedIDs []int32
+		if _, err = tx.NewUpdate().Table("runs").
+			Set("project_id = ?", bun.Safe(req.DestinationProjectId)).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+		if err = tx.Commit(); err != nil {
+			return nil, err
+		}
+	}
+	return &apiv1.MoveRunsResponse{Results: results}, nil
 }
