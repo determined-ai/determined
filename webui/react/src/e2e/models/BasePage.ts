@@ -2,8 +2,8 @@ import { type Page } from '@playwright/test';
 
 import { canBeParent } from './BaseComponent';
 
-export class BasePage extends canBeParent {
-  readonly _page: Page;
+export abstract class BasePage extends canBeParent {
+  readonly #page: Page;
   readonly url: string | null = null;
 
   /**
@@ -16,7 +16,7 @@ export class BasePage extends canBeParent {
    */
   constructor(page: Page) {
     super();
-    this._page = page;
+    this.#page = page;
   }
 
   /**
@@ -32,9 +32,9 @@ export class BasePage extends canBeParent {
     if (this.url == null) {
       throw new Error('URL is not set');
     }
-    this._page.goto(this.url);
+    this.#page.goto(this.url);
     if (waitFor) {
-      this._page.waitForURL(this.url);
+      this.#page.waitForURL(this.url);
     }
     return this
   }
@@ -46,6 +46,6 @@ export class BasePage extends canBeParent {
    * We use this method to call this.loc.locate().
    */
   override get locator(): Page {
-    return this._page;
+    return this.#page;
   }
 }

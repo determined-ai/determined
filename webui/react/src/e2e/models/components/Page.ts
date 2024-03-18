@@ -27,23 +27,23 @@ export class Page extends BaseComponent {
     if (typeof subComponents !== 'undefined') {
       allSubComponents = allSubComponents.concat(parentSubComponents)
     }
-    // initialize subComponents under normal base page as well
-    // these aren't exact copies so maby
-    this._parent._initializeSubComponents(allSubComponents);
+    // initializeSubComponents is protected, the following is an "escape hatch"
+    this.parent['initializeSubComponents'](allSubComponents);
     allSubComponents.forEach((subComponent) => {
       // this is the part that copies references between the page object and it's parent
       // this allows the model to emulate the React Fragment `<>`
-      const descriptor = Object.getOwnPropertyDescriptor(this._parent, subComponent.name);
+      const descriptor = Object.getOwnPropertyDescriptor(this.parent, subComponent.name);
       if (typeof descriptor === 'undefined') {
         // TODO uniquely identify each error. think about how languages throw errors
         // This should be some kind of "Unreachable" error:
         //     Meaning logic present in the same function should be guarding us against throwing this error
-        // In this example, `this._parent._initializeSubComponents` ensures the components are present
+        // In this example, `this.parent.initializeSubComponents` ensures the components are present
         throw new Error(`subComponent ${subComponent.name} not present in parent object`);
       }
       Object.defineProperty(this, subComponent.name, {
         value: descriptor,
-        writable: false, // it's a good thing these are readonly because idk what would happen if we tried to delete one
+        // it's a good thing these are readonly because idk what would happen if we tried to delete one
+        writable: false,
       });
     });
   }
