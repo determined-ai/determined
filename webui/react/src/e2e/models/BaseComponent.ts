@@ -1,8 +1,12 @@
-import { type Locator, Page } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
-type LocatorPage = Locator | Page
+// type that has a function "locator" which takes a string and gives a Locator
+type implementsLocator = {locator: (arg0: string) => Locator}
+// type that has a function "locate" which takes a string and gives a Locator
+type implementsLocate = {locate: () => implementsLocator}
 
-export class hasSubelements {
+export class hasSubelements implements implementsLocate {
+    // This class exists so we can DRY `_initialize_subelements`
     _initialize_subelements(subelements: Subelement[]) {
         subelements.forEach(subelement => {
             Object.defineProperty(this, subelement.name, new BaseComponent({
@@ -17,12 +21,12 @@ export class hasSubelements {
     static #notImplemented() : never {
         throw new Error("not Implemented")
     }
-    locate(): LocatorPage {return hasSubelements.#notImplemented()}
+    locate(): implementsLocator {return hasSubelements.#notImplemented()}
 
     // shorthand functions
 
     // `loc = this.locate` right here will bind it to the one in this class. we want to use the reimplementation
-    loc(): LocatorPage {return this.locate()}
+    loc(): implementsLocator {return this.locate()}
 }
 
 export interface BaseComponentProps {
