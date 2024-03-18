@@ -1,16 +1,28 @@
 import { Page } from '@playwright/test';
+import { SignIn } from 'e2e/models/pages/SignIn';
 
 export class AuthFixture {
   readonly #page: Page;
-  readonly #USERNAME = process.env.PW_USER_NAME ?? '';
-  readonly #PASSWORD = process.env.PW_PASSWORD ?? '';
+  readonly #USERNAME: string;
+  readonly #PASSWORD: string;
+  readonly signInPage: SignIn;
+
   constructor(readonly page: Page) {
+    if (typeof process.env.PW_USER_NAME === "undefined") {
+      throw new Error('username must be defined')
+    }
+    if (typeof process.env.PW_PASSWORD === "undefined") {
+      throw new Error('username must be defined')
+    }
+    this.#USERNAME = process.env.PW_USER_NAME;
+    this.#PASSWORD = process.env.PW_PASSWORD;
     this.#page = page;
+    this.signInPage = new SignIn(page);
   }
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
-    // TODO document
-    // TODO implement this in a test
+    await this.signInPage['determinedAuth'] // ah dammit this doesnt work
+
     await this.#page.getByPlaceholder('username').fill(this.#USERNAME);
     await this.#page.getByPlaceholder('password').fill(this.#PASSWORD);
     await this.#page.getByRole('button', { name: 'Sign In' }).click();
