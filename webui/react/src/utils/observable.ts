@@ -15,7 +15,7 @@ import React from 'react';
 export class DeepObservable<T> extends WritableObservable<T> {
   override set(v: T | Observable<T>): void {
     const newValue = v instanceof Observable ? v.get() : v;
-    if (!isEqual(newValue, this._valInput?.get())) super.set(v);
+    if (!isEqual(newValue, this._evaluate())) super.set(v);
   }
 }
 
@@ -27,7 +27,7 @@ export class ImmutableObservable<
 > extends WritableObservable<T> {
   override set(v: T | Observable<T>): void {
     const newValue = v instanceof Observable ? v.get() : v;
-    if (!is(newValue, this._valInput?.get())) super.set(v);
+    if (!is(newValue, this._evaluate())) super.set(v);
   }
 }
 
@@ -71,6 +71,15 @@ const useValueMemoizedObservable = <T>(o: Observable<T>): T => {
   return value;
 };
 
+const eagerSubscribe = <T>(
+  o: Observable<T>,
+  fn: (curVal: T, prevVal?: T) => void,
+): (() => void) => {
+  const retVal = o.subscribe(fn);
+  fn(o.get());
+  return retVal;
+};
+
 export {
   observable,
   Observable,
@@ -79,4 +88,5 @@ export {
   useValueMemoizedObservable,
   deepObservable,
   immutableObservable,
+  eagerSubscribe,
 };
