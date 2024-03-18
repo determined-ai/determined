@@ -199,15 +199,11 @@ func buildStartupMsg(
 			}
 		case models:
 			var modelIDs, workspaceIDs, userIDs []int
-			var modelNames []string
 			if subscriptionIDs[models] != nil {
 				modelIDs = subscriptionIDs[models].([]int)
 			}
 			if subscriptionIDs["workspaces"] != nil {
 				workspaceIDs = subscriptionIDs["workspaces"].([]int)
-			}
-			if subscriptionIDs["names"] != nil {
-				modelNames = subscriptionIDs["names"].([]string)
 			}
 			if subscriptionIDs["users"] != nil {
 				userIDs = subscriptionIDs["users"].([]int)
@@ -215,7 +211,6 @@ func buildStartupMsg(
 			subscriptionSpecSet.Models = &ModelSubscriptionSpec{
 				ModelIDs:     modelIDs,
 				WorkspaceIDs: workspaceIDs,
-				ModelNames:   modelNames,
 				UserIDs:      userIDs,
 				Since:        0,
 			}
@@ -558,16 +553,16 @@ func TestSubscribeByName(t *testing.T) {
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
-				description: "startup test case for: subscribe to models by name",
+				description: "startup test case for: subscribe to models by user id",
 				startupMsg: buildStartupMsg(
 					"1",
-					map[string]string{projects: "2", models: ""},
-					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"names": []string{testModel.Name}}},
+					map[string]string{projects: "2", models: "1"},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"users": []int{1}}},
 				),
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
 			},
-			description: "subscribe to models by name",
+			description: "subscribe to models by user id",
 			queries: []streamdata.ExecutableQuery{
 				streamdata.GetAddProjectQuery(testProject),
 				db.Bun().NewInsert().Model(&testModel),
