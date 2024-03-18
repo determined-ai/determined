@@ -101,11 +101,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           },
         ]}>
         <Input
-          data-testid="username"
           autoFocus
+          data-testid="username"
           placeholder="username"
           prefix={<Icon name="user" size="small" title="Username" />}
-          />
+        />
       </Form.Item>
       <Form.Item name="password">
         <Input.Password
@@ -115,7 +115,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         />
       </Form.Item>
       {isBadCredentials && (
-        <p data-testid="error" className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
+        <p className={[css.errorMessage, css.message].join(' ')} data-testid="error">Incorrect username or password.</p>
       )}
       <Form.Item>
         <Button data-testid="submit" disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">

@@ -1,32 +1,32 @@
 import { type Locator } from '@playwright/test';
 
 // type that has a function "locator" which takes a string and gives a Locator
-type implementsLocator = {locator: (arg0: string) => Locator}
+type implementsLocator = { locator: (arg0: string) => Locator }
 // type that has a function "locate" which takes a string and gives a Locator
-type implementsLocate = {locate: () => implementsLocator}
+type implementsLocate = { locate: () => implementsLocator }
 
 export class hasSubelements implements implementsLocate {
     // This class exists so we can DRY `_initialize_subelements`
-    _initialize_subelements(subelements: Subelement[]) {
-        subelements.forEach(subelement => {
+    _initialize_subelements(subelements: Subelement[]): void {
+        subelements.forEach((subelement) => {
             Object.defineProperty(this, subelement.name, new BaseComponent({
                 parent: this,
                 selector: subelement.selector,
-                subelements: subelement.subelements
-            }))
+                subelements: subelement.subelements,
+            }));
         });
     }
-    
+
     // idenity functions that should be reimplemented by BaseComponent and BasePage
-    static #notImplemented() : never {
-        throw new Error("not Implemented")
+    static #notImplemented(): never {
+        throw new Error('not Implemented');
     }
-    locate(): implementsLocator {return hasSubelements.#notImplemented()}
+    locate(): implementsLocator { return hasSubelements.#notImplemented(); }
 
     // shorthand functions
 
     // `loc = this.locate` right here will bind it to the one in this class. we want to use the reimplementation
-    loc(): implementsLocator {return this.locate()}
+    loc(): implementsLocator { return this.locate(); }
 }
 
 export interface BaseComponentProps {
@@ -52,31 +52,31 @@ export class BaseComponent extends hasSubelements {
     */
 
     readonly defaultSelector: undefined | string;
-    
+
     readonly _selector: string;
     _parent: hasSubelements;
     _locator: Locator | undefined;
 
-    constructor({parent, selector, subelements}: BaseComponentProps) {
-        super()
-        if (typeof this.defaultSelector === "undefined") {
-            throw new Error('defaultSelector is undefined')
+    constructor({ parent, selector, subelements }: BaseComponentProps) {
+        super();
+        if (typeof this.defaultSelector === 'undefined') {
+            throw new Error('defaultSelector is undefined');
         }
         this._selector = selector || this.defaultSelector;
         this._parent = parent;
-        
-        if (typeof subelements !== "undefined") {
-            this._initialize_subelements(subelements)
+
+        if (typeof subelements !== 'undefined') {
+            this._initialize_subelements(subelements);
         }
     }
 
     override locate(): Locator {
-        if (typeof this._selector === "undefined") {
-            throw new Error('selector is undefined')
+        if (typeof this._selector === 'undefined') {
+            throw new Error('selector is undefined');
         }
         if (!this._locator) {
             this._locator = this._parent.locate().locator(this._selector);
         }
-        return this._locator
+        return this._locator;
     }
 }
