@@ -35,3 +35,10 @@ CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 
 We use `mcr.microsoft.com/playwright` for [docker container](https://playwright.dev/docs/docker).
 Update the docker image version along with Playwright version.
+
+# TODO
+* Page Models
+* isDisplayed needs to check all parents, might need to find a way to play nice with expect.to.be.displayed somehow
+  how to waitToBeDisplayed()?
+* consider proxy over `get locator()`
+  * https://stackoverflow.com/questions/1529496/is-there-a-javascript-equivalent-of-pythons-getattr-method

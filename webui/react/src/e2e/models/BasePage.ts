@@ -1,27 +1,51 @@
 import { type Page } from '@playwright/test';
 
-import { hasSubelements } from './BaseComponent';
+import { canBeParent } from './BaseComponent';
 
-export class BasePage extends hasSubelements {
-    readonly _page: Page;
-    readonly url: string | null = null;
+export class BasePage extends canBeParent {
+  readonly _page: Page;
+  readonly url: string | null = null;
 
-    constructor(page: Page) {
-        super();
-        this._page = page;
+  /**
+   * Returns the representation of a Page.
+   *
+   * @remarks
+   * This constructor is a base class for any component in src/pages/.
+   *
+   * @param {Page} page - The '@playwright/test' Page being used by a test
+   */
+  constructor(page: Page) {
+    super();
+    this._page = page;
+  }
+
+  /**
+   * Returns this so we can chain.
+   * ie. await expect(thePage.goto().theElement.loc()).toBeVisible()
+   *
+   * @remarks
+   * This constructor is a base class for any component in src/pages/.
+   *
+   * @param {Page} page - The '@playwright/test' Page being used by a test
+   */
+  goto(waitFor: boolean = true): BasePage {
+    if (this.url == null) {
+      throw new Error('URL is not set');
     }
-
-    visit(waitFor: boolean = true): void {
-        if (this.url == null) {
-            throw new Error('URL is not set');
-        }
-        this._page.goto(this.url);
-        if (waitFor) {
-            this._page.waitForURL(this.url);
-        }
+    this._page.goto(this.url);
+    if (waitFor) {
+      this._page.waitForURL(this.url);
     }
+    return this
+  }
 
-    override locate(): Page {
-        return this._page;
-    }
+  /**
+   * Returns this object's Page.
+   *
+   * @remarks
+   * We use this method to call this.loc.locate().
+   */
+  override get locator(): Page {
+    return this._page;
+  }
 }

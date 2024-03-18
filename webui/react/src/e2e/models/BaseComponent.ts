@@ -1,82 +1,122 @@
 import { type Locator } from '@playwright/test';
 
-// type that has a function "locator" which takes a string and gives a Locator
+/**
+ * Alias for type that has a function "locator" which takes a string and gives a Locator
+ */
 type implementsLocator = { locator: (arg0: string) => Locator }
-// type that has a function "locate" which takes a string and gives a Locator
-type implementsLocate = { locate: () => implementsLocator }
+/**
+ * Alias for type that has a member "locator" which is of type implementsLocator
+ * 
+ * @remarks This enables us to call `this.loc` and expect to be able to call `.locator()`
+ * It's like saying (BasePage | BaseComponent) without importing type BasePage
+ */
+type implementsGetLocator = { locator: implementsLocator }
 
-export class hasSubelements implements implementsLocate {
-    // This class exists so we can DRY `_initialize_subelements`
-    _initialize_subelements(subelements: Subelement[]): void {
-        subelements.forEach((subelement) => {
-            Object.defineProperty(this, subelement.name, new BaseComponent({
-                parent: this,
-                selector: subelement.selector,
-                subelements: subelement.subelements,
-            }));
-        });
-    }
+export class canBeParent implements implementsGetLocator {
 
-    // idenity functions that should be reimplemented by BaseComponent and BasePage
-    static #notImplemented(): never {
-        throw new Error('not Implemented');
-    }
-    locate(): implementsLocator { return hasSubelements.#notImplemented(); }
+  /**
+   * Sets subComponents as properties of this object
+   * 
+   * @remarks
+   * This class exists so we can DRY `_initializeSubComponents`
+   * 
+   * @param {SubComponent[]} subComponents - List of subComponents to define as properties on this
+   */
+  _initializeSubComponents(subComponents: SubComponent[]): void {
+    subComponents.forEach((subComponent) => {
+      Object.defineProperty(this, subComponent.name, new BaseComponent({
+        parent: this,
+        selector: subComponent.selector,
+        subComponents: subComponent.subComponents,
+      }));
+    });
+  }
 
-    // shorthand functions
+  // Idenity functions that should be reimplemented by BaseComponent and BasePage
 
-    // `loc = this.locate` right here will bind it to the one in this class. we want to use the reimplementation
-    loc(): implementsLocator { return this.locate(); }
+  /**
+   * Never Returns
+   *
+   * @remarks
+   * Used by default methods that should be reimplemented
+   */
+  static #notImplemented(): never {
+    throw new Error('not Implemented');
+  }
+
+  /**
+   * Never Returns
+   *
+   * @remarks
+   * Used by default methods that should be reimplemented
+   */
+  get locator(): implementsLocator { return canBeParent.#notImplemented(); }
+
+  // Shorthand functions
+
+  /**
+   * Returns this.locator.
+   */
+  get loc(): implementsLocator { return this.locator; }
 }
 
 export interface BaseComponentProps {
-    parent: hasSubelements
-    selector?: string
-    subelements?: Subelement[]
+  parent: canBeParent
+  selector?: string
+  subComponents?: SubComponent[]
 }
 
-export interface Subelement {
-    name: string
-    type: typeof BaseComponent
-    selector: string
-    subelements?: Subelement[]
+export interface SubComponent {
+  name: string
+  type: typeof BaseComponent
+  selector: string
+  subComponents?: SubComponent[]
 }
 
-export class BaseComponent extends hasSubelements {
-    /*
-    isDisplayed needs to check all parents, might need to find a way to play nice with expect.to.be.displayed somehow
-    how to waitToBeDisplayed()?
+export class BaseComponent extends canBeParent {
+  readonly defaultSelector: undefined | string;
 
-    consider proxy
-    https://stackoverflow.com/questions/1529496/is-there-a-javascript-equivalent-of-pythons-getattr-method
-    */
+  readonly _selector: string;
+  _parent: canBeParent;
+  _locator: Locator | undefined;
 
-    readonly defaultSelector: undefined | string;
-
-    readonly _selector: string;
-    _parent: hasSubelements;
-    _locator: Locator | undefined;
-
-    constructor({ parent, selector, subelements }: BaseComponentProps) {
-        super();
-        if (typeof this.defaultSelector === 'undefined') {
-            throw new Error('defaultSelector is undefined');
-        }
-        this._selector = selector || this.defaultSelector;
-        this._parent = parent;
-
-        if (typeof subelements !== 'undefined') {
-            this._initialize_subelements(subelements);
-        }
+  /**
+   * Returns the representation of a Component.
+   * 
+   * @remarks
+   * This constructor is a base class for any component in src/components/.
+   * 
+   * @param {Object} obj
+   * @param {implementsGetLocator} obj.parent - The parent used to locate this BaseComponent
+   * @param {string} [obj.selector] - Used instead of `defaultSelector`
+   * @param {SubComponent[]} [obj.subComponents] - SubComponents to initialize at runtime
+   */
+  constructor({ parent, selector, subComponents }: BaseComponentProps) {
+    super();
+    if (typeof this.defaultSelector === 'undefined') {
+      throw new Error('defaultSelector is undefined');
     }
+    this._selector = selector || this.defaultSelector;
+    this._parent = parent;
 
-    override locate(): Locator {
-        if (typeof this._selector === 'undefined') {
-            throw new Error('selector is undefined');
-        }
-        if (!this._locator) {
-            this._locator = this._parent.locate().locator(this._selector);
-        }
-        return this._locator;
+    if (typeof subComponents !== 'undefined') {
+      this._initializeSubComponents(subComponents);
     }
+  }
+
+  /**
+   * Returns this object's Locator.
+   *
+   * @remarks
+   * We use this method to call this.loc.locate().
+   */
+  override get locator(): Locator {
+    if (typeof this._selector === 'undefined') {
+      throw new Error('selector is undefined');
+    }
+    if (!this._locator) {
+      this._locator = this._parent.loc.locator(this._selector);
+    }
+    return this._locator;
+  }
 }
