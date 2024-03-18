@@ -15,42 +15,15 @@ builds:
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
     goos:
       - linux
-      - darwin
     goarch:
       - amd64
-      - arm64
-      - ppc64
   - main: ./cmd/determined-gotmpl
     id: determined-gotmpl
     binary: determined-gotmpl
     goos:
       - linux
-      - darwin
     goarch:
       - amd64
-      - arm64
-      - ppc64
-
-archives:
-  - wrap_in_directory: "true"
-    rlcp: true
-    files:
-      - src: "packaging/master.yaml"
-        dst: "etc/determined/"
-        strip_parent: true
-
-      - src: "packaging/determined-master.service"
-        dst: "lib/systemd/system/"
-        strip_parent: true
-      - src: "packaging/determined-master.socket"
-        dst: "lib/systemd/system/"
-        strip_parent: true
-      - src: "packaging/LICENSE"
-        strip_parent: true
-      - src: "static/**/*"
-        dst: "share/static"
-      - src: "build/**/*"
-        dst: "share"
 
 nfpms:
   - maintainer: "Determined AI <hello@determined.ai>"
