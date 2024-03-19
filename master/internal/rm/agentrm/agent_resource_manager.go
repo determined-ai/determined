@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/rmutils"
@@ -38,7 +39,7 @@ func New(
 	config *config.ResourceManagerWithPoolsConfig,
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
-) *ResourceManager {
+) (*ResourceManager, error) {
 	agentService, agentUpdates := newAgentService(config.ResourcePools, opts)
 
 	e.GET("/agents", func(c echo.Context) error {
@@ -69,7 +70,7 @@ func newAgentResourceManager(
 	db *db.PgDB, config *config.ResourceManagerWithPoolsConfig,
 	cert *tls.Certificate, agentService *agents,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
-) *ResourceManager {
+) (*ResourceManager, error) {
 	a := &ResourceManager{
 		syslog: logrus.WithField("component", "agentrm"),
 
@@ -85,9 +86,8 @@ func newAgentResourceManager(
 	for ix, config := range a.poolsConfig {
 		rp, err := a.createResourcePool(a.db, a.poolsConfig[ix], a.cert)
 		if err != nil {
-			// TODO(DET-9975): Don't panic.
-			a.syslog.WithError(err).Errorf("failed to create resource pool: %s", a.poolsConfig[ix].PoolName)
-			panic(err)
+			return nil, fmt.Errorf("failed to create resource pool: %s: %w",
+				a.poolsConfig[ix].PoolName, err)
 		}
 		a.pools[config.PoolName] = rp
 	}
@@ -103,11 +103,11 @@ func newAgentResourceManager(
 		}
 	}()
 
-	return a
+	return a, nil
 }
 
 // Allocate implements rm.ResourceManager.
-func (a *ResourceManager) Allocate(_ string, msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
+func (a *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	// this code exists to handle the case where an experiment does not have
 	// an explicit resource pool specified in the config. This should never happen
 	// for newly created/forked experiments as the default pool is filled in to the
@@ -138,7 +138,7 @@ func (*ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, e
 }
 
 // DisableAgent implements rm.ResourceManager.
-func (a *ResourceManager) DisableAgent(_ string, msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
 	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
@@ -147,7 +147,7 @@ func (a *ResourceManager) DisableAgent(_ string, msg *apiv1.DisableAgentRequest)
 }
 
 // DisableSlot implements rm.ResourceManager.
-func (a *ResourceManager) DisableSlot(_ string, req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
+func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
 	deviceIDStr, err := strconv.Atoi(req.SlotId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
@@ -167,7 +167,7 @@ func (a *ResourceManager) DisableSlot(_ string, req *apiv1.DisableSlotRequest) (
 }
 
 // EnableAgent implements rm.ResourceManager.
-func (a *ResourceManager) EnableAgent(_ string, msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
 	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
@@ -176,7 +176,7 @@ func (a *ResourceManager) EnableAgent(_ string, msg *apiv1.EnableAgentRequest) (
 }
 
 // EnableSlot implements rm.ResourceManager.
-func (a *ResourceManager) EnableSlot(_ string, req *apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error) {
+func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error) {
 	deviceIDStr, err := strconv.Atoi(req.SlotId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
@@ -219,12 +219,12 @@ func (a *ResourceManager) CheckMaxSlotsExceeded(v *sproto.ValidateResourcesReque
 }
 
 // ExternalPreemptionPending implements rm.ResourceManager.
-func (*ResourceManager) ExternalPreemptionPending(model.AllocationID) error {
+func (*ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error {
 	return rmerrors.ErrNotSupported
 }
 
 // GetAgent implements rm.ResourceManager.
-func (a *ResourceManager) GetAgent(_ string, msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
+func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
 	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
@@ -248,35 +248,33 @@ func (a *ResourceManager) GetAllocationSummaries() (map[model.AllocationID]sprot
 }
 
 // GetDefaultAuxResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) GetDefaultAuxResourcePool(string) (sproto.GetDefaultAuxResourcePoolResponse, error) {
+func (a *ResourceManager) GetDefaultAuxResourcePool() (rm.ResourcePoolName, error) {
 	if a.config.DefaultAuxResourcePool == "" {
-		return sproto.GetDefaultAuxResourcePoolResponse{}, rmerrors.ErrNoDefaultResourcePool
+		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool}, nil
+	return rm.ResourcePoolName(a.config.DefaultAuxResourcePool), nil
 }
 
 // GetDefaultComputeResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) GetDefaultComputeResourcePool(string) (sproto.GetDefaultComputeResourcePoolResponse, error) {
+func (a *ResourceManager) GetDefaultComputeResourcePool() (rm.ResourcePoolName, error) {
 	if a.config.DefaultComputeResourcePool == "" {
-		return sproto.GetDefaultComputeResourcePoolResponse{}, rmerrors.ErrNoDefaultResourcePool
+		return "", rmerrors.ErrNoDefaultResourcePool
 	}
-	return sproto.GetDefaultComputeResourcePoolResponse{
-		PoolName: a.config.DefaultComputeResourcePool,
-	}, nil
+	return rm.ResourcePoolName(a.config.DefaultComputeResourcePool), nil
 }
 
 // GetExternalJobs implements rm.ResourceManager.
-func (*ResourceManager) GetExternalJobs(_, _ string) ([]*jobv1.Job, error) {
+func (*ResourceManager) GetExternalJobs(rm.ResourcePoolName) ([]*jobv1.Job, error) {
 	return nil, rmerrors.ErrNotSupported
 }
 
 // GetJobQ implements rm.ResourceManager.
-func (a *ResourceManager) GetJobQ(_, resourcePool string) (map[model.JobID]*sproto.RMJobInfo, error) {
-	if resourcePool == "" {
-		resourcePool = a.config.DefaultComputeResourcePool
+func (a *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error) {
+	if rpName == "" {
+		rpName = rm.ResourcePoolName(a.config.DefaultComputeResourcePool)
 	}
 
-	pool, err := a.poolByName(resourcePool)
+	pool, err := a.poolByName(rpName.String())
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +283,7 @@ func (a *ResourceManager) GetJobQ(_, resourcePool string) (map[model.JobID]*spro
 
 // GetJobQueueStatsRequest implements rm.ResourceManager.
 func (a *ResourceManager) GetJobQueueStatsRequest(
-	_ string, msg *apiv1.GetJobQueueStatsRequest,
+	msg *apiv1.GetJobQueueStatsRequest,
 ) (*apiv1.GetJobQueueStatsResponse, error) {
 	resp := &apiv1.GetJobQueueStatsResponse{
 		Results: make([]*apiv1.RPQueueStat, 0),
@@ -338,7 +336,7 @@ func (a *ResourceManager) GetResourcePools() (*apiv1.GetResourcePoolsResponse, e
 }
 
 // GetSlot implements rm.ResourceManager.
-func (a *ResourceManager) GetSlot(_ string, req *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
+func (a *ResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
 	deviceIDStr, err := strconv.Atoi(req.SlotId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid slot id: %s", req.SlotId)
@@ -353,7 +351,7 @@ func (a *ResourceManager) GetSlot(_ string, req *apiv1.GetSlotRequest) (*apiv1.G
 }
 
 // GetSlots implements rm.ResourceManager.
-func (a *ResourceManager) GetSlots(_ string, msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
+func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
 	agent, ok := a.agentService.get(agentID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
@@ -362,12 +360,12 @@ func (a *ResourceManager) GetSlots(_ string, msg *apiv1.GetSlotsRequest) (*apiv1
 }
 
 // IsReattachableOnlyAfterStarted implements rm.ResourceManager.
-func (*ResourceManager) IsReattachableOnlyAfterStarted(string) bool {
+func (*ResourceManager) IsReattachableOnlyAfterStarted() bool {
 	return true
 }
 
 // MoveJob implements rm.ResourceManager.
-func (a *ResourceManager) MoveJob(_ string, msg sproto.MoveJob) error {
+func (a *ResourceManager) MoveJob(msg sproto.MoveJob) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
@@ -384,7 +382,7 @@ func (*ResourceManager) NotifyContainerRunning(sproto.NotifyContainerRunning) er
 }
 
 // RecoverJobPosition implements rm.ResourceManager.
-func (a *ResourceManager) RecoverJobPosition(_ string, msg sproto.RecoverJobPosition) {
+func (a *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		a.syslog.WithError(err).Error("recovering job position")
@@ -394,7 +392,7 @@ func (a *ResourceManager) RecoverJobPosition(_ string, msg sproto.RecoverJobPosi
 }
 
 // Release implements rm.ResourceManager.
-func (a *ResourceManager) Release(_ string, msg sproto.ResourcesReleased) {
+func (a *ResourceManager) Release(msg sproto.ResourcesReleased) {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		a.syslog.WithError(err).Warnf("release found no resource pool with name %s",
@@ -405,68 +403,68 @@ func (a *ResourceManager) Release(_ string, msg sproto.ResourcesReleased) {
 }
 
 // ResolveResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) ResolveResourcePool(_ string, req sproto.ResolveResourcesRequest) (
-	rmName string, poolName string, err error,
+func (a *ResourceManager) ResolveResourcePool(name rm.ResourcePoolName, workspaceID int, slots int) (
+	rm.ResourcePoolName, error,
 ) {
 	ctx := context.TODO()
-	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, req.Workspace)
+	defaultComputePool, defaultAuxPool, err := db.GetDefaultPoolsForWorkspace(ctx, workspaceID)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	// If the resource pool isn't set, fill in the default at creation time.
-	if req.ResourcePool == "" && req.Slots == 0 {
+	if name == "" && slots == 0 {
 		if defaultAuxPool == "" {
-			resp, err := a.GetDefaultAuxResourcePool("")
+			resp, err := a.GetDefaultAuxResourcePool()
 			if err != nil {
-				return "", "", fmt.Errorf("defaulting to aux pool: %w", err)
+				return "", fmt.Errorf("defaulting to aux pool: %w", err)
 			}
-			return "", resp.PoolName, nil
+			return resp, nil
 		}
-		req.ResourcePool = defaultAuxPool
+		name = rm.ResourcePoolName(defaultAuxPool)
 	}
 
-	if req.ResourcePool == "" && req.Slots >= 0 {
+	if name == "" && slots >= 0 {
 		if defaultComputePool == "" {
-			resp, err := a.GetDefaultComputeResourcePool("")
+			resp, err := a.GetDefaultComputeResourcePool()
 			if err != nil {
-				return "", "", fmt.Errorf("defaulting to compute pool: %w", err)
+				return "", fmt.Errorf("defaulting to compute pool: %w", err)
 			}
-			return "", resp.PoolName, nil
+			return resp, nil
 		}
-		req.ResourcePool = defaultComputePool
+		name = rm.ResourcePoolName(defaultComputePool)
 	}
 
 	resp, err := a.GetResourcePools()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
 	poolNames, _, err := db.ReadRPsAvailableToWorkspace(
-		ctx, int32(req.Workspace), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
+		ctx, int32(workspaceID), 0, -1, rmutils.ResourcePoolsToConfig(resp.ResourcePools))
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	found := false
 	for _, poolName := range poolNames {
-		if req.ResourcePool == poolName {
+		if name.String() == poolName {
 			found = true
 			break
 		}
 	}
 	if !found {
-		return "", "", fmt.Errorf(
+		return "", fmt.Errorf(
 			"resource pool %s does not exist or is not available to workspace id %d",
-			req.ResourcePool, req.Workspace)
+			name, workspaceID)
 	}
 
-	if err := a.ValidateResourcePool("", req.ResourcePool); err != nil {
-		return "", "", fmt.Errorf("validating pool: %w", err)
+	if err := a.ValidateResourcePool(name); err != nil {
+		return "", fmt.Errorf("validating pool: %w", err)
 	}
-	return "", req.ResourcePool, nil
+	return name, nil
 }
 
 // SetGroupMaxSlots implements rm.ResourceManager.
-func (a *ResourceManager) SetGroupMaxSlots(_ string, msg sproto.SetGroupMaxSlots) {
+func (a *ResourceManager) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		a.syslog.WithError(err).Warnf("set group max slots found no resource pool with name %s",
@@ -479,7 +477,7 @@ func (a *ResourceManager) SetGroupMaxSlots(_ string, msg sproto.SetGroupMaxSlots
 }
 
 // SetGroupPriority implements rm.ResourceManager.
-func (a *ResourceManager) SetGroupPriority(_ string, msg sproto.SetGroupPriority) error {
+func (a *ResourceManager) SetGroupPriority(msg sproto.SetGroupPriority) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("set group priority found no resource pool with name %s: %w",
@@ -489,7 +487,7 @@ func (a *ResourceManager) SetGroupPriority(_ string, msg sproto.SetGroupPriority
 }
 
 // SetGroupWeight implements rm.ResourceManager.
-func (a *ResourceManager) SetGroupWeight(_ string, msg sproto.SetGroupWeight) error {
+func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 	pool, err := a.poolByName(msg.ResourcePool)
 	if err != nil {
 		return fmt.Errorf("set group weight found no resource pool with name %s: %w",
@@ -501,13 +499,13 @@ func (a *ResourceManager) SetGroupWeight(_ string, msg sproto.SetGroupWeight) er
 
 // TaskContainerDefaults implements rm.ResourceManager.
 func (a *ResourceManager) TaskContainerDefaults(
-	_, resourcePoolName string,
+	resourcePoolName rm.ResourcePoolName,
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
 	result := fallbackConfig
 	// Iterate through configured pools looking for a TaskContainerDefaults setting.
 	for _, pool := range a.poolsConfig {
-		if resourcePoolName == pool.PoolName {
+		if resourcePoolName.String() == pool.PoolName {
 			if pool.TaskContainerDefaults == nil {
 				break
 			}
@@ -519,7 +517,7 @@ func (a *ResourceManager) TaskContainerDefaults(
 
 // ValidateResources implements rm.ResourceManager.
 func (a *ResourceManager) ValidateResources(
-	_ string, msg sproto.ValidateResourcesRequest,
+	msg sproto.ValidateResourcesRequest,
 ) ([]command.LaunchWarning, error) {
 	if msg.Slots == 0 {
 		return nil, nil
@@ -533,7 +531,7 @@ func (a *ResourceManager) ValidateResources(
 				"validating request for (%s, %d): %w", msg.ResourcePool, msg.Slots, err)
 		}
 		resp := pool.ValidateResources(msg)
-		if !resp {
+		if !resp.Fulfillable {
 			return nil, errors.New("request unfulfillable, please try requesting less slots")
 		}
 		return nil, nil
@@ -550,8 +548,8 @@ func (a *ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePool implements rm.ResourceManager.
-func (a *ResourceManager) ValidateResourcePool(_, name string) error {
-	_, err := a.poolByName(name)
+func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
+	_, err := a.poolByName(name.String())
 	if err != nil {
 		return err
 	}
@@ -695,6 +693,8 @@ func (a *ResourceManager) createResourcePoolSummary(
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		SlotType:                     slotType.Proto(),
 		Accelerator:                  accelerator,
+		ResourceManagerName:          a.config.Name,
+		ResourceManagerMetadata:      a.config.Metadata,
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)

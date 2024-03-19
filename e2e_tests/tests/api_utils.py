@@ -168,8 +168,8 @@ F = TypeVar("F", bound=Callable)
 @functools.lru_cache(maxsize=1)
 def _get_is_k8s() -> Optional[bool]:
     try:
-        admin = admin_session()
-        resp = bindings.get_GetMasterConfig(admin)
+        admin_sess = admin_session()
+        resp = bindings.get_GetMasterConfig(admin_sess)
         is_k8s = resp.config["resource_manager"]["type"] == "kubernetes"
         assert isinstance(is_k8s, bool)
         return is_k8s
@@ -194,7 +194,6 @@ def skipif_not_k8s(reason: str = "test is k8s-specific") -> Callable[[F], F]:
 # which is why only the first resource pool's type is checked.
 @functools.lru_cache(maxsize=1)
 def _get_scheduler_type() -> Optional[bindings.v1SchedulerType]:
-    scheduler_type: Optional[bindings.v1SchedulerType]
     try:
         sess = user_session()
         resourcePool = bindings.get_GetResourcePools(sess).resourcePools
@@ -241,17 +240,18 @@ def skipif_not_pbs(reason: str = "test is slurm-specific") -> Callable[[F], F]:
     return decorator
 
 
-def is_hpc() -> bool:
-    st = _get_scheduler_type()
-    if st is None:
-        raise RuntimeError("unable to contact master to determine is_hpc()")
+def is_hpc(sess: api.Session) -> bool:
+    resourcePool = bindings.get_GetResourcePools(sess).resourcePools
+    if not resourcePool:
+        raise ValueError("Resource Pool returned no value. Make sure the resource pool is set.")
+    st = resourcePool[0].schedulerType
     return st in (bindings.v1SchedulerType.SLURM, bindings.v1SchedulerType.PBS)
 
 
 @functools.lru_cache(maxsize=1)
 def _get_ee() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
     try:
-        sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
         info = sess.get("info").json()
         return "sso_providers" in info
     except (errors.APIException, errors.MasterNotFoundException):
@@ -284,8 +284,8 @@ def skipif_not_ee(reason: str = "test is ee-specific") -> Callable[[F], F]:
 
 @functools.lru_cache(maxsize=1)
 def _get_scim_enabled() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
     try:
-        sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
         info = sess.get("info").json()
         return bool(info.get("sso_providers") and len(info["sso_providers"]) > 0)
     except (errors.APIException, errors.MasterNotFoundException):
@@ -306,8 +306,8 @@ def skipif_scim_not_enabled(reason: str = "scim is required for this test") -> C
 
 @functools.lru_cache(maxsize=1)
 def _get_rbac_enabled() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
     try:
-        sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
         return bindings.get_GetMaster(sess).rbacEnabled
     except (errors.APIException, errors.MasterNotFoundException):
         return None
@@ -327,8 +327,8 @@ def skipif_rbac_not_enabled(reason: str = "ee is required for this test") -> Cal
 
 @functools.lru_cache(maxsize=1)
 def _get_strict_q() -> Optional[bool]:
+    sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
     try:
-        sess = api.UnauthSession(conf.make_master_url(), cert(), max_retries=0)
         resp = bindings.get_GetMaster(sess)
         return resp.rbacEnabled and resp.strictJobQueueControl
     except (errors.APIException, errors.MasterNotFoundException):

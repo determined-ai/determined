@@ -1,9 +1,9 @@
+import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
-import Message from 'hew/Message';
 import { Modal } from 'hew/Modal';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
@@ -11,7 +11,7 @@ import { Body } from 'hew/Typography';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { continueExperiment, createExperiment } from 'services/api';
@@ -95,7 +95,7 @@ const ExperimentContinueModalComponent = ({
 
   useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
 
-  const requiredFields = [EXPERIMENT_NAME, MAX_LENGTH];
+  const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
 
   const handleModalClose = () => {
     setModalState(DEFAULT_MODAL_STATE);
@@ -150,13 +150,13 @@ const ExperimentContinueModalComponent = ({
 
       // Validate the yaml syntax by attempting to load it.
       try {
-        newModalState.config = yaml.load(newConfigString) as RawJson;
+        newModalState.config = (yaml.load(newConfigString) || {}) as RawJson;
         newModalState.configError = undefined;
         newModalState.error = undefined;
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }
-
+      setDisabled(newModalState.configError !== undefined);
       return newModalState;
     });
   }, []);
@@ -208,11 +208,13 @@ const ExperimentContinueModalComponent = ({
           },
           { name: ADDITIONAL_LENGTH, value: additionalLength },
         ]);
+        await form.validateFields();
       } catch (e) {
         handleError(e, { publicMessage: 'failed to load previous yaml config' });
       }
+    } else {
+      setDisabled(false);
     }
-    await form.validateFields();
   }, [form, modalState, originalConfig.searcher.max_length]);
 
   const getConfigFromForm = useCallback(
@@ -381,8 +383,8 @@ const ExperimentContinueModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    setDisabled(!experiment.name); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isReactivate, form]);
+    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [experiment, trial, type, isReactivate, form, requiredFields]);
 
   if (!experiment || (!isReactivate && !trial)) return <></>;
 
@@ -412,9 +414,9 @@ const ExperimentContinueModalComponent = ({
       title={type}
       onClose={handleModalClose}>
       <>
-        {modalState.error && <Message icon="error" title={modalState.error} />}
+        {modalState.error && <Alert message={modalState.error} showIcon type="error" />}
         {modalState.configError && modalIsInAdvancedMode && (
-          <Message icon="error" title={modalState.configError} />
+          <Alert message={modalState.configError} showIcon type="error" />
         )}
         {modalIsInAdvancedMode && (
           <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>

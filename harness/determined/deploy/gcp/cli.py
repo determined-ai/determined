@@ -11,7 +11,7 @@ from termcolor import colored
 import determined.deploy
 from determined.cli.errors import CliError
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group, string_to_bool
-from determined.deploy.errors import MasterTimeoutExpired
+from determined.deploy.errors import MasterTimeoutExpired, warn_version_mismatch
 from determined.deploy.gcp import constants, gcp
 
 
@@ -37,6 +37,11 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     if not os.path.exists(args.local_state_path):
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
+
+    warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        # keep the existing default value behavior of the cli.
+        args.det_version = determined.__version__
 
     # Set default tf state gcs bucket as '$PROJECT_NAME-determined-deploy` if local tf
     # state doesn't exist and user has not provided a gcs bucket.
@@ -142,7 +147,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
             "tf_state_gcs_bucket_name": args.project_id + "-determined-deploy",
         }
 
-        gcp.dry_run(det_configs, env, variables_to_exclude)
         gcp.delete(det_configs, env, args.yes)
         print("Delete Successful")
         return
@@ -405,7 +409,6 @@ args_description = Cmd(
                         Arg(
                             "--det-version",
                             type=str,
-                            default=determined.__version__,
                             help=argparse.SUPPRESS,
                         ),
                         Arg(

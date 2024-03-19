@@ -5,18 +5,15 @@ import io
 import os
 import socket
 import socketserver
-import ssl
 import sys
 import threading
 import time
-import urllib.request
 from dataclasses import dataclass
 from typing import Iterator, List, Optional
-from urllib import parse
 
 import lomond
 
-from determined.common import api
+from determined.common import api, detlomond
 from determined.common.api import bindings, certs
 
 
@@ -25,32 +22,6 @@ class ListenerConfig:
     service_id: str
     local_port: int
     local_addr: str = "0.0.0.0"
-
-
-class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
-    """
-    A session class that allows for the TLS verification mode of a WebSocket connection to be
-    configured.
-    """
-
-    def __init__(self, socket: lomond.WebSocket, cert: Optional[certs.Cert]) -> None:
-        super().__init__(socket)
-        self.ctx = ssl.create_default_context()
-
-        self.cert_name = cert.name if cert else None
-
-        bundle = cert.bundle if cert else None
-        if bundle is False:
-            self.ctx.check_hostname = False
-            self.ctx.verify_mode = ssl.CERT_NONE
-            return
-
-        if bundle is not None:
-            assert isinstance(bundle, str)
-            self.ctx.load_verify_locations(cafile=bundle)
-
-    def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
-        return self.ctx.wrap_socket(sock, server_hostname=self.cert_name or host)
 
 
 def copy_to_websocket(
@@ -92,10 +63,7 @@ def copy_from_websocket(
     cert: Optional[certs.Cert],
 ) -> None:
     try:
-        for event in ws.connect(
-            ping_rate=0,
-            session_class=lambda socket: CustomSSLWebsocketSession(socket, cert),
-        ):
+        for event in ws.connect(ping_rate=0):
             if isinstance(event, lomond.events.Binary):
                 f.write(event.data)
             elif isinstance(event, lomond.events.Ready):
@@ -118,10 +86,7 @@ def copy_from_websocket2(
     cert: Optional[certs.Cert],
 ) -> None:
     try:
-        for event in ws.connect(
-            ping_rate=0,
-            session_class=lambda socket: CustomSSLWebsocketSession(socket, cert),
-        ):
+        for event in ws.connect(ping_rate=0):
             if isinstance(event, lomond.events.Binary):
                 f.send(event.data)
             elif isinstance(event, lomond.events.Ready):
@@ -139,36 +104,8 @@ def copy_from_websocket2(
         f.close()
 
 
-def maybe_upgrade_ws_scheme(master_address: str) -> str:
-    parsed = parse.urlparse(master_address)
-    if parsed.scheme == "https":
-        return parsed._replace(scheme="wss").geturl()
-    elif parsed.scheme == "http":
-        return parsed._replace(scheme="ws").geturl()
-    else:
-        return master_address
-
-
 def http_connect_tunnel(sess: api.BaseSession, service: str) -> None:
-    parsed_master = parse.urlparse(sess.master)
-    assert parsed_master.hostname is not None, f"Failed to parse master address: {sess.master}"
-
-    # The "lomond.WebSocket()" function does not honor the "no_proxy" or
-    # "NO_PROXY" environment variables. To work around that, we check if
-    # the hostname is in the "no_proxy" or "NO_PROXY" environment variables
-    # ourselves using the "proxy_bypass()" function, which checks the "no_proxy"
-    # and "NO_PROXY" environment variables, and returns True if the host does
-    # not require a proxy server. The "lomond.WebSocket()" function will disable
-    # the proxy if the "proxies" parameter is an empty dictionary.  Otherwise,
-    # if the "proxies" parameter is "None", it will honor the "HTTP_PROXY" and
-    # "HTTPS_PROXY" environment variables. When the "proxies" parameter is not
-    # specified, the default value is "None".
-    proxies = {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
-
-    url = f"{sess.master}/proxy/{service}/"
-    ws = lomond.WebSocket(maybe_upgrade_ws_scheme(url), proxies=proxies)
-    if isinstance(sess, api.Session):
-        ws.add_header(b"Authorization", f"Bearer {sess.token}".encode())
+    ws = detlomond.WebSocket(sess, f"proxy/{service}/")
 
     # We can't send data to the WebSocket before the connection becomes ready, which takes a bit of
     # time; this semaphore lets the sending thread wait for that to happen.
@@ -197,20 +134,10 @@ def _http_tunnel_listener(
     sess: api.BaseSession,
     tunnel: ListenerConfig,
 ) -> socketserver.ThreadingTCPServer:
-    parsed_master = parse.urlparse(sess.master)
-    assert parsed_master.hostname is not None, f"Failed to parse master address: {sess.master}"
-
-    url = f"{sess.master}/proxy/{tunnel.service_id}/"
-
     class TunnelHandler(socketserver.BaseRequestHandler):
         def handle(self) -> None:
-            proxies = (
-                {} if urllib.request.proxy_bypass(parsed_master.hostname) else None  # type: ignore
-            )
+            ws = detlomond.WebSocket(sess, f"proxy/{tunnel.service_id}/")
 
-            ws = lomond.WebSocket(maybe_upgrade_ws_scheme(url), proxies=proxies)
-            if isinstance(sess, api.Session):
-                ws.add_header(b"Authorization", f"Bearer {sess.token}".encode())
             # We can't send data to the WebSocket before the connection becomes ready,
             # which takes a bit of time; this semaphore lets the sending thread
             # wait for that to happen.

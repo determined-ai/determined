@@ -7,6 +7,83 @@
 ###############
 
 **************
+ Version 0.29
+**************
+
+Version 0.29.1
+==============
+
+**Release Date:** March 18, 2024
+
+**New Features**
+
+-  Include early-access NVIDIA NGC-based images in our environment offerings. These images are
+   accessible from `pytorch-ngc <https://hub.docker.com/r/determinedai/pytorch-ngc>`__ or
+   `tensorflow-ngc <https://hub.docker.com/r/determinedai/tensorflow-ngc>`__. By downloading and
+   using these images, users acknowledge and agree to the terms and conditions of all third-party
+   software licenses contained within, including the `NVIDIA Deep Learning Container License
+   <https://developer.download.nvidia.com/licenses/NVIDIA_Deep_Learning_Container_License.pdf>`__.
+   Users can build their own images from a specified NGC container version using the
+   ``build-pytorch-ngc`` or ``build-tensorflow-ngc`` targets in the makefile in our `environments
+   repository <https://github.com/determined-ai/environments>`__.
+
+**Improvements**
+
+-  Images: Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain
+   available for TensorFlow users.
+
+**Bug Fixes**
+
+-  Experiments: Fix an issue where experiments in the ``STOPPING_CANCELED`` state on master restart
+   would leave unkillable containers running on agents.
+
+Version 0.29.0
+==============
+
+**Release Date:** March 05, 2024
+
+**Breaking Changes**
+
+-  Add a new requirement for runtime configurations that there be a writable ``$HOME`` directory in
+   every container. Previously, there was limited support for containers without a writable
+   ``$HOME``, merely by coincidence. This change could impact users in scenarios where jobs were
+   configured to run as the ``nobody`` user inside a container, instead of the ``det-nobody``
+   alternative recommended in :ref:`run-unprivileged-tasks`. Users combining non-root tasks with
+   custom images not based on Determined's official images may also be affected. Overall, it is
+   expected that few or no users are affected by this change.
+
+**Removed Features**
+
+-  Removed the accidentally exposed ``Session`` object from the ``det.experimental.client``
+   namespace. It was never meant to be a public API and it was not documented in :ref:`python-sdk`,
+   but was nonetheless exposed in that namespace. It was also available as a deprecated legacy
+   alias, ``det.experimental.Session``. It is expected that most users use the Python SDK normally
+   and are unaffected by this change, since the ``det.experimental.client``'s ``login()`` and
+   ``Determined()`` are unaffected.
+
+**Improvements**
+
+-  Configure log settings for the Determined agent in the configuration file used to launch
+   Determined clusters by setting ``log.level`` and ``log.color`` appropriately.
+
+**Bug Fixes**
+
+-  Resource Manager: Prevent connections from duplicate agents. Agent connection attempts will be
+   rejected if there's already an active connection from a matching agent ID. This prevents and
+   replaces previous behavior of stopping the running agent when a duplicate connection attempt is
+   made (causing both connections to fail).
+
+**Security**
+
+-  Add a configuration setting, ``initial_user_password``, to the master configuration file forcing
+   the setup of an initial user password for the built-in ``determined`` and ``admin`` users during
+   the first launch, when a cluster's database is bootstrapped.
+
+.. important::
+
+   For any publicly accessible cluster, you should ensure all users have a password set.
+
+**************
  Version 0.28
 **************
 

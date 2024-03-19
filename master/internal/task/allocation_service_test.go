@@ -179,9 +179,9 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 	var rm mocks.ResourceManager
 	subq := queue.New[sproto.ResourcesEvent]()
 	sub := sproto.NewAllocationSubscription(subq, func() {})
-	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil).Once()
-	rm.On("Release", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		msg := args[1].(sproto.ResourcesReleased)
+	rm.On("Allocate", mock.Anything).Return(sub, nil).Once()
+	rm.On("Release", mock.Anything).Return().Run(func(args mock.Arguments) {
+		msg := args[0].(sproto.ResourcesReleased)
 		if msg.ResourcesID == nil {
 			subq.Put(sproto.ResourcesReleasedEvent{})
 		}
@@ -239,7 +239,7 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 
 	t.Log("restore the allocation")
 	ar.Restore = true
-	rm.On("Allocate", mock.Anything, mock.MatchedBy(func(req sproto.AllocateRequest) bool {
+	rm.On("Allocate", mock.MatchedBy(func(req sproto.AllocateRequest) bool {
 		return req.Restore
 	})).Return(sub, nil).Once()
 	err = DefaultService.StartAllocation(
@@ -530,6 +530,14 @@ func TestRestore(t *testing.T) {
 	db, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
 		*ar = restoredAr
 	})
+
+	rID, resources := requireAssigned(t, pgDB, restoredAr.AllocationID, q)
+	q.Put(&sproto.ResourcesAllocated{
+		ID:           restoredAr.AllocationID,
+		ResourcePool: restoredAr.ResourcePool,
+		Resources:    map[sproto.ResourcesID]sproto.Resources{rID: resources},
+		Recovered:    true,
+	})
 	defer requireKilled(t, db, id, q, exitFuture)
 }
 
@@ -557,9 +565,9 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 	q := queue.New[sproto.ResourcesEvent]()
 	sub := sproto.NewAllocationSubscription(q, func() { subClosed.Store(true) })
 
-	rm.On("Allocate", mock.Anything, mock.Anything).Return(sub, nil)
-	rm.On("Release", mock.Anything, mock.Anything).Return().Run(func(args mock.Arguments) {
-		msg := args[1].(sproto.ResourcesReleased)
+	rm.On("Allocate", mock.Anything).Return(sub, nil)
+	rm.On("Release", mock.Anything).Return().Run(func(args mock.Arguments) {
+		msg := args[0].(sproto.ResourcesReleased)
 		if msg.ResourcesID == nil {
 			q.Put(sproto.ResourcesReleasedEvent{})
 		}
@@ -595,19 +603,15 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 
 func stubAllocateRequest(task *model.Task) sproto.AllocateRequest {
 	return sproto.AllocateRequest{
-		TaskID:          task.TaskID,
-		AllocationID:    model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
-		SlotsNeeded:     2,
-		Preemptible:     true,
-		ResourceManager: stubResourceManagerName,
-		ResourcePool:    stubResourcePoolName,
+		TaskID:       task.TaskID,
+		AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
+		SlotsNeeded:  2,
+		Preemptible:  true,
+		ResourcePool: stubResourcePoolName,
 	}
 }
 
-var (
-	stubResourcePoolName    = "default"
-	stubResourceManagerName = "default"
-)
+var stubResourcePoolName = "default"
 
 var stubAgentName = aproto.ID("agentx")
 

@@ -6,13 +6,13 @@ package internal
 import (
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -20,21 +20,20 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func getMockResourceManager(poolName string) *mocks.ResourceManager {
-	rm := &mocks.ResourceManager{}
-	rm.On("ResolveResourcePool", mock.Anything, mock.Anything).Return(
-		mock.Anything, poolName, nil)
-	rm.On("ValidateResources", mock.Anything, sproto.ValidateResourcesRequest{
-		ResourcePool: poolName,
+func getMockResourceManager(poolName rm.ResourcePoolName) *mocks.ResourceManager {
+	r := &mocks.ResourceManager{}
+	r.On("ResolveResourcePool", rm.ResourcePoolName("/"), 0, 1).Return(poolName, nil)
+	r.On("ValidateResources", sproto.ValidateResourcesRequest{
+		ResourcePool: poolName.String(),
 		Slots:        1,
 		IsSingleNode: true,
 	}).Return(nil, nil)
-	return rm
+	return r
 }
 
 func TestResolveResources(t *testing.T) {
 	tests := map[string]struct {
-		expectedPoolName string
+		expectedPoolName rm.ResourcePoolName
 		resourcePool     string
 		slots            int
 		workspaceID      int
@@ -53,7 +52,7 @@ func TestResolveResources(t *testing.T) {
 				rm:     getMockResourceManager(testVars.expectedPoolName),
 				config: config.DefaultConfig(),
 			}
-			_, poolName, _, err := m.ResolveResources("", testVars.resourcePool, testVars.slots, testVars.workspaceID, true)
+			poolName, _, err := m.ResolveResources(testVars.resourcePool, testVars.slots, testVars.workspaceID, true)
 
 			require.NoError(t, err, "Error in ResolveResources()")
 			require.Equal(t, testVars.expectedPoolName, poolName)
@@ -63,7 +62,7 @@ func TestResolveResources(t *testing.T) {
 
 func TestFillTaskSpec(t *testing.T) {
 	tests := map[string]struct {
-		poolName       string
+		poolName       rm.ResourcePoolName
 		agentUserGroup *model.AgentUserGroup
 		userModel      *model.User
 		workDir        string
@@ -91,10 +90,10 @@ func TestFillTaskSpec(t *testing.T) {
 				Owner:          testVars.userModel,
 			}
 			rm.On("TaskContainerDefaults",
-				"", testVars.poolName,
+				testVars.poolName,
 				m.config.TaskContainerDefaults,
 			).Return(model.TaskContainerDefaultsConfig{WorkDir: &testVars.workDir}, nil)
-			taskSpec, err := m.fillTaskSpec("", testVars.poolName, testVars.agentUserGroup, testVars.userModel)
+			taskSpec, err := m.fillTaskSpec(testVars.poolName, testVars.agentUserGroup, testVars.userModel)
 			require.NoError(t, err, "Error in fillTaskSpec()")
 			require.Equal(t, expectedTaskSpec, taskSpec)
 		})

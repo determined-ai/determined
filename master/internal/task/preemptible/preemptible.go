@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
@@ -84,7 +85,12 @@ func (p *Preemptible) Preempt(timeoutCallback TimeoutFn) {
 	if !p.preempted {
 		p.wg.Go(func(ctx context.Context) {
 			// don't acquire a lock in here without changing close to not lock while it waits.
-			t := time.NewTimer(DefaultTimeout)
+			timeout := DefaultTimeout
+			if debugTimeout := config.GetMasterConfig().InternalConfig.PreemptionTimeout; debugTimeout != nil {
+				timeout = time.Duration(*debugTimeout)
+			}
+
+			t := time.NewTimer(timeout)
 			defer t.Stop()
 
 			select {

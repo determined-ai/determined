@@ -1853,13 +1853,6 @@ var (
             "maximum": 99,
             "default": null
         },
-        "resource_manager": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": ""
-        },
         "resource_pool": {
             "type": [
                 "string",

@@ -8,15 +8,14 @@ import (
 	"net/url"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-cleanhttp"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 )
@@ -189,7 +188,7 @@ func (a *WebhooksAPIServer) TestWebhook(
 	}
 
 	log.Infof("creating webhook request for event %v", eventID)
-	c := http.Client{}
+	c := cleanhttp.DefaultClient()
 	resp, err := c.Do(tReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,

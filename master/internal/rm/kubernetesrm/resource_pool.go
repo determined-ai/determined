@@ -128,7 +128,7 @@ func (k *kubernetesResourcePool) UpdatePodStatus(msg sproto.UpdatePodStatus) {
 	}
 }
 
-func (k *kubernetesResourcePool) PendingPreemption(model.AllocationID) error {
+func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption) error {
 	return rmerrors.ErrNotSupported
 }
 
@@ -213,6 +213,15 @@ func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
 	return k.moveJob(msg.ID, msg.Anchor, msg.Ahead)
 }
 
+func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJobResponse {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.reschedule = true
+
+	// For now, there is nothing to cleanup in k8s.
+	return sproto.EmptyDeleteJobResponse()
+}
+
 func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -252,13 +261,15 @@ func (k *kubernetesResourcePool) getResourceSummary(msg getResourceSummary) (*re
 	}, nil
 }
 
-func (k *kubernetesResourcePool) ValidateResources(msg sproto.ValidateResourcesRequest) bool {
+func (k *kubernetesResourcePool) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) sproto.ValidateResourcesResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.reschedule = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return fulfillable
+	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
 func (k *kubernetesResourcePool) Schedule() {

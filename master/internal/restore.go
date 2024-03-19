@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/workspace"
 
@@ -14,9 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
-	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -64,23 +63,8 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Errorf("cannot restore experiment %d with unparsable config", expModel.ID)
 	}
-	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
-		if err = m.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
-			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
-		}
-		expModel.State = terminal
-		telemetry.ReportExperimentStateChanged(m.db, expModel)
-		if err := webhooks.ReportExperimentStateChanged(
-			context.TODO(), *expModel, activeConfig,
-		); err != nil {
-			log.WithError(err).Error("failed to send experiment state change webhook in restore")
-		}
-		return nil
-	} else if _, ok := model.RunningStates[expModel.State]; !ok {
-		return errors.Errorf(
-			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
-		)
-	} else if err = activeConfig.Searcher().AssertCurrent(); err != nil {
+
+	if err := activeConfig.Searcher().AssertCurrent(); err != nil {
 		return errors.Errorf(
 			"cannot restore experiment %d with legacy searcher", expModel.ID,
 		)
@@ -91,25 +75,23 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return err
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
-	managerName, poolName, err := m.rm.ResolveResourcePool(activeConfig.Resources().ResourceManager(),
-		sproto.ResolveResourcesRequest{
-			ResourcePool: activeConfig.Resources().ResourcePool(),
-			Workspace:    workspaceID,
-			Slots:        activeConfig.Resources().SlotsPerTrial(),
-		})
+	poolName, err := m.rm.ResolveResourcePool(
+		rm.ResourcePoolName(activeConfig.Resources().ResourcePool()),
+		workspaceID,
+		activeConfig.Resources().SlotsPerTrial(),
+	)
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
-	if _, err = m.rm.ValidateResources(activeConfig.Resources().ResourceManager(),
-		sproto.ValidateResourcesRequest{
-			ResourcePool: poolName,
-			Slots:        activeConfig.Resources().SlotsPerTrial(),
-			IsSingleNode: false,
-		}); err != nil {
+	if _, err = m.rm.ValidateResources(sproto.ValidateResourcesRequest{
+		ResourcePool: poolName.String(),
+		Slots:        activeConfig.Resources().SlotsPerTrial(),
+		IsSingleNode: false,
+	}); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		managerName, poolName,
+		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
@@ -177,9 +159,6 @@ func (e *internalExperiment) restoreTrial(
 		l = l.WithField("trial-id", trial.ID)
 		if model.TerminalStates[trial.State] {
 			l.Debugf("trial was in terminal state in restore: %s", trial.State)
-			terminal = true
-		} else if !model.RunningStates[trial.State] {
-			l.Debugf("cannot restore trial in state: %s", trial.State)
 			terminal = true
 		}
 	}

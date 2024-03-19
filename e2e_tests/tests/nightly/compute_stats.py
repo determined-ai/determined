@@ -130,6 +130,6 @@ def compare_stats(sess: api.Session) -> None:
     # For shorter tests, a tolerance that is percentage based can make unreasonably tight timing.
     max_diff = max(max_diff, 3)
     # slurm and pbs needs looser tolerances
-    if api_utils.is_hpc():
+    if api_utils.is_hpc(sess):
         max_diff = max(max_diff, 10)
     assert abs(gpu_from_log - gpu_from_api) <= max_diff

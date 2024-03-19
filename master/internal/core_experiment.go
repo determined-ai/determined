@@ -77,7 +77,7 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	return &queries, nil
 }
 
-func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, m *Master,
+func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context,
 	expID int, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
@@ -111,7 +111,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 	exp, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	)
 	if err != nil {
@@ -155,7 +155,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -183,7 +183,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, args.ExperimentID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -240,7 +240,7 @@ func getCreateExperimentsProject(
 			errProjectNotFound = api.NotFoundErrs("workspace/project",
 				config.Workspace()+"/"+config.Project(), true)
 
-			projectID, err = m.db.ProjectByName(config.Workspace(), config.Project())
+			projectID, err = project.ProjectByName(context.TODO(), config.Workspace(), config.Project())
 			if errors.Is(err, db.ErrNotFound) {
 				return nil, errProjectNotFound
 			} else if err != nil {
@@ -293,13 +293,12 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	managerName, poolName, _, err := m.ResolveResources(resources.ResourceManager(),
-		resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		managerName, poolName,
+		poolName,
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {

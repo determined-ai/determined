@@ -89,9 +89,13 @@ def my_permissions(args: Namespace) -> None:
             workspace_name = bindings.get_GetWorkspace(sess, id=wid).workspace.name
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
 
-        render.render_objects(
-            v1PermissionHeaders, [render.unmarshal(v1PermissionHeaders, p.to_json()) for p in perms]
-        )
+        perms_to_render = []
+        perms_added: set[bindings.v1PermissionType] = set()
+        for p in perms:
+            if p.id not in perms_added:
+                perms_added.add(p.id)
+                perms_to_render.append(render.unmarshal(v1PermissionHeaders, p.to_json()))
+        render.render_objects(v1PermissionHeaders, perms_to_render)
         print()
 
 

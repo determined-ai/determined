@@ -23,6 +23,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
+
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -53,6 +56,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
@@ -952,6 +956,53 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
+func buildRM(
+	db *db.PgDB,
+	echo *echo.Echo,
+	rmConfigs []*config.ResourceManagerWithPoolsConfig,
+	tcd *model.TaskContainerDefaultsConfig,
+	opts *aproto.MasterSetAgentOptions,
+	cert *tls.Certificate,
+) (rm.ResourceManager, error) {
+	if len(rmConfigs) <= 1 {
+		config := rmConfigs[0]
+		switch {
+		case config.ResourceManager.AgentRM != nil:
+			return agentrm.New(db, echo, config, opts, cert)
+		case config.ResourceManager.KubernetesRM != nil:
+			return kubernetesrm.New(db, config, tcd, opts, cert)
+		default:
+			return nil, fmt.Errorf("no expected resource manager config is defined")
+		}
+	}
+
+	// Set the default RM name for the multi-rm, from the default RM index.
+	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
+	rms := map[string]rm.ResourceManager{}
+
+	for _, cfg := range rmConfigs {
+		c := cfg.ResourceManager
+		switch {
+		case c.AgentRM != nil:
+			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = agentRM
+		case c.KubernetesRM != nil:
+			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			}
+			rms[c.Name()] = k8sRM
+		default:
+			return nil, fmt.Errorf("no expected resource manager config is defined")
+		}
+	}
+
+	return multirm.New(defaultRMName, rms), nil
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 //
 // gRPCLogInitDone is closed when the grpclog package's logger singletons are set. This is just
@@ -1140,19 +1191,17 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	// TODO(multirm) do multiple resource managers.
-	r := m.config.ResourceManagers()[0]
-	m.rm = rm.New(
-		m.db,
-		m.echo,
-		r,
+	if m.rm, err = buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
 			LoggingOptions: m.config.Logging,
 		},
 		cert,
-	)
+	); err != nil {
+		return fmt.Errorf("could not initialize resource manager(s): %w", err)
+	}
+
 	jobservice.SetDefaultService(m.rm)
 
 	tasksGroup := m.echo.Group("/tasks")
@@ -1355,7 +1404,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	go func() {
 		_ = ssup.Run(ctx)
 	}()
-	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket))
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
 
 	return m.startServers(ctx, cert, gRPCLogInitDone)
 }

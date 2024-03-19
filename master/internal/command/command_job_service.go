@@ -59,12 +59,11 @@ func (c *Command) SetWeight(weight float64) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	switch err := c.rm.SetGroupWeight(c.Config.Resources.ResourceManager,
-		sproto.SetGroupWeight{
-			Weight:       weight,
-			ResourcePool: c.Config.Resources.ResourcePool,
-			JobID:        c.jobID,
-		}).(type) {
+	switch err := c.rm.SetGroupWeight(sproto.SetGroupWeight{
+		Weight:       weight,
+		ResourcePool: c.Config.Resources.ResourcePool,
+		JobID:        c.jobID,
+	}).(type) {
 	case nil:
 	case rmerrors.UnsupportedError:
 		c.syslog.WithError(err).Debug("ignoring unsupported call to set group weight")
@@ -77,11 +76,11 @@ func (c *Command) SetWeight(weight float64) error {
 }
 
 // SetResourcePool is not implemented for commands.
-func (c *Command) SetResourcePool(resourceManager, resourcePool string) error {
+func (c *Command) SetResourcePool(resourcePool string) error {
 	return fmt.Errorf("setting resource pool for job type %s is not supported", c.jobType)
 }
 
 // ResourcePool gets the command's resource pool.
-func (c *Command) ResourcePool() (string, string) {
-	return c.Config.Resources.ResourceManager, c.Config.Resources.ResourcePool
+func (c *Command) ResourcePool() string {
+	return c.Config.Resources.ResourcePool
 }

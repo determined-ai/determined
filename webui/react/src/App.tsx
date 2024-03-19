@@ -32,6 +32,8 @@ import { paths, serverAddress } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore from 'stores/determinedInfo';
+import projectStore from 'stores/projects';
+import streamStore from 'stores/stream';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
@@ -67,6 +69,10 @@ const AppView: React.FC = () => {
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
+
+  useEffect(() => {
+    return streamStore.on(projectStore);
+  }, []);
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);

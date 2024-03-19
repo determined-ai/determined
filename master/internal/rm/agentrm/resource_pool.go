@@ -565,7 +565,9 @@ func (rp *resourcePool) GetAllocationSummaries() map[model.AllocationID]sproto.A
 	return rp.taskList.TaskSummaries(rp.groups, rp.config.Scheduler.GetType())
 }
 
-func (rp *resourcePool) ValidateResources(msg sproto.ValidateResourcesRequest) bool {
+func (rp *resourcePool) ValidateResources(
+	msg sproto.ValidateResourcesRequest,
+) sproto.ValidateResourcesResponse {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
@@ -587,7 +589,7 @@ func (rp *resourcePool) ValidateResources(msg sproto.ValidateResourcesRequest) b
 		fulfillable = maxSlots >= msg.Slots
 	}
 
-	return fulfillable
+	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
 // GetResourceSummary requests a summary of the resources used by the resource pool (agents, slots, cpu containers).

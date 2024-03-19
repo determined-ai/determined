@@ -30,15 +30,13 @@ const ClusterLogs: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <LogViewer
-        decoder={jsonToClusterLog}
-        serverAddress={serverAddress}
-        sortKey="id"
-        onError={handleError}
-        onFetch={handleFetch}
-      />
-    </div>
+    <LogViewer
+      decoder={jsonToClusterLog}
+      serverAddress={serverAddress}
+      sortKey="id"
+      onError={handleError}
+      onFetch={handleFetch}
+    />
   );
 };
 

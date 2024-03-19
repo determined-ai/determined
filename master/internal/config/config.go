@@ -239,6 +239,48 @@ func (c Config) Printable() ([]byte, error) {
 	return optJSON, nil
 }
 
+func k8sValidateMaxSlots(r *ResourceManagerWithPoolsConfig,
+	taskContainerDefaults model.TaskContainerDefaultsConfig, totalRMs int,
+) (model.TaskContainerDefaultsConfig, error) {
+	if taskContainerDefaults.Kubernetes == nil {
+		taskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+	}
+
+	rmMaxSlots := r.ResourceManager.KubernetesRM.MaxSlotsPerPod
+	taskMaxSlots := taskContainerDefaults.Kubernetes.MaxSlotsPerPod
+
+	// if exactly one resource manager, allow global task default to be used
+	if totalRMs == 1 {
+		if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
+			return taskContainerDefaults, fmt.Errorf("must provide exactly one of " +
+				"resource_manager.max_slots_per_pod and " +
+				"task_container_defaults.kubernetes.max_slots_per_pod")
+		}
+
+		if rmMaxSlots != nil {
+			taskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
+		}
+		if taskMaxSlots != nil {
+			r.ResourceManager.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
+		}
+	} else {
+		// otherwise, must use max slots defined in resource manager config
+		if rmMaxSlots == nil {
+			return taskContainerDefaults, fmt.Errorf("must provide resource_manager.max_slots_per_pod")
+		}
+		if taskMaxSlots != nil {
+			log.Warn("ignoring task_container_defaults.kubernetes.max_slots_per_pod - " +
+				"must provide resource_manager.max_slots_per_pod " +
+				"if multiple resource managers are defined")
+		}
+	}
+
+	if maxSlotsPerPod := *r.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
+		return taskContainerDefaults, fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
+	}
+	return taskContainerDefaults, nil
+}
+
 // Resolve resolves the values in the configuration.
 func (c *Config) Resolve() error {
 	if c.Port == 0 {
@@ -267,31 +309,11 @@ func (c *Config) Resolve() error {
 			r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
 		}
 
-		// TODO(RM-6) change behavior on max slots per pod.
 		if r.ResourceManager.KubernetesRM != nil {
-			if c.TaskContainerDefaults.Kubernetes == nil {
-				c.TaskContainerDefaults.Kubernetes = &model.KubernetesTaskContainerDefaults{}
+			c.TaskContainerDefaults, err = k8sValidateMaxSlots(r, c.TaskContainerDefaults, len(c.ResourceManagers()))
+			if err != nil {
+				return err
 			}
-
-			rmMaxSlots := r.ResourceManager.KubernetesRM.MaxSlotsPerPod
-			taskMaxSlots := c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
-			if (rmMaxSlots != nil) == (taskMaxSlots != nil) {
-				return fmt.Errorf("must provide exactly one of " +
-					"resource_manager.max_slots_per_pod and " +
-					"task_container_defaults.kubernetes.max_slots_per_pod")
-			}
-
-			if rmMaxSlots != nil {
-				c.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod = rmMaxSlots
-			}
-			if taskMaxSlots != nil {
-				r.ResourceManager.KubernetesRM.MaxSlotsPerPod = taskMaxSlots
-			}
-			if maxSlotsPerPod := *r.ResourceManager.KubernetesRM.MaxSlotsPerPod; maxSlotsPerPod < 0 {
-				return fmt.Errorf("max_slots_per_pod must be >= 0 got %d", maxSlotsPerPod)
-			}
-
-			break // TODO(RM-6) remove this break.
 		}
 	}
 
@@ -400,6 +422,7 @@ type InternalConfig struct {
 	AuditLoggingEnabled bool                   `json:"audit_logging_enabled"`
 	ExternalSessions    model.ExternalSessions `json:"external_sessions"`
 	ProxiedServers      []ProxiedServerConfig  `json:"proxied_servers"`
+	PreemptionTimeout   *model.Duration        `json:"preemption_timeout"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -454,15 +477,28 @@ func readPriorityFromScheduler(conf *SchedulerConfig) *int {
 // TODO(Brad): Move these to a resource pool level API.
 func ReadRMPreemptionStatus(rpName string) bool {
 	config := GetMasterConfig()
-	return readRMPreemptionStatus(config, rpName)
+
+	for _, r := range config.ResourceManagers() {
+		for _, rpConfig := range r.ResourcePools {
+			if rpConfig.PoolName == rpName {
+				if rpConfig.Scheduler != nil {
+					return rpConfig.Scheduler.GetPreemption()
+				}
+				// if not found, fall back to resource manager config
+				return readRMPreemptionStatus(r, rpName)
+			}
+		}
+	}
+
+	// if not found in any RMs, return default RM config
+	if len(config.ResourceManagers()) != 0 {
+		return readRMPreemptionStatus(config.ResourceManagers()[0], rpName)
+	}
+	panic("unexpected resource configuration")
 }
 
-func readRMPreemptionStatus(config *Config, rpName string) bool {
-	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
-	// a resource manager name too.
-	r := config.ResourceManagers()[0]
-
-	for _, rpConfig := range r.ResourcePools {
+func readRMPreemptionStatus(config *ResourceManagerWithPoolsConfig, rpName string) bool {
+	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.PoolName != rpName {
 			continue
 		}
@@ -474,13 +510,13 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 
 	// if not found, fall back to resource manager config
 	switch {
-	case r.ResourceManager.AgentRM != nil:
-		if r.ResourceManager.AgentRM.Scheduler == nil {
+	case config.ResourceManager.AgentRM != nil:
+		if config.ResourceManager.AgentRM.Scheduler == nil {
 			panic("scheduler not configured")
 		}
-		return r.ResourceManager.AgentRM.Scheduler.GetPreemption()
-	case r.ResourceManager.KubernetesRM != nil:
-		return r.ResourceManager.KubernetesRM.GetPreemption()
+		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
+	case config.ResourceManager.KubernetesRM != nil:
+		return config.ResourceManager.KubernetesRM.GetPreemption()
 	default:
 		panic("unexpected resource configuration")
 	}
@@ -490,7 +526,7 @@ func readRMPreemptionStatus(config *Config, rpName string) bool {
 func ReadPriority(rpName string, jobConf interface{}) int {
 	config := GetMasterConfig()
 	var prio *int
-	// look at the idividual job config
+	// look at the individual job config
 	switch conf := jobConf.(type) {
 	case *expconf.ExperimentConfig:
 		prio = conf.Resources().Priority()
@@ -501,35 +537,32 @@ func ReadPriority(rpName string, jobConf interface{}) int {
 		return *prio
 	}
 
-	var schedulerConf *SchedulerConfig
-
 	// if not found, fall back to the resource pools config
-	// TODO(RM-38) make this be correct for len(resourceManagers) > 0 by taking
-	// a resource manager name too.
-	r := config.ResourceManagers()[0]
+	for _, rm := range config.ResourceManagers() {
+		for _, rpConfig := range rm.ResourcePools {
+			if rpConfig.PoolName == rpName {
+				schedulerConf := rpConfig.Scheduler
+				prio = readPriorityFromScheduler(schedulerConf)
+				if prio != nil {
+					return *prio
+				}
 
-	for _, rpConfig := range r.ResourcePools {
-		if rpConfig.PoolName != rpName {
-			continue
+				// if not found, fall back to resource manager config
+				if rm.ResourceManager.AgentRM != nil {
+					schedulerConf = rm.ResourceManager.AgentRM.Scheduler
+					prio = readPriorityFromScheduler(schedulerConf)
+					if prio != nil {
+						return *prio
+					}
+				}
+
+				if rm.ResourceManager.KubernetesRM != nil {
+					return KubernetesDefaultPriority
+				}
+
+				break
+			}
 		}
-		schedulerConf = rpConfig.Scheduler
-	}
-	prio = readPriorityFromScheduler(schedulerConf)
-	if prio != nil {
-		return *prio
-	}
-
-	// if not found, fall back to resource manager config
-	if r.ResourceManager.AgentRM != nil {
-		schedulerConf = r.ResourceManager.AgentRM.Scheduler
-		prio = readPriorityFromScheduler(schedulerConf)
-		if prio != nil {
-			return *prio
-		}
-	}
-
-	if r.ResourceManager.KubernetesRM != nil {
-		return KubernetesDefaultPriority
 	}
 
 	return DefaultSchedulingPriority

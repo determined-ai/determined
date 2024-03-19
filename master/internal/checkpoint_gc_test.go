@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -55,14 +56,15 @@ func TestRunCheckpointGCTask(t *testing.T) {
 			name: "simple success",
 			args: args{
 				rm: func() *mocks.ResourceManager {
-					var rm mocks.ResourceManager
-					rm.On("ResolveResourcePool", mock.Anything, mock.Anything).
-						Return("", "default", nil)
+					var r mocks.ResourceManager
 
-					rm.On("TaskContainerDefaults", mock.Anything, mock.Anything, mock.Anything).
+					r.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return(rm.ResourcePoolName("default"), nil)
+
+					r.On("TaskContainerDefaults", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 						Return(model.TaskContainerDefaultsConfig{}, nil)
 
-					return &rm
+					return &r
 				}(),
 				as: func(t *testing.T) *allocationmocks.AllocationService {
 					var as allocationmocks.AllocationService
@@ -113,12 +115,12 @@ func TestRunCheckpointGCTask(t *testing.T) {
 			name: "simple failure",
 			args: args{
 				rm: func() *mocks.ResourceManager {
-					var rm mocks.ResourceManager
+					var r mocks.ResourceManager
 
-					rm.On("ResolveResourcePool", mock.Anything, mock.Anything).
-						Return("", "", errors.New("rm is down or something"))
+					r.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+						Return(rm.ResourcePoolName(""), errors.New("rm is down or something"))
 
-					return &rm
+					return &r
 				}(),
 				as: func(t *testing.T) *allocationmocks.AllocationService {
 					return &allocationmocks.AllocationService{}
