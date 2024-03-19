@@ -4,6 +4,56 @@ import { isEqual } from 'lodash';
 
 import { Streamable, StreamSpec } from '.';
 
+export class ModelSpec extends StreamSpec {
+  readonly #id: Streamable = 'models';
+  #workspace_ids: Array<number>;
+  #model_ids: Array<number>;
+  #user_ids: Array<number>;
+  #since: number;
+
+  constructor(
+    workspace_ids?: Array<number>,
+    model_ids?: Array<number>,
+    user_ids?: Array<number>,
+    since?: number,
+  ) {
+    super();
+    this.#workspace_ids = workspace_ids || [];
+    this.#model_ids = model_ids || [];
+    this.#user_ids = user_ids || [];
+    this.#since = since || 0;
+  }
+
+  public equals = (sp?: StreamSpec): boolean => {
+    if (!sp) return false;
+    if (sp instanceof ModelSpec) {
+      return (
+        isEqual(sp.#workspace_ids, this.#workspace_ids)
+        &&
+        isEqual(sp.#model_ids, this.#model_ids)
+        &&
+        isEqual(sp.#user_ids, this.#user_ids)
+        &&
+        isEqual(sp.#since, this.#since)
+      );
+    }
+    return false;
+  };
+
+  public id = (): Streamable => {
+    return this.#id;
+  };
+
+  public toWire = (): Record<string, unknown> => {
+    return {
+      workspace_ids: this.#workspace_ids,
+      model_ids: this.#model_ids,
+      user_ids: this.#user_ids,
+      since: this.#since,
+    };
+  };
+}
+
 export class ProjectSpec extends StreamSpec {
   readonly #id: Streamable = 'projects';
   #workspace_ids: Array<number>;
@@ -47,3 +97,4 @@ export class ProjectSpec extends StreamSpec {
     };
   };
 }
+

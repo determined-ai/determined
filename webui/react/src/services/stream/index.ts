@@ -1,4 +1,4 @@
-export type Streamable = 'projects' | 'experiments';
+export type Streamable = 'projects' | 'experiments' | 'models';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type StreamContent = any;

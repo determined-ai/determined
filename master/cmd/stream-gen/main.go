@@ -359,7 +359,7 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 			}
 			b.Writef("    };\n")
 			b.Writef("  };\n")
-			b.Writef("}\n")
+			b.Writef("}\n\n")
 		}
 	}
 	return []byte(b.String()), nil
