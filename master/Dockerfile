@@ -11,6 +11,7 @@ RUN apt-get update -yq \
       ca-certificates \
       unattended-upgrades \
       google-cloud-sdk-gke-gcloud-auth-plugin \
+      google-cloud-cli \
     && unattended-upgrade \
     && apt-get remove -y unattended-upgrades \
     && apt-get autoremove -y \
