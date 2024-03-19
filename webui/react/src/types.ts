@@ -1213,30 +1213,37 @@ export interface FlatRun {
   id: number;
   startTime: Date | DateString;
   endTime?: Date | DateString;
-  state: Api.Trialv1State;
+  state: RunState;
   labels?: Array<string>;
   checkpointSize: number;
   checkpointCount: number;
-  searcherType?: string;
-  searcherMetric?: string;
   searcherMetricValue?: number;
   externalRunId?: number;
-  hyperparameters?: string;
+  hyperparameters?: TrialHyperparameters;
   summaryMetrics?: SummaryMetrics;
-  experimentId?: number;
   userId?: number;
-  forkedFrom?: number;
-  externalExperimentId?: string;
-  resourcePool?: string;
-  experimentProgress?: number;
-  experimentDescription?: string;
-  experimentName?: string;
   duration?: number;
   projectId: number;
   projectName: string;
   workspaceId: number;
   workspaceName: string;
   parentArchived: boolean;
-  unmanaged?: boolean;
-  isExpMultitrial: boolean;
+  experiment?: FlatRunExperiment;
+}
+
+export interface FlatRunExperiment {
+  id: number;
+  searcherType: string;
+  searcherMetric: string;
+  forkedFrom?: number;
+  externalExperimentId?: string;
+  resourcePool: string;
+  progress: number;
+  description: string;
+  name: string;
+  unmanaged: boolean;
+  isMultitrial: boolean;
+}
+export interface SearchFlatRunPagination extends WithPagination {
+  runs: FlatRun[];
 }

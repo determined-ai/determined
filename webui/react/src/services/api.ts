@@ -743,6 +743,14 @@ export const getProjectNumericMetricsRange = generateDetApi<
   Type.ProjectMetricsRange[]
 >(Config.getProjectNumericMetricsRange);
 
+/* Runs */
+
+export const searchRuns = generateDetApi<
+  Service.SearchRunsParams,
+  Api.V1SearchRunsResponse,
+  Type.SearchFlatRunPagination
+>(Config.searchRuns);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

@@ -163,7 +163,7 @@ export const getColumnDefs = ({
     id: 'externalExperimentId',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: record.externalExperimentId ?? '',
+      copyData: record.experiment?.externalExperimentId ?? '',
       data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
@@ -187,15 +187,15 @@ export const getColumnDefs = ({
     id: 'forkedFrom',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.forkedFrom ?? ''),
-      cursor: record.forkedFrom ? 'pointer' : undefined,
+      copyData: String(record.experiment?.forkedFrom ?? ''),
+      cursor: record.experiment?.forkedFrom ? 'pointer' : undefined,
       data: {
         kind: 'link-cell',
         link:
-          record.forkedFrom !== undefined
+          record.experiment?.forkedFrom !== undefined
             ? {
-                href: record.forkedFrom ? paths.experimentDetails(record.forkedFrom) : undefined,
-                title: String(record.forkedFrom ?? ''),
+                href: record.experiment?.forkedFrom ? paths.experimentDetails(record.experiment?.forkedFrom) : undefined,
+                title: String(record.experiment?.forkedFrom ?? ''),
               }
             : undefined,
         navigateOn: 'click',
@@ -234,15 +234,15 @@ export const getColumnDefs = ({
     id: 'searcherName',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experimentName),
+      copyData: String(record.experiment?.name),
       cursor: 'pointer',
       data: {
         kind: 'link-cell',
-        link: record.experimentId
+        link: record.experiment?.id
           ? {
-              href: paths.experimentDetails(record.experimentId),
-              title: String(record.experimentName),
-              unmanaged: record.unmanaged,
+              href: paths.experimentDetails(record.experiment?.id),
+              title: String(record.experiment?.name),
+              unmanaged: record.experiment.unmanaged,
             }
           : undefined,
         navigateOn: 'click',
@@ -258,7 +258,7 @@ export const getColumnDefs = ({
   progress: {
     id: 'experimentProgress',
     renderer: (record: FlatRun) => {
-      const percentage = floatToPercent(record.experimentProgress ?? 0, 0);
+      const percentage = floatToPercent(record.experiment?.progress ?? 0, 0);
 
       return {
         allowOverlay: false,
@@ -275,7 +275,7 @@ export const getColumnDefs = ({
     id: 'resourcePool',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.resourcePool),
+      copyData: String(record.experiment?.resourcePool),
       data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
@@ -287,7 +287,7 @@ export const getColumnDefs = ({
     id: 'searcherMetric',
     isNumerical: false,
     renderer: (record: FlatRun) => {
-      const sMetric = record.searcherMetric ?? '';
+      const sMetric = record.experiment?.searcherMetric ?? '';
       return {
         allowOverlay: false,
         copyData: sMetric,
@@ -303,7 +303,7 @@ export const getColumnDefs = ({
     id: 'searcherType',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.searcherType),
+      copyData: String(record.experiment?.searcherType),
       data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
     }),
