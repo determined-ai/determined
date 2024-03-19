@@ -169,8 +169,10 @@ def _average_metric_samples_depth_one(metric_samples: List[Dict[str, Any]]) -> D
     for sample in metric_samples:
         for k, v in sample.items():
             if isinstance(v, dict):
-                aggregated_metrics[k] = {}
+                aggregated_metrics[k] = aggregated_metrics.get(k, {})
                 for k1, v1 in v.items():
+                    if isinstance(v1, dict):
+                        raise ValueError("only one level of nested is supported")
                     aggregated_metrics[k][k1] = aggregated_metrics[k].get(k1, 0) + v1
             else:
                 aggregated_metrics[k] = aggregated_metrics.get(k, 0) + v
