@@ -22,7 +22,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.29.0-dev0
+    default: 0.29.2-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -48,7 +48,7 @@ parameters:
     default: v1dev25
   gke-version:
     type: string
-    default: "1.29.0"
+    default: "1.29"
   master-build-resource-class:
     type: string
     default: xlarge
@@ -112,85 +112,63 @@ commands:
       - run: git submodule sync
       - run: git submodule update --init
 
-  skip-if-docs-only:
+  add-and-fetch-upstream:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: tools/scripts/retry.sh git fetch upstream
+
+  skip-if-only-dir:
+    parameters:
+      dir:
+        type: string
+    steps:
       - run:
-          name: check for docs-only changes
+          name: skip if << parameters.dir >>-only changes
           command: |
             MERGE_BASE="$(git merge-base upstream/main HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "docs" ] ; then
-              echo "docs-only change detected, halting job now"
+            if [ "$DIFF_DIRS" = "<< parameters.dir >>" ] ; then
+              echo "<< parameters.dir >>-only change detected, halting job now"
               circleci-agent step halt
             else
-              echo "detected non-docs-only changes: $DIFF_DIRS"
+              echo "detected non-<< parameters.dir >>-only changes: $DIFF_DIRS"
             fi
+
+  skip-if-not-dir:
+    parameters:
+      dir:
+        type: string
+    steps:
+      - run:
+          name: continue if << parameters.dir >> changes
+          command: |
+            MERGE_BASE="$(git merge-base upstream/main HEAD)"
+            if ! git diff --quiet "$MERGE_BASE" HEAD -- "<< parameters.dir >>"; then
+              echo "<< parameters.dir >> change detected, running downstream steps"
+            else
+              echo "<< parameters.dir >> code not affected, halting job now"
+              circleci-agent step halt
+            fi
+
+  skip-if-only-docs:
+    steps:
+      - skip-if-only-dir:
+          dir: docs
 
   skip-if-not-docs:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: tools/scripts/retry.sh git fetch upstream
-      - run:
-          name: check for any docs changes
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            # check "shared" is in the list of changed directories
-            if [[ "$DIFF_DIRS" == *"docs"* ]]; then
-              echo "docs change detected, running downstream steps"
-            else
-              echo "detected non-docs changes, halting job now"
-              circleci-agent step halt
-            fi
+      - skip-if-not-dir:
+          dir: docs
 
-  skip-if-webui-only:
+  skip-if-only-webui:
     steps:
-      - run: tools/scripts/retry.sh git fetch upstream
-      - run:
-          name: check for webui-only changes # must be run after skip-if-docs-only
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = "webui" ] ; then
-              echo "webui-only change detected, halting job now"
-              circleci-agent step halt
-            else
-              echo "detected non-webui-only changes: $DIFF_DIRS"
-            fi
+      - skip-if-only-dir:
+          dir: webui
 
-  skip-if-not-shared:
+  skip-if-only-github:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined
-      - run: tools/scripts/retry.sh git fetch upstream
-      - run:
-          name: check for shared changes
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
-            # check "shared" is in the list of changed directories
-            if [[ "$DIFF_DIRS" == *"shared"* ]]; then
-              echo "shared code changed, running downstream test"
-            else
-              echo "shared code not affected, halting job now"
-              circleci-agent step halt
-            fi
-
-  skip-if-github-only:
-    steps:
-      - run: tools/scripts/retry.sh git fetch upstream
-      - run:
-          name: check for github-only changes
-          command: |
-            MERGE_BASE="$(git merge-base upstream/main HEAD)"
-            DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
-            if [ "$DIFF_DIRS" = ".github" ] ; then
-              echo "github-only change detected, halting job now"
-              circleci-agent step halt
-            else
-              echo "detected changes outside of .github: $DIFF_DIRS"
-            fi
+      - skip-if-only-dir:
+          dir: .github
 
   set-slack-user-id:
     steps:
@@ -247,7 +225,6 @@ commands:
       - run: tools/scripts/retry.sh curl --retry-connrefused --retry 10 https://dl.google.com/go/go1.22.0.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
       - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
       - run: echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
-
 
   install-protoc:
     steps:
@@ -567,39 +544,22 @@ commands:
                 port: <<parameters.master-port>>
 
       - run:
-          name: Split tests
-          working_directory: ~/project/e2e_tests
-          command: |
-            # Preselect the files that contain any matching tests to minimize how wrong CircleCI's
-            # splitting can get things. (The presence of files with no tests can cause the files
-            # with tests to be bunched up incorrectly, making the split suboptimal.)
-
-            # `--setup-plan` tells pytest to not run any tests but instead print out a description
-            # of the tests that would be run, along with some other stuff. Each file containing
-            # any selected tests is printed on a line by itself, except for (for some reason) a
-            # single trailing space.
-            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
-
-            echo 'All files with tests matching mark "<<parameters.mark>>":'
-            sed 's/^/- /' </tmp/all-relevant-files
-
-            circleci tests split --split-by=timings < /tmp/all-relevant-files > /tmp/tests-to-run
-            echo "Running tests from these files:"
-            sed 's/^/- /' </tmp/tests-to-run
-
-            if [ ! -s /tmp/tests-to-run ]; then
-              echo 'No test files found!'
-              exit 1
-            fi
-
-      - run:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
           no_output_timeout: 30m
           command: |
-            DD_CIVISIBILITY_AGENTLESS_ENABLED=true DD_SITE='datadoghq.com' DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
-            DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            pytest -vv -s \
+            pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
+            if [ ! -s /tmp/all-relevant-files ]; then
+              echo 'No test files found!'
+              exit 1
+            fi
+
+            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_SITE='datadoghq.com' \
+            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
+            DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
+            xargs pytest -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
@@ -608,8 +568,8 @@ commands:
             --master-port="<<parameters.master-port>>" \
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>> \
-            $(< /tmp/tests-to-run)
+            <<parameters.extra-pytest-flags>>" \
+            --verbose --split-by=timings
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
@@ -689,8 +649,7 @@ commands:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
       - when:
-          condition:
-            << parameters.extra-tags >>
+          condition: << parameters.extra-tags >>
           steps:
             - run:
                 name: Add extra tags
@@ -1124,7 +1083,6 @@ commands:
           no_output_timeout: 30m
           command: make package
 
-
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1247,6 +1205,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
+      - add-and-fetch-upstream
       - skip-if-not-docs
       - attach_workspace:
           at: .
@@ -1269,9 +1228,10 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - reinstall-go
       - attach_workspace:
           at: .
@@ -1302,9 +1262,10 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1443,8 +1404,9 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
       - setup-python-venv:
           install-python: false
           extra-requirements-file: "bindings/requirements.txt"
@@ -1459,9 +1421,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - setup-python-venv:
           install-python: false
           extra-requirements-file: "bindings/requirements.txt"
@@ -1487,9 +1450,10 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
@@ -1512,8 +1476,9 @@ jobs:
       - image: cimg/node:20.9.0
     steps:
       - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
       - react-get-deps
       - run: make -C webui/react check
       - store_artifacts:
@@ -1529,8 +1494,9 @@ jobs:
     resource_class: large
     steps:
       - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
       - react-get-deps
       - run: |
           if <<parameters.dev-mode>>; then
@@ -1549,8 +1515,9 @@ jobs:
     resource_class: large
     steps:
       - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
       - run: apt-get update && apt-get -y install make
       - react-get-deps
       - run: make -C webui/react get-playwright-ci
@@ -1571,8 +1538,9 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout-with-sm
-      - skip-if-docs-only
-      - skip-if-github-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
       - react-get-deps
       - run: make -C webui/react test-ci
       - codecov/upload:
@@ -1583,23 +1551,14 @@ jobs:
       - store_artifacts:
           path: webui/react/coverage
 
-  test-intg-downstream:
-    docker:
-      - image: cimg/node:20.9.0
-    steps:
-      - checkout-with-sm
-      - skip-if-not-shared
-      - setup-python-venv:
-          executor: <<pipeline.parameters.machine-image>>
-      - run: make -C webui/react test-shared
-
   lint-sql:
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-webui
       - setup-python-venv:
           install-python: false
           extras-requires: "sqlfluff"
@@ -1614,9 +1573,10 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - reinstall-go
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
@@ -1632,9 +1592,10 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - reinstall-go
       - restore_cache:
           keys:
@@ -1674,9 +1635,10 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1701,9 +1663,10 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1726,9 +1689,10 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1748,9 +1712,10 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1761,9 +1726,10 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1797,9 +1763,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1817,9 +1784,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - install-codecov
       - setup-python-venv:
           install-python: false
@@ -1834,7 +1802,6 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-
   test-unit-harness-gpu:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
@@ -1842,9 +1809,10 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
@@ -1863,9 +1831,10 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
@@ -1883,9 +1852,10 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
@@ -1897,7 +1867,6 @@ jobs:
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
 
-
   test-unit-harness-gpu-parallel:
     docker:
       - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.29.1
@@ -1905,9 +1874,10 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
@@ -1926,9 +1896,10 @@ jobs:
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
@@ -1945,9 +1916,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - install-codecov
       - setup-python-venv:
           install-python: false
@@ -1967,9 +1939,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - install-codecov
       - setup-python-venv:
           install-python: false
@@ -1990,9 +1963,10 @@ jobs:
     resource_class: medium+
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - install-codecov
       - setup-python-venv:
           install-python: false
@@ -2014,9 +1988,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - setup-python-venv:
           install-python: false
           determined: false
@@ -2101,9 +2076,10 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
 
@@ -2411,9 +2387,10 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2516,9 +2493,10 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2584,9 +2562,10 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - run: docker load --input build/master.image
@@ -2616,9 +2595,10 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - run: docker load --input build/master.image
@@ -2628,7 +2608,6 @@ jobs:
           determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
-
 
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
@@ -2659,9 +2638,10 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2749,8 +2729,9 @@ workflows:
           matrix:
             parameters:
               executor-name:
-                ["python-38", "python-39", "win/default"]
-
+                - "python-38"
+                - "python-39"
+                - "win/default"
   test-unit:
     jobs:
       - test-unit-react
@@ -2797,8 +2778,6 @@ workflows:
 
   test-go:
     jobs:
-      # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
-      # - test-intg-downstream
       - test-intg-master:
           context: storage-unit-tests
       - test-intg-agent

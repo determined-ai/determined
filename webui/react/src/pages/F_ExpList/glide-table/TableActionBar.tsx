@@ -16,6 +16,7 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import TableFilter from 'components/FilterForm/TableFilter';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -78,7 +79,7 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  excludedExperimentIds?: Set<number>;
+  excludedExperimentIds?: Map<number, unknown>;
   experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
@@ -99,7 +100,8 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectAll: boolean;
-  selectedExperimentIds: Set<number>;
+  selectedExperimentIds: Map<number, unknown>;
+  selection: SelectionType;
   sorts: Sort[];
   tableViewMode: TableViewMode;
   total: Loadable<number>;
@@ -127,6 +129,7 @@ const TableActionBar: React.FC<Props> = ({
   project,
   projectColumns,
   rowHeight,
+  selection,
   selectAll,
   selectedExperimentIds,
   sorts,
@@ -141,7 +144,10 @@ const TableActionBar: React.FC<Props> = ({
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
-  const experimentIds = useMemo(() => Array.from(selectedExperimentIds), [selectedExperimentIds]);
+  const experimentIds = useMemo(
+    () => Array.from(selectedExperimentIds.keys()),
+    [selectedExperimentIds],
+  );
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce(
@@ -158,7 +164,7 @@ const TableActionBar: React.FC<Props> = ({
 
   const selectedExperiments = useMemo(
     () =>
-      Array.from(selectedExperimentIds).flatMap((id) =>
+      Array.from(selectedExperimentIds.keys()).flatMap((id) =>
         id in experimentMap ? [experimentMap[id]] : [],
       ),
     [experimentMap, selectedExperimentIds],
@@ -182,7 +188,10 @@ const TableActionBar: React.FC<Props> = ({
         filters: selectAll ? filters : undefined,
       };
       if (excludedExperimentIds?.size) {
-        params.filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+        params.filters = {
+          ...filters,
+          excludedExperimentIds: Array.from(excludedExperimentIds.keys()),
+        };
       }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
@@ -338,20 +347,20 @@ const TableActionBar: React.FC<Props> = ({
           'experiment',
         )}`;
 
-        if (selectAll) {
-          const all = !excludedExperimentIds?.size ? 'All ' : '';
+        if (selection.type === 'ALL_EXCEPT') {
+          const all = selection.exclusions.length === 0 ? 'All ' : '';
           const totalSelected =
-            (totalExperiments - (excludedExperimentIds?.size ?? 0)).toLocaleString() + ' ';
+            (totalExperiments - (selection.exclusions.length ?? 0)).toLocaleString() + ' ';
           label = `${all}${totalSelected}experiments selected`;
-        } else if (selectedExperimentIds.size > 0) {
-          label = `${selectedExperimentIds.size} of ${label} selected`;
+        } else if (selection.selections.length > 0) {
+          label = `${selection.selections.length} of ${label} selected`;
         }
 
         return label;
       },
       NotLoaded: () => 'Loading experiments...',
     });
-  }, [excludedExperimentIds, selectAll, selectedExperimentIds, total]);
+  }, [selection, total]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 

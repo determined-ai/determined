@@ -450,22 +450,41 @@ To list all existing cluster roles and the concrete permissions they include:
 
    det rbac list-roles
 
+``ModelRegistryViewer``
+=======================
+
+The ``ModelRegistryViewer`` role contains the sole permission to view the Model Registry within its
+scope.
+
 ``Viewer``
 ==========
 
-The ``Viewer`` role allows a user to see workspaces, projects, notebooks, TensorBoards, shells,
-commands (NTSC), and experiments, as well as experiment metadata and artifacts within its scope.
+The ``Viewer`` role supersedes the ``ModelRegistryViewer`` role and includes permissions to see
+workspaces, projects, notebooks, TensorBoards, shells, commands (NTSC), and experiments, as well as
+experiment metadata and artifacts within its scope.
+
+``EditorRestricted``
+====================
+
+The ``EditorRestricted`` role supersedes the ``Viewer`` role and includes permissions to create,
+edit, or delete projects and experiments within its scope.
 
 ``Editor``
 ==========
 
-The ``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or
-delete projects, NTSC, and experiments within its scope.
+The ``Editor`` role supersedes the ``EditorRestricted`` role and includes permissions to create or
+update NTSC tasks within its scope.
+
+-  ``EditorRestricted`` users can still open and use scoped JupyterLab notebooks and perform all
+   experiment-related jobs, just like those with the ``Editor`` role. The only additional
+   permissions granted by the ``Editor`` role include the ability to create notebooks, TensorBoards,
+   shells, and commands (NTSC tasks), as well as the permission to update these tasks, such as
+   changing the task's priority or deleting it.
 
 ``WorkspaceAdmin``
 ==================
 
-The ``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or
+The ``WorkspaceAdmin`` role supersedes the ``Editor`` role and includes permissions to edit or
 delete workspaces, and modify role assignments within its scope.
 
 Users who take this role on a particular workspace can assign roles to other users on this

@@ -1,6 +1,7 @@
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
+import { escapeRegExp } from 'lodash';
 import React, { useCallback, useId } from 'react';
 
 import { deleteProject } from 'services/api';
@@ -68,7 +69,7 @@ const ProjectDeleteModalComponent: React.FC<Props> = ({ onClose, project, onDele
           rules={[
             {
               message: 'Please type the project name to confirm',
-              pattern: new RegExp(`^${project.name}$`),
+              pattern: new RegExp(`^${escapeRegExp(project.name)}$`),
               required: true,
             },
           ]}>
