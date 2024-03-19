@@ -824,6 +824,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
             break;
           case V1LocationType.UNSPECIFIED:
+          default:
             break;
         }
         switch (currentColumn.type) {
