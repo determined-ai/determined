@@ -21,7 +21,7 @@ from determined.common.api._rbac import (
     workspace_by_name,
     not_found_errs,
 )
-from determined.common.api.authentication import UsernameTokenPair, salt_and_hash
+from determined.common.api.authentication import salt_and_hash
 from determined.common.api.logs import (
     pprint_logs,
     trial_logs,

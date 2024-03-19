@@ -76,9 +76,9 @@ def log_in_user(args: Namespace) -> None:
     password = getpass.getpass(message)
 
     token_store = authentication.TokenStore(args.master)
-    utp = authentication.login(args.master, username, password, cli.cert)
-    token_store.set_token(utp.username, utp.token)
-    token_store.set_active(utp.username)
+    sess = authentication.login(args.master, username, password, cli.cert)
+    token_store.set_token(sess.username, sess.token)
+    token_store.set_active(sess.username)
 
     # check for maintenance messages
     resp = bindings.get_GetMaster(setup_session(parsed_args))
@@ -132,9 +132,9 @@ def change_password(args: Namespace) -> None:
     # password change so that the user doesn't have to do so manually.
     if args.target_user is None:
         token_store = authentication.TokenStore(args.master)
-        utp = authentication.login(args.master, username, password, cli.cert)
-        token_store.set_token(utp.username, utp.token)
-        token_store.set_active(utp.username)
+        sess = authentication.login(args.master, username, password, cli.cert)
+        token_store.set_token(sess.username, sess.token)
+        token_store.set_active(sess.username)
 
 
 def link_with_agent_user(args: Namespace) -> None:

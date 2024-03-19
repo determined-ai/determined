@@ -2,6 +2,7 @@
 check_ready_logs.py accepts a task's logs as STDIN, runs a regex to determine and report readiness.
 Callers should be aware it may terminate early, and stop reading from STDIN.
 """
+
 import argparse
 import os
 import re
@@ -36,8 +37,7 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
     cert = certs.default_load(master_url)
     # This only runs on-cluster, so it is expected the username and session token are present in the
     # environment.
-    utp = authentication.login_with_cache(master_url, cert=cert)
-    sess = api.Session(master_url, utp, cert)
+    sess = authentication.login_with_cache(master_url, cert=cert)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
     for line in sys.stdin:
         if ready.match(line):
@@ -46,6 +46,7 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
         if waiting and waiting.match(line):
             post_ready(sess, allocation_id, "waiting")
             return
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Read STDIN for a match and mark a task as ready")
