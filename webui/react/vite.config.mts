@@ -131,6 +131,14 @@ export default defineConfig(({ mode }) => ({
   ],
   preview: {
     port: 3001,
+    proxy: {
+      '/api': { target: webpackProxyUrl},
+      '/proxy': { target: webpackProxyUrl},
+      '/stream': {
+        target: websocketProxyUrl,
+        ws: true,
+      },
+    },
     strictPort: true,
   },
   resolve: {
