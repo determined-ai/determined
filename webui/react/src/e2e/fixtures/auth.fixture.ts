@@ -22,7 +22,10 @@ export class AuthFixture {
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
     await this.signInPage['determinedAuth'] // ah dammit this doesnt work
-
+    // TODO subcomponenets need to turn into a dict. something like this
+    // this.signInPage.sc.determinedAuth
+    // but then i need to make sure the determinedAuth is properly typed to DeterminedAuth and not BaseComponent
+    
     await this.#page.getByPlaceholder('username').fill(this.#USERNAME);
     await this.#page.getByPlaceholder('password').fill(this.#PASSWORD);
     await this.#page.getByRole('button', { name: 'Sign In' }).click();
