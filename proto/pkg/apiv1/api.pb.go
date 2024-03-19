@@ -79,6 +79,9 @@ var file_determined_api_v1_api_proto_rawDesc = []byte{
 	0x1a, 0x24, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x61, 0x70, 0x69,
 	0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x70, 0x6f, 0x6f, 0x6c,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xb8, 0xbf, 0x02, 0x0a, 0x0a, 0x44, 0x65, 0x74, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xa1, 0xba, 0x02, 0x0a, 0x0a, 0x44, 0x65, 0x74, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0x93, 0xb8, 0x02, 0x0a, 0x0a, 0x44, 0x65, 0x74, 0x65,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xeb, 0xb8, 0x02, 0x0a, 0x0a, 0x44, 0x65, 0x74, 0x65,
 	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x12, 0x7e, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12,
 	0x1f, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69,
 	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
@@ -4263,6 +4266,10 @@ type DeterminedClient interface {
 	PauseRuns(ctx context.Context, in *PauseRunsRequest, opts ...grpc.CallOption) (*PauseRunsResponse, error)
 	// Unpause experiment associated with provided runs.
 	ResumeRuns(ctx context.Context, in *ResumeRunsRequest, opts ...grpc.CallOption) (*ResumeRunsResponse, error)
+	// Get run metadata.
+	GetRunMetadata(ctx context.Context, in *GetRunMetadataRequest, opts ...grpc.CallOption) (*GetRunMetadataResponse, error)
+	// Update run metadata.
+	PostRunMetadata(ctx context.Context, in *PostRunMetadataRequest, opts ...grpc.CallOption) (*PostRunMetadataResponse, error)
 }
 
 type determinedClient struct {
@@ -6780,6 +6787,24 @@ func (c *determinedClient) ResumeRuns(ctx context.Context, in *ResumeRunsRequest
 	return out, nil
 }
 
+func (c *determinedClient) GetRunMetadata(ctx context.Context, in *GetRunMetadataRequest, opts ...grpc.CallOption) (*GetRunMetadataResponse, error) {
+	out := new(GetRunMetadataResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/GetRunMetadata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *determinedClient) PostRunMetadata(ctx context.Context, in *PostRunMetadataRequest, opts ...grpc.CallOption) (*PostRunMetadataResponse, error) {
+	out := new(PostRunMetadataResponse)
+	err := c.cc.Invoke(ctx, "/determined.api.v1.Determined/PostRunMetadata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DeterminedServer is the server API for Determined service.
 type DeterminedServer interface {
 	// Login the user.
@@ -7310,6 +7335,10 @@ type DeterminedServer interface {
 	PauseRuns(context.Context, *PauseRunsRequest) (*PauseRunsResponse, error)
 	// Unpause experiment associated with provided runs.
 	ResumeRuns(context.Context, *ResumeRunsRequest) (*ResumeRunsResponse, error)
+	// Get run metadata.
+	GetRunMetadata(context.Context, *GetRunMetadataRequest) (*GetRunMetadataResponse, error)
+	// Update run metadata.
+	PostRunMetadata(context.Context, *PostRunMetadataRequest) (*PostRunMetadataResponse, error)
 }
 
 // UnimplementedDeterminedServer can be embedded to have forward compatible implementations.
@@ -8041,6 +8070,12 @@ func (*UnimplementedDeterminedServer) PauseRuns(context.Context, *PauseRunsReque
 }
 func (*UnimplementedDeterminedServer) ResumeRuns(context.Context, *ResumeRunsRequest) (*ResumeRunsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResumeRuns not implemented")
+}
+func (*UnimplementedDeterminedServer) GetRunMetadata(context.Context, *GetRunMetadataRequest) (*GetRunMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRunMetadata not implemented")
+}
+func (*UnimplementedDeterminedServer) PostRunMetadata(context.Context, *PostRunMetadataRequest) (*PostRunMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostRunMetadata not implemented")
 }
 
 func RegisterDeterminedServer(s *grpc.Server, srv DeterminedServer) {
@@ -12445,6 +12480,42 @@ func _Determined_ResumeRuns_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Determined_GetRunMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRunMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeterminedServer).GetRunMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/determined.api.v1.Determined/GetRunMetadata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeterminedServer).GetRunMetadata(ctx, req.(*GetRunMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Determined_PostRunMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostRunMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DeterminedServer).PostRunMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/determined.api.v1.Determined/PostRunMetadata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DeterminedServer).PostRunMetadata(ctx, req.(*PostRunMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Determined_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "determined.api.v1.Determined",
 	HandlerType: (*DeterminedServer)(nil),
@@ -13360,6 +13431,14 @@ var _Determined_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResumeRuns",
 			Handler:    _Determined_ResumeRuns_Handler,
+		},
+		{
+			MethodName: "GetRunMetadata",
+			Handler:    _Determined_GetRunMetadata_Handler,
+		},
+		{
+			MethodName: "PostRunMetadata",
+			Handler:    _Determined_PostRunMetadata_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

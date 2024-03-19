@@ -140,7 +140,8 @@ SELECT
   ) AS wall_clock_time,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
   -- so trials in terminal state have restarts = max + 1
-  LEAST(t.restarts, max_restarts) as restarts
+  LEAST(t.restarts, max_restarts) as restarts,
+  t.metadata as metadata
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

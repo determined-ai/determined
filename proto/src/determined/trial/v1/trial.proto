@@ -146,6 +146,9 @@ message Trial {
   double searcher_metric_value = 21;
   // Number of days to retain logs for.
   optional int32 log_retention_days = 22;
+  // metadata associated with the trial (based off the metadata stored in the
+  // run).
+  optional google.protobuf.Struct metadata = 23;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
