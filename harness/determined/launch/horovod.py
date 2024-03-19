@@ -4,6 +4,7 @@ autohorovod.py is the default launch layer for Determined.
 It launches the entrypoint script under horovodrun when slots_per_trial>1, or as a regular
 subprocess otherwise.
 """
+
 import argparse
 import logging
 import os
@@ -14,7 +15,6 @@ from typing import List, Tuple
 
 import determined as det
 from determined import horovod, util
-from determined.common import api
 from determined.common.api import authentication, certs
 from determined.constants import DTRAIN_SSH_PORT
 
@@ -129,8 +129,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
         # Mark sshd containers as daemon resources that the master should kill when all non-daemon
         # containers (horovodrun, in this case) have exited.
         cert = certs.default_load(info.master_url)
-        utp = authentication.login_with_cache(info.master_url, cert=cert)
-        sess = api.Session(info.master_url, utp, cert)
+        sess = authentication.login_with_cache(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon")
 
         pid_server_cmd, run_sshd_command = create_sshd_worker_cmd(

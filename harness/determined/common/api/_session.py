@@ -1,6 +1,7 @@
 import abc
+import copy
 import json as _json
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union
 
 import requests
 import urllib3
@@ -8,9 +9,10 @@ import urllib3
 import determined as det
 from determined.common import api
 from determined.common import requests as det_requests
-from determined.common.api import authentication, certs, errors
+from determined.common.api import certs, errors
 
 GeneralizedRetry = Union[urllib3.util.retry.Retry, int]
+T = TypeVar("T", bound="BaseSession")
 
 # Default retry logic
 DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
@@ -170,6 +172,12 @@ class BaseSession(metaclass=abc.ABCMeta):
     ) -> requests.Response:
         return self._do_request("PUT", path, params, json, data, headers, timeout, False)
 
+    def with_retry(self: T, max_retries: GeneralizedRetry) -> T:
+        """Generate a new session with a different retry policy."""
+        new_session = copy.copy(self)
+        new_session._max_retries = max_retries
+        return new_session
+
 
 class UnauthSession(BaseSession):
     """
@@ -229,7 +237,8 @@ class Session(BaseSession):
     def __init__(
         self,
         master: str,
-        utp: authentication.UsernameTokenPair,
+        username: str,
+        token: str,
         cert: Optional[certs.Cert],
         max_retries: Optional[GeneralizedRetry] = DEFAULT_MAX_RETRIES,
     ) -> None:
@@ -241,8 +250,8 @@ class Session(BaseSession):
             )
 
         self.master = master
-        self.username = utp.username
-        self.token = utp.token
+        self.username = username
+        self.token = token
         self.cert = cert
         self._max_retries = max_retries
 

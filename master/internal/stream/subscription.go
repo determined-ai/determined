@@ -15,6 +15,7 @@ import (
 // streamable type.
 type SubscriptionSet struct {
 	Projects *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
+	Models   *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 }
 
 // subscriptionState contains per-type subscription state.
@@ -26,6 +27,7 @@ type subscriptionState[T stream.Msg, S any] struct {
 // SubscriptionSpecSet is the set of subscription specs that can be sent in startup message.
 type SubscriptionSpecSet struct {
 	Projects *ProjectSubscriptionSpec `json:"projects"`
+	Models   *ModelSubscriptionSpec   `json:"models"`
 }
 
 // CollectStartupMsgsFunc collects messages that were missed prior to startup.
@@ -48,6 +50,7 @@ func NewSubscriptionSet(
 ) (SubscriptionSet, error) {
 	var err error
 	var projectSubscriptionState *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
+	var modelSubscriptionState *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 
 	if spec.Projects != nil {
 		projectSubscriptionState = &subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]{
@@ -60,9 +63,21 @@ func NewSubscriptionSet(
 			ProjectCollectStartupMsgs,
 		}
 	}
+	if spec.Models != nil {
+		modelSubscriptionState = &subscriptionState[*ModelMsg, ModelSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Models,
+				newPermFilter(ctx, user, ModelMakePermissionFilter, &err),
+				newFilter(spec.Models, ModelMakeFilter, &err),
+			),
+			ModelCollectStartupMsgs,
+		}
+	}
 
 	return SubscriptionSet{
 		Projects: projectSubscriptionState,
+		Models:   modelSubscriptionState,
 	}, err
 }
 
@@ -80,6 +95,13 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 			ctx, user, &msgs, err,
 			ss.Projects, known.Projects,
 			sub.Projects, ss.Projects.Subscription.Streamer.PrepareFn,
+		)
+	}
+	if ss.Models != nil {
+		err = startup(
+			ctx, user, &msgs, err,
+			ss.Models, known.Models,
+			sub.Models, ss.Models.Subscription.Streamer.PrepareFn,
 		)
 	}
 	return msgs, err
