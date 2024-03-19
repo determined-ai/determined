@@ -3153,6 +3153,200 @@ export const V1FittingPolicy = {
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
 /**
+ * Flat run respresentation.
+ * @export
+ * @interface V1FlatRun
+ */
+export interface V1FlatRun {
+    /**
+     * The id of the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    id: number;
+    /**
+     * The time the run was started.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    startTime: Date | DateString;
+    /**
+     * The time the run ended.
+     * @type {Date | DateString}
+     * @memberof V1FlatRun
+     */
+    endTime?: Date | DateString;
+    /**
+     * The current state of the run(trial).
+     * @type {Trialv1State}
+     * @memberof V1FlatRun
+     */
+    state: Trialv1State;
+    /**
+     * The tags of the associated experiment. TODO(aaron.amanuel): Create add/remove tags for runs.
+     * @type {Array<string>}
+     * @memberof V1FlatRun
+     */
+    labels?: Array<string>;
+    /**
+     * The total size of checkpoints.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    checkpointSize: string;
+    /**
+     * The count of checkpoints.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    checkpointCount: number;
+    /**
+     * Signed searcher metrics value.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    searcherMetricValue?: number;
+    /**
+     * The id of external run
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    externalRunId?: number;
+    /**
+     * Trial hyperparameters.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    hyperparameters?: string;
+    /**
+     * summary metrics.
+     * @type {any}
+     * @memberof V1FlatRun
+     */
+    summaryMetrics?: any;
+    /**
+     * The id of the user who created the run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    userId?: number;
+    /**
+     * Time in seconds which the run ran or has been running.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    duration?: number;
+    /**
+     * The id of the project associated with this run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    projectId: number;
+    /**
+     * The name of the project associated with this run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    projectName: string;
+    /**
+     * The id of the workspace associated with this run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    workspaceId: number;
+    /**
+     * The name of the workspace associated with this run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    workspaceName: string;
+    /**
+     * The archived status of the parent project (can be inherited from workspace).
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    parentArchived: boolean;
+    /**
+     * Data related the the experiment associated with this run.
+     * @type {V1FlatRunExperiment}
+     * @memberof V1FlatRun
+     */
+    experiment?: V1FlatRunExperiment;
+}
+/**
+ * 
+ * @export
+ * @interface V1FlatRunExperiment
+ */
+export interface V1FlatRunExperiment {
+    /**
+     * The id of the experiment linked to the run.
+     * @type {number}
+     * @memberof V1FlatRunExperiment
+     */
+    id: number;
+    /**
+     * The type of searcher for the experiment.
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    searcherType: string;
+    /**
+     * The searcher metric name for the experiment.
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    searcherMetric: string;
+    /**
+     * Original id of a forked or continued experiment.
+     * @type {number}
+     * @memberof V1FlatRunExperiment
+     */
+    forkedFrom: number;
+    /**
+     * The id of external experiment
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    externalExperimentId?: string;
+    /**
+     * The resource pool the experiment was created in.
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    resourcePool: string;
+    /**
+     * The current progress of a running experiment.
+     * @type {number}
+     * @memberof V1FlatRunExperiment
+     */
+    progress: number;
+    /**
+     * The description of the experiment.
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    description: string;
+    /**
+     * The experiment name.
+     * @type {string}
+     * @memberof V1FlatRunExperiment
+     */
+    name: string;
+    /**
+     * Unmanaged experiments are detached.
+     * @type {boolean}
+     * @memberof V1FlatRunExperiment
+     */
+    unmanaged: boolean;
+    /**
+     * True if the associated experiment is a multitrial experiment
+     * @type {boolean}
+     * @memberof V1FlatRunExperiment
+     */
+    isMultitrial: boolean;
+}
+/**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
  * @export
  * @enum {string}
@@ -5561,7 +5755,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+ * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric  - LOCATION_TYPE_RUN: Column is located on the run  - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
  * @export
  * @enum {string}
  */
@@ -5572,6 +5766,8 @@ export const V1LocationType = {
     VALIDATIONS: 'LOCATION_TYPE_VALIDATIONS',
     TRAINING: 'LOCATION_TYPE_TRAINING',
     CUSTOMMETRIC: 'LOCATION_TYPE_CUSTOM_METRIC',
+    RUN: 'LOCATION_TYPE_RUN',
+    RUNHYPERPARAMETERS: 'LOCATION_TYPE_RUN_HYPERPARAMETERS',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
@@ -9262,6 +9458,25 @@ export interface V1SearchRolesAssignableToScopeResponse {
      * @memberof V1SearchRolesAssignableToScopeResponse
      */
     roles?: Array<V1Role>;
+}
+/**
+ * Response to SearchRunsResponse.
+ * @export
+ * @interface V1SearchRunsResponse
+ */
+export interface V1SearchRunsResponse {
+    /**
+     * The list of returned runs.
+     * @type {Array<V1FlatRun>}
+     * @memberof V1SearchRunsResponse
+     */
+    runs: Array<V1FlatRun>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1SearchRunsResponse
+     */
+    pagination: V1Pagination;
 }
 /**
  * Set the priority of the requested command.
@@ -19888,6 +20103,61 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/runs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (projectId !== undefined) {
+                localVarQueryParameter['projectId'] = projectId
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (sort !== undefined) {
+                localVarQueryParameter['sort'] = sort
+            }
+            
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -21516,6 +21786,29 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchRuns(projectId, offset, limit, sort, filter, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Start (an unmanaged) trial.
          * @param {number} trialId Trial id.
          * @param {V1StartTrialRequest} body
@@ -22364,6 +22657,20 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
             return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {number} [projectId] ID of the project to look at.
+         * @param {number} [offset] How many experiments to skip before including in the results.
+         * @param {number} [limit] How many results to show.
+         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+         * @param {string} [filter] Filter expression.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+            return InternalApiFp(configuration).searchRuns(projectId, offset, limit, sort, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -23278,6 +23585,22 @@ export class InternalApi extends BaseAPI {
      */
     public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
         return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of runs.
+     * @param {number} [projectId] ID of the project to look at.
+     * @param {number} [offset] How many experiments to skip before including in the results.
+     * @param {number} [limit] How many results to show.
+     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+     * @param {string} [filter] Filter expression.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
+        return InternalApiFp(this.configuration).searchRuns(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
     }
     
     /**
