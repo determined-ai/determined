@@ -26,7 +26,16 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' }
+    },
+    
+    {
+      name: 'chromium-no-cors',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome', 
+      bypassCSP: true,
+      launchOptions: {
+        args: ['--disable-web-security']
+      }},
     },
 
     {
@@ -78,7 +87,8 @@ export default defineConfig({
     baseURL: 'http://localhost:3001/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
+    video: 'retain-on-failure'
   },
 
   /* Run your local dev server before starting the tests */
