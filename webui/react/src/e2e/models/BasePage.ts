@@ -18,6 +18,11 @@ export abstract class BasePage {
   }
 
   /**
+   * The playwright locator method from this model's page
+   */
+  get pwLocatorFunction() { return this._page.locator }
+
+  /**
    * Returns this so we can chain.
    *
    * @remarks

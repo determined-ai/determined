@@ -40,27 +40,17 @@ export class BaseComponent {
   }
 
   /**
-   * Returns this object's Locator.
-   *
-   * @remarks
-   * We use this method to call this.loc.locate().
+   * The playwright locator method from this model's locator
    */
-  get pwLocator(): Locator {
-    // only set this._locator once. maybe consider redefining it as readonly
+  get pwLocatorFunction() { return this.locateSelf.locator }
+
+  /**
+   * The playwright Locator that represents this model
+   */
+  get locateSelf(): Locator {
     if (typeof this._locator === 'undefined') {
-      // this feels contrived. maybe we can have each parent return the method instead of a locator on self
-      if (this._parent instanceof BasePage) {
-        this._locator = this._parent._page.locator(this.#selector);
-      } else if (this._parent instanceof BaseReactFragment) {
-        const ancestor = this._parent._parent
-        if (ancestor instanceof BaseComponent) {
-          this._locator = ancestor.pwLocator.locator(this.#selector)
-        } else {
-          this._locator = ancestor._page.locator(this.#selector);
-        }
-      } else {
-        this._locator = this._parent.pwLocator.locator(this.#selector);
-      }
+      this._locator = this._parent.pwLocatorFunction(this.#selector);
+      Object.freeze(this._locator)
     }
     return this._locator;
   }
@@ -71,9 +61,23 @@ export class BaseComponent {
  * 
  * @remarks
  * React Fragment Components are special in that they group elements, but not under a dir.
+ * Fragments cannot have selectors
  * 
  * @param {Object} obj
  * @param {BasePage | BaseComponent} obj.parent - The parent used to locate this BaseComponent
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class BaseReactFragment extends BaseComponent { }
+export class BaseReactFragment extends BaseComponent {
+  // we never use the defaultSelector, but there are guardrails enforcing it be set
+  override readonly defaultSelector: string = '';
+
+  constructor({ parent }: { parent: BasePage | BaseComponent}) {
+    super({parent: parent})
+  }
+  /**
+   * The playwright Locator that represents this model
+   * 
+   * @remarks
+   * Since this model is a fragment, we simply get the parent's locator
+   */
+  override get pwLocatorFunction() { return this._parent.pwLocatorFunction }
+}

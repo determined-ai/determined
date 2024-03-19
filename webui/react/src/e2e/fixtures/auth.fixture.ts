@@ -1,5 +1,4 @@
 import { Page } from '@playwright/test';
-import { DeterminedAuth } from 'e2e/models/components/DeterminedAuth';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 export class AuthFixture {
@@ -22,7 +21,7 @@ export class AuthFixture {
   }
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
-    const auth = this.signInPage.detAuth.username.pwLocator.fill(this.#USERNAME)
+    const auth = this.signInPage.detAuth.username.locateSelf.fill(this.#USERNAME)
 
     // TODO subcomponents - kind of annoying to need to cast here. maybe a helper can help
     
