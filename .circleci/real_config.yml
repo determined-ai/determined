@@ -982,9 +982,9 @@ commands:
         default: ""
       det-version:
         type: string
-      region:
+      zone:
         type: string
-        default: ${GKE_REGION}
+        default: ${GKE_ZONE}
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         description: The gcloud service key
@@ -1068,7 +1068,7 @@ commands:
             echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
           name: Install GKE auth plugin
       - run:
-          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --zone <<parameters.zone>>
           name: Get Kubeconfig
       - run: 
           command: kubectl create namespace ${GENERATED_NAMESPACE}
