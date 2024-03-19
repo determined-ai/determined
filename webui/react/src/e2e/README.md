@@ -27,8 +27,7 @@ If you don't want to use dev cluster, you can use det deploy to initiate the bac
 2. `SERVER_ADDRESS="http://localhost:3001" npm run build --prefix webui/react`
 3. Optional if you want an experiment created for the test: `det experiment create ./examples/tutorials/mnist_pytorch/const.yaml ./examples/tutorials/mnist_pytorch/`
 4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if CI=true
-4. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
-
+5. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
 
 ## CI
 
