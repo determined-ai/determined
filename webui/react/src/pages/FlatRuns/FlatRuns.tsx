@@ -18,7 +18,7 @@ import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -34,13 +34,12 @@ import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { Error } from 'pages/F_ExpList/glide-table/exceptions';
 import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
-import { handlePath, paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { getProjectColumns } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
-import { AnyMouseEvent } from 'utils/routes';
 
 import { getColumnDefs, RunColumn, runColumns, searcherMetricsValColumn } from './columns';
 import css from './FlatRuns.module.scss';
@@ -114,6 +113,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
   const users = useObservable(usersStore.getUsers());
+
+  const navigate = useNavigate();
 
   const colorMap = useGlasbey(settings.selectedRuns);
   const [scrollPositionSetCount] = useState(observable(0));
@@ -531,9 +532,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
             onContextMenuComplete={handleContextMenuComplete}
-            onLinkClick={(href) => {
-              handlePath(event as unknown as AnyMouseEvent, { path: href });
-            }}
+            onNavigate={(path) => navigate(path)}
           />
           {showPagination && (
             <Row>
