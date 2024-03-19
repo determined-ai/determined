@@ -91,10 +91,13 @@ import {
 } from './glide-table/contextMenu';
 import GlideTable, {
   DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
   SCROLL_SET_COUNT_NEEDED,
+  SelectionType,
   Sort,
-  validSort,
   ValidSort,
+  validSort,
 } from './glide-table/GlideTable';
 
 interface Props {
@@ -102,13 +105,6 @@ interface Props {
 }
 
 type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
-
-type RangelessSelectionType = 'add-all' | 'remove-all';
-type SelectionType = 'add' | 'remove' | 'set';
-export interface HandleSelectionChangeType {
-  (selectionType: RangelessSelectionType): void;
-  (selectionType: SelectionType, range: [number, number]): void;
-}
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
