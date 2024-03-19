@@ -1,4 +1,5 @@
 import { type Locator } from '@playwright/test';
+import { BasePage } from './BasePage';
 
 /**
  * Alias for type that has a function "locator" which takes a string and gives a Locator
@@ -12,7 +13,7 @@ type HasLocator = { locator: (arg0: string) => Locator }
  */
 type GetsLocator = { locator: HasLocator }
 
-export abstract class canBeParent implements GetsLocator {
+export abstract class canBeParent {
 
   // all parents can have subComponents
   readonly subComponents: Map<String,BaseComponent> = new Map()
@@ -37,22 +38,6 @@ export abstract class canBeParent implements GetsLocator {
     });
   }
 
-  // Idenity functions that should be reimplemented by BaseComponent and BasePage
-
-  /**
-   * Abstract member needs override
-   *
-   * @remarks
-   * Used by default methods that should be reimplemented
-   */
-  abstract get locator(): HasLocator
-
-  // Shorthand functions
-
-  /**
-   * Returns this.locator.
-   */
-  get loc(): HasLocator { return this.locator; }
 }
 
 export interface BaseComponentProps {
@@ -68,7 +53,7 @@ export interface SubComponent {
   subComponents?: SubComponent[]
 }
 
-export class BaseComponent extends canBeParent {
+export class BaseComponent extends canBeParent implements GetsLocator {
   readonly defaultSelector: undefined | string;
 
   readonly #selector: string;
@@ -105,13 +90,21 @@ export class BaseComponent extends canBeParent {
    * @remarks
    * We use this method to call this.loc.locate().
    */
-  override get locator(): Locator {
+  get locator(): Locator {
     if (typeof this.#selector === 'undefined') {
       throw new Error('selector is undefined');
     }
     if (!this.#locator) {
-      this.#locator = this.parent.loc.locator(this.#selector);
+      if (this.parent instanceof BasePage) {
+        this.#locator = this.parent._page.locator(this.#selector);
+      } else if (this.parent instanceof BaseComponent) {
+        this.#locator = this.parent.loc.locator(this.#selector);
+      } else {
+        throw new Error(`parent is bad type ${typeof this.parent}`);
+      }
     }
     return this.#locator;
   }
+
+  loc = this.locator
 }

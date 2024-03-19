@@ -4,7 +4,7 @@ import { canBeParent } from './BaseComponent';
 
 export abstract class BasePage extends canBeParent {
 
-  readonly #page: Page;
+  readonly _page: Page;
   readonly url: string | undefined;
 
   /**
@@ -17,7 +17,7 @@ export abstract class BasePage extends canBeParent {
    */
   constructor(page: Page) {
     super();
-    this.#page = page;
+    this._page = page;
   }
 
   /**
@@ -33,20 +33,11 @@ export abstract class BasePage extends canBeParent {
     if (typeof this.url === "undefined") {
       throw new Error('URL is not set');
     }
-    this.#page.goto(this.url);
+    this._page.goto(this.url);
     if (waitFor) {
-      this.#page.waitForURL(this.url);
+      this._page.waitForURL(this.url);
     }
     return this
   }
 
-  /**
-   * Returns this object's Page.
-   *
-   * @remarks
-   * We use this method to call this.loc.locate().
-   */
-  override get locator(): Page {
-    return this.#page;
-  }
 }

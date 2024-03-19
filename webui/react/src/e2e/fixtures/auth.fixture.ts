@@ -22,7 +22,8 @@ export class AuthFixture {
   }
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
-    const auth = this.signInPage.sc.get('determinedAuth') as DeterminedAuth
+    const auth = (this.signInPage.sc.get('determinedAuth') as DeterminedAuth).form.sc.get('username')?.loc.fill(this.#USERNAME)
+
     // TODO subcomponents - kind of annoying to need to cast here. maybe a helper can help
     
     await this.#page.getByPlaceholder('username').fill(this.#USERNAME);
