@@ -515,6 +515,8 @@ you find that the built-in context.DataLoader() does not support your use case.
 
 See the :mod:`determined.pytorch.samplers` for details.
 
+.. _pytorch_profiler:
+
 Profiling
 ---------
 
