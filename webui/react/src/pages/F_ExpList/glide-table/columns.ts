@@ -5,9 +5,9 @@ import {
   Theme as GTheme,
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
+import _ from 'lodash';
 
 import { RawJson } from 'types';
-import { getPath, isString } from 'utils/data';
 import { formatDatetime } from 'utils/datetime';
 
 export const MIN_COLUMN_WIDTH = 40;
@@ -38,7 +38,7 @@ export function defaultTextColumn<T extends RawJson>(
   return {
     id: columnId,
     renderer: (record) => {
-      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
+      const data = dataPath !== undefined ? _.get(record, dataPath) : undefined;
       return {
         allowOverlay: false,
         copyData: String(data ?? ''),
@@ -78,7 +78,7 @@ export function defaultNumberColumn<T extends RawJson>(
   return {
     id: columnId,
     renderer: (record) => {
-      const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
+      const data = dataPath !== undefined ? _.get(record, dataPath) : undefined;
       let theme: Partial<GTheme> = {};
       if (heatmapProps && data !== undefined) {
         const { min, max } = heatmapProps;
@@ -90,7 +90,7 @@ export function defaultNumberColumn<T extends RawJson>(
       }
       return {
         allowOverlay: false,
-        copyData: data !== undefined ? String(data) : '',
+        copyData: String(data ?? ''),
         data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
         themeOverride: theme,
@@ -135,10 +135,10 @@ export function defaultDateColumn<T extends RawJson>(
   return {
     id: columnId,
     renderer: (record) => {
-      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
+      const data = dataPath !== undefined ? _.get(record, dataPath) : undefined;
       return {
         allowOverlay: false,
-        copyData: formatDatetime(String(data), { outputUTC: false }),
+        copyData: data ? formatDatetime(String(data), { outputUTC: false }) : '',
         data: { kind: 'text-cell' },
         kind: GridCellKind.Custom,
       };

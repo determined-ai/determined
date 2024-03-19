@@ -38,20 +38,6 @@ const immutableObservable = <T extends Collection<unknown, unknown>>(
   o?: Options,
 ): ImmutableObservable<T> => new ImmutableObservable(v, o);
 
-// type comparator<T> = (current: T, previous: T) => boolean;
-
-// Observable.prototype.listenWhile = <T>(fn: comparator<T>): void => {
-//   const unsubscribe = {
-//     value: null,
-//   };
-//   const unsub = this.onChange((value, oldValue) => {
-//     if (!fn(value, oldValue) && unsubscribe.value) {
-//       unsubscribe.value();
-//     }
-//   });
-//   unsubscribe.value = unsub;
-// };
-
 const useValueMemoizedObservable = <T>(o: Observable<T>): T => {
   const [, forceRender] = React.useState({});
   const value = o.get();

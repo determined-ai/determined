@@ -80,7 +80,6 @@ const renderer: CustomRenderer<LinkCell> = {
       ctx.moveTo(drawX, Math.floor(drawY + underlineOffset) + 0.5);
       ctx.lineTo(drawX + metrics.width, Math.floor(drawY + underlineOffset) + 0.5);
 
-      // ctx.lineWidth = 1;
       ctx.strokeStyle = theme.linkColor;
       ctx.stroke();
 

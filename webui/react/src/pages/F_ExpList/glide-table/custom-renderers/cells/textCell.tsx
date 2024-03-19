@@ -16,7 +16,6 @@ export type TextCell = CustomCell<TextCellProps>;
 const renderer: CustomRenderer<TextCell> = {
   draw: (args, cell) => {
     const { ctx, rect, theme } = args;
-    // hoverX = -100, highlighted
 
     const xPad = theme.cellHorizontalPadding;
     const font = `${theme.baseFontStyle} ${theme.fontFamily}`;
