@@ -50,8 +50,7 @@ def wait_for_genai_url(
     start_time = time.time()
 
     # Hopefully we have an active session to this master, or we can make a default one.
-    utp = authentication.login_with_cache(master_url, cert=cert)
-    sess = api.Session(master_url, utp, cert)
+    sess = authentication.login_with_cache(master_url, cert=cert)
 
     try:
         while time.time() - start_time < timeout:

@@ -310,10 +310,10 @@ if __name__ == "__main__":
         )
 
     cert = certs.default_load(info.master_url)
-    utp = authentication.login_with_cache(info.master_url, cert=cert)
     # With backoff retries for 64 seconds
-    max_retries = urllib3.util.retry.Retry(total=6, backoff_factor=0.5)
-    sess = api.Session(info.master_url, utp, cert, max_retries)
+    sess = authentication.login_with_cache(info.master_url, cert=cert).with_retry(
+        urllib3.util.retry.Retry(total=6, backoff_factor=0.5)
+    )
 
     # Notify the Determined Master that the container is running.
     # This should only be used on HPC clusters.
