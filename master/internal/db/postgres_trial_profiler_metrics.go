@@ -45,7 +45,7 @@ func groupFromLabelName(n string) string {
 		return disk
 	case strings.HasPrefix(n, "net_"):
 		return network
-	case strings.HasPrefix(n, "mem_"):
+	case strings.HasPrefix(n, "memory_"):
 		return memory
 	default:
 		return ""
@@ -55,6 +55,7 @@ func groupFromLabelName(n string) string {
 // GetTrialProfilerMetricsBatches gets a batch of profiler metric batches from the database.
 // This method is for backwards compatibility and should be deprecated in the future in favor of
 // generics metrics APIs.
+//
 // Profiler metrics are stored in the metrics table as a nested JSON mapping of labels to values.
 // All profiler metrics are associated with an agent ID, but certain metrics (i.e. gpu_util) may
 // be associated with other labels. For example:
@@ -72,13 +73,18 @@ func (db *PgDB) GetTrialProfilerMetricsBatches(
 ) (model.TrialProfilerMetricsBatchBatch, error) {
 	metricGroup := groupFromLabelName(labels.Name)
 
+	if metricGroup == "gpu" && labels.GpuUuid == "" {
+		// If GPU metrics are requested without a GPU UUID, the Web UI expects metrics for all
+		// GPU UUIDs returned. This is done as a separate query to optimize fetch time.
+		return db.getTrialProfilerMetricsAllGPUs(labels.Name, labels.AgentId, labels.TrialId, offset, limit)
+	}
+
 	// Translate old schema to new, which formats metrics with label IDs as keys.
 	jsonPath := "metrics"
 	if labels.AgentId != "" {
-		if labels.GpuUuid != "" {
-			jsonPath = fmt.Sprintf("metrics->'%s'->'%s'", labels.AgentId, labels.GpuUuid)
-		} else {
-			jsonPath = fmt.Sprintf("metrics->'%s'", labels.AgentId)
+		jsonPath += fmt.Sprintf("->'%s'", labels.AgentId)
+		if metricGroup == "gpu" && labels.GpuUuid != "" {
+			jsonPath += fmt.Sprintf("->'%s'", labels.GpuUuid)
 		}
 	}
 
@@ -86,9 +92,8 @@ func (db *PgDB) GetTrialProfilerMetricsBatches(
 SELECT
     `+jsonPath+`->>$1 AS values,
     end_time AS timestamps
-FROM metrics
-WHERE partition_type='PROFILING'
-AND trial_id=$2
+FROM system_metrics
+WHERE trial_id=$2
 AND metric_group=$3
 AND `+jsonPath+` ? $1 
 ORDER by id
@@ -110,6 +115,80 @@ OFFSET $4 LIMIT $5`, labels.Name, labels.TrialId, metricGroup, offset, limit)
 			Values:     []float32{*resValue},
 			Timestamps: []*timestamppb.Timestamp{protoutils.ToTimestamp(*resTime)},
 			Labels:     labels,
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "converting batch to protobuf")
+		}
+
+		pBatches = append(pBatches, pBatch)
+	}
+	return pBatches, nil
+}
+
+// getTrialProfilerMetricsAllGPUs gets GPU metrics for all GPU UUIDs for a given agent and metric
+// name. This method is a special case of GetTrialProfilerMetricsBatches for when the metric
+// requested is a GPU metric, but no GPU UUID was specified. In this case, the Web UI expects
+// metrics for all GPU UUIDs to be returned. It is implemented as a separate query to optimize
+// fetch times.
+// This method is slated for deprecation after the Web UI transitions to using generic metrics APIs.
+func (db *PgDB) getTrialProfilerMetricsAllGPUs(
+	metricName, agentID string, trialID int32, offset, limit int,
+) (model.TrialProfilerMetricsBatchBatch, error) {
+	var pBatches []*trialv1.TrialProfilerMetricsBatch
+
+	metricGroup := groupFromLabelName(metricName)
+	if metricGroup != "gpu" {
+		return pBatches, nil
+	}
+
+	// Use all keys of parent object for all GPU UUIDs.
+	allGPUKeys := fmt.Sprintf("jsonb_object_keys(metrics->'%s')", agentID)
+	jsonPath := fmt.Sprintf("metrics->'%s'->%s", agentID, allGPUKeys)
+
+	rows, err := db.sql.Queryx(`
+SELECT
+	`+allGPUKeys+` AS gpu,
+    `+jsonPath+`->>$1 AS value,
+    end_time AS timestamp
+FROM system_metrics
+WHERE trial_id=$2
+AND metric_group='gpu'
+ORDER by id
+OFFSET $3 LIMIT $4`, metricName, trialID, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	var res struct {
+		Gpu       *string
+		Value     *float32
+		Timestamp *time.Time
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.StructScan(&res); err != nil {
+			return nil, errors.Wrap(err, "querying profiler metric batch")
+		}
+
+		if res.Value == nil {
+			// This should never happen but in the case that one report doesn't contain all metric
+			// keys, just skip it.
+			continue
+		}
+		gpuUuid := ""
+		if res.Gpu != nil {
+			gpuUuid = *res.Gpu
+		}
+		pBatch := &trialv1.TrialProfilerMetricsBatch{
+			Values:     []float32{*res.Value},
+			Timestamps: []*timestamppb.Timestamp{protoutils.ToTimestamp(*res.Timestamp)},
+			Labels: &trialv1.TrialProfilerMetricLabels{
+				TrialId:    trialID,
+				AgentId:    agentID,
+				GpuUuid:    gpuUuid,
+				Name:       metricName,
+				MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+			},
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "converting batch to protobuf")
