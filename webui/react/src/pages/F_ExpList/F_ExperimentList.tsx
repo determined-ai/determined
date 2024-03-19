@@ -366,12 +366,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           return loadedExperiments.map((experiment) => Loaded(experiment));
         }
 
-        let newExperiments = prev;
-
-        // Fill out the loadable experiments array with total count.
-        if (prev.length !== total) {
-          newExperiments = new Array(total).fill(NotLoaded);
-        }
+        // Ensure experiments array has enough space for full result set
+        const newExperiments = prev.length !== total ? new Array(total).fill(NotLoaded) : [...prev];
 
         // Update the list with the fetched results.
         Array.prototype.splice.apply(newExperiments, [
