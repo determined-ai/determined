@@ -1,16 +1,9 @@
 import pytest
 
-from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import bindings
 from tests.fixtures import api_responses
 
 _MASTER = "http://localhost:8080"
-
-
-@pytest.fixture
-def standard_session() -> api.Session:
-    utp = authentication.UsernameTokenPair("username", "token")
-    return api.Session(_MASTER, utp, cert=None)
 
 
 @pytest.fixture

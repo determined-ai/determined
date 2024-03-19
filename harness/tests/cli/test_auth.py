@@ -9,6 +9,7 @@ import responses
 from responses import matchers, registries
 
 from determined.cli import cli
+from determined.common import api
 from determined.common.api import authentication
 from tests.cli import util
 
@@ -250,8 +251,8 @@ def test_login_scenarios(
     def _is_token_valid(master_url: str, token: str, cert: Any) -> bool:
         return token in ["cache", "env_token"]
 
-    def login(master_address: str, username: str, *_: Any) -> authentication.UsernameTokenPair:
-        return authentication.UsernameTokenPair(username, "new")
+    def login(master_address: str, username: str, *_: Any) -> api.Session:
+        return api.Session(master_address, username, "new", None)
 
     mock_getpass.side_effect = getpass
     mock_is_token_valid.side_effect = _is_token_valid
@@ -285,23 +286,26 @@ def test_login_scenarios(
             mts.get_active_user(retval=scenario.cache and "user")
 
             try:
-                utp = authentication.login_with_cache(
-                    "master_url", scenario.req_user, scenario.req_pass, None
+                sess = authentication.login_with_cache(
+                    MOCK_MASTER_URL,
+                    scenario.req_user,
+                    scenario.req_pass,
+                    None,
                 )
 
                 # Make sure we got the results we expected.
                 for exp in scenario_set.expected:
                     if isinstance(exp, Check):
                         mock_is_token_valid.assert_has_calls(
-                            [mock.call("master_url", exp.token, None)]
+                            [mock.call(MOCK_MASTER_URL, exp.token, None)]
                         )
                     elif isinstance(exp, DoLogin):
                         mock_login.assert_has_calls(
-                            [mock.call("master_url", exp.username, exp.password, None)]
+                            [mock.call(MOCK_MASTER_URL, exp.username, exp.password, None)]
                         )
                     elif isinstance(exp, Use):
-                        assert utp.username == exp.user
-                        assert utp.token == exp.token
+                        assert sess.username == exp.user
+                        assert sess.token == exp.token
                     else:
                         raise ValueError(f"unexpected result: {exp}")
 
