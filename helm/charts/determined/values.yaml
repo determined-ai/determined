@@ -157,9 +157,9 @@ db:
   # Only used for Determined DB deployment. Configures the size of the PersistentVolumeClaim for the
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
-  storageSize: 30Gi
-  cpuRequest: 2
-  memRequest: 8Gi
+  storageSize: 1Gi
+  cpuRequest: 0.5
+  memRequest: 0.5Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -242,8 +242,8 @@ maxSlotsPerPod:
   # cpu: 7
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 2
-masterMemRequest: 8Gi
+masterCpuRequest: 0.5
+masterMemRequest: 0.5Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -339,19 +339,25 @@ resourcePools:
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
 
+
 additional_resource_managers:
   - resource_manager:
       type: kubernetes
+      max_slots_per_pod: 1
       name: "a"
-      kubeconfig_secret_name: kubeconfsecret
-      kubeconfig_secret_value: kubeconfigsecretvalue
+      kubeconfig_secret_name: defaultrm
+      kubeconfig_secret_value: gke
+      determined_master_ip: 127.0.0.1:8080
+      determined_master_port: 8080 # TODO
     resource_pools:
       - pool_name: test_a
   - resource_manager:
       type: kubernetes
+      max_slots_per_pod: 1
       name: "b"
-      kubeconfig_secret_name: kubeconfsecret
-      kubeconfig_secret_value: kubeconfigsecretvalue
-      x: y
+      kubeconfig_secret_name: additionalrm
+      kubeconfig_secret_value: gke
+      determined_master_ip: 127.0.0.1:8080
+      determined_master_port: 8080 # TODO
     resource_pools:
     - pool_name: test_b

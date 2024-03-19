@@ -62,9 +62,8 @@ spec:
           {{ end }}
           {{- range $index, $manager := .Values.additional_resource_managers }}
           - name: additionalrm-kubeconfig{{ $index }}
-            mountPath: {{ include "determined.secretPath" . }}additionalrm-kubeconfig{{ $index }}
-            secret:
-              secretName: {{ $manager.resource_manager.kubeconfig_secret_name }}
+            mountPath: {{ include "determined.secretPath" . }}{{ $index }}/
+            readOnly: true
           {{- end }}
           {{- if .Values.db.certResourceName }}
           - name: database-cert
