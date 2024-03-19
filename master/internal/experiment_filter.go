@@ -184,13 +184,15 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	if filterColumnType != nil {
 		queryColumnType = *filterColumnType
 	}
+	var queryArgs []interface{}
 	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
 	for i := 0; i < len(hp); i++ {
+		queryArgs = append(queryArgs, hp[i])
 		// for last element
 		if i == len(hp)-1 {
-			hp[i] = fmt.Sprintf(`>'%s'`, hp[i])
+			hp[i] = ">?"
 		} else {
-			hp[i] = fmt.Sprintf(`'%s'`, hp[i])
+			hp[i] = "?"
 		}
 	}
 	hpQuery := strings.Join(hp, "->")
@@ -198,7 +200,6 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	if err != nil {
 		return nil, err
 	}
-	var queryArgs []interface{}
 	var queryString string
 	switch o {
 	case empty:
@@ -207,27 +208,24 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 		queryString = fmt.Sprintf(`r.hparams->%s IS NOT NULL`, hpQuery)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
-			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s LIKE %s`, hpQuery, "?")
-		} else {
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 = %s`, hpQuery, "?")
+		} else {
+			queryString = fmt.Sprintf(`r.hparams->%s LIKE %s`, hpQuery, "?")
 		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
-			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s NOT LIKE %s`, hpQuery, "?")
-		} else {
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 != %s`, hpQuery, "?")
+		} else {
+			queryString = fmt.Sprintf(`r.hparams->%s NOT LIKE %s`, hpQuery, "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() ||
-			queryColumnType == projectv1.ColumnType_COLUMN_TYPE_DATE.String() {
-			queryString = fmt.Sprintf(`r.hparams->%s %s %s`, hpQuery, "?", "?")
-		} else {
+		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
 			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 %s %s`, hpQuery, "?", "?")
+		} else {
+			queryString = fmt.Sprintf(`r.hparams->%s %s %s`, hpQuery, "?", "?")
 		}
 	}
 

@@ -68,8 +68,8 @@ func TestSearchRunsSort(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, int32(exp.ID), *resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp2.ID), *resp.Runs[1].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp2.ID), resp.Runs[1].Experiment.Id)
 
 	// Sort by hyperparameter
 	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
@@ -78,8 +78,8 @@ func TestSearchRunsSort(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), *resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), *resp.Runs[1].Experiment.Id)
+	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
 
 	// Sort by nested hyperparameter
 	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
@@ -88,8 +88,8 @@ func TestSearchRunsSort(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), *resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), *resp.Runs[1].Experiment.Id)
+	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
 }
 
 func TestSearchRunsFilter(t *testing.T) {

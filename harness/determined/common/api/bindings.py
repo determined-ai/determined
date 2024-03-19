@@ -4087,12 +4087,12 @@ class v1FlatRun(Printable):
         return out
 
 class v1FlatRunExperiment(Printable):
+    externalExperimentId: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         description: str,
-        externalExperimentId: str,
         forkedFrom: int,
         id: int,
         isMultitrial: bool,
@@ -4102,9 +4102,9 @@ class v1FlatRunExperiment(Printable):
         searcherMetric: str,
         searcherType: str,
         unmanaged: bool,
+        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.description = description
-        self.externalExperimentId = externalExperimentId
         self.forkedFrom = forkedFrom
         self.id = id
         self.isMultitrial = isMultitrial
@@ -4114,12 +4114,13 @@ class v1FlatRunExperiment(Printable):
         self.searcherMetric = searcherMetric
         self.searcherType = searcherType
         self.unmanaged = unmanaged
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "description": obj["description"],
-            "externalExperimentId": obj["externalExperimentId"],
             "forkedFrom": obj["forkedFrom"],
             "id": obj["id"],
             "isMultitrial": obj["isMultitrial"],
@@ -4130,12 +4131,13 @@ class v1FlatRunExperiment(Printable):
             "searcherType": obj["searcherType"],
             "unmanaged": obj["unmanaged"],
         }
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "description": self.description,
-            "externalExperimentId": self.externalExperimentId,
             "forkedFrom": self.forkedFrom,
             "id": self.id,
             "isMultitrial": self.isMultitrial,
@@ -4146,6 +4148,8 @@ class v1FlatRunExperiment(Printable):
             "searcherType": self.searcherType,
             "unmanaged": self.unmanaged,
         }
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
         return out
 
 class v1GenericTaskState(DetEnum):

@@ -3231,31 +3231,31 @@ export interface V1FlatRun {
      */
     userId?: number;
     /**
-     * Time in seconds which experiment ran or has been running.
+     * Time in seconds which the run ran or has been running.
      * @type {number}
      * @memberof V1FlatRun
      */
     duration?: number;
     /**
-     * The id of the project associated with this experiment.
+     * The id of the project associated with this run.
      * @type {number}
      * @memberof V1FlatRun
      */
     projectId: number;
     /**
-     * The name of the project associated with this experiment.
+     * The name of the project associated with this run.
      * @type {string}
      * @memberof V1FlatRun
      */
     projectName: string;
     /**
-     * The id of the workspace associated with this experiment.
+     * The id of the workspace associated with this run.
      * @type {number}
      * @memberof V1FlatRun
      */
     workspaceId: number;
     /**
-     * The name of the workspace associated with this experiment.
+     * The name of the workspace associated with this run.
      * @type {string}
      * @memberof V1FlatRun
      */
@@ -3280,6 +3280,12 @@ export interface V1FlatRun {
  */
 export interface V1FlatRunExperiment {
     /**
+     * The id of the experiment linked to the run.
+     * @type {number}
+     * @memberof V1FlatRunExperiment
+     */
+    id: number;
+    /**
      * The type of searcher for the experiment.
      * @type {string}
      * @memberof V1FlatRunExperiment
@@ -3302,7 +3308,7 @@ export interface V1FlatRunExperiment {
      * @type {string}
      * @memberof V1FlatRunExperiment
      */
-    externalExperimentId: string;
+    externalExperimentId?: string;
     /**
      * The resource pool the experiment was created in.
      * @type {string}
@@ -3339,12 +3345,6 @@ export interface V1FlatRunExperiment {
      * @memberof V1FlatRunExperiment
      */
     isMultitrial: boolean;
-    /**
-     * The id of the experiment linked to the run.
-     * @type {number}
-     * @memberof V1FlatRunExperiment
-     */
-    id: number;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown

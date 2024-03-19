@@ -60,16 +60,18 @@ func (a *apiServer) RunPrepareForReporting(
 func (a *apiServer) SearchRuns(
 	ctx context.Context, req *apiv1.SearchRunsRequest,
 ) (*apiv1.SearchRunsResponse, error) {
-	resp := &apiv1.SearchRunsResponse{Runs: []*runv1.FlatRun{}}
-	query := db.Bun().NewSelect().
-		Model(&resp.Runs).
-		ModelTableExpr("runs AS r").
-		Apply(getRunsColumns)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
+
+	resp := &apiv1.SearchRunsResponse{}
+	var runs []*runv1.FlatRun
+	query := db.Bun().NewSelect().
+		Model(&runs).
+		ModelTableExpr("runs AS r").
+		Apply(getRunsColumns)
+
 	var proj *projectv1.Project
 	if req.ProjectId != nil {
 		proj, err = a.GetProjectByID(ctx, *req.ProjectId, *curUser)
@@ -116,10 +118,11 @@ func (a *apiServer) SearchRuns(
 	}
 
 	pagination, err := runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
-	resp.Pagination = pagination
 	if err != nil {
 		return nil, err
 	}
+	resp.Pagination = pagination
+	resp.Runs = runs
 	return resp, nil
 }
 
