@@ -518,7 +518,7 @@ There are two ways to profile the performance of your training job:
 
 #. Core API's built-in system metrics profiler
 
-#. Integration with profilers native to your training framework, such as the Tensorflow and PyTorch
+#. Integration with profilers native to your training framework, such as the TensorFlow and PyTorch
 profilers
 
 .. _core-profiler:
@@ -526,9 +526,9 @@ profilers
 Core API Profiler
 =================
 
-Core API comes with profiling functionality that tracks system metrics throughout the training run.
-These metrics are recorded at specified intervals to the master and can be viewed in the Web UI
-under your experiment's "Profiling" tab.
+The Core API includes a profiling feature that monitors and records system metrics during the
+training run. These metrics are recorded at specified intervals and sent to the master, allowing you
+to view them in the "Profiling" tab of your experiment in the WebUI.
 
 Use ``core_context.profiler`` to interact with the Core API profiler. It can be toggled on or off by
 calling ``core_context.profiler.on()`` and ``core_context.profiler.off()``.
@@ -558,12 +558,12 @@ Native Profilers
 
 Profiling with native profilers such as PyTorch profiler and TensorFlow profiler can be configured
 as usual. If running on a Determined cluster, the profiling log output path can be configured for
-automatic upload to the Determined Tensorboard UI.
+automatic upload to the Determined TensorBoard UI.
 
 The following snippet initializes the PyTorch Profiler. It will profile GPU and CPU activities,
 skipping batch 1, warming up on batch 2, profiling batches 3 and 4, then repeating the cycle. Result
 files will be uploaded to the experiment's TensorBoard path and can be viewed under the "PyTorch
-Profiler" tab in the Determined Tensorboard UI.
+Profiler" tab in the Determined TensorBoard UI.
 
 See `PyTorch Profiler <https://github.com/pytorch/kineto/tree/main/tb_plugin>`_ documentation for
 details.

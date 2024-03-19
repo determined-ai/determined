@@ -45,11 +45,11 @@ reported for an experiment do not match hardware expectations, that is a sign th
 be able to be optimized to make better use of the hardware resources.
 
 The Determined profiler collects a set of system metrics throughout an experiment which can be
-visualized in the Web UI under the experiment's "Profiler" tab. It is supported for all training
+visualized in the WebUI under the experiment's "Profiler" tab. It is supported for all training
 APIs, but is not enabled by default.
 
-Please see :ref:`core-profiler` for details on enabling and configuring the Determined profiler for
-your experiment.
+Visit :ref:`core-profiler` to find out how to enable and configure the Determined profiler for your
+experiment.
 
 The following system metrics are tracked:
 
@@ -71,7 +71,7 @@ agent, and GPU metrics can be further broken down by GPU.
 .. note::
 
    System Metrics record agent-level metrics, so when there are multiple experiments on the same
-   agent, it is difficult to analyze. We suggest that profiling is done with only a single
+   agent, it is difficult to analyze. It is recommended that profiling is done with only a single
    experiment per agent.
 
 .. _how-to-profiling-native-profilers:
@@ -103,9 +103,8 @@ with a pre-configured Grafana dashboard. These can be set up to track detailed h
 metrics for a Determined cluster, and can be helpful for alerting and monitoring cluster health.
 
 The Prometheus endpoint aggregates system metrics and associates them with Determined concepts such
-as experiments, tags, and resource pools, which can be viewed in Grafana. We provide a Grafana
-dashboard that shows real-time resource metrics across an entire cluster as well as experiments,
-containers, and resource pools.
+as experiments, tags, and resource pools, which can be viewed in Grafana. Determined provides a
+Grafana dashboard that shows real-time resource metrics across an entire cluster as well as
+experiments, containers, and resource pools.
 
-Please follow :ref:`configure-prometheus-grafana` for instructions on how to enable this
-functionality.
+Visit :ref:`configure-prometheus-grafana` to find out how to enable this functionality.
