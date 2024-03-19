@@ -18,7 +18,7 @@ _MASTER = "http://localhost:8080"
 
 @pytest.fixture
 def standard_session() -> api.Session:
-    return api.Session(_MASTER, "username", "token", cert=None)
+    return api.Session(_MASTER, "username", "token", cert=None, max_retries=0)
 
 
 @pytest.fixture
@@ -30,12 +30,14 @@ def make_expref(standard_session: api.Session) -> Callable[[int], experiment.Exp
 
 
 @responses.activate
+@mock.patch("determined.common.experimental.experiment.Experiment.reload")
 def test_await_waits_for_first_trial_to_start(
-    make_expref: Callable[[int], experiment.Experiment]
+    unused_reload: mock.MagicMock, make_expref: Callable[[int], experiment.Experiment]
 ) -> None:
     expref = make_expref(1)
 
     tr_resp = api_responses.sample_get_experiment_trials()
+    assert len(tr_resp.trials) > 0  # Demonstrate that the fixture has at least one trial
     for trial in tr_resp.trials:
         trial.experimentId = expref.id
     empty_tr_resp = bindings.v1GetExperimentTrialsResponse(
@@ -48,6 +50,56 @@ def test_await_waits_for_first_trial_to_start(
 
     expref.await_first_trial(interval=0.01)
     assert len(responses.calls) > 2
+
+
+@responses.activate
+def test_await_raises_exception_when_experiment_is_terminated_before_trial_starts(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+    # Experiment starts "RUNNING" and then is "CANCELED" after a couple calls to master
+    expref.state = experiment.ExperimentState.RUNNING
+    exp_resp_running = api_responses.sample_get_experiment(
+        id=expref.id, state=bindings.experimentv1State.RUNNING
+    )
+    exp_resp_terminal = api_responses.sample_get_experiment(
+        id=expref.id, state=bindings.experimentv1State.CANCELED
+    )
+    # Set up an empty trial response to simulate the experiment being terminated before any trials
+    exp_trials_resp = api_responses.sample_get_experiment_trials()
+    exp_trials_resp.trials = []
+
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_running.to_json())
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_running.to_json())
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp_terminal.to_json())
+    responses.get(
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials", json=exp_trials_resp.to_json()
+    )
+
+    with pytest.raises(RuntimeError):
+        expref.await_first_trial(interval=0.01)
+
+
+@responses.activate
+def test_await_returns_first_trial_even_if_experiment_is_terminated(
+    make_expref: Callable[[int], experiment.Experiment]
+) -> None:
+    expref = make_expref(1)
+    # Experiment starts await while "CANCELED", but already has started a trial
+    expref.state = experiment.ExperimentState.CANCELED
+    exp_resp = api_responses.sample_get_experiment(
+        id=expref.id, state=bindings.experimentv1State.CANCELED
+    )
+
+    exp_trials_resp = api_responses.sample_get_experiment_trials()
+    assert len(exp_trials_resp.trials) > 0  # Demonstrate that the fixture has at least one trial
+
+    responses.get(f"{_MASTER}/api/v1/experiments/{expref.id}", json=exp_resp.to_json())
+    responses.get(
+        f"{_MASTER}/api/v1/experiments/{expref.id}/trials", json=exp_trials_resp.to_json()
+    )
+
+    assert expref.await_first_trial() is not None
 
 
 @pytest.mark.parametrize(
