@@ -113,14 +113,12 @@ def test_sample_metrics_memory(
 ) -> None:
     cpu_collector = profiler._Memory()
     assert len(cpu_collector.metric_samples) == 0
+    MockMemoryInfo = NamedTuple("MockMemoryInfo", [("available", int)])
 
-    mock_memory = psutil._psosx.svmem(
-        total=1000, available=900, percent=90.0, used=10, free=100, active=0, inactive=0, wired=0
-    )
-    mock_psutil.return_value = mock_memory
+    mock_psutil.return_value = MockMemoryInfo(available=900)
 
     expected_metrics = {
-        "memory_free": mock_memory.available / 1e9,
+        "memory_free": 900 / 1e9,
     }
 
     cpu_collector.sample_metrics()
@@ -147,6 +145,7 @@ def test_sample_metrics_cpu(
     assert cpu_collector.metric_samples[0] == expected_metrics
 
 
+@pytest.mark.skipif(profiler.pynvml is None, reason="pynvml required for test")
 @mock.patch("determined.core._profiler.pynvml.nvmlInit")
 @mock.patch("determined.core._profiler.pynvml.nvmlDeviceGetCount")
 @mock.patch("determined.core._profiler.pynvml.nvmlDeviceGetHandleByIndex")
@@ -173,8 +172,6 @@ def test_sample_metrics_gpu(
     mock_gpu_free_memory = [1.0e10, 1.5e10]
     mock_gpu_util = [10.0, 20.0]
 
-    mock_pynvml_device_count.return_value = len(mock_gpu_devices)
-
     def mock_device_handle_by_index(index: int) -> MockNVMLDeviceHandle:
         return mock_gpu_devices[index]
 
@@ -187,6 +184,7 @@ def test_sample_metrics_gpu(
     def mock_device_get_util(handle: Any) -> MockGPUInfo:
         return MockGPUInfo(mock_gpu_util[mock_gpu_devices.index(handle)])
 
+    mock_pynvml_device_count.return_value = len(mock_gpu_devices)
     mock_pynvml_device_handle.side_effect = mock_device_handle_by_index
     mock_pynvml_device_uuid.side_effect = mock_device_get_uuid
     mock_pynvml_device_util.side_effect = mock_device_get_util

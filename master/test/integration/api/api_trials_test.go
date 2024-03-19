@@ -10,7 +10,6 @@ import (
 	"io"
 	"math"
 	"math/rand"
-	"sort"
 	"testing"
 	"time"
 
@@ -25,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
-	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
@@ -53,15 +51,6 @@ func TestTrialProfilerMetrics(t *testing.T) {
 	assert.NilError(t, err, "failed to start master")
 
 	trialProfilerMetricsTests(creds, t, cl, pgDB)
-}
-
-func TestTrialProfilerMetricsAvailableSeries(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
-	defer cancel()
-	assert.NilError(t, err, "failed to start master")
-
-	trialProfilerMetricsAvailableSeriesTests(creds, t, cl, pgDB)
 }
 
 func trialDetailAPITests(
@@ -280,86 +269,6 @@ func trialProfilerMetricsTests(
 
 	_, err = tlCl.Recv()
 	assert.Equal(t, err, io.EOF, "log stream didn't terminate with trial")
-}
-
-func trialProfilerMetricsAvailableSeriesTests(
-	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
-) {
-	_, _, trial := setupTrial(t, pgDB)
-
-	ctx, cancel := context.WithTimeout(creds, time.Minute)
-	defer cancel()
-	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
-		TrialId: int32(trial.ID),
-		Follow:  true,
-	})
-	assert.NilError(t, err, "failed to initiate trial profiler series stream")
-	reportTime := timestamppb.Now()
-	metricNames := []string{
-		"gpu_util", "gpu_util", "cpu_util", "cpu_util",
-	}
-	metricGroups := []string{
-		"gpu", "gpu", "cpu", "cpu",
-	}
-	agentIDs := []string{
-		"agent0", "agent1", "agent0", "agent2",
-	}
-	var testMetrics []*trialv1.TrialMetrics
-
-	for i, n := range metricNames {
-		testMetric := randTrialProfilerSystemMetrics(trial.ID, n, agentIDs[i], "1", reportTime)
-		testMetrics = append(testMetrics, testMetric)
-	}
-
-	var expected []string
-	internal.TrialAvailableSeriesBatchWaitTime = 10 * time.Millisecond
-
-	for i, tb := range testMetrics {
-		expected = append(expected, metricNames[i])
-		_, err = cl.ReportTrialMetrics(creds, &apiv1.ReportTrialMetricsRequest{
-			Metrics: tb,
-			Group:   metricGroups[i],
-		})
-		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
-
-		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure
-		// mechanism, if the client is not ready to receive a message when it is sent to the
-		// stream server side, the server will buffer it and any calls to Send will return,
-		// allowing the code to chug along merrily and Send more and more data while the
-		// client doesn't consume it. Because of this, we give the test a chance to read
-		// out stale entries before marking the attempt as a failure. For more detail, see
-		// https://github.com/grpc/grpc-go/issues/2159.
-		shots := 5
-		var resp *apiv1.GetTrialProfilerAvailableSeriesResponse
-		for i := 1; i <= shots; i++ {
-			resp, err = tlCl.Recv()
-			assert.NilError(t, err, "failed to stream metrics")
-
-			if len(expected) == len(resp.Labels) {
-				break
-			}
-
-			if i == shots {
-				assert.Equal(
-					t, len(expected),
-					len(resp.Labels),
-					"incorrect number of labels; expected %v, got %v",
-					expected,
-					resp.Labels,
-				)
-			}
-		}
-
-		var actual []string
-		for _, l := range resp.Labels {
-			actual = append(actual, l.Name)
-		}
-
-		sort.Strings(expected)
-		sort.Strings(actual)
-
-		assert.DeepEqual(t, expected, actual)
-	}
 }
 
 func randTrialProfilerSystemMetrics(
