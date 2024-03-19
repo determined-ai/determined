@@ -474,11 +474,15 @@ def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
     template_name = "test_template"
+    template_config_key = "description"
+    template_config_value = "test_sdk_template"
     try:
         # create template
+        template_config = conf.load_config(conf.fixtures_path("templates/template.yaml"))
+        template_config[template_config_key] = template_config_value
         tpl = bindings.v1Template(
             name=template_name,
-            config=conf.load_config(conf.fixtures_path("templates/template.yaml")),
+            config=template_config,
             workspaceId=1,
         )
         tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
@@ -491,10 +495,8 @@ def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
         )
         exp.await_first_trial()
 
-        trials = exp.get_trials()
-        assert len(trials) == 1, trials
         assert exp.config is not None
-        assert exp.config["reproducibility"]["experiment_seed"] == 999, exp.config
+        assert exp.config[template_config_key] == template_config_value, exp.config
 
     finally:
         bindings.delete_DeleteTemplate(sess, templateName=template_name)

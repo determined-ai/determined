@@ -178,7 +178,7 @@ def create_experiment(
         config: Experiment config filename (.yaml) or a dict.
         model_dir: Directory containing model definition.
         includes: Additional files or directories to include in the model definition.
-        parent_id: If specified, the created experiment will use the model definition 
+        parent_id: If specified, the created experiment will use the model definition
             from the parent experiment.
         project_id: The id of the project this experiment should belong to.
         template: The name of the template for the experiment.

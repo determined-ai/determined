@@ -135,7 +135,7 @@ class Determined:
             model_dir(string, optional): directory containing model definition. (default: ``None``)
             includes(Iterable[Union[str, pathlib.Path]], optional): Additional files or
                 directories to include in the model definition. (default: ``None``)
-            parent_id(int, optional): If specified, the created experiment will use the model 
+            parent_id(int, optional): If specified, the created experiment will use the model
                 definition from the parent experiment. (default: ``None``)
             project_id(int, optional): The id of the project this experiment should belong to.
             (default: ``None``)
