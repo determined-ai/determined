@@ -209,8 +209,15 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		switch {
 		case strings.HasPrefix(paramDetail[0], "hp."):
 			param := strings.ReplaceAll(paramDetail[0], "'", "")
-			hps := strings.ReplaceAll(strings.TrimPrefix(param, "hp."), ".", "'->'")
-			runQuery.OrderExpr("r.hparams->'?' ?", bun.Safe(hps), bun.Safe(sortDirection))
+			hp := strings.Split(strings.TrimPrefix(param, "hp."), ".")
+			var queryArgs []interface{}
+			for i := 0; i < len(hp); i++ {
+				queryArgs = append(queryArgs, hp[i])
+				hp[i] = "?"
+			}
+			hpQuery := strings.Join(hp, "->")
+			queryArgs = append(queryArgs, bun.Safe(sortDirection))
+			runQuery.OrderExpr(fmt.Sprintf(`r.hparams->%s ?`, hpQuery), queryArgs...)
 		case strings.Contains(paramDetail[0], "."):
 			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
 			if err != nil {
