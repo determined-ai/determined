@@ -121,7 +121,7 @@ export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
  * Otherwise `onScroll` would erroneously set the page to 0
  * when the table is first initialized.
  */
-export const SCROLL_SET_COUNT_NEEDED = 3;
+export const SCROLL_SET_COUNT_NEEDED = 1;
 
 const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
@@ -174,8 +174,11 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
     if (gridRef.current !== null) {
       const rowOffset = Math.max(page * PAGE_SIZE, 0);
-      gridRef.current.scrollTo(0, rowOffset);
-      scrollPositionSetCount.update((x) => x + 1);
+      const bounds = gridRef.current.getBounds(0, rowOffset);
+      if (bounds && !Number.isNaN(bounds.x)) {
+        gridRef.current.scrollTo(0, rowOffset);
+        scrollPositionSetCount.update((x) => x + 1);
+      }
     }
   });
 
@@ -311,7 +314,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
                 key: 'select-none',
                 label: 'Clear selected',
                 onClick: () => {
-                  onSelectionChange?.('remove-all', [0, data.length]);
+                  onSelectionChange?.('remove-all');
                   setMenuIsOpen(false);
                 },
               }
@@ -332,7 +335,7 @@ export const GlideTable: React.FC<GlideTableProps> = ({
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              onSelectionChange?.('add-all', [0, data.length]);
+              onSelectionChange?.('add-all');
               setMenuIsOpen(false);
             },
           },
@@ -466,7 +469,6 @@ export const GlideTable: React.FC<GlideTableProps> = ({
     },
     [
       columnIds,
-      data.length,
       projectColumns,
       formStore,
       sorts,

@@ -21,8 +21,7 @@ def cert() -> certs.Cert:
 def make_session(username: str, password: str) -> api.Session:
     master_url = conf.make_master_url()
     # Use login instead of login_with_cache() to not touch auth.json on the filesystem.
-    utp = authentication.login(master_url, username, password, cert())
-    return api.Session(master_url, utp, cert(), max_retries=0)
+    return authentication.login(master_url, username, password, cert())
 
 
 @functools.lru_cache(maxsize=1)

@@ -7860,6 +7860,8 @@ class v1LocationType(DetEnum):
     - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
     - LOCATION_TYPE_RUN: Column is located on the run
     - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
+    - LOCATION_TYPE_RUN: Column is located on the run
+    - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
     """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
@@ -7867,6 +7869,8 @@ class v1LocationType(DetEnum):
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
     CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
+    RUN = "LOCATION_TYPE_RUN"
+    RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
     RUN = "LOCATION_TYPE_RUN"
     RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
 
@@ -12726,6 +12730,33 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
+        return out
+
+class v1SearchRunsResponse(Printable):
+    """Response to SearchRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        pagination: "v1Pagination",
+        runs: "typing.Sequence[v1FlatRun]",
+    ):
+        self.pagination = pagination
+        self.runs = runs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "runs": [v1FlatRun.from_json(x) for x in obj["runs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "runs": [x.to_json(omit_unset) for x in self.runs],
+        }
         return out
 
 class v1SearchRunsResponse(Printable):
@@ -21474,6 +21505,44 @@ def get_SearchRuns(
         return v1SearchRunsResponse.from_json(_resp.json())
     raise APIHttpError("get_SearchRuns", _resp)
 
+def get_SearchRuns(
+    session: "api.BaseSession",
+    *,
+    filter: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
+) -> "v1SearchRunsResponse":
+    """Get a list of runs.
+
+    - filter: Filter expression.
+    - limit: How many results to show.
+    - offset: How many experiments to skip before including in the results.
+    - projectId: ID of the project to look at.
+    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+    """
+    _params = {
+        "filter": filter,
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+        "sort": sort,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchRunsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchRuns", _resp)
+
 def post_SetCommandPriority(
     session: "api.BaseSession",
     *,
@@ -22303,5 +22372,6 @@ Paginated = typing.Union[
     v1ListWorkspacesBoundToRPResponse,
     v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
+    v1SearchRunsResponse,
     v1SearchRunsResponse,
 ]

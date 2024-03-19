@@ -6,7 +6,8 @@ import requests_mock as mock
 
 import determined
 import determined.cli
-from determined.common.api import authentication, bindings
+from determined.common import api
+from determined.common.api import bindings
 from tests.fixtures import api_responses
 
 
@@ -24,9 +25,10 @@ def test_wait_returns_error_code_when_experiment_errors(
     login_with_cache_mock: unittest.mock.MagicMock,
     requests_mock: mock.Mocker,
 ) -> None:
-    login_with_cache_mock.return_value = authentication.UsernameTokenPair("username", "token")
+    master = "http://localhost:8888"
+    login_with_cache_mock.return_value = api.Session(master, "test", "test", None)
     exp = api_responses.sample_get_experiment(id=1, state=bindings.experimentv1State.COMPLETED)
-    args = CliArgs(master="http://localhost:8888", experiment_id=1)
+    args = CliArgs(master=master, experiment_id=1)
     exp.experiment.state = bindings.experimentv1State.ERROR
     requests_mock.get(
         f"/api/v1/experiments/{args.experiment_id}",

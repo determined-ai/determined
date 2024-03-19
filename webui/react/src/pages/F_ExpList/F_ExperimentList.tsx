@@ -9,7 +9,6 @@ import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -24,8 +23,10 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
+import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import userSettings from 'stores/userSettings';
 import {
   ExperimentAction,
   ExperimentItem,
@@ -36,14 +37,19 @@ import {
   RunState,
 } from 'types';
 import handleError from 'utils/error';
+import { eagerSubscribe } from 'utils/observable';
 
 import ComparisonView from './ComparisonView';
 import css from './F_ExperimentList.module.scss';
 import {
+  DEFAULT_SELECTION,
+  defaultProjectSettings,
   F_ExperimentListGlobalSettings,
-  F_ExperimentListSettings,
-  settingsConfigForProject,
+  ProjectSettings,
+  ProjectUrlSettings,
+  SelectionType as SelectionState,
   settingsConfigGlobal,
+  settingsPathForProject,
 } from './F_ExperimentList.settings';
 import {
   columnWidthsFallback,
@@ -63,11 +69,14 @@ interface Props {
   project: Project;
 }
 
-type SelectionType = 'add' | 'add-all' | 'remove' | 'remove-all' | 'set';
-export type HandleSelectionChangeType = (
-  selectionType: SelectionType,
-  range: [number, number],
-) => void;
+type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+
+type RangelessSelectionType = 'add-all' | 'remove-all';
+type SelectionType = 'add' | 'remove' | 'set';
+export interface HandleSelectionChangeType {
+  (selectionType: RangelessSelectionType): void;
+  (selectionType: SelectionType, range: [number, number]): void;
+}
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -95,20 +104,36 @@ const STATIC_COLUMNS = [MULTISELECT];
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
 
-  const {
-    isLoading: isLoadingSettings,
-    settings,
-    updateSettings,
-  } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
+  const projectSettingsObs = useMemo(
+    () => userSettings.get(ProjectSettings, settingsPath),
+    [settingsPath],
+  );
+  const projectSettings = useObservable(projectSettingsObs);
+  const isLoadingSettings = useMemo(() => projectSettings.isNotLoaded, [projectSettings]);
+  const updateSettings = useCallback(
+    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
+    [settingsPath],
+  );
+  const settings = useMemo(
+    () =>
+      projectSettings
+        .map((s) => ({ ...defaultProjectSettings, ...s }))
+        .getOrElse(defaultProjectSettings),
+    [projectSettings],
+  );
+
+  const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
+  const page = params.page || 0;
+  const setPage = useCallback(
+    (p: number) => updateParams({ page: p || undefined }),
+    [updateParams],
+  );
+
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
   const isPagedView = globalSettings.tableViewMode === 'paged';
-  const [page, setPage] = useState(() =>
-    isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
-  );
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -132,20 +157,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const isMobile = useMobile();
   const { openToast } = useToast();
 
-  const [selection, setSelection] = React.useState<GridSelection>({
-    columns: CompactSelection.empty(),
-    rows: CompactSelection.empty(),
-  });
-
   const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selectAll,
-    [isLoadingSettings, settings.selectAll],
-  );
-  const setSelectAll = useCallback(
-    (selectAll: boolean) => {
-      updateSettings({ selectAll });
-    },
-    [updateSettings],
+    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
+    [isLoadingSettings, settings.selection],
   );
 
   const { getThemeVar } = useTheme();
@@ -161,95 +175,105 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, []);
 
-  useEffect(() => {
-    setSearchParams((params) => {
-      if (page) {
-        params.set('page', page.toString());
-      } else {
-        params.delete('page');
-      }
-      return params;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortString]);
+  const resetPagination = useCallback(() => {
+    setIsLoading(true);
+    setPage(0);
+    setExperiments(INITIAL_LOADING_EXPERIMENTS);
+  }, [setPage]);
 
   useEffect(() => {
-    // useSettings load the default value first, and then load the data from DB
-    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    if (isLoadingSettings) return;
-    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-    if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
-        publicSubject: 'Unable to initialize filterset from settings',
-      });
-    } else {
-      const formset = formSetValidation.right;
-      formStore.init(formset);
-    }
-  }, [settings.filterset, isLoadingSettings]);
+    let cleanup: () => void;
+    // eagerSubscribe is like subscribe but it runs once before the observed value changes.
+    cleanup = eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      // init formset once from settings when loaded, then flip the sync
+      // direction -- when formset changes, update settings
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          cleanup?.();
+          // init formset
+          if (!s?.filterset) return;
+          const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+          if (isLeft(formSetValidation)) {
+            handleError(formSetValidation.left, {
+              publicSubject: 'Unable to initialize filterset from settings',
+            });
+          } else {
+            formStore.init(formSetValidation.right);
+          }
+          cleanup = formStore.asJsonString.subscribe(() => {
+            resetPagination();
+            const loadableFormset = formStore.formset.get();
+            Loadable.forEach(loadableFormset, (formSet) =>
+              updateSettings({ filterset: JSON.stringify(formSet) }),
+            );
+          });
+        });
+      }
+    });
+    return () => cleanup?.();
+  }, [projectSettingsObs, resetPagination, updateSettings]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  const colorMap = useGlasbey(settings.selectedExperiments);
+  // partition experiment list into not selected/selected with indices and experiments so we only iterate the result list once
+  const [excludedExperimentIds, selectedExperimentIds] = useMemo(() => {
+    const selectedMap = new Map<number, ExperimentWithIndex>();
+    const excludedMap = new Map<number, ExperimentWithIndex>();
+    if (isLoadingSettings) {
+      return [excludedMap, selectedMap];
+    }
+    const selectedIdSet = new Set(
+      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
+    );
+    const excludedIdSet = new Set(
+      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
+    );
+    experiments.forEach((e, index) => {
+      Loadable.forEach(e, ({ experiment }) => {
+        const mapToAdd =
+          (selectAll && !excludedIdSet.has(experiment.id)) || selectedIdSet.has(experiment.id)
+            ? selectedMap
+            : excludedMap;
+        mapToAdd.set(experiment.id, { experiment, index });
+      });
+    });
+    return [excludedMap, selectedMap];
+  }, [isLoadingSettings, selectAll, settings.selection, experiments]);
+
+  const selection = useMemo<GridSelection>(() => {
+    let rows = CompactSelection.empty();
+    if (selectAll) {
+      Loadable.forEach(total, (t) => {
+        rows = rows.add([0, t]);
+      });
+      excludedExperimentIds.forEach((info) => {
+        rows = rows.remove(info.index);
+      });
+    } else {
+      selectedExperimentIds.forEach((info) => {
+        rows = rows.add(info.index);
+      });
+    }
+    return {
+      columns: CompactSelection.empty(),
+      rows,
+    };
+  }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
+
+  const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
   const { height: containerHeight, width: containerWidth } = useResize(contentRef);
   const height =
     containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
   const [scrollPositionSetCount] = useState(observable(0));
-
-  const selectedExperimentIds: Set<number> = useMemo(() => {
-    return isLoadingSettings ? new Set() : new Set(settings.selectedExperiments);
-  }, [isLoadingSettings, settings.selectedExperiments]);
-
-  const excludedExperimentIds: Set<number> = useMemo(() => {
-    return isLoadingSettings ? new Set() : new Set(settings.excludedExperiments);
-  }, [isLoadingSettings, settings.excludedExperiments]);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const selectedIds = new Set(selectedExperimentIds);
-
-    if (selectAll) {
-      Loadable.filterNotLoaded(experiments).forEach((experiment) => {
-        const id = experiment.experiment.id;
-        if (!excludedExperimentIds.has(id)) selectedIds.add(id);
-      });
-      updateSettings({ selectedExperiments: Array.from(selectedIds) });
-    }
-
-    /**
-     * Use settings info (selectionAll, selectedExperimentIds, excludedExperimentIds)
-     * to figure out and update list selections.
-     */
-    setSelection((prevSelection) => {
-      let rows = CompactSelection.empty();
-      experiments.forEach((loadable, index) => {
-        const id = Loadable.getOrElse(undefined, loadable)?.experiment.id;
-        if (!id) return;
-        if ((selectAll && !excludedExperimentIds.has(id)) || (!selectAll && selectedIds.has(id))) {
-          rows = rows.add(index);
-        }
-      });
-      return { ...prevSelection, rows };
-    });
-  }, [
-    excludedExperimentIds,
-    experiments,
-    isLoading,
-    selectAll,
-    selectedExperimentIds,
-    total,
-    updateSettings,
-  ]);
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
       if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
       setPage(Math.floor((y + height) / PAGE_SIZE));
     },
-    [scrollPositionSetCount],
+    [scrollPositionSetCount, setPage],
   );
 
   const experimentFilters = useMemo(() => {
@@ -266,13 +290,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       rootFilterChildren.length
     );
   }, [experimentFilters, rootFilterChildren.length]);
-
-  const resetPagination = useCallback(() => {
-    setIsLoading(true);
-    setPage(0);
-    setExperiments(INITIAL_LOADING_EXPERIMENTS);
-    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
-  }, []);
 
   const handleSortChange = useCallback(
     (sorts: Sort[]) => {
@@ -292,6 +309,24 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingSettings]);
+
+  useEffect(() => {
+    return eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach(() => {
+          if (params.compare !== undefined) {
+            updateSettings({ compare: params.compare });
+          }
+        });
+      } else {
+        ps.forEach((s) => {
+          if (s) {
+            updateParams({ compare: s.compare || undefined });
+          }
+        });
+      }
+    });
+  }, [params.compare, updateSettings, updateParams, projectSettingsObs]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
@@ -402,16 +437,69 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [canceler, stopPolling]);
 
-  useEffect(
-    () =>
-      formStore.asJsonString.subscribe(() => {
-        resetPagination();
-        const loadableFormset = formStore.formset.get();
-        Loadable.forEach(loadableFormset, (formSet) =>
-          updateSettings({ filterset: JSON.stringify(formSet) }),
-        );
-      }),
-    [resetPagination, updateSettings],
+  const rowRangeToIds = useCallback(
+    (range: [number, number]) => {
+      const slice = experiments.slice(range[0], range[1]);
+      return Loadable.filterNotLoaded(slice).map(({ experiment }) => experiment.id);
+    },
+    [experiments],
+  );
+
+  const handleSelectionChange: HandleSelectionChangeType = useCallback(
+    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
+      let newSettings: SelectionState = { ...settings.selection };
+
+      switch (selectionType) {
+        case 'add':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.add(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'add-all':
+          newSettings = {
+            exclusions: [],
+            type: 'ALL_EXCEPT' as const,
+          };
+
+          break;
+        case 'remove':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'remove-all':
+          newSettings = DEFAULT_SELECTION;
+
+          break;
+        case 'set':
+          if (!range) return;
+          newSettings = {
+            ...DEFAULT_SELECTION,
+            selections: Array.from(rowRangeToIds(range)),
+          };
+
+          break;
+      }
+
+      updateSettings({ selection: newSettings });
+    },
+    [rowRangeToIds, settings.selection, updateSettings],
   );
 
   const handleActionComplete = useCallback(async () => {
@@ -419,105 +507,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
      * Deselect selected rows since their states may have changed where they
      * are no longer part of the filter criteria.
      */
-    setSelection({
-      columns: CompactSelection.empty(),
-      rows: CompactSelection.empty(),
-    });
-    setSelectAll(false);
+    handleSelectionChange('remove-all');
 
     // Re-fetch experiment list to get updates based on batch action.
     await fetchExperiments();
-  }, [fetchExperiments, setSelectAll, setSelection]);
-
-  const rowRangeToIds = useCallback(
-    (range: [number, number]) => {
-      return Loadable.filterNotLoaded(experiments.slice(range[0], range[1])).map(
-        (experiment) => experiment.experiment.id,
-      );
-    },
-    [experiments],
-  );
-
-  const handleSelectionChange: HandleSelectionChangeType = useCallback(
-    (selectionType: SelectionType, range: [number, number]) => {
-      const totalCount = Loadable.getOrElse(0, total);
-      if (!totalCount) return;
-
-      setSelection((prevSelection) => {
-        const newSettings: Partial<F_ExperimentListSettings> = {};
-        const excludedSet = new Set(settings.excludedExperiments);
-        const includedSet = new Set(settings.selectedExperiments);
-        let newSelection = prevSelection;
-
-        switch (selectionType) {
-          case 'add':
-            if (selectAll) {
-              rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
-              newSettings.excludedExperiments = Array.from(excludedSet);
-            }
-
-            rowRangeToIds(range).forEach((id) => includedSet.add(id));
-            newSettings.selectedExperiments = Array.from(includedSet);
-
-            newSelection = { ...prevSelection, rows: prevSelection.rows.add(range) };
-            break;
-          case 'add-all':
-            newSettings.selectAll = true;
-            newSettings.excludedExperiments = [];
-
-            Loadable.filterNotLoaded(experiments).forEach((experiment) => {
-              includedSet.add(experiment.experiment.id);
-            });
-            newSettings.selectedExperiments = Array.from(includedSet);
-
-            newSelection = {
-              columns: CompactSelection.empty(),
-              rows: CompactSelection.empty().add([0, totalCount]),
-            };
-            break;
-          case 'remove':
-            if (selectAll) {
-              rowRangeToIds(range).forEach((id) => excludedSet.add(id));
-              newSettings.excludedExperiments = Array.from(excludedSet);
-            }
-
-            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
-            newSettings.selectedExperiments = Array.from(includedSet);
-
-            newSelection = { ...prevSelection, rows: prevSelection.rows.remove(range) };
-            break;
-          case 'remove-all':
-            newSettings.selectAll = false;
-            newSettings.selectedExperiments = [];
-            newSettings.excludedExperiments = [];
-            newSelection = { columns: CompactSelection.empty(), rows: CompactSelection.empty() };
-            break;
-          case 'set':
-            newSettings.selectAll = false;
-
-            includedSet.clear();
-            rowRangeToIds(range).forEach((id) => includedSet.add(id));
-            newSettings.selectedExperiments = Array.from(includedSet);
-
-            newSelection = { ...prevSelection, rows: CompactSelection.empty().add(range) };
-            break;
-        }
-
-        if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
-
-        return newSelection;
-      });
-    },
-    [
-      experiments,
-      rowRangeToIds,
-      selectAll,
-      settings.excludedExperiments,
-      settings.selectedExperiments,
-      total,
-      updateSettings,
-    ],
-  );
+  }, [handleSelectionChange, fetchExperiments]);
 
   const handleActionSuccess = useCallback(
     (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
@@ -571,9 +565,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         default:
           break;
       }
-      handleSelectionChange('remove-all', [0, selectedExperimentIds.size]);
+      handleSelectionChange('remove-all');
     },
-    [handleSelectionChange, selectedExperimentIds, openToast],
+    [handleSelectionChange, openToast],
   );
 
   const handleContextMenuComplete = useCallback(
@@ -599,11 +593,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setSelectAll(false);
-        setSelection({
-          columns: CompactSelection.empty(),
-          rows: CompactSelection.empty(),
-        });
+        handleSelectionChange('remove-all');
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -611,7 +601,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
-  }, [setSelectAll, setSelection]);
+  }, [handleSelectionChange]);
 
   const handleTableViewModeChange = useCallback(
     (mode: TableViewMode) => {
@@ -631,7 +621,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       }
       setPage(cPage - 1);
     },
-    [page, updateSettings],
+    [page, updateSettings, setPage],
   );
 
   const handleToggleComparisonView = useCallback(() => {
@@ -750,6 +740,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         rowHeight={globalSettings.rowHeight}
         selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
+        selection={settings.selection}
         sorts={sorts}
         tableViewMode={globalSettings.tableViewMode}
         total={total}

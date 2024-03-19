@@ -91,13 +91,12 @@ def unauth_session(args: argparse.Namespace) -> api.UnauthSession:
 
 def setup_session(args: argparse.Namespace) -> api.Session:
     master_url = args.master
-    utp = authentication.login_with_cache(
+    return authentication.login_with_cache(
         master_address=master_url,
         requested_user=args.user,
         password=None,
         cert=cli.cert,
     )
-    return api.Session(master_url, utp, cli.cert)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:

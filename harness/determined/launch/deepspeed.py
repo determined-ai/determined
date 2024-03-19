@@ -3,6 +3,7 @@ deepspeed.py is the launch layer for DeepSpeedTrial in Determined.
 
 It launches the entrypoint script using DeepSpeed's launch process.
 """
+
 import argparse
 import logging
 import os
@@ -21,7 +22,6 @@ from packaging import version
 import determined as det
 import determined.common
 from determined import constants, util
-from determined.common import api
 from determined.common.api import authentication, certs
 
 hostfile_path = None
@@ -287,8 +287,7 @@ def main(script: List[str]) -> int:
         # Mark sshd containers as daemon containers that the master should kill when all non-daemon
         # containers (deepspeed launcher, in this case) have exited.
         cert = certs.default_load(info.master_url)
-        utp = authentication.login_with_cache(info.master_url, cert=cert)
-        sess = api.Session(info.master_url, utp, cert)
+        sess = authentication.login_with_cache(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon")
 
         # Wrap it in a pid_server to ensure that we can't hang if a worker fails.
