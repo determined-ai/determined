@@ -14,6 +14,10 @@ type GetsLocator = { locator: HasLocator }
 
 export abstract class canBeParent implements GetsLocator {
 
+  // all parents can have subComponents
+  readonly subComponents: Map<String,BaseComponent> = new Map()
+  readonly sc: Map<String,BaseComponent> = this.subComponents
+
   /**
    * Sets subComponents as properties of this object
    * 
@@ -24,11 +28,12 @@ export abstract class canBeParent implements GetsLocator {
    */
   protected initializeSubComponents(subComponents: SubComponent[]): void {
     subComponents.forEach((subComponent) => {
-      Object.defineProperty(this, subComponent.name, new BaseComponent({
+      const newComponent = new subComponent.type({
         parent: this,
         selector: subComponent.selector,
         subComponents: subComponent.subComponents,
-      }));
+      })
+      this.subComponents.set(subComponent.name, newComponent)
     });
   }
 
