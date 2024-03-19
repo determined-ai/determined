@@ -25,6 +25,7 @@ type StartupMsg struct {
 // Each field of a KnownKeySet is a comma-separated list of int64s and ranges like "a,b-c,d".
 type KnownKeySet struct {
 	Projects string `json:"projects"`
+	Models   string `json:"models"`
 }
 
 // prepareWebsocketMessage converts the MarshallableMsg into a websocket.PreparedMessage.
