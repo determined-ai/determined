@@ -2150,14 +2150,16 @@ jobs:
           only-on-branch: main
           time: "120" # Wait two hours at most. Adjust this over time.
       - checkout
+      - add-and-fetch-upstream
       - attach_workspace:
           at: .
       - setup-python-venv:
+          determined: True
           executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
       - run:
           name: Install upload deps
-          command: tools/scripts/retry.sh pip install requests determined psycopg2-binary
+          command: tools/scripts/retry.sh pip install requests psycopg2-binary
 
       - when:
           condition: <<parameters.deploy-db>>
