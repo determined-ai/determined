@@ -1,18 +1,6 @@
 import { type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 
-/**
- * Alias for type that has a function "locator" which takes a string and gives a Locator
- */
-type HasLocator = { locator: (arg0: string) => Locator }
-/**
- * Alias for type that has a member "locator" which is of type HasLocator
- * 
- * @remarks This enables us to call `this.loc` and expect to be able to call `.locator()`
- * It's like saying (BasePage | BaseComponent) without importing type BasePage
- */
-type GetsLocator = { locator: HasLocator }
-
 export abstract class canBeParent {
 
   // all parents can have subComponents
@@ -53,7 +41,7 @@ export interface SubComponent {
   subComponents?: SubComponent[]
 }
 
-export class BaseComponent extends canBeParent implements GetsLocator {
+export class BaseComponent extends canBeParent {
   readonly defaultSelector: undefined | string;
 
   readonly #selector: string;
@@ -67,7 +55,7 @@ export class BaseComponent extends canBeParent implements GetsLocator {
    * This constructor is a base class for any component in src/components/.
    * 
    * @param {Object} obj
-   * @param {GetsLocator} obj.parent - The parent used to locate this BaseComponent
+   * @param {canBeParent} obj.parent - The parent used to locate this BaseComponent
    * @param {string} [obj.selector] - Used instead of `defaultSelector`
    * @param {SubComponent[]} [obj.subComponents] - SubComponents to initialize at runtime
    */
