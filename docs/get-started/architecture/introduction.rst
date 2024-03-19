@@ -234,9 +234,12 @@ following benefits:
 |                                                | without risking future lock-in. See                       |
 |                                                | :ref:`apis-howto-overview`.                               |
 +------------------------------------------------+-----------------------------------------------------------+
-| Profiling                                      | Out-of-the-box system metrics (measurements of hardware   |
-|                                                | usage) and timings (durations of actions taken during     |
-|                                                | training, such as data loading).                          |
+| Profiling                                      | Optimize your model's performance and diagnose            |
+|                                                | bottlenecks with comprehensive profiling support across   |
+|                                                | different layers of your deployment, from out-of-the-box  |
+|                                                | system metrics tracking and seamless integrations with    |
+|                                                | native training profilers to Prometheus/Grafana support.  |
+|                                                | See :ref:`profiling`.                                     |
 +------------------------------------------------+-----------------------------------------------------------+
 | Visualization                                  | Visualize your model and training procedure by using The  |
 |                                                | built-in WebUI and by launching managed                   |

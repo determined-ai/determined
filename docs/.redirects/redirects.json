@@ -1,6 +1,7 @@
 {
     "reference/python-sdk": "python-sdk/python-sdk.html",
     "reference/training/experiment-config-reference": "../experiment-config-reference.html",
+    "model-dev-guide/dtrain/optimize-training": "../profiling.html",
     "model-dev-guide/submit-experiment": "create-experiment.html",
     "setup-cluster/internet-access": "checklists/adv-requirements.html",
     "setup-cluster/deploy-cluster/internet-access": "../checklists/adv-requirements.html",

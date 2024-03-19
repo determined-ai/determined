@@ -95,6 +95,8 @@ implement the :class:`determined.keras.callbacks.Callback` interface (an extensi
 :class:`~determined.keras.TFKerasTrial` by implementing
 :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
+.. _keras-profiler:
+
 ***********
  Profiling
 ***********
