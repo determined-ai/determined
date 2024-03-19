@@ -23,6 +23,10 @@ enum LocationType {
   LOCATION_TYPE_TRAINING = 4;
   // Column is located on the experiment's custom metric
   LOCATION_TYPE_CUSTOM_METRIC = 5;
+  // Column is located on the run
+  LOCATION_TYPE_RUN = 6;
+  // Column is located in the hyperparameter of the run
+  LOCATION_TYPE_RUN_HYPERPARAMETERS = 7;
 }
 
 // ColumnType indicates the type of data under the column

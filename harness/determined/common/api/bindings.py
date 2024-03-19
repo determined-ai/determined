@@ -3955,6 +3955,203 @@ class v1FittingPolicy(DetEnum):
     SLURM = "FITTING_POLICY_SLURM"
     PBS = "FITTING_POLICY_PBS"
 
+class v1FlatRun(Printable):
+    """Flat run respresentation."""
+    duration: "typing.Optional[int]" = None
+    endTime: "typing.Optional[str]" = None
+    experiment: "typing.Optional[v1FlatRunExperiment]" = None
+    externalRunId: "typing.Optional[int]" = None
+    hyperparameters: "typing.Optional[str]" = None
+    labels: "typing.Optional[typing.Sequence[str]]" = None
+    searcherMetricValue: "typing.Optional[float]" = None
+    summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        checkpointCount: int,
+        checkpointSize: str,
+        id: int,
+        parentArchived: bool,
+        projectId: int,
+        projectName: str,
+        startTime: str,
+        state: "trialv1State",
+        workspaceId: int,
+        workspaceName: str,
+        duration: "typing.Union[int, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+        experiment: "typing.Union[v1FlatRunExperiment, None, Unset]" = _unset,
+        externalRunId: "typing.Union[int, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
+        summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.checkpointCount = checkpointCount
+        self.checkpointSize = checkpointSize
+        self.id = id
+        self.parentArchived = parentArchived
+        self.projectId = projectId
+        self.projectName = projectName
+        self.startTime = startTime
+        self.state = state
+        self.workspaceId = workspaceId
+        self.workspaceName = workspaceName
+        if not isinstance(duration, Unset):
+            self.duration = duration
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+        if not isinstance(experiment, Unset):
+            self.experiment = experiment
+        if not isinstance(externalRunId, Unset):
+            self.externalRunId = externalRunId
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
+        if not isinstance(labels, Unset):
+            self.labels = labels
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
+        if not isinstance(summaryMetrics, Unset):
+            self.summaryMetrics = summaryMetrics
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1FlatRun":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": obj["checkpointCount"],
+            "checkpointSize": obj["checkpointSize"],
+            "id": obj["id"],
+            "parentArchived": obj["parentArchived"],
+            "projectId": obj["projectId"],
+            "projectName": obj["projectName"],
+            "startTime": obj["startTime"],
+            "state": trialv1State(obj["state"]),
+            "workspaceId": obj["workspaceId"],
+            "workspaceName": obj["workspaceName"],
+        }
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        if "experiment" in obj:
+            kwargs["experiment"] = v1FlatRunExperiment.from_json(obj["experiment"]) if obj["experiment"] is not None else None
+        if "externalRunId" in obj:
+            kwargs["externalRunId"] = obj["externalRunId"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
+        if "labels" in obj:
+            kwargs["labels"] = obj["labels"]
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
+        if "summaryMetrics" in obj:
+            kwargs["summaryMetrics"] = obj["summaryMetrics"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "checkpointCount": self.checkpointCount,
+            "checkpointSize": self.checkpointSize,
+            "id": self.id,
+            "parentArchived": self.parentArchived,
+            "projectId": self.projectId,
+            "projectName": self.projectName,
+            "startTime": self.startTime,
+            "state": self.state.value,
+            "workspaceId": self.workspaceId,
+            "workspaceName": self.workspaceName,
+        }
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        if not omit_unset or "experiment" in vars(self):
+            out["experiment"] = None if self.experiment is None else self.experiment.to_json(omit_unset)
+        if not omit_unset or "externalRunId" in vars(self):
+            out["externalRunId"] = self.externalRunId
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
+        if not omit_unset or "labels" in vars(self):
+            out["labels"] = self.labels
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
+        if not omit_unset or "summaryMetrics" in vars(self):
+            out["summaryMetrics"] = self.summaryMetrics
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
+        return out
+
+class v1FlatRunExperiment(Printable):
+    externalExperimentId: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        description: str,
+        forkedFrom: int,
+        id: int,
+        isMultitrial: bool,
+        name: str,
+        progress: float,
+        resourcePool: str,
+        searcherMetric: str,
+        searcherType: str,
+        unmanaged: bool,
+        externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.description = description
+        self.forkedFrom = forkedFrom
+        self.id = id
+        self.isMultitrial = isMultitrial
+        self.name = name
+        self.progress = progress
+        self.resourcePool = resourcePool
+        self.searcherMetric = searcherMetric
+        self.searcherType = searcherType
+        self.unmanaged = unmanaged
+        if not isinstance(externalExperimentId, Unset):
+            self.externalExperimentId = externalExperimentId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "description": obj["description"],
+            "forkedFrom": obj["forkedFrom"],
+            "id": obj["id"],
+            "isMultitrial": obj["isMultitrial"],
+            "name": obj["name"],
+            "progress": float(obj["progress"]),
+            "resourcePool": obj["resourcePool"],
+            "searcherMetric": obj["searcherMetric"],
+            "searcherType": obj["searcherType"],
+            "unmanaged": obj["unmanaged"],
+        }
+        if "externalExperimentId" in obj:
+            kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "description": self.description,
+            "forkedFrom": self.forkedFrom,
+            "id": self.id,
+            "isMultitrial": self.isMultitrial,
+            "name": self.name,
+            "progress": dump_float(self.progress),
+            "resourcePool": self.resourcePool,
+            "searcherMetric": self.searcherMetric,
+            "searcherType": self.searcherType,
+            "unmanaged": self.unmanaged,
+        }
+        if not omit_unset or "externalExperimentId" in vars(self):
+            out["externalExperimentId"] = self.externalExperimentId
+        return out
+
 class v1GenericTaskState(DetEnum):
     """State of a Generic task
     - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown
@@ -7665,6 +7862,8 @@ class v1LocationType(DetEnum):
     - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics
     - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps
     - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
+    - LOCATION_TYPE_RUN: Column is located on the run
+    - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
     """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
@@ -7672,6 +7871,8 @@ class v1LocationType(DetEnum):
     VALIDATIONS = "LOCATION_TYPE_VALIDATIONS"
     TRAINING = "LOCATION_TYPE_TRAINING"
     CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
+    RUN = "LOCATION_TYPE_RUN"
+    RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None
@@ -12568,6 +12769,33 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
+        return out
+
+class v1SearchRunsResponse(Printable):
+    """Response to SearchRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        pagination: "v1Pagination",
+        runs: "typing.Sequence[v1FlatRun]",
+    ):
+        self.pagination = pagination
+        self.runs = runs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "pagination": v1Pagination.from_json(obj["pagination"]),
+            "runs": [v1FlatRun.from_json(x) for x in obj["runs"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "pagination": self.pagination.to_json(omit_unset),
+            "runs": [x.to_json(omit_unset) for x in self.runs],
+        }
         return out
 
 class v1SearcherEvent(Printable):
@@ -21332,6 +21560,44 @@ def post_SearchRolesAssignableToScope(
         return v1SearchRolesAssignableToScopeResponse.from_json(_resp.json())
     raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
+def get_SearchRuns(
+    session: "api.BaseSession",
+    *,
+    filter: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    projectId: "typing.Optional[int]" = None,
+    sort: "typing.Optional[str]" = None,
+) -> "v1SearchRunsResponse":
+    """Get a list of runs.
+
+    - filter: Filter expression.
+    - limit: How many results to show.
+    - offset: How many experiments to skip before including in the results.
+    - projectId: ID of the project to look at.
+    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
+    """
+    _params = {
+        "filter": filter,
+        "limit": limit,
+        "offset": offset,
+        "projectId": projectId,
+        "sort": sort,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1SearchRunsResponse.from_json(_resp.json())
+    raise APIHttpError("get_SearchRuns", _resp)
+
 def post_SetCommandPriority(
     session: "api.BaseSession",
     *,
@@ -22182,4 +22448,5 @@ Paginated = typing.Union[
     v1ListWorkspacesBoundToRPResponse,
     v1SearchExperimentsResponse,
     v1SearchRolesAssignableToScopeResponse,
+    v1SearchRunsResponse,
 ]
