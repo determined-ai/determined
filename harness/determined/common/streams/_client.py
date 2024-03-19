@@ -130,7 +130,7 @@ class ModelSpec:
         return wire.ModelSubscriptionSpec(
             workspace_ids=int_or_list(self.workspace_id),
             model_ids=int_or_list(self.model_id),
-            user_ids=int_or_list(self.user_id)
+            user_ids=int_or_list(self.user_id),
         ).to_json()
 
 
