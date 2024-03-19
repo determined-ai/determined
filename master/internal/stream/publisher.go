@@ -25,6 +25,7 @@ import (
 type PublisherSet struct {
 	DBAddress  string
 	Projects   *stream.Publisher[*ProjectMsg]
+	Models     *stream.Publisher[*ModelMsg]
 	bootemChan chan struct{}
 	bootLock   sync.Mutex
 	readyCond  sync.Cond
@@ -37,6 +38,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 	return &PublisherSet{
 		DBAddress:  dbAddress,
 		Projects:   stream.NewPublisher[*ProjectMsg](),
+		Models:     stream.NewPublisher[*ModelMsg](),
 		bootemChan: make(chan struct{}),
 		readyCond:  *sync.NewCond(&lock),
 	}
@@ -46,6 +48,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
 		ps.Projects: make(chan bool),
+		ps.Models:   make(chan bool),
 	}
 
 	eg := errgroupx.WithContext(ctx)
@@ -60,6 +63,21 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 			)
 			if err != nil {
 				return fmt.Errorf("project publishLoop failed: %s", err.Error())
+			}
+			return nil
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			err := publishLoop(
+				c,
+				ps.DBAddress,
+				modelChannel,
+				ps.Models,
+				readyChannels[ps.Models],
+			)
+			if err != nil {
+				return fmt.Errorf("models publishLoop failed: %s", err.Error())
 			}
 			return nil
 		},
