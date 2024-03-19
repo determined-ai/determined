@@ -1481,9 +1481,6 @@ jobs:
           check: false
       - make-package-small
       - run: tools/scripts/retry.sh make -C master publish-dev-small
-      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-rc:
     docker:
@@ -3038,10 +3035,7 @@ workflows:
               only:
                 - main
 
-      - package-and-push-system-dev-small:
-          requires:
-            - build-react
-            - build-docs
+      - package-and-push-system-dev-small
 
       - upload-docs-search-index:
           requires:
