@@ -8128,10 +8128,12 @@ class v1MetricType(DetEnum):
     - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
     - METRIC_TYPE_TRAINING: For metrics emitted during training.
     - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     """
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
     VALIDATION = "METRIC_TYPE_VALIDATION"
+    PROFILING = "METRIC_TYPE_PROFILING"
 
 class v1Metrics(Printable):
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -14315,37 +14317,49 @@ class v1TrialLogsResponse(Printable):
 
 class v1TrialMetrics(Printable):
     """Metrics from the trial some duration of training."""
+    reportTime: "typing.Optional[str]" = None
+    stepsCompleted: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         metrics: "v1Metrics",
-        stepsCompleted: int,
         trialId: int,
         trialRunId: int,
+        reportTime: "typing.Union[str, None, Unset]" = _unset,
+        stepsCompleted: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.metrics = metrics
-        self.stepsCompleted = stepsCompleted
         self.trialId = trialId
         self.trialRunId = trialRunId
+        if not isinstance(reportTime, Unset):
+            self.reportTime = reportTime
+        if not isinstance(stepsCompleted, Unset):
+            self.stepsCompleted = stepsCompleted
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
-            "stepsCompleted": obj["stepsCompleted"],
             "trialId": obj["trialId"],
             "trialRunId": obj["trialRunId"],
         }
+        if "reportTime" in obj:
+            kwargs["reportTime"] = obj["reportTime"]
+        if "stepsCompleted" in obj:
+            kwargs["stepsCompleted"] = obj["stepsCompleted"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
-            "stepsCompleted": self.stepsCompleted,
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
         }
+        if not omit_unset or "reportTime" in vars(self):
+            out["reportTime"] = self.reportTime
+        if not omit_unset or "stepsCompleted" in vars(self):
+            out["stepsCompleted"] = self.stepsCompleted
         return out
 
 class v1TrialOperation(Printable):
@@ -16076,6 +16090,7 @@ def get_CompareTrials(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - startBatches: Sample from metrics after this batch number.
     - timeSeriesFilter_doubleRange_gt: Greater than.
     - timeSeriesFilter_doubleRange_gte: Greater than or equal.
@@ -19058,6 +19073,7 @@ a metric.
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - offset: Skip the number of workloads before returning results. Negative values
 denote number of workloads to skip from the end before returning results.
     - orderBy: Order workloads in either ascending or descending order.
@@ -19964,6 +19980,7 @@ def get_MetricBatches(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     """
     _params = {
@@ -21932,6 +21949,7 @@ def get_TrialsSample(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     - startBatches: Beginning of window (inclusive) to fetch data for.
     """
@@ -21994,6 +22012,7 @@ def get_TrialsSnapshot(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     """
     _params = {
