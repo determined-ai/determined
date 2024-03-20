@@ -232,19 +232,21 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
 
 The resource manager used to acquire resources. Defaults to ``agent``.
 
-If additional resource managers are defined (only for Kubernetes), the resource manager defined
-here, under the primary ``resource_manager`` key, is considered the default resource manager.
+For Kubernetes installations, if you define additional resource managers, the resource manager
+specified under the primary resource_manager key here is considered the default.
 
 ``name``
 ========
 
-Optional. The resource manager name to use. Defaults to "default" if no name is specified.
+Optional. Specifies the resource manager's name. Defaults to default if no name is specified. or
+Kubernetes installations, if you specify additional resource managers, the names of all resource
+managers on the cluster must be unique.
 
 ``metadata``
 ============
 
-Optional. A place to store additional information on a resource manager, like the zone, region,
-location etc.
+Optional. Stores additional information about the resource manager, such as the zone, region, or
+location.
 
 ``type: agent``
 ===============
@@ -703,7 +705,7 @@ documentation on :ref:`resource-pools` for more information. Defaults to a resou
 ``pool_name``
 =============
 
-The name of the resource pool, which must be unique among all resource pools defined.
+Specifies the name of the resource pool, which must be unique among all defined resource pools.
 
 ``description``
 ===============
@@ -1181,17 +1183,17 @@ those partitions/queues.
  ``additional_resource_managers``
 **********************************
 
-For Kubernetes, cluster administrators can define additional resource managers to connect the
-Determined master service to remote clusters. For a single resource manager or to define the default
-resource manager, do not define this under ``additional_resource_manager``; instead, use the primary
-``resource_manager`` key.
+Cluster administrators for Kubernetes installations can define additional resource managers for
+connecting the Determined master service with remote clusters. To define a single resource manager
+or designate the default resource manager, do not define it under ``additional_resource_manager``;
+instead, use the primary ``resource_manager`` key.
 
-Resource manager names must be unique among all resource managers.
+Resource manager names must be unique among all defined resource managers.
 
-Additional resource managers must have defined resource pools under them. Resource pool names must
-be defined and must be unique among all resource pools in all resource managers. Resource pools for
-each additional resource manager are not defined at the root level but rather their respective
-element in the resource manager list.
+Any additional resource managers must have at least one resource pool assigned to them. These
+resource pool names must be defined and must be distinct among all resource pools across all
+resource managers. You define resource pools for any additional resource managers within their
+respective elements in the resource manager list (not at the root level).
 
 For example, to define three resource managers (one default, two additional):
 
@@ -1220,9 +1222,9 @@ For example, to define three resource managers (one default, two additional):
 ``resource_manager``
 ====================
 
-Optional. Follows the existing resource manager configuration pattern, with ``resource_pools``
-nested. There can be 'n'-many resource managers defined under the ``additional_resource_manager``
-key, following this pattern. Additional resource managers defined here require a ``name`` and
+Optional. This section allows for the definition of 'n'-many (multiple) resource managers under the
+additional_resource_manager key. It follows the existing resource manager configuration pattern, and
+``resource_pools`` is nested. Any additional resource managers defined here require a name and
 ``resource_pools``.
 
 ************************
