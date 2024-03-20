@@ -1,11 +1,12 @@
-import { GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { CompoundRunState, DetailedUser, ExperimentWithTrial, JobState, RunState } from 'types';
 import { humanReadableNumber } from 'utils/number';
+import { AnyMouseEvent } from 'utils/routes';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 
@@ -224,6 +225,13 @@ export const getColumnDefs = ({
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
+      onClick: (e: CellClickedEventArgs) => {
+        if (record.experiment.forkedFrom) {
+          handlePath(e as unknown as AnyMouseEvent, {
+            path: String(record.experiment.forkedFrom),
+          });
+        }
+      },
       readonly: true,
     }),
     title: 'Forked From',
@@ -242,8 +250,12 @@ export const getColumnDefs = ({
           href: paths.experimentDetails(record.experiment.id),
           title: String(record.experiment.id),
         },
-
         navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          handlePath(e as unknown as AnyMouseEvent, {
+            path: paths.experimentDetails(record.experiment.id),
+          });
+        },
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
@@ -267,6 +279,11 @@ export const getColumnDefs = ({
           unmanaged: record.experiment.unmanaged,
         },
         navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          handlePath(e as unknown as AnyMouseEvent, {
+            path: paths.experimentDetails(record.experiment.id),
+          });
+        },
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,

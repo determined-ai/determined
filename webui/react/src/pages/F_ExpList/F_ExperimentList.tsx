@@ -11,7 +11,6 @@ import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComparisonView from 'components/ComparisonView';
@@ -137,7 +136,6 @@ const rowHeightMap: Record<RowHeight, number> = {
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
   const projectSettingsObs = useMemo(
@@ -1152,9 +1150,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onNavigate={(path) => {
-                  navigate(path);
-                }}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onScroll={isPagedView ? undefined : handleScroll}
                 onSelectionChange={handleSelectionChange}

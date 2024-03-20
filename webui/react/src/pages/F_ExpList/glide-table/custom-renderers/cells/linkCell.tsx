@@ -1,5 +1,6 @@
 import {
   blend,
+  CellClickedEventArgs,
   CustomCell,
   CustomRenderer,
   getMiddleCenterBias,
@@ -23,6 +24,7 @@ interface LinkCellProps {
     readonly href: string;
     readonly unmanaged?: boolean;
   };
+  readonly onClick?: (e: CellClickedEventArgs) => void;
 }
 
 export type LinkCell = CustomCell<LinkCellProps>;
