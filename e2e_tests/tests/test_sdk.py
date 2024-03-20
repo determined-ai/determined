@@ -469,7 +469,7 @@ def test_rp_workspace_mapping() -> None:
 @pytest.mark.e2e_cpu
 def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
     # Create a minimal experiment with a simple template
-    # Verify that after the first trial is started, the executed experiment has exactly one trial
+    # Start the experiment and wait until a trial has started to ensure experiment creation has no errors
     # Verify that the content in template is indeed applied
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
