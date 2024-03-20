@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/o1egl/paseto"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
@@ -336,22 +338,16 @@ func CloseOpenAllocations(ctx context.Context, exclude []model.AllocationID) err
 
 // RecordTaskStats record stats for tasks.
 func RecordTaskStats(ctx context.Context, stats *model.TaskStats) error {
-	return RecordTaskStatsBun(ctx, stats)
-}
+	if stats.StartTime == nil || stats.StartTime.IsZero() {
+		log.Warnf("task stats %+v has no start time", stats)
+	}
 
-// RecordTaskStatsBun record stats for tasks with bun.
-func RecordTaskStatsBun(ctx context.Context, stats *model.TaskStats) error {
 	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
 	return err
 }
 
 // RecordTaskEndStats record end stats for tasks.
 func RecordTaskEndStats(ctx context.Context, stats *model.TaskStats) error {
-	return RecordTaskEndStatsBun(ctx, stats)
-}
-
-// RecordTaskEndStatsBun record end stats for tasks with bun.
-func RecordTaskEndStatsBun(ctx context.Context, stats *model.TaskStats) error {
 	query := Bun().NewUpdate().Model(stats).Column("end_time").
 		Where("allocation_id = ?", stats.AllocationID).
 		Where("event_type = ?", stats.EventType).
