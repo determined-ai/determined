@@ -1,13 +1,7 @@
 import { type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 
-/**
- * Used in the constructor for BaseComponent
- */
-export interface BaseComponentProps {
-  parent: BasePage | BaseComponent
-  selector?: string
-}
+type parentTypes = BasePage | BaseComponent | BaseReactFragment
 
 /**
  * Returns the representation of a Component.
@@ -16,26 +10,16 @@ export interface BaseComponentProps {
  * This constructor is a base class for any component in src/components/.
  * 
  * @param {Object} obj
- * @param {BasePage | BaseComponent} obj.parent - The parent used to locate this BaseComponent
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class BaseComponent {
-  readonly defaultSelector: undefined | string;
-
   readonly #selector: string;
-  protected readonly _parent: BasePage | BaseComponent;
+  protected readonly _parent: parentTypes;
   protected _locator: Locator | undefined;
 
-  constructor({ parent, selector }: BaseComponentProps) {
-    if (typeof this !== typeof BaseComponent && typeof this.defaultSelector === 'undefined') {
-      throw new Error(`defaultSelector is undefined in class ${typeof this}`);
-    }
-    if (typeof this === typeof BaseComponent && typeof selector === 'undefined') {
-      throw new Error(`BaseComponent needs a selector`);
-    }
-
-    // guardrails above ensure that either selector or defaultSelector are defined
-    this.#selector = selector || this.defaultSelector!;
+  constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
+    this.#selector = selector;
     this._parent = parent;
   }
 
@@ -64,14 +48,13 @@ export class BaseComponent {
  * Fragments cannot have selectors
  * 
  * @param {Object} obj
- * @param {BasePage | BaseComponent} obj.parent - The parent used to locate this BaseComponent
+ * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
  */
-export class BaseReactFragment extends BaseComponent {
-  // we never use the defaultSelector, but there are guardrails enforcing it be set
-  override readonly defaultSelector: string = '';
+export class BaseReactFragment {
+  readonly _parent: parentTypes
 
-  constructor({ parent }: { parent: BasePage | BaseComponent}) {
-    super({parent: parent})
+  constructor({ parent }: { parent: parentTypes }) {
+    this._parent = parent
   }
   /**
    * The playwright Locator that represents this model
@@ -79,5 +62,40 @@ export class BaseReactFragment extends BaseComponent {
    * @remarks
    * Since this model is a fragment, we simply get the parent's locator
    */
-  override get pwLocatorFunction() { return this._parent.pwLocatorFunction }
+  get pwLocatorFunction(): (selector: string, options?: {}) => Locator { return this._parent.pwLocatorFunction }
 }
+
+/**
+ * The actual implemntation of a NamedComponent class
+ * 
+ * @param {Object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this NamedComponent
+ * @param {string} [obj.selector] - A selector to locate the object in place of static defaultSelector
+ *
+ * @remarks
+ * Remarks regarding implementation are found in the NamedComponent function
+ */
+abstract class _NamedComponent extends BaseComponent {
+  static defaultSelector: string;
+  constructor({ selector, parent }: { parent: parentTypes, selector?: string }) {
+    super({ parent: parent, selector: selector || _NamedComponent.defaultSelector });
+  }
+}
+
+/**
+ * Function used to extend the NamedComponent class
+ * 
+ * @param {Object} mandatory
+ * @param {string} mandatory.defaultSelector - A selector to locate the object
+ * 
+ * @remarks
+ * Named components should all come with a default selector so that their parents don't have to specify a selector.
+ * Since the default selector is static, we can access and append to it if we want a more specific selector.
+ */
+export function NamedComponent(mandatory: { defaultSelector: string }) {
+  return class extends _NamedComponent {
+    static override defaultSelector = mandatory.defaultSelector
+  }
+}
+// Classes are just a type and a function
+export type NamedComponent = typeof _NamedComponent
