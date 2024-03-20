@@ -172,7 +172,6 @@ stringData:
       default_compute_resource_pool: {{.Values.defaultComputeResourcePool}}
 
 
-
     {{- if .Values.additional_resource_managers}}
     additional_resource_managers:
     {{- range $index, $manager_and_pools := .Values.additional_resource_managers }}
@@ -185,7 +184,6 @@ stringData:
         {{- toYaml $manager_and_pools.resource_pools | nindent 8}}
     {{- end }}
     {{- end }}
-
 
     {{- if .Values.resourcePools}}
     resource_pools:
