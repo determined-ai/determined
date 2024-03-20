@@ -35,7 +35,7 @@ import { useSettings } from 'hooks/useSettings';
 import { Error } from 'pages/F_ExpList/glide-table/exceptions';
 import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
 import { paths } from 'routes/utils';
-import { getProjectColumns } from 'services/api';
+import { getProjectColumns, searchRuns } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
@@ -210,41 +210,35 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
         }
         if (columnName in columnDefs) return columnDefs[columnName];
-        if (!Loadable.isLoaded(projectColumnsMap)) return;
-        const currentColumn = projectColumnsMap.data[columnName];
+
+        const currentColumn = projectColumnsMap.getOrElse({})[columnName];
         if (!currentColumn) return;
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
             break;
-          case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
+          case V1LocationType.RUN:
+            dataPath = currentColumn.column;
             break;
-          /* case V1LocationType.RUN:
-              break;
+          case V1LocationType.HYPERPARAMETERS:
           case V1LocationType.RUNHYPERPARAMETERS:
-            break; */
+            dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
+            break;
           case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
+            dataPath = `summaryMetrics.validationMetrics.${currentColumn.column.replace(
               'validation.',
               '',
             )}`;
             break;
           case V1LocationType.TRAINING:
-            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
-              'training.',
-              '',
-            )}`;
+            dataPath = `summaryMetrics.avgMetrics.${currentColumn.column.replace('training.', '')}`;
             break;
           case V1LocationType.CUSTOMMETRIC:
-            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
+            dataPath = `summaryMetrics.${currentColumn.column}`;
             break;
-
           case V1LocationType.UNSPECIFIED:
+          default:
             break;
         }
         switch (currentColumn.type) {
@@ -327,26 +321,27 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [page, updateSettings],
   );
 
+  const experimentFilters = useMemo(() => {
+    const filters: V1BulkExperimentFilters = {
+      projectId: project.id,
+    };
+    return filters;
+  }, [project.id]);
+
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
-      // const response = await searchExperiments(
-      //   {
-      //     ...experimentFilters,
-      //     filter: filtersString,
-      //     limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-      //     offset: isPagedView ? page * settings.pageLimit : tableOffset,
-      //     sort: sortString || undefined,
-      //   },
-      //   { signal: canceler.signal },
-      // );
-      const response = await {
-        pagination: {
-          total: 0,
+      const response = await searchRuns(
+        {
+          ...experimentFilters,
+          //filter: filtersString,
+          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
+          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          sort: sortString || undefined,
         },
-        runs: [],
-      };
+        { signal: canceler.signal },
+      );
       const total = response.pagination.total ?? 0;
       const loadedRuns = response.runs;
 
@@ -379,16 +374,18 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoadingSettings, isPagedView, loadableFormset, page]);
+  }, [
+    canceler.signal,
+    experimentFilters,
+    isLoadingSettings,
+    isPagedView,
+    loadableFormset,
+    page,
+    settings.pageLimit,
+    sortString,
+  ]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
-
-  const experimentFilters = useMemo(() => {
-    const filters: V1BulkExperimentFilters = {
-      projectId: project.id,
-    };
-    return filters;
-  }, [project.id]);
 
   const numFilters = useMemo(() => {
     return (
@@ -439,7 +436,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     }
   }, [settings.filterset, isLoadingSettings]);
 
-  const handleColumnWidthChange = useCallback(() => {}, []);
+  const handleColumnWidthChange = useCallback(
+    (columnId: string, width: number) => {
+      updateSettings({ columnWidths: { ...settings.columnWidths, [columnId]: width } });
+    },
+    [settings.columnWidths, updateSettings],
+  );
 
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
     useCallback(() => {}, []);
@@ -457,7 +459,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   // TODO: poll?
   useEffect(() => {
-    let mounted = true;
     (async () => {
       try {
         const columns = await getProjectColumns({ id: project.id });
@@ -466,17 +467,11 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
             : 0,
         );
-
-        if (mounted) {
-          setProjectColumns(Loaded(columns));
-        }
+        setProjectColumns(Loaded(columns));
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch project columns' });
       }
     })();
-    return () => {
-      mounted = false;
-    };
   }, [project.id]);
 
   useEffect(
