@@ -107,7 +107,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
    * used for progressive loading along with
    *  scrollPositionSetCount, page, pageSize, numRows, and height props
    */
-  onScroll?: (r: Rectangle) => void;
+  onScroll: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
   onColumnsOrderChange?: (newColumnsOrder: string[]) => void;
   page: number;
