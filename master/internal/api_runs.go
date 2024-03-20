@@ -28,9 +28,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/uptrace/bun"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type archiveRunOKResult struct {
