@@ -2754,7 +2754,7 @@ jobs:
         - run:
             name: Delete GCS CI Buckets
             command: |
-              gsutil ls -p dai-dev-55 | grep -Eo "^gs://test-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil rm -r || true
+              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil rm -r || true
 
 workflows:
   lint:
@@ -3638,7 +3638,7 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
-          
+
       - run-gke-cluster-cleanup:
           name: gke-cleanup
           context: gcp-shared-cluster
