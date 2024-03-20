@@ -238,15 +238,23 @@ specified under the primary resource_manager key here is considered the default.
 ``name``
 ========
 
-Optional. Specifies the resource manager's name. Defaults to default if no name is specified. or
+Optional. Specifies the resource manager's name. Defaults to ``default`` if no name is specified, or
 Kubernetes installations, if you specify additional resource managers, the names of all resource
 managers on the cluster must be unique.
 
 ``metadata``
 ============
 
-Optional. Stores additional information about the resource manager, such as the zone, region, or
-location.
+Optional. Stores additional information about the resource manager in a yaml map, such as the zone,
+region, or location.
+
+For example:
+
+.. code:: yaml
+
+   metadata:
+      region: us-west1
+      zone: us-west1-a
 
 ``type: agent``
 ===============
