@@ -189,6 +189,7 @@ func setupNewAllocation(t *testing.T, dbPtr *db.PgDB) *model.Allocation {
 
 	res, err := db.AllocationByID(ctx, a.AllocationID)
 	require.NoError(t, err)
+	require.Equal(t, a, *res)
 	return res
 }
 
@@ -209,11 +210,12 @@ func TestAuthMiddleware(t *testing.T) {
 	require.NoError(t, err)
 
 	user := model.User{Username: username, ID: model.UserID(resp.User.Id)}
-	require.NoError(t, err)
 
 	allocation := setupNewAllocation(t, api.m.db)
 	allocationToken, err := db.StartAllocationSession(ctx, allocation.AllocationID, &user)
 	require.NoError(t, err)
+	require.NotEmpty(t, allocationToken)
+
 	allocationHeader := grpcutil.GrpcMetadataPrefix + grpcutil.AllocationTokenHeader
 
 	proxiedSubRoute := "/proxied-path-a/anysubroute"
