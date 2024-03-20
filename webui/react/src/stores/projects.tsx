@@ -3,7 +3,7 @@ import { List, Map } from 'immutable';
 
 import { getWorkspaceProjects } from 'services/api';
 import { Streamable, StreamContent } from 'services/stream';
-import { ProjectSpec } from 'services/stream/projects';
+import { ProjectSpec } from 'services/stream/wire';
 import streamStore, { StreamSubscriber } from 'stores/stream';
 import { Project } from 'types';
 import asValueObject, { ValueObjectOf } from 'utils/asValueObject';

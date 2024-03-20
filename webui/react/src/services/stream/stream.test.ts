@@ -2,8 +2,8 @@ import WS from 'jest-websocket-mock';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ExperimentSpec } from './experiments';
-import { ProjectSpec } from './projects';
 import { Stream } from './stream';
+import { ProjectSpec } from './wire';
 
 const onUpsert = vi.fn();
 const onDelete = vi.fn();
