@@ -10,8 +10,8 @@ import _ from 'lodash';
 import { RawJson } from 'types';
 import { formatDatetime } from 'utils/datetime';
 
+export const DEFAULT_COLUMN_WIDTH = 140;
 export const MIN_COLUMN_WIDTH = 40;
-export const NO_PINS_WIDTH = 200;
 
 export const MULTISELECT = 'selected';
 
@@ -48,7 +48,7 @@ export function defaultTextColumn<T extends RawJson>(
     },
     title: columnTitle,
     tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
+    width: columnWidth ?? DEFAULT_COLUMN_WIDTH,
   };
 }
 
@@ -98,7 +98,7 @@ export function defaultNumberColumn<T extends RawJson>(
     },
     title: columnTitle,
     tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
+    width: columnWidth ?? DEFAULT_COLUMN_WIDTH,
   };
 }
 
@@ -145,8 +145,6 @@ export function defaultDateColumn<T extends RawJson>(
     },
     title: columnTitle,
     tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
+    width: columnWidth ?? DEFAULT_COLUMN_WIDTH,
   };
 }
-
-export const columnWidthsFallback = 140;

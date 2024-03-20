@@ -7,7 +7,7 @@ import {
 } from '@glideapps/glide-data-grid';
 
 interface UserProfileCellProps {
-  readonly kind: 'user-profile-cell';
+  readonly kind: 'user-avatar-cell';
   readonly image: string;
   readonly initials: string;
   readonly tint: string;
@@ -73,7 +73,7 @@ const renderer: CustomRenderer<UserProfileCell> = {
     return true;
   },
   isMatch: (cell: CustomCell): cell is UserProfileCell =>
-    (cell.data as UserProfileCellProps).kind === 'user-profile-cell',
+    (cell.data as UserProfileCellProps).kind === 'user-avatar-cell',
   kind: GridCellKind.Custom,
   measure: () => 50,
   onPaste: (v, d) => ({

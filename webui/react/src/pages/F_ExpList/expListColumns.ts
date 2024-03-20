@@ -12,7 +12,7 @@ import { getDisplayName } from 'utils/user';
 import {
   ColumnDef,
   ColumnDefs,
-  columnWidthsFallback,
+  DEFAULT_COLUMN_WIDTH,
   getHeatmapColor,
   HeatmapProps,
 } from './glide-table/columns';
@@ -406,7 +406,7 @@ export const getColumnDefs = ({
         data: {
           image: undefined,
           initials: getInitials(displayName),
-          kind: 'user-profile-cell',
+          kind: 'user-avatar-cell',
           tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
@@ -456,7 +456,7 @@ export const searcherMetricsValColumn = (
     },
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
+    width: columnWidth ?? DEFAULT_COLUMN_WIDTH,
   };
 };
 

@@ -2,8 +2,8 @@ import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
-interface RangeCellProps {
-  readonly kind: 'range-cell';
+interface ProgressCellProps {
+  readonly kind: 'progress-cell';
   readonly value: number;
   readonly min: number;
   readonly max: number;
@@ -14,11 +14,11 @@ interface RangeCellProps {
   readonly color: string;
 }
 
-export type RangeCell = CustomCell<RangeCellProps>;
+export type ProgressCell = CustomCell<ProgressCellProps>;
 
 const RANGE_HEIGHT = 6;
 
-const renderer: CustomRenderer<RangeCell> = {
+const renderer: CustomRenderer<ProgressCell> = {
   draw: (args, cell) => {
     const { ctx, theme, rect } = args;
     const { min, max, value, color } = cell.data;
@@ -45,7 +45,7 @@ const renderer: CustomRenderer<RangeCell> = {
 
     return true;
   },
-  isMatch: (c): c is RangeCell => (c.data as RangeCellProps).kind === 'range-cell',
+  isMatch: (c): c is ProgressCell => (c.data as ProgressCellProps).kind === 'progress-cell',
   kind: GridCellKind.Custom,
   onPaste: (v, d) => {
     let num = Number.parseFloat(v);
