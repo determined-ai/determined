@@ -170,6 +170,7 @@ func newAllocation(
 		req: req,
 		model: model.Allocation{
 			AllocationID: req.AllocationID,
+			// do we want to set the starttime?
 			TaskID:       req.TaskID,
 			Slots:        req.SlotsNeeded,
 			ResourcePool: req.ResourcePool,
@@ -625,8 +626,9 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	err = db.RecordTaskStats(context.TODO(), &model.TaskStats{
 		AllocationID: msg.ID,
 		EventType:    "QUEUED",
-		StartTime:    &msg.JobSubmissionTime,
-		EndTime:      &now,
+		// allocation.startTime?
+		StartTime: &msg.JobSubmissionTime,
+		EndTime:   &now,
 	})
 	if err != nil {
 		return errors.Wrap(err, "recording task queued stats")
