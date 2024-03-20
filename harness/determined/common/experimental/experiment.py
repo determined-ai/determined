@@ -37,6 +37,14 @@ class ExperimentState(enum.Enum):
         return bindings.experimentv1State(self.value)
 
 
+TERMINAL_STATES = {
+    ExperimentState.COMPLETED,
+    ExperimentState.CANCELED,
+    ExperimentState.DELETED,
+    ExperimentState.ERROR,
+}
+
+
 class ExperimentSortBy(enum.Enum):
     ID = bindings.v1GetExperimentsRequestSortBy.ID
     DESCRIPTION = bindings.v1GetExperimentsRequestSortBy.DESCRIPTION
@@ -149,9 +157,7 @@ class Experiment:
         self.workspace_id = exp.workspaceId
 
     def reload(self) -> None:
-        """
-        Explicit refresh of cached properties.
-        """
+        """Explicit refresh of cached properties."""
         resp = bindings.get_GetExperiment(self._session, experimentId=self.id).experiment
         self._hydrate(resp)
 
@@ -231,10 +237,9 @@ class Experiment:
         bindings.post_CancelExperiment(self._session, id=self._id)
 
     def delete(self) -> None:
-        """
-        Delete an experiment and all its artifacts from persistent storage.
+        """Delete an experiment and all its artifacts from persistent storage.
 
-        You must be authenticated as admin to delete an experiment.
+        Note: You must be authenticated as admin to delete an experiment.
         """
         bindings.delete_DeleteExperiment(self._session, experimentId=self._id)
 
@@ -332,10 +337,19 @@ class Experiment:
                 yield trial.Trial._from_bindings(t, self._session)
 
     def await_first_trial(self, interval: float = 0.1) -> trial.Trial:
-        """
-        Wait for the first trial to be started for this experiment.
+        """Wait for the first trial to be started for this experiment.
+
+        Arguments:
+            interval: An interval time in seconds before checking next experiment state.
+
+        Returns:
+            The first trial of the experiment.
+
+        Raises:
+            RuntimeError: If the experiment terminates before a trial starts.
         """
         while True:
+            self.reload()
             resp = bindings.get_GetExperimentTrials(
                 self._session,
                 experimentId=self._id,
@@ -345,6 +359,12 @@ class Experiment:
             if len(resp.trials) > 0:
                 return trial.Trial._from_bindings(resp.trials[0], self._session)
             time.sleep(interval)
+
+            if self.state in TERMINAL_STATES:
+                raise RuntimeError(
+                    "This experiment has terminated before a trial was started."
+                    f" Experiment is in state {self.state}."
+                )
 
     def kill(self) -> None:
         bindings.post_KillExperiment(self._session, id=self._id)
@@ -376,22 +396,18 @@ class Experiment:
         self.workspace_id = proj.workspace_id
 
     def wait(self, interval: float = 5.0) -> ExperimentState:
-        """
-        Wait for the experiment to reach a complete or terminal state.
+        """Wait for the experiment to reach a complete or terminal state.
 
         Arguments:
-            interval (int, optional): An interval time in seconds before checking
-                next experiment state.
+            interval: An interval time in seconds before checking next experiment state.
+
+        Returns:
+            The terminal state the experiment is in after waiting
         """
         elapsed_time = 0.0
         while True:
             self.reload()
-            if self.state in (
-                ExperimentState.COMPLETED,
-                ExperimentState.CANCELED,
-                ExperimentState.DELETED,
-                ExperimentState.ERROR,
-            ):
+            if self.state in TERMINAL_STATES:
                 return self.state
             elif self.state == ExperimentState.PAUSED:
                 raise ValueError(
@@ -489,9 +505,11 @@ class Experiment:
                 limit=max_results,
                 offset=offset,
                 orderBy=order_by._to_bindings() if order_by else None,
-                sortByAttr=sort_by._to_bindings()
-                if isinstance(sort_by, checkpoint.CheckpointSortBy)
-                else None,
+                sortByAttr=(
+                    sort_by._to_bindings()
+                    if isinstance(sort_by, checkpoint.CheckpointSortBy)
+                    else None
+                ),
                 sortByMetric=sort_by if isinstance(sort_by, str) else None,
                 states=[bindings.checkpointv1State.COMPLETED],
             )
