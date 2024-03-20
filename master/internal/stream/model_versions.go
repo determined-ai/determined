@@ -23,7 +23,7 @@ const (
 	// ModelVersionsUpsertKey specifies the key for upsert model_versions.
 	ModelVersionsUpsertKey = "modelversion"
 	// model_versionChannel specifies the channel to listen to model_version events.
-	modelVersionChannel = "stream_modelversion_chan"
+	modelVersionChannel = "stream_model_version_chan"
 )
 
 // ModelVersionMsg is a stream.Msg.
@@ -41,11 +41,11 @@ type ModelVersionMsg struct {
 	CheckpointUuid  string    `bun:"checkpoint_uuid" json:"checkpoint_uuid"`
 	CreationTime    time.Time `bun:"creation_time" json:"creation_time"`
 	LastUpdatedTime time.Time `bun:"last_updated_time" json:"last_updated_time"`
-	Metadata        JSONB     `bun:"metadata" json:"metadata"`
+	Metadata        JSONB     `bun:"metadata,type:jsonb" json:"metadata"`
 	ModelID         int       `bun:"model_id" json:"model_id"`
 	UserID          int       `bun:"user_id" json:"user_id"`
 	Comment         string    `bun:"comment" json:"comment"`
-	Labels          JSONB     `bun:"labels" json:"labels"`
+	Labels          []string  `bun:"labels,array" json:"labels"`
 	Notes           string    `bun:"notes" json:"notes"`
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
@@ -58,6 +58,7 @@ func (pm *ModelVersionMsg) SeqNum() int64 {
 
 // UpsertMsg creates a ModelVersion stream upsert message.
 func (pm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
+	log.Infof("-------------------  upsert %+v", pm)
 	return stream.UpsertMsg{
 		JSONKey: ModelVersionsUpsertKey,
 		Msg:     pm,

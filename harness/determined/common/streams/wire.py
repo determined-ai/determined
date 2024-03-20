@@ -59,12 +59,12 @@ class ModelMsg(ServerMsg):
         description: "str",
         archived: "bool",
         creation_time: "float",
-        notes: "typing.Any",
+        notes: "str",
         workspace_id: "int",
         user_id: "int",
         last_updated_time: "float",
         metadata: "typing.Any",
-        labels: "typing.Any",
+        labels: "typing.List[str]",
         seq: "int",
     ) -> None:
         self.id = id
@@ -112,7 +112,7 @@ class ModelVersionMsg(ServerMsg):
         model_id: "int",
         user_id: "int",
         comment: "str",
-        labels: "typing.Any",
+        labels: "typing.List[str]",
         notes: "str",
         seq: "int",
     ) -> None:

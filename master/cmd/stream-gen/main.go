@@ -24,6 +24,7 @@ type streamType string
 const (
 	json           streamType = "JSONB"
 	text           streamType = "string"
+	textArr        streamType = "[]string"
 	integer        streamType = "int"
 	integer64      streamType = "int64"
 	intArr         streamType = "[]int"
@@ -270,6 +271,7 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 		x := map[streamType]([2]string){
 			json:           {"any", "{}"},
 			text:           {"string", ""},
+			textArr:        {"Array<string>", "[]"},
 			boolean:        {"bool", "false"},
 			integer:        {"number", "0"},
 			integer64:      {"number", "0"},
@@ -371,6 +373,7 @@ func genPython(streamables []Streamable) ([]byte, error) {
 		x := map[streamType]string{
 			json:           "typing.Any",
 			text:           "str",
+			textArr:        "typing.List[str]",
 			boolean:        "bool",
 			integer:        "int",
 			integer64:      "int",
