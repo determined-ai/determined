@@ -21,7 +21,7 @@ export type ValueObjectOf<T> = T extends { equals?: unknown; hashCode?: unknown 
       hashCode: () => number;
     };
 
-const getProps = <T extends t.HasProps>(codec: T): t.Props => {
+export const getProps = <T extends t.HasProps>(codec: T): t.Props => {
   switch (codec._tag) {
     case 'RefinementType':
     case 'ReadonlyType':

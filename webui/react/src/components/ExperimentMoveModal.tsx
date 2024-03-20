@@ -29,7 +29,7 @@ type FormInputs = {
 };
 
 interface Props {
-  excludedExperimentIds?: Set<number>;
+  excludedExperimentIds?: Map<number, unknown>;
   experimentIds: number[];
   filters?: V1BulkExperimentFilters;
   onSubmit?: (successfulIds?: number[]) => void;
@@ -81,7 +81,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const projId = values.projectId ?? 1;
 
     if (excludedExperimentIds?.size) {
-      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds) };
+      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds.keys()) };
     }
 
     const results = await moveExperiments({

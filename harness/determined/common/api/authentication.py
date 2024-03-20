@@ -34,29 +34,30 @@ def get_det_password_from_env() -> Optional[str]:
     return os.environ.get("DET_PASS")
 
 
-class UsernameTokenPair:
-    def __init__(self, username: str, token: str):
-        self.username = username
-        self.token = token
-
-
 def login(
     master_address: str,
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-) -> UsernameTokenPair:
+) -> "api.Session":
     """
     Log in without considering or affecting the TokenStore on the file system.
 
+    This sends a login request to the master in order to obtain a new token that can sign future
+    requests to the master. This token is then baked into a new api.Session object for those future
+    communications.
+
     Used as part of login_with_cache, and also useful in tests where you wish to not affect the
     TokenStore.
+
+    Returns:
+        A new, logged-in api.Session (one that has a valid token).
     """
     password = api.salt_and_hash(password)
     unauth_session = api.UnauthSession(master=master_address, cert=cert, max_retries=0)
     login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
     r = bindings.post_Login(session=unauth_session, body=login)
-    return UsernameTokenPair(username, r.token)
+    return api.Session(master=master_address, username=username, token=r.token, cert=cert)
 
 
 def default_load_user_password(
@@ -110,22 +111,27 @@ def login_with_cache(
     requested_user: Optional[str] = None,
     password: Optional[str] = None,
     cert: Optional[certs.Cert] = None,
-) -> UsernameTokenPair:
+) -> "api.Session":
     """
     Log in, preferring cached credentials in the TokenStore, if possible.
 
     This is the login path for nearly all user-facing cases.
 
+    Unlike ``login``, this function may not send a login request to the master. It will instead
+    first attempt to find a valid token in the TokenStore, and only if that fails will it post a
+    login request to the master to generate a new one. As with ``login``, the token is then baked
+    into a new ``api.Session`` object to sign future communication with master.
+
     There is also a special case for checking if the DET_USER_TOKEN is set in the environment (by
     the determined-master).  That must happen in this function because it is only used when no other
     login tokens are active, but it must be considered before asking the user for a password.
 
-    As a somewhat surprising side-effect re-using an existing token from the cache, it is actually
-    possible in cache hit scenarios for an invalid password here to result in a valid login since
-    the password is only used in a cache miss.
+    As a somewhat surprising side-effect of re-using an existing token from the cache, it is
+    actually possible in cache hit scenarios for an invalid password here to result in a valid login
+    since the password is only used in a cache miss.
 
     Returns:
-        The username and token of the logged in user.
+        A new, logged-in Session (one that has a valid token).
     """
 
     token_store = TokenStore(master_address)
@@ -140,7 +146,7 @@ def login_with_cache(
         token = None
 
     if token is not None:
-        return UsernameTokenPair(user, token)
+        return api.Session(master=master_address, username=user, token=token, cert=cert)
 
     # Special case: use token provided from the container environment if:
     # - No token was obtained from the token store already,
@@ -156,14 +162,14 @@ def login_with_cache(
         assert env_user
         env_token = get_det_user_token_from_env()
         assert env_token
-        return UsernameTokenPair(env_user, env_token)
+        return api.Session(master=master_address, username=env_user, token=env_token, cert=cert)
 
     if password is None:
         password = getpass.getpass(f"Password for user '{user}': ")
 
     try:
-        utp = login(master_address, user, password, cert)
-        user, token = utp.username, utp.token
+        sess = login(master_address, user, password, cert)
+        user, token = sess.username, sess.token
     except api.errors.ForbiddenException:
         # Master will return a 403 if the user is not found, or if the password is incorrect.
         # This is the right response to a failed explicit login attempt. But in the "fallback" case,
@@ -175,7 +181,7 @@ def login_with_cache(
 
     token_store.set_token(user, token)
 
-    return UsernameTokenPair(user, token)
+    return sess
 
 
 def logout(
@@ -210,8 +216,7 @@ def logout(
 
     token_store.drop_user(user)
 
-    utp = UsernameTokenPair(user, token)
-    sess = api.Session(master=master_address, utp=utp, cert=cert)
+    sess = api.Session(master=master_address, username=user, token=token, cert=cert)
     try:
         bindings.post_Logout(sess)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
@@ -235,8 +240,7 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     Find out whether the given token is valid by attempting to use it
     on the "api/v1/me" endpoint.
     """
-    utp = UsernameTokenPair("username-doesnt-matter", token)
-    sess = api.Session(master_address, utp, cert)
+    sess = api.Session(master_address, username="ignored", token=token, cert=cert)
     try:
         r = sess.get("api/v1/me")
     except (api.errors.UnauthenticatedException, api.errors.APIException):

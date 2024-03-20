@@ -1,7 +1,7 @@
 import { test as base } from '@playwright/test';
 
-import { AuthFixture } from './fixtures/auth.fixture';
-import { DevFixture } from './fixtures/dev.fixture';
+import { AuthFixture } from './auth.fixture';
+import { DevFixture } from './dev.fixture';
 
 type CustomFixtures = {
   dev: DevFixture;

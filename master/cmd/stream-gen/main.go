@@ -248,6 +248,7 @@ func genPython(streamables []Streamable) ([]byte, error) {
 			"int":              "int",
 			"int64":            "int",
 			"[]int":            "typing.List[int]",
+			"[]string":         "typing.List[str]",
 			"time.Time":        "float",
 			"*time.Time":       "typing.Optional[float]",
 			"model.TaskID":     "str",

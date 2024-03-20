@@ -32,8 +32,9 @@ if __name__ == "__main__":
     cert = certs.default_load(args.master_url, cert_file, args.cert_name, noverify)
 
     if args.auth:
-        utp = authentication.login_with_cache(args.master_url, args.user, cert=cert)
-        sess: api.BaseSession = api.Session(args.master_url, utp, cert)
+        sess: api.BaseSession = authentication.login_with_cache(
+            args.master_url, args.user, cert=cert
+        )
     else:
         sess = api.UnauthSession(args.master_url, cert)
 

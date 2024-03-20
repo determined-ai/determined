@@ -5,7 +5,8 @@ from unittest import mock
 import pytest
 import responses
 
-from determined.common.api import authentication, errors
+from determined.common import api
+from determined.common.api import errors
 from determined.experimental import client as _client
 from tests.fixtures import api_responses
 
@@ -14,7 +15,7 @@ _MASTER = "http://localhost:8080"
 
 def make_client() -> _client.Determined:
     with mock.patch("determined.common.api.authentication.login_with_cache") as mock_login:
-        mock_login.return_value = authentication.UsernameTokenPair("username", "token")
+        mock_login.return_value = api.Session(_MASTER, "username", "token", None)
         return _client.Determined(_MASTER)
 
 

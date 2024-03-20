@@ -117,15 +117,15 @@ def test_horovod_chief(
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
 @mock.patch("determined.common.api.authentication.login_with_cache")
-@mock.patch("determined.common.api._session.Session.post")
 def test_sshd_worker(
-    mock_post: mock.MagicMock,
     mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,
     mock_popen: mock.MagicMock,
 ) -> None:
     info = test_util.make_mock_cluster_info(["0.0.0.0", "0.0.0.1"], 1, num_slots=1)
     mock_cluster_info.return_value = info
+    mock_session = mock.MagicMock()
+    mock_login.return_value = mock_session
     hvd_args = ["ds1", "ds2"]
     script = ["s1", "s2"]
 
@@ -153,7 +153,7 @@ def test_sshd_worker(
     mock_popen.assert_has_calls([mock.call(launch_cmd)])
 
     mock_login.assert_called_once()
-    mock_post.assert_has_calls(
+    mock_session.post.assert_has_calls(
         [mock.call(f"/api/v1/allocations/{info.allocation_id}/resources/resourcesId/daemon")]
     )
 

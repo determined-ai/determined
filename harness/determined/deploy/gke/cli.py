@@ -11,6 +11,7 @@ import determined
 from determined.common import yaml
 from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.common.util import safe_load_yaml_with_exceptions
+from determined.deploy.errors import warn_version_mismatch
 from determined.deploy.gke.constants import defaults
 
 
@@ -95,6 +96,7 @@ def validate_accelerator_zone(args: argparse.Namespace, zone: str) -> None:
 
 
 def validate_args(args: argparse.Namespace) -> None:
+    warn_version_mismatch(args.det_version)
     validate_location(args.zone, isZone=True)
     validate_accelerator_type(args.gpu_type)
 
