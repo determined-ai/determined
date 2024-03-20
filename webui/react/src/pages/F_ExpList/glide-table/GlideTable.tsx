@@ -97,7 +97,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   /** return a color value to use for each row */
   getRowAccentColor?: (rowData: T) => string;
   getHeaderMenuItems?: (columnId: string, colIdx: number) => MenuItem[];
-  height?: number;
+  height: number;
   /** only display pinned columns */
   hideUnpinned?: boolean;
   onColumnResize?: (columnId: string, width: number) => void;
