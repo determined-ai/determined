@@ -3203,10 +3203,6 @@ workflows:
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
-      - run-gke-cluster-cleanup:
-          name: gke-cleanup
-          context: gcp-shared-cluster
-
   test-e2e-longrunning:
     jobs:
       # Build and publish artifacts used in tests
@@ -3643,6 +3639,9 @@ workflows:
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
           
+      - run-gke-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
 
   release:
     jobs:
