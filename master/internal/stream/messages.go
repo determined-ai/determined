@@ -26,7 +26,7 @@ type StartupMsg struct {
 type KnownKeySet struct {
 	Projects      string `json:"projects"`
 	Models        string `json:"models"`
-	ModelVersions string `json:"model_versions"`
+	ModelVersions string `json:"modelversions"`
 }
 
 // prepareWebsocketMessage converts the MarshallableMsg into a websocket.PreparedMessage.

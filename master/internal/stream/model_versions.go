@@ -19,11 +19,11 @@ import (
 
 const (
 	// ModelVersionsDeleteKey specifies the key for delete model_versions.
-	ModelVersionsDeleteKey = "model_versions_deleted"
+	ModelVersionsDeleteKey = "modelversions_deleted"
 	// ModelVersionsUpsertKey specifies the key for upsert model_versions.
-	ModelVersionsUpsertKey = "model_version"
+	ModelVersionsUpsertKey = "modelversion"
 	// model_versionChannel specifies the channel to listen to model_version events.
-	modelVersionChannel = "stream_model_version_chan"
+	modelVersionChannel = "stream_modelversion_chan"
 )
 
 // ModelVersionMsg is a stream.Msg.
@@ -45,7 +45,7 @@ type ModelVersionMsg struct {
 	ModelID         int       `bun:"model_id" json:"model_id"`
 	UserID          int       `bun:"user_id" json:"user_id"`
 	Comment         string    `bun:"comment" json:"comment"`
-	Labels          []string  `bun:"labels" json:"labels"`
+	Labels          JSONB     `bun:"labels" json:"labels"`
 	Notes           string    `bun:"notes" json:"notes"`
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
@@ -103,13 +103,13 @@ func createFilteredModelVersionIDQuery(
 
 	q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		if len(spec.ModelVersionIDs) > 0 {
-			q.WhereOr("p.id in (?)", bun.In(spec.ModelVersionIDs))
+			q.WhereOr("id in (?)", bun.In(spec.ModelVersionIDs))
 		}
 		if len(spec.ModelIDs) > 0 {
-			q.WhereOr("p.model_id in (?)", bun.In(spec.ModelIDs))
+			q.WhereOr("model_id in (?)", bun.In(spec.ModelIDs))
 		}
 		if len(spec.UserIDs) > 0 {
-			q.WhereOr("p.user_id in (?)", bun.In(spec.UserIDs))
+			q.WhereOr("user_id in (?)", bun.In(spec.UserIDs))
 		}
 		return q
 	})
@@ -242,7 +242,6 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 		// user has global access for viewing model_versions
 		return func(msg *ModelVersionMsg) bool { return true }, nil
 	default:
-
 		return func(msg *ModelVersionMsg) bool {
 			parentModel := modelv1.Model{}
 			err := db.Bun().NewSelect().Model(&parentModel).Where("id = ?", msg.ModelID).Scan(ctx)

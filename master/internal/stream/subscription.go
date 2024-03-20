@@ -14,8 +14,8 @@ import (
 // There is one SubscriptionSet for each websocket connection.  It has one SubscriptionManager per
 // streamable type.
 type SubscriptionSet struct {
-	Projects *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
-	Models   *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
+	Projects      *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
+	Models        *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 	ModelVersions *subscriptionState[*ModelVersionMsg, ModelVersionSubscriptionSpec]
 }
 
@@ -27,9 +27,9 @@ type subscriptionState[T stream.Msg, S any] struct {
 
 // SubscriptionSpecSet is the set of subscription specs that can be sent in startup message.
 type SubscriptionSpecSet struct {
-	Projects *ProjectSubscriptionSpec `json:"projects"`
-	Models   *ModelSubscriptionSpec   `json:"models"`
-	ModelVersion *ModelVersionSubscriptionSpec `json:"model_versions"`
+	Projects     *ProjectSubscriptionSpec      `json:"projects"`
+	Models       *ModelSubscriptionSpec        `json:"models"`
+	ModelVersion *ModelVersionSubscriptionSpec `json:"modelversions"`
 }
 
 // CollectStartupMsgsFunc collects messages that were missed prior to startup.
@@ -83,14 +83,15 @@ func NewSubscriptionSet(
 				streamer,
 				ps.ModelVersions,
 				newPermFilter(ctx, user, ModelVersionMakePermissionFilter, &err),
-				newFilter(spec.ModelVersion, ModelVersionMakeFilter, &err)
-			)
+				newFilter(spec.ModelVersion, ModelVersionMakeFilter, &err),
+			),
+			ModelVersionCollectStartupMsgs,
 		}
 	}
 
 	return SubscriptionSet{
-		Projects: projectSubscriptionState,
-		Models:   modelSubscriptionState,
+		Projects:      projectSubscriptionState,
+		Models:        modelSubscriptionState,
 		ModelVersions: modelVersionSubscriptionState,
 	}, err
 }
@@ -120,7 +121,7 @@ func (ss *SubscriptionSet) Startup(ctx context.Context, user model.User, startup
 	}
 	if ss.ModelVersions != nil {
 		err = startup(
-			ctx, user,  &msgs, err,
+			ctx, user, &msgs, err,
 			ss.ModelVersions, known.ModelVersions,
 			sub.ModelVersion, ss.ModelVersions.Subscription.Streamer.PrepareFn,
 		)
