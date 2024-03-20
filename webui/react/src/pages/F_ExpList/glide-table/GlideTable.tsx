@@ -418,13 +418,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
       newCols.splice(columnsOrderEndIdx, 0, toMove);
       onColumnsOrderChange?.(newCols);
     },
-    [
-      onPinnedColumnsCountChange,
-      onColumnsOrderChange,
-      pinnedColumnsCount,
-      columns,
-      staticColumns,
-    ],
+    [onPinnedColumnsCountChange, onColumnsOrderChange, pinnedColumnsCount, columns, staticColumns],
   );
 
   const onColumnHovered = useCallback(
