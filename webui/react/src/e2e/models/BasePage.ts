@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { Locator, type Page } from '@playwright/test';
 
 /**
  * Returns the representation of a Page.
@@ -18,9 +18,9 @@ export abstract class BasePage {
   }
 
   /**
-   * The playwright locator method from this model's page
+   * The playwright top-level locator
    */
-  get pwLocatorFunction() { return this._page.locator }
+  get pwLocator(): Locator { return this._page.locator('') }
 
   /**
    * Returns this so we can chain.

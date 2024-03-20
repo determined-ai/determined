@@ -24,16 +24,11 @@ export class BaseComponent {
   }
 
   /**
-   * The playwright locator method from this model's locator
-   */
-  get pwLocatorFunction() { return this.locateSelf.locator }
-
-  /**
    * The playwright Locator that represents this model
    */
-  get locateSelf(): Locator {
+  get pwLocator(): Locator {
     if (typeof this._locator === 'undefined') {
-      this._locator = this._parent.pwLocatorFunction(this.#selector);
+      this._locator = this._parent.pwLocator.locator(this.#selector);
       Object.freeze(this._locator)
     }
     return this._locator;
@@ -62,7 +57,7 @@ export class BaseReactFragment {
    * @remarks
    * Since this model is a fragment, we simply get the parent's locator
    */
-  get pwLocatorFunction(): (selector: string, options?: {}) => Locator { return this._parent.pwLocatorFunction }
+  get pwLocator(): Locator { return this._parent.pwLocator }
 }
 
 /**

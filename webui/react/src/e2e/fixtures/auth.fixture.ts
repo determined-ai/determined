@@ -21,11 +21,7 @@ export class AuthFixture {
   }
 
   async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
-    const auth = this.signInPage.detAuth.username.locateSelf.fill(this.#USERNAME)
-
-    // TODO subcomponents - kind of annoying to need to cast here. maybe a helper can help
-    
-    await this.#page.getByPlaceholder('username').fill(this.#USERNAME);
+    await this.signInPage.detAuth.username.pwLocator.fill(this.#USERNAME)
     await this.#page.getByPlaceholder('password').fill(this.#PASSWORD);
     await this.#page.getByRole('button', { name: 'Sign In' }).click();
     await this.#page.waitForURL(waitForURL);
