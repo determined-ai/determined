@@ -238,9 +238,9 @@ specified under the primary resource_manager key here is considered the default.
 ``name``
 ========
 
-Optional. Specifies the resource manager's name. Defaults to ``default`` if no name is specified, or
-Kubernetes installations, if you specify additional resource managers, the names of all resource
-managers on the cluster must be unique.
+Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
+Kubernetes installations with additional resource managers, ensure unique names for all resource
+managers in the cluster.
 
 ``metadata``
 ============
@@ -1230,10 +1230,9 @@ For example, to define three resource managers (one default, two additional):
 ``resource_manager``
 ====================
 
-Optional. This section allows for the definition of 'n'-many (multiple) resource managers under the
-additional_resource_manager key. It follows the existing resource manager configuration pattern, and
-``resource_pools`` is nested. Any additional resource managers defined here require a name and
-``resource_pools``.
+Optional. Defines 'n'-many (multiple) resource managers under the ``additional_resource_manager``
+key, following the existing resource manager configuration pattern. Each additional resource manager
+requires a name and a nested ``resource_pools`` section.
 
 ************************
  ``checkpoint_storage``
