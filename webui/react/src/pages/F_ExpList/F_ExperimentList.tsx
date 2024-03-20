@@ -1114,7 +1114,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onWidthChange={handleCompareWidthChange}>
               <GlideTable<ExperimentWithTrial, ExperimentAction, ExperimentItem>
                 columns={columns}
-                columnsOrder={columnsIfLoaded}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}
                 getRowAccentColor={getRowAccentColor}
