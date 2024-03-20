@@ -103,7 +103,10 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   onColumnResize?: (columnId: string, width: number) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
   onPinnedColumnsCountChange?: (count: number) => void;
-  /** handle visible region change */
+  /**
+   * used for progressive loading along with
+   *  scrollPositionSetCount, page, pageSize, numRows, and height props
+   */
   onScroll?: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
   onColumnsOrderChange?: (newColumnsOrder: string[]) => void;
