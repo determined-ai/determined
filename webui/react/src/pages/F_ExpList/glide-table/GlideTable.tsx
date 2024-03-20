@@ -335,7 +335,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         const cell = columns[col].renderer(rowData, row);
 
         if (isLinkCell(cell)) {
-          (cell as LinkCell).data.onClick?.(event);
+          cell.data.onClick?.(event);
         } else {
           if (event.shiftKey) {
             if (clickedCellRef.current !== null) {
