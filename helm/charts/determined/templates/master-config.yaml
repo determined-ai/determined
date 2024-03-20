@@ -174,15 +174,7 @@ stringData:
 
     {{- if .Values.additional_resource_managers}}
     additional_resource_managers:
-    {{- range $index, $manager_and_pools := .Values.additional_resource_managers }}
-    - resource_manager:
-        {{- omit $manager_and_pools.resource_manager
-          "kubeconfig_secret_name" "kubeconfig_secret_value" |
-          toYaml | nindent 8 }}
-        kubeconfig_path: {{ include "determined.secretPath" . }}{{ $index }}/{{ required "for each additional_resource_managers, resource_manager.kubeconfig_secret_value must be specified" $manager_and_pools.resource_manager.kubeconfig_secret_value }}
-      resource_pools:
-        {{- toYaml $manager_and_pools.resource_pools | nindent 8}}
-    {{- end }}
+      {{- toYaml .Values.additional_resource_managers | nindent 4}}
     {{- end }}
 
     {{- if .Values.resourcePools}}
