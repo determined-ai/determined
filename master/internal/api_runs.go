@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
-
 	"slices"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
@@ -26,8 +28,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type archiveRunOKResult struct {
@@ -292,12 +292,28 @@ func (a *apiServer) MoveRuns(
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_id = ?", bun.Safe(req.SourceProjectId))
+		Where("r.project_id = ?", req.SourceProjectId)
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
 	} else {
-		return nil, errors.Errorf("Move with filter unimplemented")
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(*req.Filter), &efr)
+		if err != nil {
+			return nil, err
+		}
+		getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(q)
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
+			return q
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = getQ.Scan(ctx)
@@ -343,7 +359,7 @@ func (a *apiServer) MoveRuns(
 
 		var acceptedIDs []int32
 		if _, err = tx.NewUpdate().Table("runs").
-			Set("project_id = ?", bun.Safe(req.DestinationProjectId)).
+			Set("project_id = ?", req.DestinationProjectId).
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Returning("runs.id").
 			Model(&acceptedIDs).

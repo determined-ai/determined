@@ -5,8 +5,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/runv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
-import "determined/common/v1/common.proto";
-import "google/protobuf/wrappers.proto";
 import "determined/trial/v1/trial.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 

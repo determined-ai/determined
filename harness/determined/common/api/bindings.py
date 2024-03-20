@@ -8610,7 +8610,47 @@ class v1MoveProjectRequest(Printable):
         }
         return out
 
+class v1MoveRunsRequest(Printable):
+    """Request to move the run to a different project."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        destinationProjectId: int,
+        runIds: "typing.Sequence[int]",
+        sourceProjectId: int,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.destinationProjectId = destinationProjectId
+        self.runIds = runIds
+        self.sourceProjectId = sourceProjectId
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": obj["destinationProjectId"],
+            "runIds": obj["runIds"],
+            "sourceProjectId": obj["sourceProjectId"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": self.destinationProjectId,
+            "runIds": self.runIds,
+            "sourceProjectId": self.sourceProjectId,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
 class v1MoveRunsResponse(Printable):
+    """Response to MoveRunsRequest."""
 
     def __init__(
         self,
@@ -20146,14 +20186,16 @@ def post_MoveProject(
 
 def post_MoveRuns(
     session: "api.BaseSession",
+    *,
+    body: "v1MoveRunsRequest",
 ) -> "v1MoveRunsResponse":
-    """Move runs"""
+    """Move runs."""
     _params = None
     _resp = session._do_request(
         method="POST",
         path="/api/v1/runs/move",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

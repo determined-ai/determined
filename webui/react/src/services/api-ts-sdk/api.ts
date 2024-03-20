@@ -6385,7 +6385,38 @@ export interface V1MoveProjectRequest {
 export interface V1MoveProjectResponse {
 }
 /**
- * 
+ * Request to move the run to a different project.
+ * @export
+ * @interface V1MoveRunsRequest
+ */
+export interface V1MoveRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1MoveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    sourceProjectId: number;
+    /**
+     * The id of the new parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    destinationProjectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to MoveRunsRequest.
  * @export
  * @interface V1MoveRunsResponse
  */
@@ -19212,11 +19243,16 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Move runs
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveRuns(options: any = {}): FetchArgs {
+        moveRuns(body: V1MoveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveRuns.');
+            }
             const localVarPath = `/api/v1/runs/move`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
@@ -19231,9 +19267,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -21414,12 +21453,13 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Move runs
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveRuns(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(options);
+        moveRuns(body: V1MoveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22504,12 +22544,13 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Move runs
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveRuns(options?: any) {
-            return InternalApiFp(configuration).moveRuns(options)(fetch, basePath);
+        moveRuns(body: V1MoveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).moveRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23398,13 +23439,14 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Move runs
+     * @summary Move runs.
+     * @param {V1MoveRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public moveRuns(options?: any) {
-        return InternalApiFp(this.configuration).moveRuns(options)(this.fetch, this.basePath)
+    public moveRuns(body: V1MoveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).moveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -245,3 +245,135 @@ func TestSearchRunsFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestMoveRunsIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
+	sourceprojectID := int32(projectIDInt)
+	destprojectID := int32(projectID2Int)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	moveIds := []int32{resp.Runs[0].Id, resp.Runs[1].Id}
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: destprojectID,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Len(t, moveResp.Results, 2)
+	require.Equal(t, moveResp.Results[0].Error, "")
+	require.Equal(t, moveResp.Results[1].Error, "")
+
+	// runs no longer in old project
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 0)
+
+	// runs in new project
+	req = &apiv1.SearchRunsRequest{
+		ProjectId: &destprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 2)
+}
+
+func TestMoveRunsFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
+	sourceprojectID := int32(projectIDInt)
+	destprojectID := int32(projectID2Int)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	// If provided with filter MoveRuns should ignore these move ids
+	moveIds := []int32{resp.Runs[0].Id, resp.Runs[1].Id}
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: destprojectID,
+		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+			`"conjunction":"and","kind":"group"},"showArchived":false}`),
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Len(t, moveResp.Results, 1)
+	require.Equal(t, moveResp.Results[0].Error, "")
+
+	// check 1 run moved in old project
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	// run in new project
+	req = &apiv1.SearchRunsRequest{
+		ProjectId: &destprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+}
