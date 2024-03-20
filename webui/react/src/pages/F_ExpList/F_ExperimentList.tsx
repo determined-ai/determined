@@ -302,10 +302,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleScroll = useCallback(
     ({ y, height }: Rectangle) => {
-      if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
+      if (isPagedView || scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
       setPage(Math.floor((y + height) / PAGE_SIZE));
     },
-    [scrollPositionSetCount, setPage],
+    [scrollPositionSetCount, setPage, isPagedView],
   );
 
   const experimentFilters = useMemo(() => {
@@ -1158,7 +1158,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
-                onScroll={isPagedView ? undefined : handleScroll}
+                onScroll={handleScroll}
                 onSelectionChange={handleSelectionChange}
               />
             </ComparisonView>
