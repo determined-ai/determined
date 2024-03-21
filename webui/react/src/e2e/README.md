@@ -14,7 +14,7 @@ Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
 - Run `npx playwright install`
 - Run `SERVER_ADDRESS={set server address} npm run build` in `webui/react`
   - It is `SERVER_ADDRESS` here. not `PW_SERVER_ADDRESS`, but the both values should be the same
-- Run `npm run e2e` in `webui/react`
+- Run `npm run e2e` in `webui/react`. Use `-- --project=<browsername>` to run a specific browser.
 
 \*\*Avoid using `make` command because it does not take env variables
 
@@ -24,10 +24,10 @@ If you don't want to use dev cluster, you can use det deploy to initiate the bac
 
 1. `det deploy local cluster-up --det-version="0.29.0" --no-gpu --master-port=8080`
    - use whatever det-version you want here.
-2. `SERVER_ADDRESS="http://localhost:8080" npm run build --prefix webui/react`
+2. `SERVER_ADDRESS="http://localhost:3001" npm run build --prefix webui/react`
 3. Optional if you want an experiment created for the test: `det experiment create ./examples/tutorials/mnist_pytorch/const.yaml ./examples/tutorials/mnist_pytorch/`
-4. To run the tests: `CI=true PW_SERVER_ADDRESS="http://localhost:8080"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react -- --project=chromium-no-cors`
-   - `CI=true` currently causes Playwright to start a frontend webserver for the test. If `CI=false` you'll need to do `npm run preview` manually and point the tests at the right port.
+4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if CI=true
+5. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
 
 ## CI
 

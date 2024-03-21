@@ -55,8 +55,7 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        utp = authentication.login_with_cache(self._master, user, password, cert=cert)
-        self._session = api.Session(self._master, utp, cert)
+        self._session = authentication.login_with_cache(self._master, user, password, cert=cert)
 
     @classmethod
     def _from_session(cls, session: api.Session) -> "Determined":
@@ -99,6 +98,11 @@ class Determined:
         return self._session.username
 
     def logout(self) -> None:
+        """Log out of the current session.
+
+        This results in dropping any cached credentials and sending a request to master to
+        invalidate the session's token.
+        """
         authentication.logout(self._session.master, self._session.username, self._session.cert)
 
     def list_users(self, active: Optional[bool] = None) -> List[user.User]:
@@ -121,6 +125,9 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: Optional[Union[str, pathlib.Path]] = None,
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
+        parent_id: Optional[int] = None,
+        project_id: Optional[int] = None,
+        template: Optional[str] = None,
     ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
@@ -130,8 +137,15 @@ class Determined:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
             model_dir(string, optional): directory containing model definition. (default: ``None``)
-            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or
-            directories to include in the model definition.  (default: ``None``)
+            includes(Iterable[Union[str, pathlib.Path]], optional): Additional files or
+                directories to include in the model definition. (default: ``None``)
+            parent_id(int, optional): If specified, the created experiment will use the model
+                definition from the parent experiment. (default: ``None``)
+            project_id(int, optional): The id of the project this experiment should belong to.
+            (default: ``None``)
+            template(string, optional): The name of the template for the experiment.
+                See :ref:`config-template` for moredetails.
+            (default: ``None``)
         """
         if isinstance(config, str):
             with open(config) as f:
@@ -162,9 +176,9 @@ class Determined:
             activate=True,
             config=config_text,
             modelDefinition=model_context,
-            # TODO: add these as params to create_experiment()
-            parentId=None,
-            projectId=None,
+            parentId=parent_id,
+            projectId=project_id,
+            template=template,
         )
 
         resp = bindings.post_CreateExperiment(self._session, body=req)

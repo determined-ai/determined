@@ -5,6 +5,12 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "determined/api/v1/pagination.proto";
+import "google/protobuf/wrappers.proto";
+import "determined/experiment/v1/experiment.proto";
+import "determined/trial/v1/trial.proto";
+import "determined/run/v1/run.proto";
+import "determined/common/v1/common.proto";
 
 // Request to prepare to start reporting to a run.
 message RunPrepareForReportingRequest {
@@ -24,4 +30,28 @@ message RunPrepareForReportingResponse {
   // The storage_id to be used when creating new checkpoints. This will be
   // returned always when checkpoint storage is set in the request.
   optional int32 storage_id = 1;
+}
+
+// Get a list of runs.
+message SearchRunsRequest {
+  // ID of the project to look at
+  optional int32 project_id = 1;
+  // How many experiments to skip before including in the results
+  int32 offset = 2;
+  // How many results to show
+  int32 limit = 3;
+  // Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+  optional string sort = 4;
+  // Filter expression
+  optional string filter = 5;
+}
+// Response to SearchRunsResponse.
+message SearchRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "runs", "pagination" ] }
+  };
+  // The list of returned runs.
+  repeated determined.run.v1.FlatRun runs = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }

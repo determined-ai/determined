@@ -7,15 +7,17 @@ import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
+import { useObservable } from 'micro-observables';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { useSettings } from 'hooks/useSettings';
 import {
-  F_ExperimentListSettings,
-  settingsConfigForProject,
+  defaultProjectSettings,
+  ProjectSettings,
+  settingsPathForProject,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { V1LocationType } from 'services/api-ts-sdk';
+import userSettings from 'stores/userSettings';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 
@@ -64,9 +66,19 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   totalColumns,
   onVisibleColumnChange,
 }) => {
-  const settingsConfig = useMemo(() => settingsConfigForProject(projectId), [projectId]);
-
-  const { settings, updateSettings } = useSettings<F_ExperimentListSettings>(settingsConfig);
+  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
+  const projectSettings = useObservable(userSettings.get(ProjectSettings, settingsPath));
+  const updateSettings = useCallback(
+    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
+    [settingsPath],
+  );
+  const settings = useMemo(
+    () =>
+      projectSettings
+        .map((s) => ({ ...s, ...defaultProjectSettings }))
+        .getOrElse(defaultProjectSettings),
+    [projectSettings],
+  );
 
   const checkedColumn = useMemo(
     () =>

@@ -1,6 +1,7 @@
 """
 The entrypoint for the GC checkpoints job container.
 """
+
 import argparse
 import json
 import logging
@@ -12,7 +13,7 @@ import urllib3
 
 import determined as det
 from determined import errors, tensorboard
-from determined.common import api, constants, storage
+from determined.common import constants, storage
 from determined.common.api import authentication, bindings, certs
 
 logger = logging.getLogger("determined")
@@ -25,10 +26,10 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
         info._to_file()
 
     cert = certs.default_load(info.master_url)
-    utp = authentication.login_with_cache(info.master_url, cert=cert)
     # With backoff retries for 64 seconds
-    max_retries = urllib3.util.retry.Retry(total=6, backoff_factor=0.5)
-    sess = api.Session(info.master_url, utp, cert, max_retries)
+    sess = authentication.login_with_cache(info.master_url, cert=cert).with_retry(
+        urllib3.util.retry.Retry(total=6, backoff_factor=0.5)
+    )
 
     checkpoints = []
     for storage_id, resources in storage_ids_to_resources.items():

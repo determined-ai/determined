@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -39,15 +38,15 @@ type ProjectMsg struct {
 	ID int `bun:"id,pk" json:"id"`
 
 	// mutable attributes
-	Name        string      `bun:"name" json:"name"`
-	Description string      `bun:"description" json:"description"`
-	Archived    bool        `bun:"archived" json:"archived"`
-	CreatedAt   time.Time   `bun:"created_at" json:"created_at"`
-	Notes       JSONB       `bun:"notes" json:"notes"`
-	WorkspaceID int         `bun:"workspace_id" json:"workspace_id"`
-	UserID      int         `bun:"user_id" json:"user_id"`
-	Immutable   bool        `bun:"immutable" json:"immutable"`
-	State       model.State `bun:"state" json:"state"`
+	Name        string               `bun:"name" json:"name"`
+	Description string               `bun:"description" json:"description"`
+	Archived    bool                 `bun:"archived" json:"archived"`
+	CreatedAt   time.Time            `bun:"created_at" json:"created_at"`
+	Notes       JSONB                `bun:"notes" json:"notes"`
+	WorkspaceID int                  `bun:"workspace_id" json:"workspace_id"`
+	UserID      int                  `bun:"user_id" json:"user_id"`
+	Immutable   bool                 `bun:"immutable" json:"immutable"`
+	State       model.WorkspaceState `bun:"state" json:"state"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
@@ -115,6 +114,7 @@ func createFilteredProjectIDQuery(
 }
 
 // ProjectCollectStartupMsgs collects ProjectMsg's that were missed prior to startup.
+// nolint: dupl
 func ProjectCollectStartupMsgs(
 	ctx context.Context,
 	user model.User,
@@ -138,56 +138,22 @@ func ProjectCollectStartupMsgs(
 	if err != nil {
 		return nil, err
 	}
-	_, globalAccess := accessMap[model.GlobalAccessScopeID]
-	var accessScopes []model.AccessScopeID
-	// only populate accessScopes if user doesn't have global access
-	if !globalAccess {
-		for id, isPermitted := range accessMap {
-			if isPermitted {
-				accessScopes = append(accessScopes, id)
-			}
-		}
-	}
+	globalAccess, accessScopes := getStreamableScopes(accessMap)
 
 	// step 1: calculate all ids matching this subscription
-	oldEventsQuery := createFilteredProjectIDQuery(
-		globalAccess,
-		accessScopes,
-		spec,
-	)
-	newEventsQuery := createFilteredProjectIDQuery(
-		globalAccess,
-		accessScopes,
-		spec,
-	)
-
-	// get events that happened prior to since that are relevant (appearance)
-	oldEventsQuery.Where("p.seq <= ?", spec.Since)
-	var exist []int64
-	err = oldEventsQuery.Scan(ctx, &exist)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error when scanning for old offline events: %v\n", err)
-		return nil, err
+	createQuery := func() *bun.SelectQuery {
+		return createFilteredProjectIDQuery(
+			globalAccess,
+			accessScopes,
+			spec,
+		)
 	}
-	// and events that happened since the last time this streamer checked
-	newEventsQuery.Where("p.seq > ?", spec.Since)
-	var newEntities []int64
-	err = newEventsQuery.Scan(ctx, &newEntities)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error when scanning for new offline events: %v\n", err)
-		return nil, err
-	}
-
-	exist = append(exist, newEntities...)
-	slices.Sort(exist)
-
-	// step 2: figure out what was missing and what has appeared
-	missing, appeared, err := stream.ProcessKnown(known, exist)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
 	if err != nil {
 		return nil, err
 	}
 
-	// step 3: hydrate appeared IDs into full ProjectMsgs
+	// step 2: hydrate appeared IDs into full ProjectMsgs
 	var projMsgs []*ProjectMsg
 	if len(appeared) > 0 {
 		query := db.Bun().NewSelect().Model(&projMsgs).Where("project_msg.id in (?)", bun.In(appeared))
@@ -201,7 +167,7 @@ func ProjectCollectStartupMsgs(
 		}
 	}
 
-	// step 4: emit deletions and updates to the client
+	// step 3: emit deletions and updates to the client
 	out = append(out, stream.DeleteMsg{
 		Key:     ProjectsDeleteKey,
 		Deleted: missing,

@@ -14,7 +14,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
 
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: 3 * 60 * 1000, // 3 min
@@ -27,15 +27,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], channel: 'chrome' }
-    },
-    
-    {
-      name: 'chromium-no-cors',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome', 
-      bypassCSP: true,
-      launchOptions: {
-        args: ['--disable-web-security']
-      }},
     },
 
     {
@@ -60,7 +51,7 @@ export default defineConfig({
 
     /* Test against branded browsers. */
     // {
-    //   name: 'Microsoft Edge',
+    //   name: 'edge',
     //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
     // },
     // {
@@ -77,7 +68,7 @@ export default defineConfig({
   ],
 
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
 
   testDir: './src/e2e',
 
@@ -98,6 +89,5 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
 
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 4 : undefined,
+  workers: process.env.CI ? 4 : 1,
 });

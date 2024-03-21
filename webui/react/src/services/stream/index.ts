@@ -1,4 +1,4 @@
-export type Streamable = 'projects' | 'experiments';
+export type Streamable = 'projects' | 'experiments' | 'models';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type StreamContent = any;
@@ -11,5 +11,5 @@ export const StreamEntityMap: Record<string, Streamable> = {
 export abstract class StreamSpec {
   abstract equals: (sp?: StreamSpec) => boolean;
   abstract id: () => Streamable;
-  abstract toWire: () => Record<string, Array<number>>;
+  abstract toWire: () => Record<string, unknown>;
 }

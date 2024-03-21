@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/labstack/echo/v4"
@@ -164,23 +165,48 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			err := user.GetService().ProcessAuthentication(next)(c)
-			if err == nil {
+			echoErr := user.GetService().ProcessAuthentication(next)(c)
+			if echoErr == nil {
 				return nil
+			} else if httpErr, ok := echoErr.(*echo.HTTPError); !ok || httpErr.Code != http.StatusUnauthorized {
+				return echoErr
 			}
-			// No web page redirects for programmatic requests.
-			for _, accept := range c.Request().Header["Accept"] {
-				if strings.Contains(accept, "application/json") {
-					return err
-				}
-			}
+
+			isProxiedPath := false
 			path := c.Request().RequestURI
 			for _, p := range redirectPaths {
 				if strings.HasPrefix(path, p) {
-					return redirectToLogin(c)
+					isProxiedPath = true
 				}
 			}
-			return err
+			if !isProxiedPath {
+				// GRPC-backed routes are authenticated by grpcutil.*AuthInterceptor.
+				return echoErr
+			}
+
+			md := metadata.MD{}
+			for k, v := range c.Request().Header {
+				k = strings.TrimPrefix(k, grpcutil.GrpcMetadataPrefix)
+				md.Append(k, v...)
+			}
+			_, _, err := grpcutil.GetUser(metadata.NewIncomingContext(c.Request().Context(), md))
+			if err == nil {
+				return next(c)
+			}
+			errStatus := status.Convert(err)
+			if errStatus.Code() != codes.PermissionDenied && errStatus.Code() != codes.Unauthenticated {
+				return err
+			}
+
+			// TODO: reverse this logic to redirect only if accept is empty or specifies text/html.
+			// No web page redirects for programmatic requests.
+			for _, accept := range c.Request().Header["Accept"] {
+				if strings.Contains(accept, "application/json") {
+					return echoErr
+				}
+			}
+
+			return redirectToLogin(c)
 		}
 	}
 }

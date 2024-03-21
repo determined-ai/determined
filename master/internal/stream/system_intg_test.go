@@ -21,6 +21,7 @@ import (
 
 const (
 	projects = "projects"
+	models   = "models"
 )
 
 func TestMockSocket(t *testing.T) {
@@ -78,6 +79,7 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 	_, err := db.Bun().NewRaw(
 		`INSERT INTO workspaces (name) VALUES ('test_workspace');
 		INSERT INTO projects (name, workspace_id) VALUES ('test_project_1', 2);
+		INSERT INTO models (name, workspace_id, creation_time, user_id) VALUES ('test_model_1', 2, NOW(), 1);
 		`,
 	).Exec(ctx)
 	if err != nil {
@@ -108,7 +110,6 @@ func basicStartupTest(t *testing.T, testCase startupTestCase, socket *mockSocket
 		baseSyncMsg + ", complete: true",
 	}
 	socket.ReadUntilFound(t, &data, expectedSyncs)
-
 	deletions, upserts, syncs := splitMsgs(t, data)
 	// confirm these messages are the expected results
 	validateMsgs(
@@ -165,7 +166,7 @@ func runStartupTest(t *testing.T, pgDB *db.PgDB, testCases []startupTestCase) {
 func buildStartupMsg(
 	syncID string,
 	knownsMap map[string]string,
-	subscriptionsMap map[string]map[string][]int,
+	subscriptionsMap map[string]map[string]interface{},
 ) StartupMsg {
 	var knownKeySet KnownKeySet
 	var subscriptionSpecSet SubscriptionSpecSet
@@ -175,6 +176,8 @@ func buildStartupMsg(
 		switch knownType {
 		case projects:
 			knownKeySet.Projects = known
+		case models:
+			knownKeySet.Models = known
 		}
 	}
 
@@ -182,9 +185,33 @@ func buildStartupMsg(
 	for subscriptionType, subscriptionIDs := range subscriptionsMap {
 		switch subscriptionType {
 		case projects:
+			var projectIDs, workspaceIDs []int
+			if subscriptionIDs[projects] != nil {
+				projectIDs = subscriptionIDs[projects].([]int)
+			}
+			if subscriptionIDs["workspaces"] != nil {
+				workspaceIDs = subscriptionIDs["workspaces"].([]int)
+			}
 			subscriptionSpecSet.Projects = &ProjectSubscriptionSpec{
-				ProjectIDs:   subscriptionIDs[projects],
-				WorkspaceIDs: subscriptionIDs["workspaces"],
+				ProjectIDs:   projectIDs,
+				WorkspaceIDs: workspaceIDs,
+				Since:        0,
+			}
+		case models:
+			var modelIDs, workspaceIDs, userIDs []int
+			if subscriptionIDs[models] != nil {
+				modelIDs = subscriptionIDs[models].([]int)
+			}
+			if subscriptionIDs["workspaces"] != nil {
+				workspaceIDs = subscriptionIDs["workspaces"].([]int)
+			}
+			if subscriptionIDs["users"] != nil {
+				userIDs = subscriptionIDs["users"].([]int)
+			}
+			subscriptionSpecSet.Models = &ModelSubscriptionSpec{
+				ModelIDs:     modelIDs,
+				WorkspaceIDs: workspaceIDs,
+				UserIDs:      userIDs,
 				Since:        0,
 			}
 		}
@@ -284,7 +311,7 @@ func TestProjectStartup(t *testing.T) {
 			startupMsg: buildStartupMsg(
 				"1",
 				map[string]string{projects: "1,2"},
-				map[string]map[string][]int{projects: {projects: {1, 2}}},
+				map[string]map[string]interface{}{projects: {projects: []int{1, 2}}},
 			),
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
@@ -292,28 +319,28 @@ func TestProjectStartup(t *testing.T) {
 		{
 			description: "project subscription with excess project id",
 			startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2,3"},
-				map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
+				map[string]map[string]interface{}{projects: {projects: []int{1, 2, 3}}}),
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 3"},
 		},
 		{
 			description: "project subscription with workspaces",
 			startupMsg: buildStartupMsg("3", map[string]string{projects: "1,2"},
-				map[string]map[string][]int{projects: {projects: {1, 2}}}),
+				map[string]map[string]interface{}{projects: {projects: []int{1, 2}}}),
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
 		{
 			description: "project offline fall out",
 			startupMsg: buildStartupMsg("4", map[string]string{projects: "1,2"},
-				map[string]map[string][]int{projects: {projects: {1}}}),
+				map[string]map[string]interface{}{projects: {projects: []int{1}}}),
 			expectedUpserts:   []string{},
 			expectedDeletions: []string{"key: projects_deleted, deleted: 2"},
 		},
 		{
 			description: "project offline fall in",
 			startupMsg: buildStartupMsg("5", map[string]string{projects: "1"},
-				map[string]map[string][]int{projects: {projects: {1, 2}}}),
+				map[string]map[string]interface{}{projects: {projects: []int{1, 2}}}),
 			expectedUpserts:   []string{"key: project, project_id: 2, state: UNSPECIFIED, workspace_id: 2"},
 			expectedDeletions: []string{"key: projects_deleted, deleted: "},
 		},
@@ -343,7 +370,7 @@ func TestProjectUpdate(t *testing.T) {
 			startupCase: startupTestCase{
 				description: "startup case for: create project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
-					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
+					map[string]map[string]interface{}{projects: {projects: []int{1, 2, 3}}}),
 				expectedUpserts:   []string{},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -356,7 +383,7 @@ func TestProjectUpdate(t *testing.T) {
 			startupCase: startupTestCase{
 				description: "startup case for: update project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
-					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
+					map[string]map[string]interface{}{projects: {projects: []int{1, 2, 3}}}),
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -371,7 +398,7 @@ func TestProjectUpdate(t *testing.T) {
 			startupCase: startupTestCase{
 				description: "startup case for: delete project 3",
 				startupMsg: buildStartupMsg("1", map[string]string{projects: "1,2"},
-					map[string]map[string][]int{projects: {projects: {1, 2, 3}}}),
+					map[string]map[string]interface{}{projects: {projects: []int{1, 2, 3}}}),
 				expectedUpserts:   []string{"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 1"},
 				expectedDeletions: []string{"key: projects_deleted, deleted: "},
 			},
@@ -403,7 +430,7 @@ func TestOnlineChanges(t *testing.T) {
 				startupMsg: buildStartupMsg(
 					"3",
 					map[string]string{projects: "2"},
-					map[string]map[string][]int{projects: {"workspaces": {2}}},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}},
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
@@ -421,7 +448,7 @@ func TestOnlineChanges(t *testing.T) {
 				startupMsg: buildStartupMsg(
 					"4",
 					map[string]string{projects: "2,3"},
-					map[string]map[string][]int{projects: {"workspaces": {2}}},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}},
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
@@ -442,7 +469,7 @@ func TestOnlineChanges(t *testing.T) {
 				startupMsg: buildStartupMsg(
 					"5",
 					map[string]string{projects: "2"},
-					map[string]map[string][]int{projects: {"workspaces": {2}}},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}},
 				),
 				expectedUpserts: []string{},
 				expectedDeletions: []string{
@@ -459,5 +486,93 @@ func TestOnlineChanges(t *testing.T) {
 		},
 	}
 
+	runUpdateTest(t, pgDB, testCases)
+}
+
+func TestMultipleSubscriptions(t *testing.T) {
+	pgDB := initializeStreamDB(context.Background(), t)
+	testProject := model.Project{
+		Name:        uuid.NewString(),
+		CreatedAt:   time.Now(),
+		Archived:    false,
+		WorkspaceID: 2,
+		UserID:      1,
+		State:       "UNSPECIFIED",
+	}
+	testModel := ModelMsg{
+		ID:           2,
+		Name:         uuid.NewString(),
+		CreationTime: time.Now(),
+		WorkspaceID:  2,
+		UserID:       1,
+	}
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: multiple subscriptions",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{projects: "2", models: "1"},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"workspaces": []int{2}}},
+				),
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
+			},
+			description: "multiple subscriptions",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddProjectQuery(testProject),
+				db.Bun().NewInsert().Model(&testModel),
+			},
+			expectedUpserts: []string{
+				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2",
+				"key: model, model_id: 2, workspace_id: 2",
+			},
+			expectedDeletions: []string{},
+		},
+	}
+	runUpdateTest(t, pgDB, testCases)
+}
+
+func TestSubscribeByName(t *testing.T) {
+	pgDB := initializeStreamDB(context.Background(), t)
+	testProject := model.Project{
+		Name:        uuid.NewString(),
+		CreatedAt:   time.Now(),
+		Archived:    false,
+		WorkspaceID: 2,
+		UserID:      1,
+		State:       "UNSPECIFIED",
+	}
+	testModel := ModelMsg{
+		ID:           2,
+		Name:         uuid.NewString(),
+		CreationTime: time.Now(),
+		WorkspaceID:  2,
+		UserID:       1,
+	}
+	testCases := []updateTestCase{
+		{
+			startupCase: startupTestCase{
+				description: "startup test case for: subscribe to models by user id",
+				startupMsg: buildStartupMsg(
+					"1",
+					map[string]string{projects: "2", models: "1"},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"users": []int{1}}},
+				),
+				expectedUpserts:   []string{},
+				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
+			},
+			description: "subscribe to models by user id",
+			queries: []streamdata.ExecutableQuery{
+				streamdata.GetAddProjectQuery(testProject),
+				db.Bun().NewInsert().Model(&testModel),
+			},
+			expectedUpserts: []string{
+				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2",
+				"key: model, model_id: 2, workspace_id: 2",
+			},
+			expectedDeletions: []string{},
+		},
+	}
 	runUpdateTest(t, pgDB, testCases)
 }

@@ -27,7 +27,7 @@ export class ExperimentSpec extends StreamSpec {
     return this.#id;
   };
 
-  public toWire = (): Record<string, Array<number>> => {
+  public toWire = (): Record<string, unknown> => {
     return { experiment_ids: this.#experiment_ids };
   };
 }

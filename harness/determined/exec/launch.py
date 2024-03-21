@@ -7,7 +7,7 @@ import sys
 import types
 
 import determined as det
-from determined.common import api, constants, storage
+from determined.common import constants, storage
 from determined.common.api import authentication, certs
 from determined.exec import prep_container
 
@@ -22,8 +22,7 @@ def trigger_preemption(signum: int, frame: types.FrameType) -> None:
         logger.info("SIGTERM: Preemption imminent.")
         # Notify the master that we need to be preempted
         cert = certs.default_load(info.master_url)
-        utp = authentication.login_with_cache(info.master_url, cert=cert)
-        sess = api.Session(info.master_url, utp, cert)
+        sess = authentication.login_with_cache(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption")
 
 

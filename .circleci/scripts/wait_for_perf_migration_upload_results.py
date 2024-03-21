@@ -35,8 +35,7 @@ def _wait_for_master() -> None:
 
 def _upload_migration_length(conn: extensions.connection) -> None:
     cert = certs.Cert(noverify=True)
-    utp = authentication.login("http://127.0.0.1:8080", "admin", "", cert)
-    sess = api.Session("http://127.0.0.1:8080", utp, cert)
+    sess = authentication.login("http://127.0.0.1:8080", "admin", "", cert)
 
     migration_start_log = None
     migration_end_log = None

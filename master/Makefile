@@ -4,6 +4,7 @@ LICENSE := packaging/LICENSE
 SCHEMA_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' -prune -o -name '*.go' -print) $(shell find ../schemas/expconf -name '*.json')
 STREAM_INPUTS = $(shell find ./internal/stream/ -name '*_test.go' -prune -o -name '*.go' -print)
 STREAM_PYTHON_CLIENT = ../harness/determined/common/streams/wire.py
+STREAM_TS_CLIENT = ../webui/react/src/services/stream/wire.ts
 MOCK_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
@@ -45,12 +46,13 @@ ungen:
 	rm -f `find ./internal/mocks -name '*.go'` build/mock_gen.stamp
 
 .PHONY: gen
-gen: $(LICENSE) build/schema_gen.stamp $(STREAM_PYTHON_CLIENT)
+gen: $(LICENSE) build/schema_gen.stamp $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT)
 
 .PHONY: force-gen
 force-gen:
 	rm -f build/schema_gen.stamp
 	rm -f $(STREAM_PYTHON_CLIENT)
+	rm -f $(STREAM_TS_CLIENT)
 
 build/schema_gen.stamp: $(SCHEMA_INPUTS)
 	go generate ./pkg/schemas/...
@@ -60,8 +62,11 @@ build/schema_gen.stamp: $(SCHEMA_INPUTS)
 $(STREAM_PYTHON_CLIENT): build/stream-gen $(STREAM_INPUTS)
 	build/stream-gen $(STREAM_INPUTS) --python --output $@
 
+$(STREAM_TS_CLIENT): build/stream-gen $(STREAM_INPUTS)
+	build/stream-gen $(STREAM_INPUTS) --ts --output $@
+
 .PHONY: stream-gen
-stream-gen: $(STREAM_PYTHON_CLIENT)
+stream-gen: $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT)
 
 .PHONY: mocks
 mocks: build/mock_gen.stamp
