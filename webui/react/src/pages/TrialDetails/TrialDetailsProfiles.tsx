@@ -24,9 +24,7 @@ const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => 
           description={
             <>
               Enable experiment profiling to analyze and debug model system performance.&nbsp;
-              <Link
-                external
-                path={paths.docs('/reference/training/experiment-config-reference.html#profiling')}>
+              <Link external path={paths.docs('/model-dev-guide/profiling.html')}>
                 Get started
               </Link>
             </>
