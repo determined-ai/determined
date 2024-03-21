@@ -20,7 +20,11 @@ export class AuthFixture {
     this.signInPage = new SignIn(page);
   }
 
-  async login(waitForURL: string | RegExp | ((url: URL) => boolean)): Promise<void> {
+  async login(waitForURL?: string | RegExp | ((url: URL) => boolean)): Promise<void> {
+    if (typeof waitForURL == 'undefined') {
+      await this.#page.goto('/');
+      waitForURL = /dashboard/
+    }
     const detAuth = this.signInPage.detAuth
     await detAuth.username.pwLocator.fill(this.#USERNAME)
     await detAuth.password.pwLocator.fill(this.#PASSWORD);

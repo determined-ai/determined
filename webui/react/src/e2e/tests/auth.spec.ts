@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
-
 import { test } from 'e2e/fixtures/global-fixtures';
+import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ dev }) => {
@@ -8,10 +8,8 @@ test.describe('Authentication', () => {
   });
 
   test('Login and Logout', async ({ page, auth }) => {
-    await page.goto('/');
-
     await test.step('Login steps', async () => {
-      await auth.login(/dashboard/);
+      await auth.login();
       await expect(page).toHaveTitle('Home - Determined');
       await expect(page).toHaveURL(/dashboard/);
     });
