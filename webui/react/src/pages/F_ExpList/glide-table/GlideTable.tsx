@@ -31,7 +31,7 @@ import React, {
 
 import useUI from 'components/ThemeProvider';
 import useMobile from 'hooks/useMobile';
-import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { observable, useObservable } from 'utils/observable';
 
 import { ColumnDef, MIN_COLUMN_WIDTH } from './columns';
 import {
@@ -94,31 +94,34 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
     props: ContextMenuComponentProps<T, ContextAction, ContextActionData>,
   ) => JSX.Element;
   data: Loadable<T>[];
-  numRows: number;
   /** return a color value to use for each row */
   getRowAccentColor?: (rowData: T) => string;
   getHeaderMenuItems?: (columnId: string, colIdx: number) => MenuItem[];
   height?: CSSProperties['height'];
   /** only display pinned columns */
   hideUnpinned?: boolean;
+  /** is displaying one page of results at a time, without infinite scroll */
+  isPaginated?: boolean;
+  /** total number of row items, for infinite scroll  */
+  total: number;
   onColumnResize?: (columnId: string, width: number) => void;
   onContextMenuComplete?: ContextMenuCompleteHandlerProps<ContextAction, ContextActionData>;
   onPinnedColumnsCountChange?: (count: number) => void;
-  /**
-   * used for progressive loading along with
-   *  scrollPositionSetCount, page, pageSize, and numRows props
-   */
-  onScroll: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
   onColumnsOrderChange?: (newColumnsOrder: string[]) => void;
+  /** update page number, for infinite scroll */
+  onPageUpdate: (page: number) => void;
+  /** page number, for infinite scroll */
   page: number;
+  /** pageSize, for infinite scroll */
   pageSize: number;
   pinnedColumnsCount?: number;
   imperativeRef?: React.Ref<DataGridHandle>;
   rowHeight?: number;
-  scrollPositionSetCount: WritableObservable<number>;
   selection?: GridSelection;
+  /** only used to draw correct arrow icon in header */
   sorts?: Sort[];
+  /** always static columns, such as a checkbox column for row selection */
   staticColumns: string[];
 }
 
@@ -138,7 +141,7 @@ export interface HandleSelectionChangeType {
  * Otherwise `onScroll` would erroneously set the page to 0
  * when the table is first initialized.
  */
-export const SCROLL_SET_COUNT_NEEDED = 1;
+const SCROLL_SET_COUNT_NEEDED = 1;
 
 const isLinkCell = (cell: GridCell): cell is LinkCell => {
   return !!(cell as LinkCell).data?.link?.href;
@@ -147,7 +150,6 @@ const isLinkCell = (cell: GridCell): cell is LinkCell => {
 export function GlideTable<T, ContextAction = void | string, ContextActionData = void>({
   columns,
   data,
-  numRows,
   getHeaderMenuItems,
   getRowAccentColor,
   hideUnpinned = false,
@@ -155,19 +157,20 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   onColumnResize,
   onContextMenuComplete,
   onPinnedColumnsCountChange,
-  onScroll,
   onSelectionChange,
   onColumnsOrderChange,
+  isPaginated = false,
   page,
   pageSize,
+  onPageUpdate,
   pinnedColumnsCount = 0,
   renderContextMenuComponent,
   rowHeight = 36,
-  scrollPositionSetCount,
   selection = {
     columns: CompactSelection.empty(),
     rows: CompactSelection.empty(),
   },
+  total,
   imperativeRef,
   sorts = [],
   staticColumns,
@@ -175,6 +178,15 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number>();
+  const [scrollPositionSetCount] = useState(observable(0));
+
+  const onScroll = useCallback(
+    ({ y, height }: Rectangle) => {
+      if (isPaginated || scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
+      onPageUpdate?.(Math.floor((y + height) / pageSize));
+    },
+    [scrollPositionSetCount, onPageUpdate, pageSize, isPaginated],
+  );
 
   useEffect(() => {
     if (scrollPositionSetCount.get() >= SCROLL_SET_COUNT_NEEDED) return;
@@ -523,7 +535,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           minColumnWidth={MIN_COLUMN_WIDTH}
           ref={gridRef}
           rowHeight={rowHeight}
-          rows={numRows}
+          rows={isPaginated ? data.length : total ?? pageSize}
           smoothScrollX
           smoothScrollY
           theme={theme}

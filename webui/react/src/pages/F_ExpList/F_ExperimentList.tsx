@@ -1,4 +1,4 @@
-import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import { MenuItem } from 'hew/Dropdown';
@@ -8,7 +8,7 @@ import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { observable, useObservable } from 'micro-observables';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,7 +86,6 @@ import GlideTable, {
   DataGridHandle,
   HandleSelectionChangeType,
   RangelessSelectionType,
-  SCROLL_SET_COUNT_NEEDED,
   SelectionType,
   Sort,
   validSort,
@@ -295,17 +294,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
-  // const height =
-  //   containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
-  const [scrollPositionSetCount] = useState(observable(0));
-
-  const handleScroll = useCallback(
-    ({ y, height }: Rectangle) => {
-      if (isPagedView || scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
-      setPage(Math.floor((y + height) / PAGE_SIZE));
-    },
-    [scrollPositionSetCount, setPage, isPagedView],
-  );
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {
@@ -1118,7 +1106,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 getRowAccentColor={getRowAccentColor}
                 hideUnpinned={settings.compare}
                 imperativeRef={dataGridRef}
-                numRows={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
+                isPaginated={isPagedView}
                 page={page}
                 pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
@@ -1148,15 +1136,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                   );
                 }}
                 rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-                scrollPositionSetCount={scrollPositionSetCount}
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
+                total={Loadable.getOrElse(PAGE_SIZE, total)}
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
+                onPageUpdate={setPage}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
-                onScroll={handleScroll}
                 onSelectionChange={handleSelectionChange}
               />
             </ComparisonView>
