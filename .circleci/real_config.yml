@@ -686,6 +686,8 @@ commands:
             echo "-----END ARGS-----"
             MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
               $(< /tmp/det-deploy-extra-args) \
+              --add-tag owner=determined_ci \
+              --add-tag gh_team=machine-users \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
               --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
@@ -839,7 +841,7 @@ commands:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
       - set-cluster-labels:
-          labels: <<parameters.labels>>
+          labels: owner=determined_ci,gh_team=machine-users,<<parameters.labels>>
       - gcloud/install:
           version: "412.0.0"
       - kubernetes/install-kubectl
@@ -2324,6 +2326,8 @@ jobs:
       reattach-enabled:
         type: boolean
         default: false
+      extra-tags:
+        type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -2347,6 +2351,7 @@ jobs:
           enable-cors: <<parameters.enable-cors>>
           reattach-enabled: <<parameters.reattach-enabled>>
           deployment-type: simple
+          extra-tags: <<parameters.extra-tags>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -2968,9 +2973,10 @@ workflows:
                 - main
 
       - deploy:
-          name: deploy-latest-master-cluster
+          name: deploy-latest-main-cluster
           enable-cors: true
           reattach-enabled: true
+          extra-tags: "long_running=determined_preview_cluster"
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
