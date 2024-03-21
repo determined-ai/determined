@@ -1,4 +1,5 @@
 import {
+  CellClickedEventArgs,
   CompactSelection,
   DataEditorProps,
   GridCell,
@@ -11,11 +12,12 @@ import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { getTimeInEnglish } from 'pages/F_ExpList/glide-table/utils';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { DetailedUser, FlatRun, ProjectColumn } from 'types';
 import { getPath, isString } from 'utils/data';
 import { DURATION_UNIT_MEASURES, durationInEnglish, formatDatetime } from 'utils/datetime';
 import { humanReadableNumber } from 'utils/number';
+import { AnyMouseEvent } from 'utils/routes';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 
@@ -144,13 +146,17 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: record.duration
-        ? durationInEnglish(record.duration, {
-            conjunction: ' ',
-            delimiter: ' ',
-            largest: 2,
-            serialComma: false,
-            unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
-          })
+        ? durationInEnglish(
+            (record.endTime ? new Date(record.endTime) : new Date()).getTime() -
+              new Date(record.startTime).getTime(),
+            {
+              conjunction: ' ',
+              delimiter: ' ',
+              largest: 2,
+              serialComma: false,
+              unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
+            },
+          )
         : '',
       data: { kind: 'text-cell' },
       kind: GridCellKind.Custom,
@@ -194,11 +200,20 @@ export const getColumnDefs = ({
         link:
           record.experiment?.forkedFrom !== undefined
             ? {
-                href: record.experiment?.forkedFrom ? paths.experimentDetails(record.experiment?.forkedFrom) : undefined,
+                href: record.experiment?.forkedFrom
+                  ? paths.experimentDetails(record.experiment?.forkedFrom)
+                  : undefined,
                 title: String(record.experiment?.forkedFrom ?? ''),
               }
             : undefined,
         navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          if (record.experiment?.forkedFrom) {
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: String(record.experiment.forkedFrom),
+            });
+          }
+        },
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
@@ -216,14 +231,25 @@ export const getColumnDefs = ({
       cursor: 'pointer',
       data: {
         kind: 'link-cell',
-        link: {
-          href: paths.experimentDetails(record.id),
-          title: String(record.id),
-        },
+        link: record.experiment?.id
+          ? {
+              href: paths.experimentDetails(record.experiment.id),
+              title: String(record.id),
+              unmanaged: record.experiment.unmanaged,
+            }
+          : undefined,
         navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          if (record.experiment) {
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(record.experiment.id),
+            });
+          }
+        },
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
+
       readonly: true,
     }),
     title: 'ID',
@@ -246,12 +272,20 @@ export const getColumnDefs = ({
             }
           : undefined,
         navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          if (record.experiment) {
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(record.experiment.id),
+            });
+          }
+        },
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
+
       readonly: true,
     }),
-    title: 'Name',
+    title: 'Searcher Name',
     tooltip: () => undefined,
     width: columnWidths.name,
   },

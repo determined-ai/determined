@@ -1,4 +1,4 @@
-import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
@@ -10,15 +10,21 @@ import {
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
-import DataGrid, { Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
+import DataGrid, {
+  SCROLL_SET_COUNT_NEEDED,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
 import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
+import { useTheme } from 'hew/Theme';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { observable, useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -31,6 +37,7 @@ import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
+import useResize from 'hooks/useResize';
 import { useSettings } from 'hooks/useSettings';
 import { Error } from 'pages/F_ExpList/glide-table/exceptions';
 import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
@@ -113,11 +120,22 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
   const users = useObservable(usersStore.getUsers());
+  const { getThemeVar } = useTheme();
 
-  const navigate = useNavigate();
+  const { height: containerHeight } = useResize(contentRef);
+  const height =
+    containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
+  const [scrollPositionSetCount] = useState(observable(0));
+
+  const handleScroll = useCallback(
+    ({ y, height }: Rectangle) => {
+      if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
+      setPage(Math.floor((y + height) / PAGE_SIZE));
+    },
+    [scrollPositionSetCount, setPage],
+  );
 
   const colorMap = useGlasbey(settings.selectedRuns);
-  const [scrollPositionSetCount] = useState(observable(0));
 
   const {
     ui: { theme: appTheme },
@@ -518,6 +536,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             columns={columns}
             data={runs}
             getRowAccentColor={getRowAccentColor}
+            height={height}
             numRows={isPagedView ? runs.length : Loadable.getOrElse(PAGE_SIZE, total)}
             page={page}
             pageSize={PAGE_SIZE}
@@ -527,7 +546,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
             onContextMenuComplete={handleContextMenuComplete}
-            onNavigate={(path) => navigate(path)}
+            onScroll={isPagedView ? undefined : handleScroll}
           />
           {showPagination && (
             <Row>

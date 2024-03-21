@@ -48,6 +48,7 @@
     "hermes-parallel-coordinates": "^0.6.17",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "hew": "npm:@hpe.com/hew@^0.6.33",
 ||||||| constructed merge base
     "hew": "github:determined-ai/hew#f4501aa743d3416beeab3297a1ae88ecf05d20b9",
@@ -59,6 +60,11 @@
 =======
     "hew": "github:determined-ai/hew#a1bec5969794753952f786eeb5d800968df49701",
 >>>>>>> Update hew
+||||||| constructed merge base
+    "hew": "github:determined-ai/hew#a1bec5969794753952f786eeb5d800968df49701",
+=======
+    "hew": "github:determined-ai/hew#0d1659a37030f9c832a42d3715fff6a61d953b11",
+>>>>>>> Fix column bugs
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",
