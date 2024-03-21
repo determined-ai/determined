@@ -1313,9 +1313,10 @@ jobs:
     resource_class: xlarge
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - attach_workspace:
           at: .
       - setup-python-venv:
@@ -1704,19 +1705,14 @@ jobs:
       slot-resource-requests-cpu:
         type: integer
         default: 1
-      master-tls-cert:
-        type: string
-      master-tls-key:
-        type: string
-      master-cert-name:
-        type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - attach_workspace:
           at: .
@@ -1751,7 +1747,7 @@ jobs:
                 name: CPU setup helm overrides
       - run:
           command: |
-            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tlsSecret=<<parameters.master-cert-name>>"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tlsSecret=${MASTER_CERT_NAME}"' >> "$BASH_ENV"
           name: Setup TLS Helm Values
       - run:
           command: |
@@ -1793,7 +1789,7 @@ jobs:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
       - run: 
-          command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
+          command: kubectl create secret tls ${MASTER_CERT_NAME} --cert ${MASTER_TLS_CERT} --key ${MASTER_TLS_KEY} --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
       - helm/install-helm-client:
@@ -1809,8 +1805,6 @@ jobs:
       - set-master-address-gke:
           release-name: ${GENERATED_NAMESPACE}
           namespace: ${GENERATED_NAMESPACE}
-          master-tls-cert: <<parameters.master-tls-cert>>
-          master-tls-key: <<parameters.master-tls-key>>
 
   test-intg-master:
     machine:
@@ -2750,9 +2744,10 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - attach_workspace:
           at: .
@@ -3058,9 +3053,6 @@ workflows:
 
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}-shared-cluster
-          master-tls-cert: ${MASTER_TLS_CERT}
-          master-tls-key: ${MASTER_TLS_KEY}
-          master-cert-name: ${MASTER_CERT_NAME}
           requires:
             - package-and-push-system-dev-small
 
