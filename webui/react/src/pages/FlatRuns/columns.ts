@@ -8,17 +8,18 @@ import {
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
+import { State } from 'hew/DataGrid/custom-renderers/cells/stateCell';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { getTimeInEnglish } from 'pages/F_ExpList/glide-table/utils';
 import { handlePath, paths } from 'routes/utils';
-import { DetailedUser, FlatRun, ProjectColumn } from 'types';
+import { DetailedUser, FlatRun, ProjectColumn, RunState } from 'types';
 import { getPath, isString } from 'utils/data';
 import { DURATION_UNIT_MEASURES, durationInEnglish, formatDatetime } from 'utils/datetime';
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
-import { floatToPercent, humanReadableBytes } from 'utils/string';
+import { capitalize, floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 
 export const MIN_COLUMN_WIDTH = 40;
@@ -71,6 +72,40 @@ export const defaultRunColumns: RunColumn[] = [
   'checkpointCount',
   'checkpointSize',
 ];
+
+function getCellStateFromExperimentState(expState: RunState) {
+  switch (expState) {
+    case RunState.Queued: {
+      return State.QUEUED;
+    }
+    case RunState.Starting:
+    case RunState.Pulling: {
+      return State.STARTING;
+    }
+    case RunState.Running: {
+      return State.RUNNING;
+    }
+    case RunState.Paused: {
+      return State.PAUSED;
+    }
+    case RunState.Completed: {
+      return State.SUCCESS;
+    }
+    case RunState.Error:
+    case RunState.Deleted:
+    case RunState.Deleting:
+    case RunState.DeleteFailed: {
+      return State.ERROR;
+    }
+    case RunState.Active:
+    case RunState.Unspecified: {
+      return State.ACTIVE;
+    }
+    default: {
+      return State.STOPPED;
+    }
+  }
+}
 
 export type ColumnDef = SizedGridColumn & {
   id: string;
@@ -381,17 +416,17 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowAdd: false,
       allowOverlay: true,
-      copyData: record.state.toLocaleLowerCase(),
+      copyData: capitalize(record.state),
       data: {
         appTheme,
-        kind: 'experiment-state-cell',
-        state: record.state,
+        kind: 'state-cell',
+        state: getCellStateFromExperimentState(record.state),
       },
       kind: GridCellKind.Custom,
     }),
     themeOverride: { cellHorizontalPadding: 13 },
     title: 'State',
-    tooltip: (record: FlatRun) => record.state.toLocaleLowerCase(),
+    tooltip: (record: FlatRun) => capitalize(record.state),
     width: columnWidths.state,
   },
   tags: {
@@ -424,7 +459,7 @@ export const getColumnDefs = ({
         data: {
           image: undefined,
           initials: getInitials(displayName),
-          kind: 'user-profile-cell',
+          kind: 'user-avatar-cell',
           tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
