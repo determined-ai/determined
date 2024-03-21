@@ -49,6 +49,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "hew": "npm:@hpe.com/hew@^0.6.33",
 ||||||| constructed merge base
     "hew": "github:determined-ai/hew#f4501aa743d3416beeab3297a1ae88ecf05d20b9",
@@ -65,6 +66,11 @@
 =======
     "hew": "github:determined-ai/hew#0d1659a37030f9c832a42d3715fff6a61d953b11",
 >>>>>>> Fix column bugs
+||||||| constructed merge base
+    "hew": "github:determined-ai/hew#0d1659a37030f9c832a42d3715fff6a61d953b11",
+=======
+    "hew": "github:determined-ai/hew#ffc32b79a3255f5aefc4891c6f027787e900972c",
+>>>>>>> Simplify height
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",
