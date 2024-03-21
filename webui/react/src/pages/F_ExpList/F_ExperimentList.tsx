@@ -1106,9 +1106,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 getRowAccentColor={getRowAccentColor}
                 hideUnpinned={settings.compare}
                 imperativeRef={dataGridRef}
-                isPaginated={isPagedView}
-                page={page}
-                pageSize={PAGE_SIZE}
+                isPaginated
+                // page={page}
+                // pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 renderContextMenuComponent={({
                   cell,
@@ -1139,11 +1139,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
-                total={Loadable.getOrElse(PAGE_SIZE, total)}
+                // total={Loadable.getOrElse(PAGE_SIZE, total)}
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onPageUpdate={setPage}
+                // onPageUpdate={setPage}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onSelectionChange={handleSelectionChange}
               />
