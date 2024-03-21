@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	projects = "projects"
-	models   = "models"
+	projects      = "projects"
+	models        = "models"
+	modelVersions = "modelversions"
 )
 
 func TestMockSocket(t *testing.T) {
@@ -80,6 +81,7 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 		`INSERT INTO workspaces (name) VALUES ('test_workspace');
 		INSERT INTO projects (name, workspace_id) VALUES ('test_project_1', 2);
 		INSERT INTO models (name, workspace_id, creation_time, user_id) VALUES ('test_model_1', 2, NOW(), 1);
+		INSERT INTO model_versions (name, version, model_id, creation_time, user_id, checkpoint_uuid) VALUES ('test_model_version_1',1, 1, NOW(), 1, uuid_in(md5(random()::text || random()::text)::cstring));
 		`,
 	).Exec(ctx)
 	if err != nil {
@@ -178,6 +180,8 @@ func buildStartupMsg(
 			knownKeySet.Projects = known
 		case models:
 			knownKeySet.Models = known
+		case modelVersions:
+			knownKeySet.ModelVersions = known
 		}
 	}
 
@@ -213,6 +217,23 @@ func buildStartupMsg(
 				WorkspaceIDs: workspaceIDs,
 				UserIDs:      userIDs,
 				Since:        0,
+			}
+		case modelVersions:
+			var modelIDs, modelVersionIDs, userIDs []int
+			if subscriptionIDs[models] != nil {
+				modelIDs = subscriptionIDs[models].([]int)
+			}
+			if subscriptionIDs["versions"] != nil {
+				modelVersionIDs = subscriptionIDs["versions"].([]int)
+			}
+			if subscriptionIDs["users"] != nil {
+				userIDs = subscriptionIDs["users"].([]int)
+			}
+			subscriptionSpecSet.ModelVersion = &ModelVersionSubscriptionSpec{
+				ModelIDs:        modelIDs,
+				ModelVersionIDs: modelVersionIDs,
+				UserIDs:         userIDs,
+				Since:           0,
 			}
 		}
 	}
@@ -506,26 +527,36 @@ func TestMultipleSubscriptions(t *testing.T) {
 		WorkspaceID:  2,
 		UserID:       1,
 	}
+	testModelVersion := ModelVersionMsg{
+		ID:             2,
+		Name:           uuid.NewString(),
+		CheckpointUuid: uuid.NewString(),
+		Version:        2,
+		ModelID:        1,
+		UserID:         1,
+	}
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
 				description: "startup test case for: multiple subscriptions",
 				startupMsg: buildStartupMsg(
 					"1",
-					map[string]string{projects: "2", models: "1"},
-					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"workspaces": []int{2}}},
+					map[string]string{projects: "2", models: "1", modelVersions: "1"},
+					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"workspaces": []int{2}}, modelVersions: {models: []int{1}}},
 				),
 				expectedUpserts:   []string{},
-				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: "},
+				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: ", "key: modelversions_deleted, deleted: "},
 			},
 			description: "multiple subscriptions",
 			queries: []streamdata.ExecutableQuery{
 				streamdata.GetAddProjectQuery(testProject),
 				db.Bun().NewInsert().Model(&testModel),
+				db.Bun().NewInsert().Model(&testModelVersion),
 			},
 			expectedUpserts: []string{
 				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2",
 				"key: model, model_id: 2, workspace_id: 2",
+				"key: modelversion, model_version_id: 2, model_id: 1",
 			},
 			expectedDeletions: []string{},
 		},
@@ -533,7 +564,7 @@ func TestMultipleSubscriptions(t *testing.T) {
 	runUpdateTest(t, pgDB, testCases)
 }
 
-func TestSubscribeByName(t *testing.T) {
+func TestSubscribeByUserID(t *testing.T) {
 	pgDB := initializeStreamDB(context.Background(), t)
 	testProject := model.Project{
 		Name:        uuid.NewString(),

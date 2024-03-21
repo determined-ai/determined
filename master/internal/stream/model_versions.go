@@ -58,7 +58,6 @@ func (pm *ModelVersionMsg) SeqNum() int64 {
 
 // UpsertMsg creates a ModelVersion stream upsert message.
 func (pm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
-	log.Infof("-------------------  upsert %+v", pm)
 	return stream.UpsertMsg{
 		JSONKey: ModelVersionsUpsertKey,
 		Msg:     pm,
