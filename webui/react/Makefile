@@ -2,6 +2,7 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
+export MOCK_ROOT=src/e2e/mocks
 source_files := $(shell find src public -type f)
 
 .PHONY: default
@@ -117,3 +118,29 @@ get-playwright:
 .PHONY: get-playwright-ci
 get-playwright-ci:
 	npx playwright install --with-deps && npx playwright install chrome
+
+.PHONY: mb-start
+mb-start:
+	docker pull bbyars/mountebank:2.9.1
+	docker run --rm --name 'playwright-mb' -d -p 2525:2525 -p 4545:4545 -p 5555:5555 bbyars/mountebank:2.9.1 start 	
+
+.PHONY: mb-stop
+mb-stop:
+	docker stop playwright-mb
+
+.PHONY: mb-save-imposters
+mb-save-imposters:
+	@curl -X GET -H 'Content-Type: application/json' \
+		http://localhost:2525/imposters > "${MOCK_ROOT}/saved-imposters.json"
+
+.PHONY: mb-start-proxy-once
+mb-start-proxy-once:
+	@curl -i -X PUT -H 'Content-Type: application/json' \
+		http://localhost:2525/imposters \
+		--data "@${MOCK_ROOT}/proxy-once.json"
+
+.PHONY: mb-start-saved-imposters
+mb-start-saved-imposters:
+	@curl -i -X PUT -H 'Content-Type: application/json' \
+		http://localhost:2525/imposters \
+		--data "@${MOCK_ROOT}/saved-imposters.json"

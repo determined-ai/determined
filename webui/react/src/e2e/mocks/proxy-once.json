@@ -1,22 +1,50 @@
 {
-    "port": 4545,
-    "protocol": "http",
-    "stubs": [
+    "imposters": [
         {
-            "responses": [
+            "port": 4545,
+            "protocol": "http",
+            "stubs": [
                 {
-                    "proxy": {
-                        "to": "http://localhost:8080",
-                        "mode": "proxyOnce",
-                        "predicateGenerators": [
-                            {
-                                "matches": {
-                                    "path": true,
-                                    "query": true
-                                }
+                    "responses": [
+                        {
+                            "proxy": {
+                                "to": "http://localhost:8080",
+                                "mode": "proxyOnce",
+                                "predicateGenerators": [
+                                    {
+                                        "matches": {
+                                            "path": true,
+                                            "query": true
+                                        }
+                                    }
+                                ]
                             }
-                        ]
-                    }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "port": 4546,
+            "protocol": "tcp",
+            "stubs": [
+                {
+                    "responses": [
+                        {
+                            "proxy": {
+                                "to": "ws://localhost:8080",
+                                "mode": "proxyOnce",
+                                "predicateGenerators": [
+                                    {
+                                        "matches": {
+                                            "path": true,
+                                            "query": true
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         }
