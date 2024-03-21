@@ -1,2 +1,4 @@
 node_modules/
 npm-debug.log
+**/mb.pid
+**/mb.log

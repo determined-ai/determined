@@ -121,26 +121,27 @@ get-playwright-ci:
 
 .PHONY: mb-start
 mb-start:
-	docker pull bbyars/mountebank:2.9.1
-	docker run --rm --name 'playwright-mb' -d -p 2525:2525 -p 4545:4545 -p 5555:5555 bbyars/mountebank:2.9.1 start 	
+	npm install mb
+	mb start>/tmp/mb-playwright.log 2>&1 &
 
 .PHONY: mb-stop
 mb-stop:
-	docker stop playwright-mb
+	mb stop
 
 .PHONY: mb-save-imposters
 mb-save-imposters:
 	@curl -X GET -H 'Content-Type: application/json' \
-		http://localhost:2525/imposters > "${MOCK_ROOT}/saved-imposters.json"
+		"http://localhost:2525/imposters?replayabe=true&removeProxies=true" > "${MOCK_ROOT}/saved-imposters.json"
 
-.PHONY: mb-start-proxy-once
-mb-start-proxy-once:
+.PHONY: mb-start-record-imposters
+mb-start-record-imposters:
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
-		--data "@${MOCK_ROOT}/proxy-once.json"
+		--data "@${MOCK_ROOT}/proxy-always.json"
 
-.PHONY: mb-start-saved-imposters
-mb-start-saved-imposters:
+.PHONY: mb-start-cached-imposters
+mb-start-cached-imposters:
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
 		--data "@${MOCK_ROOT}/saved-imposters.json"
+
