@@ -150,6 +150,7 @@ const openNotification = (e: DetError) => {
     description: e.publicMessage || '',
     severity: toastSeverityMap[e.level],
     title: e.publicSubject || listToStr([e.type, e.level]),
+    duration: 1000
   });
 };
 

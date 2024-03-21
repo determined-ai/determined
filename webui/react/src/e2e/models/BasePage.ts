@@ -11,7 +11,7 @@ import { Locator, type Page } from '@playwright/test';
 export abstract class BasePage {
 
   readonly _page: Page;
-  readonly url: string | undefined;
+  readonly abstract url: string;
 
   constructor(page: Page) {
     this._page = page;
@@ -31,9 +31,6 @@ export abstract class BasePage {
    * @param {Page} [waitForURL] - Whether for the URL to change
    */
   goto(waitForURL: boolean = true): BasePage {
-    if (typeof this.url === "undefined") {
-      throw new Error('URL is not set');
-    }
     this._page.goto(this.url);
     if (waitForURL) {
       this._page.waitForURL(this.url);

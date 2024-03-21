@@ -33,6 +33,14 @@ export class BaseComponent {
     }
     return this._locator;
   }
+
+  get root(): BasePage {
+    let root: parentTypes = this
+    while (true) {
+      if (root instanceof BasePage) return root
+      else root = root._parent
+    }
+  }
 }
 
 /**
@@ -60,7 +68,7 @@ export class BaseReactFragment {
   get pwLocator(): Locator { return this._parent.pwLocator }
 }
 
-export interface NamedComponentProps {
+export type NamedComponentArgs = {
   parent: parentTypes,
   selector?: string
 }

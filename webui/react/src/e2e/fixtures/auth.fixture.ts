@@ -20,14 +20,16 @@ export class AuthFixture {
     this.signInPage = new SignIn(page);
   }
 
-  async login(waitForURL?: string | RegExp | ((url: URL) => boolean)): Promise<void> {
-    if (typeof waitForURL == 'undefined') {
+  async login(
+    waitForURL: string | RegExp | ((url: URL) => boolean) = /dashboard/,
+    { username = this.#USERNAME, password = this.#PASSWORD }: { username?: string, password?: string } = {}
+  ): Promise<void> {
+    if (waitForURL instanceof RegExp && waitForURL.source == /dashboard/.source) {
       await this.#page.goto('/');
-      waitForURL = /dashboard/
     }
     const detAuth = this.signInPage.detAuth
-    await detAuth.username.pwLocator.fill(this.#USERNAME)
-    await detAuth.password.pwLocator.fill(this.#PASSWORD);
+    await detAuth.username.pwLocator.fill(username)
+    await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
     await this.#page.waitForURL(waitForURL);
   }

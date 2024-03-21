@@ -23,11 +23,12 @@ Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
 If you don't want to use dev cluster, you can use det deploy to initiate the backend. These commands should run and pass tests on chrome:
 
 1. `det deploy local cluster-up --det-version="0.29.0" --no-gpu --master-port=8080`
-   - use whatever det-version you want here.
+   - Use whatever det-version you want here.
 2. `SERVER_ADDRESS="http://localhost:3001" npm run build --prefix webui/react`
 3. Optional if you want an experiment created for the test: `det experiment create ./examples/tutorials/mnist_pytorch/const.yaml ./examples/tutorials/mnist_pytorch/`
-4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if CI=true
+4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if `CI=true`.
 5. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
+   - Provice `-- -p=firefox` to choose one browser to run on. Full list of projects located in [playwright config](/webui/react/playwright.config.ts).
 
 ## CI
 
@@ -35,10 +36,3 @@ CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 
 We use `mcr.microsoft.com/playwright` for [docker container](https://playwright.dev/docs/docker).
 Update the docker image version along with Playwright version.
-
-# TODO
-* Page Models
-* isDisplayed needs to check all parents, might need to find a way to play nice with expect.to.be.displayed somehow
-  how to waitToBeDisplayed()?
-* consider proxy over `get locator()`
-  * https://stackoverflow.com/questions/1529496/is-there-a-javascript-equivalent-of-pythons-getattr-method
