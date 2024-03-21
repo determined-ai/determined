@@ -127,7 +127,7 @@ def test_client_subscribe() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_subscribe_model_version():
+def test_subscribe_model_version() -> None:
     sess = api_utils.admin_session()
     ws = streams._client.LomondStreamWebSocket(sess)
     stream = streams._client.Stream(ws)
