@@ -87,7 +87,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
 
   const loginForm = (
     <Form
-      data-test="authForm"
       initialValues={{ username: storage.getWithDefault(STORAGE_KEY_LAST_USERNAME, '') }}
       name="login"
       onFinish={onFinish}
@@ -126,7 +125,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <div data-test="detAuth" className={css.base}>
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;

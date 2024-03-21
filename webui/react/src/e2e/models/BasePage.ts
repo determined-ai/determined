@@ -20,7 +20,7 @@ export abstract class BasePage {
   /**
    * The playwright top-level locator
    */
-  get pwLocator(): Locator { return this._page.locator('') }
+  get pwLocator(): Locator { return this._page.locator(':root') }
 
   /**
    * Returns this so we can chain.

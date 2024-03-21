@@ -14,12 +14,12 @@ type parentTypes = BasePage | BaseComponent | BaseReactFragment
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class BaseComponent {
-  readonly #selector: string;
-  protected readonly _parent: parentTypes;
+  protected _selector: string;
+  readonly _parent: parentTypes;
   protected _locator: Locator | undefined;
 
   constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
-    this.#selector = selector;
+    this._selector = selector;
     this._parent = parent;
   }
 
@@ -28,7 +28,7 @@ export class BaseComponent {
    */
   get pwLocator(): Locator {
     if (typeof this._locator === 'undefined') {
-      this._locator = this._parent.pwLocator.locator(this.#selector);
+      this._locator = this._parent.pwLocator.locator(this._selector);
       Object.freeze(this._locator)
     }
     return this._locator;
@@ -60,21 +60,19 @@ export class BaseReactFragment {
   get pwLocator(): Locator { return this._parent.pwLocator }
 }
 
+export interface NamedComponentProps {
+  parent: parentTypes,
+  selector?: string
+}
+
 /**
  * The actual implemntation of a NamedComponent class
- * 
- * @param {Object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this NamedComponent
- * @param {string} [obj.selector] - A selector to locate the object in place of static defaultSelector
  *
  * @remarks
  * Remarks regarding implementation are found in the NamedComponent function
  */
 abstract class _NamedComponent extends BaseComponent {
   static defaultSelector: string;
-  constructor({ selector, parent }: { parent: parentTypes, selector?: string }) {
-    super({ parent: parent, selector: selector || _NamedComponent.defaultSelector });
-  }
 }
 
 /**
@@ -86,6 +84,7 @@ abstract class _NamedComponent extends BaseComponent {
  * @remarks
  * Named components should all come with a default selector so that their parents don't have to specify a selector.
  * Since the default selector is static, we can access and append to it if we want a more specific selector.
+ * All named components should have a constructor that uses the defaultSelector as a selector if selector is undefined.
  */
 export function NamedComponent(mandatory: { defaultSelector: string }) {
   return class extends _NamedComponent {
