@@ -1750,16 +1750,17 @@ jobs:
             echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tlsSecret=${MASTER_CERT_NAME}"' >> "$BASH_ENV"
           name: Setup TLS Helm Values
       - run:
+          name: Setup Firewall Config
           command: |
             ip_addresses=($(echo "${CI_RANGES}" | tr -d '" ' | tr ',' ' '))
-            formattedRange="loadBalancerSourceRanges=["
+            formattedRange="loadBalancerSourceRanges={"
             for i in ${ip_addresses[@]}; do
-              formattedRange+="\"$i\""
+              formattedRange+=$i
             done
-            formattedRange+="]"
+            formattedRange+="}"
             export FORMATTED_RANGES=${formattedRange}
-            echo 'export HELM_LIST_VALUES="${FORMATTED_RANGES}"' >> "$BASH_ENV"
-          name: Setup Firewall Config
+
+            echo 'export HELM_VALUES="${HELM_VALUES}${FORMATTED_RANGES}"' >> "$BASH_ENV"
       - gcloud/install:
           version: "412.0.0"
       - kubernetes/install-kubectl
@@ -1796,15 +1797,12 @@ jobs:
           version: v3.2.4
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --set-json "${HELM_LIST_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --set "${LB_HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait
           name: Helm Install
       - run:
           command: |
             helm get values ${GENERATED_NAMESPACE} --namespace="${GENERATED_NAMESPACE}"
           name: Get Helm Values
-      - set-master-address-gke:
-          release-name: ${GENERATED_NAMESPACE}
-          namespace: ${GENERATED_NAMESPACE}
 
   test-intg-master:
     machine:
@@ -2761,6 +2759,9 @@ jobs:
           name: Show public IP address
           command: |
             curl ifconfig.me
+      - set-master-address-gke:
+          release-name: ${GENERATED_NAMESPSCE}
+          namespace: ${GENERATED_NAMESPACE}
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
