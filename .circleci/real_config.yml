@@ -3052,6 +3052,7 @@ workflows:
       - package-and-push-system-dev-small
 
       - setup-shared-cluster:
+          context: gcp-shared-cluster
           det-version: ${CIRCLE_SHA1}-shared-cluster
           requires:
             - package-and-push-system-dev-small
