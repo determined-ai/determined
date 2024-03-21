@@ -2,9 +2,11 @@ import random
 
 import pytest
 
-from determined.common import streams
+from determined.common import streams, util
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
+from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
@@ -122,3 +124,37 @@ def test_client_subscribe() -> None:
         else:
             raise ValueError(f"Unexpected message from stream. {event}")
     assert deleted
+
+
+@pytest.mark.e2e_cpu
+def test_subscribe_model_version():
+    sess = api_utils.admin_session()
+    ws = streams._client.LomondStreamWebSocket(sess)
+    stream = streams._client.Stream(ws)
+    syncId = "sync2"
+    modelName = "test_model_version_streaming"
+
+    detobj = client.Determined._from_session(sess)
+    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+        config = util.yaml_safe_load(f)
+    exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
+    assert exp.wait() == client.ExperimentState.COMPLETED
+    ckpt = exp.top_checkpoint()
+
+    resp_m = bindings.post_PostModel(sess, body=bindings.v1PostModelRequest(name=modelName))
+    m = resp_m.model
+
+    stream.subscribe(sync_id=syncId, model_versions=streams._client.ModelVersionSpec(model_id=m.id))
+
+    bindings.post_PostModelVersion(
+        sess,
+        body=bindings.v1PostModelVersionRequest(checkpointUuid=ckpt.uuid, modelName=modelName),
+        modelName=modelName,
+    )
+    found = False
+    for event in stream:
+        if isinstance(event, streams.wire.ModelVersionMsg):
+            assert event.model_id == m.id
+            assert event.checkpoint_uuid == ckpt.uuid
+            found = True
+    assert found
