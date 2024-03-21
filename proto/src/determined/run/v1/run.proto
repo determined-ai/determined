@@ -84,7 +84,7 @@ message FlatRun {
   // The count of checkpoints.
   int32 checkpoint_count = 7;
   // Signed searcher metrics value.
-  double searcher_metric_value = 8;
+  optional double searcher_metric_value = 8;
   // The id of external run
   optional int32 external_run_id = 9;
   // Trial hyperparameters.
