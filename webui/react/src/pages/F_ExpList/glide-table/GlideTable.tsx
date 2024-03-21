@@ -20,6 +20,7 @@ import { type Theme as HewTheme, useTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import * as io from 'io-ts';
 import React, {
+  CSSProperties,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -97,7 +98,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   /** return a color value to use for each row */
   getRowAccentColor?: (rowData: T) => string;
   getHeaderMenuItems?: (columnId: string, colIdx: number) => MenuItem[];
-  height: number;
+  height?: CSSProperties['height'];
   /** only display pinned columns */
   hideUnpinned?: boolean;
   onColumnResize?: (columnId: string, width: number) => void;
@@ -105,7 +106,7 @@ export interface GlideTableProps<T, ContextAction = void | string, ContextAction
   onPinnedColumnsCountChange?: (count: number) => void;
   /**
    * used for progressive loading along with
-   *  scrollPositionSetCount, page, pageSize, numRows, and height props
+   *  scrollPositionSetCount, page, pageSize, and numRows props
    */
   onScroll: (r: Rectangle) => void;
   onSelectionChange?: HandleSelectionChangeType;
@@ -150,7 +151,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   getHeaderMenuItems,
   getRowAccentColor,
   hideUnpinned = false,
-  height,
+  height = '100%',
   onColumnResize,
   onContextMenuComplete,
   onPinnedColumnsCountChange,
@@ -499,6 +500,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
 
   return (
     <div
+      className={css.wrapper}
       onWheel={() => {
         contextMenuOpen.set(false);
         closeTooltip();
