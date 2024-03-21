@@ -11,6 +11,9 @@ spec:
   - port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
     targetPort: {{- include "determined.masterPort" . | indent 1 }}
     protocol: TCP
+    {{- if .Values.loadBalancerSourceRanges }}
+    loadBalancerSourceRanges: {{ .Values.loadBalancerSourceRanges}}
+    {{- end }}
 
 {{- if ((.Values.openshiftRoute).enabled | default false) }}
   type: ClusterIP

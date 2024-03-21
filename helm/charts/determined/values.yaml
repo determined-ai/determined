@@ -233,6 +233,8 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
+createNonNamespacedObjects:
+
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
 # slotResourceRequests:
@@ -338,3 +340,7 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+## Configure the set of IP ranges allowed to connect to the Determined master service on a public
+## GKE cluster.
+loadBalancerSourceRanges: []
