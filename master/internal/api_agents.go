@@ -83,7 +83,7 @@ func (a *apiServer) GetAgents(
 	if baseSlot == nil {
 		return nil, nil
 	}
-	newAgents := rm.ScaleUpAgents(baseAgent, baseSlot)
+	newAgents := rm.ScaleUpAgents(baseAgent, baseSlot, 2000, 512)
 	resp.Agents = newAgents
 
 	if req.ExcludeSlots {

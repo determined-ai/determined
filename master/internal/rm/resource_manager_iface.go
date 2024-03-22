@@ -12,10 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func ScaleUpAgents(baseAgent *agentv1.Agent, baseSlot *agentv1.Slot) []*agentv1.Agent {
-	slotsPerNode := 512
-	nodes := 2000 // *2 somehow
-
+func ScaleUpAgents(baseAgent *agentv1.Agent, baseSlot *agentv1.Slot, nodes, slotsPerNode int) []*agentv1.Agent {
 	newSlots := make(map[string]*agentv1.Slot, slotsPerNode)
 	for i := 0; i < slotsPerNode; i++ {
 		randStrId := uuid.New().String()
