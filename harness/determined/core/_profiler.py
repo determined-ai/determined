@@ -163,7 +163,7 @@ def _average_metric_samples_depth_one(metric_samples: List[Dict[str, Any]]) -> D
 
     Supports up to 1 level of nesting. Returns a single merged dictionary where the values are
     averaged across all dictionaries in the given list by key.
-    # TODO (anda): find a cleaner way to do this.
+    # TODO (MD-338): find a cleaner way to do this.
     """
     aggregated_metrics: Dict[str, Any] = {}
     for sample in metric_samples:
@@ -243,14 +243,16 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
 
 
 class _Network(_MetricGroupCollector):
-    group = "network"
-
     def __init__(self) -> None:
         # Set initial values for throughput calculations.
         self._interval_start_ts = time.time()
         self._interval_start_vals = psutil.net_io_counters()
 
         super().__init__()
+
+    @property
+    def group(self) -> str:
+        return "network"
 
     def sample_metrics(self) -> None:
         ts = time.time()
@@ -273,8 +275,6 @@ class _Network(_MetricGroupCollector):
 
 
 class _Disk(_MetricGroupCollector):
-    group = "disk"
-
     _disk_paths = ["/", constants.SHARED_FS_CONTAINER_PATH]
 
     def __init__(self) -> None:
@@ -293,6 +293,10 @@ class _Disk(_MetricGroupCollector):
 
         super().__init__()
 
+    @property
+    def group(self) -> str:
+        return "disk"
+
     def sample_metrics(self) -> None:
         ts = time.time()
         vals = psutil.disk_io_counters()
@@ -303,8 +307,9 @@ class _Disk(_MetricGroupCollector):
         write_thru = (vals.write_bytes - self._interval_start_vals.write_bytes) / (
             ts - self._interval_start_ts
         )
-        iops = (vals.read_count + vals.write_count) - (
-            self._interval_start_vals.read_count + self._interval_start_vals.write_count
+        iops = (
+            (vals.read_count + vals.write_count)
+            - (self._interval_start_vals.read_count + self._interval_start_vals.write_count)
         ) / (ts - self._interval_start_ts)
         self._interval_start_ts, self._interval_start_vals = ts, vals
 
@@ -321,19 +326,19 @@ class _Disk(_MetricGroupCollector):
 
 
 class _Memory(_MetricGroupCollector):
-    group = "memory"
-
     def sample_metrics(self) -> None:
         free_mem_bytes = psutil.virtual_memory().available
         metrics = {
-            "memory_free": free_mem_bytes / 1e9,
+            "memory_free": free_mem_bytes,
         }
         self.metric_samples.append(metrics)
 
+    @property
+    def group(self) -> str:
+        return "memory"
+
 
 class _CPU(_MetricGroupCollector):
-    group = "cpu"
-
     def sample_metrics(self) -> None:
         cpu_util = psutil.cpu_percent()
         metrics = {
@@ -341,10 +346,12 @@ class _CPU(_MetricGroupCollector):
         }
         self.metric_samples.append(metrics)
 
+    @property
+    def group(self) -> str:
+        return "cpu"
+
 
 class _GPU(_MetricGroupCollector):
-    group = "gpu"
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -355,6 +362,10 @@ class _GPU(_MetricGroupCollector):
         else:
             logging.warning("pynvml module not found. GPU metrics will not be collected.")
 
+    @property
+    def group(self) -> str:
+        return "gpu"
+
     def _init_pynvml(self) -> None:
         """Initialize the pynvml library and validate methods.
 
@@ -364,8 +375,8 @@ class _GPU(_MetricGroupCollector):
         If any NVML method fails for any GPU device, no GPU metrics will be collected for
         all GPU devices.
         """
+        assert pynvml
         try:
-            assert pynvml
             pynvml.nvmlInit()
             num_gpus = pynvml.nvmlDeviceGetCount()
             for i in range(num_gpus):

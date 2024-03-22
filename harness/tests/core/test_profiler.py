@@ -10,6 +10,12 @@ from determined.core import _profiler as profiler
 @mock.patch("determined.core._profiler.psutil.net_io_counters")
 @mock.patch("time.time")
 def test_sample_metrics_network(mock_time: mock.MagicMock, mock_psutil: mock.MagicMock) -> None:
+    """Test that ``Network.sample_metrics()`` collects metrics to the expected format.
+
+    Mocks `psutil` and `time` dependencies used to calculate network throughput metrics and
+    verifies that the resulting dict appended to ``Network.metric_samples`` contains the expected
+    metric names and values.
+    """
     mock_start_time = 0.0
     mock_time.return_value = mock_start_time
     mock_start_bytes_sent = 100
@@ -49,6 +55,12 @@ def test_sample_metrics_disk(
     mock_psutil_disk_usage: mock.MagicMock,
     mock_psutil_disk_io: mock.MagicMock,
 ) -> None:
+    """Test that ``Disk.sample_metrics()`` collects metrics to the expected format.
+
+    Mocks `psutil` and `time` dependencies used to calculate disk throughput metrics and verifies
+    that the resulting dict appended to ``Disk.metric_samples`` contains the expected metric names
+    and values.
+    """
     mock_start_time = 0.0
     mock_time.return_value = mock_start_time
     mock_start_disk_io = psutil._common.sdiskio(
@@ -90,8 +102,9 @@ def test_sample_metrics_disk(
     exp_thru_write = (mock_disk_io.write_bytes - mock_start_disk_io.write_bytes) / (
         mock_end_time - mock_start_time
     )
-    exp_iops = (mock_disk_io.read_count + mock_disk_io.write_count) - (
-        mock_start_disk_io.read_count + mock_start_disk_io.write_count
+    exp_iops = (
+        (mock_disk_io.read_count + mock_disk_io.write_count)
+        - (mock_start_disk_io.read_count + mock_start_disk_io.write_count)
     ) / (mock_end_time - mock_start_time)
 
     expected_metrics = {
@@ -118,7 +131,7 @@ def test_sample_metrics_memory(
     mock_psutil.return_value = MockMemoryInfo(available=900)
 
     expected_metrics = {
-        "memory_free": 900 / 1e9,
+        "memory_free": 900,
     }
 
     cpu_collector.sample_metrics()
@@ -160,6 +173,13 @@ def test_sample_metrics_gpu(
     mock_pynvml_device_count: mock.MagicMock,
     mock_pynvml_init: mock.MagicMock,
 ) -> None:
+    """Test that ``GPU.sample_metrics()`` collects metrics to the expected format.
+
+    Calls to the `pynvml` dependency used to get GPU metrics have been mocked. This test verifies
+    that given expected `pynvml` output values, ``sample_metrics()`` generates a properly-formatted
+    metrics dict that is appended to ``GPU.metric_samples``.
+    """
+
     class MockNVMLDeviceHandle:
         pass
 
@@ -212,7 +232,7 @@ def test_sample_metrics_gpu(
     assert gpu_collector.metric_samples[0] == expected_metrics
 
 
-def test_average_metric_samples() -> None:
+def test_average_metric_samples_flat() -> None:
     test_metrics_flat = [
         {
             "name1": 0,
@@ -227,6 +247,8 @@ def test_average_metric_samples() -> None:
     result = profiler._average_metric_samples_depth_one(metric_samples=test_metrics_flat)
     assert result == {"name1": (0 + 2) / 2, "name2": (1 + 3) / 2}
 
+
+def test_average_metric_samples_depth_one() -> None:
     test_metrics_single_nested = [
         {
             "label1": {
@@ -244,6 +266,8 @@ def test_average_metric_samples() -> None:
     result = profiler._average_metric_samples_depth_one(metric_samples=test_metrics_single_nested)
     assert result == {"label1": {"name1": (0 + 2) / 2, "name2": (1 + 3) / 2}}
 
+
+def test_average_metric_samples_depth_two() -> None:
     test_metrics_twice_nested: List[Dict[str, Any]] = [
         {
             "label1": {

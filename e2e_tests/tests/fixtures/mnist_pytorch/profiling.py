@@ -15,8 +15,7 @@ def run():
     with pytorch.init() as train_context:
         trial = mnist_pytorch.MNistTrial(train_context, hparams=info.trial.hparams)
         trainer = pytorch.Trainer(trial, train_context)
-        trainer.configure_profiler(enabled=True)
-        trainer.fit(latest_checkpoint=info.latest_checkpoint)
+        trainer.fit(latest_checkpoint=info.latest_checkpoint, profiling_enabled=True)
 
 
 if __name__ == "__main__":
