@@ -6,17 +6,19 @@ import {
   measureTextCached,
 } from '@glideapps/glide-data-grid';
 
-interface UserProfileCellProps {
-  readonly kind: 'user-avatar-cell';
+export const USER_AVATAR_CELL = 'user-avatar-cell';
+
+interface UserAvatarProps {
+  readonly kind: typeof USER_AVATAR_CELL;
   readonly image: string;
   readonly initials: string;
   readonly tint: string;
   readonly name?: string;
 }
 
-export type UserProfileCell = CustomCell<UserProfileCellProps>;
+export type UserAvatar = CustomCell<UserAvatarProps>;
 
-const renderer: CustomRenderer<UserProfileCell> = {
+const renderer: CustomRenderer<UserAvatar> = {
   draw: (args, cell) => {
     const { ctx, rect, theme, imageLoader, col, row } = args;
     const { image, name, initials, tint } = cell.data;
@@ -72,8 +74,8 @@ const renderer: CustomRenderer<UserProfileCell> = {
 
     return true;
   },
-  isMatch: (cell: CustomCell): cell is UserProfileCell =>
-    (cell.data as UserProfileCellProps).kind === 'user-avatar-cell',
+  isMatch: (cell: CustomCell): cell is UserAvatar =>
+    (cell.data as UserAvatarProps).kind === USER_AVATAR_CELL,
   kind: GridCellKind.Custom,
   measure: () => 50,
   onPaste: (v, d) => ({

@@ -6,8 +6,10 @@ import {
   parseToRgba,
 } from '@glideapps/glide-data-grid';
 
+export const SPARKLINE_CELL = 'sparkline-cell';
+
 interface SparklineCellProps {
-  readonly kind: 'sparkline-cell';
+  readonly kind: typeof SPARKLINE_CELL;
   readonly graphKind?: 'line' | 'bar';
   readonly values: readonly number[];
   readonly displayValues?: readonly string[];
@@ -131,7 +133,7 @@ const renderer: CustomRenderer<SparklineCell> = {
     return true;
   },
   isMatch: (cell: CustomCell): cell is SparklineCell =>
-    (cell.data as SparklineCellProps).kind === 'sparkline-cell',
+    (cell.data as SparklineCellProps).kind === SPARKLINE_CELL,
   kind: GridCellKind.Custom,
   needsHover: true,
   needsHoverPosition: true,

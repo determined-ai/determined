@@ -10,8 +10,10 @@ import {
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
+export const LINK_CELL = 'link-cell';
+
 interface LinkCellProps {
-  readonly kind: 'link-cell';
+  readonly kind: typeof LINK_CELL;
   /**
    * Used to hand tune the position of the underline as this is not a native canvas capability, it can need tweaking
    * for different fonts.
@@ -122,7 +124,7 @@ const renderer: CustomRenderer<LinkCell> = {
 
     return true;
   },
-  isMatch: (c): c is LinkCell => (c.data as LinkCellProps).kind === 'link-cell',
+  isMatch: (c): c is LinkCell => (c.data as LinkCellProps).kind === LINK_CELL,
   kind: GridCellKind.Custom,
   measure: (ctx, cell, theme) => {
     const { link } = cell.data;

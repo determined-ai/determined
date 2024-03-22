@@ -9,8 +9,10 @@ import {
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
+export const TAGS_CELL = 'tags-cell';
+
 interface TagsCellProps {
-  readonly kind: 'tags-cell';
+  readonly kind: typeof TAGS_CELL;
   readonly tags: readonly string[];
   readonly readonly?: boolean;
   readonly possibleTags: readonly {
@@ -80,7 +82,7 @@ const renderer: CustomRenderer<TagsCell> = {
 
     return true;
   },
-  isMatch: (c): c is TagsCell => (c.data as TagsCellProps).kind === 'tags-cell',
+  isMatch: (c): c is TagsCell => (c.data as TagsCellProps).kind === TAGS_CELL,
   kind: GridCellKind.Custom,
   measure: (ctx, cell, theme) => {
     const { tags } = cell.data;

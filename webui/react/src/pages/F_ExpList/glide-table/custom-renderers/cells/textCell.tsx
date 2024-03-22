@@ -7,8 +7,10 @@ import {
 
 import { drawTextWithEllipsis } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
+export const TEXT_CELL = 'text-cell';
+
 interface TextCellProps {
-  readonly kind: 'text-cell';
+  readonly kind: typeof TEXT_CELL;
 }
 
 export type TextCell = CustomCell<TextCellProps>;
@@ -29,7 +31,7 @@ const renderer: CustomRenderer<TextCell> = {
 
     return true;
   },
-  isMatch: (c): c is TextCell => (c.data as TextCellProps).kind === 'text-cell',
+  isMatch: (c): c is TextCell => (c.data as TextCellProps).kind === TEXT_CELL,
   kind: GridCellKind.Custom,
   needsHover: true,
   provideEditor: () => undefined,

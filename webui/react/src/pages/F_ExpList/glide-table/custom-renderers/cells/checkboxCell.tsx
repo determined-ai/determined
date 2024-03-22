@@ -94,15 +94,17 @@ function drawBoolean(args: BaseDrawArgs, checked: boolean) {
   }
 }
 
+export const CHECKBOX_CELL = 'checkbox-cell';
+
 type CheckboxCellProps = {
-  kind: 'checkbox-cell';
+  kind: typeof CHECKBOX_CELL;
   checked: boolean;
 };
 export type CheckboxCell = CustomCell<CheckboxCellProps>;
 
 const renderer: CustomRenderer<CheckboxCell> = {
   draw: (a, cell) => drawBoolean(a, cell.data.checked),
-  isMatch: (c): c is CheckboxCell => (c.data as CheckboxCellProps).kind === 'checkbox-cell',
+  isMatch: (c): c is CheckboxCell => (c.data as CheckboxCellProps).kind === CHECKBOX_CELL,
   kind: GridCellKind.Custom,
   measure: () => 40,
   needsHover: true,

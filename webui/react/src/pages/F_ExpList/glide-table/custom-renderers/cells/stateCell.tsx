@@ -17,9 +17,11 @@ export const State = {
 
 export type State = ValueOf<typeof State>;
 
+export const STATE_CELL = 'state-cell';
+
 interface StateCellProps {
   readonly appTheme: Theme;
-  readonly kind: 'state-cell';
+  readonly kind: typeof STATE_CELL;
   readonly state: State;
 }
 
@@ -201,7 +203,7 @@ const renderer: CustomRenderer<StateCell> = {
     return true;
   },
   isMatch: (cell: CustomCell): cell is StateCell =>
-    (cell.data as StateCellProps).kind === 'state-cell',
+    (cell.data as StateCellProps).kind === STATE_CELL,
   kind: GridCellKind.Custom,
   measure: () => 60,
   provideEditor: () => undefined,

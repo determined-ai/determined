@@ -4,9 +4,11 @@ import { Theme } from 'hew/Theme';
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 
+export const LOADING_CELL = 'loading-cell';
+
 interface LoadingCellProps {
   readonly appTheme: Theme;
-  readonly kind: 'loading-cell';
+  readonly kind: typeof LOADING_CELL;
 }
 
 export type LoadingCell = CustomCell<LoadingCellProps>;
@@ -67,7 +69,7 @@ const renderer: CustomRenderer<LoadingCell> = {
     requestAnimationFrame();
   },
   isMatch: (cell: CustomCell): cell is LoadingCell => {
-    return 'kind' in cell.data && cell.data.kind === 'loading-cell';
+    return 'kind' in cell.data && cell.data.kind === LOADING_CELL;
   },
   kind: GridCellKind.Custom,
   needsHover: true,

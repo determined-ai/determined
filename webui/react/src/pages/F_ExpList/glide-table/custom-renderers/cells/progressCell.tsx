@@ -2,8 +2,10 @@ import { CustomCell, CustomRenderer, GridCellKind } from '@glideapps/glide-data-
 
 import { roundedRect } from 'pages/F_ExpList/glide-table/custom-renderers/utils';
 
+export const PROGRESS_CELL = 'progress-cell';
+
 interface ProgressCellProps {
-  readonly kind: 'progress-cell';
+  readonly kind: typeof PROGRESS_CELL;
   readonly value: number;
   readonly min: number;
   readonly max: number;
@@ -45,7 +47,7 @@ const renderer: CustomRenderer<ProgressCell> = {
 
     return true;
   },
-  isMatch: (c): c is ProgressCell => (c.data as ProgressCellProps).kind === 'progress-cell',
+  isMatch: (c): c is ProgressCell => (c.data as ProgressCellProps).kind === PROGRESS_CELL,
   kind: GridCellKind.Custom,
   onPaste: (v, d) => {
     let num = Number.parseFloat(v);
