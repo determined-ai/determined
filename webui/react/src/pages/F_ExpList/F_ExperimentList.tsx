@@ -1106,7 +1106,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 getRowAccentColor={getRowAccentColor}
                 hideUnpinned={settings.compare}
                 imperativeRef={dataGridRef}
-                isPaginated
+                isPaginated={isPagedView}
                 page={page}
                 pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
