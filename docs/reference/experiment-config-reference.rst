@@ -1486,15 +1486,11 @@ explicitly specified, the master will automatically generate an experiment seed.
 The ``profiling`` section specifies configuration options for the Determined system metrics
 profiler. See :ref:`how-to-profiling` for a more detailed walkthrough.
 
-``profiling``
-=============
-
-Optional. Defaults to false.
-
 ``enabled``
------------
+===========
 
-Optional. Defines whether profiles should be collected or not. Defaults to false.
+Optional. Enables system metrics profiling on the experiment, which can be viewed in the Web UI.
+Defaults to false.
 
 .. _experiment-configuration_training_units:
 
