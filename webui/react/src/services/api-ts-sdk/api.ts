@@ -9827,6 +9827,12 @@ export interface V1SlotStats {
      * @memberof V1SlotStats
      */
     drainingCount?: number;
+    /**
+     * map slot id to container state
+     * @type {{ [key: string]: Containerv1State; }}
+     * @memberof V1SlotStats
+     */
+    slotStates?: { [key: string]: Containerv1State; };
 }
 /**
  * Describe one SSO provider.

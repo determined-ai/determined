@@ -19,13 +19,15 @@ message SlotStats {
 
   // The number of slots in each state.
   // map<determined.container.v1.State, int32> state_counts = 1;
-  map<string, int32> state_counts = 1;
+  map<int32, int32> state_counts = 1;
   // The number of slots in each device type.
-  map<string, int32> device_type_counts = 2;
+  map<int32, int32> device_type_counts = 2;
   // The number of slots that are disabled.
   int32 disabled_count = 3;
   // The number of slots that are draining.
   int32 draining_count = 4;
+  // map slot id to container state
+  map<string, determined.container.v1.State> slot_states = 5;
 }
 
 // Agent is a pool of resources where containers are run.

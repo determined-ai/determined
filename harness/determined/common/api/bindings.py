@@ -13417,6 +13417,7 @@ class v1SlotStats(Printable):
     deviceTypeCounts: "typing.Optional[typing.Dict[str, int]]" = None
     disabledCount: "typing.Optional[int]" = None
     drainingCount: "typing.Optional[int]" = None
+    slotStates: "typing.Optional[typing.Dict[str, containerv1State]]" = None
     stateCounts: "typing.Optional[typing.Dict[str, int]]" = None
 
     def __init__(
@@ -13425,6 +13426,7 @@ class v1SlotStats(Printable):
         deviceTypeCounts: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
         disabledCount: "typing.Union[int, None, Unset]" = _unset,
         drainingCount: "typing.Union[int, None, Unset]" = _unset,
+        slotStates: "typing.Union[typing.Dict[str, containerv1State], None, Unset]" = _unset,
         stateCounts: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
     ):
         if not isinstance(deviceTypeCounts, Unset):
@@ -13433,6 +13435,8 @@ class v1SlotStats(Printable):
             self.disabledCount = disabledCount
         if not isinstance(drainingCount, Unset):
             self.drainingCount = drainingCount
+        if not isinstance(slotStates, Unset):
+            self.slotStates = slotStates
         if not isinstance(stateCounts, Unset):
             self.stateCounts = stateCounts
 
@@ -13446,6 +13450,8 @@ class v1SlotStats(Printable):
             kwargs["disabledCount"] = obj["disabledCount"]
         if "drainingCount" in obj:
             kwargs["drainingCount"] = obj["drainingCount"]
+        if "slotStates" in obj:
+            kwargs["slotStates"] = {k: containerv1State(v) for k, v in obj["slotStates"].items()} if obj["slotStates"] is not None else None
         if "stateCounts" in obj:
             kwargs["stateCounts"] = obj["stateCounts"]
         return cls(**kwargs)
@@ -13459,6 +13465,8 @@ class v1SlotStats(Printable):
             out["disabledCount"] = self.disabledCount
         if not omit_unset or "drainingCount" in vars(self):
             out["drainingCount"] = self.drainingCount
+        if not omit_unset or "slotStates" in vars(self):
+            out["slotStates"] = None if self.slotStates is None else {k: v.value for k, v in self.slotStates.items()}
         if not omit_unset or "stateCounts" in vars(self):
             out["stateCounts"] = self.stateCounts
         return out

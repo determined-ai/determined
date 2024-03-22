@@ -16,16 +16,36 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
 
 // SummarizeSlots for a single agent.
 func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	stats := agentv1.SlotStats{}
+	// stateCounts := make(map[containerv1.State]int32)
+	stateCounts := make(map[int32]int32)
+	// typeCounts := make(map[devicev1.Type]int32)
+	typeCounts := make(map[int32]int32)
+	slotStates := make(map[string]containerv1.State)
+
 	for _, slot := range slots {
 		if !slot.Enabled {
 			stats.DisabledCount++
 		}
+		if slot.Draining {
+			stats.DrainingCount++
+		}
+		if slot.Container != nil {
+			stateCounts[int32(slot.Container.State)]++
+			slotStates[slot.Id] = slot.Container.State
+		}
+		if slot.Device != nil {
+			typeCounts[int32(slot.Device.Type)]++
+		}
 	}
+	stats.DeviceTypeCounts = typeCounts
+	stats.StateCounts = stateCounts
+	stats.SlotStates = slotStates
 	return &stats
 }
 
