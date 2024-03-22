@@ -14,31 +14,9 @@
                                     {
                                         "matches": {
                                             "path": true,
-                                            "query": true
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "port": 4546,
-            "protocol": "http",
-            "stubs": [
-                {
-                    "responses": [
-                        {
-                            "proxy": {
-                                "to": "ws://localhost:8080",
-                                "mode": "proxyAlways",
-                                "predicateGenerators": [
-                                    {
-                                        "matches": {
-                                            "path": true,
-                                            "query": true
+                                            "query": true,
+                                            "header": true,
+                                            "body": true
                                         }
                                     }
                                 ]
