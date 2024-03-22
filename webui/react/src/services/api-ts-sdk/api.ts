@@ -9810,7 +9810,7 @@ export interface V1SlotStats {
      */
     stateCounts?: { [key: string]: number; };
     /**
-     * The number of slots in each device type.
+     * The number of slots in each device type. map<determined.device.v1.Type, int32> device_type_counts = 1;
      * @type {{ [key: string]: number; }}
      * @memberof V1SlotStats
      */

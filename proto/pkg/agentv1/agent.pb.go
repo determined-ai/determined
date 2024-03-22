@@ -31,6 +31,7 @@ type SlotStats struct {
 	// map<determined.container.v1.State, int32> state_counts = 1;
 	StateCounts map[int32]int32 `protobuf:"bytes,1,rep,name=state_counts,json=stateCounts,proto3" json:"state_counts,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// The number of slots in each device type.
+	// map<determined.device.v1.Type, int32> device_type_counts = 1;
 	DeviceTypeCounts map[int32]int32 `protobuf:"bytes,2,rep,name=device_type_counts,json=deviceTypeCounts,proto3" json:"device_type_counts,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// The number of slots that are disabled.
 	DisabledCount int32 `protobuf:"varint,3,opt,name=disabled_count,json=disabledCount,proto3" json:"disabled_count,omitempty"`

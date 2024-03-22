@@ -10,17 +10,11 @@ import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
 message SlotStats {
-  /*
-  map state to slot_ids
-  map dev type to count
-  count of disabled
-  count of draining
-  */
-
   // The number of slots in each state.
   // map<determined.container.v1.State, int32> state_counts = 1;
   map<int32, int32> state_counts = 1;
   // The number of slots in each device type.
+  // map<determined.device.v1.Type, int32> device_type_counts = 1;
   map<int32, int32> device_type_counts = 2;
   // The number of slots that are disabled.
   int32 disabled_count = 3;
