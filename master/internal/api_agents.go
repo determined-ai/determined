@@ -2,10 +2,12 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -13,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -41,7 +44,36 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
-	api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
+	slotsPerNode := 512
+	nodes := 2000 // *2 somehow
+
+	baseAgent := resp.Agents[0]
+	var baseSlot *agentv1.Slot
+	for _, slot := range baseAgent.Slots {
+		baseSlot = slot
+		break
+	}
+	if baseSlot == nil {
+		return nil, nil
+	}
+	newSlots := make(map[string]*agentv1.Slot, slotsPerNode)
+	for i := 0; i < slotsPerNode; i++ {
+		randStrId := uuid.New().String()
+		newSlots[randStrId] = baseSlot
+	}
+	baseAgent.Slots = newSlots
+
+	newAgents := make([]*agentv1.Agent, 0, nodes)
+	for i := 0; i < nodes; i++ {
+		newAgents = append(newAgents, baseAgent)
+	}
+	resp.Agents = newAgents
+
+	// print all stats
+	fmt.Println("Total Agents: ", len(resp.Agents))
+	fmt.Println("Total Slots: ", len(resp.Agents)*slotsPerNode)
+
+	// api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
 	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
