@@ -129,7 +129,7 @@ def test_client_subscribe() -> None:
 @pytest.mark.e2e_cpu
 def test_subscribe_model_version() -> None:
     # Subscribe to model versions by model ID
-    # When model version is created, verify that can be received from the stream 
+    # When model version is created, verify that can be received from the stream
     sess = api_utils.admin_session()
     ws = streams._client.LomondStreamWebSocket(sess)
     stream = streams._client.Stream(ws)
