@@ -28,7 +28,7 @@ jobs:
             master/go.sum
             proto/go.sum
       - name: Setup Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: 3.17.1
           repo-token: ${{ secrets.DETERMINED_TOKEN }}
