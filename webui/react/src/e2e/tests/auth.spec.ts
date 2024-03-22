@@ -44,8 +44,7 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/login/);
     const signInPage = new SignIn(page)
     await expect(signInPage.detAuth.error.pwLocator).toBeVisible();
-    // text assertion not working yet, but we can see the error locator
-    await expect(signInPage.detAuth.error.message.pwLocator).toContainText('Login Failed');
-    await expect(signInPage.detAuth.error.description.pwLocator).toHaveText('invalid credentials');
+    expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain('Login failed');
+    expect(await signInPage.detAuth.error.description.pwLocator.textContent()).toContain('invalid credentials');
   });
 });
