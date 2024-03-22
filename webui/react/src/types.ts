@@ -420,6 +420,7 @@ export const ExperimentSearcherName = {
   Pbt: 'pbt',
   Random: 'random',
   Single: 'single',
+  Unknown: 'unknown', // use it when search name is not known
 } as const;
 
 export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
