@@ -171,7 +171,7 @@ class ClusterStore extends PollingStore {
   public fetchAgents(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
-    getAgents({}, { signal: signal ?? canceler.signal })
+    getAgents({ excludeSlots: true }, { signal: signal ?? canceler.signal })
       .then((response) => {
         this.#agents.set(Loaded(response));
       })
@@ -205,7 +205,7 @@ class ClusterStore extends PollingStore {
   }
 
   public async poll() {
-    const agentRequest = getAgents({}, { signal: this.canceler?.signal });
+    const agentRequest = getAgents({ excludeSlots: true }, { signal: this.canceler?.signal });
     const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
     const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
     this.#resourcePools.set(Loaded(resourcePools));

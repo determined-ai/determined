@@ -12,9 +12,71 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
+
+type slotStats map[string]*agentv1.DeviceStats
+
+// SummarizeSlots for a single agent.
+func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
+	stats := agentv1.SlotStats{
+		DisabledSlots:    make([]string, 0),
+		SlotStates:       make(map[string]containerv1.State),
+		StateCounts:      make(map[string]int32),
+		DeviceTypeCounts: make(map[string]int32),
+		TypeStats:        make(slotStats),
+		BrandStats:       make(slotStats),
+	}
+
+	if slots == nil || len(slots) == 0 {
+		return &stats
+	}
+	for _, slot := range slots {
+		deviceType := slot.Device.Type.String()
+		deviceTypeStats, ok := stats.TypeStats[deviceType]
+		if !ok {
+			deviceTypeStats = &agentv1.DeviceStats{
+				States: make(map[string]int32),
+			}
+			stats.TypeStats[deviceType] = deviceTypeStats
+		}
+		deviceBrand := slot.Device.Brand
+		deviceBrandStats, ok := stats.BrandStats[deviceBrand]
+		if !ok {
+			deviceBrandStats = &agentv1.DeviceStats{
+				States: make(map[string]int32),
+			}
+			stats.BrandStats[deviceBrand] = deviceBrandStats
+		}
+		deviceBrandStats.Total++
+		deviceTypeStats.Total++
+
+		if !slot.Enabled {
+			deviceBrandStats.Disabled++
+			deviceTypeStats.Disabled++
+			stats.DisabledSlots = append(stats.DisabledSlots, slot.Id)
+		}
+		if slot.Draining {
+			deviceBrandStats.Draining++
+			deviceTypeStats.Draining++
+			stats.DrainingCount++
+		}
+		if slot.Container != nil {
+			deviceBrandStats.States[slot.Container.State.String()]++
+			deviceTypeStats.States[slot.Container.State.String()]++
+			stats.StateCounts[slot.Container.State.String()]++
+			stats.SlotStates[slot.Id] = slot.Container.State
+		}
+		if slot.Device != nil {
+			stats.DeviceTypeCounts[slot.Device.Type.String()]++
+		}
+	}
+	return &stats
+}
 
 func (a *apiServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
@@ -38,6 +100,31 @@ func (a *apiServer) GetAgents(
 			if err := authz.ObfuscateAgent(agent); err != nil {
 				return nil, err
 			}
+		}
+	}
+
+	if len(resp.Agents) != 0 {
+		baseAgent := resp.Agents[0]
+		var baseSlot *agentv1.Slot
+		for _, slot := range baseAgent.Slots {
+			baseSlot = slot
+			break
+		}
+		if baseSlot == nil {
+			return nil, nil
+		}
+		newAgents := rm.ScaleUpAgents(baseAgent, baseSlot, 2000, 512)
+		resp.Agents = newAgents
+	}
+
+	// PERF: can perhaps be done before RBAC.
+	for _, agent := range resp.Agents {
+		agent.SlotStats = SummarizeSlots(agent.Slots)
+		if req.ExcludeSlots {
+			agent.Slots = nil
+		}
+		if req.ExcludeContainers {
+			agent.Containers = nil
 		}
 	}
 
