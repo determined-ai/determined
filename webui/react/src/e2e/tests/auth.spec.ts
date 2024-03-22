@@ -39,12 +39,15 @@ test.describe('Authentication', () => {
   });
   
   test('Bad Credentials should throw an error', async ({ page, auth }) => {
+    const signInPage = new SignIn(page)
     await auth.login(/login/, {username: 'jcom', password: 'superstar'});
     await expect(page).toHaveTitle(SignIn.title);
     await expect(page).toHaveURL(/login/);
-    const signInPage = new SignIn(page)
     await expect(signInPage.detAuth.error.pwLocator).toBeVisible();
     expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain('Login failed');
     expect(await signInPage.detAuth.error.description.pwLocator.textContent()).toContain('invalid credentials');
+    await signInPage.detAuth.submit.pwLocator.click()
+    await expect(signInPage.detAuth.error.alert.pwLocator).toHaveCount(2)
+    await expect(signInPage.detAuth.error.message.pwLocator).toHaveCount(2)
   });
 });
