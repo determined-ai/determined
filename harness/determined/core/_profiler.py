@@ -243,14 +243,16 @@ class _MetricGroupCollector(metaclass=abc.ABCMeta):
 
 
 class _Network(_MetricGroupCollector):
-    group = "network"
-
     def __init__(self) -> None:
         # Set initial values for throughput calculations.
         self._interval_start_ts = time.time()
         self._interval_start_vals = psutil.net_io_counters()
 
         super().__init__()
+
+    @property
+    def group(self) -> str:
+        return "network"
 
     def sample_metrics(self) -> None:
         ts = time.time()
@@ -273,8 +275,6 @@ class _Network(_MetricGroupCollector):
 
 
 class _Disk(_MetricGroupCollector):
-    group = "disk"
-
     _disk_paths = ["/", constants.SHARED_FS_CONTAINER_PATH]
 
     def __init__(self) -> None:
@@ -292,6 +292,10 @@ class _Disk(_MetricGroupCollector):
                 pass
 
         super().__init__()
+
+    @property
+    def group(self) -> str:
+        return "disk"
 
     def sample_metrics(self) -> None:
         ts = time.time()
@@ -321,8 +325,6 @@ class _Disk(_MetricGroupCollector):
 
 
 class _Memory(_MetricGroupCollector):
-    group = "memory"
-
     def sample_metrics(self) -> None:
         free_mem_bytes = psutil.virtual_memory().available
         metrics = {
@@ -330,10 +332,12 @@ class _Memory(_MetricGroupCollector):
         }
         self.metric_samples.append(metrics)
 
+    @property
+    def group(self) -> str:
+        return "memory"
+
 
 class _CPU(_MetricGroupCollector):
-    group = "cpu"
-
     def sample_metrics(self) -> None:
         cpu_util = psutil.cpu_percent()
         metrics = {
@@ -341,10 +345,12 @@ class _CPU(_MetricGroupCollector):
         }
         self.metric_samples.append(metrics)
 
+    @property
+    def group(self) -> str:
+        return "cpu"
+
 
 class _GPU(_MetricGroupCollector):
-    group = "gpu"
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -355,6 +361,10 @@ class _GPU(_MetricGroupCollector):
         else:
             logging.warning("pynvml module not found. GPU metrics will not be collected.")
 
+    @property
+    def group(self) -> str:
+        return "gpu"
+
     def _init_pynvml(self) -> None:
         """Initialize the pynvml library and validate methods.
 
@@ -364,8 +374,8 @@ class _GPU(_MetricGroupCollector):
         If any NVML method fails for any GPU device, no GPU metrics will be collected for
         all GPU devices.
         """
+        assert pynvml
         try:
-            assert pynvml
             pynvml.nvmlInit()
             num_gpus = pynvml.nvmlDeviceGetCount()
             for i in range(num_gpus):
