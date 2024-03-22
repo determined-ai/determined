@@ -16,9 +16,9 @@ utilized during a training job. It can reveal patterns in resource utilization t
 performance bottlenecks and pinpoint areas of the code or pipeline that are causing slowdowns or
 inefficiencies.
 
-Profiling a training job can be instrumented at many different layers, from generic system-level
-metrics to individual model operators and GPU kernels. Determined provides a few options for
-profiling, each targeting a different layer in a training job at various levels of detail:
+A training job can be profiled at many different layers, from generic system-level metrics to
+individual model operators and GPU kernels. Determined provides a few options for profiling, each
+targeting a different layer in a training job at various levels of detail:
 
 -  :ref:`Determined system metrics profiler <how-to-profiling-det-profiler>` collects general
    system-level metrics and provides an overview of hardware usage during an experiment.
@@ -53,17 +53,15 @@ experiment.
 
 The following system metrics are tracked:
 
--  *GPU utilization (percent)*: current utilization of a GPU device
--  *GPU free memory (bytes)*: current amount of free memory available on a GPU device
--  *Network throughput - sent (bytes/s)*: change rate of number of bytes sent system-wide
--  *Network throughput (received)*: change rate of number of bytes received system-wide
--  *Disk IOPS (bytes/s)*: change rate of number of read + writes system-wide
--  *Disk throughput - reads (bytes/s)*: change rate of bytes read system-wide
--  *Disk throughput - writes (bytes/s)*: change rate of bytes written system-wide
--  *Host available memory (gigabytes)*: current amount of memory available (not including swap)
-   system-wide
--  *CPU utilization (percent)*: current utilization of CPU cores, averaged across all cores in the
-   system
+-  *GPU utilization (percent)*: utilization of a GPU device
+-  *GPU free memory (bytes)*: amount of free memory available on a GPU device
+-  *Network throughput - sent (bytes/s)*: bytes sent system-wide
+-  *Network throughput (received)*: bytes received system-wide
+-  *Disk IOPS (bytes/s)*: number of read + writes system-wide
+-  *Disk throughput - reads (bytes/s)*: bytes read system-wide
+-  *Disk throughput - writes (bytes/s)*: bytes written system-wide
+-  *Host available memory (gigabytes)*: amount of memory available (not including swap) system-wide
+-  *CPU utilization (percent)*: utilization of CPU cores, averaged across all cores in the system
 
 For distributed training, these metrics are collected for every agent. The data is broken down by
 agent, and GPU metrics can be further broken down by GPU.
@@ -71,8 +69,7 @@ agent, and GPU metrics can be further broken down by GPU.
 .. note::
 
    System Metrics record agent-level metrics, so when there are multiple experiments on the same
-   agent, it is difficult to analyze. It is recommended that profiling is done with only a single
-   experiment per agent.
+   agent, it is difficult to analyze.
 
 .. _how-to-profiling-native-profilers:
 
