@@ -342,8 +342,24 @@ const ioToHyperparametereters = (io: ioTypes.ioTypeHyperparameters): types.Hyper
 };
 
 export const ioToExperimentConfig = (
-  io: ioTypes.ioTypeExperimentConfig,
+  io: ioTypes.ioTypeExperimentConfig | undefined,
 ): types.ExperimentConfig => {
+  if (io === undefined) {
+    const defaultConfig: types.ExperimentConfig = {
+      checkpointPolicy: '',
+      hyperparameters: {},
+      maxRestarts: 0,
+      name: '',
+      resources: {},
+      searcher: {
+        metric: '',
+        name: types.ExperimentSearcherName.Unknown,
+        smallerIsBetter: false,
+        sourceTrialId: undefined,
+      },
+    };
+    return defaultConfig;
+  }
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
     checkpointStorage: io.checkpoint_storage
@@ -431,20 +447,22 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Experimentv1St
 export const mapV1GetExperimentDetailsResponse = ({
   experiment: exp,
   jobSummary,
+  config,
 }: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    exp.config,
+    config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    exp?.hyperparameters ?? ioConfig?.hyperparameters ?? {},
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   const v1Exp = mapV1Experiment(exp, jobSummary);
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: exp.config,
+    configRaw: config ?? {},
     hyperparameters,
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
@@ -467,22 +485,24 @@ export const mapSearchExperiment = (
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
+  config?: Sdk.V1GetExperimentResponse['config'],
 ): types.ExperimentItem => {
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
-    ioTypes.ioExperimentConfig,
-    data.config,
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeOptionalExperimentConfig>(
+    ioTypes.ioOptionalExperimentConfig,
+    config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    data?.hyperparameters ?? ioConfig?.hyperparameters ?? {},
+    { continueFn },
+  ) as types.HyperparametersFlattened;
 
   return {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
-    configRaw: data.config,
+    configRaw: config ?? {},
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,

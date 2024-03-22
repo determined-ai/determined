@@ -654,7 +654,7 @@ export const getExperiment: DetApi<
 > = {
   name: 'getExperiment',
   postProcess: (response: Api.V1GetExperimentResponse) => {
-    const exp = decoder.mapV1Experiment(response.experiment, undefined);
+    const exp = decoder.mapV1Experiment(response.experiment, undefined, response.config);
     return exp;
   },
   request: (params: Service.GetExperimentParams) => {

@@ -12,8 +12,7 @@ import {
 } from 'types';
 import { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const decode = <T>(type: io.Mixed, data: any): T => {
+export const decode = <T>(type: io.Mixed, data: unknown): T => {
   try {
     const result = type.decode(data);
     if (isLeft(result)) throw result.left;
@@ -228,6 +227,9 @@ export const ioExperimentConfig = io.type({
   }),
 });
 export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;
+
+export const ioOptionalExperimentConfig = io.union([ioExperimentConfig, io.undefined]);
+export type ioTypeOptionalExperimentConfig = io.TypeOf<typeof ioOptionalExperimentConfig>;
 
 export const ioExperiment = io.type({
   archived: io.boolean,
