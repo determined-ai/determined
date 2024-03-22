@@ -10,6 +10,9 @@ import _ from 'lodash';
 import { RawJson } from 'types';
 import { formatDatetime } from 'utils/datetime';
 
+import { CHECKBOX_CELL } from './custom-renderers/cells/checkboxCell';
+import { TEXT_CELL } from './custom-renderers/cells/textCell';
+
 export const DEFAULT_COLUMN_WIDTH = 140;
 export const MIN_COLUMN_WIDTH = 40;
 
@@ -42,7 +45,7 @@ export function defaultTextColumn<T extends RawJson>(
       return {
         allowOverlay: false,
         copyData: String(data ?? ''),
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
       };
     },
@@ -91,7 +94,7 @@ export function defaultNumberColumn<T extends RawJson>(
       return {
         allowOverlay: false,
         copyData: String(data ?? ''),
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
         themeOverride: theme,
       };
@@ -115,7 +118,7 @@ export function defaultSelectionColumn<T>(
       copyData: String(rowSelection.hasIndex(idx)),
       data: {
         checked: rowSelection.hasIndex(idx),
-        kind: 'checkbox-cell',
+        kind: CHECKBOX_CELL,
       },
       kind: GridCellKind.Custom,
     }),
@@ -139,7 +142,7 @@ export function defaultDateColumn<T extends RawJson>(
       return {
         allowOverlay: false,
         copyData: data ? formatDatetime(String(data), { outputUTC: false }) : '',
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
       };
     },

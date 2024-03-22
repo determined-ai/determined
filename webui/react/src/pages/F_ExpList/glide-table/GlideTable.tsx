@@ -44,6 +44,7 @@ import {
 import { customRenderers } from './custom-renderers';
 import { getCheckboxDimensions } from './custom-renderers/cells/checkboxCell';
 import { LinkCell } from './custom-renderers/cells/linkCell';
+import { LOADING_CELL } from './custom-renderers/cells/loadingCell';
 import { drawArrow, drawTextWithEllipsis } from './custom-renderers/utils';
 import css from './GlideTable.module.scss';
 import { getHeaderIcons } from './icons';
@@ -323,7 +324,7 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
       const loadingCell: GridCell = {
         allowOverlay: true,
         copyData: '',
-        data: { appTheme, kind: 'loading-cell' },
+        data: { appTheme, kind: LOADING_CELL },
         kind: GridCellKind.Custom,
         readonly: true,
       };

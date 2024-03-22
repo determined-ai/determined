@@ -17,7 +17,11 @@ import {
   getHeatmapColor,
   HeatmapProps,
 } from './glide-table/columns';
-import { State } from './glide-table/custom-renderers/cells/stateCell';
+import { LINK_CELL } from './glide-table/custom-renderers/cells/linkCell';
+import { State, STATE_CELL } from './glide-table/custom-renderers/cells/stateCell';
+import { TAGS_CELL } from './glide-table/custom-renderers/cells/tagsCell';
+import { TEXT_CELL } from './glide-table/custom-renderers/cells/textCell';
+import { USER_AVATAR_CELL } from './glide-table/custom-renderers/cells/userAvatarCell';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
@@ -148,7 +152,7 @@ export const getColumnDefs = ({
       copyData: record.experiment.checkpointSize
         ? humanReadableBytes(record.experiment.checkpointSize)
         : '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Checkpoint Size',
@@ -160,7 +164,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.description),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Description',
@@ -173,7 +177,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getDurationInEnglish(record.experiment),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Duration',
@@ -185,7 +189,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.externalExperimentId ?? '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'External Experiment ID',
@@ -197,7 +201,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: record.experiment.externalTrialId ?? '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'External Trial ID',
@@ -211,7 +215,7 @@ export const getColumnDefs = ({
       copyData: String(record.experiment.forkedFrom ?? ''),
       cursor: record.experiment.forkedFrom ? 'pointer' : undefined,
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link:
           record.experiment.forkedFrom !== undefined
             ? {
@@ -245,7 +249,7 @@ export const getColumnDefs = ({
       copyData: String(record.experiment.id),
       cursor: 'pointer',
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link: {
           href: paths.experimentDetails(record.experiment.id),
           title: String(record.experiment.id),
@@ -272,7 +276,7 @@ export const getColumnDefs = ({
       copyData: String(record.experiment.name),
       cursor: 'pointer',
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link: {
           href: paths.experimentDetails(record.experiment.id),
           title: String(record.experiment.name),
@@ -327,7 +331,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.resourcePool),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Resource Pool',
@@ -342,7 +346,7 @@ export const getColumnDefs = ({
       return {
         allowOverlay: false,
         copyData: sMetric,
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
       };
     },
@@ -355,7 +359,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: String(record.experiment.searcherType),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Searcher',
@@ -368,7 +372,7 @@ export const getColumnDefs = ({
     renderer: (record: ExperimentWithTrial) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.experiment.startTime)),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Start Time',
@@ -383,7 +387,7 @@ export const getColumnDefs = ({
       copyData: record.experiment.state.toLocaleLowerCase(),
       data: {
         appTheme,
-        kind: 'state-cell',
+        kind: STATE_CELL,
         state: getCellStateFromExperimentState(record.experiment.state),
       },
       kind: GridCellKind.Custom,
@@ -399,7 +403,7 @@ export const getColumnDefs = ({
       allowOverlay: true,
       copyData: record.experiment['labels'].join(', '),
       data: {
-        kind: 'tags-cell',
+        kind: TAGS_CELL,
         possibleTags: [],
         readonly: true,
         tags: record.experiment['labels'],
@@ -423,7 +427,7 @@ export const getColumnDefs = ({
         data: {
           image: undefined,
           initials: getInitials(displayName),
-          kind: 'user-avatar-cell',
+          kind: USER_AVATAR_CELL,
           tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
@@ -466,7 +470,7 @@ export const searcherMetricsValColumn = (
             ? humanReadableNumber(sMetricValue)
             : sMetricValue
           : '',
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
         themeOverride: theme,
       };
