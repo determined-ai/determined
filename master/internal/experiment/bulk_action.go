@@ -632,19 +632,19 @@ func MoveExperiments(ctx context.Context,
 
 	var expChecks []archiveExperimentOKResult
 	getQ := db.Bun().NewSelect().
-		ModelTableExpr("experiments AS exp").
+		ModelTableExpr("experiments AS e").
 		Model(&expChecks).
-		Column("exp.id").
-		ColumnExpr("(exp.archived OR p.archived OR w.archived) AS archived").
+		Column("e.id").
+		ColumnExpr("(e.archived OR p.archived OR w.archived) AS archived").
 		ColumnExpr("TRUE AS state").
-		Join("JOIN projects p ON exp.project_id = p.id").
+		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	if filters == nil {
-		getQ = getQ.Where("exp.id IN (?)", bun.In(experimentIds))
+		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		getQ = queryBulkExperiments(getQ, filters).
-			Where("NOT (exp.archived OR p.archived OR w.archived)")
+			Where("NOT (e.archived OR p.archived OR w.archived)")
 	}
 
 	if getQ, err = AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
