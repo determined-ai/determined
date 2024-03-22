@@ -43,11 +43,11 @@ test.describe('Authentication', () => {
     await auth.login(/login/, {username: 'jcom', password: 'superstar'});
     await expect(page).toHaveTitle(SignIn.title);
     await expect(page).toHaveURL(/login/);
-    await expect(signInPage.detAuth.error.pwLocator).toBeVisible();
-    expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain('Login failed');
-    expect(await signInPage.detAuth.error.description.pwLocator.textContent()).toContain('invalid credentials');
+    await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
+    expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain('Login failed');
+    expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain('invalid credentials');
     await signInPage.detAuth.submit.pwLocator.click()
-    await expect(signInPage.detAuth.error.alert.pwLocator).toHaveCount(2)
-    await expect(signInPage.detAuth.error.message.pwLocator).toHaveCount(2)
+    await expect(signInPage.detAuth.errors.alert.pwLocator).toHaveCount(2)
+    await expect(signInPage.detAuth.errors.message.pwLocator).toHaveCount(2)
   });
 });
