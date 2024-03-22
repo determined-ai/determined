@@ -9,6 +9,25 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
+message SlotStats {
+  /*
+  map state to slot_ids
+  map dev type to count
+  count of disabled
+  count of draining
+  */
+
+  // The number of slots in each state.
+  // map<determined.container.v1.State, int32> state_counts = 1;
+  map<string, int32> state_counts = 1;
+  // The number of slots in each device type.
+  map<string, int32> device_type_counts = 2;
+  // The number of slots that are disabled.
+  int32 disabled_count = 3;
+  // The number of slots that are draining.
+  int32 draining_count = 4;
+}
+
 // Agent is a pool of resources where containers are run.
 message Agent {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -36,6 +55,30 @@ message Agent {
   // The name of the resource pools the agent is in. Only slurm can contain
   // multiples.
   repeated string resource_pools = 6;
+
+  // The slot stats for this agent.
+  SlotStats slot_stats = 11;
+
+}
+
+// Slot wraps a single device on the agent.
+message SlimSlot {
+  // The unqiue id of the slot for a given agent.
+  string id = 1;
+  // The individual resource this slot wraps.
+  optional determined.device.v1.Device device = 2;
+  // Flag notifying if containers can be scheduled on this slot.
+  bool enabled = 3;
+  // Container that is currently running on this agent. It is unset if there is
+  // no container currently running on this slot.
+  optional determined.container.v1.Container container = 4;
+  // Flag notifying if this slot is in the draining mode: current containers
+  // will be allowed to finish but no new ones will be scheduled.
+  bool draining = 5;
+  // The state of the container running on this slot.
+  determined.container.v1.State container_state = 6;
+  // The type of the device this slot wraps.
+  determined.device.v1.Type device_type = 7;
 }
 
 // Slot wraps a single device on the agent.

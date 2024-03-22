@@ -1090,6 +1090,12 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     resourcePools?: Array<string>;
+    /**
+     * The slot stats for this agent.
+     * @type {V1SlotStats}
+     * @memberof V1Agent
+     */
+    slotStats?: V1SlotStats;
 }
 /**
  * AgentUserGroup represents a username and primary group for a user on an agent host machine.
@@ -9790,6 +9796,37 @@ export interface V1Slot {
      * @memberof V1Slot
      */
     draining?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface V1SlotStats
+ */
+export interface V1SlotStats {
+    /**
+     * The number of slots in each state. map<determined.container.v1.State, int32> state_counts = 1;
+     * @type {{ [key: string]: number; }}
+     * @memberof V1SlotStats
+     */
+    stateCounts?: { [key: string]: number; };
+    /**
+     * The number of slots in each device type.
+     * @type {{ [key: string]: number; }}
+     * @memberof V1SlotStats
+     */
+    deviceTypeCounts?: { [key: string]: number; };
+    /**
+     * The number of slots that are disabled.
+     * @type {number}
+     * @memberof V1SlotStats
+     */
+    disabledCount?: number;
+    /**
+     * The number of slots that are draining.
+     * @type {number}
+     * @memberof V1SlotStats
+     */
+    drainingCount?: number;
 }
 /**
  * Describe one SSO provider.
