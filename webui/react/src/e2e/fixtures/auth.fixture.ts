@@ -12,7 +12,7 @@ export class AuthFixture {
       throw new Error('username must be defined')
     }
     if (typeof process.env.PW_PASSWORD === "undefined") {
-      throw new Error('username must be defined')
+      throw new Error('password must be defined')
     }
     this.#USERNAME = process.env.PW_USER_NAME;
     this.#PASSWORD = process.env.PW_PASSWORD;

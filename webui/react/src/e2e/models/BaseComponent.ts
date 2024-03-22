@@ -1,6 +1,7 @@
 import { type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+// BasePage is the root of any tree, use `instanceof BasePage` when climbing.
 type parentTypes = BasePage | BaseComponent | BaseReactFragment
 
 /**
@@ -29,6 +30,7 @@ export class BaseComponent {
   get pwLocator(): Locator {
     if (typeof this._locator === 'undefined') {
       this._locator = this._parent.pwLocator.locator(this._selector);
+      // Treat the locator as a readonly, but only after we've created it
       Object.freeze(this._locator)
     }
     return this._locator;
