@@ -10,7 +10,6 @@ import "determined/agent/v1/agent.proto";
 
 // Get a set of agents from the cluster.
 message GetAgentsRequest {
-  // TODO: add a slot summary flag?
   // Sorts agents by the given field.
   enum SortBy {
     // Returns agents in an unsorted list.
@@ -31,6 +30,8 @@ message GetAgentsRequest {
   int32 limit = 4;
   // This field has been deprecated and will be ignored.
   string label = 5;
+  // exclude slots
+  bool exclude_slots = 6;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {

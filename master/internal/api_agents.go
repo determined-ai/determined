@@ -86,9 +86,11 @@ func (a *apiServer) GetAgents(
 	newAgents := rm.ScaleUpAgents(baseAgent, baseSlot)
 	resp.Agents = newAgents
 
-	for _, agent := range resp.Agents {
-		agent.SlotStats = SummarizeSlots(agent.Slots)
-		agent.Slots = nil
+	if req.ExcludeSlots {
+		for _, agent := range resp.Agents {
+			agent.SlotStats = SummarizeSlots(agent.Slots)
+			agent.Slots = nil
+		}
 	}
 
 	// api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)

@@ -3415,7 +3415,7 @@ export interface V1GetAgentResponse {
     agent: V1Agent;
 }
 /**
- * TODO: add a slot summary flag? Sorts agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
+ * Sorts agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
  * @export
  * @enum {string}
  */
@@ -12274,10 +12274,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -12310,6 +12311,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (label !== undefined) {
                 localVarQueryParameter['label'] = label
+            }
+            
+            if (excludeSlots !== undefined) {
+                localVarQueryParameter['excludeSlots'] = excludeSlots
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12755,11 +12760,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12997,11 +13003,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options)(fetch, basePath);
         },
         /**
          * 
@@ -13169,12 +13176,13 @@ export class ClusterApi extends BaseAPI {
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
      * @param {string} [label] This field has been deprecated and will be ignored.
+     * @param {boolean} [excludeSlots] exclude slots.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath)
+    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options)(this.fetch, this.basePath)
     }
     
     /**

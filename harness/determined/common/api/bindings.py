@@ -4243,8 +4243,7 @@ class v1GetAgentResponse(Printable):
         return out
 
 class v1GetAgentsRequestSortBy(DetEnum):
-    """TODO: add a slot summary flag?
-    Sorts agents by the given field.
+    """Sorts agents by the given field.
     - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.
     - SORT_BY_ID: Returns agents sorted by id.
     - SORT_BY_TIME: Returns agents sorted by time.
@@ -16849,6 +16848,7 @@ def get_GetAgent(
 def get_GetAgents(
     session: "api.BaseSession",
     *,
+    excludeSlots: "typing.Optional[bool]" = None,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -16857,6 +16857,7 @@ def get_GetAgents(
 ) -> "v1GetAgentsResponse":
     """Get a set of agents from the cluster.
 
+    - excludeSlots: exclude slots.
     - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
     - offset: Skip the number of agents before returning results. Negative values
@@ -16873,6 +16874,7 @@ denote number of agents to skip from the end before returning results.
  - SORT_BY_TIME: Returns agents sorted by time.
     """
     _params = {
+        "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
         "label": label,
         "limit": limit,
         "offset": offset,
