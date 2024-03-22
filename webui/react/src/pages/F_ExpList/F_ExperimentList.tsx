@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 
 import ComparisonView from 'components/ComparisonView';
+import { Error, NoExperiments } from 'components/exceptions';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -54,7 +55,6 @@ import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
-import { Error, NoExperiments } from './exceptions';
 import {
   ExperimentColumn,
   experimentColumns,
