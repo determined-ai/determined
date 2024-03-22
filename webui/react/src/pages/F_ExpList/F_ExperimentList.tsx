@@ -433,7 +433,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -897,12 +897,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const items: MenuItem[] = [
         selection.rows.length > 0
           ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove-all');
-              },
-            }
+            key: 'select-none',
+            label: 'Clear selected',
+            onClick: () => {
+              handleSelectionChange?.('remove-all');
+            },
+          }
           : null,
         ...[5, 10, 25].map((n) => ({
           key: `select-${n}`,
@@ -961,30 +961,30 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
-                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                );
-              },
-            }
-          : {
-              disabled: settings.pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-              },
+            icon: <Icon decorative name="pin" />,
+            key: 'pin',
+            label: 'Pin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(
+                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+              );
             },
+          }
+          : {
+            disabled: settings.pinnedColumnsCount <= 1,
+            icon: <Icon decorative name="pin" />,
+            key: 'unpin',
+            label: 'Unpin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            },
+          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -1001,46 +1001,46 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Add Filter',
-              onClick: () => {
-                setTimeout(filterMenuItemsForColumn, 5);
-              },
+          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
             },
-          ]),
+          },
+        ]),
       filterCount > 0
         ? {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          }
+          icon: <Icon decorative name="filter" />,
+          key: 'filter-clear',
+          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+          onClick: () => {
+            setTimeout(clearFilterForColumn, 5);
+          },
+        }
         : null,
       settings.heatmapOn &&
-      (column.column === 'searcherMetricsVal' ||
-        (column.type === V1ColumnType.NUMBER &&
-          (column.location === V1LocationType.VALIDATIONS ||
-            column.location === V1LocationType.TRAINING)))
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
         ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !settings.heatmapSkipped.includes(column.column)
-              ? 'Cancel heatmap'
-              : 'Apply heatmap',
-            onClick: () => {
-              handleHeatmapSelection?.(
-                settings.heatmapSkipped.includes(column.column)
-                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                  : [...settings.heatmapSkipped, column.column],
-              );
-            },
-          }
+          icon: <Icon decorative name="heatmap" />,
+          key: 'heatmap',
+          label: !settings.heatmapSkipped.includes(column.column)
+            ? 'Cancel heatmap'
+            : 'Apply heatmap',
+          onClick: () => {
+            handleHeatmapSelection?.(
+              settings.heatmapSkipped.includes(column.column)
+                ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                : [...settings.heatmapSkipped, column.column],
+            );
+          },
+        }
         : null,
     ];
     return items;
@@ -1107,8 +1107,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 hideUnpinned={settings.compare}
                 imperativeRef={dataGridRef}
                 isPaginated
-                // page={page}
-                // pageSize={PAGE_SIZE}
+                page={page}
+                pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 renderContextMenuComponent={({
                   cell,
@@ -1139,11 +1139,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
-                // total={Loadable.getOrElse(PAGE_SIZE, total)}
+                total={Loadable.getOrElse(PAGE_SIZE, total)}
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                // onPageUpdate={setPage}
+                onPageUpdate={setPage}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onSelectionChange={handleSelectionChange}
               />
