@@ -18495,7 +18495,8 @@ def get_GetSlots(
 ) -> "v1GetSlotsResponse":
     """Get all the slots for an agent.
 
-    - agentId: The id of the agent.
+    - agentId: TODO: add a summary flag?
+The id of the agent.
     """
     _params = None
     if type(agentId) == str:

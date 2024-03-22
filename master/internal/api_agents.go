@@ -61,6 +61,20 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 			deviceBrandStats.States[slot.Container.State.String()]++
 			deviceTypeStats.States[slot.Container.State.String()]++
 		}
+		if slot.Draining {
+			deviceBrandStats.Draining++
+			deviceTypeStats.Draining++
+			stats.DrainingCount++
+		}
+		if slot.Container != nil {
+			deviceBrandStats.States[slot.Container.State.String()]++
+			deviceTypeStats.States[slot.Container.State.String()]++
+			stats.StateCounts[slot.Container.State.String()]++
+			stats.SlotStates[slot.Id] = slot.Container.State
+		}
+		if slot.Device != nil {
+			stats.DeviceTypeCounts[slot.Device.Type.String()]++
+		}
 	}
 	return &stats
 }
