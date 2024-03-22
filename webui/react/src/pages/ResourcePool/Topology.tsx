@@ -59,6 +59,7 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
 };
 
 const Topology: React.FC<PropsWithChildren<Props>> = ({ nodes }) => {
+  return null;
   return (
     <Section title="Topology">
       <div className={`${css.mainContainer} ${css.nodesContainer}`}>
