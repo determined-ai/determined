@@ -4243,7 +4243,8 @@ class v1GetAgentResponse(Printable):
         return out
 
 class v1GetAgentsRequestSortBy(DetEnum):
-    """Sorts agents by the given field.
+    """TODO: add a slot summary flag?
+    Sorts agents by the given field.
     - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.
     - SORT_BY_ID: Returns agents sorted by id.
     - SORT_BY_TIME: Returns agents sorted by time.
@@ -18462,7 +18463,8 @@ def get_GetSlots(
 ) -> "v1GetSlotsResponse":
     """Get all the slots for an agent.
 
-    - agentId: The id of the agent.
+    - agentId: TODO: add a summary flag?
+The id of the agent.
     """
     _params = None
     if type(agentId) == str:

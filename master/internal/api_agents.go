@@ -2,22 +2,32 @@ package internal
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
+
+// SummarizeSlots for a single agent.
+func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
+	stats := agentv1.SlotStats{}
+	for _, slot := range slots {
+		if !slot.Enabled {
+			stats.DisabledCount++
+		}
+	}
+	return &stats
+}
 
 func (a *apiServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
@@ -44,9 +54,6 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
-	slotsPerNode := 512
-	nodes := 2000 // *2 somehow
-
 	baseAgent := resp.Agents[0]
 	var baseSlot *agentv1.Slot
 	for _, slot := range baseAgent.Slots {
@@ -56,22 +63,13 @@ func (a *apiServer) GetAgents(
 	if baseSlot == nil {
 		return nil, nil
 	}
-	newSlots := make(map[string]*agentv1.Slot, slotsPerNode)
-	for i := 0; i < slotsPerNode; i++ {
-		randStrId := uuid.New().String()
-		newSlots[randStrId] = baseSlot
-	}
-	baseAgent.Slots = newSlots
-
-	newAgents := make([]*agentv1.Agent, 0, nodes)
-	for i := 0; i < nodes; i++ {
-		newAgents = append(newAgents, baseAgent)
-	}
+	newAgents := rm.ScaleUpAgents(baseAgent, baseSlot)
 	resp.Agents = newAgents
 
-	// print all stats
-	fmt.Println("Total Agents: ", len(resp.Agents))
-	fmt.Println("Total Slots: ", len(resp.Agents)*slotsPerNode)
+	for _, agent := range resp.Agents {
+		agent.SlotStats = SummarizeSlots(agent.Slots)
+		agent.Slots = nil
+	}
 
 	// api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
 	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)

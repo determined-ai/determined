@@ -3415,7 +3415,7 @@ export interface V1GetAgentResponse {
     agent: V1Agent;
 }
 /**
- * Sorts agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
+ * TODO: add a slot summary flag? Sorts agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
  * @export
  * @enum {string}
  */
@@ -12412,7 +12412,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId The id of the agent.
+         * @param {string} agentId TODO: add a summary flag? The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12823,7 +12823,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId The id of the agent.
+         * @param {string} agentId TODO: add a summary flag? The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13029,7 +13029,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId The id of the agent.
+         * @param {string} agentId TODO: add a summary flag? The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13209,7 +13209,7 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Get all the slots for an agent.
-     * @param {string} agentId The id of the agent.
+     * @param {string} agentId TODO: add a summary flag? The id of the agent.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
