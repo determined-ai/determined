@@ -19,13 +19,15 @@ func ScaleUpAgents(baseAgent *agentv1.Agent, baseSlot *agentv1.Slot) []*agentv1.
 	newSlots := make(map[string]*agentv1.Slot, slotsPerNode)
 	for i := 0; i < slotsPerNode; i++ {
 		randStrId := uuid.New().String()
-		newSlots[randStrId] = baseSlot
+		newSlots[randStrId] = &(*baseSlot)
 	}
 	baseAgent.Slots = newSlots
 
 	newAgents := make([]*agentv1.Agent, 0, nodes)
 	for i := 0; i < nodes; i++ {
-		newAgents = append(newAgents, baseAgent)
+		newAgent := *baseAgent
+		newAgent.Id = uuid.New().String()
+		newAgents = append(newAgents, &newAgent)
 	}
 	fmt.Println("Total Agents: ", len(newAgents))
 	fmt.Println("Total Slots: ", len(newAgents)*slotsPerNode)
