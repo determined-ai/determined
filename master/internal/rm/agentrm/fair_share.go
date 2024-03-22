@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -81,7 +82,7 @@ func (f *fairShare) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo
 func fairshareSchedule(
 	taskList *tasklist.TaskList,
 	groups map[model.JobID]*tasklist.Group,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []model.AllocationID) {
@@ -133,7 +134,7 @@ func fairshareSchedule(
 	return allToAllocate, allToRelease
 }
 
-func totalCapacity(agents map[agentID]*agentState) int {
+func totalCapacity(agents map[aproto.ID]*agentState) int {
 	result := 0
 
 	for _, agent := range agents {
@@ -147,7 +148,7 @@ func calculateGroupStates(
 	taskList *tasklist.TaskList,
 	groups map[model.JobID]*tasklist.Group,
 	capacity int,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint,
 	allowHeterogeneousAgentFits bool,
 ) []*groupState {
@@ -358,7 +359,7 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 }
 
 func assignTasks(
-	agents map[agentID]*agentState, states []*groupState, fittingMethod SoftConstraint,
+	agents map[aproto.ID]*agentState, states []*groupState, fittingMethod SoftConstraint,
 	allowHetergenousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)

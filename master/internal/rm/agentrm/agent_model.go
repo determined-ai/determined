@@ -17,15 +17,12 @@ type slotData struct {
 	ContainerID *cproto.ID
 }
 
-// agentID is the agent id type.
-type agentID string
-
 // agentSnapshot is a database representation of `agentState`.
 type agentSnapshot struct {
 	bun.BaseModel `bun:"table:resourcemanagers_agent_agentstate,alias:rmas"`
 
 	ID                    int64       `bun:"id,pk,autoincrement"`
-	AgentID               agentID     `bun:"agent_id,notnull,unique"`
+	AgentID               aproto.ID   `bun:"agent_id,notnull,unique"`
 	UUID                  string      `bun:"uuid,notnull,unique"`
 	ResourcePoolName      string      `bun:"resource_pool_name,notnull"`
 	Label                 string      `bun:"label"`
