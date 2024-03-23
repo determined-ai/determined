@@ -22,7 +22,7 @@ provider "aws" {
   default_tags {
     tags = {
       owner        = "determined_ci"
-      team         = "docs-team"
+      gh_team         = "docs-team"
       long_running = "docs_site"
     }
   }
