@@ -2328,6 +2328,7 @@ jobs:
         default: false
       extra-tags:
         type: string
+        default: ""
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
