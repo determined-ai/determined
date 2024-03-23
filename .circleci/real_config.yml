@@ -1186,7 +1186,7 @@ jobs:
 
   publish-docs:
     docker:
-      - image: hashicorp/terraform:light
+      - image: hashicorp/terraform:latest
     steps:
       - checkout
       - attach_workspace:

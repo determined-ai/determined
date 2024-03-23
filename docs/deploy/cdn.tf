@@ -7,14 +7,16 @@ resource "aws_cloudfront_distribution" "distribution" {
       origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     }
 
-    domain_name = "${aws_s3_bucket.docs.website_endpoint}"
+    domain_name = aws_s3_bucket_website_configuration.docs.website_endpoint
 
-    origin_id = "${local.domain}"
+    origin_id = local.domain
   }
 
   enabled             = true
   default_root_object = "index.html"
-  aliases             = ["${local.domain}"]
+  aliases = [
+    local.domain,
+  ]
 
   default_cache_behavior {
     viewer_protocol_policy = "redirect-to-https"
@@ -22,7 +24,7 @@ resource "aws_cloudfront_distribution" "distribution" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
 
-    target_origin_id = "${local.domain}"
+    target_origin_id = local.domain
     min_ttl          = 0
     default_ttl      = 3600
     max_ttl          = 31536000
