@@ -253,6 +253,76 @@ func TestMoveRunsIds(t *testing.T) {
 	sourceprojectID := int32(projectIDInt)
 	destprojectID := int32(projectID2Int)
 
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	moveIds := []int32{resp.Runs[0].Id}
+	stayID := resp.Runs[1].Id
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: destprojectID,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Len(t, moveResp.Results, 1)
+	require.Equal(t, moveResp.Results[0].Error, "")
+
+	// run no longer in old project
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+	require.Equal(t, resp.Runs[0].Id, stayID)
+
+	// runs in new project
+	req = &apiv1.SearchRunsRequest{
+		ProjectId: &destprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+	require.Equal(t, resp.Runs[0].Id, moveIds[0])
+
+	// Experiment in new project
+	exp, err := api.getExperiment(ctx, curUser, exp1.ID)
+	require.NoError(t, err)
+	require.Equal(t, exp.ProjectId, destprojectID)
+}
+
+func TestMoveRunsMultiTrial(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
+	sourceprojectID := int32(projectIDInt)
+	destprojectID := int32(projectID2Int)
+
 	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
@@ -306,6 +376,8 @@ func TestMoveRunsIds(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 2)
+	// Check if runs are split into diff experiments
+	require.NotEqual(t, resp.Runs[0].Experiment.Id, resp.Runs[1].Experiment.Id)
 }
 
 func TestMoveRunsFilter(t *testing.T) {

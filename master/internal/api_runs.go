@@ -31,8 +31,10 @@ import (
 )
 
 type archiveRunOKResult struct {
-	Archived bool
-	ID       int32
+	Archived     bool
+	ID           int32
+	ExpID        *int32
+	IsMultitrial bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -289,6 +291,8 @@ func (a *apiServer) MoveRuns(
 		Model(&runChecks).
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -324,6 +328,8 @@ func (a *apiServer) MoveRuns(
 	var results []*apiv1.RunActionResult
 	var visibleIDs []int32
 	var validIDs []int32
+	// associated experiments to move
+	var expMoveIds []int32
 	for _, check := range runChecks {
 		visibleIDs = append(visibleIDs, check.ID)
 		if check.Archived {
@@ -332,6 +338,20 @@ func (a *apiServer) MoveRuns(
 				Id:    check.ID,
 			})
 		} else {
+			newExpID := *check.ExpID
+			if check.IsMultitrial {
+				newExpID, err = cloneExperimentAndSetToRun(ctx, *check.ExpID, check.ID)
+				if err != nil {
+					results = append(results, &apiv1.RunActionResult{
+						Error: "Failed to clone multi-trial run",
+						Id:    check.ID,
+					})
+					continue
+				}
+			}
+			if check.ExpID != nil {
+				expMoveIds = append(expMoveIds, newExpID)
+			}
 			validIDs = append(validIDs, check.ID)
 		}
 	}
@@ -339,7 +359,7 @@ func (a *apiServer) MoveRuns(
 		for _, originalID := range req.RunIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, &apiv1.RunActionResult{
-					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.SourceProjectId),
 					Id:    originalID,
 				})
 			}
@@ -353,14 +373,25 @@ func (a *apiServer) MoveRuns(
 		defer func() {
 			txErr := tx.Rollback()
 			if txErr != nil && txErr != sql.ErrTxDone {
-				logrus.WithError(txErr).Error("error rolling back transaction in MoveExperiments")
+				logrus.WithError(txErr).Error("error rolling back transaction in MoveRuns")
 			}
 		}()
 
+		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+		if err != nil {
+			return nil, err
+		}
+		failedExpMoveIds := []int32{-1}
+		for _, res := range expMoveResults {
+			if res.Error != nil {
+				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			}
+		}
 		var acceptedIDs []int32
 		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", req.DestinationProjectId).
 			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
 			Returning("runs.id").
 			Model(&acceptedIDs).
 			Exec(ctx); err != nil {
@@ -378,4 +409,34 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
+}
+
+func cloneExperimentAndSetToRun(ctx context.Context, expID int32, runID int32) (int32, error) {
+	var cloneExpID int32
+
+	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time,
+		model_packages, archived, git_remote, git_commit,git_committer, git_commit_date, parent_id, owner_id,
+		progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count, best_trial_id,
+		unmanaged, external_experiment_id) 
+		SELECT state, config, model_definition, start_time, end_time, model_packages, archived, git_remote,
+		git_commit,git_committer, git_commit_date, parent_id, owner_id, progress, original_config, notes, 
+		job_id, 1 as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged, external_experiment_id
+		FROM experiments WHERE id = ? RETURNING id;`, expID).Scan(ctx, &cloneExpID)
+	if err != nil {
+		return -1, err
+	}
+
+	var acceptedIDs []int32
+	err = db.Bun().NewUpdate().Table("runs").
+		Set("experiment_id = ?", cloneExpID).
+		Where("id = ?", runID).
+		Returning("runs.id").
+		Model(&acceptedIDs).
+		Scan(ctx)
+	if err != nil {
+		// Delete cloned experiment if run reassingment fails
+		err = db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+		return -1, err
+	}
+	return cloneExpID, nil
 }
