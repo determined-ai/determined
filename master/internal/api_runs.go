@@ -259,9 +259,6 @@ func (a *apiServer) MoveRuns(
 	if err != nil {
 		return nil, err
 	}
-	if curUser == nil {
-		return nil, errors.Errorf("No user found")
-	}
 	// check that user can view source project
 	srcProject, err := a.GetProjectByID(ctx, req.SourceProjectId, *curUser)
 	if err != nil {
