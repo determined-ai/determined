@@ -29,9 +29,8 @@ export class BaseComponent {
    */
   get pwLocator(): Locator {
     if (typeof this._locator === 'undefined') {
-      this._locator = this._parent.pwLocator.locator(this._selector);
       // Treat the locator as a readonly, but only after we've created it
-      Object.freeze(this._locator)
+      this._locator = this._parent.pwLocator.locator(this._selector);
     }
     return this._locator;
   }
