@@ -122,7 +122,7 @@ get-playwright-ci:
 .PHONY: mb-start
 mb-start:
 	npm install mb
-	mb start>/tmp/mb-playwright.log 2>&1 &
+	mb start --allowInjection --localonly >/tmp/mb-playwright.log 2>&1 & # DNJ TODO - make separate version for no inject
 
 .PHONY: mb-stop
 mb-stop:
@@ -131,16 +131,17 @@ mb-stop:
 .PHONY: mb-save-imposters
 mb-save-imposters:
 	@curl -X GET -H 'Content-Type: application/json' \
-		"http://localhost:2525/imposters?replayabe=true&removeProxies=true" > "${MOCK_ROOT}/saved-imposters.json"
+		"http://localhost:2525/imposters?replayabe=true&removeProxies=true" > "${MOCK_ROOT}/debug-saved-imposters.json"
 
-.PHONY: mb-start-record-imposters
-mb-start-record-imposters:
+.PHONY: mb-record-imposters
+mb-record-imposters:
+	injection_script=$(tr -d '\n' <src/e2e/mocks/predicate-generator.js)
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
 		--data "@${MOCK_ROOT}/proxy-always.json"
 
-.PHONY: mb-start-cached-imposters
-mb-start-cached-imposters:
+.PHONY: mb-start-saved-imposters
+mb-start-saved-imposters:
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
 		--data "@${MOCK_ROOT}/saved-imposters.json"
