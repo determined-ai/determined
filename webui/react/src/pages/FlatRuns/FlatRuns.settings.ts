@@ -1,84 +1,83 @@
-import { array, boolean, number, partial, record, string } from 'io-ts';
+//import { SelectionType } from 'hew/DataGrid/DataGrid';
+import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { SettingsConfig } from 'hooks/useSettings';
+import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { ioTableViewMode, TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
 import { ioRowHeight, RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
 
-export interface FlatRunsSettings {
-  columns: string[];
-  columnWidths: Record<string, number>;
-  compare: boolean;
-  excludedRuns: number[];
-  filterset: string; // save FilterFormSet as string
-  sortString: string;
-  pageLimit: number;
-  pinnedColumnsCount: number;
-  selectAll: boolean;
-  selectedRuns: Array<number>;
-}
+// have to intersect with an empty object bc of settings store type issue
+export const FlatRunsSettings = t.intersection([
+  t.type({}),
+  t.type({
+    columns: t.array(t.string),
+    columnWidths: t.record(t.string, t.number),
+    compare: t.boolean,
+    filterset: t.string, // save FilterFormSet as string
+    pageLimit: t.number,
+    pinnedColumnsCount: t.number,
+    selection: SelectionType,
+    sortString: t.string,
+  }),
+]);
+export type FlatRunsSettings = t.TypeOf<typeof FlatRunsSettings>;
+
+export const ProjectUrlSettings = t.partial({
+  compare: t.boolean,
+  page: t.number,
+});
+
 export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSettings> => ({
   settings: {
     columns: {
       defaultValue: defaultRunColumns,
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: array(string),
+      type: t.array(t.string),
     },
     columnWidths: {
       defaultValue: defaultColumnWidths,
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: record(string, number),
+      type: t.record(t.string, t.number),
     },
     compare: {
       defaultValue: false,
       storageKey: 'compare',
-      type: boolean,
-    },
-    excludedRuns: {
-      defaultValue: [],
-      skipUrlEncoding: true,
-      storageKey: 'excludedExperiments',
-      type: array(number),
+      type: t.boolean,
     },
     filterset: {
       defaultValue: JSON.stringify(INIT_FORMSET),
       skipUrlEncoding: true,
       storageKey: 'filterset',
-      type: string,
+      type: t.string,
     },
     pageLimit: {
       defaultValue: 20,
       skipUrlEncoding: true,
       storageKey: 'pageLimit',
-      type: number,
+      type: t.number,
     },
     pinnedColumnsCount: {
       defaultValue: 3,
       skipUrlEncoding: true,
       storageKey: 'pinnedColumnsCount',
-      type: number,
+      type: t.number,
     },
-    selectAll: {
-      defaultValue: false,
+    selection: {
+      defaultValue: DEFAULT_SELECTION,
       skipUrlEncoding: true,
-      storageKey: 'selectAll',
-      type: boolean,
-    },
-    selectedRuns: {
-      defaultValue: [],
-      skipUrlEncoding: true,
-      storageKey: 'selectedRuns',
-      type: array(number),
+      storageKey: 'selection',
+      type: SelectionType,
     },
     sortString: {
       defaultValue: 'id=desc',
       skipUrlEncoding: true,
       storageKey: 'sortString',
-      type: string,
+      type: t.string,
     },
   },
   storagePath: `flatRunsForProject${id}`,
@@ -89,7 +88,7 @@ export interface FlatRunsGlobalSettings {
   tableViewMode: TableViewMode;
 }
 
-export const flatRunsGlobalSettingsConfig = partial({
+export const flatRunsGlobalSettingsConfig = t.partial({
   rowHeight: ioRowHeight,
   tableViewMode: ioTableViewMode,
 });
