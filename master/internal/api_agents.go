@@ -21,23 +21,28 @@ import (
 
 // SummarizeSlots for a single agent.
 func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
-	stats := agentv1.SlotStats{}
+	stats := agentv1.SlotStats{
+		DisabledSlots: make(map[string]bool),
+		SlotStates:    make(map[string]containerv1.State),
+	}
+	if slots == nil || len(slots) == 0 {
+		return &stats
+	}
 	// stateCounts := make(map[containerv1.State]int32)
 	stateCounts := make(map[int32]int32)
 	// typeCounts := make(map[devicev1.Type]int32)
 	typeCounts := make(map[int32]int32)
-	slotStates := make(map[string]containerv1.State)
 
 	for _, slot := range slots {
 		if !slot.Enabled {
-			stats.DisabledCount++
+			stats.DisabledSlots[slot.Id] = true
 		}
 		if slot.Draining {
 			stats.DrainingCount++
 		}
 		if slot.Container != nil {
 			stateCounts[int32(slot.Container.State)]++
-			slotStates[slot.Id] = slot.Container.State
+			stats.SlotStates[slot.Id] = slot.Container.State
 		}
 		if slot.Device != nil {
 			typeCounts[int32(slot.Device.Type)]++
@@ -45,7 +50,6 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	}
 	stats.DeviceTypeCounts = typeCounts
 	stats.StateCounts = stateCounts
-	stats.SlotStates = slotStates
 	return &stats
 }
 
@@ -86,9 +90,10 @@ func (a *apiServer) GetAgents(
 	newAgents := rm.ScaleUpAgents(baseAgent, baseSlot, 2000, 512)
 	resp.Agents = newAgents
 
-	if req.ExcludeSlots {
-		for _, agent := range resp.Agents {
-			agent.SlotStats = SummarizeSlots(agent.Slots)
+	// PERF: can perhaps be done before RBAC.
+	for _, agent := range resp.Agents {
+		agent.SlotStats = SummarizeSlots(agent.Slots)
+		if req.ExcludeSlots {
 			agent.Slots = nil
 		}
 	}
