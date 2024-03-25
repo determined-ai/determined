@@ -310,7 +310,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Move multiple experiements without filters", func(t *testing.T) {
+	t.Run("Move multiple experiments without filters", func(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
@@ -325,7 +325,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Move experiements with filters", func(t *testing.T) {
+	t.Run("Move experiments with filters", func(t *testing.T) {
 		const numNewExp = 13
 		label := uuid.New().String()
 		for i := 0; i < numNewExp; i++ {
@@ -346,7 +346,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Move no experiements with filters (no filter match)", func(t *testing.T) {
+	t.Run("Move no experiments with filters (no filter match)", func(t *testing.T) {
 		notExsistentLable := uuid.New().String()
 		createTestExp(t, api, curUser)
 
@@ -362,7 +362,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Move multiple experiements to non-existent project", func(t *testing.T) {
+	t.Run("Move multiple experiments to non-existent project", func(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
@@ -374,7 +374,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("Move 0 experiements", func(t *testing.T) {
+	t.Run("Move 0 experiments", func(t *testing.T) {
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
@@ -394,7 +394,7 @@ func TestMoveExperiments(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Move mixed of existent and non-existent experiements", func(t *testing.T) {
+	t.Run("Move mixed of existent and non-existent experiments", func(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		expIds := []int32{-1, 0, int32(exp.ID)}
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
