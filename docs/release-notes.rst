@@ -27,6 +27,25 @@ Version 0.29.1
    ``build-pytorch-ngc`` or ``build-tensorflow-ngc`` targets in the makefile in our `environments
    repository <https://github.com/determined-ai/environments>`__.
 
+-  RBAC: Add a pre-canned role called ``EditorRestricted`` which supersedes the ``Viewer`` role and
+   precedes the ``Editor`` role.
+
+   -  Like the ``Editor`` role, the ``EditorRestricted`` role grants the permissions to create,
+      edit, or delete projects and experiments within its designated scope. However, the
+      ``EditorRestricted`` role lacks the permissions to create or update NTSC-type workloads.
+
+      Therefore, a user with ``EditorRestricted`` privileges in a given scope is limited when using
+      the WebUI within that scope since the option to launch JupyterLab notebooks and kill running
+      tasks will be unavailable. The user will also be unable to run CLI commands that create scoped
+      notebooks, TensorBoards, shells, and commands and will be unable to perform updates on these
+      tasks (such as changing the task's priority or deleting it). ``EditorRestricted`` users can
+      still open and use scoped JupyterLab notebooks and perform all experiment-related jobs, just
+      like those with the ``Editor`` role.
+
+   -  The ``EditorRestricted`` role allows workspace and cluster editors and admins to have more
+      fine-grained control over GPU resources. Thus, users with this role lack the ability to launch
+      or modify tasks that indefinitely consume slot-requesting resources within a given scope.
+
 **Improvements**
 
 -  Images: Eliminate TensorFlow 2.8 images from our offerings. Default TensorFlow 2.11 images remain
