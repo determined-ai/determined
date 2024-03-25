@@ -58,7 +58,7 @@ All pages and components support subcomponents using instance properties. Inital
 Here's a simplified example using part of the `DeterminedAuth` component. Intrinsic elements are be represent with `BaseComponent`, and they can be as `parent`s for other elements. The amount of specificity is left to the author's discretion. If you're not sure, more is better to avoid conflicts with future additions. Deeper specificity will also optimize for searching through the DOM on larger pages.
 
 ```js
-export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test='detAuth']"}) {
+export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test-component='detAuth']"}) {
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }
@@ -85,17 +85,17 @@ When creating page models, you'll most likely want to author test hooks into the
 
 | Test Hook | Usage |
 | ----------------- | ------------------------------------------------------ |
-| `data-test='my-component'` | Belongs at the top level element wrapping the component |
+| `data-test-component='my-component'` | Belongs at the top level element wrapping the component |
 | `data-testid='my-componentid'` | Attributed to any *instances* of components or any intrinsic element |
 
 Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
 
 ```js
-  // DeterminedTable.defaultSelector = "[data-test='DetTable']"
+  // DeterminedTable.defaultSelector = "[data-test-component='DetTable']"
   readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
   readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
 ```
 
-The component `DeterminedTable` would have `data-test='DetTable'` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
+The component `DeterminedTable` would have `data-test-component='DetTable'` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
 
 Not every component needs a data-testid, but, in general, more is better. It's better to select for *"a duck named Hoffman"* rather than "a duck" or "Hoffman".

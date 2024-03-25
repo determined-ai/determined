@@ -11,7 +11,7 @@ import { ErrorComponent } from 'e2e/models/utils/error';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this DeterminedAuth
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test='detAuth']"}) {
+export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test-component='detAuth']"}) {
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }

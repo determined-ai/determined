@@ -125,7 +125,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   );
 
   return (
-    <div data-test="detAuth" className={css.base}>
+    <div data-test-component="detAuth" className={css.base}>
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;

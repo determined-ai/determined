@@ -48,6 +48,7 @@ test.describe('Authentication', () => {
     expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain('invalid credentials');
     await signInPage.detAuth.submit.pwLocator.click()
     await expect(signInPage.detAuth.errors.alert.pwLocator).toHaveCount(2)
+    const secondError = signInPage.detAuth.errors.alert.pwLocator.nth(1)
     await expect(signInPage.detAuth.errors.message.pwLocator).toHaveCount(2)
   });
 });
