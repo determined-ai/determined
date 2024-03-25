@@ -13418,7 +13418,7 @@ class v1SlotStats(Printable):
         self,
         *,
         deviceTypeCounts: "typing.Dict[str, int]",
-        disabledSlots: "typing.Dict[str, bool]",
+        disabledSlots: "typing.Sequence[str]",
         drainingCount: int,
         slotStates: "typing.Dict[str, containerv1State]",
         stateCounts: "typing.Dict[str, int]",

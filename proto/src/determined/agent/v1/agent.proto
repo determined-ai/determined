@@ -30,7 +30,7 @@ message SlotStats {
   // Map of slot ids to container state, if there is an associated container.
   map<string, determined.container.v1.State> slot_states = 4;
   // Set of slot ids that are disabled.
-  map<string, bool> disabled_slots = 5;
+  repeated string disabled_slots = 5;
 }
 
 // Agent is a pool of resources where containers are run.

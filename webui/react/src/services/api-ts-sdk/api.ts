@@ -9829,10 +9829,10 @@ export interface V1SlotStats {
     slotStates: { [key: string]: Containerv1State; };
     /**
      * Set of slot ids that are disabled.
-     * @type {{ [key: string]: boolean; }}
+     * @type {Array<string>}
      * @memberof V1SlotStats
      */
-    disabledSlots: { [key: string]: boolean; };
+    disabledSlots: Array<string>;
 }
 /**
  * Describe one SSO provider.

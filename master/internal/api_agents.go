@@ -22,7 +22,7 @@ import (
 // SummarizeSlots for a single agent.
 func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	stats := agentv1.SlotStats{
-		DisabledSlots:    make(map[string]bool),
+		DisabledSlots:    make([]string, 0),
 		SlotStates:       make(map[string]containerv1.State),
 		StateCounts:      make(map[string]int32),
 		DeviceTypeCounts: make(map[string]int32),
@@ -32,7 +32,7 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	}
 	for _, slot := range slots {
 		if !slot.Enabled {
-			stats.DisabledSlots[slot.Id] = true
+			stats.DisabledSlots = append(stats.DisabledSlots, slot.Id)
 		}
 		if slot.Draining {
 			stats.DrainingCount++
