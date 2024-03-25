@@ -1014,7 +1014,7 @@ commands:
             export FORMATTED_RANGES=${formattedRange}
             echo "These are the formatted ranges:"
             echo ${FORMATTED_RANGES}
-            echo 'export LB_HELM_VALUES="${FORMATTED_RANGES}"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="${HELM_VALUES},${FORMATTED_RANGES}"' >> "$BASH_ENV"
           name: Setup Firewall Config
       - gcloud/install:
           version: "412.0.0"
@@ -1052,7 +1052,7 @@ commands:
           version: v3.2.4
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --set "${LB_HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}"--namespace="${GENERATED_NAMESPACE}" --wait
           name: Helm Install
       - run:
           command: |
@@ -1111,7 +1111,7 @@ commands:
               echo "export MASTER_PORT=8443" >> $BASH_ENV
               echo "export MASTER_SCHEME=https" >> $BASH_ENV
             fi
-
+  
   set-google-application-credentials:
     steps:
       - run:
