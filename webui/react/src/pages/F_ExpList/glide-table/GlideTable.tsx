@@ -115,6 +115,8 @@ interface GlideTableCommonProps<T, ContextAction = void | string, ContextActionD
   sorts?: Sort[];
   /** always static columns, such as a checkbox column for row selection */
   staticColumns: string[];
+  smoothScrollX?: boolean;
+  smoothScrollY?: boolean;
 }
 
 interface Paginated {
@@ -193,6 +195,8 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   imperativeRef,
   sorts = [],
   staticColumns,
+  smoothScrollX = true,
+  smoothScrollY = true,
 }: GlideTableProps<T, ContextAction, ContextActionData>): JSX.Element {
   const gridRef = useRef<DataEditorRef>(null);
   const clickedCellRef = useRef<{ col: number; row: number } | null>(null);
@@ -560,8 +564,8 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
           ref={gridRef}
           rowHeight={rowHeight}
           rows={isPaginated ? data.length : total ?? pageSize ?? data.length}
-          smoothScrollX
-          smoothScrollY
+          smoothScrollX={smoothScrollX}
+          smoothScrollY={smoothScrollY}
           theme={theme}
           verticalBorder={verticalBorder}
           width="100%"
