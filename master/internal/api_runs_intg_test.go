@@ -292,13 +292,13 @@ func TestMoveRunsIds(t *testing.T) {
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
 	require.Len(t, moveResp.Results, 1)
-	require.Equal(t, moveResp.Results[0].Error, "")
+	require.Equal(t, "", moveResp.Results[0].Error)
 
 	// run no longer in old project
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
-	require.Equal(t, resp.Runs[0].Id, stayID)
+	require.Equal(t, stayID, resp.Runs[0].Id)
 
 	// runs in new project
 	req = &apiv1.SearchRunsRequest{
@@ -309,12 +309,12 @@ func TestMoveRunsIds(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
-	require.Equal(t, resp.Runs[0].Id, moveIds[0])
+	require.Equal(t, moveIds[0], resp.Runs[0].Id)
 
 	// Experiment in new project
 	exp, err := api.getExperiment(ctx, curUser, exp1.ID)
 	require.NoError(t, err)
-	require.Equal(t, exp.ProjectId, destprojectID)
+	require.Equal(t, destprojectID, exp.ProjectId)
 }
 
 func TestMoveRunsMultiTrial(t *testing.T) {
@@ -362,13 +362,13 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
 	require.Len(t, moveResp.Results, 1)
-	require.Equal(t, moveResp.Results[0].Error, "")
+	require.Equal(t, "", moveResp.Results[0].Error)
 
 	// run no longer in old project
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
-	require.Equal(t, resp.Runs[0].Id, stayID)
+	require.Equal(t, stayID, resp.Runs[0].Id)
 
 	// run in new project
 	req = &apiv1.SearchRunsRequest{
@@ -380,7 +380,7 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 	// Check if run is split into diff experiment
-	require.NotEqual(t, resp.Runs[0].Experiment.Id, int32(exp.ID))
+	require.NotEqual(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
 }
 
 func TestMoveRunsMultiTrialNoClone(t *testing.T) {
@@ -428,7 +428,7 @@ func TestMoveRunsMultiTrialNoClone(t *testing.T) {
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
 	require.Len(t, moveResp.Results, 1)
-	require.Equal(t, moveResp.Results[0].Error, "")
+	require.Equal(t, "", moveResp.Results[0].Error)
 
 	// runs no longer in old project
 	resp, err = api.SearchRuns(ctx, req)
@@ -445,10 +445,10 @@ func TestMoveRunsMultiTrialNoClone(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 2)
 	// Check if other run moved as well
-	require.Equal(t, resp.Runs[1].Id, stayID)
+	require.Equal(t, stayID, resp.Runs[1].Id)
 	// Check if runs in same experiment
-	require.Equal(t, resp.Runs[0].Experiment.Id, int32(exp.ID))
-	require.Equal(t, resp.Runs[1].Experiment.Id, int32(exp.ID))
+	require.Equal(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
 }
 
 func TestMoveRunsFilter(t *testing.T) {
@@ -504,7 +504,7 @@ func TestMoveRunsFilter(t *testing.T) {
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
 	require.Len(t, moveResp.Results, 1)
-	require.Equal(t, moveResp.Results[0].Error, "")
+	require.Equal(t, "", moveResp.Results[0].Error)
 
 	// check 1 run moved in old project
 	resp, err = api.SearchRuns(ctx, req)
