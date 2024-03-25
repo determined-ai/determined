@@ -10,7 +10,17 @@ import {
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
-import DataGrid, { Sort, validSort, ValidSort } from 'hew/DataGrid/DataGrid';
+import DataGrid, {
+  DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
+import { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
 import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
@@ -19,22 +29,34 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  IOFilterFormSet,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
+import {
+  DEFAULT_SELECTION,
+  SelectionType as SelectionState,
+} from 'pages/F_ExpList/F_ExperimentList.settings';
 import { Error } from 'pages/F_ExpList/glide-table/exceptions';
-import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
+import { EMPTY_SORT, sortMenuItemsForColumn } from 'pages/F_ExpList/glide-table/MultiSortMenu';
 import { paths } from 'routes/utils';
 import { getProjectColumns, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
+import { pluralizer } from 'utils/string';
 
 import { getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
@@ -72,6 +94,7 @@ const parseSortString = (sortString: string): Sort[] => {
 };
 
 const FlatRuns: React.FC<Props> = ({ project }) => {
+  const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
@@ -104,8 +127,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const [canceler] = useState(new AbortController());
   const users = useObservable(usersStore.getUsers());
 
-  const colorMap = useGlasbey(settings.selectedRuns);
-
   const {
     ui: { theme: appTheme },
     isDarkMode,
@@ -124,53 +145,56 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
-  const [selection, setSelection] = React.useState<GridSelection>({
-    columns: CompactSelection.empty(),
-    rows: CompactSelection.empty(),
-  });
-
   const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selectAll,
-    [isLoadingSettings, settings.selectAll],
+    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
+    [isLoadingSettings, settings.selection.type],
   );
 
-  const selectedRunIds: Set<number> = useMemo(() => {
-    return isLoadingSettings ? new Set() : new Set(settings.selectedRuns);
-  }, [isLoadingSettings, settings.selectedRuns]);
-
-  const excludedRunIds: Set<number> = useMemo(() => {
-    return isLoadingSettings ? new Set() : new Set(settings.excludedRuns);
-  }, [isLoadingSettings, settings.excludedRuns]);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const selectedIds = new Set(selectedRunIds);
-    const loadedRuns = Loadable.filterNotLoaded(runs);
-
-    if (selectAll) {
-      loadedRuns.forEach((run) => {
-        const id = run.id;
-        if (!excludedRunIds.has(id)) selectedIds.add(id);
-      });
-      updateSettings({ selectedRuns: Array.from(selectedIds) });
+  const [excludedRunIds, selectedRunIds] = useMemo(() => {
+    const selectedMap = new Map<number, { run: FlatRun; index: number }>();
+    const excludedMap = new Map<number, { run: FlatRun; index: number }>();
+    if (isLoadingSettings) {
+      return [excludedMap, selectedMap];
     }
-
-    /**
-     * Use settings info (selectionAll, selectedRunIds, excludedRunIds)
-     * to figure out and update list selections.
-     */
-    setSelection((prevSelection) => {
-      let rows = CompactSelection.empty();
-      loadedRuns.forEach((run, index) => {
-        const id = run.id;
-        if ((selectAll && !excludedRunIds.has(id)) || (!selectAll && selectedIds.has(id))) {
-          rows = rows.add(index);
-        }
+    const selectedIdSet = new Set(
+      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
+    );
+    const excludedIdSet = new Set(
+      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
+    );
+    runs.forEach((r, index) => {
+      Loadable.forEach(r, (run) => {
+        const mapToAdd =
+          (selectAll && !excludedIdSet.has(run.id)) || selectedIdSet.has(run.id)
+            ? selectedMap
+            : excludedMap;
+        mapToAdd.set(run.id, { index, run });
       });
-      return { ...prevSelection, rows };
     });
-  }, [excludedRunIds, isLoading, runs, selectAll, selectedRunIds, total, updateSettings]);
+    return [excludedMap, selectedMap];
+  }, [isLoadingSettings, settings.selection, runs, selectAll]);
+
+  const selection = useMemo<GridSelection>(() => {
+    let rows = CompactSelection.empty();
+    if (selectAll) {
+      Loadable.forEach(total, (t) => {
+        rows = rows.add([0, t]);
+      });
+      excludedRunIds.forEach((info) => {
+        rows = rows.remove(info.index);
+      });
+    } else {
+      selectedRunIds.forEach((info) => {
+        rows = rows.add(info.index);
+      });
+    }
+    return {
+      columns: CompactSelection.empty(),
+      rows,
+    };
+  }, [selectAll, total, excludedRunIds, selectedRunIds]);
+
+  const colorMap = useGlasbey([...selectedRunIds.keys()]);
 
   const columns: ColumnDef<FlatRun>[] = useMemo(() => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
@@ -348,7 +372,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     setIsLoading(true);
     setPage(0);
     setRuns(INITIAL_LOADING_RUNS);
-    setSelection({ columns: CompactSelection.empty(), rows: CompactSelection.empty() });
   }, []);
 
   useEffect(() => {
@@ -392,6 +415,71 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [settings.columnWidths, updateSettings],
   );
 
+  const rowRangeToIds = useCallback(
+    (range: [number, number]) => {
+      const slice = runs.slice(range[0], range[1]);
+      return Loadable.filterNotLoaded(slice).map((run) => run.id);
+    },
+    [runs],
+  );
+
+  const handleSelectionChange: HandleSelectionChangeType = useCallback(
+    (selectionType: SelectionType | RangelessSelectionType, range?: [number, number]) => {
+      let newSettings: SelectionState = { ...settings.selection };
+
+      switch (selectionType) {
+        case 'add':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.delete(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.add(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'add-all':
+          newSettings = {
+            exclusions: [],
+            type: 'ALL_EXCEPT' as const,
+          };
+
+          break;
+        case 'remove':
+          if (!range) return;
+          if (newSettings.type === 'ALL_EXCEPT') {
+            const excludedSet = new Set(newSettings.exclusions);
+            rowRangeToIds(range).forEach((id) => excludedSet.add(id));
+            newSettings.exclusions = Array.from(excludedSet);
+          } else {
+            const includedSet = new Set(newSettings.selections);
+            rowRangeToIds(range).forEach((id) => includedSet.delete(id));
+            newSettings.selections = Array.from(includedSet);
+          }
+
+          break;
+        case 'remove-all':
+          newSettings = DEFAULT_SELECTION;
+
+          break;
+        case 'set':
+          if (!range) return;
+          newSettings = {
+            ...DEFAULT_SELECTION,
+            selections: Array.from(rowRangeToIds(range)),
+          };
+
+          break;
+      }
+
+      updateSettings({ selection: newSettings });
+    },
+    [rowRangeToIds, settings.selection, updateSettings],
+  );
+
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
     useCallback(() => {}, []);
 
@@ -402,8 +490,158 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
+  const handleSortChange = useCallback(
+    (sorts: Sort[]) => {
+      setSorts(sorts);
+      const newSortString = makeSortString(sorts.filter(validSort.is));
+      if (newSortString !== sortString) {
+        resetPagination();
+      }
+      updateSettings({ sortString: newSortString });
+    },
+    [resetPagination, sortString, updateSettings],
+  );
+
   const getRowAccentColor = (rowData: FlatRun) => {
     return colorMap[rowData.id];
+  };
+
+  const handlePinnedColumnsCountChange = useCallback(
+    (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
+    [updateSettings],
+  );
+
+  const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
+    if (columnId === MULTISELECT) {
+      const items: MenuItem[] = [
+        selection.rows.length > 0
+          ? {
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
+          : null,
+        ...[5, 10, 25].map((n) => ({
+          key: `select-${n}`,
+          label: `Select first ${n}`,
+          onClick: () => {
+            handleSelectionChange?.('set', [0, n]);
+            dataGridRef.current?.scrollToTop();
+          },
+        })),
+        {
+          key: 'select-all',
+          label: 'Select all',
+          onClick: () => {
+            handleSelectionChange?.('add-all');
+          },
+        },
+      ];
+      return items;
+    }
+    const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+    if (!column) {
+      return [];
+    }
+
+    const filterCount = formStore.getFieldCount(column.column).get();
+
+    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal', 'searcherType'];
+    const loadableFormset = formStore.formset.get();
+    const filterMenuItemsForColumn = () => {
+      const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
+      formStore.addChild(ROOT_ID, FormKind.Field, {
+        index: Loadable.match(loadableFormset, {
+          _: () => 0,
+          Loaded: (formset) => formset.filterGroup.children.length,
+        }),
+        item: {
+          columnName: column.column,
+          id: uuidv4(),
+          kind: FormKind.Field,
+          location: column.location,
+          operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+          type: column.type,
+          value: null,
+        },
+      });
+    };
+    const clearFilterForColumn = () => {
+      formStore.removeByField(column.column);
+    };
+
+    const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
+    const items: MenuItem[] = [
+      // Column is pinned if the index is inside of the frozen columns
+      colIdx < STATIC_COLUMNS.length || isMobile
+        ? null
+        : !isPinned
+          ? {
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
+              },
+            }
+          : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              },
+            },
+      {
+        icon: <Icon decorative name="eye-close" />,
+        key: 'hide',
+        label: 'Hide column',
+        onClick: () => {
+          const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+          handleColumnsOrderChange?.(newColumnsOrder);
+          if (isPinned) {
+            handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+          }
+        },
+      },
+      { type: 'divider' as const },
+      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+        ? []
+        : [
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
+              },
+            },
+          ]),
+      filterCount > 0
+        ? {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
+        : null,
+    ];
+    return items;
   };
 
   // TODO: poll?
@@ -466,17 +704,23 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           <DataGrid
             columns={columns}
             data={runs}
+            getHeaderMenuItems={getHeaderMenuItems}
             getRowAccentColor={getRowAccentColor}
+            imperativeRef={dataGridRef}
             isPaginated={isPagedView}
             page={page}
             pageSize={PAGE_SIZE}
+            pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
             selection={selection}
+            sorts={sorts}
             staticColumns={STATIC_COLUMNS}
             total={isPagedView ? runs.length : Loadable.getOrElse(PAGE_SIZE, total)}
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
             onContextMenuComplete={handleContextMenuComplete}
             onPageUpdate={handlePageUpdate}
+            onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
+            onSelectionChange={handleSelectionChange}
           />
           {showPagination && (
             <Row>

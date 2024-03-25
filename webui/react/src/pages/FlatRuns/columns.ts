@@ -387,7 +387,7 @@ export const getColumnDefs = ({
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
-    title: 'Searcher',
+    title: 'Searcher Type',
     tooltip: () => undefined,
     width: columnWidths.searcherType,
   },
