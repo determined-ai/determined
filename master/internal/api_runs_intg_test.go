@@ -286,6 +286,7 @@ func TestMoveRunsIds(t *testing.T) {
 		RunIds:               moveIds,
 		SourceProjectId:      sourceprojectID,
 		DestinationProjectId: destprojectID,
+		CloneMultitrial:      false,
 	}
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
@@ -355,6 +356,7 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 		RunIds:               moveIds,
 		SourceProjectId:      sourceprojectID,
 		DestinationProjectId: destprojectID,
+		CloneMultitrial:      true,
 	}
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
@@ -378,7 +380,75 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 	// Check if run is split into diff experiment
-	require.NotEqual(t, resp.Runs[0].Experiment.Id, exp.ID)
+	require.NotEqual(t, resp.Runs[0].Experiment.Id, int32(exp.ID))
+}
+
+func TestMoveRunsMultiTrialNoClone(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
+	sourceprojectID := int32(projectIDInt)
+	destprojectID := int32(projectID2Int)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	moveIds := []int32{resp.Runs[0].Id}
+	stayID := resp.Runs[1].Id
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: destprojectID,
+		CloneMultitrial:      false,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Len(t, moveResp.Results, 1)
+	require.Equal(t, moveResp.Results[0].Error, "")
+
+	// runs no longer in old project
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 0)
+
+	// runs in new project
+	req = &apiv1.SearchRunsRequest{
+		ProjectId: &destprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 2)
+	// Check if other run moved as well
+	require.Equal(t, resp.Runs[1].Id, stayID)
+	// Check if runs in same experiment
+	require.Equal(t, resp.Runs[0].Experiment.Id, int32(exp.ID))
+	require.Equal(t, resp.Runs[1].Experiment.Id, int32(exp.ID))
 }
 
 func TestMoveRunsFilter(t *testing.T) {
@@ -428,6 +498,7 @@ func TestMoveRunsFilter(t *testing.T) {
 		Filter: ptrs.Ptr(`{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
 			`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 			`"conjunction":"and","kind":"group"},"showArchived":false}`),
+		CloneMultitrial: true,
 	}
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)

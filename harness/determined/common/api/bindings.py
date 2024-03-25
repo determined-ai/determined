@@ -8612,6 +8612,7 @@ class v1MoveProjectRequest(Printable):
 
 class v1MoveRunsRequest(Printable):
     """Request to move the run to a different project."""
+    cloneMultitrial: "typing.Optional[bool]" = None
     filter: "typing.Optional[str]" = None
 
     def __init__(
@@ -8620,11 +8621,14 @@ class v1MoveRunsRequest(Printable):
         destinationProjectId: int,
         runIds: "typing.Sequence[int]",
         sourceProjectId: int,
+        cloneMultitrial: "typing.Union[bool, None, Unset]" = _unset,
         filter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
         self.runIds = runIds
         self.sourceProjectId = sourceProjectId
+        if not isinstance(cloneMultitrial, Unset):
+            self.cloneMultitrial = cloneMultitrial
         if not isinstance(filter, Unset):
             self.filter = filter
 
@@ -8635,6 +8639,8 @@ class v1MoveRunsRequest(Printable):
             "runIds": obj["runIds"],
             "sourceProjectId": obj["sourceProjectId"],
         }
+        if "cloneMultitrial" in obj:
+            kwargs["cloneMultitrial"] = obj["cloneMultitrial"]
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
         return cls(**kwargs)
@@ -8645,6 +8651,8 @@ class v1MoveRunsRequest(Printable):
             "runIds": self.runIds,
             "sourceProjectId": self.sourceProjectId,
         }
+        if not omit_unset or "cloneMultitrial" in vars(self):
+            out["cloneMultitrial"] = self.cloneMultitrial
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
         return out

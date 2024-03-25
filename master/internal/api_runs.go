@@ -336,7 +336,7 @@ func (a *apiServer) MoveRuns(
 			})
 		} else {
 			newExpID := *check.ExpID
-			if check.IsMultitrial {
+			if check.IsMultitrial && req.CloneMultitrial {
 				newExpID, err = cloneExperimentAndSetToRun(ctx, *check.ExpID, check.ID)
 				if err != nil {
 					results = append(results, &apiv1.RunActionResult{
