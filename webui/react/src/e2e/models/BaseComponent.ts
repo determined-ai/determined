@@ -7,7 +7,6 @@ type parentTypes = BasePage | BaseComponent | BaseReactFragment
 
 /**
  * Returns the representation of a Component.
- * @remarks
  * This constructor is a base class for any component in src/components/.
  * @param {object} obj
  * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
@@ -35,15 +34,16 @@ export class BaseComponent {
   }
 
   get root(): BasePage {
-    let root: parentTypes = this._parent
-    for (; !(root instanceof BasePage); root = root._parent) {/* empty */}
+    let root: parentTypes = this._parent;
+    for (; !(root instanceof BasePage); root = root._parent) {
+      /* empty */
+    }
     return root;
   }
 }
 
 /**
  * Returns the representation of a React Fragment.
- * @remarks
  * React Fragment Components are special in that they group elements, but not under a dir.
  * Fragments cannot have selectors
  * @param {object} obj
@@ -57,7 +57,6 @@ export class BaseReactFragment {
   }
   /**
    * The playwright Locator that represents this model
-   * @remarks
    * Since this model is a fragment, we simply get the parent's locator
    */
   get pwLocator(): Locator { return this._parent.pwLocator; }
@@ -78,8 +77,8 @@ export type NamedComponentArgs = {
 export abstract class NamedComponent extends BaseComponent {
   constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
     super({ parent, selector });
-    const requiredStaticProperties: string[] = ['defaultSelector']
-    requiredStaticProperties.forEach(requiredProp => {
+    const requiredStaticProperties: string[] = ['defaultSelector'];
+    requiredStaticProperties.forEach((requiredProp) => {
       if (!Object.hasOwn(this.constructor, requiredProp)){
         throw new Error(`A named component must declare a static ${requiredProp}!`);
       }
