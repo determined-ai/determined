@@ -21,12 +21,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom';
 
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import {
-  FilterFormSet,
-  FormField,
-  FormGroup,
-  IOFilterFormSet,
-} from 'components/FilterForm/components/type';
+import { IOFilterFormSet } from 'components/FilterForm/components/type';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -36,12 +31,12 @@ import { Error } from 'pages/F_ExpList/glide-table/exceptions';
 import { EMPTY_SORT } from 'pages/F_ExpList/glide-table/MultiSortMenu';
 import { paths } from 'routes/utils';
 import { getProjectColumns, searchRuns } from 'services/api';
-import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 
-import { getColumnDefs, RunColumn, runColumns, searcherMetricsValColumn } from './columns';
+import { getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
 import {
   FlatRunsGlobalSettings,
@@ -101,12 +96,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     return [EMPTY_SORT];
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
-  //const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
-  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
-    _: () => [],
-    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
-  });
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -156,9 +146,10 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     if (isLoading) return;
 
     const selectedIds = new Set(selectedRunIds);
+    const loadedRuns = Loadable.filterNotLoaded(runs);
 
     if (selectAll) {
-      Loadable.filterNotLoaded(runs).forEach((run) => {
+      loadedRuns.forEach((run) => {
         const id = run.id;
         if (!excludedRunIds.has(id)) selectedIds.add(id);
       });
@@ -171,9 +162,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
      */
     setSelection((prevSelection) => {
       let rows = CompactSelection.empty();
-      runs.forEach((loadableRun, index) => {
-        if (!loadableRun.isLoaded) return;
-        const id = loadableRun.data.id;
+      loadedRuns.forEach((run, index) => {
+        const id = run.id;
         if ((selectAll && !excludedRunIds.has(id)) || (!selectAll && selectedIds.has(id))) {
           rows = rows.add(index);
         }
@@ -240,23 +230,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         }
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
-            // const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            // if (
-            //   heatmap &&
-            //   settings.heatmapOn &&
-            //   !settings.heatmapSkipped.includes(currentColumn.column)
-            // ) {
-            //   columnDefs[currentColumn.column] = defaultNumberColumn(
-            //     currentColumn.column,
-            //     currentColumn.displayName || currentColumn.column,
-            //     settings.columnWidths[currentColumn.column],
-            //     dataPath,
-            //     {
-            //       max: heatmap.max,
-            //       min: heatmap.min,
-            //     },
-            //   );
-            // } else {
             columnDefs[currentColumn.column] = defaultNumberColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
@@ -284,11 +257,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               dataPath,
             );
         }
-        if (currentColumn.column === 'searcherMetricsVal') {
-          columnDefs[currentColumn.column] = searcherMetricsValColumn(
-            settings.columnWidths[currentColumn.column],
-          );
-        }
         return columnDefs[currentColumn.column];
       })
       .flatMap((col) => (col ? [col] : []));
@@ -310,20 +278,15 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     (cPage: number, cPageSize: number) => {
       updateSettings({ pageLimit: cPageSize });
       // Pagination component is assuming starting index of 1.
-      if (cPage - 1 !== page) {
-        setRuns(Array(cPageSize).fill(NotLoaded));
-      }
-      setPage(cPage - 1);
+      setPage((prevPage) => {
+        if (cPage - 1 !== prevPage) {
+          setRuns(Array(cPageSize).fill(NotLoaded));
+        }
+        return cPage - 1;
+      });
     },
-    [page, updateSettings],
+    [updateSettings],
   );
-
-  const experimentFilters = useMemo(() => {
-    const filters: V1BulkExperimentFilters = {
-      projectId: project.id,
-    };
-    return filters;
-  }, [project.id]);
 
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
@@ -331,15 +294,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          ...experimentFilters,
           //filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          projectId: project.id,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
-      const total = response.pagination.total ?? 0;
       const loadedRuns = response.runs;
 
       setRuns((prev) => {
@@ -347,21 +309,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           return loadedRuns.map((run) => Loaded(run));
         }
 
-        let newRuns = prev;
-
-        // Fill out the loadable experiments array with total count.
-        if (prev.length !== total) {
-          newRuns = new Array(total).fill(NotLoaded);
-        }
-
         // Update the list with the fetched results.
-        Array.prototype.splice.apply(newRuns, [
+        return prev.toSpliced(
           tableOffset,
           loadedRuns.length,
           ...loadedRuns.map((experiment) => Loaded(experiment)),
-        ]);
-
-        return newRuns;
+          ...INITIAL_LOADING_RUNS,
+        );
       });
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
@@ -373,11 +327,11 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     }
   }, [
     canceler.signal,
-    experimentFilters,
     isLoadingSettings,
     isPagedView,
     loadableFormset,
     page,
+    project.id,
     settings.pageLimit,
     sortString,
   ]);
@@ -388,13 +342,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     setPage(page);
   }, []);
 
-  const numFilters = useMemo(() => {
-    return (
-      Object.values(experimentFilters).filter((x) => x !== undefined).length -
-      1 +
-      rootFilterChildren.length
-    );
-  }, [experimentFilters, rootFilterChildren.length]);
+  const numFilters = 0;
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
@@ -420,7 +368,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       return params;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sortString]);
+  }, [page]);
 
   useEffect(() => {
     // useSettings load the default value first, and then load the data from DB
@@ -496,7 +444,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
-      {!isLoading && runs.length === 0 ? (
+      {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message
             action={

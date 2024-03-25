@@ -1,31 +1,26 @@
-import {
-  CellClickedEventArgs,
-  CompactSelection,
-  DataEditorProps,
-  GridCell,
-  GridCellKind,
-  Theme as GTheme,
-  SizedGridColumn,
-} from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, CompactSelection, GridCellKind } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { State } from 'hew/DataGrid/custom-renderers/cells/stateCell';
+import { ColumnDefs, MULTISELECT } from 'hew/DataGrid/columns';
+import {
+  CHECKBOX_CELL,
+  LINK_CELL,
+  State,
+  STATE_CELL,
+  TAGS_CELL,
+  TEXT_CELL,
+  USER_AVATAR_CELL,
+} from 'hew/DataGrid/custom-renderers/index';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
 import { getTimeInEnglish } from 'pages/F_ExpList/glide-table/utils';
 import { handlePath, paths } from 'routes/utils';
-import { DetailedUser, FlatRun, ProjectColumn, RunState } from 'types';
-import { getPath, isString } from 'utils/data';
-import { DURATION_UNIT_MEASURES, durationInEnglish, formatDatetime } from 'utils/datetime';
+import { DetailedUser, FlatRun, RunState } from 'types';
+import { DURATION_UNIT_MEASURES, durationInEnglish } from 'utils/datetime';
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 import { capitalize, floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
-
-export const MIN_COLUMN_WIDTH = 40;
-export const NO_PINS_WIDTH = 200;
-
-export const MULTISELECT = 'selected';
 
 // order used in ColumnPickerMenu
 export const runColumns = [
@@ -107,19 +102,14 @@ function getCellStateFromExperimentState(expState: RunState) {
   }
 }
 
-export type ColumnDef = SizedGridColumn & {
-  id: string;
-  isNumerical?: boolean;
-  renderer: (record: FlatRun, idx: number) => GridCell;
-  tooltip: (record: FlatRun) => string | undefined;
-};
+// export type ColumnDef = SizedGridColumn & {
+//   id: string;
+//   isNumerical?: boolean;
+//   renderer: (record: FlatRun, idx: number) => GridCell;
+//   tooltip: (record: FlatRun) => string | undefined;
+// };
 
-export type ColumnDefs = Record<string, ColumnDef>;
-
-interface HeatmapProps {
-  min: number;
-  max: number;
-}
+//export type ColumnDefs = Record<string, ColumnDef>;
 
 interface Params {
   appTheme: Theme;
@@ -136,7 +126,7 @@ export const getColumnDefs = ({
   users,
   selectAll,
   appTheme,
-}: Params): ColumnDefs => ({
+}: Params): ColumnDefs<FlatRun> => ({
   archived: {
     id: 'parentArchived',
     renderer: (record: FlatRun) => ({
@@ -168,7 +158,7 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Checkpoint Size',
@@ -193,7 +183,7 @@ export const getColumnDefs = ({
             },
           )
         : '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Duration',
@@ -205,7 +195,7 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: record.experiment?.externalExperimentId ?? '',
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'External Experiment ID',
@@ -217,7 +207,7 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.externalRunId ?? ''),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'External Trial ID',
@@ -231,7 +221,7 @@ export const getColumnDefs = ({
       copyData: String(record.experiment?.forkedFrom ?? ''),
       cursor: record.experiment?.forkedFrom ? 'pointer' : undefined,
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link:
           record.experiment?.forkedFrom !== undefined
             ? {
@@ -265,7 +255,7 @@ export const getColumnDefs = ({
       copyData: String(record.id),
       cursor: 'pointer',
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link: record.experiment?.id
           ? {
               href: paths.experimentDetails(record.experiment.id),
@@ -298,7 +288,7 @@ export const getColumnDefs = ({
       copyData: String(record.experiment?.name),
       cursor: 'pointer',
       data: {
-        kind: 'link-cell',
+        kind: LINK_CELL,
         link: record.experiment?.id
           ? {
               href: paths.experimentDetails(record.experiment?.id),
@@ -345,7 +335,7 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.experiment?.resourcePool),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Resource Pool',
@@ -360,7 +350,7 @@ export const getColumnDefs = ({
       return {
         allowOverlay: false,
         copyData: sMetric,
-        data: { kind: 'text-cell' },
+        data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
       };
     },
@@ -368,12 +358,33 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherMetric,
   },
+  searcherMetricsVal: {
+    id: 'searcherMetricsVal',
+    isNumerical: true,
+    renderer: (record: FlatRun) => {
+      const sMetricValue = record.searcherMetricValue;
+
+      return {
+        allowOverlay: false,
+        copyData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
+          : '',
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      };
+    },
+    title: 'Searcher Metric Value',
+    tooltip: () => undefined,
+    width: columnWidths.searcherMetricsVal,
+  },
   searcherType: {
     id: 'searcherType',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.experiment?.searcherType),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Searcher',
@@ -389,7 +400,7 @@ export const getColumnDefs = ({
       copyData: String(rowSelection.hasIndex(idx)),
       data: {
         checked: rowSelection.hasIndex(idx),
-        kind: 'checkbox-cell',
+        kind: CHECKBOX_CELL,
       },
       kind: GridCellKind.Custom,
     }),
@@ -404,7 +415,7 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: getTimeInEnglish(new Date(record.startTime)),
-      data: { kind: 'text-cell' },
+      data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
     title: 'Start Time',
@@ -419,7 +430,7 @@ export const getColumnDefs = ({
       copyData: capitalize(record.state),
       data: {
         appTheme,
-        kind: 'state-cell',
+        kind: STATE_CELL,
         state: getCellStateFromExperimentState(record.state),
       },
       kind: GridCellKind.Custom,
@@ -435,7 +446,7 @@ export const getColumnDefs = ({
       allowOverlay: true,
       copyData: record.labels?.join(', ') ?? '',
       data: {
-        kind: 'tags-cell',
+        kind: TAGS_CELL,
         possibleTags: [],
         readonly: true,
         tags: record.labels,
@@ -459,7 +470,7 @@ export const getColumnDefs = ({
         data: {
           image: undefined,
           initials: getInitials(displayName),
-          kind: 'user-avatar-cell',
+          kind: USER_AVATAR_CELL,
           tint: getColor(displayName, themeIsDark),
         },
         kind: GridCellKind.Custom,
@@ -475,136 +486,6 @@ export const getColumnDefs = ({
     width: columnWidths.user,
   },
 });
-
-export const searcherMetricsValColumn = (
-  columnWidth?: number,
-  heatmapProps?: HeatmapProps,
-): ColumnDef => {
-  return {
-    id: 'searcherMetricsVal',
-    isNumerical: true,
-    renderer: (record: FlatRun) => {
-      const sMetricValue = record.searcherMetricValue;
-
-      let theme: Partial<GTheme> = {};
-      if (heatmapProps && sMetricValue) {
-        const { min, max } = heatmapProps;
-        theme = {
-          accentLight: getHeatmapColor(min, max, sMetricValue),
-          bgCell: getHeatmapColor(min, max, sMetricValue),
-          textDark: 'white',
-        };
-      }
-      return {
-        allowOverlay: false,
-        copyData: sMetricValue
-          ? typeof sMetricValue === 'number'
-            ? humanReadableNumber(sMetricValue)
-            : sMetricValue
-          : '',
-        data: { kind: 'text-cell' },
-        kind: GridCellKind.Custom,
-        themeOverride: theme,
-      };
-    },
-    title: 'Searcher Metric Value',
-    tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
-  };
-};
-
-export const defaultTextColumn = (
-  column: ProjectColumn,
-  columnWidth?: number,
-  dataPath?: string,
-): ColumnDef => {
-  return {
-    id: column.column,
-    renderer: (record: FlatRun) => {
-      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
-      return {
-        allowOverlay: false,
-        copyData: String(data ?? ''),
-        data: { kind: 'text-cell' },
-        kind: GridCellKind.Custom,
-      };
-    },
-    title: column.displayName || column.column,
-    tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
-  };
-};
-
-const getHeatmapPercentage = (min: number, max: number, value: number): number => {
-  if (min >= max || value >= max) return 1;
-  if (value <= min) return 0;
-  return (value - min) / (max - min);
-};
-
-const getHeatmapColor = (min: number, max: number, value: number): string => {
-  const p = getHeatmapPercentage(min, max, value);
-  const red = [44, 222];
-  const green = [119, 66];
-  const blue = [176, 91];
-  return `rgb(${red[0] + (red[1] - red[0]) * p}, ${green[0] + (green[1] - green[0]) * p}, ${
-    blue[0] + (blue[1] - blue[0]) * p
-  })`;
-};
-
-export const defaultNumberColumn = (
-  column: ProjectColumn,
-  columnWidth?: number,
-  dataPath?: string,
-  heatmapProps?: HeatmapProps,
-): ColumnDef => {
-  return {
-    id: column.column,
-    renderer: (record: FlatRun) => {
-      const data = isString(dataPath) ? getPath<number>(record, dataPath) : undefined;
-      let theme: Partial<GTheme> = {};
-      if (heatmapProps && data !== undefined) {
-        const { min, max } = heatmapProps;
-        theme = {
-          accentLight: getHeatmapColor(min, max, data),
-          bgCell: getHeatmapColor(min, max, data),
-          textDark: 'white',
-        };
-      }
-      return {
-        allowOverlay: false,
-        copyData: data !== undefined ? String(data) : '',
-        data: { kind: 'text-cell' },
-        kind: GridCellKind.Custom,
-        themeOverride: theme,
-      };
-    },
-    title: column.displayName || column.column,
-    tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
-  };
-};
-
-export const defaultDateColumn = (
-  column: ProjectColumn,
-  columnWidth?: number,
-  dataPath?: string,
-): ColumnDef => {
-  return {
-    id: column.column,
-    renderer: (record: FlatRun) => {
-      const data = isString(dataPath) ? getPath<string>(record, dataPath) : undefined;
-      return {
-        allowOverlay: false,
-        copyData: formatDatetime(String(data), { outputUTC: false }),
-        data: { kind: 'text-cell' },
-        kind: GridCellKind.Custom,
-      };
-    },
-    title: column.displayName || column.column,
-    tooltip: () => undefined,
-    width: columnWidth ?? columnWidthsFallback,
-  };
-};
 
 export const columnWidthsFallback = 140;
 
@@ -630,26 +511,3 @@ export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
   tags: 106,
   user: 50,
 };
-
-// TODO: use theme here
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getHeaderIcons = (_appTheme: Theme): DataEditorProps['headerIcons'] => ({
-  allSelected: () => `
-    <svg width="16" height="16" viewBox="-1 -1 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0.5" y="0.5" width="13" height="13" rx="3" fill="#D9D9D9" fill-opacity="0.05" stroke="#454545"/>
-      <line x1="5.25" y1="6.5" x2="6.75" y2="8" stroke="#454545" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="6.75" y1="8" x2="9.25" y2="5.5" stroke="#454545" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-  `,
-  noneSelected: () => `
-    <svg width="16" height="16" viewBox="-1 -1 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0.5" y="0.5" width="13" height="13" rx="3" fill="#D9D9D9" fill-opacity="0.05" stroke="#454545"/>
-    </svg>
-  `,
-  someSelected: () => `
-    <svg width="16" height="16" viewBox="-1 -1 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0.5" y="0.5" width="13" height="13" rx="3" fill="#D9D9D9" fill-opacity="0.05" stroke="#454545"/>
-      <line x1="3" y1="7" x2="11" y2="7" stroke="#929292" stroke-width="2"/>
-    </svg>
-  `,
-});
