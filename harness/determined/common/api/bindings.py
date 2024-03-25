@@ -13413,61 +13413,41 @@ class v1Slot(Printable):
         return out
 
 class v1SlotStats(Printable):
-    deviceTypeCounts: "typing.Optional[typing.Dict[str, int]]" = None
-    disabledCount: "typing.Optional[int]" = None
-    drainingCount: "typing.Optional[int]" = None
-    slotStates: "typing.Optional[typing.Dict[str, containerv1State]]" = None
-    stateCounts: "typing.Optional[typing.Dict[str, int]]" = None
 
     def __init__(
         self,
         *,
-        deviceTypeCounts: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
-        disabledCount: "typing.Union[int, None, Unset]" = _unset,
-        drainingCount: "typing.Union[int, None, Unset]" = _unset,
-        slotStates: "typing.Union[typing.Dict[str, containerv1State], None, Unset]" = _unset,
-        stateCounts: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
+        deviceTypeCounts: "typing.Dict[str, int]",
+        disabledSlots: "typing.Dict[str, bool]",
+        drainingCount: int,
+        slotStates: "typing.Dict[str, containerv1State]",
+        stateCounts: "typing.Dict[str, int]",
     ):
-        if not isinstance(deviceTypeCounts, Unset):
-            self.deviceTypeCounts = deviceTypeCounts
-        if not isinstance(disabledCount, Unset):
-            self.disabledCount = disabledCount
-        if not isinstance(drainingCount, Unset):
-            self.drainingCount = drainingCount
-        if not isinstance(slotStates, Unset):
-            self.slotStates = slotStates
-        if not isinstance(stateCounts, Unset):
-            self.stateCounts = stateCounts
+        self.deviceTypeCounts = deviceTypeCounts
+        self.disabledSlots = disabledSlots
+        self.drainingCount = drainingCount
+        self.slotStates = slotStates
+        self.stateCounts = stateCounts
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SlotStats":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "deviceTypeCounts": obj["deviceTypeCounts"],
+            "disabledSlots": obj["disabledSlots"],
+            "drainingCount": obj["drainingCount"],
+            "slotStates": {k: containerv1State(v) for k, v in obj["slotStates"].items()},
+            "stateCounts": obj["stateCounts"],
         }
-        if "deviceTypeCounts" in obj:
-            kwargs["deviceTypeCounts"] = obj["deviceTypeCounts"]
-        if "disabledCount" in obj:
-            kwargs["disabledCount"] = obj["disabledCount"]
-        if "drainingCount" in obj:
-            kwargs["drainingCount"] = obj["drainingCount"]
-        if "slotStates" in obj:
-            kwargs["slotStates"] = {k: containerv1State(v) for k, v in obj["slotStates"].items()} if obj["slotStates"] is not None else None
-        if "stateCounts" in obj:
-            kwargs["stateCounts"] = obj["stateCounts"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "deviceTypeCounts": self.deviceTypeCounts,
+            "disabledSlots": self.disabledSlots,
+            "drainingCount": self.drainingCount,
+            "slotStates": {k: v.value for k, v in self.slotStates.items()},
+            "stateCounts": self.stateCounts,
         }
-        if not omit_unset or "deviceTypeCounts" in vars(self):
-            out["deviceTypeCounts"] = self.deviceTypeCounts
-        if not omit_unset or "disabledCount" in vars(self):
-            out["disabledCount"] = self.disabledCount
-        if not omit_unset or "drainingCount" in vars(self):
-            out["drainingCount"] = self.drainingCount
-        if not omit_unset or "slotStates" in vars(self):
-            out["slotStates"] = None if self.slotStates is None else {k: v.value for k, v in self.slotStates.items()}
-        if not omit_unset or "stateCounts" in vars(self):
-            out["stateCounts"] = self.stateCounts
         return out
 
 class v1StartTrialRequest(Printable):

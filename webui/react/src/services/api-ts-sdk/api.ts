@@ -9808,31 +9808,31 @@ export interface V1SlotStats {
      * @type {{ [key: string]: number; }}
      * @memberof V1SlotStats
      */
-    stateCounts?: { [key: string]: number; };
+    stateCounts: { [key: string]: number; };
     /**
      * The number of slots in each device type. map<determined.device.v1.Type, int32> device_type_counts = 1;
      * @type {{ [key: string]: number; }}
      * @memberof V1SlotStats
      */
-    deviceTypeCounts?: { [key: string]: number; };
-    /**
-     * The number of slots that are disabled.
-     * @type {number}
-     * @memberof V1SlotStats
-     */
-    disabledCount?: number;
+    deviceTypeCounts: { [key: string]: number; };
     /**
      * The number of slots that are draining.
      * @type {number}
      * @memberof V1SlotStats
      */
-    drainingCount?: number;
+    drainingCount: number;
     /**
-     * map slot id to container state
+     * Map of slot ids to container state, if there is an associated container.
      * @type {{ [key: string]: Containerv1State; }}
      * @memberof V1SlotStats
      */
-    slotStates?: { [key: string]: Containerv1State; };
+    slotStates: { [key: string]: Containerv1State; };
+    /**
+     * Set of slot ids that are disabled.
+     * @type {{ [key: string]: boolean; }}
+     * @memberof V1SlotStats
+     */
+    disabledSlots: { [key: string]: boolean; };
 }
 /**
  * Describe one SSO provider.

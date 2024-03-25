@@ -10,18 +10,27 @@ import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
 message SlotStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [
+      "state_counts",
+      "device_type_counts",
+      "draining_count",
+      "slot_states",
+      "disabled_slots"
+    ] }
+  };
   // The number of slots in each state.
   // map<determined.container.v1.State, int32> state_counts = 1;
   map<int32, int32> state_counts = 1;
   // The number of slots in each device type.
   // map<determined.device.v1.Type, int32> device_type_counts = 1;
   map<int32, int32> device_type_counts = 2;
-  // The number of slots that are disabled.
-  int32 disabled_count = 3;
   // The number of slots that are draining.
-  int32 draining_count = 4;
-  // map slot id to container state
-  map<string, determined.container.v1.State> slot_states = 5;
+  int32 draining_count = 3;
+  // Map of slot ids to container state, if there is an associated container.
+  map<string, determined.container.v1.State> slot_states = 4;
+  // Set of slot ids that are disabled.
+  map<string, bool> disabled_slots = 5;
 }
 
 // Agent is a pool of resources where containers are run.
