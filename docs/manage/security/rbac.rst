@@ -469,6 +469,8 @@ experiment metadata and artifacts within its scope.
 The ``EditorRestricted`` role supersedes the ``Viewer`` role and includes permissions to create,
 edit, or delete projects and experiments within its scope.
 
+-  ``EditorRestricted`` users lack the permissions to create or update NSC (notebook, shell, command) type workloads. ``EditorRestricted`` users can still open and use scoped JupyterLab notebooks and perform all experiment-related jobs, just like those with the ``Editor`` role. The only additional permissions granted by the ``Editor`` role include the ability to create notebooks, shells, and commands (NSC tasks),  as well as the permission to update these tasks, such as changing the task's priority or deleting it.
+
 ``Editor``
 ==========
 
