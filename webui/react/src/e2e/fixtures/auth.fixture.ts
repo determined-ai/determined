@@ -1,4 +1,5 @@
 import { expect, Page } from '@playwright/test';
+
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 export class AuthFixture {
