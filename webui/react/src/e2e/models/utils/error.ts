@@ -10,7 +10,8 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {implementsGetLocator} obj.parent - The parent used to locate this error
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class ErrorComponent extends NamedComponent({ defaultSelector: ".ant-notification"}) {
+export class ErrorComponent extends NamedComponent {
+  static override defaultSelector = ".ant-notification";
   static readonly selectorTopRight = ".ant-notification-topRight"
   static readonly selectorBottomRight = ".ant-notification-bottomRight"
   constructor({ parent, selector }: NamedComponentArgs) {
