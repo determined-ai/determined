@@ -292,6 +292,139 @@ func TestMoveExperimentRunID(t *testing.T) {
 	})
 }
 
+func TestMoveExperiments(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	t.Run("Move an experiement without filters", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp.ID)},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), 1)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move multiple experiements without filters", func(t *testing.T) {
+		exp1 := createTestExp(t, api, curUser)
+		exp2 := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), 2)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move experiements with filters", func(t *testing.T) {
+		const numNewExp = 13
+		label := uuid.New().String()
+		for i := 0; i < numNewExp; i++ {
+			createTestExp(t, api, curUser, label)
+		}
+
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters: &apiv1.BulkExperimentFilters{
+				Labels: []string{label},
+			},
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), numNewExp)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move no experiements with filters (no filter match)", func(t *testing.T) {
+		notExsistentLable := uuid.New().String()
+		createTestExp(t, api, curUser)
+
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters: &apiv1.BulkExperimentFilters{
+				Labels:   []string{notExsistentLable},
+				Archived: &wrappers.BoolValue{Value: true},
+			},
+		})
+		require.Equal(t, len(result.Results), 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move multiple experiements to non-existent project", func(t *testing.T) {
+		exp1 := createTestExp(t, api, curUser)
+		exp2 := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
+			DestinationProjectId: 0,
+			Filters:              nil,
+		})
+		require.Nil(t, result)
+		require.Error(t, err)
+	})
+
+	t.Run("Move 0 experiements", func(t *testing.T) {
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		require.Equal(t, len(result.Results), 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move a non-existent experiement", func(t *testing.T) {
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{-1, 0},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		require.Equal(t, len(result.Results), 2)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move mixed of existent and non-existent experiements", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		expIds := []int32{-1, 0, int32(exp.ID)}
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        expIds,
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		successIDList := make([]int32, 0)
+		errorIDList := make([]int32, 0)
+		for _, v := range result.Results {
+			if v.Error == "" {
+				require.Equal(t, v.Error, "")
+				successIDList = append(successIDList, v.Id)
+			} else {
+				require.Equal(
+					t,
+					v.Error,
+					fmt.Sprintf("rpc error: code = NotFound desc = experiment '%d' not found", v.Id),
+				)
+				errorIDList = append(errorIDList, v.Id)
+			}
+		}
+		require.Equal(t, len(successIDList), 1)
+		require.Equal(t, len(errorIDList), 2)
+		require.Equal(t, successIDList[0], int32(exp.ID))
+		require.Equal(t, len(result.Results), len(expIds))
+		require.NoError(t, err)
+	})
+}
+
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
