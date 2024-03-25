@@ -348,7 +348,8 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	resp, err := api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 
-	moveIds := []int32{resp.Runs[0].Id, resp.Runs[1].Id}
+	moveIds := []int32{resp.Runs[0].Id}
+	stayID := resp.Runs[1].Id
 
 	moveReq := &apiv1.MoveRunsRequest{
 		RunIds:               moveIds,
@@ -358,16 +359,16 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
-	require.Len(t, moveResp.Results, 2)
+	require.Len(t, moveResp.Results, 1)
 	require.Equal(t, moveResp.Results[0].Error, "")
-	require.Equal(t, moveResp.Results[1].Error, "")
 
-	// runs no longer in old project
+	// run no longer in old project
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Len(t, resp.Runs, 1)
+	require.Equal(t, resp.Runs[0].Id, stayID)
 
-	// runs in new project
+	// run in new project
 	req = &apiv1.SearchRunsRequest{
 		ProjectId: &destprojectID,
 		Sort:      ptrs.Ptr("id=asc"),
@@ -375,9 +376,9 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 2)
-	// Check if runs are split into diff experiments
-	require.NotEqual(t, resp.Runs[0].Experiment.Id, resp.Runs[1].Experiment.Id)
+	require.Len(t, resp.Runs, 1)
+	// Check if run is split into diff experiment
+	require.NotEqual(t, resp.Runs[0].Experiment.Id, exp.ID)
 }
 
 func TestMoveRunsFilter(t *testing.T) {
