@@ -16,9 +16,9 @@ interface UserAvatarProps {
   readonly name?: string;
 }
 
-export type UserAvatar = CustomCell<UserAvatarProps>;
+export type UserAvatarCell = CustomCell<UserAvatarProps>;
 
-const renderer: CustomRenderer<UserAvatar> = {
+const renderer: CustomRenderer<UserAvatarCell> = {
   draw: (args, cell) => {
     const { ctx, rect, theme, imageLoader, col, row } = args;
     const { image, name, initials, tint } = cell.data;
@@ -74,7 +74,7 @@ const renderer: CustomRenderer<UserAvatar> = {
 
     return true;
   },
-  isMatch: (cell: CustomCell): cell is UserAvatar =>
+  isMatch: (cell: CustomCell): cell is UserAvatarCell =>
     (cell.data as UserAvatarProps).kind === USER_AVATAR_CELL,
   kind: GridCellKind.Custom,
   measure: () => 50,

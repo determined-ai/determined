@@ -17,11 +17,14 @@ import {
   getHeatmapColor,
   HeatmapProps,
 } from './glide-table/columns';
-import { LINK_CELL } from './glide-table/custom-renderers/cells/linkCell';
-import { State, STATE_CELL } from './glide-table/custom-renderers/cells/stateCell';
-import { TAGS_CELL } from './glide-table/custom-renderers/cells/tagsCell';
-import { TEXT_CELL } from './glide-table/custom-renderers/cells/textCell';
-import { USER_AVATAR_CELL } from './glide-table/custom-renderers/cells/userAvatarCell';
+import {
+  LINK_CELL,
+  State,
+  STATE_CELL,
+  TAGS_CELL,
+  TEXT_CELL,
+  USER_AVATAR_CELL,
+} from './glide-table/custom-renderers';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
