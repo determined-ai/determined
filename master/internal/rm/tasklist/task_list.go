@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/emirpasic/gods/sets/treeset"
-	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -94,9 +93,6 @@ func (l *TaskList) AddAllocation(id model.AllocationID, assigned *sproto.Resourc
 // AddAllocationRaw adds an allocation for the allocation actor without modifying the
 // sproto.AllocateRequest's  sproto.SchedulingState.
 func (l *TaskList) AddAllocationRaw(id model.AllocationID, assigned *sproto.ResourcesAllocated) {
-	if assigned != nil && assigned.JobSubmissionTime.IsZero() {
-		logrus.Warnf("added allocation %s without a job submission time", id)
-	}
 	l.allocations[id] = assigned
 }
 
