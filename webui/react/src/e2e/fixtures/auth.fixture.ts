@@ -24,10 +24,11 @@ export class AuthFixture {
     waitForURL: string | RegExp | ((url: URL) => boolean) = /dashboard/,
     { username = this.#USERNAME, password = this.#PASSWORD }: { username?: string, password?: string } = {}
   ): Promise<void> {
-    if (waitForURL instanceof RegExp && waitForURL.source == /dashboard/.source) {
-      await this.#page.goto('/');
-    }
     const detAuth = this.signInPage.detAuth
+    if (!await detAuth.pwLocator.isVisible()) {
+      await this.#page.goto('/');
+      expect(detAuth.pwLocator).toBeVisible()
+    }
     await detAuth.username.pwLocator.fill(username)
     await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
