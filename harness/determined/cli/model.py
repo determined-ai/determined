@@ -109,7 +109,8 @@ def list_versions(args: Namespace) -> None:
 
 
 def delete(args: Namespace) -> None:
-    model = client.Determined(args.master, None).get_model(args.name)
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
     model.delete()
 
 
