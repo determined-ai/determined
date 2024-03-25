@@ -81,25 +81,12 @@ export type NamedComponentArgs = {
  * @remarks
  * Remarks regarding implementation are found in the NamedComponent function
  */
-abstract class _NamedComponent extends BaseComponent {
+export abstract class NamedComponent extends BaseComponent {
   static defaultSelector: string;
-}
-
-/**
- * Function used to extend the NamedComponent class
- * 
- * @param {Object} mandatory
- * @param {string} mandatory.defaultSelector - A selector to locate the object
- * 
- * @remarks
- * Named components should all come with a default selector so that their parents don't have to specify a selector.
- * Since the default selector is static, we can access and append to it if we want a more specific selector.
- * All named components should have a constructor that uses the defaultSelector as a selector if selector is undefined.
- */
-export function NamedComponent(mandatory: { defaultSelector: string }) {
-  return class extends _NamedComponent {
-    static override defaultSelector = mandatory.defaultSelector
+  constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
+    super({parent, selector})
+    if ((this.constructor as any).defaultSelector == undefined){
+      throw new Error('A named compnent has been defined without a default selector!')
+    }
   }
 }
-// Classes are just a type and a function
-export type NamedComponent = typeof _NamedComponent
