@@ -117,7 +117,12 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button data-testid="submit" disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
+        <Button
+          data-testid="submit"
+          disabled={!canSubmit}
+          htmlType="submit"
+          loading={isSubmitted}
+          type="primary">
           Sign In
         </Button>
       </Form.Item>

@@ -15,10 +15,25 @@ export class DeterminedAuth extends NamedComponent {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }
   readonly form: BaseComponent = new BaseComponent({ parent: this, selector: 'form' });
-  readonly username: BaseComponent = new BaseComponent({ parent: this.form, selector: "input[data-testid='username']" });
-  readonly password: BaseComponent = new BaseComponent({ parent: this.form, selector: "input[data-testid='password']" });
-  readonly submit: BaseComponent = new BaseComponent({ parent: this.form, selector: "button[data-testid='submit']" });
-  readonly docs: BaseComponent = new BaseComponent({ parent: this, selector: "link[data-testid='docs']" });
+  readonly username: BaseComponent = new BaseComponent({
+    parent: this.form,
+    selector: "input[data-testid='username']",
+  });
+  readonly password: BaseComponent = new BaseComponent({
+    parent: this.form,
+    selector: "input[data-testid='password']",
+  });
+  readonly submit: BaseComponent = new BaseComponent({
+    parent: this.form,
+    selector: "button[data-testid='submit']",
+  });
+  readonly docs: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: "link[data-testid='docs']",
+  });
   // TODO consdier a BaseComponents plural class
-  readonly errors: ErrorComponent = new ErrorComponent({ parent: this.root, selector: ErrorComponent.defaultSelector + ErrorComponent.selectorTopRight });
+  readonly errors: ErrorComponent = new ErrorComponent({
+    parent: this.root,
+    selector: ErrorComponent.defaultSelector + ErrorComponent.selectorTopRight,
+  });
 }

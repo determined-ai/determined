@@ -15,6 +15,12 @@ export class ErrorComponent extends NamedComponent {
     super({ parent: parent, selector: selector || ErrorComponent.defaultSelector });
   }
   readonly alert: BaseComponent = new BaseComponent({ parent: this, selector: "[role='alert']" });
-  readonly message: BaseComponent = new BaseComponent({ parent: this.alert, selector: '.ant-notification-notice-message' });
-  readonly description: BaseComponent = new BaseComponent({ parent: this.alert, selector: '.ant-notification-notice-description' });
+  readonly message: BaseComponent = new BaseComponent({
+    parent: this.alert,
+    selector: '.ant-notification-notice-message',
+  });
+  readonly description: BaseComponent = new BaseComponent({
+    parent: this.alert,
+    selector: '.ant-notification-notice-description',
+  });
 }

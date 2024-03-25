@@ -3,7 +3,7 @@ import { type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 // BasePage is the root of any tree, use `instanceof BasePage` when climbing.
-type parentTypes = BasePage | BaseComponent | BaseReactFragment
+type parentTypes = BasePage | BaseComponent | BaseReactFragment;
 
 /**
  * Returns the representation of a Component.
@@ -17,7 +17,7 @@ export class BaseComponent {
   readonly _parent: parentTypes;
   protected _locator: Locator | undefined;
 
-  constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
+  constructor({ parent, selector }: { parent: parentTypes; selector: string }) {
     this._selector = selector;
     this._parent = parent;
   }
@@ -59,13 +59,15 @@ export class BaseReactFragment {
    * The playwright Locator that represents this model
    * Since this model is a fragment, we simply get the parent's locator
    */
-  get pwLocator(): Locator { return this._parent.pwLocator; }
+  get pwLocator(): Locator {
+    return this._parent.pwLocator;
+  }
 }
 
 export type NamedComponentArgs = {
-  parent: parentTypes,
-  selector?: string
-}
+  parent: parentTypes;
+  selector?: string;
+};
 
 /**
  * Returns a representation of a named component.
@@ -75,11 +77,11 @@ export type NamedComponentArgs = {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export abstract class NamedComponent extends BaseComponent {
-  constructor({ parent, selector }: { parent: parentTypes, selector: string }) {
+  constructor({ parent, selector }: { parent: parentTypes; selector: string }) {
     super({ parent, selector });
     const requiredStaticProperties: string[] = ['defaultSelector'];
     requiredStaticProperties.forEach((requiredProp) => {
-      if (!Object.hasOwn(this.constructor, requiredProp)){
+      if (!Object.hasOwn(this.constructor, requiredProp)) {
         throw new Error(`A named component must declare a static ${requiredProp}!`);
       }
     });

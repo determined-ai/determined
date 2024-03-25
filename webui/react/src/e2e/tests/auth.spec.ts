@@ -8,7 +8,7 @@ test.describe('Authentication', () => {
     await dev.setServerAddress();
   });
   test.afterEach(async ({ page, auth }) => {
-    if (await page.title() !== SignIn.title) {
+    if ((await page.title()) !== SignIn.title) {
       await auth.logout();
     }
   });
@@ -45,8 +45,12 @@ test.describe('Authentication', () => {
     await expect(page).toHaveTitle(SignIn.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
-    expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain('Login failed');
-    expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain('invalid credentials');
+    expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
+      'Login failed',
+    );
+    expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain(
+      'invalid credentials',
+    );
     await signInPage.detAuth.submit.pwLocator.click();
     await expect(signInPage.detAuth.errors.alert.pwLocator).toHaveCount(2);
     await expect(signInPage.detAuth.errors.message.pwLocator).toHaveCount(2);

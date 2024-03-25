@@ -2,9 +2,9 @@
 
 Models represented in this folder are meant to be a one-to-one representations of objects from `src`.
 
-* `src/pages/SignIn.tsx` -> `src/e2e/models/pages/SignIn.ts`
-* `src/components/DeterminedAuth.tsx` -> `src/e2e/models/components/DeterminedAuth.ts`
-* `src/utils/error.ts` -> `src/e2e/models/utils/error.ts`
+- `src/pages/SignIn.tsx` -> `src/e2e/models/pages/SignIn.ts`
+- `src/components/DeterminedAuth.tsx` -> `src/e2e/models/components/DeterminedAuth.ts`
+- `src/utils/error.ts` -> `src/e2e/models/utils/error.ts`
 
 ## Why page models
 
@@ -35,7 +35,7 @@ Simply instantiate a new page inside a test case or fixture. The page will come 
 And here's a complete example with an `expect`:
 
 ```js
-await detAuth.username.pwLocator.fill(username)
+await detAuth.username.pwLocator.fill(username);
 await detAuth.password.pwLocator.fill(password);
 expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain('Login failed');
 ```
@@ -44,9 +44,9 @@ expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain
 
 First, if the model doesn't exist, create it. The file name and path in `src/e2e/models` with match the file name and path from it's counterpart in `src`.
 
-* Pages will inherit from `BasePage` and serve as the root of a component tree. Each page will need a `url`, and the `BasePage` class provides common properties for all pages like `goto`.
-* Named components and utilities will inherit form `NamedComponent`. This class is similar to `BaseComponent` but it enforces that a static `defaultSelector` be declared. Use this selector in the component's constructor as an alternative if `selector` isn't passed through.
-* If the component being represented returns a `React.Fragment`, inherit from the `BaseReactFragment` class
+- Pages will inherit from `BasePage` and serve as the root of a component tree. Each page will need a `url`, and the `BasePage` class provides common properties for all pages like `goto`.
+- Named components and utilities will inherit form `NamedComponent`. This class is similar to `BaseComponent` but it enforces that a static `defaultSelector` be declared. Use this selector in the component's constructor as an alternative if `selector` isn't passed through.
+- If the component being represented returns a `React.Fragment`, inherit from the `BaseReactFragment` class
 
 All pages and components support subcomponents using instance properties. Initalize new components using instances of BaseComponent. They should support selector and parent arguments.
 
@@ -83,10 +83,10 @@ export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-
 
 When creating page models, you'll most likely want to author test hooks into the `src` model.
 
-| Test Hook | Usage |
-| ----------------- | ------------------------------------------------------ |
-| `data-test-component='my-component'` | Belongs at the top level element wrapping the component |
-| `data-testid='my-componentid'` | Attributed to any *instances* of components or any intrinsic element |
+| Test Hook                            | Usage                                                                |
+| ------------------------------------ | -------------------------------------------------------------------- |
+| `data-test-component='my-component'` | Belongs at the top level element wrapping the component              |
+| `data-testid='my-componentid'`       | Attributed to any _instances_ of components or any intrinsic element |
 
 Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
 
@@ -98,4 +98,4 @@ Looking back to the exmaple with the imaginary `DeterminedTable`, we want to ena
 
 The component `DeterminedTable` would have `data-test-component='DetTable'` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
 
-Not every component needs a data-testid, but, in general, more is better. It's better to select for *"a duck named Hoffman"* rather than "a duck" or "Hoffman".
+Not every component needs a data-testid, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman".

@@ -23,10 +23,13 @@ export class AuthFixture {
 
   async login(
     waitForURL: string | RegExp | ((url: URL) => boolean) = /dashboard/,
-    { username = this.#USERNAME, password = this.#PASSWORD }: { username?: string, password?: string } = {},
+    {
+      username = this.#USERNAME,
+      password = this.#PASSWORD,
+    }: { username?: string; password?: string } = {},
   ): Promise<void> {
     const detAuth = this.signInPage.detAuth;
-    if (!await detAuth.pwLocator.isVisible()) {
+    if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');
       expect(detAuth.pwLocator).toBeVisible();
     }

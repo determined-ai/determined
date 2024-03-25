@@ -6,9 +6,8 @@ import { Locator, type Page } from '@playwright/test';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export abstract class BasePage {
-
   readonly _page: Page;
-  readonly abstract url: string;
+  abstract readonly url: string;
 
   constructor(page: Page) {
     this._page = page;
@@ -17,7 +16,9 @@ export abstract class BasePage {
   /**
    * The playwright top-level locator
    */
-  get pwLocator(): Locator { return this._page.locator(':root'); }
+  get pwLocator(): Locator {
+    return this._page.locator(':root');
+  }
 
   /**
    * Returns this so we can chain.
@@ -31,5 +32,4 @@ export abstract class BasePage {
     }
     return this;
   }
-
 }
