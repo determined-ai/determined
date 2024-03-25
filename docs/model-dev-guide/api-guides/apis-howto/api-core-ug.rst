@@ -551,6 +551,13 @@ code, but the profiler can be turned on and off at any point within the ``core.C
                core_context.profiler.off()
            train_batch(...)
 
+Then enable profiling in your experiment configuration file:
+
+.. code:: yaml
+
+   profiling:
+     enabled: true
+
 .. _core-native-profilers:
 
 Native Profilers
