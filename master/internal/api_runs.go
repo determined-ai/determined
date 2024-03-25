@@ -411,14 +411,12 @@ func (a *apiServer) MoveRuns(
 func cloneExperimentAndSetToRun(ctx context.Context, expID int32, runID int32) (int32, error) {
 	var cloneExpID int32
 
-	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time,
-		model_packages, archived, git_remote, git_commit,git_committer, git_commit_date, parent_id, owner_id,
-		progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count, best_trial_id,
-		unmanaged, external_experiment_id) 
-		SELECT state, config, model_definition, start_time, end_time, model_packages, archived, git_remote,
-		git_commit,git_committer, git_commit_date, parent_id, owner_id, progress, original_config, notes, 
-		job_id, 1 as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged, external_experiment_id
-		FROM experiments WHERE id = ? RETURNING id;`, expID).Scan(ctx, &cloneExpID)
+	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
+		parent_id, owner_id, progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count,
+		best_trial_id, unmanaged, external_experiment_id) 
+		SELECT state, config, model_definition, start_time, end_time, archived, parent_id, owner_id, progress,
+		original_config, notes, job_id, 1 as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged,
+		external_experiment_id FROM experiments WHERE id = ? RETURNING id;`, expID).Scan(ctx, &cloneExpID)
 	if err != nil {
 		return -1, err
 	}
