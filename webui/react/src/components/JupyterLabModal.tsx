@@ -457,8 +457,8 @@ const JupyterLabForm: React.FC<{
       <Form.Item initialValue={defaults?.name} label="Name" name="name">
         <Input placeholder="Name (optional)" />
       </Form.Item>
-      <Form.Item initialValue={defaults?.pool} label="Resource Pool" name="pool">
-        <Select allowClear placeholder="Pick the best option">
+      <Form.Item label="Resource Pool" name="pool">
+        <Select allowClear disabled={!selectedWorkspace} placeholder="Pick the best option">
           {boundResourcePools.map((pool) => (
             <Option key={pool.name} value={pool.name}>
               {pool.name}
