@@ -51,6 +51,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "hew": "npm:@hpe.com/hew@^0.6.33",
 ||||||| constructed merge base
     "hew": "github:determined-ai/hew#f4501aa743d3416beeab3297a1ae88ecf05d20b9",
@@ -77,6 +78,11 @@
 =======
     "hew": "github:determined-ai/hew#2ae8ac075784b1877eb37fd86e7cb5fc4236ec17",
 >>>>>>> Feedback + performance
+||||||| constructed merge base
+    "hew": "github:determined-ai/hew#2ae8ac075784b1877eb37fd86e7cb5fc4236ec17",
+=======
+    "hew": "github:determined-ai/hew#e8b5db5cff2bceb2284c51ad377722d259016867",
+>>>>>>> Update hew
     "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.20",
