@@ -1,8 +1,4 @@
-DROP TRIGGER IF EXISTS autoupdate_exp_best_trial_metrics;
-CREATE TRIGGER autoupdate_exp_best_trial_metrics
-AFTER UPDATE OF best_validation_id ON runs
-FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
-
+DROP TRIGGER autoupdate_exp_best_trial_single_run_no_validation_trigger ON runs;
 UPDATE experiments
 SET best_trial_id = NULL 
 WHERE 

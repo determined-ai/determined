@@ -1,21 +1,38 @@
-CREATE OR REPLACE FUNCTION autoupdate_exp_best_trial_metrics() RETURNS trigger AS $$
-BEGIN
-    WITH bt AS (
+CREATE OR REPLACE FUNCTION autoupdate_exp_best_trial_single_run_no_validation() RETURNS trigger AS $$
+BEGIN 
+    WITH rc AS (
+        SELECT COUNT(*) AS count
+        FROM runs
+        WHERE experiment_id = NEW.id),
+    br AS (
         SELECT id, best_validation_id 
         FROM runs 
-        WHERE experiment_id = NEW.experiment_id 
+        WHERE 
+            runs.experiment_id = NEW.id 
+            AND
+            best_validation_id IS NULL
         ORDER BY searcher_metric_value_signed LIMIT 1)
-    UPDATE experiments SET best_trial_id = bt.id FROM bt
-    WHERE experiments.id = NEW.experiment_id;
+    UPDATE 
+        experiments 
+    SET 
+        best_trial_id = br.id
+    FROM br, rc
+    WHERE
+        experiments.id = NEW.id
+        AND
+        rc.count = 1;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS autoupdate_exp_best_trial_metrics ON runs;
-CREATE TRIGGER autoupdate_exp_best_trial_metrics
-AFTER INSERT OR UPDATE OF best_validation_id ON runs
-FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
+DROP TRIGGER IF EXISTS autoupdate_exp_best_trial_single_run_no_validation_trigger ON experiments;
+CREATE TRIGGER autoupdate_exp_best_trial_single_run_no_validation_trigger 
+AFTER UPDATE OF state ON experiments
+FOR EACH ROW 
+    WHEN (NEW.state = 'COMPLETED' AND NEW.best_trial_id IS NULL)
+    EXECUTE PROCEDURE autoupdate_exp_best_trial_single_run_no_validation();
 
+-- backfill existing single-trial experiments without best_trial_id
 WITH single_run_experiments AS (
     SELECT experiment_id
     FROM runs r
