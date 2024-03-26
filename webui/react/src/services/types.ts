@@ -353,10 +353,6 @@ export interface PostUserParams {
   username: string;
 }
 
-export interface GetAgentsParams {
-  excludeSlots?: boolean;
-}
-
 export interface SetUserPasswordParams {
   password: string;
   userId: number;

@@ -205,11 +205,9 @@ export const getTelemetry = generateDetApi<EmptyParams, Api.V1GetTelemetryRespon
 
 /* Cluster */
 
-export const getAgents = generateDetApi<
-  Service.GetAgentsParams,
-  Api.V1GetAgentsResponse,
-  Type.Agent[]
->(Config.getAgents);
+export const getAgents = generateDetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]>(
+  Config.getAgents,
+);
 
 export const enableAgent = generateDetApi<string, Api.V1EnableAgentResponse, Type.Agent | null>(
   Config.enableAgent,
