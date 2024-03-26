@@ -22,15 +22,13 @@ type slotStats map[string]*agentv1.DeviceStats
 
 // SummarizeSlots for a single agent.
 func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
-	dTypeMap := make(slotStats)
-	dBrandMap := make(slotStats)
 	stats := agentv1.SlotStats{
 		DisabledSlots:    make([]string, 0),
 		SlotStates:       make(map[string]containerv1.State),
 		StateCounts:      make(map[string]int32),
 		DeviceTypeCounts: make(map[string]int32),
-		TypeStats:        slotStats{},
-		BrandStats:       slotStats{},
+		TypeStats:        make(slotStats),
+		BrandStats:       make(slotStats),
 	}
 
 	if slots == nil || len(slots) == 0 {
@@ -38,20 +36,20 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	}
 	for _, slot := range slots {
 		deviceType := slot.Device.Type.String()
-		deviceTypeStats, ok := dTypeMap[deviceType]
+		deviceTypeStats, ok := stats.TypeStats[deviceType]
 		if !ok {
 			deviceTypeStats = &agentv1.DeviceStats{
 				States: make(map[string]int32),
 			}
-			dTypeMap[deviceType] = deviceTypeStats
+			stats.TypeStats[deviceType] = deviceTypeStats
 		}
 		deviceBrand := slot.Device.Brand
-		deviceBrandStats, ok := dBrandMap[deviceBrand]
+		deviceBrandStats, ok := stats.BrandStats[deviceBrand]
 		if !ok {
 			deviceBrandStats = &agentv1.DeviceStats{
 				States: make(map[string]int32),
 			}
-			dBrandMap[deviceBrand] = deviceBrandStats
+			stats.BrandStats[deviceBrand] = deviceBrandStats
 		}
 		deviceBrandStats.Total++
 		deviceTypeStats.Total++
@@ -76,8 +74,6 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 			stats.DeviceTypeCounts[slot.Device.Type.String()]++
 		}
 	}
-	stats.BrandStats = dBrandMap
-	stats.TypeStats = dTypeMap
 	return &stats
 }
 
