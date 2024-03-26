@@ -73,7 +73,7 @@ func (db *PgDB) GetTrialProfilerMetricsBatches(
 ) (model.TrialProfilerMetricsBatchBatch, error) {
 	metricGroup := groupFromLabelName(labels.Name)
 
-	if metricGroup == "gpu" && labels.GpuUuid == "" {
+	if metricGroup == gpu && labels.GpuUuid == "" {
 		// If GPU metrics are requested without a GPU UUID, the Web UI expects metrics for all
 		// GPU UUIDs returned. This is done as a separate query to optimize fetch time.
 		return db.getTrialProfilerMetricsAllGPUs(labels.Name, labels.AgentId, labels.TrialId, offset, limit)
@@ -83,7 +83,7 @@ func (db *PgDB) GetTrialProfilerMetricsBatches(
 	jsonPath := "metrics"
 	if labels.AgentId != "" {
 		jsonPath += fmt.Sprintf("->'%s'", labels.AgentId)
-		if metricGroup == "gpu" && labels.GpuUuid != "" {
+		if metricGroup == gpu && labels.GpuUuid != "" {
 			jsonPath += fmt.Sprintf("->'%s'", labels.GpuUuid)
 		}
 	}
@@ -137,7 +137,7 @@ func (db *PgDB) getTrialProfilerMetricsAllGPUs(
 	var pBatches []*trialv1.TrialProfilerMetricsBatch
 
 	metricGroup := groupFromLabelName(metricName)
-	if metricGroup != "gpu" {
+	if metricGroup != gpu {
 		return pBatches, nil
 	}
 
@@ -175,9 +175,9 @@ OFFSET $3 LIMIT $4`, metricName, trialID, offset, limit)
 			// keys, just skip it.
 			continue
 		}
-		gpuUuid := ""
+		gpuUUID := ""
 		if res.Gpu != nil {
-			gpuUuid = *res.Gpu
+			gpuUUID = *res.Gpu
 		}
 		pBatch := &trialv1.TrialProfilerMetricsBatch{
 			Values:     []float32{*res.Value},
@@ -185,7 +185,7 @@ OFFSET $3 LIMIT $4`, metricName, trialID, offset, limit)
 			Labels: &trialv1.TrialProfilerMetricLabels{
 				TrialId:    trialID,
 				AgentId:    agentID,
-				GpuUuid:    gpuUuid,
+				GpuUuid:    gpuUUID,
 				Name:       metricName,
 				MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 			},

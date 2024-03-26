@@ -57,10 +57,10 @@ The following system metrics are tracked:
 -  *GPU free memory (bytes)*: amount of free memory available on a GPU device
 -  *Network throughput - sent (bytes/s)*: bytes sent system-wide
 -  *Network throughput (received)*: bytes received system-wide
--  *Disk IOPS (bytes/s)*: number of read + writes system-wide
+-  *Disk IOPS (operations/s)*: number of read + writes system-wide
 -  *Disk throughput - reads (bytes/s)*: bytes read system-wide
 -  *Disk throughput - writes (bytes/s)*: bytes written system-wide
--  *Host available memory (gigabytes)*: amount of memory available (not including swap) system-wide
+-  *Host available memory (bytes)*: amount of memory available (not including swap) system-wide
 -  *CPU utilization (percent)*: utilization of CPU cores, averaged across all cores in the system
 
 For distributed training, these metrics are collected for every agent. The data is broken down by

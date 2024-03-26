@@ -530,8 +530,13 @@ The Core API includes a profiling feature that monitors and records system metri
 training run. These metrics are recorded at specified intervals and sent to the master, allowing you
 to view them in the "Profiling" tab of your experiment in the WebUI.
 
-Use ``core_context.profiler`` to interact with the Core API profiler. It can be toggled on or off by
-calling ``core_context.profiler.on()`` and ``core_context.profiler.off()``.
+Use :class:`~determined.core.ProfilerContext` to interact with the Core API profiler. It can be
+toggled on or off by calling :meth:`~determined.core.ProfilerContext.on` and
+:meth:`~determined.core.ProfilerContext.off`. :meth:`~determined.core.ProfilerContext.on` accepts
+optional parameters that configure the rate (in seconds) at which system metrics are sampled
+(``sampling_interval``) and the number of samples to average before reporting
+(``samples_per_report``). By default, the profiler samples every 1 second and reports the aggregate
+of every 10 samples.
 
 The following code snippet demonstrates how to enable profiling for only a portion of your training
 code, but the profiler can be turned on and off at any point within the ``core.Context``.
