@@ -86,6 +86,7 @@ type IntegrationsConfig struct {
 
 // PachydermConfig stores fields needed to integrate Pachyderm with determined.
 type PachydermConfig struct {
+	// pachyderm daemon address.
 	Address string `json:"address"`
 }
 

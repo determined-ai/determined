@@ -3040,3 +3040,111 @@ func (a *apiServer) DeleteTensorboardFiles(
 
 	return &apiv1.DeleteTensorboardFilesResponse{}, nil
 }
+
+func getPachydermConfig(config map[string]interface{}, experimentID int32) (map[string]interface{}, error) {
+	integrationConfig, ok := config["integration"].(map[string]interface{})
+	// this should not return if proper defaults are used.
+	if !ok {
+		return nil, api.NotFoundErrs("'integration' config for experiment", fmt.Sprint(experimentID), true)
+	}
+
+	pachydermConfig, ok := integrationConfig["pachyderm"].(map[string]interface{})
+	if !ok {
+		return nil, api.NotFoundErrs("'pachyderm' integration config for experiment", fmt.Sprint(experimentID), true)
+	}
+	return pachydermConfig, nil
+}
+
+func (a *apiServer) GetPachydermRepoURL(
+	ctx context.Context, req *apiv1.GetPachydermRepoURLRequest,
+) (resp *apiv1.GetPachydermRepoURLResponse, err error) {
+	// ensure current user has access to this experiment
+	getResp, err := a.GetExperiment(
+		ctx,
+		&apiv1.GetExperimentRequest{
+			ExperimentId: req.ExperimentId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// extract configs from experiment response
+	pachydermConfig, err := getPachydermConfig(getResp.Config.AsMap(), req.ExperimentId)
+	if err != nil {
+		return nil, err
+	}
+	proxyConfig, ok := pachydermConfig["proxy"].(map[string]interface{})
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+
+	// get pachyderm console proxy address
+	host, ok := proxyConfig["host"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy.host' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+	port, ok := proxyConfig["port"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.proxy.port' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+	pachydermAddress := fmt.Sprintf("%s:%s", host, port)
+
+	// get input dataset information
+	project, ok := pachydermConfig["project"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.project' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+	repo, ok := pachydermConfig["repo"].(string)
+	if !ok {
+		return nil, api.NotFoundErrs(
+			"'pachyderm.repo' integration config for experiment",
+			fmt.Sprint(req.ExperimentId),
+			true,
+		)
+	}
+
+	pachydermURL := fmt.Sprintf(
+		"%s/lineage/%s/repos/%s",
+		pachydermAddress,
+		project,
+		repo,
+	)
+
+	previousCommit, _ := pachydermConfig["previous_commit"].(string)
+	if previousCommit != "" {
+		pachydermURL = fmt.Sprintf(
+			"%s/commit/%s",
+			pachydermURL,
+			previousCommit,
+		)
+	}
+
+	branch, _ := pachydermConfig["branch"].(string)
+	if branch != "" {
+		pachydermURL = fmt.Sprintf(
+			"%s/?branchId=%s",
+			pachydermURL,
+			branch,
+		)
+	}
+
+	// TODO (ET-9): validate construct pachyderm URL to ensure repository exists and user has access to it.
+	return &apiv1.GetPachydermRepoURLResponse{PachydermInputRepoUrl: pachydermURL}, nil
+}

@@ -21,6 +21,19 @@
       save_trial_latest: 1
     data:
       any: thing
+    integration:
+      pachyderm: 
+        pachd:
+          host: localhost
+          port: 80
+          token: tkn
+        proxy:
+          host: localhost
+          port: 80
+        branch: br
+        previous_commit: commit-hash
+        project: proj
+        repo: repo-name
     data_layer:
       # data_layer feature is gone, and the config is ignored
       container_storage_path: null
@@ -160,6 +173,9 @@
     checkpoint_policy: best
     checkpoint_storage: null
     data: {}
+    integration: {
+      pachyderm: null
+    }
     debug: false
     description: null
     entrypoint: model_def:MyTrial
