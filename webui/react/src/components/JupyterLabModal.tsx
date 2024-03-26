@@ -349,18 +349,18 @@ const JupyterLabForm: React.FC<{
 }> = ({ form, formId, currentWorkspace, defaults, lockedWorkspace, setWorkspace, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
-  const selectedWorkspace = Form.useWatch('workspaceId', form);
+  const selectedWorkspaceId = Form.useWatch('workspaceId', form);
 
   const resourcePools = useObservable(clusterStore.resourcePools);
   const boundResourcePoolsMap = useObservable(workspaceStore.boundResourcePoolsMap());
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
-    if (!Loadable.isLoaded(resourcePools) || !boundResourcePoolsMap || !selectedWorkspace)
+    if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId)
       return [];
     return resourcePools.data.filter(
-      (rp) => boundResourcePoolsMap.get(selectedWorkspace)?.includes(rp.name),
+      (rp) => boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
     );
-  }, [resourcePools, boundResourcePoolsMap, selectedWorkspace]);
+  }, [resourcePools, boundResourcePoolsMap, selectedWorkspaceId]);
 
   const selectedPoolName = Form.useWatch('pool', form);
 
@@ -394,8 +394,8 @@ const JupyterLabForm: React.FC<{
   }, [resourceInfo, form]);
 
   useEffect(() => {
-    selectedWorkspace && workspaceStore.fetchAvailableResourcePools(selectedWorkspace);
-  }, [selectedWorkspace]);
+    selectedWorkspaceId && workspaceStore.fetchAvailableResourcePools(selectedWorkspaceId);
+  }, [selectedWorkspaceId]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -458,7 +458,7 @@ const JupyterLabForm: React.FC<{
         <Input placeholder="Name (optional)" />
       </Form.Item>
       <Form.Item label="Resource Pool" name="pool">
-        <Select allowClear disabled={!selectedWorkspace} placeholder="Pick the best option">
+        <Select allowClear disabled={!selectedWorkspaceId} placeholder="Pick the best option">
           {boundResourcePools.map((pool) => (
             <Option key={pool.name} value={pool.name}>
               {pool.name}
