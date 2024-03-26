@@ -241,6 +241,7 @@ export interface Agent {
   registeredTime: number;
   resourcePools: string[];
   slots?: SlotsRecord;
+  slotStats?: Api.V1SlotStats;
   resources: Resource[];
 }
 
