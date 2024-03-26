@@ -1,4 +1,5 @@
 import Alert from 'hew/Alert';
+import { MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import SplitPane, { Pane } from 'hew/SplitPane';
@@ -7,7 +8,6 @@ import React, { useMemo } from 'react';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { MIN_COLUMN_WIDTH } from 'pages/F_ExpList/glide-table/columns';
 import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 

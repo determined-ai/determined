@@ -1,10 +1,10 @@
 import Button from 'hew/Button';
+import { DirectionType, Sort, validSort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Select from 'hew/Select';
 import { Loadable } from 'hew/utils/loadable';
 
-import { DirectionType, Sort, validSort } from 'pages/F_ExpList/glide-table/GlideTable';
 import { V1ColumnType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 

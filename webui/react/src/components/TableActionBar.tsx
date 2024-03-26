@@ -1,5 +1,6 @@
 import Button from 'hew/Button';
 import Column from 'hew/Column';
+import { Sort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -18,7 +19,6 @@ import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import ColumnPickerMenu from 'pages/F_ExpList/ColumnPickerMenu';
 import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { Sort } from 'pages/F_ExpList/glide-table/GlideTable';
 import {
   activateExperiments,
   archiveExperiments,

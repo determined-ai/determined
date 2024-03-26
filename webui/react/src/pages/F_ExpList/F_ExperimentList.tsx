@@ -1,6 +1,25 @@
 import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
+import {
+  ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultSelectionColumn,
+  defaultTextColumn,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
+} from 'hew/DataGrid/columns';
+import DataGrid, {
+  DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
@@ -72,25 +91,6 @@ import {
   settingsConfigGlobal,
   settingsPathForProject,
 } from './F_ExperimentList.settings';
-import {
-  ColumnDef,
-  DEFAULT_COLUMN_WIDTH,
-  defaultDateColumn,
-  defaultNumberColumn,
-  defaultSelectionColumn,
-  defaultTextColumn,
-  MIN_COLUMN_WIDTH,
-  MULTISELECT,
-} from './glide-table/columns';
-import GlideTable, {
-  DataGridHandle,
-  HandleSelectionChangeType,
-  RangelessSelectionType,
-  SelectionType,
-  Sort,
-  validSort,
-  ValidSort,
-} from './glide-table/GlideTable';
 
 interface Props {
   project: Project;
@@ -1099,7 +1099,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <GlideTable<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
                 columns={columns}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}

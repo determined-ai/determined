@@ -1,5 +1,20 @@
 import { CellClickedEventArgs, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
+import {
+  ColumnDef,
+  ColumnDefs,
+  DEFAULT_COLUMN_WIDTH,
+  getHeatmapColor,
+  HeatmapProps,
+} from 'hew/DataGrid/columns';
+import {
+  LINK_CELL,
+  State,
+  STATE_CELL,
+  TAGS_CELL,
+  TEXT_CELL,
+  USER_AVATAR_CELL,
+} from 'hew/DataGrid/custom-renderers/index';
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
@@ -10,21 +25,6 @@ import { AnyMouseEvent } from 'utils/routes';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
 
-import {
-  ColumnDef,
-  ColumnDefs,
-  DEFAULT_COLUMN_WIDTH,
-  getHeatmapColor,
-  HeatmapProps,
-} from './glide-table/columns';
-import {
-  LINK_CELL,
-  State,
-  STATE_CELL,
-  TAGS_CELL,
-  TEXT_CELL,
-  USER_AVATAR_CELL,
-} from './glide-table/custom-renderers';
 import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu

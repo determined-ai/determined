@@ -1,5 +1,6 @@
 import { GridCell } from '@glideapps/glide-data-grid';
 import Button from 'hew/Button';
+import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -13,7 +14,6 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import usePermissions from 'hooks/usePermissions';
-import { ContextMenuCompleteHandlerProps } from 'pages/F_ExpList/glide-table/contextMenu';
 import { handlePath } from 'routes/utils';
 import {
   activateExperiment,
