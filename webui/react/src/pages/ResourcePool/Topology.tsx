@@ -71,6 +71,7 @@ const Topology: React.FC<PropsWithChildren<Props>> = ({ nodes }) => {
       </Section>
     );
   }
+  // TODO: pull in slots from /agents.
   return (
     <Section title="Topology">
       <div className={`${css.mainContainer} ${css.nodesContainer}`}>
