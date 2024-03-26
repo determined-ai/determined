@@ -1169,6 +1169,18 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, string(latestExpected), string(latestActual))
 
 	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
+
+	// when single-trial experiment with no validation metrics completes
+	// ensure that the only trial is the best trial.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", noValidationsExp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Experiments[1].BestTrial)
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 }
 
 func TestSearchExperimentsFilters(t *testing.T) {
