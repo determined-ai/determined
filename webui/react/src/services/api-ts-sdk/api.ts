@@ -12471,7 +12471,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId TODO: add a summary flag? The id of the agent.
+         * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12884,7 +12884,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId TODO: add a summary flag? The id of the agent.
+         * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13092,7 +13092,7 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         /**
          * 
          * @summary Get all the slots for an agent.
-         * @param {string} agentId TODO: add a summary flag? The id of the agent.
+         * @param {string} agentId The id of the agent.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13274,7 +13274,7 @@ export class ClusterApi extends BaseAPI {
     /**
      * 
      * @summary Get all the slots for an agent.
-     * @param {string} agentId TODO: add a summary flag? The id of the agent.
+     * @param {string} agentId The id of the agent.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
