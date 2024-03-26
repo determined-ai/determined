@@ -13,7 +13,7 @@ test.describe('Authentication', () => {
   test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
     await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click()
-    await userManagementPage.nav.sidebar.headerDropdownMenu.admin.pwLocator.click()
+    await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click()
   });
 
   // test('Redirect to the target URL after login', async ({ page, auth }) => {
