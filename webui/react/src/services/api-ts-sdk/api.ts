@@ -12318,10 +12318,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options: any = {}): FetchArgs {
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -12358,6 +12359,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (excludeSlots !== undefined) {
                 localVarQueryParameter['excludeSlots'] = excludeSlots
+            }
+            
+            if (excludeContainers !== undefined) {
+                localVarQueryParameter['excludeContainers'] = excludeContainers
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12804,11 +12809,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13047,11 +13053,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options)(fetch, basePath);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(fetch, basePath);
         },
         /**
          * 
@@ -13220,12 +13227,13 @@ export class ClusterApi extends BaseAPI {
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
      * @param {string} [label] This field has been deprecated and will be ignored.
      * @param {boolean} [excludeSlots] exclude slots.
+     * @param {boolean} [excludeContainers] exclude containers.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, options)(this.fetch, this.basePath)
+    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
     }
     
     /**

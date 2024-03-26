@@ -482,7 +482,7 @@ export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
   request: () =>
-    detApi.Cluster.getAgents(undefined, undefined, undefined, undefined, undefined, true),
+    detApi.Cluster.getAgents(undefined, undefined, undefined, undefined, undefined, true, true),
 };
 
 export const enableAgent: DetApi<string, Api.V1EnableAgentResponse, Type.Agent | null> = {

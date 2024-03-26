@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -102,7 +103,7 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
-	if len(resp.Agents) == 0 {
+	if len(resp.Agents) != 0 {
 		baseAgent := resp.Agents[0]
 		var baseSlot *agentv1.Slot
 		for _, slot := range baseAgent.Slots {
@@ -112,8 +113,8 @@ func (a *apiServer) GetAgents(
 		if baseSlot == nil {
 			return nil, nil
 		}
-		// newAgents := rm.ScaleUpAgents(baseAgent, baseSlot, 2000, 512)
-		// resp.Agents = newAgents
+		newAgents := rm.ScaleUpAgents(baseAgent, baseSlot, 2000, 512)
+		resp.Agents = newAgents
 	}
 
 	// PERF: can perhaps be done before RBAC.
@@ -121,6 +122,9 @@ func (a *apiServer) GetAgents(
 		agent.SlotStats = SummarizeSlots(agent.Slots)
 		if req.ExcludeSlots {
 			agent.Slots = nil
+		}
+		if req.ExcludeContainers {
+			agent.Containers = nil
 		}
 	}
 

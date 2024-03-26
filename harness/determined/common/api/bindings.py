@@ -16887,6 +16887,7 @@ def get_GetAgent(
 def get_GetAgents(
     session: "api.BaseSession",
     *,
+    excludeContainers: "typing.Optional[bool]" = None,
     excludeSlots: "typing.Optional[bool]" = None,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
@@ -16896,6 +16897,7 @@ def get_GetAgents(
 ) -> "v1GetAgentsResponse":
     """Get a set of agents from the cluster.
 
+    - excludeContainers: exclude containers.
     - excludeSlots: exclude slots.
     - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
@@ -16913,6 +16915,7 @@ denote number of agents to skip from the end before returning results.
  - SORT_BY_TIME: Returns agents sorted by time.
     """
     _params = {
+        "excludeContainers": str(excludeContainers).lower() if excludeContainers is not None else None,
         "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
         "label": label,
         "limit": limit,
