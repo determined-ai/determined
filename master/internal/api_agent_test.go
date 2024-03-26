@@ -53,7 +53,8 @@ func TestSummarizeSlots_VariousStates(t *testing.T) {
 	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CPU.String()].Total))
 	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CUDA.String()].Disabled))
 	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CPU.String()].Draining))
-	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CUDA.String()].States[containerv1.State_STATE_RUNNING.String()]))
+	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CUDA.String()].
+		States[containerv1.State_STATE_RUNNING.String()]))
 
 	assert.Equal(t, 2, int(stats.BrandStats["Nvidia"].Total))
 	assert.Equal(t, 1, int(stats.BrandStats["Intel"].Total))
