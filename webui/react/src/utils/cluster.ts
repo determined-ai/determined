@@ -6,17 +6,29 @@ export const getSlotContainerStates = (
   resourcePoolName?: string,
 ): ResourceState[] => {
   const slotContainerStates = agents
-    .filter((agent) => (resourcePoolName ? agent.resourcePools?.includes(resourcePoolName) : true))
-    .map((agent) => {
-      const ids = Object.keys(agent.slotStats?.deviceTypeCounts ?? {})
-        .map((deviceType) => deviceType.replace('TYPE_', ''))
-        .filter((deviceType) => deviceType === resourceType);
-      const states = ids
-        .map((id) => agent.slotStats?.slotStates?.[id]?.replace('STATE_', '') as ResourceState)
-        .flatMap((state) => (state === undefined ? [] : [state]));
-      return states;
+    .filter((agent) => {
+      if (resourcePoolName === undefined) {
+        return true;
+      }
+      for (const agentResourcePool of agent.resourcePools) {
+        if (!resourcePoolName.includes(agentResourcePool)) {
+          return false;
+        }
+      }
+      return true;
     })
-    .flat();
-
+    .flatMap((agent) => {
+      const arr: ResourceState[] = Object.entries(agent.slotStats?.typeStats ?? {})
+        .filter(([type]) => {
+          return resourceType === ResourceType.ALL ? true : type === `TYPE_${resourceType}`;
+        })
+        .flatMap(([, val]) => {
+          const tempArr = Object.entries(val.states ?? {}).flatMap(([state, count]) => {
+            return Array(count).fill(state.replace('STATE_', ''));
+          });
+          return tempArr;
+        });
+      return arr;
+    });
   return slotContainerStates;
 };
