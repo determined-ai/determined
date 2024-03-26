@@ -128,7 +128,7 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
-	// api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
+	api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
 	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
