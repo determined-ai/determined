@@ -26,7 +26,7 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 		BrandStats: make(slotStats),
 	}
 
-	if slots == nil || len(slots) == 0 {
+	if len(slots) == 0 {
 		return &stats
 	}
 	for _, slot := range slots {
