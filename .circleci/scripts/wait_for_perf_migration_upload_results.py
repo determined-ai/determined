@@ -20,15 +20,16 @@ def _wait_for_master() -> None:
 
     # 2 hours is the most a migration can take, with this setup.
     # If a migration takes longer than that we have hit an issue a customer will likely hit too.
+    time_start = time.time()
     for i in range(2 * 60 * 60):
         try:
             r = sess.get("info")
             if r.status_code == requests.codes.ok:
+                print(f"Master is up and available after {time.time() - time_start} seconds")
                 return
         except api.errors.MasterNotFoundException:
             pass
-        if i % 60 == 0:
-            print("Waiting for master to be available...")
+        print(f"Waiting for master to be available ({time.time() - time_start} seconds elapsed)")
         time.sleep(1)
     raise ConnectionError("Timed out connecting to Master")
 
