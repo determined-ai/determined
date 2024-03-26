@@ -302,7 +302,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
 
     items.push({
       children: (
-        <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
+        <TrialDetailsProfiles trial={trialDetails as TrialDetails} />
       ),
       disabled: experiment.unmanaged,
       key: TabType.Profiler,
