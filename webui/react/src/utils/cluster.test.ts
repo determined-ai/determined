@@ -2,60 +2,54 @@ import * as Type from 'types';
 
 import * as utils from './cluster';
 
-const AGENTS = [
+// DISCLAIMER
+// Blank unnused fields for this test to reduce complexity,
+// so this whole data is not necessarily accurate other than required fields
+// Required fields: `resourcePools`, `slotStats.typeStats`
+const DEFAULT = 'default';
+const COMPUTE_POOL = 'compute-pool';
+const AGENTS: Type.Agent[] = [
   {
-    id: 'Calebs-MacBook-Pro.local',
-    registeredTime: 1637797899,
-    resourcePools: ['aux-pool'],
-    resources: [
-      {
-        container: {
-          id: '',
-          state: Type.ResourceState.Assigned,
-        },
-        enabled: true,
-        id: '0',
-        name: 'Intel(R) Core(TM) i9-9980HK CPU @ 2.40GHz x 8 physical cores',
-        type: Type.ResourceType.CPU,
-        uuid: 'GenuineIntel',
+    enabled: true,
+    id: '',
+    registeredTime: 0,
+    resourcePools: [DEFAULT],
+    resources: [],
+    slotStats: {
+      brandStats: {},
+      deviceTypeCounts: {},
+      disabledSlots: [],
+      drainingCount: 0,
+      slotStates: {},
+      stateCounts: {},
+      typeStats: {
+        TYPE_CPU: { disabled: 0, draining: 0, states: { STATE_RUNNING: 1 }, total: 2 },
       },
-    ],
+    },
   },
   {
-    id: 'i-05caeddde60b7bb2a',
-    registeredTime: 1638250166,
-    resourcePools: ['compute-pool'],
-    resources: [
-      {
-        container: {
-          id: '9d6eaaa0-5ffb-491f-8fc8-3970a2a2b2b8',
-          state: Type.ResourceState.Running,
+    enabled: true,
+    id: '',
+    registeredTime: 0,
+    resourcePools: [COMPUTE_POOL],
+    resources: [],
+    slotStats: {
+      brandStats: {},
+      deviceTypeCounts: {},
+      disabledSlots: [],
+      drainingCount: 0,
+      slotStates: {},
+      stateCounts: {},
+      typeStats: {
+        TYPE_CPU: { disabled: 0, draining: 0, states: { STATE_RUNNING: 2 }, total: 2 },
+        TYPE_CUDA: {
+          disabled: 0,
+          draining: 0,
+          states: { STATE_PULLING: 3, STATE_RUNNING: 1 },
+          total: 5,
         },
-        enabled: true,
-        id: '0',
-        name: 'Tesla K80',
-        type: Type.ResourceType.CUDA,
-        uuid: 'GPU-d3a502f5-2637-3e09-6a6c-b56efa07288e',
       },
-    ],
-  },
-  {
-    id: 'i-08c04ab8ca93366c4',
-    registeredTime: 1638250636,
-    resourcePools: ['compute-pool'],
-    resources: [
-      {
-        container: {
-          id: '0192e222-51a0-11ec-bf63-0242ac130002',
-          state: Type.ResourceState.Terminated,
-        },
-        enabled: false,
-        id: '1',
-        name: 'Tesla K80',
-        type: Type.ResourceType.CUDA,
-        uuid: 'CPU-0b4ced76-51a0-11ec-bf63-0242ac130002',
-      },
-    ],
+    },
   },
 ];
 
@@ -63,25 +57,70 @@ describe('Cluster Utilities', () => {
   describe('getSlotContainerStates', () => {
     it('should convert all agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.ALL);
-      const expected = [Type.ResourceState.Assigned, Type.ResourceState.Running];
+      const expected = [
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Running,
+      ];
+      expect(result).toStrictEqual(expected);
+    });
+
+    it('should convert all agents in `compute-pool` into slot container states', () => {
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.ALL, COMPUTE_POOL);
+      const expected = [
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Running,
+      ];
       expect(result).toStrictEqual(expected);
     });
 
     it('should convert enabled CPU agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU);
-      const expected = [Type.ResourceState.Assigned];
+      const expected = [
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+      ];
       expect(result).toStrictEqual(expected);
     });
 
-    it('should convert enabled GPU agents into slot container states', () => {
+    it('should convert enabled GPU (CUDA) agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA);
-      const expected = [Type.ResourceState.Running];
+      const expected: Type.ResourceState[] = [
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Running,
+      ];
       expect(result).toStrictEqual(expected);
     });
 
-    it('should convert specified resource pool agents into container states', () => {
-      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CUDA, 'compute-pool');
-      const expected = [Type.ResourceState.Running];
+    it('should convert enabled UNSPECIFIED agents into slot container states', () => {
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.UNSPECIFIED);
+      const expected: Type.ResourceState[] = [];
+      expect(result).toStrictEqual(expected);
+    });
+
+    it('should convert `default` resource pool agents into container states', () => {
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU, DEFAULT);
+      const expected: Type.ResourceState[] = [Type.ResourceState.Running];
+      expect(result).toStrictEqual(expected);
+    });
+
+    it('should convert `compute-pool` resource pool agents into container states', () => {
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU, COMPUTE_POOL);
+      const expected: Type.ResourceState[] = [
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+      ];
       expect(result).toStrictEqual(expected);
     });
   });
