@@ -251,4 +251,27 @@
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
    <master-config-reference>`.
 
+-  ``additional_resource_managers``: This section is a list of additional resource managers for if
+   you want to launch jobs in multiple Kubernetes clusters. See :ref:`additional_resource_managers
+   <master-config-additional-resource-managers>` for information on this feature. An example
+   configuration is provided in the ``values.yaml`` file.
+
+   -  ``resource_manager``: The resource manager configuration. See :ref:`resource_manager
+      <master-config-resource-manager>` for available configuration options.
+
+      -  ``kubeconfig_secret_name``: The name of the secret that contains the resource manager's
+         kubeconfig. This kubeconfig will be used to connect to the Kubernetes cluster and launch
+         tasks. Note some kubeconfig's will require additional work or modification to get working.
+         For example some kubeconfig's reference paths of files so if these would be used the files
+         that the kubeconfig reference will need to be bind mounted into the container or the file
+         path will need its data encoded into the kubeconfig. Other kubeconfig (such as GKE) could
+         need plugins installed into the Determined master container and have certain credential
+         files bind mounted. (*Required*)
+
+      -  ``kubeconfig_secret_value``: The name of the secret that contains the resource manager's
+         kubeconfig. (*Required*)
+
+   -  ``resource_pools``: The resource pool configuration. See :ref:`resource_pools
+      <cluster-resource-pools>` for available configuration options.
+
 .. include:: ../../_shared/note-dtrain-learn-more.txt
