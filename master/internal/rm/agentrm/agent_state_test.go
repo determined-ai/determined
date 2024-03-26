@@ -49,7 +49,7 @@ func TestAgentStatePersistence(t *testing.T) {
 	require.NoError(t, err)
 
 	// Fake an agent, test adding it to the db.
-	state := newAgentState(agentID(uuid.NewString()), 64)
+	state := newAgentState(aproto.ID(uuid.NewString()), 64)
 	state.handler = &agent{}
 	state.resourcePoolName = "compute"
 	devices := []device.Device{
@@ -187,7 +187,7 @@ func TestAgentStatePersistence(t *testing.T) {
 
 func TestClearAgentStates(t *testing.T) {
 	ctx := context.Background()
-	agentIDs := []agentID{agentID(uuid.NewString()), agentID(uuid.NewString())}
+	agentIDs := []aproto.ID{aproto.ID(uuid.NewString()), aproto.ID(uuid.NewString())}
 	for _, agentID := range agentIDs {
 		_, err := db.Bun().NewInsert().Model(&agentSnapshot{
 			AgentID:               agentID,
@@ -326,7 +326,7 @@ func Test_agentState_checkAgentStartedDevicesMatch(t *testing.T) {
 
 func TestSlotStates(t *testing.T) {
 	rpName := "test"
-	state := newAgentState(agentID(uuid.NewString()), 64)
+	state := newAgentState(aproto.ID(uuid.NewString()), 64)
 	state.handler = &agent{}
 	state.resourcePoolName = rpName
 	devices := []device.Device{

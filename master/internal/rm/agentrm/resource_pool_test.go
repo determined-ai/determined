@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -160,7 +161,7 @@ func TestScalingInfoAgentSummary(t *testing.T) {
 	})
 
 	// Test removing agents.
-	delete(rp.agentStatesCache, agentID("agent1"))
+	delete(rp.agentStatesCache, aproto.ID("agent1"))
 	updated = rp.updateScalingInfo()
 	assert.Check(t, updated)
 	assert.DeepEqual(t, *rp.scalingInfo, sproto.ScalingInfo{
