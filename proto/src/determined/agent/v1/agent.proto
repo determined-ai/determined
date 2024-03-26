@@ -9,6 +9,18 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
+// DeviceStats contains statistics about a single device type.
+message DeviceStats {
+  // The number of slots in each state if there's an associated container.
+  map<string, int32> states = 1;
+  // the number of draining slots.
+  int32 draining = 2;
+  // the number of disabled slots.
+  int32 disabled = 3;
+  // the total number of slots.
+  int32 total = 4;
+}
+
 message SlotStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [
@@ -16,7 +28,9 @@ message SlotStats {
       "device_type_counts",
       "draining_count",
       "slot_states",
-      "disabled_slots"
+      "disabled_slots",
+      "type_stats",
+      "brand_stats"
     ] }
   };
   // The number of slots in each state.
@@ -31,6 +45,10 @@ message SlotStats {
   map<string, determined.container.v1.State> slot_states = 4;
   // Set of slot ids that are disabled.
   repeated string disabled_slots = 5;
+  // Map of device type to device stats.
+  map<string, DeviceStats> type_stats = 6;
+  // Map of device brands to device stats.
+  map<string, DeviceStats> brand_stats = 7;
 }
 
 // Agent is a pool of resources where containers are run.

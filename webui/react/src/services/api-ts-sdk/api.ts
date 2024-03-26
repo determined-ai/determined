@@ -2550,6 +2550,37 @@ export interface V1Device {
     type?: Devicev1Type;
 }
 /**
+ * DeviceStats contains statistics about a single device type.
+ * @export
+ * @interface V1DeviceStats
+ */
+export interface V1DeviceStats {
+    /**
+     * The number of slots in each state if there's an associated container.
+     * @type {{ [key: string]: number; }}
+     * @memberof V1DeviceStats
+     */
+    states?: { [key: string]: number; };
+    /**
+     * the number of draining slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    draining?: number;
+    /**
+     * the number of disabled slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    disabled?: number;
+    /**
+     * the total number of slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    total?: number;
+}
+/**
  * Disable the agent.
  * @export
  * @interface V1DisableAgentRequest
@@ -9833,6 +9864,18 @@ export interface V1SlotStats {
      * @memberof V1SlotStats
      */
     disabledSlots: Array<string>;
+    /**
+     * Map of device type to device stats.
+     * @type {{ [key: string]: V1DeviceStats; }}
+     * @memberof V1SlotStats
+     */
+    typeStats: { [key: string]: V1DeviceStats; };
+    /**
+     * Map of device brands to device stats.
+     * @type {{ [key: string]: V1DeviceStats; }}
+     * @memberof V1SlotStats
+     */
+    brandStats: { [key: string]: V1DeviceStats; };
 }
 /**
  * Describe one SSO provider.
