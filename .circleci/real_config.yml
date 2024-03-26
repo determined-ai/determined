@@ -1522,7 +1522,7 @@ jobs:
       - react-get-deps
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: cd webui/react && ./run-mocked-playwright
+      - run: cd webui/react && ./run-mocked-playwright.sh
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
