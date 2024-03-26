@@ -12,11 +12,7 @@ import "determined/device/v1/device.proto";
 // DeviceStats contains statistics about a single device group.
 message DeviceStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [
-      "draining",
-      "disabled",
-      "total"
-    ] }
+    json_schema: { required: [ "draining", "disabled", "total" ] }
   };
   // The number of slots in each state if there's an associated container.
   map<string, int32> states = 1;
@@ -31,10 +27,7 @@ message DeviceStats {
 // SlotStats contains statistics about a set of slots.
 message SlotStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [
-      "type_stats",
-      "brand_stats"
-    ] }
+    json_schema: { required: [ "type_stats", "brand_stats" ] }
   };
   // Map of device type to device stats.
   map<string, DeviceStats> type_stats = 1;
@@ -71,7 +64,6 @@ message Agent {
   repeated string resource_pools = 6;
   // The slot stats for this agent.
   SlotStats slot_stats = 11;
-
 }
 
 // Slot wraps a single device on the agent.
