@@ -266,10 +266,8 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
   });
 
   const scrollToTop = useCallback(() => {
-    if (gridRef.current) {
-      gridRef.current.scrollTo(0, 0);
-    }
-  }, [gridRef]);
+    gridRef.current?.scrollTo(0, 0);
+  }, []);
 
   const getRowThemeOverride: DataEditorProps['getRowThemeOverride'] = React.useCallback(
     (row: number): Partial<Theme> | undefined => {
@@ -345,24 +343,19 @@ export function GlideTable<T, ContextAction = void | string, ContextActionData =
         _: () => loadingCell,
         Loaded: (rowData) => {
           let cell: GridCell | undefined = columns[col]?.renderer?.(rowData, row);
-          if (cell) {
-            switch (cell.kind) {
-              case GridCellKind.Text:
-              case GridCellKind.Number:
-                if (!cell.displayData || cell.displayData === '') {
-                  cell = {
-                    ...cell,
-                    displayData: '-',
-                    themeOverride: {
-                      ...cell.themeOverride,
-                      textDark: getThemeVar('surfaceOnWeak'),
-                    },
-                  };
-                }
-                break;
-              default:
-                break;
-            }
+          if (
+            cell &&
+            (cell.kind === GridCellKind.Text || cell.kind === GridCellKind.Number) &&
+            !cell.displayData
+          ) {
+            cell = {
+              ...cell,
+              displayData: '-',
+              themeOverride: {
+                ...cell.themeOverride,
+                textDark: getThemeVar('surfaceOnWeak'),
+              },
+            };
           }
           return cell || loadingCell;
         }, // TODO correctly handle error state
