@@ -121,12 +121,12 @@ get-playwright-ci:
 
 .PHONY: mb-start
 mb-start:
-	npm install -g mb
-	mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
+	npm install mb
+	npx mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
 
 .PHONY: mb-stop
 mb-stop:
-	mb stop
+	npx mb stop
 
 .PHONY: mb-save-imposters
 mb-save-imposters:
