@@ -9,8 +9,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
-// DeviceStats contains statistics about a single device type.
+// DeviceStats contains statistics about a single device group.
 message DeviceStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [
+      "draining",
+      "disabled",
+      "total"
+    ] }
+  };
   // The number of slots in each state if there's an associated container.
   map<string, int32> states = 1;
   // the number of draining slots.
@@ -21,40 +28,24 @@ message DeviceStats {
   int32 total = 4;
 }
 
+// SlotStats contains statistics about a set of slots.
 message SlotStats {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [
-      "state_counts",
-      "device_type_counts",
-      "draining_count",
-      "slot_states",
-      "disabled_slots",
       "type_stats",
       "brand_stats"
     ] }
   };
-  // The number of slots in each state.
-  // map<determined.container.v1.State, int32> state_counts = 1;
-  map<string, int32> state_counts = 1;
-  // The number of slots in each device type.
-  // map<determined.device.v1.Type, int32> device_type_counts = 1;
-  map<string, int32> device_type_counts = 2;
-  // The number of slots that are draining.
-  int32 draining_count = 3;
-  // Map of slot ids to container state, if there is an associated container.
-  map<string, determined.container.v1.State> slot_states = 4;
-  // Set of slot ids that are disabled.
-  repeated string disabled_slots = 5;
   // Map of device type to device stats.
-  map<string, DeviceStats> type_stats = 6;
+  map<string, DeviceStats> type_stats = 1;
   // Map of device brands to device stats.
-  map<string, DeviceStats> brand_stats = 7;
+  map<string, DeviceStats> brand_stats = 2;
 }
 
 // Agent is a pool of resources where containers are run.
 message Agent {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema: { required: [ "id", "slot_stats" ] }
   };
   // The unique id of the agent.
   string id = 1;
@@ -78,30 +69,9 @@ message Agent {
   // The name of the resource pools the agent is in. Only slurm can contain
   // multiples.
   repeated string resource_pools = 6;
-
   // The slot stats for this agent.
   SlotStats slot_stats = 11;
 
-}
-
-// Slot wraps a single device on the agent.
-message SlimSlot {
-  // The unqiue id of the slot for a given agent.
-  string id = 1;
-  // The individual resource this slot wraps.
-  optional determined.device.v1.Device device = 2;
-  // Flag notifying if containers can be scheduled on this slot.
-  bool enabled = 3;
-  // Container that is currently running on this agent. It is unset if there is
-  // no container currently running on this slot.
-  optional determined.container.v1.Container container = 4;
-  // Flag notifying if this slot is in the draining mode: current containers
-  // will be allowed to finish but no new ones will be scheduled.
-  bool draining = 5;
-  // The state of the container running on this slot.
-  determined.container.v1.State container_state = 6;
-  // The type of the device this slot wraps.
-  determined.device.v1.Type device_type = 7;
 }
 
 // Slot wraps a single device on the agent.

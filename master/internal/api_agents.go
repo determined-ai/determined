@@ -15,20 +15,15 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
 
 type slotStats map[string]*agentv1.DeviceStats
 
-// SummarizeSlots for a single agent.
+// SummarizeSlots a set of slots.
 func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 	stats := agentv1.SlotStats{
-		DisabledSlots:    make([]string, 0),
-		SlotStates:       make(map[string]containerv1.State),
-		StateCounts:      make(map[string]int32),
-		DeviceTypeCounts: make(map[string]int32),
-		TypeStats:        make(slotStats),
-		BrandStats:       make(slotStats),
+		TypeStats:  make(slotStats),
+		BrandStats: make(slotStats),
 	}
 
 	if slots == nil || len(slots) == 0 {
@@ -57,21 +52,14 @@ func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
 		if !slot.Enabled {
 			deviceBrandStats.Disabled++
 			deviceTypeStats.Disabled++
-			stats.DisabledSlots = append(stats.DisabledSlots, slot.Id)
 		}
 		if slot.Draining {
 			deviceBrandStats.Draining++
 			deviceTypeStats.Draining++
-			stats.DrainingCount++
 		}
 		if slot.Container != nil {
 			deviceBrandStats.States[slot.Container.State.String()]++
 			deviceTypeStats.States[slot.Container.State.String()]++
-			stats.StateCounts[slot.Container.State.String()]++
-			stats.SlotStates[slot.Id] = slot.Container.State
-		}
-		if slot.Device != nil {
-			stats.DeviceTypeCounts[slot.Device.Type.String()]++
 		}
 	}
 	return &stats
