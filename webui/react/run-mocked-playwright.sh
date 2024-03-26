@@ -2,11 +2,12 @@
 set -euxo pipefail
 
 make mb-start
-sleep 2 # let MB start up. It's pretty quick.
+sleep 10 # let MB start up. It's pretty quick.
 make mb-start-saved-imposters
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
 export PW_SERVER_ADDRESS="http://localhost:3001"
+export PW_TEST_HTML_REPORT_OPEN='never'
 set +e
 npm run e2e
 test_result=$?
@@ -16,7 +17,7 @@ if [ $test_result -ne 0 ]; then
     det deploy local cluster-up --no-gpu
     make mb-stop
     make mb-start
-    sleep 2
+    sleep 10
     make mb-record-imposters
     set +e
     npm run e2e
