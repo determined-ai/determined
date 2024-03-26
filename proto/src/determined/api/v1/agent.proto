@@ -32,6 +32,8 @@ message GetAgentsRequest {
   string label = 5;
   // exclude slots
   bool exclude_slots = 6;
+  // exclude containers
+  bool exclude_containers = 7;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
