@@ -139,6 +139,8 @@ func TestCheckpointsOnArchivedSteps(t *testing.T) {
 			})
 			require.NoError(t, err)
 
+			step := int32(i)
+
 			for _, group := range []string{
 				model.ValidationMetricGroup.ToString(),
 				model.TrainingMetricGroup.ToString(),
@@ -147,7 +149,7 @@ func TestCheckpointsOnArchivedSteps(t *testing.T) {
 					Metrics: &trialv1.TrialMetrics{
 						TrialId:        int32(trial.ID),
 						TrialRunId:     int32(trialRunID),
-						StepsCompleted: int32(i),
+						StepsCompleted: &step,
 						Metrics: &commonv1.Metrics{
 							AvgMetrics: expectedMetrics,
 						},

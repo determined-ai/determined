@@ -19,6 +19,11 @@ const (
 	InferenceMetricGroup MetricGroup = "inference"
 )
 
+// ProfilingMetricGroups designates metrics from profiling runs.
+var ProfilingMetricGroups = []MetricGroup{
+	"gpu", "cpu", "memory", "disk", "network",
+}
+
 type metricName string
 
 // Validate validates the metric name.

@@ -167,13 +167,6 @@ def _run_pytorch_trial(
 
             trainer = pytorch.Trainer(trial_inst, train_context)
 
-            trainer.configure_profiler(
-                sync_timings=bool(info.trial._config["profiling"]["sync_timings"]),
-                enabled=bool(info.trial._config["profiling"]["enabled"]),
-                begin_on_batch=info.trial._config["profiling"]["begin_on_batch"],
-                end_after_batch=info.trial._config["profiling"]["end_after_batch"],
-            )
-
             if "global_batch_size" in info.trial.hparams:
                 global_batch_size = int(
                     info.trial.hparams["global_batch_size"]
@@ -195,6 +188,7 @@ def _run_pytorch_trial(
                 latest_checkpoint=info.latest_checkpoint,
                 step_zero_validation=info.trial._config["perform_initial_validation"],
                 test_mode=False,
+                profiling_enabled=bool(info.trial._config["profiling"]["enabled"]),
             )
 
     return 0
