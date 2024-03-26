@@ -355,8 +355,7 @@ const JupyterLabForm: React.FC<{
   const boundResourcePoolsMap = useObservable(workspaceStore.boundResourcePoolsMap());
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
-    if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId)
-      return [];
+    if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId) return [];
     return resourcePools.data.filter(
       (rp) => boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
     );
