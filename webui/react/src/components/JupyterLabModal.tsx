@@ -18,7 +18,7 @@ import { paths } from 'routes/utils';
 import { getTaskTemplates } from 'services/api';
 import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
-import { RawJson, Template, Workspace } from 'types';
+import { RawJson, ResourcePool, Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { useObservable } from 'utils/observable';
@@ -349,12 +349,22 @@ const JupyterLabForm: React.FC<{
 }> = ({ form, formId, currentWorkspace, defaults, lockedWorkspace, setWorkspace, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
 
-  const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
+  const selectedWorkspaceId = Form.useWatch('workspaceId', form);
+
+  const resourcePools = useObservable(clusterStore.resourcePools);
+  const boundResourcePoolsMap = useObservable(workspaceStore.boundResourcePoolsMap());
+
+  const boundResourcePools: ResourcePool[] = useMemo(() => {
+    if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId) return [];
+    return resourcePools.data.filter(
+      (rp) => boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
+    );
+  }, [resourcePools, boundResourcePoolsMap, selectedWorkspaceId]);
 
   const selectedPoolName = Form.useWatch('pool', form);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find((pool) => pool.name === selectedPoolName);
+    const selectedPool = boundResourcePools.find((pool) => pool.name === selectedPoolName);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -372,7 +382,7 @@ const JupyterLabForm: React.FC<{
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [selectedPoolName, resourcePools]);
+  }, [selectedPoolName, boundResourcePools]);
 
   useEffect(() => {
     if (!resourceInfo.hasCompute && resourceInfo.hasAux) form.setFieldValue('slots', 0);
@@ -381,6 +391,10 @@ const JupyterLabForm: React.FC<{
       if (slots == null) form.setFieldValue('slots', DEFAULT_SLOT_COUNT);
     }
   }, [resourceInfo, form]);
+
+  useEffect(() => {
+    selectedWorkspaceId && workspaceStore.fetchAvailableResourcePools(selectedWorkspaceId);
+  }, [selectedWorkspaceId]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -396,11 +410,11 @@ const JupyterLabForm: React.FC<{
 
   useEffect(() => {
     const fields = form.getFieldsValue(true);
-    if (!fields?.pool && resourcePools[0]?.name) {
-      const firstPoolInList = resourcePools[0]?.name;
+    if (!fields?.pool && boundResourcePools[0]?.name) {
+      const firstPoolInList = boundResourcePools[0]?.name;
       form.setFieldValue('pool', firstPoolInList);
     }
-  }, [resourcePools, form]);
+  }, [boundResourcePools, form]);
 
   useEffect(() => {
     form.setFieldValue('workspaceId', currentWorkspace?.id);
@@ -442,9 +456,9 @@ const JupyterLabForm: React.FC<{
       <Form.Item initialValue={defaults?.name} label="Name" name="name">
         <Input placeholder="Name (optional)" />
       </Form.Item>
-      <Form.Item initialValue={defaults?.pool} label="Resource Pool" name="pool">
-        <Select allowClear placeholder="Pick the best option">
-          {resourcePools.map((pool) => (
+      <Form.Item label="Resource Pool" name="pool">
+        <Select allowClear disabled={!selectedWorkspaceId} placeholder="Pick the best option">
+          {boundResourcePools.map((pool) => (
             <Option key={pool.name} value={pool.name}>
               {pool.name}
             </Option>
