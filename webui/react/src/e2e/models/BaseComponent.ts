@@ -3,7 +3,7 @@ import { type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 // BasePage is the root of any tree, use `instanceof BasePage` when climbing.
-type parentTypes = BasePage | BaseComponent | BaseReactFragment;
+export type parentTypes = BasePage | BaseComponent | BaseReactFragment;
 
 /**
  * Returns the representation of a Component.
@@ -32,7 +32,10 @@ export class BaseComponent {
     }
     return this._locator;
   }
-
+  
+  /**
+   * Returns the root of the component tree
+   */
   get root(): BasePage {
     let root: parentTypes = this._parent;
     for (; !(root instanceof BasePage); root = root._parent) {
@@ -55,12 +58,24 @@ export class BaseReactFragment {
   constructor({ parent }: { parent: parentTypes }) {
     this._parent = parent;
   }
+
   /**
    * The playwright Locator that represents this model
    * Since this model is a fragment, we simply get the parent's locator
    */
   get pwLocator(): Locator {
     return this._parent.pwLocator;
+  }
+
+  /**
+   * Returns the root of the component tree
+   */
+  get root(): BasePage {
+    let root: parentTypes = this._parent;
+    for (; !(root instanceof BasePage); root = root._parent) {
+      /* empty */
+    }
+    return root;
   }
 }
 

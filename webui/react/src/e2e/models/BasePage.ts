@@ -1,4 +1,5 @@
 import { Locator, type Page } from '@playwright/test';
+import { Navigation } from 'e2e/models/components/Navigation';
 
 /**
  * Returns the representation of a Page.
@@ -8,6 +9,7 @@ import { Locator, type Page } from '@playwright/test';
 export abstract class BasePage {
   readonly _page: Page;
   abstract readonly url: string;
+  readonly nav: Navigation = new Navigation({ parent: this });
 
   constructor(page: Page) {
     this._page = page;

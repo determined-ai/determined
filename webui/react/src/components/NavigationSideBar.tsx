@@ -267,10 +267,10 @@ const NavigationSideBar: React.FC = () => {
         in={settings.navbarCollapsed}
         nodeRef={nodeRef}
         timeout={200}>
-        <nav className={css.base} ref={nodeRef}>
+        <nav data-testid='navSidebar' className={css.base} ref={nodeRef}>
           <header>
             <Dropdown menu={menuItems}>
-              <div className={css.user}>
+              <div data-testid='headerDropdown' className={css.user}>
                 <UserBadge compact hideAvatarTooltip user={currentUser} />
               </div>
             </Dropdown>
