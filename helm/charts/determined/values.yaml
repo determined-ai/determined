@@ -166,9 +166,9 @@ db:
   # Only used for Determined DB deployment. Configures the size of the PersistentVolumeClaim for the
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
-  storageSize: 3Gi
-  cpuRequest: 0.5
-  memRequest: 1Gi
+  storageSize: 30Gi
+  cpuRequest: 2
+  memRequest: 8Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -251,8 +251,8 @@ maxSlotsPerPod:
   # cpu: 7
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 0.5
-masterMemRequest: 1Gi
+masterCpuRequest: 2
+masterMemRequest: 8Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
