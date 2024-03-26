@@ -192,7 +192,6 @@ type RunMessage struct {
 // For now this carries stats of docker image pull.
 type ContainerStatsRecord struct {
 	EndStats bool
-	// TODO: also carries TaskStats.
 	Stats    *model.TaskStats
 	TaskType model.TaskType
 }
