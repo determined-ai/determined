@@ -1,5 +1,5 @@
 /*
-  Migrates existing profiling metrics (in `trial_profiler_metrics`) to `metrics`.
+  Migrates historical profiling metrics (in `trial_profiler_metrics`) to `metrics`.
 
   Queries `trial_profiler_metrics` to downsample and shim all system metrics data to fit
   generic metrics `metrics` schema.
@@ -31,9 +31,9 @@ from
         -- Query to downsample existing metrics to one per metric name <> group <> agent <> trial <> gpu per second
         select
             jsonb_object_agg(
-                -- Change the `free_memory` metric name to `mem_free`.
+                -- Change the `free_memory` metric name to `memory_free`.
                 case
-                    when tpm.labels->>'name'='free_memory' then 'mem_free'
+                    when tpm.labels->>'name'='free_memory' then 'memory_free'
                     else tpm.labels->>'name'
                 end,
                 v
