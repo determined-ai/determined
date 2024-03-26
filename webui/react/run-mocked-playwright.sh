@@ -3,7 +3,7 @@ set -euxo pipefail
 
 make mb-start
 sleep 30 # let MB start up. It's pretty quick.
-cat /tmp/mb-playwright.log
+cat "/tmp/mb-playwright.log"
 make mb-start-saved-imposters
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"

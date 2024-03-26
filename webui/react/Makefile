@@ -122,7 +122,7 @@ get-playwright-ci:
 .PHONY: mb-start
 mb-start:
 	npm install mb
-	mb start --allowInjection --localonly >/tmp/mb-playwright.log 2>&1 & # DNJ TODO - make separate version for no inject
+	mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
 
 .PHONY: mb-stop
 mb-stop:
