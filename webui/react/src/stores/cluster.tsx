@@ -133,7 +133,6 @@ class ClusterStore extends PollingStore {
     Loadable.map(agents, (agents) => {
       const overview: ClusterOverview = structuredClone(initClusterOverview);
       agents.forEach((agent) => {
-        agent.slotStats?.disabledSlots.length;
         const types = Object.keys(agent.slotStats?.typeStats ?? {}).map((key) =>
           key.replace('TYPE_', ''),
         ) as ResourceType[];
