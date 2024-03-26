@@ -1192,9 +1192,11 @@ those partitions/queues.
 **********************************
 
 Cluster administrators for Kubernetes installations can define additional resource managers for
-connecting the Determined master service with remote clusters. To define a single resource manager
-or designate the default resource manager, do not define it under ``additional_resource_manager``;
-instead, use the primary ``resource_manager`` key.
+connecting the Determined master service with remote clusters. Support for notebooks and other
+workloads that require proxying on remote clusters is currently under development.
+
+To define a single resource manager or designate the default resource manager, do not define it
+under ``additional_resource_manager``; instead, use the primary ``resource_manager`` key.
 
 Resource manager names must be unique among all defined resource managers.
 

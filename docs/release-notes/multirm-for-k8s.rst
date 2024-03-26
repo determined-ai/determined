@@ -9,7 +9,7 @@
    required to have at least one resource pool defined). Additional resource managers and their
    resource pools must have unique names. For more information, visit :ref:master configuration
    <master-config-reference>. Support for notebooks and other workloads that require proxying is
-   being worked on and will be announced in a later release.
+   currently under development.
 
 -  WebUI: Add ability to view resource manager name for resource pools.
 
