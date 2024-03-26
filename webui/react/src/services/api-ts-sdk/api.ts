@@ -2566,19 +2566,19 @@ export interface V1DeviceStats {
      * @type {number}
      * @memberof V1DeviceStats
      */
-    draining?: number;
+    draining: number;
     /**
      * the number of disabled slots.
      * @type {number}
      * @memberof V1DeviceStats
      */
-    disabled?: number;
+    disabled: number;
     /**
      * the total number of slots.
      * @type {number}
      * @memberof V1DeviceStats
      */
-    total?: number;
+    total: number;
 }
 /**
  * Disable the agent.

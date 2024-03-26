@@ -3102,53 +3102,41 @@ class v1Device(Printable):
 
 class v1DeviceStats(Printable):
     """DeviceStats contains statistics about a single device group."""
-    disabled: "typing.Optional[int]" = None
-    draining: "typing.Optional[int]" = None
     states: "typing.Optional[typing.Dict[str, int]]" = None
-    total: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        disabled: "typing.Union[int, None, Unset]" = _unset,
-        draining: "typing.Union[int, None, Unset]" = _unset,
+        disabled: int,
+        draining: int,
+        total: int,
         states: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
-        total: "typing.Union[int, None, Unset]" = _unset,
     ):
-        if not isinstance(disabled, Unset):
-            self.disabled = disabled
-        if not isinstance(draining, Unset):
-            self.draining = draining
+        self.disabled = disabled
+        self.draining = draining
+        self.total = total
         if not isinstance(states, Unset):
             self.states = states
-        if not isinstance(total, Unset):
-            self.total = total
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1DeviceStats":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "disabled": obj["disabled"],
+            "draining": obj["draining"],
+            "total": obj["total"],
         }
-        if "disabled" in obj:
-            kwargs["disabled"] = obj["disabled"]
-        if "draining" in obj:
-            kwargs["draining"] = obj["draining"]
         if "states" in obj:
             kwargs["states"] = obj["states"]
-        if "total" in obj:
-            kwargs["total"] = obj["total"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "disabled": self.disabled,
+            "draining": self.draining,
+            "total": self.total,
         }
-        if not omit_unset or "disabled" in vars(self):
-            out["disabled"] = self.disabled
-        if not omit_unset or "draining" in vars(self):
-            out["draining"] = self.draining
         if not omit_unset or "states" in vars(self):
             out["states"] = self.states
-        if not omit_unset or "total" in vars(self):
-            out["total"] = self.total
         return out
 
 class v1DisableAgentRequest(Printable):
