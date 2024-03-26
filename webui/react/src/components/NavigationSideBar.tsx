@@ -231,7 +231,7 @@ const NavigationSideBar: React.FC = () => {
     const items: MenuItem[] = [
       {
         key: 'settings',
-        label: <Link onClick={() => setShowSettings(true)}>Settings</Link>,
+        label: <Link onClick={() => setShowSettings(true)}>User Settings</Link>,
       },
       { key: 'theme-toggle', label: <ThemeToggle /> },
       { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
@@ -239,7 +239,7 @@ const NavigationSideBar: React.FC = () => {
     if (canAdministrateUsers) {
       items.unshift({
         key: 'admin',
-        label: <Link path={paths.admin()}>Admin</Link>,
+        label: <Link path={paths.admin()}>Admin Settings</Link>,
       });
     }
     return items;

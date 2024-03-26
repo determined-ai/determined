@@ -150,7 +150,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
         const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
 
         return (
-          <Drawer open={show} placement="left" title="Settings" onClose={onClose}>
+          <Drawer open={show} placement="left" title="User Settings" onClose={onClose}>
             <Section divider title="Profile">
               <div className={css.section}>
                 <InlineForm<string>

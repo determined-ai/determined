@@ -41,7 +41,7 @@ export class AuthFixture {
 
   async logout(): Promise<void> {
     await this.signInPage.nav.sidebar.headerDropdown.pwLocator.click()
-    await this.signInPage.nav.sidebar.headerDropdownMenuItemsSignOut.pwLocator.click()
+    await this.signInPage.nav.sidebar.headerDropdownMenu.signOut.pwLocator.click()
     await this.#page.waitForURL(/login/);
   }
 }

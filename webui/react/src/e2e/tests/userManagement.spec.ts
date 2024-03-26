@@ -1,5 +1,5 @@
 
-import { expect } from '@playwright/test';
+// import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
@@ -10,10 +10,10 @@ test.describe('Authentication', () => {
     await auth.login()
   });
 
-  test('Navigate to User Management', async ({ page, dev }) => {
+  test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
     await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click()
-    await userManagementPage.nav.sidebar.headerDropdownMenuItemsAdmin.pwLocator.click()
+    await userManagementPage.nav.sidebar.headerDropdownMenu.admin.pwLocator.click()
   });
 
   // test('Redirect to the target URL after login', async ({ page, auth }) => {
