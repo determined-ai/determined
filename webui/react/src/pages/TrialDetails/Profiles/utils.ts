@@ -5,7 +5,7 @@ import { humanReadableBytes } from 'utils/string';
 // key should be lowercase to match the metric name
 const MetricNameUnit = {
   cpu_util_simple: '%',
-  disk_iops: 'bytes/second',
+  disk_iops: 'operations/second',
   disk_throughput_read: 'bytes/second',
   disk_throughput_write: 'bytes/second',
   gpu_free_memory: 'bytes',
