@@ -1522,11 +1522,13 @@ jobs:
       - react-get-deps
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - run: cd webui/react && ./run-mocked-playwright
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_artifacts:
+          path: webui/react/src/e2e/mocks/debug-saved-imposters.json
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
 
