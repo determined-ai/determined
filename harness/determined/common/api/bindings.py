@@ -7181,6 +7181,29 @@ class v1KillNotebookResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
+class v1KillRunsResponse(Printable):
+    """Response to KillRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1KillShellResponse(Printable):
     """Response to KillShellRequest."""
     shell: "typing.Optional[v1Shell]" = None
@@ -12402,6 +12425,33 @@ class v1RoleWithAssignments(Printable):
             out["role"] = None if self.role is None else self.role.to_json(omit_unset)
         if not omit_unset or "userRoleAssignments" in vars(self):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
+        return out
+
+class v1RunActionResult(Printable):
+    """Message for results of individual runs in a multi-run action."""
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RunActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
         return out
 
 class v1RunPrepareForReportingRequest(Printable):
@@ -19578,6 +19628,35 @@ def post_KillNotebook(
     if _resp.status_code == 200:
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
+
+def get_KillRuns(
+    session: "api.BaseSession",
+    *,
+    filter: "typing.Optional[str]" = None,
+    runIds: "typing.Optional[typing.Sequence[int]]" = None,
+) -> "v1KillRunsResponse":
+    """Get a list of runs.
+
+    - filter: Filter expression.
+    - runIds: The ids of the runs being killed.
+    """
+    _params = {
+        "filter": filter,
+        "runIds": runIds,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/runs/kill",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1KillRunsResponse.from_json(_resp.json())
+    raise APIHttpError("get_KillRuns", _resp)
 
 def post_KillShell(
     session: "api.BaseSession",
