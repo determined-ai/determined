@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 make mb-start
-sleep 10 # let MB start up. It's pretty quick.
+sleep 30 # let MB start up. It's pretty quick.
 make mb-start-saved-imposters
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
@@ -28,9 +28,8 @@ if [ $test_result -ne 0 ]; then
         exit $test_result
     else
         test_result=1 # we still failed and need updates
-        echo "Tests failed with mocks, but passed with a real service. \
-        Mocks likely need updates. \
-        Copy 'webui/react/src/e2e/mocks/debug-saved-imposters.jsonn' from the artifacts, \
+        echo "Tests failed with mocks, but passed with the real service. Mocks likely need updates. \n\
+        Copy 'webui/react/src/e2e/mocks/debug-saved-imposters.jsonn' from the artifacts, \n\
         and replace mocks/saved-imposters.json to update the mocks."
         make mb-save-imposters
     fi

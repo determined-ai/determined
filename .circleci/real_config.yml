@@ -1531,6 +1531,8 @@ jobs:
           path: webui/react/src/e2e/mocks/debug-saved-imposters.json
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
+      - store_test_results:
+          path: /tmp/mb-playwright.log
 
   test-unit-react:
     docker:
