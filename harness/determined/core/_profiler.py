@@ -32,6 +32,7 @@ class ProfilerContext:
     turned on/off as such:
 
     .. code::
+
         with det.core.init() as core_context:
             core_context.profiler.on()
             ...
