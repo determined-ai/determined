@@ -71,7 +71,6 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
                 elif event_data.tag == "Determined/val_x":
                     val_events.append(event_data.simple_value)
 
-    assert len(event_files) == 2
     assert len(train_events) == 20
     assert len(val_events) == 20 / validation_period
 

@@ -60,7 +60,7 @@ class BatchMetricWriter:
                 continue
             self._maybe_write_metric(name, value, steps_completed)
 
-        self._maybe_reset()
+        self.writer.flush()
 
     def on_validation_step_end(self, steps_completed: int, metrics: Dict[str, Any]) -> None:
         logger.debug("Write validation metrics for TensorBoard")
@@ -70,7 +70,7 @@ class BatchMetricWriter:
                 name = "val_" + name
             self._maybe_write_metric(name, value, steps_completed)
 
-        self._maybe_reset()
+        self.writer.flush()
 
     def _maybe_reset(self) -> None:
         """
