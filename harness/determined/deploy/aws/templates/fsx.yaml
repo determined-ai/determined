@@ -299,8 +299,6 @@ Parameters:
 
       __internal:
         proxied_servers:
-          - destination: "http://lore-backend:9011/lore"
-            path_prefix: /lore
           - destination: "http://lore-backend:9011/genai"
             path_prefix: /genai
       {{ end }}
