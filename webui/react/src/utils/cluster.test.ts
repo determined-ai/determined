@@ -8,6 +8,7 @@ import * as utils from './cluster';
 // Required fields: `resourcePools`, `slotStats.typeStats`
 const DEFAULT = 'default';
 const COMPUTE_POOL = 'compute-pool';
+const NOT_EXIST = 'not-exist';
 const AGENTS: Type.Agent[] = [
   {
     enabled: true,
@@ -117,6 +118,12 @@ describe('Cluster Utilities', () => {
         Type.ResourceState.Running,
         Type.ResourceState.Running,
       ];
+      expect(result).toStrictEqual(expected);
+    });
+
+    it('should return empty list when resource pool does not exist', () => {
+      const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU, NOT_EXIST);
+      const expected: Type.ResourceState[] = [];
       expect(result).toStrictEqual(expected);
     });
   });

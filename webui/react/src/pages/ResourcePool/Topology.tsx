@@ -59,19 +59,6 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
 };
 
 const Topology: React.FC<PropsWithChildren<Props>> = ({ nodes }) => {
-  const MAX_USABLE_NODES = 100;
-  if (nodes.length > MAX_USABLE_NODES) {
-    return (
-      <Section title="Topology">
-        <div className={css.warningContainer}>
-          <p>
-            Current Topology view is disabled for pools with more than {MAX_USABLE_NODES} nodes.
-          </p>
-        </div>
-      </Section>
-    );
-  }
-  // TODO: pull in slots from /agents.
   return (
     <Section title="Topology">
       <div className={`${css.mainContainer} ${css.nodesContainer}`}>

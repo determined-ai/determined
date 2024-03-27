@@ -488,7 +488,7 @@ export const getAgents: DetApi<Service.GetAgentsParams, Api.V1GetAgentsResponse,
       undefined,
       undefined,
       undefined,
-      params.excludeSlots ?? false,
+      params.excludeSlots ?? true,
       true,
     ),
 };
