@@ -116,11 +116,13 @@ const clusterStatusText = (
 
 class ClusterStore extends PollingStore {
   #agents = deepObservable<Loadable<Agent[]>>(NotLoaded);
+  #agentsWithSlots = deepObservable<Loadable<Agent[]>>(NotLoaded);
   #resourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
   #unboundResourcePools = deepObservable<Loadable<ResourcePool[]>>(NotLoaded);
   #resourcePoolBindings = immutableObservable<Map<string, OrderedSet<number>>>(Map());
 
   public readonly agents = this.#agents.readOnly();
+  public readonly agentsWithSlots = this.#agentsWithSlots.readOnly();
   public readonly resourcePoolBindings = this.#resourcePoolBindings.select((bindings) =>
     bindings.map((workspaceIds) => workspaceIds.toJS()),
   );
@@ -191,6 +193,18 @@ class ClusterStore extends PollingStore {
     return () => canceler.abort();
   }
 
+  public fetchAgentsWithSlots(signal?: AbortSignal): () => void {
+    const canceler = new AbortController();
+
+    getAgents({ excludeSlots: true }, { signal: signal ?? canceler.signal })
+      .then((response) => {
+        this.#agents.set(Loaded(response));
+      })
+      .catch(handleError);
+
+    return () => canceler.abort();
+  }
+
   public fetchResourcePools(signal?: AbortSignal): () => void {
     const canceler = new AbortController();
 
@@ -217,10 +231,19 @@ class ClusterStore extends PollingStore {
 
   public async poll() {
     const agentRequest = getAgents({}, { signal: this.canceler?.signal });
+    const agentWithSlotsRequest = getAgents(
+      { excludeSlots: true },
+      { signal: this.canceler?.signal },
+    );
     const poolsRequest = getResourcePools({}, { signal: this.canceler?.signal });
-    const [agents, resourcePools] = await Promise.all([agentRequest, poolsRequest]);
+    const [agents, agentWithSlots, resourcePools] = await Promise.all([
+      agentRequest,
+      agentWithSlotsRequest,
+      poolsRequest,
+    ]);
     this.#resourcePools.set(Loaded(resourcePools));
     this.#agents.set(Loaded(agents));
+    this.#agentsWithSlots.set(Loaded(agentWithSlots));
   }
 
   public readonly boundWorkspaces = (resourcePool: string) =>

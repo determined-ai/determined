@@ -478,11 +478,19 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telem
 
 /* Cluster */
 
-export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]> = {
+export const getAgents: DetApi<Service.GetAgentsParams, Api.V1GetAgentsResponse, Type.Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
-  request: () =>
-    detApi.Cluster.getAgents(undefined, undefined, undefined, undefined, undefined, true),
+  request: (params: Service.GetAgentsParams) =>
+    detApi.Cluster.getAgents(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      params.excludeSlots ?? false,
+      true,
+    ),
 };
 
 export const enableAgent: DetApi<string, Api.V1EnableAgentResponse, Type.Agent | null> = {

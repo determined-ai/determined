@@ -60,7 +60,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
-  const agents = Loadable.getOrElse([], useObservable(clusterStore.agents));
+  const agentsWithSlots = Loadable.getOrElse([], useObservable(clusterStore.agentsWithSlots));
   const resourcePools = useObservable(clusterStore.resourcePools);
   const pool = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools)) return;
@@ -71,13 +71,13 @@ const ResourcepoolDetailInner: React.FC = () => {
   const usage = useMemo(() => {
     if (!pool) return 0;
     const totalSlots = pool.slotsAvailable;
-    const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
+    const resourceStates = getSlotContainerStates(agentsWithSlots || [], pool.slotType, pool.name);
     const runningState = resourceStates.filter((s) => s === ResourceState.Running).length;
     const slotsPotential = maxPoolSlotCapacity(pool);
     const slotsAvaiablePer =
       slotsPotential && slotsPotential > totalSlots ? totalSlots / slotsPotential : 1;
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
-  }, [pool, agents]);
+  }, [pool, agentsWithSlots]);
 
   const navigate = useNavigate();
   const [canceler] = useState(new AbortController());
@@ -86,8 +86,11 @@ const ResourcepoolDetailInner: React.FC = () => {
   const [poolsStats, setPoolsStats] = useState<V1RPQueueStat[]>();
 
   const topologyAgentPool = useMemo(
-    () => (poolname ? agents.filter(({ resourcePools }) => resourcePools.includes(poolname)) : []),
-    [poolname, agents],
+    () =>
+      poolname
+        ? agentsWithSlots.filter(({ resourcePools }) => resourcePools.includes(poolname))
+        : [],
+    [poolname, agentsWithSlots],
   );
 
   const fetchStats = useCallback(async () => {
