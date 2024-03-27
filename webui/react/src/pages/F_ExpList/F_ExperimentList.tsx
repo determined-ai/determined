@@ -191,15 +191,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ps.forEach((s) => {
           cleanup?.();
           if (!s?.filterset) {
-            return formStore.init();
-          }
-          const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
-          if (isLeft(formSetValidation)) {
-            handleError(formSetValidation.left, {
-              publicSubject: 'Unable to initialize filterset from settings',
-            });
+            formStore.init();
           } else {
-            formStore.init(formSetValidation.right);
+            const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+            if (isLeft(formSetValidation)) {
+              handleError(formSetValidation.left, {
+                publicSubject: 'Unable to initialize filterset from settings',
+              });
+            } else {
+              formStore.init(formSetValidation.right);
+            }
           }
           cleanup = formStore.asJsonString.subscribe(() => {
             resetPagination();
