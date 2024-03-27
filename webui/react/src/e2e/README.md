@@ -29,6 +29,11 @@ If you don't want to use dev cluster, you can use det deploy to initiate the bac
 4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if CI=true
 5. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
 
+## Mocking with MounteBank
+
+### Recording request from remote servers
+You can mock to a remote backend like `https://netlify.determined.ai/dynamic/http/0.0.0.0:8080` if necessary but there are some caveats. MounteBank can not handle any path elements in the `to` proxy field. So, you can only include `https://netlify.determined.ai` in the `to` field. Then you can set `DET_WEBPACK_PROXY_URL="http://localhost:4545/dynamic/http/52.89.73.17:8080"` and use the `predicate-generator.js` to strip thse extra path fields from the path and `match` the path rather than using equals.
+
 ## CI
 
 CI is setup as `test-e2e-react` in `.circleci/config.yml`.

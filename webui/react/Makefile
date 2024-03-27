@@ -121,8 +121,9 @@ get-playwright-ci:
 
 .PHONY: mb-start
 mb-start:
-	npm install -g mountebank
+	npm install mountebank
 	npx mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
+	sleep 3
 
 .PHONY: mb-stop
 mb-stop:
@@ -145,4 +146,3 @@ mb-start-saved-imposters:
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
 		--data "@${MOCK_ROOT}/saved-imposters.json"
-
