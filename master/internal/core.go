@@ -152,6 +152,48 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
+//	@Summary Get health of Determined and the dependencies.
+//	@Tags	 Cluster
+//	@ID		 health
+//	@Produce json
+//	@Success 200     {object} model.HealthCheck
+//	@Failure 503     {object} model.HealthCheck
+//	@Router	 /health [get]
+//
+// nolint:lll
+func (m *Master) healthCheckEndpoint(c echo.Context) error {
+	hc := m.healthCheck(c.Request().Context())
+	status := http.StatusOK
+	if hc.Status != model.Healthy {
+		status = http.StatusServiceUnavailable
+	}
+
+	return c.JSON(status, hc)
+}
+
+func (m *Master) healthCheck(ctx context.Context) model.HealthCheck {
+	var hc model.HealthCheck
+
+	hc.Database = model.Healthy
+	_, err := db.Bun().NewSelect().Exists(ctx)
+	if err != nil {
+		hc.Database = model.Unhealthy
+	}
+
+	hc.ResourceManagers = m.rm.HealthCheck()
+
+	isHealthy := hc.Database == model.Healthy
+	for _, rm := range hc.ResourceManagers {
+		isHealthy = isHealthy && rm.Status == model.Healthy
+	}
+	hc.Status = model.Healthy
+	if !isHealthy {
+		hc.Status = model.Unhealthy
+	}
+
+	return hc
+}
+
 //	@Summary	Get a detailed view of resource allocation during the given time period (CSV).
 //	@Tags		Cluster
 //	@ID			get-raw-resource-allocation-csv
