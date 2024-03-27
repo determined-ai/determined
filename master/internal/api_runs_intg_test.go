@@ -350,7 +350,8 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	require.NoError(t, err)
 
 	moveIds := []int32{resp.Runs[0].Id}
-	stayID := resp.Runs[1].Id
+	runID1 := resp.Runs[0].Id
+	runID2 := resp.Runs[1].Id
 
 	moveReq := &apiv1.MoveRunsRequest{
 		RunIds:               moveIds,
@@ -364,11 +365,12 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	require.Len(t, moveResp.Results, 1)
 	require.Equal(t, "", moveResp.Results[0].Error)
 
-	// run no longer in old project
+	// run still in old project
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 1)
-	require.Equal(t, stayID, resp.Runs[0].Id)
+	require.Len(t, resp.Runs, 2)
+	require.Equal(t, runID1, resp.Runs[0].Id)
+	require.Equal(t, runID2, resp.Runs[1].Id)
 
 	// run in new project
 	req = &apiv1.SearchRunsRequest{
@@ -379,7 +381,8 @@ func TestMoveRunsMultiTrial(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
-	// Check if run is split into diff experiment
+	// Check if run is split into diff experiment and run
+	require.NotEqual(t, runID1, resp.Runs[0].Id)
 	require.NotEqual(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
 }
 
@@ -458,7 +461,8 @@ func TestMoveRunsFilter(t *testing.T) {
 	sourceprojectID := int32(projectIDInt)
 	destprojectID := int32(projectID2Int)
 
-	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
@@ -466,7 +470,7 @@ func TestMoveRunsFilter(t *testing.T) {
 	require.NoError(t, db.AddTask(ctx, task1))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
-		ExperimentID: exp.ID,
+		ExperimentID: exp1.ID,
 		StartTime:    time.Now(),
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
@@ -476,7 +480,7 @@ func TestMoveRunsFilter(t *testing.T) {
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
 		State:        model.PausedState,
-		ExperimentID: exp.ID,
+		ExperimentID: exp2.ID,
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))

@@ -335,19 +335,23 @@ func (a *apiServer) MoveRuns(
 				Id:    check.ID,
 			})
 		} else {
-			newExpID := *check.ExpID
 			if check.IsMultitrial && req.CloneMultitrial {
-				newExpID, err = cloneExperimentAndSetToRun(ctx, *check.ExpID, check.ID)
+				err := cloneExperimentAndRun(ctx, *check.ExpID, check.ID, req.DestinationProjectId)
 				if err != nil {
 					results = append(results, &apiv1.RunActionResult{
-						Error: "Failed to clone multi-trial run",
+						Error: fmt.Sprintf(`Failed to clone multi-trial run: %s`, err),
 						Id:    check.ID,
 					})
-					continue
+				} else {
+					results = append(results, &apiv1.RunActionResult{
+						Error: "",
+						Id:    check.ID,
+					})
 				}
+				continue
 			}
 			if check.ExpID != nil {
-				expMoveIds = append(expMoveIds, newExpID)
+				expMoveIds = append(expMoveIds, *check.ExpID)
 			}
 			validIDs = append(validIDs, check.ID)
 		}
@@ -408,30 +412,37 @@ func (a *apiServer) MoveRuns(
 	return &apiv1.MoveRunsResponse{Results: results}, nil
 }
 
-func cloneExperimentAndSetToRun(ctx context.Context, expID int32, runID int32) (int32, error) {
+func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destProjID int32) error {
 	var cloneExpID int32
 
+	// clone experiment into dest project
 	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
 		parent_id, owner_id, progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count,
 		best_trial_id, unmanaged, external_experiment_id) 
-		SELECT state, config, model_definition, start_time, end_time, archived, parent_id, owner_id, progress,
-		original_config, notes, job_id, 1 as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged,
-		external_experiment_id FROM experiments WHERE id = ? RETURNING id;`, expID).Scan(ctx, &cloneExpID)
+		SELECT 'COMPLETED'::experiment_state as state, config, model_definition, start_time,
+		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time, archived, parent_id, owner_id, progress,
+		original_config, notes, job_id, ? as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged,
+		external_experiment_id FROM experiments WHERE id = ? RETURNING id;`, destProjID, expID).Scan(ctx, &cloneExpID)
 	if err != nil {
-		return -1, err
+		return err
 	}
 
-	var acceptedIDs []int32
-	err = db.Bun().NewUpdate().Table("runs").
-		Set("experiment_id = ?", cloneExpID).
-		Where("id = ?", runID).
-		Returning("runs.id").
-		Model(&acceptedIDs).
-		Scan(ctx)
+	var cloneRunID int32
+	// clone run into dest project
+	err = db.Bun().NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
+		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
+		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
+		summary_metrics_timestamp, last_activity, external_run_id, project_id)
+		SELECT ? as experiment_id, 'COMPLETED'::trial_state, start_time,
+		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time, hparams, warm_start_checkpoint_id,
+		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
+		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
+		summary_metrics_timestamp, last_activity, external_run_id, ? as project_id FROM runs WHERE id = ? RETURNING id`,
+		cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
 	if err != nil {
-		// Delete cloned experiment if run reassingment fails
+		// Delete cloned experiment if run cloning fails
 		err = db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
-		return -1, err
+		return err
 	}
-	return cloneExpID, nil
+	return nil
 }
