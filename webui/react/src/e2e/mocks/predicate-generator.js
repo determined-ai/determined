@@ -7,29 +7,27 @@ function generate(config) {
                 'cookie': false,
             }
         },
+        matches: {
+            path: config.request.path
+        },
         equals: {
             method: config.request.method,
-            path: config.request.path
+        },
+        deepEquals: {
+            body: config.request.body,
+            query: config.request.query
         }
     };
-    if (config.request.body) {
-        if (!predicatePreview.deepEquals) {
-            predicatePreview.deepEquals = {};
-        }
-        predicatePreview.deepEquals.body = config.request.body;
-    }
-    if (config.request.query) {
-        if (!predicatePreview.deepEquals) {
-            predicatePreview.deepEquals = {};
-        }
-        predicatePreview.deepEquals.query = config.request.query;
-    }
     if (config.request.headers['authorization']) {
         predicatePreview.exists.headers['authorization'] = true;
     }
     if (config.request.headers['cookie']) {
         predicatePreview.exists.headers['cookie'] = true;
     }
+    if (config.request.path.startsWith('/dynamic/http')){ // in case it's the netlify backend
+        predicatePreview.matches.path = config.request.path.split('/').splice(1, 3).join('/');
+    } 
+    predicatePreview.matches.path = '^.*'+predicatePreview.matches.path+'$'
     const predicate = { and: [] };
     for (const [operator, matchers] of Object.entries(predicatePreview)) {
         predicate.and.push({ [operator]: matchers });
