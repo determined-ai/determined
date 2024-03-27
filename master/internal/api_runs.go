@@ -433,11 +433,14 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
 		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
 		summary_metrics_timestamp, last_activity, external_run_id, project_id)
-		SELECT ? as experiment_id, 'COMPLETED'::trial_state, start_time,
-		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time, hparams, warm_start_checkpoint_id,
-		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
-		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
-		summary_metrics_timestamp, last_activity, external_run_id, ? as project_id FROM runs WHERE id = ? RETURNING id`,
+		SELECT ? as experiment_id,
+		(CASE WHEN state IN ('CANCELED', 'COMPLETED', 'ERROR') THEN state ELSE 'COMPLETED'::trial_state END) as state,
+		start_time,
+		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time,
+		hparams, warm_start_checkpoint_id, best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size,
+		checkpoint_count, searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id,
+		summary_metrics, summary_metrics_timestamp, last_activity, external_run_id, ? as project_id
+		FROM runs WHERE id = ? RETURNING id`,
 		cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
 	if err != nil {
 		// Delete cloned experiment if run cloning fails
