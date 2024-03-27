@@ -18,7 +18,10 @@ export default defineConfig({
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: 3 * 60 * 1000, // 3 min
-
+  timeout:10000,
+  expect: {
+    timeout:2000
+  },
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
 
@@ -68,7 +71,7 @@ export default defineConfig({
   ],
 
   /* Retry on CI only */
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 0 : 0,
 
   testDir: './src/e2e',
 
@@ -86,7 +89,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview',
     port: 3001,
-    reuseExistingServer: true,
+    reuseExistingServer: !!process.env.REUSE_EXISTING_FRONTEND,
   },
 
   workers: process.env.CI ? 4 : 1,
