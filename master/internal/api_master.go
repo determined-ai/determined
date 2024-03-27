@@ -281,23 +281,25 @@ func (a *apiServer) SetMaintenanceMessage(
 			"message must be at most %d characters; got %d", MaintenanceMessageMaxLength, msgLen)
 	}
 
-	startTime := req.StartTime.AsTime()
 	mm := model.MaintenanceMessage{
 		CreatorID: int(u.ID),
 		Message:   req.Message,
-		StartTime: startTime,
+		StartTime: req.StartTime.AsTime(),
 	}
 
-	var endTime time.Time
+	// var endTime time.Time
 	if req.EndTime != nil {
-		endTime = req.EndTime.AsTime()
-		if endTime.Before(startTime) {
+		// mm.CreatedTime.
+		mm.EndTime = sql.NullTime{
+			Time:  req.EndTime.AsTime(),
+			Valid: true,
+		}
+		if mm.EndTime.Time.Before(mm.StartTime) {
 			return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
 		}
-		if endTime.Before(time.Now()) {
+		if mm.EndTime.Time.Before(time.Now()) {
 			return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
 		}
-		mm.EndTime = &endTime
 	}
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

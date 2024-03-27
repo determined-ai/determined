@@ -8025,39 +8025,43 @@ class v1LoginResponse(Printable):
 
 class v1MaintenanceMessage(Printable):
     """Active notice from the server admin."""
+    createdTime: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
-        id: int,
         message: str,
         startTime: str,
+        createdTime: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
-        self.id = id
         self.message = message
         self.startTime = startTime
+        if not isinstance(createdTime, Unset):
+            self.createdTime = createdTime
         if not isinstance(endTime, Unset):
             self.endTime = endTime
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MaintenanceMessage":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "id": obj["id"],
             "message": obj["message"],
             "startTime": obj["startTime"],
         }
+        if "createdTime" in obj:
+            kwargs["createdTime"] = obj["createdTime"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "id": self.id,
             "message": self.message,
             "startTime": self.startTime,
         }
+        if not omit_unset or "createdTime" in vars(self):
+            out["createdTime"] = self.createdTime
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         return out

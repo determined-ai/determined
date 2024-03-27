@@ -30,14 +30,14 @@ message MaintenanceMessage {
     json_schema: { required: [ "id", "message", "start_time" ] }
   };
 
-  // Unique ID.
-  int32 id = 1;
   // Text content of message.
-  string message = 2;
+  string message = 1;
   // Time to begin showing message.
-  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp start_time = 2;
   // Time to stop showing message.
-  optional google.protobuf.Timestamp end_time = 4;
+  optional google.protobuf.Timestamp end_time = 3;
+  // Time message was created.
+  google.protobuf.Timestamp created_time = 4;
 }
 
 // Get master information.

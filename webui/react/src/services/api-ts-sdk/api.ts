@@ -5906,12 +5906,6 @@ export interface V1LogoutResponse {
  */
 export interface V1MaintenanceMessage {
     /**
-     * Unique ID.
-     * @type {number}
-     * @memberof V1MaintenanceMessage
-     */
-    id: number;
-    /**
      * Text content of message.
      * @type {string}
      * @memberof V1MaintenanceMessage
@@ -5929,6 +5923,12 @@ export interface V1MaintenanceMessage {
      * @memberof V1MaintenanceMessage
      */
     endTime?: Date | DateString;
+    /**
+     * Time message was created.
+     * @type {Date | DateString}
+     * @memberof V1MaintenanceMessage
+     */
+    createdTime?: Date | DateString;
 }
 /**
  * Mark some reservation as a daemon.
