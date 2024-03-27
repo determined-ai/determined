@@ -141,7 +141,7 @@ def test_subscribe_model_version() -> None:
         config = util.yaml_safe_load(f)
     exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
     assert exp.wait() == client.ExperimentState.COMPLETED
-    ckpt = exp.top_checkpoint()
+    ckpt = detobj.get_experiment(exp.id).top_checkpoint()
 
     resp_m = bindings.post_PostModel(sess, body=bindings.v1PostModelRequest(name=modelName))
     m = resp_m.model
