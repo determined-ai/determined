@@ -10,7 +10,14 @@ import {
   overwriteResourcePoolBindings,
 } from 'services/api';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
-import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
+import {
+  Agent,
+  ClusterOverview,
+  ClusterOverviewResource,
+  isResourceType,
+  ResourcePool,
+  ResourceType,
+} from 'types';
 import handleError from 'utils/error';
 import { percent } from 'utils/number';
 import { deepObservable, immutableObservable, Observable } from 'utils/observable';
@@ -133,13 +140,16 @@ class ClusterStore extends PollingStore {
     Loadable.map(agents, (agents) => {
       const overview: ClusterOverview = structuredClone(initClusterOverview);
       agents.forEach((agent) => {
-        const types = Object.keys(agent.slotStats?.typeStats ?? {}).map((key) =>
-          key.replace('TYPE_', ''),
-        ) as ResourceType[];
+        const TYPE_PREFIX = 'TYPE_';
+        const types = Object.keys(agent.slotStats?.typeStats ?? {}).flatMap((key) => {
+          const type = key.replace(TYPE_PREFIX, '');
+          return isResourceType(type) ? [type] : [];
+        });
         for (const type of types) {
-          const typeStat = agent.slotStats?.typeStats[`TYPE_${type}`];
+          const typeStat = agent.slotStats?.typeStats[`${TYPE_PREFIX}${type}`];
           const total = typeStat?.total ?? 0;
-          const available = typeStat?.states?.['STATE_RUNNING'] ?? 0;
+          const available =
+            total - Object.values(typeStat?.states ?? {}).reduce((a, b) => a + b, 0);
           overview[type].available += available;
           overview[type].total += total;
           overview[ResourceType.ALL].available += available;

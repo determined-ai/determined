@@ -171,6 +171,7 @@ export interface Auth {
   token?: string;
 }
 
+// ResourceType key and value must be the same
 export const ResourceType = {
   ALL: 'ALL',
   CPU: 'CPU',
@@ -180,6 +181,10 @@ export const ResourceType = {
 } as const;
 
 export type ResourceType = ValueOf<typeof ResourceType>;
+
+export const isResourceType = (val: string): val is ResourceType => {
+  return val in ResourceType;
+};
 
 export const isDeviceType = (type: ResourceType): boolean => {
   return ResourceType.CPU === type || ResourceType.CUDA === type || ResourceType.ROCM === type;
