@@ -192,8 +192,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [isLoadingSettings, settings.selection],
   );
 
-  // const { getThemeVar } = useTheme();
-
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
