@@ -2238,6 +2238,7 @@ jobs:
       - run:
           name: Wait and record any migrations ran
           command: python .circleci/scripts/wait_for_perf_migration_upload_results.py
+          no_output_timeout: 30m
 
       - when:
           condition: <<parameters.snapshot-after-migrations>>
