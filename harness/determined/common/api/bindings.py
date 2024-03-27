@@ -1031,6 +1031,7 @@ class v1Agent(Printable):
         self,
         *,
         id: str,
+        slotStats: "v1SlotStats",
         addresses: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         containers: "typing.Union[typing.Dict[str, v1Container], None, Unset]" = _unset,
         draining: "typing.Union[bool, None, Unset]" = _unset,
@@ -1042,6 +1043,7 @@ class v1Agent(Printable):
         version: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
+        self.slotStats = slotStats
         if not isinstance(addresses, Unset):
             self.addresses = addresses
         if not isinstance(containers, Unset):
@@ -1065,6 +1067,7 @@ class v1Agent(Printable):
     def from_json(cls, obj: Json) -> "v1Agent":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
+            "slotStats": v1SlotStats.from_json(obj["slotStats"]),
         }
         if "addresses" in obj:
             kwargs["addresses"] = obj["addresses"]
@@ -1089,6 +1092,7 @@ class v1Agent(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
+            "slotStats": self.slotStats.to_json(omit_unset),
         }
         if not omit_unset or "addresses" in vars(self):
             out["addresses"] = self.addresses
@@ -3094,6 +3098,45 @@ class v1Device(Printable):
             out["type"] = None if self.type is None else self.type.value
         if not omit_unset or "uuid" in vars(self):
             out["uuid"] = self.uuid
+        return out
+
+class v1DeviceStats(Printable):
+    """DeviceStats contains statistics about a single device group."""
+    states: "typing.Optional[typing.Dict[str, int]]" = None
+
+    def __init__(
+        self,
+        *,
+        disabled: int,
+        draining: int,
+        total: int,
+        states: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
+    ):
+        self.disabled = disabled
+        self.draining = draining
+        self.total = total
+        if not isinstance(states, Unset):
+            self.states = states
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeviceStats":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "disabled": obj["disabled"],
+            "draining": obj["draining"],
+            "total": obj["total"],
+        }
+        if "states" in obj:
+            kwargs["states"] = obj["states"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "disabled": self.disabled,
+            "draining": self.draining,
+            "total": self.total,
+        }
+        if not omit_unset or "states" in vars(self):
+            out["states"] = self.states
         return out
 
 class v1DisableAgentRequest(Printable):
@@ -13406,6 +13449,33 @@ class v1Slot(Printable):
             out["id"] = self.id
         return out
 
+class v1SlotStats(Printable):
+    """SlotStats contains statistics about a set of slots."""
+
+    def __init__(
+        self,
+        *,
+        brandStats: "typing.Dict[str, v1DeviceStats]",
+        typeStats: "typing.Dict[str, v1DeviceStats]",
+    ):
+        self.brandStats = brandStats
+        self.typeStats = typeStats
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SlotStats":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "brandStats": {k: v1DeviceStats.from_json(v) for k, v in obj["brandStats"].items()},
+            "typeStats": {k: v1DeviceStats.from_json(v) for k, v in obj["typeStats"].items()},
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "brandStats": {k: v.to_json(omit_unset) for k, v in self.brandStats.items()},
+            "typeStats": {k: v.to_json(omit_unset) for k, v in self.typeStats.items()},
+        }
+        return out
+
 class v1StartTrialRequest(Printable):
     """Start a trial."""
     resume: "typing.Optional[bool]" = None
@@ -16797,6 +16867,8 @@ def get_GetAgent(
 def get_GetAgents(
     session: "api.BaseSession",
     *,
+    excludeContainers: "typing.Optional[bool]" = None,
+    excludeSlots: "typing.Optional[bool]" = None,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -16805,6 +16877,8 @@ def get_GetAgents(
 ) -> "v1GetAgentsResponse":
     """Get a set of agents from the cluster.
 
+    - excludeContainers: exclude containers.
+    - excludeSlots: exclude slots.
     - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
     - offset: Skip the number of agents before returning results. Negative values
@@ -16821,6 +16895,8 @@ denote number of agents to skip from the end before returning results.
  - SORT_BY_TIME: Returns agents sorted by time.
     """
     _params = {
+        "excludeContainers": str(excludeContainers).lower() if excludeContainers is not None else None,
+        "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
         "label": label,
         "limit": limit,
         "offset": offset,
