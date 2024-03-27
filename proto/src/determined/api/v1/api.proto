@@ -2474,4 +2474,14 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a list of runs.
+  rpc KillRuns(KillRunsRequest) returns (KillRunsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/runs/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

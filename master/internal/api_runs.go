@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -24,6 +25,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+type archiveRunOKResult struct {
+	Archived bool
+	ID       int32
+}
 
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
@@ -238,4 +244,51 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		runQuery.OrderExpr("id ASC")
 	}
 	return nil
+}
+
+func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
+) (*apiv1.KillRunsResponse, error) {
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived")
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		return nil, fmt.Errorf("filter unimplemented")
+	}
+
+	err := getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	var visibleIDs []int32
+	var validIDs []int32
+	for _, check := range runChecks {
+		visibleIDs = append(visibleIDs, check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+		} else {
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	return nil, nil
 }
