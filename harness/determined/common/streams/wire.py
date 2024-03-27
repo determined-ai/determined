@@ -51,50 +51,6 @@ class ClientMsg:
         return isinstance(other, type(self)) and self.to_json() == other.to_json()
 
 
-class ProjectMsg(ServerMsg):
-    def __init__(
-        self,
-        id: "int",
-        name: "str",
-        description: "str",
-        archived: "bool",
-        created_at: "float",
-        notes: "typing.Any",
-        workspace_id: "int",
-        user_id: "int",
-        immutable: "bool",
-        state: "str",
-        seq: "int",
-    ) -> None:
-        self.id = id
-        self.name = name
-        self.description = description
-        self.archived = archived
-        self.created_at = created_at
-        self.notes = notes
-        self.workspace_id = workspace_id
-        self.user_id = user_id
-        self.immutable = immutable
-        self.state = state
-        self.seq = seq
-
-
-class ProjectsDeleted(DeleteMsg):
-    pass
-
-
-class ProjectSubscriptionSpec(ClientMsg):
-    def __init__(
-        self,
-        workspace_ids: "typing.Optional[typing.List[int]]" = None,
-        project_ids: "typing.Optional[typing.List[int]]" = None,
-        since: "typing.Optional[int]" = None,
-    ) -> None:
-        self.workspace_ids = workspace_ids
-        self.project_ids = project_ids
-        self.since = since
-
-
 class ModelMsg(ServerMsg):
     def __init__(
         self,
@@ -140,4 +96,48 @@ class ModelSubscriptionSpec(ClientMsg):
         self.workspace_ids = workspace_ids
         self.model_ids = model_ids
         self.user_ids = user_ids
+        self.since = since
+
+
+class ProjectMsg(ServerMsg):
+    def __init__(
+        self,
+        id: "int",
+        name: "str",
+        description: "str",
+        archived: "bool",
+        created_at: "float",
+        notes: "typing.Any",
+        workspace_id: "int",
+        user_id: "int",
+        immutable: "bool",
+        state: "str",
+        seq: "int",
+    ) -> None:
+        self.id = id
+        self.name = name
+        self.description = description
+        self.archived = archived
+        self.created_at = created_at
+        self.notes = notes
+        self.workspace_id = workspace_id
+        self.user_id = user_id
+        self.immutable = immutable
+        self.state = state
+        self.seq = seq
+
+
+class ProjectsDeleted(DeleteMsg):
+    pass
+
+
+class ProjectSubscriptionSpec(ClientMsg):
+    def __init__(
+        self,
+        workspace_ids: "typing.Optional[typing.List[int]]" = None,
+        project_ids: "typing.Optional[typing.List[int]]" = None,
+        since: "typing.Optional[int]" = None,
+    ) -> None:
+        self.workspace_ids = workspace_ids
+        self.project_ids = project_ids
         self.since = since

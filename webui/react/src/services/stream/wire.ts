@@ -4,50 +4,6 @@ import { isEqual } from 'lodash';
 
 import { Streamable, StreamSpec } from '.';
 
-export class ProjectSpec extends StreamSpec {
-  readonly #id: Streamable = 'projects';
-  #workspace_ids: Array<number>;
-  #project_ids: Array<number>;
-  #since: number;
-
-  constructor(
-    workspace_ids?: Array<number>,
-    project_ids?: Array<number>,
-    since?: number,
-  ) {
-    super();
-    this.#workspace_ids = workspace_ids || [];
-    this.#project_ids = project_ids || [];
-    this.#since = since || 0;
-  }
-
-  public equals = (sp?: StreamSpec): boolean => {
-    if (!sp) return false;
-    if (sp instanceof ProjectSpec) {
-      return (
-        isEqual(sp.#workspace_ids, this.#workspace_ids)
-        &&
-        isEqual(sp.#project_ids, this.#project_ids)
-        &&
-        isEqual(sp.#since, this.#since)
-      );
-    }
-    return false;
-  };
-
-  public id = (): Streamable => {
-    return this.#id;
-  };
-
-  public toWire = (): Record<string, unknown> => {
-    return {
-      workspace_ids: this.#workspace_ids,
-      project_ids: this.#project_ids,
-      since: this.#since,
-    };
-  };
-}
-
 export class ModelSpec extends StreamSpec {
   readonly #id: Streamable = 'models';
   #workspace_ids: Array<number>;
@@ -93,6 +49,50 @@ export class ModelSpec extends StreamSpec {
       workspace_ids: this.#workspace_ids,
       model_ids: this.#model_ids,
       user_ids: this.#user_ids,
+      since: this.#since,
+    };
+  };
+}
+
+export class ProjectSpec extends StreamSpec {
+  readonly #id: Streamable = 'projects';
+  #workspace_ids: Array<number>;
+  #project_ids: Array<number>;
+  #since: number;
+
+  constructor(
+    workspace_ids?: Array<number>,
+    project_ids?: Array<number>,
+    since?: number,
+  ) {
+    super();
+    this.#workspace_ids = workspace_ids || [];
+    this.#project_ids = project_ids || [];
+    this.#since = since || 0;
+  }
+
+  public equals = (sp?: StreamSpec): boolean => {
+    if (!sp) return false;
+    if (sp instanceof ProjectSpec) {
+      return (
+        isEqual(sp.#workspace_ids, this.#workspace_ids)
+        &&
+        isEqual(sp.#project_ids, this.#project_ids)
+        &&
+        isEqual(sp.#since, this.#since)
+      );
+    }
+    return false;
+  };
+
+  public id = (): Streamable => {
+    return this.#id;
+  };
+
+  public toWire = (): Record<string, unknown> => {
+    return {
+      workspace_ids: this.#workspace_ids,
+      project_ids: this.#project_ids,
       since: this.#since,
     };
   };
