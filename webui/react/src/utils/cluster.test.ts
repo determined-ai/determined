@@ -55,9 +55,15 @@ const AGENTS: Type.Agent[] = [
 
 describe('Cluster Utilities', () => {
   describe('getSlotContainerStates', () => {
+    it('should return empty array when agent list is empty', () => {
+      const result = utils.getSlotContainerStates([], Type.ResourceType.ALL);
+      const expected: Type.ResourceState[] = [];
+      expect(result).toStrictEqual(expected);
+    });
+
     it('should convert all agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.ALL);
-      const expected = [
+      const expected: Type.ResourceState[] = [
         Type.ResourceState.Running,
         Type.ResourceState.Running,
         Type.ResourceState.Running,
@@ -71,7 +77,7 @@ describe('Cluster Utilities', () => {
 
     it('should convert all agents in `compute-pool` into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.ALL, COMPUTE_POOL);
-      const expected = [
+      const expected: Type.ResourceState[] = [
         Type.ResourceState.Running,
         Type.ResourceState.Running,
         Type.ResourceState.Pulling,
@@ -84,7 +90,7 @@ describe('Cluster Utilities', () => {
 
     it('should convert enabled CPU agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.CPU);
-      const expected = [
+      const expected: Type.ResourceState[] = [
         Type.ResourceState.Running,
         Type.ResourceState.Running,
         Type.ResourceState.Running,
