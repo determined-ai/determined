@@ -163,6 +163,7 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 // nolint:lll
 func (m *Master) healthCheckEndpoint(c echo.Context) error {
 	hc := m.healthCheck(c.Request().Context())
+
 	status := http.StatusOK
 	if hc.Status != model.Healthy {
 		status = http.StatusServiceUnavailable
@@ -175,7 +176,7 @@ func (m *Master) healthCheck(ctx context.Context) model.HealthCheck {
 	var hc model.HealthCheck
 
 	hc.Database = model.Healthy
-	_, err := db.Bun().NewSelect().Exists(ctx)
+	_, err := db.Bun().NewSelect().Table("cluster_id").Exists(ctx)
 	if err != nil {
 		hc.Database = model.Unhealthy
 	}
@@ -1360,6 +1361,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
 	m.echo.GET("/info", api.Route(m.getInfo))
+	m.echo.GET("/health", m.healthCheckEndpoint)
 
 	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)

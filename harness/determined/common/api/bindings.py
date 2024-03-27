@@ -402,6 +402,86 @@ class jobv1Type(DetEnum):
     EXTERNAL = "TYPE_EXTERNAL"
     GENERIC = "TYPE_GENERIC"
 
+class model.HealthCheck(Printable):
+    database: "typing.Optional[model.HealthStatus]" = None
+    resource_managers: "typing.Optional[typing.Sequence[model.ResourceManagerHealth]]" = None
+    status: "typing.Optional[model.HealthStatus]" = None
+
+    def __init__(
+        self,
+        *,
+        database: "typing.Union[model.HealthStatus, None, Unset]" = _unset,
+        resource_managers: "typing.Union[typing.Sequence[model.ResourceManagerHealth], None, Unset]" = _unset,
+        status: "typing.Union[model.HealthStatus, None, Unset]" = _unset,
+    ):
+        if not isinstance(database, Unset):
+            self.database = database
+        if not isinstance(resource_managers, Unset):
+            self.resource_managers = resource_managers
+        if not isinstance(status, Unset):
+            self.status = status
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "model.HealthCheck":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "database" in obj:
+            kwargs["database"] = model.HealthStatus(obj["database"]) if obj["database"] is not None else None
+        if "resource_managers" in obj:
+            kwargs["resource_managers"] = [model.ResourceManagerHealth.from_json(x) for x in obj["resource_managers"]] if obj["resource_managers"] is not None else None
+        if "status" in obj:
+            kwargs["status"] = model.HealthStatus(obj["status"]) if obj["status"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "database" in vars(self):
+            out["database"] = None if self.database is None else self.database.value
+        if not omit_unset or "resource_managers" in vars(self):
+            out["resource_managers"] = None if self.resource_managers is None else [x.to_json(omit_unset) for x in self.resource_managers]
+        if not omit_unset or "status" in vars(self):
+            out["status"] = None if self.status is None else self.status.value
+        return out
+
+class model.HealthStatus(DetEnum):
+    up = "up"
+    down = "down"
+
+class model.ResourceManagerHealth(Printable):
+    name: "typing.Optional[str]" = None
+    status: "typing.Optional[model.HealthStatus]" = None
+
+    def __init__(
+        self,
+        *,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        status: "typing.Union[model.HealthStatus, None, Unset]" = _unset,
+    ):
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(status, Unset):
+            self.status = status
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "model.ResourceManagerHealth":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "status" in obj:
+            kwargs["status"] = model.HealthStatus(obj["status"]) if obj["status"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "status" in vars(self):
+            out["status"] = None if self.status is None else self.status.value
+        return out
+
 class protobufAny(Printable):
     """https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"""
     typeUrl: "typing.Optional[str]" = None
@@ -22407,6 +22487,27 @@ def post_UpdateJobQueue(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UpdateJobQueue", _resp)
+
+def get_health(
+    session: "api.BaseSession",
+) -> "model.HealthCheck":
+    """Get health of Determined and the dependencies."""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/health",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return model.HealthCheck.from_json(_resp.json())
+    if _resp.status_code == 503:
+        return model.HealthCheck.from_json(_resp.json())
+    raise APIHttpError("get_health", _resp)
 
 # Paginated is a union type of objects whose .pagination
 # attribute is a v1Pagination-type object.

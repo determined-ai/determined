@@ -241,6 +241,60 @@ export const Jobv1Type = {
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
 /**
+ * 
+ * @export
+ * @interface Model.HealthCheck
+ */
+export interface Model.HealthCheck {
+    /**
+     * 
+     * @type {Model.HealthStatus}
+     * @memberof Model.HealthCheck
+     */
+    database?: Model.HealthStatus;
+    /**
+     * 
+     * @type {Array<Model.ResourceManagerHealth>}
+     * @memberof Model.HealthCheck
+     */
+    resource_managers?: Array<Model.ResourceManagerHealth>;
+    /**
+     * 
+     * @type {Model.HealthStatus}
+     * @memberof Model.HealthCheck
+     */
+    status?: Model.HealthStatus;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export const Model.HealthStatus = {
+    up: 'up',
+    down: 'down',
+} as const
+export type Model.HealthStatus = ValueOf<typeof Model.HealthStatus>
+/**
+ * 
+ * @export
+ * @interface Model.ResourceManagerHealth
+ */
+export interface Model.ResourceManagerHealth {
+    /**
+     * 
+     * @type {string}
+     * @memberof Model.ResourceManagerHealth
+     */
+    name?: string;
+    /**
+     * 
+     * @type {Model.HealthStatus}
+     * @memberof Model.ResourceManagerHealth
+     */
+    status?: Model.HealthStatus;
+}
+/**
  * Gets around not being able to do "Optional map<string, int64>". Not ideal but this API is marked internal for now.
  * @export
  * @interface PatchCheckpointOptionalResources
@@ -12496,6 +12550,36 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options: any = {}): FetchArgs {
+            const localVarPath = `/health`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -12892,6 +12976,24 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Model.HealthCheck> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).health(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -13091,6 +13193,15 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         },
         /**
          * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options?: any) {
+            return ClusterApiFp(configuration).health(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Stream master logs.
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
@@ -13271,6 +13382,17 @@ export class ClusterApi extends BaseAPI {
      */
     public getSlots(agentId: string, options?: any) {
         return ClusterApiFp(this.configuration).getSlots(agentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get health of Determined and the dependencies.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public health(options?: any) {
+        return ClusterApiFp(this.configuration).health(options)(this.fetch, this.basePath)
     }
     
     /**
