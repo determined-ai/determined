@@ -273,6 +273,20 @@ func (m *MultiRMRouter) GetExternalJobs(rpName rm.ResourcePoolName) ([]*jobv1.Jo
 	return m.rms[resolvedRMName].GetExternalJobs(rpName)
 }
 
+// HealthCheck calls HealthCheck on all the resource managers.
+func (m *MultiRMRouter) HealthCheck() []model.ResourceManagerHealth {
+	res, _ := fanOutRMCall(m, func(rm rm.ResourceManager) ([]model.ResourceManagerHealth, error) {
+		return rm.HealthCheck(), nil
+	})
+
+	var flattened []model.ResourceManagerHealth
+	for _, r := range res {
+		flattened = append(flattened, r...)
+	}
+
+	return flattened
+}
+
 // GetAgents returns all agents across all resource managers.
 func (m *MultiRMRouter) GetAgents() (*apiv1.GetAgentsResponse, error) {
 	res, err := fanOutRMCall(m, func(rm rm.ResourceManager) (*apiv1.GetAgentsResponse, error) {
