@@ -18,7 +18,7 @@ export const getSlotContainerStates = (
       return true;
     })
     .flatMap((agent) => {
-      const arr: ResourceState[] = Object.entries(agent.slotStats?.typeStats ?? {})
+      const arr: ResourceState[] = Object.entries(agent.slotStats.typeStats ?? {})
         .filter(([type]) => {
           return resourceType === ResourceType.ALL ? true : type === `TYPE_${resourceType}`;
         })
