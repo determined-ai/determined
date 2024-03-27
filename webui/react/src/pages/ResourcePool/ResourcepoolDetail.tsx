@@ -65,7 +65,7 @@ const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
-  const agents = Loadable.getOrElse([], useObservable(clusterStore.agents));
+  const agents = useObservable(clusterStore.agents);
   const resourcePools = useObservable(clusterStore.resourcePools);
   const navigate = useNavigate();
   const [canceler] = useState(new AbortController());
@@ -80,20 +80,25 @@ const ResourcepoolDetailInner: React.FC = () => {
   }, [poolname, resourcePools]);
 
   const totalSlots = useMemo(() => {
-    const total = agents.reduce(
-      (totalVal, { slotStats }) =>
-        totalVal +
-        Object.values(slotStats.typeStats ?? {}).reduce(
-          (localTotal, { total }) => localTotal + total,
-          0,
-        ),
-      0,
-    );
+    const total = agents
+      .getOrElse([])
+      .reduce(
+        (totalVal, { slotStats }) =>
+          totalVal +
+          Object.values(slotStats.typeStats ?? {}).reduce(
+            (localTotal, { total }) => localTotal + total,
+            0,
+          ),
+        0,
+      );
     return total;
   }, [agents]);
 
+  const isTopologyAvailable =
+    agents.isLoaded && agents.data.length <= MAX_USABLE_NODES && totalSlots <= MAX_USABLE_SLOTS;
+
   const agentsWithSlots = useAsync(async () => {
-    if (agents.length > MAX_USABLE_NODES || totalSlots > MAX_USABLE_SLOTS) {
+    if (!isTopologyAvailable) {
       return [];
     }
     try {
@@ -102,7 +107,7 @@ const ResourcepoolDetailInner: React.FC = () => {
       handleError(e, { publicSubject: 'Could not get agents with slots' });
       return [];
     }
-  }, [agents.length, totalSlots]);
+  }, [isTopologyAvailable]);
 
   const usage = useMemo(() => {
     if (!pool) return 0;
@@ -316,7 +321,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        {agents.length <= MAX_USABLE_NODES && totalSlots <= MAX_USABLE_SLOTS && (
+        {isTopologyAvailable && (
           <>
             {topologyAgentPool.length !== 0 && poolname && <Topology nodes={topologyAgentPool} />}
           </>
