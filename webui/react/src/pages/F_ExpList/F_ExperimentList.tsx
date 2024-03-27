@@ -190,8 +190,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       if (!prevPs?.isLoaded) {
         ps.forEach((s) => {
           cleanup?.();
-          // init formset
-          if (!s?.filterset) return;
+          if (!s?.filterset) {
+            return formStore.init();
+          }
           const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
           if (isLeft(formSetValidation)) {
             handleError(formSetValidation.left, {
