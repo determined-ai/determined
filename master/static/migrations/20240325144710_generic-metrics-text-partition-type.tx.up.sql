@@ -1,5 +1,6 @@
 /*
- Change `partition_type` on `metrics` from ENUM type to TEXT.
+  Drop 'NOT NULL' on `metrics.total_batches`.
+  Change `partition_type` on `metrics` from ENUM type to TEXT.
 
  Partition keys cannot be modified without dropping and recreating the table.
  */
@@ -40,7 +41,7 @@ SELECT setval(
     true
 );
 
--- Re-create table with `partition_type` TEXT.
+-- Re-create table with `partition_type` TEXT and nullable `total_batches`
 CREATE TABLE metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
@@ -55,14 +56,18 @@ CREATE TABLE metrics (
 
 
 -- Modify child partitions to have `partition_type` TEXT and set defaults.
-ALTER TABLE raw_steps ALTER COLUMN partition_type TYPE text;
-ALTER TABLE raw_steps ALTER COLUMN partition_type SET DEFAULT 'TRAINING';
+-- Drop and recreate the columns, since it's faster and we already know the values.
+ALTER TABLE raw_steps DROP COLUMN partition_type;
+ALTER TABLE raw_steps ADD COLUMN partition_type TEXT DEFAULT 'TRAINING';
+ALTER TABLE raw_steps ALTER COLUMN partition_type SET NOT NULL;
 
-ALTER TABLE raw_validations ALTER COLUMN partition_type TYPE text;
-ALTER TABLE raw_validations ALTER COLUMN partition_type SET DEFAULT 'VALIDATION';
+ALTER TABLE raw_validations DROP COLUMN partition_type;
+ALTER TABLE raw_validations ADD COLUMN partition_type TEXT DEFAULT 'VALIDATION';
+ALTER TABLE raw_validations ALTER COLUMN partition_type SET NOT NULL;
 
-ALTER TABLE generic_metrics ALTER COLUMN partition_type TYPE text;
-ALTER TABLE generic_metrics ALTER COLUMN partition_type SET DEFAULT 'GENERIC';
+ALTER TABLE generic_metrics DROP COLUMN partition_type;
+ALTER TABLE generic_metrics ADD COLUMN partition_type TEXT DEFAULT 'GENERIC';
+ALTER TABLE generic_metrics ALTER COLUMN partition_type SET NOT NULL;
 
 
 -- Drop `metric_partition_type` enum.
