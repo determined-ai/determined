@@ -24,6 +24,7 @@ import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
+import FlatRuns from './FlatRuns/FlatRuns';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 
@@ -34,6 +35,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const f_explist = useFeature().isOn('explist_v2');
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -83,12 +85,23 @@ const ProjectDetails: React.FC = () => {
   });
 
   const tabItems: PivotProps['items'] = useMemo(() => {
-    if (!project) {
-      return [];
-    }
+    const items: PivotProps['items'] = [];
+    if (!project) return items;
 
-    const items: PivotProps['items'] = [
-      {
+    if (f_flat_runs) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <FlatRuns project={project} />
+            </div>
+          </div>
+        ),
+        key: 'runs',
+        label: id === 1 ? '' : 'Runs',
+      });
+    } else {
+      items.push({
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
@@ -102,8 +115,8 @@ const ProjectDetails: React.FC = () => {
         ),
         key: 'experiments',
         label: id === 1 ? '' : 'Experiments',
-      },
-    ];
+      });
+    }
 
     if (!project.immutable && projectId) {
       items.push({
@@ -120,7 +133,7 @@ const ProjectDetails: React.FC = () => {
     }
 
     return items;
-  }, [fetchProject, id, project, projectId, f_explist]);
+  }, [project, f_flat_runs, f_explist, projectId, id, fetchProject]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
 

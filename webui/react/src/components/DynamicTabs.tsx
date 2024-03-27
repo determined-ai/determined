@@ -6,18 +6,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 interface DynamicTabBarProps extends Omit<PivotProps, 'activeKey' | 'type'> {
   basePath: string;
   type?: PivotTabType;
-  children?: React.ReactNode;
 }
 
 type TabBarUpdater = (node?: JSX.Element) => void;
 
 const TabBarContext = createContext<TabBarUpdater | undefined>(undefined);
 
-const DynamicTabs: React.FC<DynamicTabBarProps> = ({
-  basePath,
-  children,
-  ...props
-}): JSX.Element => {
+const DynamicTabs: React.FC<DynamicTabBarProps> = ({ basePath, items, ...props }): JSX.Element => {
   const [tabBarExtraContent, setTabBarExtraContent] = useState<JSX.Element | undefined>();
 
   const navigate = useNavigate();
@@ -25,9 +20,9 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   const [tabKeys, setTabKeys] = useState<string[]>([]);
 
   useEffect(() => {
-    const newTabKeys = React.Children.map(children, (c) => (c as { key: string })?.key ?? '');
+    const newTabKeys = items?.map((c) => c.key ?? '');
     if (Array.isArray(newTabKeys) && !_.isEqual(newTabKeys, tabKeys)) setTabKeys(newTabKeys);
-  }, [children, tabKeys]);
+  }, [items, tabKeys]);
 
   const { tab } = useParams<{ tab: string }>();
 
@@ -46,7 +41,7 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   }, [tab]);
 
   useEffect(() => {
-    if (!activeKey && tabKeys.length) {
+    if ((!activeKey || !tabKeys.includes(activeKey)) && tabKeys.length) {
       navigate(`${basePath}/${tabKeys[0]}`, { replace: true });
     }
   }, [activeKey, tabKeys, handleTabSwitch, basePath, navigate]);
@@ -60,6 +55,7 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
       <Pivot
         {...props}
         activeKey={activeKey}
+        items={items}
         tabBarExtraContent={tabBarExtraContent}
         onTabClick={handleTabSwitch}
       />
