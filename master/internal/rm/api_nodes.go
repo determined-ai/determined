@@ -1,4 +1,4 @@
-package internal
+package rm
 
 import (
 	"context"
@@ -16,10 +16,21 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-func (a *apiServer) GetAgents(
+// NodesAPIServer implements node management gRPC endpoints.
+type NodesAPIServer struct {
+	rm ResourceManager
+}
+
+// NewNodesAPIServer creates a new NodesAPIServer.
+func NewNodesAPIServer(rm ResourceManager) NodesAPIServer {
+	return NodesAPIServer{rm: rm}
+}
+
+// GetAgents returns all nodes know about by the master's resource manager.
+func (a *NodesAPIServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
 ) (*apiv1.GetAgentsResponse, error) {
-	resp, err := a.m.rm.GetAgents()
+	resp, err := a.rm.GetAgents()
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +56,8 @@ func (a *apiServer) GetAgents(
 	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
-func (a *apiServer) GetAgent(
+// GetAgent returns information about a particular node known to the master.
+func (a *NodesAPIServer) GetAgent(
 	ctx context.Context, req *apiv1.GetAgentRequest,
 ) (*apiv1.GetAgentResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
@@ -53,7 +65,7 @@ func (a *apiServer) GetAgent(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetAgent(req)
+	resp, err := a.rm.GetAgent(req)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +82,8 @@ func (a *apiServer) GetAgent(
 	return resp, nil
 }
 
-func (a *apiServer) GetSlots(
+// GetSlots returns all slots (accelerators) attached to a particular node known to the master.
+func (a *NodesAPIServer) GetSlots(
 	ctx context.Context, req *apiv1.GetSlotsRequest,
 ) (*apiv1.GetSlotsResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
@@ -78,7 +91,7 @@ func (a *apiServer) GetSlots(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetSlots(req)
+	resp, err := a.rm.GetSlots(req)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +111,8 @@ func (a *apiServer) GetSlots(
 	return resp, nil
 }
 
-func (a *apiServer) GetSlot(
+// GetSlot returns Information about a particular slot (accelerator) on a node known to the master.
+func (a *NodesAPIServer) GetSlot(
 	ctx context.Context, req *apiv1.GetSlotRequest,
 ) (*apiv1.GetSlotResponse, error) {
 	user, _, err := grpcutil.GetUser(ctx)
@@ -106,7 +120,7 @@ func (a *apiServer) GetSlot(
 		return nil, err
 	}
 
-	resp, err := a.m.rm.GetSlot(req)
+	resp, err := a.rm.GetSlot(req)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +137,7 @@ func (a *apiServer) GetSlot(
 	return resp, nil
 }
 
-func (a *apiServer) canUpdateAgents(ctx context.Context) error {
+func (a *NodesAPIServer) canUpdateAgents(ctx context.Context) error {
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
@@ -138,32 +152,36 @@ func (a *apiServer) canUpdateAgents(ctx context.Context) error {
 	return nil
 }
 
-func (a *apiServer) EnableAgent(
+// EnableAgent enables a node, allowing jobs to be scheduled on it.
+func (a *NodesAPIServer) EnableAgent(
 	ctx context.Context, req *apiv1.EnableAgentRequest,
 ) (resp *apiv1.EnableAgentResponse, err error) {
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return a.m.rm.EnableAgent(req)
+	return a.rm.EnableAgent(req)
 }
 
-func (a *apiServer) DisableAgent(
+// DisableAgent disables a node, forbidding jobs from being scheduled on it. If drain is true then existing jobs
+// scheduled on the node will be allowed to finish, else they are terminated immediately.
+func (a *NodesAPIServer) DisableAgent(
 	ctx context.Context, req *apiv1.DisableAgentRequest,
 ) (resp *apiv1.DisableAgentResponse, err error) {
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
-	return a.m.rm.DisableAgent(req)
+	return a.rm.DisableAgent(req)
 }
 
-func (a *apiServer) EnableSlot(
+// EnableSlot enables a slot, allowing job to be scheduled on it.
+func (a *NodesAPIServer) EnableSlot(
 	ctx context.Context, req *apiv1.EnableSlotRequest,
 ) (resp *apiv1.EnableSlotResponse, err error) {
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
 
-	resp, err = a.m.rm.EnableSlot(req)
+	resp, err = a.rm.EnableSlot(req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):
 		return resp, status.Error(codes.Unimplemented, err.Error())
@@ -174,14 +192,16 @@ func (a *apiServer) EnableSlot(
 	}
 }
 
-func (a *apiServer) DisableSlot(
+// DisableSlot disables a slot, forbidding jobs from being scheduled on it. If drain is true then existing jobs
+// scheduled on the slot will be allowed to finish, else they are terminated immediately.
+func (a *NodesAPIServer) DisableSlot(
 	ctx context.Context, req *apiv1.DisableSlotRequest,
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	if err := a.canUpdateAgents(ctx); err != nil {
 		return nil, err
 	}
 
-	resp, err = a.m.rm.DisableSlot(req)
+	resp, err = a.rm.DisableSlot(req)
 	switch {
 	case errors.Is(err, rmerrors.ErrNotSupported):
 		return resp, status.Error(codes.Unimplemented, err.Error())

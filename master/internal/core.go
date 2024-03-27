@@ -670,7 +670,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate, gRPCLo
 
 	// This must be before grpcutil.RegisterHTTPProxy is called since it may use stuff set up by the
 	// gRPC server (logger initialization, maybe more). Found by --race.
-	gRPCServer := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
+	gRPCServer := grpcutil.NewGRPCServer(m.db, newAPIServer(m),
 		m.config.Observability.EnablePrometheus,
 		&m.config.InternalConfig.ExternalSessions,
 		m.logs,
