@@ -6,6 +6,6 @@ import { BasePage } from 'e2e/models/BasePage';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class UserManagement extends BasePage {
-  static title: string | RegExp = 'Determined';
-  readonly url: string = 'admin/user-management';
+  static title: string = 'Determined';
+  static url: string = 'admin/user-management';
 }

@@ -94,11 +94,14 @@ export type NamedComponentArgs = {
 export abstract class NamedComponent extends BaseComponent {
   constructor({ parent, selector }: { parent: parentTypes; selector: string }) {
     super({ parent, selector });
-    const requiredStaticProperties: string[] = ['defaultSelector'];
-    requiredStaticProperties.forEach((requiredProp) => {
-      if (!Object.hasOwn(this.constructor, requiredProp)) {
-        throw new Error(`A named component must declare a static ${requiredProp}!`);
-      }
-    });
+    requireStaticArgs(this.constructor, ['defaultSelector'])
   }
+}
+
+export function requireStaticArgs(obj: any, requiredProperties: string[]):void {
+  requiredProperties.forEach((requiredProp) => {
+    if (!Object.hasOwn(obj, requiredProp)) {
+      throw new Error(`${obj} must declare a static ${requiredProp}!`);
+    }
+  });
 }
