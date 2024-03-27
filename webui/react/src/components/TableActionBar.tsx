@@ -1,5 +1,6 @@
 import Button from 'hew/Button';
 import Column from 'hew/Column';
+import { Sort } from 'hew/DataGrid/DataGrid';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -16,6 +17,7 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import TableFilter from 'components/FilterForm/TableFilter';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import ColumnPickerMenu from 'pages/F_ExpList/ColumnPickerMenu';
 import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
@@ -45,10 +47,8 @@ import {
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
-import ColumnPickerMenu from './ColumnPickerMenu';
-import { TableViewMode } from './GlideTable';
-import MultiSortMenu, { Sort } from './MultiSortMenu';
-import { OptionsMenu, RowHeight } from './OptionsMenu';
+import MultiSortMenu from './MultiSortMenu';
+import { OptionsMenu, RowHeight, TableViewMode } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [

@@ -1,11 +1,10 @@
 import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
+import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import { SettingsConfig } from 'hooks/useSettings';
 
-import { defaultColumnWidths, defaultExperimentColumns } from './glide-table/columns';
-import { ioTableViewMode, TableViewMode } from './glide-table/GlideTable';
-import { ioRowHeight, RowHeight } from './glide-table/OptionsMenu';
+import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
 
 const SelectAllType = t.type({
   exclusions: t.array(t.number),

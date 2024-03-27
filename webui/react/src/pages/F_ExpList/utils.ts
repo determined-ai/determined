@@ -1,6 +1,4 @@
-import { DataEditorProps } from '@glideapps/glide-data-grid';
 import dayjs from 'dayjs';
-import { Theme } from 'hew/Theme';
 
 import { ExperimentItem } from 'types';
 import {
@@ -45,26 +43,4 @@ export const getTimeInEnglish = (d: Date): string => {
   } else {
     return `${durationInEnglish(delta, options)} ago`;
   }
-};
-
-/**
- * Glide Table Theme Reference
- * https://github.com/glideapps/glide-data-grid/blob/main/packages/core/API.md#theme
- */
-export const getTheme = (appTheme: Theme): DataEditorProps['theme'] => {
-  return {
-    accentLight: appTheme.float,
-    bgBubble: appTheme.ixStrong,
-    bgCell: appTheme.surface,
-    bgHeader: appTheme.surface,
-    bgHeaderHovered: appTheme.surfaceStrong,
-    borderColor: appTheme.ixBorder,
-    fontFamily: appTheme.fontFamily,
-    headerBottomBorderColor: appTheme.ixBorder,
-    headerFontStyle: 'normal 12px',
-    linkColor: appTheme.surfaceOn,
-    textBubble: appTheme.surfaceBorderStrong,
-    textDark: appTheme.surfaceOnWeak,
-    textHeader: appTheme.surfaceOnWeak,
-  };
 };

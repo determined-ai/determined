@@ -2,12 +2,11 @@ import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Toggle from 'hew/Toggle';
-import { TypeOf } from 'io-ts';
+import { literal, TypeOf, union } from 'io-ts';
 import { useMemo } from 'react';
 
 import { valueof } from 'utils/valueof';
 
-import { TableViewMode } from './GlideTable';
 import css from './OptionsMenu.module.scss';
 
 export const RowHeight = {
@@ -43,6 +42,10 @@ export const rowHeightItems = [
     rowHeight: RowHeight.EXTRA_TALL,
   },
 ];
+
+export type TableViewMode = 'scroll' | 'paged';
+
+export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
 
 interface OptionProps {
   onRowHeightChange?: (r: RowHeight) => void;

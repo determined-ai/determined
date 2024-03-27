@@ -11,6 +11,7 @@ import { useObservable } from 'micro-observables';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import {
   defaultProjectSettings,
   ProjectSettings,
@@ -22,7 +23,6 @@ import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 
 import css from './ColumnPickerMenu.module.scss';
-import { defaultExperimentColumns } from './columns';
 
 const BANNED_COLUMNS: Set<string> = new Set([]);
 

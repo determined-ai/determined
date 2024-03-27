@@ -1,4 +1,5 @@
 import Alert from 'hew/Alert';
+import { MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import SplitPane, { Pane } from 'hew/SplitPane';
@@ -12,7 +13,6 @@ import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
-import { MIN_COLUMN_WIDTH } from './glide-table/columns';
 
 interface Props {
   children: React.ReactElement;

@@ -1,5 +1,6 @@
 import { GridCell } from '@glideapps/glide-data-grid';
 import Button from 'hew/Button';
+import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -37,11 +38,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (
-    action: ExperimentAction,
-    id: number,
-    data?: Partial<ExperimentItem>,
-  ) => void | Promise<void>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
