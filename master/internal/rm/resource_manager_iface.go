@@ -1,35 +1,12 @@
 package rm
 
 import (
-	"fmt"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
-	"github.com/google/uuid"
 )
-
-func ScaleUpAgents(baseAgent *agentv1.Agent, baseSlot *agentv1.Slot, nodes, slotsPerNode int) []*agentv1.Agent {
-	newSlots := make(map[string]*agentv1.Slot, slotsPerNode)
-	for i := 0; i < slotsPerNode; i++ {
-		randStrId := uuid.New().String()
-		newSlots[randStrId] = &(*baseSlot)
-	}
-	baseAgent.Slots = newSlots
-
-	newAgents := make([]*agentv1.Agent, 0, nodes)
-	for i := 0; i < nodes; i++ {
-		newAgent := *baseAgent
-		newAgent.Id = uuid.New().String()
-		newAgents = append(newAgents, &newAgent)
-	}
-	fmt.Println("Total Agents: ", len(newAgents))
-	fmt.Println("Total Slots: ", len(newAgents)*slotsPerNode)
-	return newAgents
-}
 
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {

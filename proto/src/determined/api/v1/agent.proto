@@ -63,7 +63,6 @@ message GetAgentResponse {
 
 // Get the set of slots for the agent with the given id.
 message GetSlotsRequest {
-  // TODO: add a summary flag?
   // The id of the agent.
   string agent_id = 1;
 }

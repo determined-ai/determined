@@ -17,11 +17,6 @@ const AGENTS: Type.Agent[] = [
     resources: [],
     slotStats: {
       brandStats: {},
-      deviceTypeCounts: {},
-      disabledSlots: [],
-      drainingCount: 0,
-      slotStates: {},
-      stateCounts: {},
       typeStats: {
         TYPE_CPU: { disabled: 0, draining: 0, states: { STATE_RUNNING: 1 }, total: 2 },
       },
@@ -35,11 +30,6 @@ const AGENTS: Type.Agent[] = [
     resources: [],
     slotStats: {
       brandStats: {},
-      deviceTypeCounts: {},
-      disabledSlots: [],
-      drainingCount: 0,
-      slotStates: {},
-      stateCounts: {},
       typeStats: {
         TYPE_CPU: { disabled: 0, draining: 0, states: { STATE_RUNNING: 2 }, total: 2 },
         TYPE_CUDA: {
