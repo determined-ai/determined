@@ -1,11 +1,9 @@
-//import { SelectionType } from 'hew/DataGrid/DataGrid';
 import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
+import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import { SettingsConfig } from 'hooks/useSettings';
 import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { ioTableViewMode, TableViewMode } from 'pages/F_ExpList/glide-table/GlideTable';
-import { ioRowHeight, RowHeight } from 'pages/F_ExpList/glide-table/OptionsMenu';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
 

@@ -13,7 +13,7 @@ import {
 import { Theme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 
-import { getTimeInEnglish } from 'pages/F_ExpList/glide-table/utils';
+import { getTimeInEnglish } from 'pages/F_ExpList/utils';
 import { handlePath, paths } from 'routes/utils';
 import { DetailedUser, FlatRun, RunState } from 'types';
 import { DURATION_UNIT_MEASURES, durationInEnglish } from 'utils/datetime';

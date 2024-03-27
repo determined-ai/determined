@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
@@ -39,6 +40,7 @@ import {
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -48,8 +50,6 @@ import {
   DEFAULT_SELECTION,
   SelectionType as SelectionState,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-import { Error } from 'pages/F_ExpList/glide-table/exceptions';
-import { EMPTY_SORT, sortMenuItemsForColumn } from 'pages/F_ExpList/glide-table/MultiSortMenu';
 import { paths } from 'routes/utils';
 import { getProjectColumns, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
