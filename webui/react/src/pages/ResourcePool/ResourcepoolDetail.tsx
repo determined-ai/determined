@@ -53,6 +53,10 @@ type TabType = ValueOf<typeof TabType>;
 
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
+// PERF: hide topology if nodes or slots are huge to avoid rendering issue
+const MAX_USABLE_NODES = 1_000;
+const MAX_USABLE_SLOTS = 10_000;
+
 const MenuKey = {
   ManageNodes: 'manage-nodes',
 } as const;
@@ -69,9 +73,6 @@ const ResourcepoolDetailInner: React.FC = () => {
   const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
   const [poolsStats, setPoolsStats] = useState<V1RPQueueStat[]>();
 
-  const MAX_USABLE_NODES = 1_000;
-  const MAX_USABLE_SLOTS = 10_000;
-
   const pool = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools)) return;
 
@@ -79,15 +80,15 @@ const ResourcepoolDetailInner: React.FC = () => {
   }, [poolname, resourcePools]);
 
   const totalSlots = useMemo(() => {
-    const total = agents
-      .map((agent) => {
-        let totalSlots = 0;
-        for (const val of Object.values(agent.slotStats.typeStats ?? {})) {
-          totalSlots += val.total;
-        }
-        return totalSlots;
-      })
-      .reduce((a, b) => a + b, 0);
+    const total = agents.reduce(
+      (totalVal, { slotStats }) =>
+        totalVal +
+        Object.values(slotStats.typeStats ?? {}).reduce(
+          (localTotal, { total }) => localTotal + total,
+          0,
+        ),
+      0,
+    );
     return total;
   }, [agents]);
 
@@ -96,10 +97,9 @@ const ResourcepoolDetailInner: React.FC = () => {
       return [];
     }
     try {
-      const response = await getAgents({ excludeSlots: false });
-      return response;
+      return await getAgents({ excludeSlots: false });
     } catch (e) {
-      handleError(e, { publicSubject: 'Could not agents with slots' });
+      handleError(e, { publicSubject: 'Could not get agents with slots' });
       return [];
     }
   }, [agents.length, totalSlots]);
@@ -316,16 +316,7 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        {agents.length > MAX_USABLE_NODES || totalSlots > MAX_USABLE_SLOTS ? (
-          <Section title="Topology">
-            <div className={css.warningContainer}>
-              <p>
-                Current Topology view is disabled for pools with more than {MAX_USABLE_NODES} nodes
-                or {MAX_USABLE_SLOTS} slots.
-              </p>
-            </div>
-          </Section>
-        ) : (
+        {agents.length <= MAX_USABLE_NODES && totalSlots <= MAX_USABLE_SLOTS && (
           <>
             {topologyAgentPool.length !== 0 && poolname && <Topology nodes={topologyAgentPool} />}
           </>
