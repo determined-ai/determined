@@ -1,5 +1,6 @@
 /*
- Rollback changing `partition_type` on `metrics` from ENUM type to TEXT.
+ Rollback changing `partition_type` on `metrics` from ENUM type to TEXT,
+ dropping NOT NULL on `total_batches`
 
  Partition keys cannot be modified without dropping and recreating the table.
  */
@@ -52,7 +53,7 @@ CREATE TABLE metrics (
     trial_id integer NOT NULL,
     end_time timestamp with time zone,
     metrics jsonb,
-    total_batches integer,
+    total_batches integer NOT NULL DEFAULT 0,
     trial_run_id integer NOT NULL DEFAULT 0,
     archived boolean NOT NULL DEFAULT false,
     id integer NOT NULL DEFAULT nextval('metrics_id_seq'),
