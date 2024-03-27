@@ -714,7 +714,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             selection={selection}
             sorts={sorts}
             staticColumns={STATIC_COLUMNS}
-            total={isPagedView ? runs.length : Loadable.getOrElse(PAGE_SIZE, total)}
+            total={total.getOrElse(PAGE_SIZE)}
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
             onContextMenuComplete={handleContextMenuComplete}

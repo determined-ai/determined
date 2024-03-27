@@ -102,15 +102,6 @@ function getCellStateFromExperimentState(expState: RunState) {
   }
 }
 
-// export type ColumnDef = SizedGridColumn & {
-//   id: string;
-//   isNumerical?: boolean;
-//   renderer: (record: FlatRun, idx: number) => GridCell;
-//   tooltip: (record: FlatRun) => string | undefined;
-// };
-
-//export type ColumnDefs = Record<string, ColumnDef>;
-
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
