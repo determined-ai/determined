@@ -8655,6 +8655,76 @@ class v1MoveProjectRequest(Printable):
         }
         return out
 
+class v1MoveRunsRequest(Printable):
+    """Request to move the run to a different project."""
+    cloneMultitrial: "typing.Optional[bool]" = None
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        destinationProjectId: int,
+        runIds: "typing.Sequence[int]",
+        sourceProjectId: int,
+        cloneMultitrial: "typing.Union[bool, None, Unset]" = _unset,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.destinationProjectId = destinationProjectId
+        self.runIds = runIds
+        self.sourceProjectId = sourceProjectId
+        if not isinstance(cloneMultitrial, Unset):
+            self.cloneMultitrial = cloneMultitrial
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": obj["destinationProjectId"],
+            "runIds": obj["runIds"],
+            "sourceProjectId": obj["sourceProjectId"],
+        }
+        if "cloneMultitrial" in obj:
+            kwargs["cloneMultitrial"] = obj["cloneMultitrial"]
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": self.destinationProjectId,
+            "runIds": self.runIds,
+            "sourceProjectId": self.sourceProjectId,
+        }
+        if not omit_unset or "cloneMultitrial" in vars(self):
+            out["cloneMultitrial"] = self.cloneMultitrial
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1MoveRunsResponse(Printable):
+    """Response to MoveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1Note(Printable):
     """Note is a user comment connected to a project."""
 
@@ -12447,6 +12517,33 @@ class v1RoleWithAssignments(Printable):
             out["role"] = None if self.role is None else self.role.to_json(omit_unset)
         if not omit_unset or "userRoleAssignments" in vars(self):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
+        return out
+
+class v1RunActionResult(Printable):
+    """Message for results of individual runs in a multi-run action."""
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RunActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
         return out
 
 class v1RunPrepareForReportingRequest(Printable):
@@ -20187,6 +20284,27 @@ def post_MoveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveProject", _resp)
+
+def post_MoveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1MoveRunsRequest",
+) -> "v1MoveRunsResponse":
+    """Move runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1MoveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_MoveRuns", _resp)
 
 def post_NotifyContainerRunning(
     session: "api.BaseSession",

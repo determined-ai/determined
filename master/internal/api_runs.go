@@ -2,13 +2,18 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
@@ -24,6 +29,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+type archiveRunOKResult struct {
+	Archived     bool
+	ID           int32
+	ExpID        *int32
+	IsMultitrial bool
+}
 
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
@@ -236,6 +248,204 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	}
 	if !hasIDSort {
 		runQuery.OrderExpr("id ASC")
+	}
+	return nil
+}
+
+func (a *apiServer) MoveRuns(
+	ctx context.Context, req *apiv1.MoveRunsRequest,
+) (*apiv1.MoveRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// check that user can view source project
+	srcProject, err := a.GetProjectByID(ctx, req.SourceProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if srcProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot have runs moved from it",
+			srcProject.Id)
+	}
+
+	// check suitable destination project
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if destProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new runs",
+			req.DestinationProjectId)
+	}
+	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", req.SourceProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(*req.Filter), &efr)
+		if err != nil {
+			return nil, err
+		}
+		getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(q)
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
+			return q
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	var visibleIDs []int32
+	var validIDs []int32
+	// associated experiments to move
+	var expMoveIds []int32
+	for _, check := range runChecks {
+		visibleIDs = append(visibleIDs, check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+		} else {
+			if check.IsMultitrial && req.CloneMultitrial {
+				err := cloneExperimentAndRun(ctx, *check.ExpID, check.ID, req.DestinationProjectId)
+				if err != nil {
+					results = append(results, &apiv1.RunActionResult{
+						Error: fmt.Sprintf(`Failed to clone multi-trial run: %s`, err),
+						Id:    check.ID,
+					})
+				} else {
+					results = append(results, &apiv1.RunActionResult{
+						Error: "",
+						Id:    check.ID,
+					})
+				}
+				continue
+			}
+			if check.ExpID != nil {
+				expMoveIds = append(expMoveIds, *check.ExpID)
+			}
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !slices.Contains(visibleIDs, originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.SourceProjectId),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	if len(validIDs) > 0 {
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				logrus.WithError(txErr).Error("error rolling back transaction in MoveRuns")
+			}
+		}()
+
+		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+		if err != nil {
+			return nil, err
+		}
+		failedExpMoveIds := []int32{-1}
+		for _, res := range expMoveResults {
+			if res.Error != nil {
+				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			}
+		}
+		var acceptedIDs []int32
+		if _, err = tx.NewUpdate().Table("runs").
+			Set("project_id = ?", req.DestinationProjectId).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+		if err = tx.Commit(); err != nil {
+			return nil, err
+		}
+	}
+	return &apiv1.MoveRunsResponse{Results: results}, nil
+}
+
+func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destProjID int32) error {
+	var cloneExpID int32
+
+	// clone experiment into dest project
+	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
+		parent_id, owner_id, progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count,
+		best_trial_id, unmanaged, external_experiment_id) 
+		SELECT 'COMPLETED'::experiment_state as state, config, model_definition, start_time,
+		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time, archived, parent_id, owner_id, progress,
+		original_config, notes, job_id, ? as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged,
+		external_experiment_id FROM experiments WHERE id = ? RETURNING id;`, destProjID, expID).Scan(ctx, &cloneExpID)
+	if err != nil {
+		return err
+	}
+
+	var cloneRunID int32
+	// clone run into dest project
+	err = db.Bun().NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
+		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
+		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
+		summary_metrics_timestamp, last_activity, external_run_id, project_id)
+		SELECT ? as experiment_id,
+		(CASE WHEN state IN ('CANCELED', 'COMPLETED', 'ERROR') THEN state ELSE 'COMPLETED'::trial_state END) as state,
+		start_time,
+		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time,
+		hparams, warm_start_checkpoint_id, best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size,
+		checkpoint_count, searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id,
+		summary_metrics, summary_metrics_timestamp, last_activity, external_run_id, ? as project_id
+		FROM runs WHERE id = ? RETURNING id`,
+		cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
+	if err != nil {
+		// Delete cloned experiment if run cloning fails
+		err = db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+		return err
 	}
 	return nil
 }
