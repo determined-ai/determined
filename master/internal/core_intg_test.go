@@ -23,7 +23,7 @@ func TestHealthCheck(t *testing.T) {
 	assertHealthCheck := func(t *testing.T, expectedCode int, expectedHealth model.HealthCheck) {
 		e := echo.New()
 		rec := httptest.NewRecorder()
-		c := e.NewContext(httptest.NewRequest("GET", "/health", nil), rec)
+		c := e.NewContext(httptest.NewRequest(http.MethodGet, "/health", nil), rec)
 
 		require.NoError(t, api.m.healthCheckEndpoint(c))
 		require.Equal(t, expectedCode, rec.Code)
