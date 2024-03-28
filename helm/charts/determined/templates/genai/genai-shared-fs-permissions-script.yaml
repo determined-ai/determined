@@ -1,0 +1,22 @@
+{{- if .Values.genai }}
+{{- if .Values.genai.version }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genai-shared-fs-permissions-script-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: genai-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+data:
+  enable_shared_fs.sh: |
+    #!/bin/sh -ex
+    echo "whoami: $(whoami)"
+    chmod 2775 /shared_fs
+    GROUP_ID={{ (required "A valid .Values.genai.generatedPVC.agentGroupID entry required!" .Values.genai.generatedPVC.agentGroupID) }}
+    GROUP_NAME={{ (required "A valid .Values.genai.generatedPVC.agentGroupName entry required!" .Values.genai.generatedPVC.agentGroupName) }}
+    groupadd -g $GROUP_ID $GROUP_NAME
+    chgrp $GROUP_NAME /shared_fs
+    ls -l / | grep shared_fs
+{{- end }}
+{{- end }}
