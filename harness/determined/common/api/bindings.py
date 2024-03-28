@@ -7181,6 +7181,37 @@ class v1KillNotebookResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
+class v1KillRunsRequest(Printable):
+    """Kill runs."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
 class v1KillRunsResponse(Printable):
     """Response to KillRunsResponse."""
 
@@ -19629,26 +19660,18 @@ def post_KillNotebook(
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
 
-def get_KillRuns(
+def post_KillRuns(
     session: "api.BaseSession",
     *,
-    filter: "typing.Optional[str]" = None,
-    runIds: "typing.Optional[typing.Sequence[int]]" = None,
+    body: "v1KillRunsRequest",
 ) -> "v1KillRunsResponse":
-    """Get a list of runs.
-
-    - filter: Filter expression.
-    - runIds: The ids of the runs being killed.
-    """
-    _params = {
-        "filter": filter,
-        "runIds": runIds,
-    }
+    """Get a list of runs."""
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="POST",
         path="/api/v1/runs/kill",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -19656,7 +19679,7 @@ def get_KillRuns(
     )
     if _resp.status_code == 200:
         return v1KillRunsResponse.from_json(_resp.json())
-    raise APIHttpError("get_KillRuns", _resp)
+    raise APIHttpError("post_KillRuns", _resp)
 
 def post_KillShell(
     session: "api.BaseSession",

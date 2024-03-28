@@ -5303,6 +5303,25 @@ export interface V1KillNotebookResponse {
     notebook?: V1Notebook;
 }
 /**
+ * Kill runs.
+ * @export
+ * @interface V1KillRunsRequest
+ */
+export interface V1KillRunsRequest {
+    /**
+     * The ids of the runs being killed.
+     * @type {Array<number>}
+     * @memberof V1KillRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillRunsRequest
+     */
+    filter?: string;
+}
+/**
  * Response to KillRunsResponse.
  * @export
  * @interface V1KillRunsResponse
@@ -19011,15 +19030,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get a list of runs.
-         * @param {Array<number>} [runIds] The ids of the runs being killed.
-         * @param {string} [filter] Filter expression.
+         * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killRuns(runIds?: Array<number>, filter?: string, options: any = {}): FetchArgs {
+        killRuns(body: V1KillRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
+            }
             const localVarPath = `/api/v1/runs/kill`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -19031,17 +19053,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (runIds) {
-                localVarQueryParameter['runIds'] = runIds
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -21339,13 +21356,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of runs.
-         * @param {Array<number>} [runIds] The ids of the runs being killed.
-         * @param {string} [filter] Filter expression.
+         * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killRuns(runIds?: Array<number>, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(runIds, filter, options);
+        killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22467,13 +22483,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get a list of runs.
-         * @param {Array<number>} [runIds] The ids of the runs being killed.
-         * @param {string} [filter] Filter expression.
+         * @param {V1KillRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killRuns(runIds?: Array<number>, filter?: string, options?: any) {
-            return InternalApiFp(configuration).killRuns(runIds, filter, options)(fetch, basePath);
+        killRuns(body: V1KillRunsRequest, options?: any) {
+            return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23355,14 +23370,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of runs.
-     * @param {Array<number>} [runIds] The ids of the runs being killed.
-     * @param {string} [filter] Filter expression.
+     * @param {V1KillRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public killRuns(runIds?: Array<number>, filter?: string, options?: any) {
-        return InternalApiFp(this.configuration).killRuns(runIds, filter, options)(this.fetch, this.basePath)
+    public killRuns(body: V1KillRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

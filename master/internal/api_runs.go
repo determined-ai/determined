@@ -253,12 +253,31 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived")
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
 	} else {
-		return nil, fmt.Errorf("filter unimplemented")
+		var efr experimentFilterRoot
+		err := json.Unmarshal([]byte(*req.Filter), &efr)
+		if err != nil {
+			return nil, err
+		}
+		getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			_, err = efr.toSQL(q)
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
+			return q
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err := getQ.Scan(ctx)
