@@ -174,10 +174,10 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 		if i == 0 {
 			taskStats.ContainerID = nil
 		}
-		require.NoError(t, RecordTaskStatsBun(ctx, taskStats))
+		require.NoError(t, RecordTaskStats(ctx, taskStats))
 
 		taskStats.EndTime = ptrs.Ptr(time.Now().Truncate(time.Millisecond))
-		require.NoError(t, RecordTaskEndStatsBun(ctx, taskStats))
+		require.NoError(t, RecordTaskEndStats(ctx, taskStats))
 		expected = append(expected, taskStats)
 	}
 

@@ -52,6 +52,8 @@ const (
 	TaskTypeGeneric TaskType = "GENERIC"
 	// GlobalAccessScopeID represents global permission access.
 	GlobalAccessScopeID AccessScopeID = 0
+	// AggregationTypeQueued is the type of aggregation for queued tasks.
+	AggregationTypeQueued = "queued"
 )
 
 // TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
@@ -200,7 +202,8 @@ type TaskStats struct {
 
 // ResourceAggregates is the model for resource_aggregates in the database.
 type ResourceAggregates struct {
-	Date            *time.Time
+	Date *time.Time
+	// AggregationType is the type of aggregation. E.g. "total", "queued", "resource_pool", "username"
 	AggregationType string
 	AggregationKey  string
 	Seconds         float32

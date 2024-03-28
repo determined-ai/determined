@@ -507,7 +507,10 @@ func (k *kubernetesResourcePool) assignResources(
 		k.containerIDtoAllocationID[rs.containerID.String()] = req.AllocationID
 	}
 
-	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
+	assigned := sproto.ResourcesAllocated{
+		ID: req.AllocationID, Resources: allocations,
+		JobSubmissionTime: req.JobSubmissionTime,
+	}
 	k.reqList.AddAllocationRaw(req.AllocationID, &assigned)
 	rmevents.Publish(req.AllocationID, assigned.Clone())
 

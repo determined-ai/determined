@@ -170,6 +170,7 @@ func newAllocation(
 		req: req,
 		model: model.Allocation{
 			AllocationID: req.AllocationID,
+			// do we want to set the starttime?
 			TaskID:       req.TaskID,
 			Slots:        req.SlotsNeeded,
 			ResourcePool: req.ResourcePool,
