@@ -55,6 +55,7 @@ func MigrateToPreRunTrialsData(t *testing.T, pgdb *db.PgDB, migrationsPath strin
 	)
 	var trialsJSON []map[string]any
 	for _, t := range trialJSONDataRow {
+		t.TrialData["log_retention_days"] = nil // View now has changed with log_retention_days.
 		trialsJSON = append(trialsJSON, t.TrialData)
 	}
 

@@ -50,6 +50,7 @@ const actionList = [
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
+  Action.RetainLogs,
   Action.Pause,
   Action.Archive,
   Action.Unarchive,

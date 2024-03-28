@@ -255,6 +255,8 @@ message GetExperimentTrialsRequest {
     SORT_BY_RESTARTS = 11;
     // Return the trials sorted by checkpoint size.
     SORT_BY_CHECKPOINT_SIZE = 12;
+    // Return the trials sorted by number of log retention days.
+    SORT_BY_LOG_RETENTION_DAYS = 13;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;
@@ -449,6 +451,21 @@ message CompareTrialsRequest {
   // The metric and range filter for a time series
   determined.common.v1.PolymorphicFilter time_series_filter = 10;
 }
+
+// Request for changing the log retention policy for the an experiment.
+message PutTrialRetainLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "num_days" ] }
+  };
+  // The ID of the trial.
+  int32 trial_id = 1;
+
+  // The number of days to retain logs, starting from the time of creation.
+  int32 num_days = 2;
+}
+
+// Response to PutExperimentRetainLogsRequest.
+message PutTrialRetainLogsResponse {}
 
 // Response to CompareTrialsRequest.
 message CompareTrialsResponse {

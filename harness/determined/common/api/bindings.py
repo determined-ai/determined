@@ -646,6 +646,7 @@ class trialv1Trial(Printable):
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    logRetentionDays: "typing.Optional[int]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -670,6 +671,7 @@ class trialv1Trial(Printable):
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -696,6 +698,8 @@ class trialv1Trial(Printable):
             self.endTime = endTime
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
+        if not isinstance(logRetentionDays, Unset):
+            self.logRetentionDays = logRetentionDays
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
         if not isinstance(searcherMetricValue, Unset):
@@ -734,6 +738,8 @@ class trialv1Trial(Printable):
             kwargs["endTime"] = obj["endTime"]
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
+        if "logRetentionDays" in obj:
+            kwargs["logRetentionDays"] = obj["logRetentionDays"]
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
         if "searcherMetricValue" in obj:
@@ -772,6 +778,8 @@ class trialv1Trial(Printable):
             out["endTime"] = self.endTime
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
+        if not omit_unset or "logRetentionDays" in vars(self):
+            out["logRetentionDays"] = self.logRetentionDays
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -4628,6 +4636,7 @@ class v1GetExperimentTrialsRequestSortBy(DetEnum):
     - SORT_BY_DURATION: Return the trials sorted by the total duration.
     - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
     - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+    - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
@@ -4640,6 +4649,7 @@ class v1GetExperimentTrialsRequestSortBy(DetEnum):
     DURATION = "SORT_BY_DURATION"
     RESTARTS = "SORT_BY_RESTARTS"
     CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    LOG_RETENTION_DAYS = "SORT_BY_LOG_RETENTION_DAYS"
 
 class v1GetExperimentTrialsResponse(Printable):
     """Response to GetExperimentTrialsRequest."""
@@ -10999,6 +11009,91 @@ class v1PutExperimentResponse(Printable):
         }
         return out
 
+class v1PutExperimentRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+
+    def __init__(
+        self,
+        *,
+        experimentId: int,
+        numDays: int,
+    ):
+        self.experimentId = experimentId
+        self.numDays = numDays
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentId": obj["experimentId"],
+            "numDays": obj["numDays"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentId": self.experimentId,
+            "numDays": self.numDays,
+        }
+        return out
+
+class v1PutExperimentsRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+    filters: "typing.Optional[v1BulkExperimentFilters]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+        numDays: int,
+        filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+    ):
+        self.experimentIds = experimentIds
+        self.numDays = numDays
+        if not isinstance(filters, Unset):
+            self.filters = filters
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentsRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+            "numDays": obj["numDays"],
+        }
+        if "filters" in obj:
+            kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+            "numDays": self.numDays,
+        }
+        if not omit_unset or "filters" in vars(self):
+            out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        return out
+
+class v1PutExperimentsRetainLogsResponse(Printable):
+    """Response to PutExperimentRetainLogsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentsRetainLogsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1PutProjectNotesRequest(Printable):
     """Request for setting project notes."""
 
@@ -11132,6 +11227,37 @@ class v1PutTrialResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "trial": self.trial.to_json(omit_unset),
         }
+        return out
+
+class v1PutTrialRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+    trialId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        numDays: int,
+        trialId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.numDays = numDays
+        if not isinstance(trialId, Unset):
+            self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutTrialRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "numDays": obj["numDays"],
+        }
+        if "trialId" in obj:
+            kwargs["trialId"] = obj["trialId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "numDays": self.numDays,
+        }
+        if not omit_unset or "trialId" in vars(self):
+            out["trialId"] = self.trialId
         return out
 
 class v1QueueControl(Printable):
@@ -17293,6 +17419,7 @@ specified by `searcher.metric` in the experiment configuration.
  - SORT_BY_DURATION: Return the trials sorted by the total duration.
  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+ - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
     - states: Limit trials to those that match the provided state.
 
  - STATE_UNSPECIFIED: The state of the experiment is unknown.
@@ -21125,6 +21252,52 @@ def put_PutExperimentLabel(
         return v1PutExperimentLabelResponse.from_json(_resp.json())
     raise APIHttpError("put_PutExperimentLabel", _resp)
 
+def put_PutExperimentRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutExperimentRetainLogsRequest",
+    experimentId: int,
+) -> None:
+    """Retain logs for an experiment.
+
+    - experimentId: The ID of the experiment.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/experiments/{experimentId}/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_PutExperimentRetainLogs", _resp)
+
+def put_PutExperimentsRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutExperimentsRetainLogsRequest",
+) -> "v1PutExperimentsRetainLogsResponse":
+    """Retain logs for an experiment."""
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path="/api/v1/experiments/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutExperimentsRetainLogsResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutExperimentsRetainLogs", _resp)
+
 def put_PutProjectNotes(
     session: "api.BaseSession",
     *,
@@ -21198,6 +21371,31 @@ def put_PutTrial(
     if _resp.status_code == 200:
         return v1PutTrialResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTrial", _resp)
+
+def put_PutTrialRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutTrialRetainLogsRequest",
+    trialId: int,
+) -> None:
+    """Retain logs for a Trial.
+
+    - trialId: The ID of the trial.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/trials/{trialId}/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_PutTrialRetainLogs", _resp)
 
 def post_RemoveAssignments(
     session: "api.BaseSession",

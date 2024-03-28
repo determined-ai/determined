@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -580,6 +581,7 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:                 "duration",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_RESTARTS:                 "restarts",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_CHECKPOINT_SIZE:          "checkpoint_size",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_LOG_RETENTION_DAYS:       "log_retention_days",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -696,6 +698,32 @@ WHERE t.external_trial_id = ? AND e.external_experiment_id = ?`,
 	}
 
 	return &resp, nil
+}
+
+func (a *apiServer) PutTrialRetainLogs(
+	ctx context.Context, req *apiv1.PutTrialRetainLogsRequest,
+) (*apiv1.PutTrialRetainLogsResponse, error) {
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(
+		ctx, int(req.TrialId), experiment.AuthZProvider.Get().CanEditExperiment,
+	); err != nil {
+		return nil, err
+	}
+
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().Table("tasks"). // TODO(nick-runs) call runs package.
+								Set("log_retention_days = ?", req.NumDays).
+								TableExpr("run_id_task_id as r").
+								Where("r.run_id = ? and tasks.task_id = r.task_id", req.TrialId).
+								Exec(ctx); err != nil {
+			return fmt.Errorf("updating log retention days for tasks: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PutTrialRetainLogsResponse{}, nil
 }
 
 func (a *apiServer) formatMetrics(

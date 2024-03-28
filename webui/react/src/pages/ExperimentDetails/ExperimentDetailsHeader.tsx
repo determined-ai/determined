@@ -24,6 +24,7 @@ import ExperimentDeleteModalComponent from 'components/ExperimentDeleteModal';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentIcons from 'components/ExperimentIcons';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import ExperimentStopModalComponent from 'components/ExperimentStopModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import Link from 'components/Link';
@@ -134,6 +135,7 @@ const headerActions = [
   Action.Fork,
   Action.ContinueTrial,
   Action.Move,
+  Action.RetainLogs,
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
   Action.DownloadCode,
@@ -178,12 +180,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const isMovable =
     canActionExperiment(Action.Move, experiment) &&
     expPermissions.canMoveExperiment({ experiment });
+  const canModifyExp = canActionExperiment(Action.Move, experiment) &&
+    expPermissions.canModifyExperiment({
+      workspace: { id: experiment.workspaceId },
+  });
   const canPausePlay = expPermissions.canModifyExperiment({
     workspace: { id: experiment.workspaceId },
   });
 
   const ExperimentStopModal = useModal(ExperimentStopModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
   const ExperimentDeleteModal = useModal(ExperimentDeleteModalComponent);
   const ReactivateExperimentModal = useModal(ExperimentContinueModalComponent);
   const ContinueExperimentModal = useModal(ExperimentContinueModalComponent);
@@ -451,6 +458,16 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           },
         ],
       },
+      [Action.RetainLogs]: {
+        key: 'retain-logs',
+        menuOptions: [
+          {
+            key: 'retain-logs',
+            label: 'Retain Logs',
+            onClick: ExperimentRetainLogsModal.open,
+          },
+        ],
+      },
       [Action.OpenTensorBoard]: {
         key: 'tensorboard',
         menuOptions: [
@@ -518,6 +535,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     ForkModal,
     ExperimentEditModal,
     ExperimentMoveModal,
+    ExperimentRetainLogsModal,
     HyperparameterSearchModal,
     isRunningTensorBoard,
     isRunningUnarchive,
@@ -731,6 +749,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleModalClose}
+      />
+      <ExperimentRetainLogsModal.Component
+        experimentIds={canModifyExp ? [experiment.id] : []}
       />
       <ExperimentStopModal.Component
         experimentId={experiment.id}

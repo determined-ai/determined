@@ -578,6 +578,27 @@ def experiment_logs(args: Namespace) -> None:
         )
 
 
+def set_log_retention(args: Namespace) -> None:
+    if not args.forever and not isinstance(args.days, int):
+        raise cli.errors.CliError(
+            "Please provide an argument to set log retention. --days sets the number of days to"
+            " retain logs from the time of creation, eg. `det e set log-retention 1 --days 50`."
+            " --forever retains logs indefinitely, eg.`det e set log-retention 1 --forever`."
+        )
+    elif isinstance(args.days, int) and (args.days < -1 or args.days > 32767):
+        raise cli.errors.CliError(
+            "Please provide a valid value for --days. The allowed range is between -1 and "
+            "32767 days."
+        )
+    bindings.put_PutExperimentRetainLogs(
+        cli.setup_session(args),
+        body=bindings.v1PutExperimentRetainLogsRequest(
+            experimentId=args.experiment_id, numDays=-1 if args.forever else args.days
+        ),
+        experimentId=args.experiment_id,
+    )
+
+
 def config(args: Namespace) -> None:
     result = bindings.get_GetExperiment(
         cli.setup_session(args), experimentId=args.experiment_id
@@ -1292,6 +1313,28 @@ main_cmd = Cmd(
                     [
                         experiment_id_arg("experiment ID to modify"),
                         Arg("max_slots", type=none_or_int, help="max slots"),
+                    ],
+                ),
+                Cmd(
+                    "log-retention",
+                    set_log_retention,
+                    "set `log-retention-days` for an experiment",
+                    [
+                        experiment_id_arg("experiment ID"),
+                        Group(
+                            Arg(
+                                "--days",
+                                type=none_or_int,
+                                help="from the time of creation, number of days to "
+                                "retain the logs for. allowed range: -1 to 32767.",
+                            ),
+                            Arg(
+                                "--forever",
+                                action="store_true",
+                                help="retain logs forever",
+                                required=False,
+                            ),
+                        ),
                     ],
                 ),
                 Cmd(

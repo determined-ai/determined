@@ -1719,6 +1719,31 @@ func (a *apiServer) CreateExperiment(
 	}, nil
 }
 
+func (a *apiServer) PutExperimentRetainLogs(
+	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
+) (*apiv1.PutExperimentRetainLogsResponse, error) {
+	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, []int32{req.ExperimentId}, nil, int16(req.NumDays))
+	if err != nil {
+		return nil, err
+	}
+	if len(results) == 0 {
+		return nil, errors.Errorf("PutExperimentRetainLogs returned neither pass nor fail on query")
+	} else if results[0].Error != nil {
+		return nil, results[0].Error
+	}
+	return &apiv1.PutExperimentRetainLogsResponse{}, nil
+}
+
+func (a *apiServer) PutExperimentsRetainLogs(
+	ctx context.Context, req *apiv1.PutExperimentsRetainLogsRequest,
+) (*apiv1.PutExperimentsRetainLogsResponse, error) {
+	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, req.ExperimentIds, req.Filters, int16(req.NumDays))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PutExperimentsRetainLogsResponse{Results: experiment.ToAPIResults(results)}, nil
+}
+
 func (a *apiServer) PutExperiment(
 	ctx context.Context, req *apiv1.PutExperimentRequest,
 ) (*apiv1.PutExperimentResponse, error) {
@@ -2609,6 +2634,7 @@ func (a *apiServer) SearchExperiments(
 		Column("trials.runner_state").
 		Column("trials.checkpoint_count").
 		Column("trials.summary_metrics").
+		Column("trials.log_retention_days").
 		ColumnExpr(`(
 				SELECT tt.task_id FROM run_id_task_id tt
 				JOIN tasks ta ON tt.task_id = ta.task_id
@@ -2722,7 +2748,8 @@ func (a *apiServer) createTrialTx(
 		exp.ID,
 		req.Hparams.AsMap(),
 		nil,
-		0)
+		0,
+		a.m.taskSpec.LogRetentionDays)
 
 	if err := db.AddTask(ctx, &model.Task{
 		TaskID:           taskID,
