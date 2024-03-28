@@ -100,7 +100,7 @@ When creating page models, you'll most likely want to author test hooks into the
 Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
 
 ```js
-  // DeterminedTable.defaultSelector = "[data-test-component='DetTable']"
+  // DeterminedTable.defaultSelector = `[data-test-component='DetTable']`
   readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
   readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
 ```

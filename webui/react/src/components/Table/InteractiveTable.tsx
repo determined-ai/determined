@@ -653,7 +653,7 @@ const InteractiveTable = <
   }, [settings.columnWidths, widthData, getUpscaledWidths]);
 
   return (
-    <div className={css.tableContainer} ref={tableRef}>
+    <div data-test-component="interactiveTable" className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={!!spinning}>
         {spinning || !settings ? (
           <SkeletonTable columns={renderColumns?.length} />

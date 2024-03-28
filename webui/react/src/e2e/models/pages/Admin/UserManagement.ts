@@ -3,7 +3,7 @@ import { CreateUserModal } from 'e2e/models/components/CreateUserModal';
 import { ChangeUserStatusModal } from 'e2e/models/components/ChangeUserStatusModal';
 import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
-// import { Table } from 'e2e/models/components/Table/Table';
+import { Table } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { BaseComponent } from 'e2e/models/BaseComponent';
 
@@ -17,7 +17,7 @@ export class UserManagement extends AdminPage {
   static url: string = 'admin/user-management';
 
   readonly actionRow: BaseComponent = new BaseComponent({ parent: this.content, selector: "data-testid='actionRow'" });
-  // readonly table: Table = new Table({ parent: this.content });
+  readonly table: Table = new Table({ parent: this.content });
   readonly skeletonTable: SkeletonTable = new SkeletonTable({ parent: this.content });
 
   readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });

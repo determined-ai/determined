@@ -10,7 +10,7 @@ import { ErrorComponent } from 'e2e/models/utils/error';
  */
 
 export class DeterminedAuth extends NamedComponent {
-  static defaultSelector = "div[data-test-component='detAuth']";
+  static defaultSelector = `div[data-test-component='detAuth']`;
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }

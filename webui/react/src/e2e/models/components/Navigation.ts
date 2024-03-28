@@ -10,7 +10,7 @@ import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
  */
 
 export class Navigation extends NamedComponent {
-  static defaultSelector = "div[data-test-component='navigation']";
+  static defaultSelector = `div[data-test-component='navigation']`;
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Navigation.defaultSelector });
   }

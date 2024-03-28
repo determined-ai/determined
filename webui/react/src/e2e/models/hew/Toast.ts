@@ -9,7 +9,7 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  */
 
 export class Toast extends NamedComponent {
-  static defaultSelector = '.ant-notification';
+  static defaultSelector = `.ant-notification`;
   static readonly selectorTopRight = '.ant-notification-topRight';
   static readonly selectorBottomRight = '.ant-notification-bottomRight';
   constructor({ parent, selector }: NamedComponentArgs) {

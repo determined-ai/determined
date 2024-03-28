@@ -8,7 +8,7 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Modal extends NamedComponent {
-  static defaultSelector = ".ant-modal-content";
+  static defaultSelector = `.ant-modal-content`;
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Modal.defaultSelector });
   }
