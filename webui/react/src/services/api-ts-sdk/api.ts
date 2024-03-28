@@ -212,6 +212,41 @@ export const GetTrialWorkloadsRequestFilterOption = {
 } as const
 export type GetTrialWorkloadsRequestFilterOption = ValueOf<typeof GetTrialWorkloadsRequestFilterOption>
 /**
+ * 
+ * @export
+ * @interface HealthCheck
+ */
+export interface HealthCheck {
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof HealthCheck
+     */
+    database?: HealthStatus;
+    /**
+     * 
+     * @type {Array<ResourceManagerHealth>}
+     * @memberof HealthCheck
+     */
+    resource_managers?: Array<ResourceManagerHealth>;
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof HealthCheck
+     */
+    status?: HealthStatus;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export const HealthStatus = {
+    up: 'up',
+    down: 'down',
+} as const
+export type HealthStatus = ValueOf<typeof HealthStatus>
+/**
  * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  * @export
  * @enum {string}
@@ -240,60 +275,6 @@ export const Jobv1Type = {
     GENERIC: 'TYPE_GENERIC',
 } as const
 export type Jobv1Type = ValueOf<typeof Jobv1Type>
-/**
- * 
- * @export
- * @interface Model.HealthCheck
- */
-export interface Model.HealthCheck {
-    /**
-     * 
-     * @type {Model.HealthStatus}
-     * @memberof Model.HealthCheck
-     */
-    database?: Model.HealthStatus;
-    /**
-     * 
-     * @type {Array<Model.ResourceManagerHealth>}
-     * @memberof Model.HealthCheck
-     */
-    resource_managers?: Array<Model.ResourceManagerHealth>;
-    /**
-     * 
-     * @type {Model.HealthStatus}
-     * @memberof Model.HealthCheck
-     */
-    status?: Model.HealthStatus;
-}
-/**
- * 
- * @export
- * @enum {string}
- */
-export const Model.HealthStatus = {
-    up: 'up',
-    down: 'down',
-} as const
-export type Model.HealthStatus = ValueOf<typeof Model.HealthStatus>
-/**
- * 
- * @export
- * @interface Model.ResourceManagerHealth
- */
-export interface Model.ResourceManagerHealth {
-    /**
-     * 
-     * @type {string}
-     * @memberof Model.ResourceManagerHealth
-     */
-    name?: string;
-    /**
-     * 
-     * @type {Model.HealthStatus}
-     * @memberof Model.ResourceManagerHealth
-     */
-    status?: Model.HealthStatus;
-}
 /**
  * Gets around not being able to do "Optional map<string, int64>". Not ideal but this API is marked internal for now.
  * @export
@@ -398,6 +379,25 @@ export const ProtobufNullValue = {
     NULLVALUE: 'NULL_VALUE',
 } as const
 export type ProtobufNullValue = ValueOf<typeof ProtobufNullValue>
+/**
+ * 
+ * @export
+ * @interface ResourceManagerHealth
+ */
+export interface ResourceManagerHealth {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResourceManagerHealth
+     */
+    name?: string;
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof ResourceManagerHealth
+     */
+    status?: HealthStatus;
+}
 /**
  * A wrapper message of a list of devices.
  * @export
@@ -12980,7 +12980,7 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        health(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Model.HealthCheck> {
+        health(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<HealthCheck> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).health(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
