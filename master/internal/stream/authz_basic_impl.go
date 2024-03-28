@@ -28,7 +28,7 @@ func (a *StreamAuthZBasic) GetModelStreamableScopes(
 }
 
 // GetPermissionChangeListener always returns a nil pointer and a nil error.
-func (a *StreamAuthZBasic) GetPermissionChangeListener() (*pq.Listener, error) {
+func (a *StreamAuthZBasic) GetPermissionChangeListener(dbAddress string) (*pq.Listener, error) {
 	return nil, nil
 }
 
