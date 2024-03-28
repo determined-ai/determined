@@ -1,3 +1,4 @@
+import contextlib
 import enum
 import os
 from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
@@ -93,21 +94,26 @@ def get_default_master_url() -> str:
 
 
 def read_paginated(
-    get_with_offset: Callable[[int], T],
+    get_with_offset: Callable[[int, Optional[api.Session]], T],
+    session: api.Session = None,
     offset: int = 0,
     pages: PageOpts = PageOpts.all,
 ) -> Iterator[T]:
-    while True:
-        resp = get_with_offset(offset)
-        pagination = resp.pagination
-        assert pagination is not None
-        assert pagination.endIndex is not None
-        assert pagination.total is not None
-        yield resp
-        if pagination.endIndex >= pagination.total or pages == PageOpts.single:
-            break
-        assert pagination.endIndex is not None
-        offset = pagination.endIndex
+    with contextlib.ExitStack() as es:
+        if session:
+            es.enter_context(session)
+
+        while True:
+            resp = get_with_offset(offset, session)
+            pagination = resp.pagination
+            assert pagination is not None
+            assert pagination.endIndex is not None
+            assert pagination.total is not None
+            yield resp
+            if pagination.endIndex >= pagination.total or pages == PageOpts.single:
+                break
+            assert pagination.endIndex is not None
+            offset = pagination.endIndex
 
 
 # Literal["notebook", "tensorboard", "shell", "command"]

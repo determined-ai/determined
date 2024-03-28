@@ -1,4 +1,5 @@
 import argparse
+import functools
 import sys
 from typing import Any, Callable, Dict, List, Sequence
 
@@ -100,6 +101,22 @@ def setup_session(args: argparse.Namespace) -> api.Session:
         password=None,
         cert=cli.cert,
     )
+
+
+def session(
+    fn: Callable[[argparse.Namespace, api.Session], None]
+) -> Callable[[argparse.Namespace, api.Session], None]:
+    """
+    A decorator that sets up an api.Session with a persistent HTTP connection
+    that is closed when the wrapped function exits.
+    """
+
+    @functools.wraps(fn)
+    def wrapped(args: argparse.Namespace) -> None:
+        with setup_session(args) as sess:
+            return fn(args, sess)
+
+    return wrapped
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
