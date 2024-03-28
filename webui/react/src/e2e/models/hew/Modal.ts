@@ -17,6 +17,6 @@ export class Modal extends NamedComponent {
 }
 
 class ModalFooter extends BaseComponent {
-  readonly submit: BaseComponent = new BaseComponent({ parent: this, selector: "[type='submit']" });
-  readonly cancel: BaseComponent = new BaseComponent({ parent: this, selector: "[type='cancel']" });
+  readonly submit: BaseComponent = new BaseComponent({ parent: this, selector: `[type="submit"]` });
+  readonly cancel: BaseComponent = new BaseComponent({ parent: this, selector: `[type="cancel"]` });
 }

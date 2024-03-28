@@ -9,5 +9,5 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class ChangeUserStatusModal extends Modal {
-  readonly status: BaseComponent = new BaseComponent({ parent: this.body, selector: "[data-testid='status']" });
+  readonly status: BaseComponent = new BaseComponent({ parent: this.body, selector: `[data-testid="status"]` });
 }

@@ -58,22 +58,22 @@ All pages and components support subcomponents using instance properties. Inital
 Here's a simplified example using part of the `DeterminedAuth` component. Intrinsic elements are be represent with `BaseComponent`, and they can be as `parent`s for other elements. The amount of specificity is left to the author's discretion. If you're not sure, more is better to avoid conflicts with future additions. Deeper specificity will also optimize for searching through the DOM on larger pages.
 
 ```js
-export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test-component='detAuth']"}) {
+export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-test-component="detAuth"]`}) {
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }
   readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: 'form' });
   readonly username: BaseComponent = new BaseComponent({
     parent: this.#form,
-    selector: "input[data-testid='username']",
+    selector: `input[data-testid="username"]`,
   });
   readonly password: BaseComponent = new BaseComponent({
     parent: this.#form,
-    selector: "input[data-testid='password']",
+    selector: `input[data-testid="password"]`,
   });
   readonly submit: BaseComponent = new BaseComponent({
     parent: this.#form,
-    selector: "button[data-testid='submit']",
+    selector: `button[data-testid="submit"]`,
   });
   ...
 }

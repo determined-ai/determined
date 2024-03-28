@@ -15,7 +15,7 @@ export class Toast extends NamedComponent {
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Toast.defaultSelector });
   }
-  readonly alert: BaseComponent = new BaseComponent({ parent: this, selector: "[role='alert']" });
+  readonly alert: BaseComponent = new BaseComponent({ parent: this, selector: `[role="alert"]` });
   readonly message: BaseComponent = new BaseComponent({
     parent: this.alert,
     selector: '.ant-notification-notice-message',
