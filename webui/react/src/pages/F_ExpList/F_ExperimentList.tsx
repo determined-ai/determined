@@ -1151,6 +1151,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             {showPagination && (
               <Row>
                 <Column align="right">
+                  <Row />
                   <Pagination
                     current={page + 1}
                     pageSize={settings.pageLimit}
