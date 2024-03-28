@@ -18,7 +18,7 @@ const SkeletonTable: React.FC<Props> = ({ columns = 10, rows = 10, ...props }: P
   }, [columns]);
   return (
     <SkeletonSection {...props}>
-      <div className={css.base}>
+      <div data-testid="skeletonTable" className={css.base}>
         {new Array(rows).fill(null).map((_, rowIndex) => (
           <div className={css.row} key={rowIndex}>
             {columnProps.map((colProps, colIndex) => (
