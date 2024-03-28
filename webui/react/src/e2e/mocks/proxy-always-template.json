@@ -8,11 +8,11 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "http://localhost:8080",
+                                "to": "https://$MB_BACKEND_ADDRESS",
                                 "mode": "proxyAlways",
                                 "predicateGenerators": [
                                     {
-                                        "inject": "function generate(e){e.logger.info('DNJ TODO making imposter: ',e.request);var t,a,s,r={exists:{headers:{authorization:!1,cookie:!1}},matches:{path:e.request.path},equals:{method:e.request.method},deepEquals:{body:e.request.body,query:e.request.query}},h=(e.request.headers.authorization&&(r.exists.headers.authorization=!0),e.request.headers.cookie&&(r.exists.headers.cookie=!0),e.request.path.startsWith('/dynamic/http')&&((t=e.request.path.split('/')).splice(1,3),r.matches.path=t.join('/')),r.matches.path='^.*'+r.matches.path+'$',{and:[]});for([a,s]of Object.entries(r))h.and.push({[a]:s});return e.logger.info('DNJ TODO made imposter! ',e.request,'Predicate path: ',r.matches.path),[h]}"
+                                        "inject": "$PRED_GEN_SCRIPT"
                                     }
                                 ]
                             }
@@ -29,7 +29,7 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "ws://localhost:8080",
+                                "to": "ws://$MB_BACKEND_ADDRESS",
                                 "mode": "proxyAlways",
                                 "keepAlive":true,
                                 "predicateGenerators": [
