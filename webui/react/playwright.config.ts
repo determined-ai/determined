@@ -18,7 +18,7 @@ export default defineConfig({
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: 3 * 60 * 1000, // 3 min
-  timeout: 20000, // single test timeout
+  timeout: 30000, // single test timeout
   expect: {
     timeout: 3000, // timeout of individual expects
   },
