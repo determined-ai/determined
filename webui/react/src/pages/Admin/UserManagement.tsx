@@ -472,7 +472,7 @@ const UserManagement: React.FC = () => {
   return (
     <>
       <Section className={css.usersTable}>
-        <div className={css.actionBar}>
+        <div data-testid="actionRow" className={css.actionBar}>
           <Row>
             <Column>
               <Row>
