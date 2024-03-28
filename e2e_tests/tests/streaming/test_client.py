@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from determined.common import streams, util
+from determined.common import streams
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
