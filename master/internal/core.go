@@ -51,6 +51,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/logpattern"
+	"github.com/determined-ai/determined/master/internal/logretention"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/internal/portregistry"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -1078,6 +1079,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
+	}
+	if m.config.LoggingRetention.Schedule != nil {
+		if err := logretention.Schedule(m.config.LoggingRetention); err != nil {
+			return errors.Wrap(err, "initializing log retention")
+		}
 	}
 
 	go m.cleanUpExperimentSnapshots()

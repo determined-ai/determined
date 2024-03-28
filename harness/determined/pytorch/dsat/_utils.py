@@ -1,19 +1,19 @@
 import argparse
+import contextlib
 import copy
 import json
 import logging
 import pathlib
 import random
-from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, Optional, Union
 
 import filelock
 import torch
 
 import determined as det
+from determined import util as det_util
 from determined.common import util
-from determined.pytorch.dsat import _defaults
-from determined.util import merge_dicts
+from determined.pytorch.dsat import defaults
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -36,7 +36,7 @@ def get_base_parser() -> argparse.ArgumentParser:
         "-mt",
         "--max-trials",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["max-trials"],
         help="Maximum number of trials to run, including the model profile info trial",
     )
     base_parser.add_argument(
@@ -49,15 +49,15 @@ def get_base_parser() -> argparse.ArgumentParser:
         "-mct",
         "--max-concurrent-trials",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["max-concurrent-trials"],
         help="Maximum number of trials to run concurrently",
     )
     base_parser.add_argument(
         "-m",
         "--metric",
         type=str,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
-        choices=_defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS,
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["metric"],
+        choices=defaults.SMALLER_IS_BETTER_METRICS + defaults.LARGER_IS_BETTER_METRICS,
     )
     base_parser.add_argument(
         "--run-full-experiment",
@@ -69,27 +69,27 @@ def get_base_parser() -> argparse.ArgumentParser:
         "--zero-stages",
         type=int,
         nargs="+",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["zero-stages"],
         choices=list(range(4)),
         help="Space-separated list of zero stages to search over",
     )
     base_parser.add_argument(
         "--start-profile-step",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["start-profile-step"],
         help="Step on which to start profiling",
     )
     base_parser.add_argument(
         "--end-profile-step",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["end-profile-step"],
         help="Step on which to stop profiling",
     )
     base_parser.add_argument(
         "-r",
         "--random-seed",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["random-seed"],
         help="Sets all random seeds",
     )
     base_parser.add_argument(
@@ -125,7 +125,7 @@ def get_full_parser() -> argparse.ArgumentParser:
     random_subparser.add_argument(
         "--trials-per-random-config",
         type=int,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["trials-per-random-config"],
         help="Maximum number of trials to run per random config",
     )
     random_subparser.add_argument(
@@ -145,7 +145,7 @@ def get_full_parser() -> argparse.ArgumentParser:
     binary_subparser.add_argument(
         "--search-range-factor",
         type=float,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
         help=search_range_factor_help,
     )
 
@@ -156,28 +156,28 @@ def get_full_parser() -> argparse.ArgumentParser:
     )
     asha_subparser.add_argument(
         "--max-rungs",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["max-rungs"],
         help="Maximum rungs to use in the ASHA algorithm",
     )
     asha_subparser.add_argument(
         "--min-binary-search-trials",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["min-binary-search-trials"],
         help="Minimum number of binary search trials to run per random configuration",
     )
     asha_subparser.add_argument(
         "--asha-early-stopping",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["asha-early-stopping"],
         help="ASHA early stopping parameter (`s` in arxiv:1810.05934)",
     )
     asha_subparser.add_argument(
         "--divisor",
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["divisor"],
         help="ASHA divisor parameter (`eta` in arxiv:1810.05934)",
     )
     asha_subparser.add_argument(
         "--search-range-factor",
         type=float,
-        default=_defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
+        default=defaults.AUTOTUNING_ARG_DEFAULTS["search-range-factor"],
         help=search_range_factor_help,
     )
 
@@ -185,12 +185,12 @@ def get_full_parser() -> argparse.ArgumentParser:
 
 
 def smaller_is_better(metric: str) -> bool:
-    if metric in _defaults.SMALLER_IS_BETTER_METRICS:
+    if metric in defaults.SMALLER_IS_BETTER_METRICS:
         return True
-    elif metric in _defaults.LARGER_IS_BETTER_METRICS:
+    elif metric in defaults.LARGER_IS_BETTER_METRICS:
         return False
     else:
-        valid_metrics = _defaults.SMALLER_IS_BETTER_METRICS + _defaults.LARGER_IS_BETTER_METRICS
+        valid_metrics = defaults.SMALLER_IS_BETTER_METRICS + defaults.LARGER_IS_BETTER_METRICS
         raise ValueError(f"metric must be one of {valid_metrics}, not {metric}")
 
 
@@ -244,12 +244,14 @@ def get_search_runner_config_from_args(args: argparse.Namespace) -> Dict[str, An
                     f"{entrypoint_deepspeed_config}."
                 )
 
-    default_search_runner_config = _defaults.DEFAULT_SEARCH_RUNNER_CONFIG
+    default_search_runner_config = defaults.DEFAULT_SEARCH_RUNNER_CONFIG
     if args.max_search_runner_restarts is not None:
         default_search_runner_config["max_restarts"] = args.max_search_runner_restarts
     # Merge with the submitted experiment config so that the search runner shares the project,
     # workspace, etc.
-    search_runner_config = merge_dicts(submitted_exp_config_dict, default_search_runner_config)
+    search_runner_config = det_util.merge_dicts(
+        submitted_exp_config_dict, default_search_runner_config
+    )
     search_runner_config["name"] = f"(DSAT) {search_runner_config['name']}"
     search_runner_config["hyperparameters"] = vars(args)
 
@@ -287,7 +289,7 @@ def get_dict_from_yaml_or_json_path(
         return yaml_dict
 
 
-@contextmanager
+@contextlib.contextmanager
 def dsat_reporting_context(
     core_context: det.core._context.Context,
     op: det.core._searcher.SearcherOperation,
@@ -309,8 +311,8 @@ def dsat_reporting_context(
     try:
         yield
     except SystemExit as se:
-        model_profiling_path = pathlib.Path(_defaults.MODEL_INFO_PROFILING_PATH)
-        autotuning_results_path = pathlib.Path(_defaults.AUTOTUNING_RESULTS_PATH)
+        model_profiling_path = pathlib.Path(defaults.MODEL_INFO_PROFILING_PATH)
+        autotuning_results_path = pathlib.Path(defaults.AUTOTUNING_RESULTS_PATH)
         possible_paths = [model_profiling_path, autotuning_results_path]
         existing_paths = [p for p in possible_paths if p.exists()]
         # Exactly one of these files should be generated for each properly exited DS AT Trial.
@@ -359,13 +361,13 @@ def get_zero_stage_search_space(
 ) -> Dict[str, List[Union[bool, float]]]:
     default_settings: Dict[
         int, Dict[str, List[Union[bool, float]]]
-    ] = _defaults.DEFAULT_ZERO_SEARCH_SPACE
+    ] = defaults.DEFAULT_ZERO_SEARCH_SPACE
     assert (
         zero_stage in default_settings
     ), f"Invalid zero_stage, must be one of {list(default_settings)}"
     search_space = default_settings[1]
     for stage in range(2, zero_stage + 1):
-        search_space = merge_dicts(search_space, default_settings[stage])
+        search_space = det_util.merge_dicts(search_space, default_settings[stage])
     return search_space
 
 
@@ -385,7 +387,7 @@ def get_batch_config_from_mbs_gas_and_slots(
     default value, if not specified).
     """
     mbs = ds_config["train_micro_batch_size_per_gpu"]
-    gas = ds_config.get("gradient_accumulation_steps", _defaults.GAS_DEFAULT)
+    gas = ds_config.get("gradient_accumulation_steps", defaults.GAS_DEFAULT)
     if gas == "auto":
         # Needed for HuggingFace.
         gas = 1
@@ -413,17 +415,17 @@ def get_ds_config_from_hparams(
     Returns:
         The Deepspeed Configuration for this experiment following the overwriting rules
     """
-    assert _defaults.CONFIG_KEY in hparams, (
-        f"Expected to find {_defaults.CONFIG_KEY} in the Hyperparameters section. "
+    assert defaults.CONFIG_KEY in hparams, (
+        f"Expected to find {defaults.CONFIG_KEY} in the Hyperparameters section. "
         f"Instead found {hparams}"
     )
-    ds_config_relative_path = hparams[_defaults.CONFIG_KEY]
+    ds_config_relative_path = hparams[defaults.CONFIG_KEY]
     base_dir = pathlib.Path(base_dir)
     full_path = base_dir.joinpath(ds_config_relative_path)
     with open(full_path, "r") as f:
         base_ds_config: Dict[str, Any] = json.load(f)
-    overwrite_ds_config = hparams.get(_defaults.OVERWRITE_KEY, {})
-    final_ds_config = merge_dicts(base_ds_config, overwrite_ds_config)
+    overwrite_ds_config = hparams.get(defaults.OVERWRITE_KEY, {})
+    final_ds_config = det_util.merge_dicts(base_ds_config, overwrite_ds_config)
     return final_ds_config
 
 
@@ -499,9 +501,9 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
     Returns:
         args: updated HF CLI arguments
     """
-    if _defaults.OVERWRITE_KEY not in hparams:
+    if defaults.OVERWRITE_KEY not in hparams:
         logger.info(
-            f"{_defaults.OVERWRITE_KEY} key not found in hparams, `get_hf_args_with_overwrites` "
+            f"{defaults.OVERWRITE_KEY} key not found in hparams, `get_hf_args_with_overwrites` "
             "is a no-op"
         )
         return args
@@ -515,7 +517,9 @@ def get_hf_args_with_overwrites(args: List[str], hparams: Dict[str, Any]) -> Lis
             ds_config_dict = json.load(f)
 
         # Then merge all overwrites into the ds_config
-        overwritten_ds_config_dict = merge_dicts(ds_config_dict, hparams[_defaults.OVERWRITE_KEY])
+        overwritten_ds_config_dict = det_util.merge_dicts(
+            ds_config_dict, hparams[defaults.OVERWRITE_KEY]
+        )
 
         # We need to actually overwrite the ds json config file, due to how HF processes args.
         with open(ds_config_path, "w") as f:

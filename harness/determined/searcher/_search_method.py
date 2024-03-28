@@ -1,10 +1,9 @@
 import abc
 import dataclasses
+import enum
 import json
 import pathlib
 import uuid
-from abc import abstractmethod
-from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from determined import experimental
@@ -69,7 +68,7 @@ class SearcherState:
         self.experiment_failed = d.get("experimentFailed", False)
 
 
-class ExitedReason(Enum):
+class ExitedReason(enum.Enum):
     """
     The reason why a trial exited early
 
@@ -225,7 +224,7 @@ class SearchMethod:
         Do not modify ``searcher_state`` passed into event handlers.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
         """
         Returns a list of initial operations that the custom hyperparameter search should
@@ -260,7 +259,7 @@ class SearchMethod:
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def on_trial_created(
         self, searcher_state: SearcherState, request_id: uuid.UUID
     ) -> List[Operation]:
@@ -294,7 +293,7 @@ class SearchMethod:
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def on_validation_completed(
         self, searcher_state: SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[Operation]:
@@ -336,7 +335,7 @@ class SearchMethod:
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def on_trial_closed(
         self, searcher_state: SearcherState, request_id: uuid.UUID
     ) -> List[Operation]:
@@ -375,7 +374,7 @@ class SearchMethod:
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def progress(self, searcher_state: SearcherState) -> float:
         """
         Returns experiment progress as a float between 0 and 1.
@@ -395,7 +394,7 @@ class SearchMethod:
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def on_trial_exited_early(
         self,
         searcher_state: SearcherState,

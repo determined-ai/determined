@@ -319,6 +319,23 @@ Example configuration:
 These settings may also be specified at the cluster or resource pool level through task container
 defaults.
 
+.. _log-retention-days:
+
+``log_retention_days``
+======================
+
+Optional. Overrides the number of days to retain logs for a trial. Values should be between ``-1``
+and ``32767``. If set to ``-1``, logs will be retained indefinitely. If set to ``0``, logs will be
+deleted during the next cleanup.
+
+Example configuration:
+
+.. code:: yaml
+
+   log_retention_days: 90
+
+This setting can be defined as a default setting for the entire cluster.
+
 *******************
  Validation Policy
 *******************
@@ -1483,37 +1500,14 @@ explicitly specified, the master will automatically generate an experiment seed.
  Profiling
 ***********
 
-The ``profiling`` section specifies configuration options related to profiling experiments. See
-:ref:`how-to-profiling` for a more detailed walkthrough.
-
-``profiling``
-=============
-
-Optional. Profiling is supported for all frameworks, though timings are only collected for
-``PyTorchTrial``. Profiles are collected for a maximum of 5 minutes, regardless of the settings
-below.
+The ``profiling`` section specifies configuration options for the Determined system metrics
+profiler. See :ref:`how-to-profiling` for a more detailed walkthrough.
 
 ``enabled``
------------
+===========
 
-Optional. Defines whether profiles should be collected or not. Defaults to false.
-
-``begin_on_batch``
-------------------
-
-Optional. Specifies the batch on which profiling should begin.
-
-``end_after_batch``
--------------------
-
-Optional. Specifies the batch after which profiling should end.
-
-``sync_timings``
-----------------
-
-Optional. Specifies whether Determined should wait for all GPU kernel streams before considering a
-timing as ended. Defaults to 'true'. Applies only for frameworks that collect timing metrics
-(currently just PyTorch).
+Optional. Enables system metrics profiling on the experiment, which can be viewed in the Web UI.
+Defaults to false.
 
 .. _experiment-configuration_training_units:
 

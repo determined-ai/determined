@@ -12,17 +12,17 @@ context during the forward pass.
 from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
 
 import torch
-from torch.cuda.amp import GradScaler, autocast
-from train import MNistTrial
+import train
+from torch.cuda import amp
 
-from determined.pytorch import PyTorchTrialContext
+from determined import pytorch
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-class MNistManualAMPTrial(MNistTrial):
-    def __init__(self, context: PyTorchTrialContext, hparams: Optional[Dict]) -> None:
-        self.scaler = context.wrap_scaler(GradScaler())
+class MNistManualAMPTrial(train.MNistTrial):
+    def __init__(self, context: pytorch.PyTorchTrialContext, hparams: Optional[Dict]) -> None:
+        self.scaler = context.wrap_scaler(amp.GradScaler())
         super().__init__(context=context, hparams=hparams)
 
     def train_batch(
@@ -31,7 +31,7 @@ class MNistManualAMPTrial(MNistTrial):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        with autocast():
+        with amp.autocast():
             output = self.model(data)
             loss = torch.nn.functional.nll_loss(output, labels)
 
@@ -45,7 +45,7 @@ class MNistManualAMPTrial(MNistTrial):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        with autocast():
+        with amp.autocast():
             output = self.model(data)
             validation_loss = torch.nn.functional.nll_loss(output, labels).item()
 

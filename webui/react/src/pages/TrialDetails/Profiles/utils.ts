@@ -5,15 +5,14 @@ import { humanReadableBytes } from 'utils/string';
 // key should be lowercase to match the metric name
 const MetricNameUnit = {
   cpu_util_simple: '%',
-  disk_iops: 'Bytes/s',
+  disk_iops: 'operations/second',
   disk_throughput_read: 'bytes/second',
   disk_throughput_write: 'bytes/second',
-  free_memory: 'Gigabytes',
-  gpu_free_memory: 'Bytes',
+  gpu_free_memory: 'bytes',
   gpu_util: '%',
-  net_throughput_recv: 'Gigabit/s',
-  net_throughput_sent: 'Gigabit/s',
-  samples_per_second: 'Samples/s',
+  memory_free: 'bytes',
+  net_throughput_recv: 'bytes/second',
+  net_throughput_sent: 'bytes/second',
 } as const;
 
 export const getUnitForMetricName = (metricName: string): string => {

@@ -154,7 +154,7 @@ const TrialDetailsComp: React.FC = () => {
         label: 'Hyperparameters',
       },
       {
-        children: <TrialDetailsProfiles experiment={experiment} trial={trial} />,
+        children: <TrialDetailsProfiles trial={trial} />,
         key: TabType.Profiler,
         label: 'Profiler',
       },

@@ -3,15 +3,15 @@ from typing import Tuple
 
 import numpy as np
 import pytest
-from tensorflow.keras.utils import Sequence
+from tensorflow.keras import utils
 
 import determined as det
 from determined import keras
 from determined.common import check
-from tests.experiment import tf_utils  # noqa: I100
+from tests.experiment import tf_utils
 
 
-class IdentitySequence(Sequence):
+class IdentitySequence(utils.Sequence):
     def __init__(self, length: int) -> None:
         self._length = length
 
@@ -63,7 +63,7 @@ def test_adapt_list_of_np_arrays_as_x() -> None:
         sample_weight=None,
         batch_size=16,
     )
-    assert isinstance(adapted, Sequence)
+    assert isinstance(adapted, utils.Sequence)
     assert len(adapted) == 7
     batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x[0], np.arange(48, 64))
@@ -78,7 +78,7 @@ def test_adapt_list_of_np_arrays_as_y() -> None:
         sample_weight=None,
         batch_size=16,
     )
-    assert isinstance(adapted, Sequence)
+    assert isinstance(adapted, utils.Sequence)
     assert len(adapted) == 7
     batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x, np.arange(48, 64))
@@ -93,7 +93,7 @@ def test_adapt_dict_of_np_arrays_as_x() -> None:
         sample_weight=None,
         batch_size=16,
     )
-    assert isinstance(adapted, Sequence)
+    assert isinstance(adapted, utils.Sequence)
     assert len(adapted) == 7
     batch_x, batch_y = adapted[3]
     assert np.array_equal(batch_x["k1"], np.arange(48, 64))

@@ -478,10 +478,19 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Telem
 
 /* Cluster */
 
-export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]> = {
+export const getAgents: DetApi<Service.GetAgentsParams, Api.V1GetAgentsResponse, Type.Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
-  request: () => detApi.Cluster.getAgents(),
+  request: (params: Service.GetAgentsParams) =>
+    detApi.Cluster.getAgents(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      params.excludeSlots ?? true,
+      true,
+    ),
 };
 
 export const enableAgent: DetApi<string, Api.V1EnableAgentResponse, Type.Agent | null> = {
@@ -992,6 +1001,16 @@ export const moveExperiments: DetApi<
   name: 'moveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params, options) => detApi.Experiments.moveExperiments(params, options),
+};
+
+export const changeExperimentLogRetention: DetApi<
+  Api.V1PutExperimentsRetainLogsRequest,
+  Api.V1PutExperimentsRetainLogsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'changeExperimentLogRetention',
+  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  request: (params, options) => detApi.Experiments.putExperimentsRetainLogs(params, options),
 };
 
 export const timeSeries: DetApi<

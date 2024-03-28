@@ -6,16 +6,14 @@ be loaded in new Determined.
 from typing import Any, Dict, cast
 
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import mean_squared_error
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers.legacy import SGD  # TODO MLG-443
-from tensorflow.raw_ops import ZipDataset
+from tensorflow import raw_ops
+from tensorflow.keras import layers, losses, models
+from tensorflow.keras.optimizers import legacy  # TODO MLG-443
 
 from determined import keras
 
 
-def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int) -> ZipDataset:
+def make_one_var_tf_dataset_loader(hparams: Dict[str, Any], batch_size: int) -> raw_ops.ZipDataset:
     dataset_range = hparams["dataset_range"]
 
     xtrain = tf.data.Dataset.range(dataset_range).batch(batch_size)
@@ -49,11 +47,13 @@ class AncientTrial(keras.TFKerasTrial):
         dataset = self.context.wrap_dataset(dataset)
         return dataset
 
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,))
+            layers.Dense(
+                1, activation=None, use_bias=False, kernel_initializer="zeros", input_shape=(1,)
+            )
         )
         model = self.context.wrap_model(model)
-        model.compile(SGD(lr=self.my_learning_rate), mean_squared_error)
-        return cast(Sequential, model)
+        model.compile(legacy.SGD(lr=self.my_learning_rate), losses.mean_squared_error)
+        return cast(models.Sequential, model)

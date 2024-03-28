@@ -3,10 +3,10 @@ import os
 import pathlib
 from typing import Any, List, Optional, no_type_check
 
-import requests.exceptions
-import urllib3.exceptions
+from requests import exceptions as request_exceptions
+from urllib3 import exceptions as url_exceptions
 
-from determined.common.storage.s3 import normalize_prefix
+from determined.common import storage
 from determined.tensorboard import base
 
 logger = logging.getLogger("determined.tensorboard.gcs")
@@ -29,7 +29,7 @@ class GCSTensorboardManager(base.TensorboardManager):
 
         self.client = google.cloud.storage.Client()
         self.bucket = self.client.bucket(bucket)
-        self.prefix = normalize_prefix(prefix)
+        self.prefix = storage.normalize_prefix(prefix)
 
     def get_storage_prefix(self, storage_id: pathlib.Path) -> str:
         return os.path.join(self.prefix, storage_id)
@@ -49,8 +49,8 @@ class GCSTensorboardManager(base.TensorboardManager):
                     ConnectionError,
                     exceptions.ServerError,
                     exceptions.TooManyRequests,
-                    urllib3.exceptions.ProtocolError,
-                    requests.exceptions.ConnectionError,
+                    url_exceptions.ProtocolError,
+                    request_exceptions.ConnectionError,
                 )
             )
 

@@ -1,11 +1,11 @@
-from dataclasses import dataclass
+import dataclasses
 
 from deepspeed.runtime.pipe import topology
 
 from determined import core
 
 
-@dataclass
+@dataclasses.dataclass
 class ModelParallelUnit:
     """
     This class contains the functions we expect in order to accurately carry out parallel training.

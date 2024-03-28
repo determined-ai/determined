@@ -41,6 +41,16 @@ func (a *apiServer) GetAgents(
 		}
 	}
 
+	// PERF: can perhaps be done before RBAC.
+	for _, agent := range resp.Agents {
+		if req.ExcludeSlots {
+			agent.Slots = nil
+		}
+		if req.ExcludeContainers {
+			agent.Containers = nil
+		}
+	}
+
 	api.Sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
 	return resp, api.Paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }

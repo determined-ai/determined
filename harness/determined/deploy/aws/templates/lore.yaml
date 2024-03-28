@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.29.2-dev0
+    Default: 0.30.0-dev0
 
   DBPassword:
     Type: String
@@ -304,8 +304,6 @@ Parameters:
 
       __internal:
         proxied_servers:
-          - destination: "http://lore-backend:9011/lore"
-            path_prefix: /lore
           - destination: "http://lore-backend:9011/genai"
             path_prefix: /genai
       {{ end }}

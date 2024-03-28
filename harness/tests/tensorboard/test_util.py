@@ -4,7 +4,6 @@ import pytest
 
 import determined as det
 from determined import tensorboard
-from determined.tensorboard import SharedFSTensorboardManager
 
 BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
@@ -42,7 +41,7 @@ def test_list_tb_files(tmp_path: pathlib.Path) -> None:
         env.det_cluster_id, env.det_experiment_id, env.det_trial_id
     )
 
-    manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
+    manager = tensorboard.SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
     test_files = [
         "no_show.txt",
         "79375caf89e9.kernel_stats.pb",
@@ -62,7 +61,7 @@ def test_list_tb_files_nonexistent_directory(tmp_path: pathlib.Path) -> None:
     sync_path = tensorboard.get_sync_path(
         env.det_cluster_id, env.det_experiment_id, env.det_trial_id
     )
-    manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
+    manager = tensorboard.SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
 
     assert not pathlib.Path(base_path).exists()
     assert manager.list_tb_files(0, lambda _: True) == []
