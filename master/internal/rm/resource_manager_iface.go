@@ -51,6 +51,7 @@ type ResourceManager interface {
 	GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error)
 	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
+	HealthCheck() []model.ResourceManagerHealth
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
