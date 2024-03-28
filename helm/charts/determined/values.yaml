@@ -85,7 +85,14 @@ useNodePortForMaster: false
 # Determined master and the task containers it launches, but does not include communication between
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
-# tlsSecret:
+tlsSecret:
+
+
+# TLS Security setting (TODO populate this comment)
+security:
+  tls:
+    cert:
+    key:
 
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
@@ -233,6 +240,10 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
+
+# TODO( POPULATE THIS COMMENT)
+createNonNamespacedObjects:
+
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
 # slotResourceRequests:
@@ -297,6 +308,7 @@ telemetry:
 ## This behavior is disabled by default.
 # notebookTimeout: 1800
 
+## deprecated, use initialUserPassword instead.
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
 
@@ -315,18 +327,18 @@ telemetry:
 
   ## Authentication and TLS options for making the connection to Elasticsearch.
   # security:
-    # username: <username>
-    # password: <password>
-    # tls:
-      # enabled: true
-      # skipVerify: false
+  #   # username: <username>
+  #   # password: <password>
+  #   tls:
+  #     enabled: true
+  #     skipVerify: false
 
-      ## The name to use when verifying the certificate, if different from the name used to connect.
-      # certificateName: <name>
+  #     # The name to use when verifying the certificate, if different from the name used to connect.
+  #     certificateName: <name>
 
-      ## This value must contain the contents of the certificate file, not a path. It may be set
-      ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
-      # certificate: <certificate contents>
+  #     # This value must contain the contents of the certificate file, not a path. It may be set
+  #     # directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
+  #     certificate: <certificate contents>
 
 ## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
@@ -338,3 +350,6 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+## Configure the initial user password for the cluster
+# initialUserPassword

@@ -56,6 +56,9 @@ stringData:
       {{- end }}
 
     security:
+      {{- if .Values.initialUserPassword }}
+      initial_user_password: {{ .Values.initialUserPassword | quote }}
+      {{- end }}
       {{- if .Values.tlsSecret }}
       tls:
         cert: {{ include "determined.secretPath" . }}tls.crt
