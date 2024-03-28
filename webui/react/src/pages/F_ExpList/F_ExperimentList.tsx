@@ -784,10 +784,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
+            dataPath = `experiment.hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
             break;
           case V1LocationType.VALIDATIONS:
             dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
