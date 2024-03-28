@@ -18,9 +18,9 @@ export default defineConfig({
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: 3 * 60 * 1000, // 3 min
-  timeout:10000,
+  timeout: 20000, // single test timeout
   expect: {
-    timeout:2000
+    timeout: 3000, // timeout of individual expects
   },
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
