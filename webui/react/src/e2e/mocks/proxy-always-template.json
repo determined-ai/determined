@@ -8,7 +8,7 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "https://$MB_BACKEND_ADDRESS",
+                                "to": "$MB_BACKEND_ADDRESS",
                                 "mode": "proxyAlways",
                                 "predicateGenerators": [
                                     {
@@ -29,7 +29,7 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "ws://$MB_BACKEND_ADDRESS",
+                                "to": "$MB_BACKEND_ADDRESS_WS",
                                 "mode": "proxyAlways",
                                 "keepAlive":true,
                                 "predicateGenerators": [

@@ -3,7 +3,7 @@ set -euxo pipefail
 
 make mb-start
 cat "/tmp/mb-playwright.log"
-make mb-start-saved-imposters
+# make mb-start-saved-imposters
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
 export PW_SERVER_ADDRESS="http://localhost:3001"
@@ -14,7 +14,7 @@ test_result=$?
 set -e
 if [ $test_result -ne 0 ]; then
     echo "Tests failed, re-running without mocks"
-    det deploy local cluster-up --no-gpu
+    devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1
     make mb-stop
     make mb-start
     make mb-record-imposters
