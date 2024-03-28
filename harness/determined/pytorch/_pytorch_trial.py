@@ -104,8 +104,8 @@ class TrainUnit:
     def should_stop(self, step_num: int) -> bool:
         if isinstance(self.value, int):
             return self._divides(step_num)
-        if isinstance(self.value, col_abc.Container):
-            return step_num in self.value
+        assert isinstance(self.value, col_abc.Container)
+        return step_num in self.value
 
     def _divides(self, steps: int) -> bool:
         assert isinstance(steps, int) and isinstance(
