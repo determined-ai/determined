@@ -14,7 +14,7 @@ test_result=$?
 set -e
 if [ $test_result -ne 0 ]; then
     echo "Tests failed, re-running without mocks"
-    cd ../.
+    cd ../..
     devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1
     cd webui/react
     make mb-stop
