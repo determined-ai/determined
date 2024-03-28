@@ -101,12 +101,14 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         ]}>
         <Input
           autoFocus
+          data-testid="username"
           placeholder="username"
           prefix={<Icon name="user" size="small" title="Username" />}
         />
       </Form.Item>
       <Form.Item name="password">
         <Input.Password
+          data-testid="password"
           placeholder="password"
           prefix={<Icon name="lock" size="small" title="Password" />}
         />
@@ -115,7 +117,12 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         <p className={[css.errorMessage, css.message].join(' ')}>Incorrect username or password.</p>
       )}
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" loading={isSubmitted} type="primary">
+        <Button
+          data-testid="submit"
+          disabled={!canSubmit}
+          htmlType="submit"
+          loading={isSubmitted}
+          type="primary">
           Sign In
         </Button>
       </Form.Item>
@@ -123,11 +130,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <div className={css.base} data-test-component="detAuth">
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link external path={paths.docs('/sysadmin-basics/users.html')} popout>
+        <Link data-testid="docs" external path={paths.docs('/sysadmin-basics/users.html')} popout>
           docs
         </Link>
       </p>

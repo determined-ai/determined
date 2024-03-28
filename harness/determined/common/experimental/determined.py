@@ -125,6 +125,9 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: Optional[Union[str, pathlib.Path]] = None,
         includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
+        parent_id: Optional[int] = None,
+        project_id: Optional[int] = None,
+        template: Optional[str] = None,
     ) -> experiment.Experiment:
         """
         Create an experiment with config parameters and model directory. The function
@@ -134,8 +137,15 @@ class Determined:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
             model_dir(string, optional): directory containing model definition. (default: ``None``)
-            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or
-            directories to include in the model definition.  (default: ``None``)
+            includes(Iterable[Union[str, pathlib.Path]], optional): Additional files or
+                directories to include in the model definition. (default: ``None``)
+            parent_id(int, optional): If specified, the created experiment will use the model
+                definition from the parent experiment. (default: ``None``)
+            project_id(int, optional): The id of the project this experiment should belong to.
+            (default: ``None``)
+            template(string, optional): The name of the template for the experiment.
+                See :ref:`config-template` for moredetails.
+            (default: ``None``)
         """
         if isinstance(config, str):
             with open(config) as f:
@@ -166,9 +176,9 @@ class Determined:
             activate=True,
             config=config_text,
             modelDefinition=model_context,
-            # TODO: add these as params to create_experiment()
-            parentId=None,
-            projectId=None,
+            parentId=parent_id,
+            projectId=project_id,
+            template=template,
         )
 
         resp = bindings.post_CreateExperiment(self._session, body=req)

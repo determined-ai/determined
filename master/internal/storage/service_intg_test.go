@@ -1,3 +1,7 @@
+//go:build integration
+// +build integration
+
+//
 //nolint:exhaustruct
 package storage
 

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,6 +27,8 @@ const (
 	TrainingMetric MetricPartitionType = "TRAINING"
 	// ValidationMetric designates metrics from validation steps.
 	ValidationMetric MetricPartitionType = "VALIDATION"
+	// ProfilingMetric designates metrics from profiling steps.
+	ProfilingMetric MetricPartitionType = "PROFILING"
 	// GenericMetric designates metrics from other sources.
 	GenericMetric MetricPartitionType = "GENERIC"
 )
@@ -155,7 +158,7 @@ WHERE trial_id = $1
 
 // addMetricsWithMerge inserts a set of metrics to the database allowing for metric merges.
 func (db *PgDB) addMetricsWithMerge(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
-	runID, trialID, lastProcessedBatch int32, mGroup model.MetricGroup,
+	reportTime *time.Time, runID, trialID int32, lastProcessedBatch *int32, mGroup model.MetricGroup,
 ) (metricID int, addedMetrics *metricsBody, err error) {
 	var existingBodyJSON model.JSONObj
 	metricGroup := string(mGroup)
@@ -175,7 +178,7 @@ FOR UPDATE`,
 	needsMerge := existingBodyJSON != nil
 
 	if !needsMerge {
-		id, err := db.addRawMetrics(ctx, tx, mBody, runID, trialID, lastProcessedBatch, mGroup)
+		id, err := db.addRawMetrics(ctx, tx, mBody.ToJSONObj(), reportTime, runID, trialID, lastProcessedBatch, mGroup)
 		return id, mBody, err
 	}
 
@@ -192,7 +195,7 @@ FOR UPDATE`,
 }
 
 func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
-	runID, trialID, lastProcessedBatch int32, mGroup model.MetricGroup,
+	runID, trialID int32, lastProcessedBatch *int32, mGroup model.MetricGroup,
 ) (int, error) {
 	if err := mGroup.Validate(); err != nil {
 		return 0, err
@@ -220,8 +223,8 @@ RETURNING id`,
 }
 
 // addRawMetrics inserts a set of raw metrics to the database and returns the metric id.
-func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
-	runID, trialID, lastProcessedBatch int32, mGroup model.MetricGroup,
+func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, metrics *model.JSONObj,
+	reportTime *time.Time, runID, trialID int32, lastProcessedBatch *int32, mGroup model.MetricGroup,
 ) (int, error) {
 	if err := mGroup.Validate(); err != nil {
 		return 0, err
@@ -236,9 +239,9 @@ func (db *PgDB) addRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBo
 INSERT INTO metrics
 	(trial_id, trial_run_id, end_time, metrics, total_batches, partition_type, metric_group)
 VALUES
-	($1, $2, now(), $3, $4, $5, $6)
+	($1, $2, COALESCE($3, now()), $4, $5, $6, $7)
 RETURNING id`,
-		trialID, runID, *mBody.ToJSONObj(), lastProcessedBatch, pType, mGroup,
+		trialID, runID, reportTime, *metrics, lastProcessedBatch, pType, mGroup,
 	).Scan(&metricRowID); err != nil {
 		return metricRowID, errors.Wrap(err, "inserting metrics")
 	}
@@ -252,11 +255,14 @@ func customMetricGroupToPartitionType(mGroup *string) MetricPartitionType {
 	if mGroup == nil {
 		return GenericMetric
 	}
-	switch model.MetricGroup(*mGroup) {
-	case model.TrainingMetricGroup:
+	group := model.MetricGroup(*mGroup)
+	switch {
+	case group == model.TrainingMetricGroup:
 		return TrainingMetric
-	case model.ValidationMetricGroup:
+	case group == model.ValidationMetricGroup:
 		return ValidationMetric
+	case slices.Contains(model.ProfilingMetricGroups, group):
+		return ProfilingMetric
 	default:
 		return GenericMetric
 	}

@@ -8,6 +8,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 )
 
 func TestIsViable(t *testing.T) {
@@ -504,8 +505,8 @@ func TestFindFitDisallowedNodes(t *testing.T) {
 
 func byID(
 	handlers ...*agentState,
-) (map[agentID]*agentState, []*agentState) {
-	agents := make(map[agentID]*agentState, len(handlers))
+) (map[aproto.ID]*agentState, []*agentState) {
+	agents := make(map[aproto.ID]*agentState, len(handlers))
 	index := make([]*agentState, 0, len(handlers))
 	for _, agent := range handlers {
 		agents[agent.id] = agent

@@ -4119,6 +4119,24 @@ func local_request_Determined_GetTrialCheckpoints_0(ctx context.Context, marshal
 
 }
 
+func request_Determined_CleanupLogs_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CleanupLogsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.CleanupLogs(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Determined_CleanupLogs_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CleanupLogsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.CleanupLogs(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 var (
 	filter_Determined_AllocationPreemptionSignal_0 = &utilities.DoubleArray{Encoding: map[string]int{"allocation_id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
@@ -13182,6 +13200,26 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_Determined_CleanupLogs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Determined_CleanupLogs_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_CleanupLogs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_Determined_AllocationPreemptionSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -17671,6 +17709,26 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("POST", pattern_Determined_CleanupLogs_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Determined_CleanupLogs_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_CleanupLogs_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_Determined_AllocationPreemptionSignal_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -20609,6 +20667,8 @@ var (
 
 	pattern_Determined_GetTrialCheckpoints_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "trials", "id", "checkpoints"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_Determined_CleanupLogs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "cleanup_logs"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_Determined_AllocationPreemptionSignal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "allocations", "allocation_id", "signals", "preemption"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_AllocationPendingPreemptionSignal_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 2, 5}, []string{"api", "v1", "allocations", "allocation_id", "signals", "pending_preemption"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -21060,6 +21120,8 @@ var (
 	forward_Determined_KillTrial_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_GetTrialCheckpoints_0 = runtime.ForwardResponseMessage
+
+	forward_Determined_CleanupLogs_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_AllocationPreemptionSignal_0 = runtime.ForwardResponseMessage
 

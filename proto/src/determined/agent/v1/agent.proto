@@ -9,10 +9,36 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/container/v1/container.proto";
 import "determined/device/v1/device.proto";
 
+// DeviceStats contains statistics about a single device group.
+message DeviceStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "draining", "disabled", "total" ] }
+  };
+  // The number of slots in each state if there's an associated container.
+  map<string, int32> states = 1;
+  // the number of draining slots.
+  int32 draining = 2;
+  // the number of disabled slots.
+  int32 disabled = 3;
+  // the total number of slots.
+  int32 total = 4;
+}
+
+// SlotStats contains statistics about a set of slots.
+message SlotStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "type_stats", "brand_stats" ] }
+  };
+  // Map of device type to device stats.
+  map<string, DeviceStats> type_stats = 1;
+  // Map of device brands to device stats.
+  map<string, DeviceStats> brand_stats = 2;
+}
+
 // Agent is a pool of resources where containers are run.
 message Agent {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema: { required: [ "id", "slot_stats" ] }
   };
   // The unique id of the agent.
   string id = 1;
@@ -36,6 +62,8 @@ message Agent {
   // The name of the resource pools the agent is in. Only slurm can contain
   // multiples.
   repeated string resource_pools = 6;
+  // The slot stats for this agent.
+  SlotStats slot_stats = 11;
 }
 
 // Slot wraps a single device on the agent.

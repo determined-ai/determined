@@ -1,7 +1,6 @@
 import os
+import pathlib
 import random
-import shutil
-import tempfile
 import time
 
 import pytest
@@ -14,7 +13,7 @@ from tests import config as conf
 
 
 @pytest.mark.e2e_cpu
-def test_completed_experiment_and_checkpoint_apis() -> None:
+def test_completed_experiment_and_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
 
@@ -22,12 +21,9 @@ def test_completed_experiment_and_checkpoint_apis() -> None:
         config = util.yaml_safe_load(f)
     config["hyperparameters"]["num_validation_metrics"] = 2
     # Test the use of the includes parameter, by feeding the model definition file via includes.
-    emptydir = tempfile.mkdtemp()
-    try:
-        model_def = conf.fixtures_path("no_op/model_def.py")
-        exp = detobj.create_experiment(config, emptydir, includes=[model_def])
-    finally:
-        os.rmdir(emptydir)
+    emptydir = tmp_path
+    model_def = conf.fixtures_path("no_op/model_def.py")
+    exp = detobj.create_experiment(config, emptydir, includes=[model_def])
     exp = detobj.create_experiment(config, conf.fixtures_path("no_op"))
 
     # Await first trial is safe to call before a trial has started.
@@ -94,7 +90,7 @@ def test_completed_experiment_and_checkpoint_apis() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_checkpoint_apis() -> None:
+def test_checkpoint_apis(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     detobj = client.Determined._from_session(sess)
     with open(conf.fixtures_path("no_op/single-default-ckpt.yaml")) as f:
@@ -215,16 +211,10 @@ def test_checkpoint_apis() -> None:
     assert "workload_sequencer.pkl" not in partially_deleted_checkpoints[0].resources
 
     # Ensure we can download the partially deleted checkpoint.
-    temp_dir = tempfile.mkdtemp()
-    try:
-        downloaded_path = partially_deleted_checkpoints[0].download(
-            path=os.path.join(temp_dir, "c")
-        )
-        files = os.listdir(downloaded_path)
-        assert "no_op_checkpoint" in files
-        assert "workload_sequencer.pkl" not in files
-    finally:
-        shutil.rmtree(temp_dir, ignore_errors=False)
+    downloaded_path = partially_deleted_checkpoints[0].download(path=os.path.join(tmp_path, "c"))
+    files = os.listdir(downloaded_path)
+    assert "no_op_checkpoint" in files
+    assert "workload_sequencer.pkl" not in files
 
     # Ensure we can delete a partially deleted checkpoint.
     partially_deleted_checkpoints[0].delete()
@@ -474,3 +464,39 @@ def test_rp_workspace_mapping() -> None:
     finally:
         for wid in workspace_ids:
             bindings.delete_DeleteWorkspace(session=sess, id=wid)
+
+
+@pytest.mark.e2e_cpu
+def test_create_experiment_w_template(tmp_path: pathlib.Path) -> None:
+    # Create a minimal experiment with a simple template
+    # Wait until a trial has started to ensure experiment creation has no errors
+    # Verify that the content in template is indeed applied
+    sess = api_utils.user_session()
+    detobj = client.Determined._from_session(sess)
+    template_name = "test_template"
+    template_config_key = "description"
+    template_config_value = "test_sdk_template"
+    try:
+        # create template
+        template_config = conf.load_config(conf.fixtures_path("templates/template.yaml"))
+        template_config[template_config_key] = template_config_value
+        tpl = bindings.v1Template(
+            name=template_name,
+            config=template_config,
+            workspaceId=1,
+        )
+        tpl_resp = bindings.post_PostTemplate(sess, body=tpl, template_name=tpl.name)
+        # create experiment with template
+        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+            config = util.yaml_safe_load(f)
+        model_def = conf.fixtures_path("no_op/model_def.py")
+        exp = detobj.create_experiment(
+            config, tmp_path, includes=[model_def], template=tpl_resp.template.name
+        )
+        exp.await_first_trial()
+
+        assert exp.config is not None
+        assert exp.config[template_config_key] == template_config_value, exp.config
+
+    finally:
+        bindings.delete_DeleteTemplate(sess, templateName=template_name)

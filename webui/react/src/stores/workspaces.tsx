@@ -129,6 +129,8 @@ class WorkspaceStore extends PollingStore {
   public readonly boundResourcePools = (workspaceId: number) =>
     this.#boundResourcePools.select((map) => map.get(workspaceId)?.toJS());
 
+  public readonly boundResourcePoolsMap = () => this.#boundResourcePools.readOnly();
+
   public async fetchAvailableResourcePools(workspaceId: number) {
     const response = await getAvailableResourcePools({ workspaceId });
     this.#boundResourcePools.update((map) => map.set(workspaceId, List(response)));

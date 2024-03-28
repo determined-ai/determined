@@ -195,6 +195,11 @@ def unpause(args: Namespace) -> None:
     print(f"Unpaused task: {args.task_id}")
 
 
+def cleanup_logs(args: Namespace) -> None:
+    response = bindings.post_CleanupLogs(cli.setup_session(args))
+    print(f"Deleted {response.removedCount} rows of log entries.")
+
+
 common_log_options: List[Any] = [
     Arg(
         "-f",
@@ -302,6 +307,7 @@ args_description: List[Any] = [
                     *common_log_options,
                 ],
             ),
+            Cmd("cleanup-logs", cleanup_logs, "cleanup expired task logs", []),
             Cmd(
                 "create",
                 create,

@@ -1031,6 +1031,7 @@ class v1Agent(Printable):
         self,
         *,
         id: str,
+        slotStats: "v1SlotStats",
         addresses: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         containers: "typing.Union[typing.Dict[str, v1Container], None, Unset]" = _unset,
         draining: "typing.Union[bool, None, Unset]" = _unset,
@@ -1042,6 +1043,7 @@ class v1Agent(Printable):
         version: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
+        self.slotStats = slotStats
         if not isinstance(addresses, Unset):
             self.addresses = addresses
         if not isinstance(containers, Unset):
@@ -1065,6 +1067,7 @@ class v1Agent(Printable):
     def from_json(cls, obj: Json) -> "v1Agent":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
+            "slotStats": v1SlotStats.from_json(obj["slotStats"]),
         }
         if "addresses" in obj:
             kwargs["addresses"] = obj["addresses"]
@@ -1089,6 +1092,7 @@ class v1Agent(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
+            "slotStats": self.slotStats.to_json(omit_unset),
         }
         if not omit_unset or "addresses" in vars(self):
             out["addresses"] = self.addresses
@@ -2110,6 +2114,29 @@ class v1CheckpointsRemoveFilesRequest(Printable):
         }
         return out
 
+class v1CleanupLogsResponse(Printable):
+    """Response to CleanupLogsRequest."""
+
+    def __init__(
+        self,
+        *,
+        removedCount: str,
+    ):
+        self.removedCount = removedCount
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CleanupLogsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "removedCount": obj["removedCount"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "removedCount": self.removedCount,
+        }
+        return out
+
 class v1CloseTrialOperation(Printable):
     """Close a trial with given ID."""
     requestId: "typing.Optional[str]" = None
@@ -3094,6 +3121,45 @@ class v1Device(Printable):
             out["type"] = None if self.type is None else self.type.value
         if not omit_unset or "uuid" in vars(self):
             out["uuid"] = self.uuid
+        return out
+
+class v1DeviceStats(Printable):
+    """DeviceStats contains statistics about a single device group."""
+    states: "typing.Optional[typing.Dict[str, int]]" = None
+
+    def __init__(
+        self,
+        *,
+        disabled: int,
+        draining: int,
+        total: int,
+        states: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
+    ):
+        self.disabled = disabled
+        self.draining = draining
+        self.total = total
+        if not isinstance(states, Unset):
+            self.states = states
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeviceStats":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "disabled": obj["disabled"],
+            "draining": obj["draining"],
+            "total": obj["total"],
+        }
+        if "states" in obj:
+            kwargs["states"] = obj["states"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "disabled": self.disabled,
+            "draining": self.draining,
+            "total": self.total,
+        }
+        if not omit_unset or "states" in vars(self):
+            out["states"] = self.states
         return out
 
 class v1DisableAgentRequest(Printable):
@@ -8128,10 +8194,12 @@ class v1MetricType(DetEnum):
     - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
     - METRIC_TYPE_TRAINING: For metrics emitted during training.
     - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+    - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     """
     UNSPECIFIED = "METRIC_TYPE_UNSPECIFIED"
     TRAINING = "METRIC_TYPE_TRAINING"
     VALIDATION = "METRIC_TYPE_VALIDATION"
+    PROFILING = "METRIC_TYPE_PROFILING"
 
 class v1Metrics(Printable):
     batchMetrics: "typing.Optional[typing.Sequence[typing.Dict[str, typing.Any]]]" = None
@@ -13404,6 +13472,33 @@ class v1Slot(Printable):
             out["id"] = self.id
         return out
 
+class v1SlotStats(Printable):
+    """SlotStats contains statistics about a set of slots."""
+
+    def __init__(
+        self,
+        *,
+        brandStats: "typing.Dict[str, v1DeviceStats]",
+        typeStats: "typing.Dict[str, v1DeviceStats]",
+    ):
+        self.brandStats = brandStats
+        self.typeStats = typeStats
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SlotStats":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "brandStats": {k: v1DeviceStats.from_json(v) for k, v in obj["brandStats"].items()},
+            "typeStats": {k: v1DeviceStats.from_json(v) for k, v in obj["typeStats"].items()},
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "brandStats": {k: v.to_json(omit_unset) for k, v in self.brandStats.items()},
+            "typeStats": {k: v.to_json(omit_unset) for k, v in self.typeStats.items()},
+        }
+        return out
+
 class v1StartTrialRequest(Printable):
     """Start a trial."""
     resume: "typing.Optional[bool]" = None
@@ -14315,37 +14410,49 @@ class v1TrialLogsResponse(Printable):
 
 class v1TrialMetrics(Printable):
     """Metrics from the trial some duration of training."""
+    reportTime: "typing.Optional[str]" = None
+    stepsCompleted: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         metrics: "v1Metrics",
-        stepsCompleted: int,
         trialId: int,
         trialRunId: int,
+        reportTime: "typing.Union[str, None, Unset]" = _unset,
+        stepsCompleted: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.metrics = metrics
-        self.stepsCompleted = stepsCompleted
         self.trialId = trialId
         self.trialRunId = trialRunId
+        if not isinstance(reportTime, Unset):
+            self.reportTime = reportTime
+        if not isinstance(stepsCompleted, Unset):
+            self.stepsCompleted = stepsCompleted
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialMetrics":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
-            "stepsCompleted": obj["stepsCompleted"],
             "trialId": obj["trialId"],
             "trialRunId": obj["trialRunId"],
         }
+        if "reportTime" in obj:
+            kwargs["reportTime"] = obj["reportTime"]
+        if "stepsCompleted" in obj:
+            kwargs["stepsCompleted"] = obj["stepsCompleted"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "metrics": self.metrics.to_json(omit_unset),
-            "stepsCompleted": self.stepsCompleted,
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
         }
+        if not omit_unset or "reportTime" in vars(self):
+            out["reportTime"] = self.reportTime
+        if not omit_unset or "stepsCompleted" in vars(self):
+            out["stepsCompleted"] = self.stepsCompleted
         return out
 
 class v1TrialOperation(Printable):
@@ -16036,6 +16143,25 @@ def post_CheckpointsRemoveFiles(
         return
     raise APIHttpError("post_CheckpointsRemoveFiles", _resp)
 
+def post_CleanupLogs(
+    session: "api.BaseSession",
+) -> "v1CleanupLogsResponse":
+    """Cleanup task logs according to the retention policy."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/cleanup_logs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CleanupLogsResponse.from_json(_resp.json())
+    raise APIHttpError("post_CleanupLogs", _resp)
+
 def get_CompareTrials(
     session: "api.BaseSession",
     *,
@@ -16076,6 +16202,7 @@ def get_CompareTrials(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - startBatches: Sample from metrics after this batch number.
     - timeSeriesFilter_doubleRange_gt: Greater than.
     - timeSeriesFilter_doubleRange_gte: Greater than or equal.
@@ -16782,6 +16909,8 @@ def get_GetAgent(
 def get_GetAgents(
     session: "api.BaseSession",
     *,
+    excludeContainers: "typing.Optional[bool]" = None,
+    excludeSlots: "typing.Optional[bool]" = None,
     label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
@@ -16790,6 +16919,8 @@ def get_GetAgents(
 ) -> "v1GetAgentsResponse":
     """Get a set of agents from the cluster.
 
+    - excludeContainers: exclude containers.
+    - excludeSlots: exclude slots.
     - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
     - offset: Skip the number of agents before returning results. Negative values
@@ -16806,6 +16937,8 @@ denote number of agents to skip from the end before returning results.
  - SORT_BY_TIME: Returns agents sorted by time.
     """
     _params = {
+        "excludeContainers": str(excludeContainers).lower() if excludeContainers is not None else None,
+        "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
         "label": label,
         "limit": limit,
         "offset": offset,
@@ -19058,6 +19191,7 @@ a metric.
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - offset: Skip the number of workloads before returning results. Negative values
 denote number of workloads to skip from the end before returning results.
     - orderBy: Order workloads in either ascending or descending order.
@@ -19964,6 +20098,7 @@ def get_MetricBatches(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     """
     _params = {
@@ -21932,6 +22067,7 @@ def get_TrialsSample(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     - startBatches: Beginning of window (inclusive) to fetch data for.
     """
@@ -21994,6 +22130,7 @@ def get_TrialsSnapshot(
  - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).
  - METRIC_TYPE_TRAINING: For metrics emitted during training.
  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
     - periodSeconds: Seconds to wait when polling for updates.
     """
     _params = {

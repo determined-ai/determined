@@ -11,14 +11,15 @@ import time
 import warnings
 from abc import abstractmethod
 from inspect import signature
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
+import torch.utils.data
 from torch import distributed as dist
 
 import determined as det
-from determined import core, profiler, pytorch, tensorboard, util
+from determined import core, pytorch, tensorboard, util
 from determined.horovod import hvd
 
 logger = logging.getLogger("determined.pytorch")
@@ -31,11 +32,10 @@ except ImportError:  # pragma: no cover
     pass
 
 
-def dataloader_next(profiler: det.profiler.ProfilerAgent, dataloader_iter: Iterator) -> Iterator:
+def dataloader_next(dataloader_iter: Iterator) -> Iterator:
     while True:
         try:
-            with profiler.record_timing("dataloader_next", requires_sync=False):
-                batch = next(dataloader_iter)
+            batch = next(dataloader_iter)
         except StopIteration:
             return
         yield batch
@@ -105,8 +105,8 @@ class TrainUnit:
     def should_stop(self, step_num: int) -> bool:
         if isinstance(self.value, int):
             return self._divides(step_num)
-        if isinstance(self.value, collections.Container):
-            return step_num in self.value
+        assert isinstance(self.value, collections.Container)
+        return step_num in self.value
 
     def _divides(self, steps: int) -> bool:
         assert isinstance(steps, int) and isinstance(
@@ -197,16 +197,14 @@ class _PyTorchTrialController:
         checkpoint_policy: str,
         step_zero_validation: bool,
         max_length: Optional[TrainUnit],
-        det_profiler: Optional[profiler.ProfilerAgent],
         global_batch_size: Optional[int],
+        profiling_enabled: Optional[bool],
     ) -> None:
         if not isinstance(trial_inst, PyTorchTrial):
             raise TypeError("PyTorchTrialController requires a PyTorchTrial.")
         self.trial = trial_inst
         self.context = context
         self.core_context = self.context._core
-        self.prof = det_profiler or profiler.DummyProfilerAgent()
-        self.context._set_determined_profiler(self.prof)
 
         self.local_training = local_training
 
@@ -248,13 +246,12 @@ class _PyTorchTrialController:
         self.ckpt_policy = checkpoint_policy
         self.smaller_is_better = smaller_is_better
         self.global_batch_size = global_batch_size
+        self.profiling_enabled = profiling_enabled
 
         if self.searcher_unit == core.Unit.RECORDS:
             if self.global_batch_size is None:
                 raise ValueError("global_batch_size required for searcher unit RECORDS.")
 
-        if torch.cuda.is_available():
-            self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
@@ -324,10 +321,9 @@ class _PyTorchTrialController:
     def _aggregate_training_metrics(self, training_metrics: List[Dict]) -> Dict:
         # Aggregate and reduce training metrics from all the training processes.
         if self.context.distributed.size > 1:
-            with self.prof.record_timing("average_training_metrics"):
-                batch_metrics = pytorch._combine_and_average_training_metrics(
-                    self.context.distributed, training_metrics
-                )
+            batch_metrics = pytorch._combine_and_average_training_metrics(
+                self.context.distributed, training_metrics
+            )
         else:
             batch_metrics = training_metrics
 
@@ -335,10 +331,9 @@ class _PyTorchTrialController:
 
         # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
         # metrics are even logical for a custom reducer.
-        with self.prof.record_timing("reduce_metrics"):
-            metrics["avg_metrics"].update(
-                pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
-            )
+        metrics["avg_metrics"].update(
+            pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=True))
+        )
 
         if not self.is_chief:
             return {}
@@ -349,7 +344,7 @@ class _PyTorchTrialController:
 
         assert self.state
         if self.context.get_enable_tensorboard_logging():
-            det.pytorch._log_tb_metrics(
+            pytorch._log_tb_metrics(
                 self.context.get_tensorboard_writer(),
                 "train",
                 self.state.batches_trained,
@@ -372,25 +367,19 @@ class _PyTorchTrialController:
 
     def _on_epoch_start(self, epoch_idx: int) -> None:
         for callback in self.callbacks.values():
-            with self.prof.record_timing(
-                f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
-            ):
-                sig = signature(callback.on_training_epoch_start)
-                if sig.parameters:
-                    callback.on_training_epoch_start(epoch_idx)
-                else:
-                    logger.warning(
-                        "on_training_epoch_start() without parameters is deprecated"
-                        " since 0.17.8. Please add epoch_idx parameter."
-                    )
-                    callback.on_training_epoch_start()  # type: ignore[call-arg]
+            sig = signature(callback.on_training_epoch_start)
+            if sig.parameters:
+                callback.on_training_epoch_start(epoch_idx)
+            else:
+                logger.warning(
+                    "on_training_epoch_start() without parameters is deprecated"
+                    " since 0.17.8. Please add epoch_idx parameter."
+                )
+                callback.on_training_epoch_start()  # type: ignore[call-arg]
 
     def _on_epoch_end(self, epoch_idx: int) -> None:
         for callback in self.callbacks.values():
-            with self.prof.record_timing(
-                f"callbacks.{callback.__class__.__name__}.on_training_epoch_end"
-            ):
-                callback.on_training_epoch_end(epoch_idx)
+            callback.on_training_epoch_end(epoch_idx)
 
     def _checkpoint(self, already_exiting: bool) -> None:
         if self.is_chief:
@@ -568,15 +557,11 @@ class _PyTorchTrialController:
         # don't bind the loop iteration variable `callback`, which would likely cause us to call
         # on_trial_shutdown() multiple times for the final callback, and not at all for the others.
         def on_shutdown(callback_name: str, on_trial_shutdown: Callable) -> None:
-            with self.prof.record_timing(f"callbacks.{callback_name}.on_trial_shutdown"):
-                on_trial_shutdown()
+            on_trial_shutdown()
 
         with contextlib.ExitStack() as exit_stack:
             for callback in self.callbacks.values():
-                with self.prof.record_timing(
-                    f"callbacks.{callback.__class__.__name__}.on_trial_startup"
-                ):
-                    callback.on_trial_startup(self.start_from_batch, self.latest_checkpoint)
+                callback.on_trial_startup(self.start_from_batch, self.latest_checkpoint)
                 exit_stack.enter_context(
                     defer(on_shutdown, callback.__class__.__name__, callback.on_trial_shutdown)
                 )
@@ -592,7 +577,7 @@ class _PyTorchTrialController:
             # shuffling values after we load state.
             self.training_iterator = iter(self.training_loader)
             self.training_enumerator = enumerate(
-                dataloader_next(self.prof, self.training_iterator), start=self.start_from_batch
+                dataloader_next(self.training_iterator), start=self.start_from_batch
             )
 
             def cleanup_iterator() -> None:
@@ -619,12 +604,12 @@ class _PyTorchTrialController:
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
-            exit_stack.enter_context(self.prof)
             for callback in self.callbacks.values():
-                with self.prof.record_timing(
-                    f"callbacks.{callback.__class__.__name__}.on_training_start"
-                ):
-                    callback.on_training_start()
+                callback.on_training_start()
+
+            # Start the Determined system metrics profiler if enabled.
+            if self.profiling_enabled:
+                self.core_context.profiler.on()
 
             self._run()
 
@@ -700,8 +685,6 @@ class _PyTorchTrialController:
         # Start of train step: tell core API and set model mode
         if self.is_chief:
             self.core_context.train.set_status("training")
-
-        self.prof.set_training(True)
 
         for model in self.context.models:
             model.train()
@@ -874,20 +857,18 @@ class _PyTorchTrialController:
             return False
         return self.context._should_communicate_and_update()
 
-    def _train_batch(self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int) -> Dict:
+    def _train_batch(
+        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, Any]:
         # Reset loss IDs for AMP
         self.context._loss_ids = {}
 
-        # Initialize profiler
         batch_start_time = time.time()
-        self.prof.update_batch_idx(batch_idx)
 
         if self.context.experimental._auto_to_device:
-            with self.prof.record_timing("to_device", accumulate=True):
-                batch = self.context.to_device(batch)  # type: ignore
+            batch = self.context.to_device(batch)  # type: ignore
 
         with contextlib.ExitStack() as exit_stack:
-            exit_stack.enter_context(self.prof.record_timing("train_batch", requires_sync=False))
             if self.context.profiler:
                 exit_stack.enter_context(self.context.profiler)
 
@@ -913,29 +894,21 @@ class _PyTorchTrialController:
             training_metrics = {"loss": training_metrics}
 
         # Step learning rate of a pytorch.LRScheduler.
-        with self.prof.record_timing("step_lr_schedulers"):
-            for lr_scheduler in self.context.lr_schedulers:
-                self._auto_step_lr_scheduler_per_batch(batch_idx, lr_scheduler)
+        for lr_scheduler in self.context.lr_schedulers:
+            self._auto_step_lr_scheduler_per_batch(batch_idx, lr_scheduler)
 
-        with self.prof.record_timing("from_device"):
-            for name, metric in training_metrics.items():
-                # Convert PyTorch metric values to NumPy, so that
-                # `det.util.encode_json` handles them properly without
-                # needing a dependency on PyTorch.
-                if isinstance(metric, torch.Tensor):
-                    metric = metric.cpu().detach().numpy()
-                training_metrics[name] = metric
+        for name, metric in training_metrics.items():
+            # Convert PyTorch metric values to NumPy, so that
+            # `det.util.encode_json` handles them properly without
+            # needing a dependency on PyTorch.
+            if isinstance(metric, torch.Tensor):
+                metric = metric.cpu().detach().numpy()
+            training_metrics[name] = metric
 
         batch_dur = time.time() - batch_start_time
         samples_per_second = self.trial.get_batch_length(batch) / batch_dur
         samples_per_second *= self.context.distributed.size
-        self.prof.record_metric("samples_per_second", samples_per_second)
 
-        if not isinstance(training_metrics, Dict):
-            raise TypeError(
-                f"train_batch() must return a dictionary mapping string names to Tensor metrics, "
-                f"got {type(training_metrics).__name__}"
-            )
         return training_metrics
 
     @torch.no_grad()  # type: ignore
@@ -964,15 +937,13 @@ class _PyTorchTrialController:
             batch_metrics = []
 
             assert isinstance(self.validation_loader, torch.utils.data.DataLoader)
-            if len(self.validation_loader) == 0:
-                raise RuntimeError("validation_loader is empty.")
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
 
+            idx = -1  # Later, we'll use this default to see if we've iterated at all.
             for idx, batch in enumerate(iter(self.validation_loader)):
                 if self.context.experimental._auto_to_device:
-                    with self.prof.record_timing("to_device", accumulate=True):
-                        batch = self.context.to_device(batch)
+                    batch = self.context.to_device(batch)
                 num_inputs += self.trial.get_batch_length(batch)
 
                 if util.has_param(self.trial.evaluate_batch, "batch_idx", 2):
@@ -1000,6 +971,9 @@ class _PyTorchTrialController:
                 if self.test_mode:
                     break
 
+            if idx == -1:
+                raise RuntimeError("validation_loader is empty.")
+
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_end(batch_metrics)
 
@@ -1014,14 +988,10 @@ class _PyTorchTrialController:
 
             # Gather a list of per-worker (num_inputs, num_batches) tuples.
             input_counts = self.context.distributed.gather((num_inputs, idx + 1))
-            if self.is_chief:
-                assert input_counts is not None
-                # Reshape and sum.
-                num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
 
         else:
             assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
-            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
+            assert self.validation_loader is not None
             if self.is_chief:
                 metrics = self.trial.evaluate_full_dataset(data_loader=self.validation_loader)
 
@@ -1031,7 +1001,6 @@ class _PyTorchTrialController:
                     )
 
                 metrics = pytorch._convert_metrics_to_numpy(metrics)
-                num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
 
         metrics.update(
             pytorch._convert_metrics_to_numpy(self.context.reduce_metrics(for_training=False))
@@ -1059,12 +1028,17 @@ class _PyTorchTrialController:
             # common than evaluate_batch() and we can't know how the user processed their
             # validation data.
             if self._evaluate_batch_defined():
+                # Reshape and sum.
+                # TODO: remove the type directive once we upgrade to mypy >= 1.7.0
+                inputs_total, batches_total = [sum(n) for n in zip(*input_counts)]  # type: ignore
                 step_duration = time.time() - step_start_time
                 logger.info(
-                    det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
+                    det.util.make_timing_log(
+                        "validated", step_duration, inputs_total, batches_total
+                    )
                 )
             if self.context.get_enable_tensorboard_logging():
-                det.pytorch._log_tb_metrics(
+                pytorch._log_tb_metrics(
                     self.context.get_tensorboard_writer(),
                     "val",
                     self.state.batches_trained,
@@ -1553,20 +1527,30 @@ class PyTorchTrial(det.LegacyTrial):
         pass
 
     @abstractmethod
-    def build_training_data_loader(self) -> pytorch.DataLoader:
+    def build_training_data_loader(self) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         """
         Defines the data loader to use during training.
 
-        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+        Most implementations of :class:`determined.pytorch.PyTorchTrial` will return a
+        :class:`determined.pytorch.DataLoader` here. Some use cases may not fit the assumptions of
+        :class:`determined.pytorch.DataLoader`. In that event, a bare
+        ``torch.utils.data.DataLoader`` may be returned if steps in the note atop
+        :ref:`pytorch-reproducible-dataset` are followed.
         """
         pass
 
     @abstractmethod
-    def build_validation_data_loader(self) -> pytorch.DataLoader:
+    def build_validation_data_loader(
+        self,
+    ) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         """
         Defines the data loader to use during validation.
 
-        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
+        Users with a MapDataset will normally return a :class:`determined.pytorch.DataLoader`, but
+        users with an IterableDataset or with other advanced needs may sacrifice some
+        Determined-managed functionality (ex: automatic data sharding) to return a bare
+        :class:`torch.utils.data.DataLoader` following the best-practices described in
+        :ref:`pytorch-reproducible-dataset`.
         """
         pass
 
@@ -1636,7 +1620,7 @@ class PyTorchTrial(det.LegacyTrial):
         """Count the number of records in a given batch.
 
         Override this method when you are using custom batch types, as produced
-        when iterating over the :py:class:`determined.pytorch.DataLoader`.
+        when iterating over the class:`determined.pytorch.DataLoader`.
         For example, when using ``pytorch_geometric``:
 
         .. code-block:: python

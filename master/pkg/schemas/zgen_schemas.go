@@ -845,6 +845,15 @@ var (
                 "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
             }
         },
+        "log_retention_days": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": -1,
+            "maximum": 32767,
+            "default": null
+        },
         "max_restarts": {
             "type": [
                 "integer",

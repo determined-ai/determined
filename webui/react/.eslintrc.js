@@ -40,6 +40,7 @@ module.exports = {
   },
   plugins: ['import', 'jsdoc', 'react', 'react-hooks', 'sort-keys-fix'],
   root: true,
+  ignorePatterns: ['**/src/services/stream/wire.ts', '**/src/e2e/playwright-report/**'],
   rules: {
     // Can disagree with @typescript-eslint/member-ordering.
     '@typescript-eslint/adjacent-overload-signatures': 'off',

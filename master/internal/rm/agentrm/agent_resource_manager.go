@@ -139,7 +139,7 @@ func (*ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, e
 
 // DisableAgent implements rm.ResourceManager.
 func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -155,7 +155,7 @@ func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Dis
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := false
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{
 		id:      deviceID,
 		enabled: &enabled,
 		drain:   &req.Drain,
@@ -168,7 +168,7 @@ func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Dis
 
 // EnableAgent implements rm.ResourceManager.
 func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -184,7 +184,7 @@ func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.Enabl
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := true
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.Enabl
 }
 
 func (a *ResourceManager) handlePatchSlotState(
-	agentID agentID, msg patchSlotState,
+	agentID aproto.ID, msg patchSlotState,
 ) (*model.SlotSummary, error) {
 	agent, ok := a.agentService.get(agentID)
 	if !ok {
@@ -225,7 +225,7 @@ func (*ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) erro
 
 // GetAgent implements rm.ResourceManager.
 func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -343,7 +343,7 @@ func (a *ResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResp
 	}
 	deviceID := device.ID(deviceIDStr)
 
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID})
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{id: deviceID})
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func (a *ResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResp
 
 // GetSlots implements rm.ResourceManager.
 func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}

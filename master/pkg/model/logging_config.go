@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
+	"github.com/robfig/cron/v3"
 
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -80,6 +82,35 @@ func (o ElasticSecurityConfig) Validate() []error {
 // Resolve resolves the configuration.
 func (o *ElasticSecurityConfig) Resolve() error {
 	return o.TLS.Resolve()
+}
+
+// LogRetentionPolicy configures the default log retention policy for trials and tasks.
+type LogRetentionPolicy struct {
+	// Days is the default number of days to retain logs for.
+	Days *int16 `json:"days"`
+	// Schedule is a time duration or cron expression interval to cleanup logs.
+	Schedule *string `json:"schedule"`
+}
+
+var (
+	errLogRetentionDaysParse     = errors.New("log retention days must be between -1 and 32767")
+	errLogRetentionScheduleParse = errors.New("log retention schedule must be a valid duration or cron expression")
+)
+
+// Validate implements the check.Validatable interface.
+func (p LogRetentionPolicy) Validate() []error {
+	var errs []error
+	if p.Days != nil && *p.Days < -1 {
+		errs = append(errs, errLogRetentionDaysParse)
+	}
+	if p.Schedule != nil {
+		if _, err := time.ParseDuration(*p.Schedule); err != nil {
+			if _, err := cron.ParseStandard(*p.Schedule); err != nil {
+				errs = append(errs, errLogRetentionScheduleParse)
+			}
+		}
+	}
+	return errs
 }
 
 // TLSClientConfig configures how to make a TLS connection.
