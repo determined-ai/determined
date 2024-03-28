@@ -184,3 +184,14 @@ message ResourceAllocationAggregatedResponse {
   repeated determined.master.v1.ResourceAllocationAggregatedEntry
       resource_entries = 1;
 }
+
+// Get telemetry information.
+message CleanupLogsRequest {}
+// Response to CleanupLogsRequest.
+message CleanupLogsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "removed_count" ] }
+  };
+  // How many row of logs were removed.
+  int64 removed_count = 1;
+}

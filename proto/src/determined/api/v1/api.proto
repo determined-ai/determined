@@ -978,6 +978,17 @@ service Determined {
       tags: "Experiments"
     };
   }
+
+  // Cleanup task logs according to the retention policy.
+  rpc CleanupLogs(CleanupLogsRequest) returns (CleanupLogsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/cleanup_logs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Long poll preemption signals for the given allocation. If the allocation
   // has been preempted when called, it will return so immediately. Otherwise,
   // the connection will be kept open until the timeout is reached or
