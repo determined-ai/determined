@@ -7,7 +7,7 @@ import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
-import React, { MouseEvent, useCallback, useMemo } from 'react';
+import React, { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
@@ -20,6 +20,7 @@ import {
   archiveExperiment,
   cancelExperiment,
   deleteExperiment,
+  getExperiment,
   killExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
@@ -83,8 +84,24 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
+  const [experimentItem, setExperimentItem] = useState<ExperimentItem | undefined>(undefined);
+  const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
   const { openToast } = useToast();
+
+  // this is required when experiment does not contain `config`.
+  // since we removed config. See #8765 on GitHub
+  const fetchedExperimentItem = useCallback(async () => {
+    try {
+      const response: ExperimentItem = await getExperiment(
+        { id: experiment.id },
+        { signal: canceler.current.signal },
+      );
+      setExperimentItem(response);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiment data.' });
+    }
+  }, [experiment.id]);
 
   const handleEditComplete = useCallback(
     (data: Partial<ExperimentItem>) => {
@@ -213,6 +230,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             ExperimentMoveModal.open();
             break;
           case Action.HyperparameterSearch:
+            await fetchedExperimentItem();
             HyperparameterSearchModal.open();
             break;
           case Action.Copy:
@@ -244,6 +262,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       confirm,
       ExperimentEditModal,
       ExperimentMoveModal,
+      fetchedExperimentItem,
       HyperparameterSearchModal,
       cell,
       openToast,
@@ -278,10 +297,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
       />
-      <HyperparameterSearchModal.Component
-        closeModal={HyperparameterSearchModal.close}
-        experiment={experiment}
-      />
+      {experimentItem !== undefined && (
+        <HyperparameterSearchModal.Component
+          closeModal={HyperparameterSearchModal.close}
+          experiment={experimentItem}
+        />
+      )}
     </>
   );
 

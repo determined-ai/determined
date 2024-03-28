@@ -110,6 +110,8 @@ message Experiment {
   string searcher_type = 12;
   // The searcher metric name for the experiment
   string searcher_metric = 42;
+  // The hyperparameters for the experiment
+  google.protobuf.Struct hyperparameters = 46;
   // The experiment name.
   string name = 13;
   // The experiment notes.
