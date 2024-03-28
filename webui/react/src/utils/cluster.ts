@@ -1,4 +1,4 @@
-import { Agent, isDeviceType, ResourceState, ResourceType } from 'types';
+import { Agent, ResourceState, ResourceType } from 'types';
 
 export const getSlotContainerStates = (
   agents: Agent[],
@@ -6,15 +6,21 @@ export const getSlotContainerStates = (
   resourcePoolName?: string,
 ): ResourceState[] => {
   const slotContainerStates = agents
-    .filter((agent) => (resourcePoolName ? agent.resourcePools?.includes(resourcePoolName) : true))
-    .map((agent) => {
-      return isDeviceType(resourceType)
-        ? agent.resources.filter((res) => res.type === resourceType)
-        : agent.resources;
+    .filter((agent) => {
+      return resourcePoolName === undefined || agent.resourcePools.includes(resourcePoolName);
     })
-    .reduce((acc, resource) => [...acc, ...resource], [])
-    .filter((resource) => resource.enabled && resource.container)
-    .map((resource) => resource.container?.state) as ResourceState[];
-
+    .flatMap((agent) => {
+      const arr: ResourceState[] = Object.entries(agent.slotStats.typeStats ?? {})
+        .filter(([type]) => {
+          return resourceType === ResourceType.ALL || type === `TYPE_${resourceType}`;
+        })
+        .flatMap(([, val]) => {
+          const tempArr = Object.entries(val.states ?? {}).flatMap(([state, count]) => {
+            return Array(count).fill(state.replace('STATE_', ''));
+          });
+          return tempArr;
+        });
+      return arr;
+    });
   return slotContainerStates;
 };
