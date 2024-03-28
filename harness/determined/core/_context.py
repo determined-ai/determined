@@ -47,6 +47,7 @@ class Context:
         info: Optional[det.ClusterInfo] = None,
         experimental: Optional[core.ExperimentalCoreContext] = None,
         profiler: Optional[core.ProfilerContext] = None,
+        metrics: Optional[core.MetricsContext] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
         _heartbeat: Optional[core._Heartbeat] = None,
         _log_shipper: Optional[core._LogShipper] = None,
@@ -57,6 +58,7 @@ class Context:
         self.train = train or core.DummyTrainContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self.info = info
+        self.metrics = metrics or core.DummyMetricsContext()
         self.experimental = experimental or core.DummyExperimentalCoreContext()
         self.profiler = profiler or core.DummyProfilerContext()
         self._tensorboard_manager = _tensorboard_manager
@@ -65,6 +67,8 @@ class Context:
 
     def start(self) -> None:
         self.preempt.start()
+        self.metrics.start()
+
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.start()
         if self._heartbeat is not None:
@@ -85,6 +89,7 @@ class Context:
         self.preempt.close()
         self.distributed.close()
         self.profiler._close()
+        self.metrics.close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
         if self._heartbeat is not None:
@@ -170,6 +175,7 @@ def _dummy_init(
     train = core.DummyTrainContext(tensorboard_path)
     searcher = core.DummySearcherContext(distributed)
     profiler = core.DummyProfilerContext()
+    metrics = core.DummyMetricsContext()
 
     _install_stacktrace_on_sigusr1()
 
@@ -180,6 +186,7 @@ def _dummy_init(
         train=train,
         searcher=searcher,
         profiler=profiler,
+        metrics=metrics,
     )
 
 
@@ -250,6 +257,7 @@ def init(
     tensorboard_manager = None
     experimental = None
     profiler = None
+    metrics = None
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
@@ -267,12 +275,18 @@ def init(
         if tensorboard_mode == core.TensorboardMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()
 
+        metrics = core.MetricsContext(
+            session=session,
+            trial_id=info.trial.trial_id,
+            run_id=info.trial._trial_run_id,
+        )
+
         train = core.TrainContext(
             session,
             info.trial.trial_id,
-            info.trial._trial_run_id,
             info.trial.experiment_id,
             distributed,
+            metrics,
             tensorboard_mode,
             tensorboard_manager,
             tbd_writer,
@@ -313,11 +327,9 @@ def init(
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
         experimental = core.ExperimentalCoreContext(session, info.trial.trial_id)
         profiler = core.ProfilerContext(
-            session=session,
             agent_id=info.agent_id,
-            trial_id=info.trial.trial_id,
-            run_id=info.trial._trial_run_id,
             distributed=distributed,
+            metrics=metrics,
         )
 
     else:
@@ -339,6 +351,7 @@ def init(
         searcher=searcher,
         experimental=experimental,
         profiler=profiler,
+        metrics=metrics,
         _tensorboard_manager=tensorboard_manager,
     )
 

@@ -4,6 +4,7 @@ from determined.core._distributed import (
     DummyDistributedContext,
     _run_on_rank_0_and_broadcast,
 )
+from determined.core._metrics import DummyMetricsContext, MetricsContext
 from determined.core._checkpoint import (
     CheckpointContext,
     DownloadMode,

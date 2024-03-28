@@ -1,6 +1,8 @@
 import enum
 import logging
 import pathlib
+import queue
+import threading
 from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
@@ -27,17 +29,17 @@ class TrainContext:
         self,
         session: api.Session,
         trial_id: int,
-        run_id: int,
         exp_id: int,
         distributed: core.DistributedContext,
+        metrics: core.MetricsContext,
         tensorboard_mode: core.TensorboardMode,
         tensorboard_manager: Optional[tensorboard.TensorboardManager],
         tbd_writer: Optional[tensorboard.BatchMetricWriter],
     ) -> None:
         self._session = session
         self._trial_id = trial_id
-        self._run_id = run_id
         self._exp_id = exp_id
+        self._metrics = metrics
         self._distributed = distributed
         if tensorboard_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
             raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
@@ -88,15 +90,12 @@ class TrainContext:
             serializable_metrics = self._get_serializable_metrics(metrics)
             reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
-        v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
-        v1TrialMetrics = bindings.v1TrialMetrics(
-            metrics=v1metrics,
-            stepsCompleted=steps_completed,
-            trialId=self._trial_id,
-            trialRunId=self._run_id,
+        self._metrics.publish(
+            group=group,
+            steps_completed=steps_completed,
+            metrics=reportable_metrics,
+            batch_metrics=batch_metrics,
         )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=group)
-        bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == core.TensorboardMode.AUTO:
@@ -140,6 +139,7 @@ class TrainContext:
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
+
         self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_metrics(
