@@ -22,9 +22,10 @@
 /docs/index.rst     @determined-ai/docs
 /docs/**/index.rst  @determined-ai/docs
 
-# Harness is mapped to model-dev by default, except for `cli`, `deploy`,
+# Harness is mapped to model-dev by default, except for `deploy`
 # and auto-generated bindings and version files.
-/harness  @determined-ai/model-dev
+/harness                         @determined-ai/model-dev
+/harness/determined/deploy       @determined-ai/resource-mgmt
 /harness/determined/common/api/bindings.py
 /harness/determined/__version__.py
 
