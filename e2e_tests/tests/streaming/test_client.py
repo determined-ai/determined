@@ -4,7 +4,10 @@ import pytest
 
 from determined.common import streams
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
+from tests import config as conf
+from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
@@ -122,3 +125,41 @@ def test_client_subscribe() -> None:
         else:
             raise ValueError(f"Unexpected message from stream. {event}")
     assert deleted
+
+
+@pytest.mark.e2e_cpu
+def test_subscribe_model_version() -> None:
+    # Subscribe to model versions by model ID
+    # When model version is created, verify that can be received from the stream
+    sess = api_utils.admin_session()
+    ws = streams._client.LomondStreamWebSocket(sess)
+    stream = streams._client.Stream(ws)
+    syncId = "sync2"
+    modelName = "test_model_version_streaming"
+
+    detobj = client.Determined._from_session(sess)
+
+    exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
+        conf.fixtures_path("no_op"),
+    )
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
+
+    ckpt = detobj.get_experiment(exp_id).top_checkpoint()
+
+    resp_m = bindings.post_PostModel(sess, body=bindings.v1PostModelRequest(name=modelName))
+    m = resp_m.model
+
+    stream.subscribe(sync_id=syncId, model_versions=streams._client.ModelVersionSpec(model_id=m.id))
+
+    bindings.post_PostModelVersion(
+        sess,
+        body=bindings.v1PostModelVersionRequest(checkpointUuid=ckpt.uuid, modelName=modelName),
+        modelName=modelName,
+    )
+    for event in stream:
+        if isinstance(event, streams.wire.ModelVersionMsg):
+            assert event.model_id == m.id
+            assert event.checkpoint_uuid == ckpt.uuid
+            break

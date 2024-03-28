@@ -41,6 +41,13 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 				typedMsg.ID,
 				typedMsg.WorkspaceID,
 			)
+		case *ModelVersionMsg:
+			return fmt.Sprintf(
+				"key: %s, model_version_id: %d, model_id: %d",
+				ModelVersionsUpsertKey,
+				typedMsg.ID,
+				typedMsg.ModelID,
+			)
 		}
 	case stream.DeleteMsg:
 		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
@@ -151,10 +158,12 @@ func splitMsgs(
 	upsertKeys := []string{
 		ProjectsUpsertKey,
 		ModelsUpsertKey,
+		ModelVersionsUpsertKey,
 	}
 	deleteKeys := []string{
 		ProjectsDeleteKey,
 		ModelsDeleteKey,
+		ModelVersionsDeleteKey,
 	}
 
 	for i := range upsertKeys {

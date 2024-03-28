@@ -105,7 +105,7 @@ class ProjectSpec:
     def _copy(self) -> "ProjectSpec":
         return ProjectSpec(self.workspace_id, self.project_id)
 
-    def _to_wire(self, since: int) -> Dict[str, Any]:
+    def _to_wire(self) -> Dict[str, Any]:
         return wire.ProjectSubscriptionSpec(
             workspace_ids=int_or_list(self.workspace_id),
             project_ids=int_or_list(self.project_id),
@@ -126,9 +126,31 @@ class ModelSpec:
     def _copy(self) -> "ModelSpec":
         return ModelSpec(self.workspace_id, self.model_id, self.user_id)
 
-    def _to_wire(self, since: int) -> Dict[str, Any]:
+    def _to_wire(self) -> Dict[str, Any]:
         return wire.ModelSubscriptionSpec(
             workspace_ids=int_or_list(self.workspace_id),
+            model_ids=int_or_list(self.model_id),
+            user_ids=int_or_list(self.user_id),
+        ).to_json()
+
+
+class ModelVersionSpec:
+    def __init__(
+        self,
+        model_version_id: Optional[Union[int, Sequence[int]]] = None,
+        model_id: Optional[Union[int, Sequence[int]]] = None,
+        user_id: Optional[Union[int, Sequence[int]]] = None,
+    ) -> None:
+        self.model_version_id = model_version_id
+        self.model_id = model_id
+        self.user_id = user_id
+
+    def _copy(self) -> "ModelSpec":
+        return ModelSpec(self.model_version_id, self.model_id, self.user_id)
+
+    def _to_wire(self) -> Dict[str, Any]:
+        return wire.ModelVersionSubscriptionSpec(
+            model_version_ids=int_or_list(self.model_version_id),
             model_ids=int_or_list(self.model_id),
             user_ids=int_or_list(self.user_id),
         ).to_json()
@@ -251,6 +273,7 @@ class Stream:
         # Our stream-level in-memory cache: just enough to handle automatic reconnects.
         self._projects = KeyCache()
         self._models = KeyCache()
+        self._model_versions = KeyCache()
         # The websocket events.  We'll connect (and reconnect) lazily.
         self._ws_iter: Optional[Iterable] = None
         self._closed = False
@@ -284,6 +307,12 @@ class Stream:
             "projects_deleted": self._make_deletion_handler(wire.ProjectsDeleted, self._projects),
             "model": self._make_upsertion_handler(wire.ModelMsg, self._models),
             "models_deleted": self._make_deletion_handler(wire.ModelsDeleted, self._models),
+            "modelversion": self._make_upsertion_handler(
+                wire.ModelVersionMsg, self._model_versions
+            ),
+            "modelversions_deleted": self._make_deletion_handler(
+                wire.ModelVersionMsg, self._model_versions
+            ),
         }
 
         self._retries = 0
@@ -321,8 +350,9 @@ class Stream:
         since = {
             "projects": self._projects.maxseq,
             "models": self._models.maxseq,
+            "modelversions": self._model_versions.maxseq,
         }
-        subscribe = {k: v._to_wire(since[k]) for k, v in spec.items()}
+        subscribe = {k: v._to_wire() for k, v in spec.items()}
         # add since info to our initial subscriptions
         #
         # Note: it is important that we calculate our since values at the moment that we send the
@@ -343,6 +373,7 @@ class Stream:
                 for k, v in {
                     "projects": self._projects.known(),
                     "models": self._models.known(),
+                    "modelversions": self._models.known(),
                 }.items()
                 if v
             },
@@ -492,6 +523,7 @@ class Stream:
         *,
         projects: Optional[ProjectSpec] = None,
         models: Optional[ModelSpec] = None,
+        model_versions: Optional[ModelVersionSpec] = None,
     ) -> "Stream":
         # Capture what the user asked for immediately, but we won't fill since or known values until
         # we send it.
@@ -500,6 +532,8 @@ class Stream:
             spec["projects"] = projects._copy()
         if models:
             spec["models"] = models._copy()
+        if model_versions:
+            spec["modelversions"] = model_versions._copy()
         self._specs.append((sync_id, spec))
         # Adding a spec can trigger sending a subscription.
         self._advance_subscription()

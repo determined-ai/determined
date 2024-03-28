@@ -17,6 +17,9 @@ type StreamAuthZ interface {
 	// GetModelStreamableScopes returns an AccessScopeSet where the user has permission to view models.
 	GetModelStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
 
+	// GetModelVersionStreamableScopes returns an AccessScopeSet where the user has permission to view models.
+	GetModelVersionStreamableScopes(ctx context.Context, curUser model.User) (model.AccessScopeSet, error)
+
 	// GetPermissionChangeListener returns a pointer listener
 	// listening for permission change notifications if applicable.
 	GetPermissionChangeListener() (*pq.Listener, error)
