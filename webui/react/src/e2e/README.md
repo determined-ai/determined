@@ -26,7 +26,8 @@ If you don't want to use dev cluster, you can use det deploy to initiate the bac
    - Use whatever det-version you want here.
 2. `SERVER_ADDRESS="http://localhost:3001" npm run build --prefix webui/react`
 3. Optional if you want an experiment created for the test: `det experiment create ./examples/tutorials/mnist_pytorch/const.yaml ./examples/tutorials/mnist_pytorch/`
-4. `npm run preview --prefix webui/react` to run the preview app. Not necessary if `CI=true`.
+4. Optional `npm run preview --prefix webui/react` to run the preview app. Won't be used if `CI=true`.
+   1. Consider running `npm run start --prefix webui/react` for live changes if you're eidting page models. The other command will constantly throw build errors if you're editing tests and test hooks at the same time.
 5. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
    - Provice `-- -p=firefox` to choose one browser to run on. Full list of projects located in [playwright config](/webui/react/playwright.config.ts).
 

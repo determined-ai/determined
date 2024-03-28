@@ -1,4 +1,5 @@
 import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
+import { Dropdown } from 'e2e/models/hew/Dropdown';
 
 /**
  * Returns a representation of the NavigationSideBar component.
@@ -7,7 +8,6 @@ import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this NavigationSideBar
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-
 export class NavigationSideBar extends BaseReactFragment {
   readonly #nav: BaseComponent = new BaseComponent({ parent: this, selector: "[data-testid='navSidebar']" });
   readonly headerDropdown: HeaderDropdown = new HeaderDropdown({ parent: this.#nav, selector: "[data-testid='headerDropdown']" });
@@ -16,14 +16,9 @@ export class NavigationSideBar extends BaseReactFragment {
   // readonly userSettings: UserSettings = new UserSettings({ parent: this });
 }
 
-class HeaderDropdown extends BaseComponent {
-  // TODO consider making a base popup handler with open() and close()
-  private selectorTemplate(id: string): string {
-    return `li.ant-dropdown-menu-item[data-menu-id$='${id}']`
-  }
-  readonly #headerDropdownMenu: BaseComponent = new BaseComponent({ parent: this.root, selector: "ul.ant-dropdown-menu" });
-  readonly admin: BaseComponent = new BaseComponent({ parent: this.#headerDropdownMenu, selector: this.selectorTemplate("admin") });
-  readonly settings: BaseComponent = new BaseComponent({ parent: this.#headerDropdownMenu, selector: this.selectorTemplate("settings") });
-  readonly theme: BaseComponent = new BaseComponent({ parent: this.#headerDropdownMenu, selector: this.selectorTemplate("theme-toggle") });
-  readonly signOut: BaseComponent = new BaseComponent({ parent: this.#headerDropdownMenu, selector: this.selectorTemplate("sign-out") });
+class HeaderDropdown extends Dropdown {
+  readonly admin: BaseComponent = new BaseComponent({ parent: this.headerDropdownMenu, selector: Dropdown.selectorTemplate("admin") });
+  readonly settings: BaseComponent = new BaseComponent({ parent: this.headerDropdownMenu, selector: Dropdown.selectorTemplate("settings") });
+  readonly theme: BaseComponent = new BaseComponent({ parent: this.headerDropdownMenu, selector: Dropdown.selectorTemplate("theme-toggle") });
+  readonly signOut: BaseComponent = new BaseComponent({ parent: this.headerDropdownMenu, selector: Dropdown.selectorTemplate("sign-out") });
 }

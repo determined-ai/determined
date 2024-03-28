@@ -137,6 +137,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
   return (
     <Modal
+      data-test-component="createUserModal"
       cancel
       size="small"
       submit={{
@@ -164,13 +165,13 @@ const CreateUserModalComponent: React.FC<Props> = ({
             name={USER_NAME_NAME}
             required
             validateTrigger={['onSubmit']}>
-            <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
+            <Input data-testid="username" autoFocus disabled={!!user} maxLength={128} placeholder="Username" />
           </Form.Item>
           <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
-            <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
+            <Input data-testid="displayName" disabled={viewOnly} maxLength={128} placeholder="Display Name" />
           </Form.Item>
           {!rbacEnabled && (
-            <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+            <Form.Item data-testid="isAdmin" label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
               <Toggle disabled={viewOnly} />
             </Form.Item>
           )}
@@ -180,13 +181,14 @@ const CreateUserModalComponent: React.FC<Props> = ({
               label={REMOTE_LABEL}
               name={REMOTE_NAME}
               valuePropName="checked">
-              <Toggle disabled={viewOnly} />
+              <Toggle data-testid="isRemote" disabled={viewOnly} />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (
             <>
               <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
                 <Select
+                  data-testid="roles"
                   disabled={(user !== undefined && userRoles?.isNotLoaded) || viewOnly}
                   loading={Loadable.isNotLoaded(knownRoles)}
                   mode="multiple"
