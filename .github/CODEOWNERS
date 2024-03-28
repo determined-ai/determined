@@ -24,8 +24,8 @@
 
 # Harness is mapped to model-dev by default, except for `deploy`
 # and auto-generated bindings and version files.
-/harness  @determined-ai/model-dev
-/harness/determined/deploy
+/harness                         @determined-ai/model-dev
+/harness/determined/deploy       @determined-ai/resource-mgmt
 /harness/determined/common/api/bindings.py
 /harness/determined/__version__.py
 
