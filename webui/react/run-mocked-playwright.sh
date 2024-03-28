@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
+cd webui/react
 make mb-start
-cat "/tmp/mb-playwright.log"
 # make mb-start-saved-imposters
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
@@ -14,7 +14,9 @@ test_result=$?
 set -e
 if [ $test_result -ne 0 ]; then
     echo "Tests failed, re-running without mocks"
+    cd ../.
     devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1
+    cd webui/react
     make mb-stop
     make mb-start
     make mb-record-imposters
@@ -35,4 +37,5 @@ if [ $test_result -ne 0 ]; then
 fi
 
 make mb-stop
+cd ../..
 exit $test_result
