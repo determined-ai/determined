@@ -290,5 +290,22 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 			}
 		}
 	}
-	return nil, nil
+
+	for _, runID := range validIDs {
+		_, err = a.KillTrial(ctx, &apiv1.KillTrialRequest{
+			Id: runID,
+		})
+		if err != nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Failed to kill run: %s", err),
+				Id:    runID,
+			})
+		} else {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    runID,
+			})
+		}
+	}
+	return &apiv1.KillRunsResponse{Results: results}, nil
 }
