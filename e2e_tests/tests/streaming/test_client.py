@@ -158,10 +158,8 @@ def test_subscribe_model_version() -> None:
         body=bindings.v1PostModelVersionRequest(checkpointUuid=ckpt.uuid, modelName=modelName),
         modelName=modelName,
     )
-    found = False
     for event in stream:
         if isinstance(event, streams.wire.ModelVersionMsg):
             assert event.model_id == m.id
             assert event.checkpoint_uuid == ckpt.uuid
-            found = True
-    assert found
+            break
