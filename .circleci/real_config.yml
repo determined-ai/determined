@@ -1510,8 +1510,12 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
+    parameters:
+      docker-image:
+        type: string
+        default: mcr.microsoft.com/playwright:v1.40.0-focal
     docker:
-      - image: mcr.microsoft.com/playwright:v1.40.0-focal
+      - image: <<pipeline.parameters.docker-image>>
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1520,6 +1524,9 @@ jobs:
       - skip-if-only-github
       - run: apt-get update && apt-get -y install make
       - react-get-deps
+      - setup-python-venv:
+          determined: True
+          executor: <<pipeline.parameters.docker-image>>
       - install-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
