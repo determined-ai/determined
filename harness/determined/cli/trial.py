@@ -1,22 +1,18 @@
+import argparse
+import datetime
 import json
 import os
 import tarfile
 import tempfile
-from argparse import Namespace
-from datetime import datetime
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-from termcolor import colored
+import termcolor
 
 from determined import cli
-from determined.cli import errors, render
-from determined.cli.master import format_log_entry
+from determined.cli import checkpoint, errors, master, render
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group, string_to_bool
 from determined.experimental import client
-
-from .checkpoint import render_checkpoint
 
 
 def none_or_int(string: str) -> Optional[int]:
@@ -40,23 +36,23 @@ def _format_validation(validation: Optional[bindings.v1MetricsWorkload]) -> Opti
     return json.dumps(validation.metrics.to_json(), indent=4)
 
 
-def _format_checkpoint(checkpoint: Optional[bindings.v1CheckpointWorkload]) -> List[Any]:
-    if not checkpoint:
+def _format_checkpoint(ckpt: Optional[bindings.v1CheckpointWorkload]) -> List[Any]:
+    if not ckpt:
         return [None, None, None]
 
-    if checkpoint.state in (
+    if ckpt.state in (
         bindings.checkpointv1State.COMPLETED,
         bindings.checkpointv1State.DELETED,
     ):
         return [
-            checkpoint.state,
-            checkpoint.uuid,
-            json.dumps(checkpoint.metadata, indent=4),
+            ckpt.state,
+            ckpt.uuid,
+            json.dumps(ckpt.metadata, indent=4),
         ]
-    elif checkpoint.state in (bindings.checkpointv1State.ACTIVE, bindings.checkpointv1State.ERROR):
-        return [checkpoint.state, None, json.dumps(checkpoint.metadata, indent=4)]
+    elif ckpt.state in (bindings.checkpointv1State.ACTIVE, bindings.checkpointv1State.ERROR):
+        return [ckpt.state, None, json.dumps(ckpt.metadata, indent=4)]
     else:
-        raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
+        raise AssertionError("Invalid checkpoint state: {}".format(ckpt.state))
 
 
 def _workloads_tabulate(
@@ -97,7 +93,7 @@ def _workloads_tabulate(
     return headers, values
 
 
-def describe_trial(args: Namespace) -> None:
+def describe_trial(args: argparse.Namespace) -> None:
     session = cli.setup_session(args)
 
     trial_response = bindings.get_GetTrial(session, trialId=args.trial_id)
@@ -152,7 +148,7 @@ def describe_trial(args: Namespace) -> None:
         render.print_json(trial_response.trial.summaryMetrics)
 
 
-def download(args: Namespace) -> None:
+def download(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     det = client.Determined._from_session(sess)
 
@@ -164,7 +160,7 @@ def download(args: Namespace) -> None:
         raise ValueError("--sort-by and --smaller-is-better must be set together")
 
     if args.uuid:
-        checkpoint = det.get_checkpoint(args.uuid)
+        ckpt = det.get_checkpoint(args.uuid)
     else:  # Downloaded checkpoint is selected from a trial
         if args.latest:
             sort_by = client.CheckpointSortBy.BATCH_NUMBER
@@ -178,39 +174,39 @@ def download(args: Namespace) -> None:
             else:
                 order_by = client.OrderBy.DESC
 
-        checkpoints = det.get_trial(args.trial_id).list_checkpoints(
+        ckpts = det.get_trial(args.trial_id).list_checkpoints(
             sort_by=sort_by,
             order_by=order_by,
         )
-        if not checkpoints:
+        if not ckpts:
             raise ValueError(f"No checkpoints found for trial {args.trial_id}")
 
         downloadable_states = [
             client.CheckpointState.COMPLETED,
             client.CheckpointState.PARTIALLY_DELETED,
         ]
-        while len(checkpoints) > 0:
-            checkpoint = checkpoints.pop()
-            if checkpoint.state in downloadable_states:
+        while len(ckpts) > 0:
+            ckpt = ckpts.pop()
+            if ckpt.state in downloadable_states:
                 break
-        if len(checkpoints) == 0:
+        if len(ckpts) == 0:
             raise errors.CliError("Download failed:  No downloadable checkpoint found")
 
-    path = checkpoint.download(path=args.output_dir)
+    path = ckpt.download(path=args.output_dir)
 
     if args.quiet:
         print(path)
     else:
-        render_checkpoint(checkpoint, path)
+        checkpoint.render_checkpoint(ckpt, path)
 
 
-def kill_trial(args: Namespace) -> None:
+def kill_trial(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     sess.post(f"/api/v1/trials/{args.trial_id}/kill")
     print("Killed trial", args.trial_id)
 
 
-def trial_logs(args: Namespace) -> None:
+def trial_logs(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
         logs = api.trial_logs(
@@ -235,7 +231,7 @@ def trial_logs(args: Namespace) -> None:
             api.pprint_logs(logs)
     finally:
         print(
-            colored(
+            termcolor.colored(
                 "Trial log stream ended. To reopen log stream, run: "
                 "det trial logs -f {}".format(args.trial_id),
                 "green",
@@ -243,15 +239,15 @@ def trial_logs(args: Namespace) -> None:
         )
 
 
-def set_log_retention(args: Namespace) -> None:
+def set_log_retention(args: argparse.Namespace) -> None:
     if not args.forever and not isinstance(args.days, int):
-        raise cli.errors.CliError(
+        raise cli.CliError(
             "Please provide an argument to set log retention. --days sets the number of days to"
             " retain logs from the time of creation, eg. `det t set log-retention 1 --days 50`."
             " --forever retains logs indefinitely, eg.`det t set log-retention 1 --forever`."
         )
     elif isinstance(args.days, int) and (args.days < -1 or args.days > 32767):
-        raise cli.errors.CliError(
+        raise cli.CliError(
             "Please provide a valid value for --days. The allowed range is between -1 and "
             "32767 days."
         )
@@ -264,14 +260,14 @@ def set_log_retention(args: Namespace) -> None:
     )
 
 
-def generate_support_bundle(args: Namespace) -> None:
+def generate_support_bundle(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
         output_dir = args.output_dir
         if output_dir is None:
             output_dir = os.getcwd()
 
-        dt = datetime.now().strftime("%Y%m%dT%H%M%S")
+        dt = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
         bundle_name = f"det-bundle-trial-{args.trial_id}-{dt}"
         fullpath = os.path.join(output_dir, f"{bundle_name}.tar.gz")
 
@@ -303,7 +299,7 @@ def generate_support_bundle(args: Namespace) -> None:
         print("Could not create the bundle because the output_dir provived was not found.")
 
 
-def write_trial_logs(sess: api.Session, args: Namespace, temp_dir: str) -> str:
+def write_trial_logs(sess: api.Session, args: argparse.Namespace, temp_dir: str) -> str:
     trial_logs = api.trial_logs(sess, args.trial_id)
     file_path = os.path.join(temp_dir, "trial_logs.txt")
     with open(file_path, "w") as f:
@@ -313,16 +309,16 @@ def write_trial_logs(sess: api.Session, args: Namespace, temp_dir: str) -> str:
     return file_path
 
 
-def write_master_logs(sess: api.Session, args: Namespace, temp_dir: str) -> str:
+def write_master_logs(sess: api.Session, args: argparse.Namespace, temp_dir: str) -> str:
     responses = bindings.get_MasterLogs(sess)
     file_path = os.path.join(temp_dir, "master_logs.txt")
     with open(file_path, "w") as f:
         for response in responses:
-            f.write(format_log_entry(response.logEntry) + "\n")
+            f.write(master.format_log_entry(response.logEntry) + "\n")
     return file_path
 
 
-def write_api_call(sess: api.Session, args: Namespace, temp_dir: str) -> Tuple[str, str]:
+def write_api_call(sess: api.Session, args: argparse.Namespace, temp_dir: str) -> Tuple[str, str]:
     api_experiment_filepath = os.path.join(temp_dir, "api_experiment_call.json")
     api_trial_filepath = os.path.join(temp_dir, "api_trial_call.json")
 
@@ -340,54 +336,54 @@ def create_json_file_in_dir(content: Any, file_path: str) -> None:
         json.dump(content, f)
 
 
-logs_args_description: ArgsDescription = [
-    Arg(
+logs_args_description: cli.ArgsDescription = [
+    cli.Arg(
         "-f",
         "--follow",
         action="store_true",
         help="follow the logs of a running trial, similar to tail -f",
     ),
-    Group(
-        Arg(
+    cli.Group(
+        cli.Arg(
             "--head",
             type=int,
             help="number of lines to show, counting from the beginning "
             "of the log (default is all)",
         ),
-        Arg(
+        cli.Arg(
             "--tail",
             type=int,
             help="number of lines to show, counting from the end of the log (default is all)",
         ),
     ),
-    Arg(
+    cli.Arg(
         "--agent-id",
         dest="agent_ids",
         action="append",
         help="agents to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--container-id",
         dest="container_ids",
         action="append",
         help="containers to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--rank-id",
         dest="rank_ids",
         type=int,
         action="append",
         help="containers to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--timestamp-before",
         help="show logs only from before (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
-    Arg(
+    cli.Arg(
         "--timestamp-after",
         help="show logs only from after (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
-    Arg(
+    cli.Arg(
         "--level",
         dest="level",
         help=(
@@ -396,13 +392,13 @@ logs_args_description: ArgsDescription = [
         ),
         choices=[lvl.name for lvl in bindings.v1LogLevel],
     ),
-    Arg(
+    cli.Arg(
         "--source",
         dest="sources",
         action="append",
         help="sources to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--stdtype",
         dest="stdtypes",
         action="append",
@@ -410,67 +406,67 @@ logs_args_description: ArgsDescription = [
     ),
 ]
 
-args_description: ArgsDescription = [
-    Cmd(
+args_description: cli.ArgsDescription = [
+    cli.Cmd(
         "t|rial",
         None,
         "manage trials",
         [
-            Cmd(
+            cli.Cmd(
                 "describe",
                 describe_trial,
                 "describe trial",
                 [
-                    Arg("trial_id", type=int, help="trial ID"),
-                    Arg(
+                    cli.Arg("trial_id", type=int, help="trial ID"),
+                    cli.Arg(
                         "--metrics-summary",
                         action="store_true",
                         help="display summary of metrics",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--metrics",
                         action="store_true",
                         help="display full metrics, such as batch metrics",
                     ),
-                    Group(
+                    cli.Group(
                         cli.output_format_args["csv"],
                         cli.output_format_args["json"],
                     ),
                     *cli.make_pagination_args(limit=1000),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "download",
                 download,
                 "download checkpoint for trial",
                 [
-                    Arg("trial_id", type=int, help="trial ID"),
-                    Group(
-                        Arg(
+                    cli.Arg("trial_id", type=int, help="trial ID"),
+                    cli.Group(
+                        cli.Arg(
                             "--best",
                             action="store_true",
                             help="download the checkpoint with the best validation metric",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--latest",
                             action="store_true",
                             help="download the most recent checkpoint",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--uuid",
                             type=str,
                             help="download a checkpoint by specifying its UUID",
                         ),
                         required=True,
                     ),
-                    Arg(
+                    cli.Arg(
                         "-o",
                         "--output-dir",
                         type=str,
                         default=None,
                         help="Desired output directory for the checkpoint",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         default=None,
@@ -479,16 +475,16 @@ args_description: ArgsDescription = [
                         "experiment's searcher metric is assumed. If this argument is specified, "
                         "--smaller-is-better must also be specified.",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--smaller-is-better",
-                        type=string_to_bool,
+                        type=cli.string_to_bool,
                         metavar="(true|false)",
                         default=None,
                         help="The sort order for metrics when using --best with --sort-by. For "
                         "example, 'accuracy' would require passing '--smaller-is-better false'. If "
                         "--sort-by is specified, this argument must be specified.",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-q",
                         "--quiet",
                         action="store_true",
@@ -496,13 +492,13 @@ args_description: ArgsDescription = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "support-bundle",
                 generate_support_bundle,
                 "support bundle",
                 [
-                    Arg("trial_id", type=int, help="trial ID"),
-                    Arg(
+                    cli.Arg("trial_id", type=int, help="trial ID"),
+                    cli.Arg(
                         "-o",
                         "--output-dir",
                         type=str,
@@ -511,38 +507,41 @@ args_description: ArgsDescription = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "logs",
                 trial_logs,
                 "fetch trial logs",
                 [
-                    Arg("trial_id", type=int, help="trial ID"),
+                    cli.Arg("trial_id", type=int, help="trial ID"),
                     cli.output_format_args["json"],
                     *logs_args_description,
                 ],
             ),
-            Cmd(
-                "kill", kill_trial, "forcibly terminate a trial", [Arg("trial_id", help="trial ID")]
+            cli.Cmd(
+                "kill",
+                kill_trial,
+                "forcibly terminate a trial",
+                [cli.Arg("trial_id", help="trial ID")],
             ),
-            Cmd(
+            cli.Cmd(
                 "set",
                 None,
                 "set trial attributes",
                 [
-                    Cmd(
+                    cli.Cmd(
                         "log-retention",
                         set_log_retention,
                         "set `log-retention-days` for a trial",
                         [
-                            Arg("trial_id", type=int, help="trial ID"),
-                            Group(
-                                Arg(
+                            cli.Arg("trial_id", type=int, help="trial ID"),
+                            cli.Group(
+                                cli.Arg(
                                     "--days",
                                     type=none_or_int,
                                     help="from the time of creation, number of days to "
                                     "retain the logs for. allowed range: -1 to 32767.",
                                 ),
-                                Arg(
+                                cli.Arg(
                                     "--forever",
                                     action="store_true",
                                     help="retain logs forever",

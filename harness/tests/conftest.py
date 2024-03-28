@@ -1,7 +1,7 @@
 from typing import Any, Iterator, List
 
 import pytest
-from _pytest.fixtures import SubRequest
+from _pytest import fixtures
 
 
 def pytest_addoption(parser: Any) -> None:
@@ -12,7 +12,7 @@ def pytest_addoption(parser: Any) -> None:
 
 
 @pytest.fixture
-def require_secrets(request: SubRequest) -> Iterator[bool]:
+def require_secrets(request: fixtures.SubRequest) -> Iterator[bool]:
     yield bool(request.config.getoption("--require-secrets"))
 
 

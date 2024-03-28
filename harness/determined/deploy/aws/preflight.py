@@ -4,14 +4,13 @@ from typing import Any, Dict
 
 import boto3
 import pkg_resources
-from botocore.exceptions import ClientError
-from termcolor import colored
+import termcolor
+from botocore import exceptions
 
 from determined.common import util, yaml
+from determined.deploy import errors
 from determined.deploy.aws import constants
-from determined.deploy.errors import PreflightFailure
-
-from .deployment_types.base import DeterminedDeployment
+from determined.deploy.aws.deployment_types import base
 
 # There's no reliable way to map instance type to its quota category via an API.
 # Lookup quota codes in AWS console at:
@@ -38,7 +37,7 @@ SPOT_QUOTA_CODES = {
 def get_instance_type_quota_code(instance_type: str, spot: bool = False) -> str:
     match = re.match("([a-z]+)[0-9]+.+", instance_type)
     if not match:
-        raise PreflightFailure("can't detect instance class")
+        raise errors.PreflightFailure("can't detect instance class")
 
     instance_class = match.group(1).capitalize()
     quota_map = SPOT_QUOTA_CODES if spot else ON_DEMAND_QUOTA_CODES
@@ -52,8 +51,8 @@ def fetch_instance_type_quota(boto_session: boto3.session.Session, quota_code: s
         client = boto_session.client("service-quotas")
         quota_data = client.get_service_quota(ServiceCode="ec2", QuotaCode=quota_code)
         return int(quota_data["Quota"]["Value"])
-    except ClientError as ex:
-        raise PreflightFailure("failed to fetch service quota: %s" % ex)
+    except exceptions.ClientError as ex:
+        raise errors.PreflightFailure("failed to fetch service quota: %s" % ex)
 
 
 # CloudFront templates use a set of built-in functions such as
@@ -74,7 +73,7 @@ class IgnoreUnknownTagConstructor(yaml.SafeConstructor):
 IgnoreUnknownTagConstructor.add_constructor(None, IgnoreUnknownTagConstructor.ignore_unknown)
 
 
-def get_default_cf_parameter(deployment_object: DeterminedDeployment, parameter: str) -> Any:
+def get_default_cf_parameter(deployment_object: base.DeterminedDeployment, parameter: str) -> Any:
     y = yaml.YAML(typ="safe", pure=True)
     y.Constructor = IgnoreUnknownTagConstructor
     with open(deployment_object.template_path) as fin:
@@ -84,7 +83,7 @@ def get_default_cf_parameter(deployment_object: DeterminedDeployment, parameter:
 
 
 def get_cf_parameter(
-    det_config: Dict[str, Any], deployment_object: DeterminedDeployment, parameter: str
+    det_config: Dict[str, Any], deployment_object: base.DeterminedDeployment, parameter: str
 ) -> Any:
     if det_config[parameter] is not None:
         return det_config[parameter]
@@ -92,7 +91,7 @@ def get_cf_parameter(
     return get_default_cf_parameter(deployment_object, parameter)
 
 
-def check_quotas(det_config: Dict[str, Any], deployment_object: DeterminedDeployment) -> None:
+def check_quotas(det_config: Dict[str, Any], deployment_object: base.DeterminedDeployment) -> None:
     try:
         boto_session: boto3.session.Session = det_config[constants.cloudformation.BOTO3_SESSION]
         gpu_instance_type = get_cf_parameter(
@@ -114,19 +113,19 @@ def check_quotas(det_config: Dict[str, Any], deployment_object: DeterminedDeploy
             vcpu_mapping = {d["instanceType"]: d for d in mapping_data}
 
         if gpu_instance_type not in vcpu_mapping:
-            raise PreflightFailure("unknown vCPU count for instance type")
+            raise errors.PreflightFailure("unknown vCPU count for instance type")
 
         vcpus_required = int(vcpu_mapping[gpu_instance_type]["vcpu"] * max_agents)
-    except PreflightFailure as ex:
-        print(colored("Failed to check AWS instance quota: %s" % ex, "yellow"))
+    except errors.PreflightFailure as ex:
+        print(termcolor.colored("Failed to check AWS instance quota: %s" % ex, "yellow"))
         return
     except Exception as ex:
-        print(colored("Error while checking AWS instance quota: %s" % ex, "yellow"))
+        print(termcolor.colored("Error while checking AWS instance quota: %s" % ex, "yellow"))
         return
 
     if vcpus_required > vcpu_quota:
         print(
-            colored(
+            termcolor.colored(
                 "Insufficient AWS GPU agent instance quota (available: %s, required: %s)"
                 % (vcpu_quota, vcpus_required),
                 "red",

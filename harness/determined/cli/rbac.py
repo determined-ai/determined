@@ -1,24 +1,23 @@
-from argparse import Namespace
-from collections import namedtuple
+import argparse
+import collections
 from typing import Any, Dict, List, Set, Tuple
 
 from determined import cli
 from determined.cli import render
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd
 
 rbac_flag_disabled_message = (
     "RBAC commands require the Determined Enterprise Edition "
     + "and the Master Configuration option security.authz.rbac_ui_enabled."
 )
 
-v1PermissionHeaders = namedtuple(
+v1PermissionHeaders = collections.namedtuple(
     "v1PermissionHeaders",
     ["id", "name", "scopeTypeMask"],
 )
 
-roleAssignmentHeaders = namedtuple(
+roleAssignmentHeaders = collections.namedtuple(
     "roleAssignmentHeaders",
     [
         "roleName",
@@ -32,25 +31,25 @@ roleAssignmentHeaders = namedtuple(
     ],
 )
 
-workspaceAssignedToHeaders = namedtuple(
+workspaceAssignedToHeaders = collections.namedtuple(
     "workspaceAssignedToHeaders",
     ["assignedGlobally", "workspaceID", "workspaceName"],
 )
 
-groupAssignmentHeaders = namedtuple(
+groupAssignmentHeaders = collections.namedtuple(
     "groupAssignmentHeaders",
     ["groupID", "groupName", "workspaceID", "workspaceName", "assignedGlobally"],
 )
 
 
-userAssignmentHeaders = namedtuple(
+userAssignmentHeaders = collections.namedtuple(
     "userAssignmentHeaders",
     ["userID", "username", "workspaceID", "workspaceName", "assignedGlobally"],
 )
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def my_permissions(args: Namespace) -> None:
+def my_permissions(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     resp = bindings.get_GetPermissionsSummary(sess)
     if args.json:
@@ -90,7 +89,7 @@ def my_permissions(args: Namespace) -> None:
             print(f"permissions assigned over workspace '{workspace_name}' with ID '{wid}'")
 
         perms_to_render = []
-        perms_added: set[bindings.v1PermissionType] = set()
+        perms_added: Set[bindings.v1PermissionType] = set()
         for p in perms:
             if p.id not in perms_added:
                 perms_added.add(p.id)
@@ -100,7 +99,7 @@ def my_permissions(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def list_roles(args: Namespace) -> None:
+def list_roles(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1SearchRolesAssignableToScopeRequest(
         limit=args.limit,
@@ -154,7 +153,7 @@ def role_with_assignment_to_dict(
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def list_users_roles(args: Namespace) -> None:
+def list_users_roles(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     user_id = api.usernames_to_user_ids(sess, [args.username])[0]
     resp = bindings.get_GetRolesAssignedToUser(sess, userId=user_id)
@@ -187,7 +186,7 @@ def list_users_roles(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def list_groups_roles(args: Namespace) -> None:
+def list_groups_roles(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     group_id = api.group_name_to_group_id(sess, args.group_name)
     resp = bindings.get_GetRolesAssignedToGroup(sess, groupId=group_id)
@@ -226,7 +225,7 @@ def list_groups_roles(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def describe_role(args: Namespace) -> None:
+def describe_role(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     role_id = api.role_name_to_role_id(sess, args.role_name)
     req = bindings.v1GetRolesByIDRequest(roleIds=[role_id])
@@ -310,7 +309,7 @@ def describe_role(args: Namespace) -> None:
 
 def make_assign_req(
     session: api.Session,
-    args: Namespace,
+    args: argparse.Namespace,
 ) -> Tuple[List[bindings.v1UserRoleAssignment], List[bindings.v1GroupRoleAssignment]]:
     """
     A helper for assign_role and unassign_role, which take the same command line flags.
@@ -339,7 +338,7 @@ def make_assign_req(
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def assign_role(args: Namespace) -> None:
+def assign_role(args: argparse.Namespace) -> None:
     # Valid CLI usage is enforced before even creating a session.
     if (args.username_to_assign is None) == (args.group_name_to_assign is None):
         raise api.errors.BadRequestException(
@@ -371,7 +370,7 @@ def assign_role(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def unassign_role(args: Namespace) -> None:
+def unassign_role(args: argparse.Namespace) -> None:
     # Valid CLI usage is enforced before even creating a session.
     if (args.username_to_assign is None) == (args.group_name_to_assign is None):
         raise api.errors.BadRequestException(
@@ -401,80 +400,82 @@ def unassign_role(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "rbac",
         None,
         "manage roles based access controls",
         [
-            Cmd(
+            cli.Cmd(
                 "my-permissions",
                 my_permissions,
                 "list permissions the current user has",
                 [
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list-roles",
                 list_roles,
                 "list roles",
                 [
-                    Arg(
+                    cli.Arg(
                         "--exclude-global-roles",
                         action="store_true",
                         help="Ignore roles with global permissions",
                     ),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                     *cli.make_pagination_args(),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "list-users-roles",
                 list_users_roles,
                 "list user's roles",
                 [
-                    Arg("username", help="username of user to list role's assigned to"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("username", help="username of user to list role's assigned to"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list-groups-roles",
                 list_groups_roles,
                 "list group's roles",
                 [
-                    Arg("group_name", help="name of the group for which to list assigned roles"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg(
+                        "group_name", help="name of the group for which to list assigned roles"
+                    ),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "describe-role",
                 describe_role,
                 "describe a role",
                 [
-                    Arg("role_name", help="name of role to describe"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("role_name", help="name of role to describe"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "assign-role",
                 assign_role,
                 "assign a role to a user or group",
                 [
-                    Arg("role_name", help="name of role to assign"),
-                    Arg(
+                    cli.Arg("role_name", help="name of role to assign"),
+                    cli.Arg(
                         "-w",
                         "--workspace-name",
                         default=None,
                         help="name of the workspace the role is assigned to",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-u",
                         "--username-to-assign",
                         default=None,
                         help="username to assign the role to",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-g",
                         "--group-name-to-assign",
                         default=None,
@@ -482,25 +483,25 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "unassign-role",
                 unassign_role,
                 "unassign a role from a user or group",
                 [
-                    Arg("role_name", help="name of role to unassign"),
-                    Arg(
+                    cli.Arg("role_name", help="name of role to unassign"),
+                    cli.Arg(
                         "-w",
                         "--workspace-name",
                         default=None,
                         help="name of the workspace the role is unassigned from",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-u",
                         "--username-to-assign",
                         default=None,
                         help="username the role is unassigned from",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-g",
                         "--group-name-to-assign",
                         default=None,

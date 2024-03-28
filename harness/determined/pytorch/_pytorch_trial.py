@@ -1,6 +1,7 @@
-import collections.abc
+import abc
 import contextlib
 import enum
+import inspect
 import json
 import logging
 import pathlib
@@ -9,8 +10,7 @@ import random
 import sys
 import time
 import warnings
-from abc import abstractmethod
-from inspect import signature
+from collections import abc as col_abc
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -19,8 +19,7 @@ import torch.utils.data
 from torch import distributed as dist
 
 import determined as det
-from determined import core, pytorch, tensorboard, util
-from determined.horovod import hvd
+from determined import core, horovod, pytorch, tensorboard, util
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -53,7 +52,7 @@ class TrainUnit:
     checkpoint/validate on batches 1, 5, and 10.
     """
 
-    def __init__(self, value: Union[int, collections.abc.Container]):
+    def __init__(self, value: Union[int, col_abc.Container]):
         self.value = value
 
     @staticmethod
@@ -105,7 +104,7 @@ class TrainUnit:
     def should_stop(self, step_num: int) -> bool:
         if isinstance(self.value, int):
             return self._divides(step_num)
-        assert isinstance(self.value, collections.Container)
+        assert isinstance(self.value, col_abc.Container)
         return step_num in self.value
 
     def _divides(self, steps: int) -> bool:
@@ -288,6 +287,7 @@ class _PyTorchTrialController:
     ) -> None:
         # Initialize the correct horovod.
         if distributed_backend.use_horovod():
+            hvd = horovod.hvd
             hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
             hvd.init()
         if distributed_backend.use_torch():
@@ -367,7 +367,7 @@ class _PyTorchTrialController:
 
     def _on_epoch_start(self, epoch_idx: int) -> None:
         for callback in self.callbacks.values():
-            sig = signature(callback.on_training_epoch_start)
+            sig = inspect.signature(callback.on_training_epoch_start)
             if sig.parameters:
                 callback.on_training_epoch_start(epoch_idx)
             else:
@@ -600,6 +600,7 @@ class _PyTorchTrialController:
                 self.state = _TrialState(trial_id=self.trial_id)
 
             if self.context.distributed.size > 1 and self.use_horovod:
+                hvd = horovod.hvd
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -1421,7 +1422,7 @@ class PyTorchTrial(det.LegacyTrial):
     trial_controller_class = _PyTorchTrialController  # type: ignore
     trial_context_class = pytorch.PyTorchTrialContext  # type: ignore
 
-    @abstractmethod
+    @abc.abstractmethod
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         """
         Initializes a trial using the provided ``context``. The general steps are:
@@ -1466,7 +1467,7 @@ class PyTorchTrial(det.LegacyTrial):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
@@ -1526,7 +1527,7 @@ class PyTorchTrial(det.LegacyTrial):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def build_training_data_loader(self) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:
         """
         Defines the data loader to use during training.
@@ -1539,7 +1540,7 @@ class PyTorchTrial(det.LegacyTrial):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def build_validation_data_loader(
         self,
     ) -> Union[pytorch.DataLoader, torch.utils.data.DataLoader]:

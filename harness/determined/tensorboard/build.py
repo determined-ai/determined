@@ -2,7 +2,7 @@ import os
 import pathlib
 from typing import Any, Dict, Optional, Union
 
-from determined.common.storage.shared import _full_storage_path, _shortcut_to_config
+from determined.common.storage import shared as shared_storage
 from determined.tensorboard import azure, base, directory, gcs, s3, shared
 
 
@@ -57,7 +57,7 @@ def build(
     SharedFSTensorboardManager.
     """
     if isinstance(checkpoint_config, str):
-        checkpoint_config = _shortcut_to_config(checkpoint_config)
+        checkpoint_config = shared_storage._shortcut_to_config(checkpoint_config)
 
     type_name = checkpoint_config.get("type")
 
@@ -78,7 +78,7 @@ def build(
         host_path = checkpoint_config["host_path"]
         storage_path = checkpoint_config.get("storage_path")
         return shared.SharedFSTensorboardManager(
-            _full_storage_path(host_path, storage_path, container_path),
+            shared_storage._full_storage_path(host_path, storage_path, container_path),
             base_path,
             sync_path,
             async_upload=async_upload,

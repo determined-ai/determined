@@ -1,16 +1,15 @@
 import io
 import logging
 import os
+import pathlib
 import uuid
-from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import botocore.exceptions
 import pytest
+from botocore import exceptions
 
 from determined.common import storage
-from determined.common.storage.s3 import normalize_prefix
-from determined.tensorboard.fetchers.s3 import S3Fetcher
+from determined.tensorboard.fetchers import s3
 from tests import parallel
 from tests.storage import util
 
@@ -20,7 +19,7 @@ CHECK_KEY_CONTENT = b"yo, you have access"
 
 
 def get_live_manager(
-    require_secrets: bool, tmp_path: Path, prefix: Optional[str]
+    require_secrets: bool, tmp_path: pathlib.Path, prefix: Optional[str]
 ) -> storage.S3StorageManager:
     """Return a working S3StorageManager connected to a real bucket.
 
@@ -48,7 +47,7 @@ def get_live_manager(
         manager.bucket.download_fileobj(CHECK_ACCESS_KEY, out)
         assert out.getvalue() == CHECK_KEY_CONTENT
         return manager
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.PartialCredentialsError):
+    except (exceptions.NoCredentialsError, exceptions.PartialCredentialsError):
         # No access detected.
         if require_secrets:
             raise
@@ -76,7 +75,7 @@ def get_live_manager(
 )
 def test_storage_prefix_normalization(
     require_secrets: bool,
-    tmp_path: Path,
+    tmp_path: pathlib.Path,
     prefix: Union[None, str],
     expected_storage_prefix: str,
     should_fail: bool,
@@ -84,7 +83,7 @@ def test_storage_prefix_normalization(
     """Test various inputs for storage prefix are normalized properly."""
 
     try:
-        observed_prefix = normalize_prefix(prefix)
+        observed_prefix = storage.normalize_prefix(prefix)
         assert not should_fail and observed_prefix == expected_storage_prefix
     except ValueError as exc:
         assert should_fail and "prefix must not match" in str(exc)
@@ -92,7 +91,9 @@ def test_storage_prefix_normalization(
 
 @pytest.mark.cloud
 @pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
-def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Optional[str]) -> None:
+def test_live_s3_lifecycle(
+    require_secrets: bool, tmp_path: pathlib.Path, prefix: Optional[str]
+) -> None:
     live_manager = get_live_manager(require_secrets, tmp_path, prefix)
 
     def post_delete_cb(storage_id: str) -> None:
@@ -108,11 +109,11 @@ def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Option
 
 def get_tensorboard_fetcher_s3(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
-) -> S3Fetcher:
+) -> s3.S3Fetcher:
     storage_config = {"bucket": BUCKET_NAME}
 
     try:
-        fetcher = S3Fetcher(storage_config, paths_to_sync, local_sync_dir)
+        fetcher = s3.S3Fetcher(storage_config, paths_to_sync, local_sync_dir)
 
         out = io.BytesIO()
         fetcher.client.download_fileobj(BUCKET_NAME, CHECK_ACCESS_KEY, out)
@@ -120,7 +121,7 @@ def get_tensorboard_fetcher_s3(
 
         return fetcher
 
-    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.PartialCredentialsError):
+    except (exceptions.NoCredentialsError, exceptions.PartialCredentialsError):
         # No access detected.
         if require_secrets:
             raise
@@ -128,7 +129,7 @@ def get_tensorboard_fetcher_s3(
 
 
 @pytest.mark.cloud
-def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
+def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: pathlib.Path) -> None:
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
 
@@ -162,7 +163,7 @@ def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None
 @pytest.mark.cloud
 def test_live_s3_sharded_upload_download(
     require_secrets: bool,
-    tmp_path: Path,
+    tmp_path: pathlib.Path,
 ) -> None:
     with parallel.Execution(4, local_size=2) as pex:
 
@@ -174,7 +175,7 @@ def test_live_s3_sharded_upload_download(
 
 
 @pytest.mark.cloud
-def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) -> None:
+def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: pathlib.Path) -> None:
     with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run

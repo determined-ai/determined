@@ -12,7 +12,6 @@ from determined.cli import errors, render
 from determined.cli import task as cli_task
 from determined.common import check
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group
 
 NO_PERMISSIONS = "NO PERMISSIONS"
 
@@ -246,47 +245,49 @@ def agent_id_completer(_1: str, parsed_args: argparse.Namespace, _2: Any) -> Lis
 # fmt: off
 
 args_description = [
-    Cmd("a|gent", None, "manage agents", [
-        Cmd("list ls", list_agents, "list agents", [
-            Group(
-                Arg("--csv", action="store_true", help="print as CSV"),
-                Arg("--json", action="store_true", help="print as JSON"),
+    cli.Cmd("a|gent", None, "manage agents", [
+        cli.Cmd("list ls", list_agents, "list agents", [
+            cli.Group(
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--json", action="store_true", help="print as JSON"),
             ),
         ], is_default=True),
-        Cmd("enable", patch_agent(True), "enable agent", [
-            Group(
-                Arg("agent_id", help="agent ID", nargs="?", completer=agent_id_completer),
-                Arg("--all", action="store_true", help="enable all agents"),
+        cli.Cmd("enable", patch_agent(True), "enable agent", [
+            cli.Group(
+                cli.Arg("agent_id", help="agent ID", nargs="?", completer=agent_id_completer),
+                cli.Arg("--all", action="store_true", help="enable all agents"),
             )
         ]),
-        Cmd("disable", patch_agent(False), "disable agent", [
-            Group(
-                Arg("agent_id", help="agent ID", nargs="?", completer=agent_id_completer),
-                Arg("--all", action="store_true", help="disable all agents"),
+        cli.Cmd("disable", patch_agent(False), "disable agent", [
+            cli.Group(
+                cli.Arg("agent_id", help="agent ID", nargs="?", completer=agent_id_completer),
+                cli.Arg("--all", action="store_true", help="disable all agents"),
             ),
-            Arg("--drain", action="store_true",
+            cli.Arg(
+                "--drain", action="store_true",
                 help="enter drain mode, allowing the tasks currently running on "
-                     "the disabled agents to finish. will also print these tasks, if any"),
-            Group(
-                Arg("--csv", action="store_true", help="print as CSV"),
-                Arg("--json", action="store_true", help="print as JSON"),
+                "the disabled agents to finish. will also print these tasks, if any"
+            ),
+            cli.Group(
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--json", action="store_true", help="print as JSON"),
             ),
         ]),
     ]),
-    Cmd("s|lot", None, "manage slots", [
-        Cmd("list ls", list_slots, "list slots in cluster", [
-            Group(
-                Arg("--csv", action="store_true", help="print as CSV"),
-                Arg("--json", action="store_true", help="print as JSON"),
+    cli.Cmd("s|lot", None, "manage slots", [
+        cli.Cmd("list ls", list_slots, "list slots in cluster", [
+            cli.Group(
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--json", action="store_true", help="print as JSON"),
             ),
         ], is_default=True),
-        Cmd("enable", patch_slot(True), "enable slot on agent", [
-            Arg("agent_id", help="agent ID", completer=agent_id_completer),
-            Arg("slot_id", type=int, help="slot ID"),
+        cli.Cmd("enable", patch_slot(True), "enable slot on agent", [
+            cli.Arg("agent_id", help="agent ID", completer=agent_id_completer),
+            cli.Arg("slot_id", type=int, help="slot ID"),
         ]),
-        Cmd("disable", patch_slot(False), "disable slot on agent", [
-            Arg("agent_id", help="agent ID", completer=agent_id_completer),
-            Arg("slot_id", type=int, help="slot ID"),
+        cli.Cmd("disable", patch_slot(False), "disable slot on agent", [
+            cli.Arg("agent_id", help="agent ID", completer=agent_id_completer),
+            cli.Arg("slot_id", type=int, help="slot ID"),
         ]),
     ]),
 ]  # type: List[Any]

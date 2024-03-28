@@ -1,14 +1,17 @@
 import numpy as np
 import tensorflow as tf
+from tensorflow.compat import v1
+from tensorflow.keras import losses
+from tensorflow.keras.optimizers import legacy
 
-from determined.keras import TFKerasTrial, TFKerasTrialContext
+from determined import keras
 
-tf.compat.v1.disable_eager_execution()
-tf.compat.v1.disable_v2_behavior()
+v1.disable_eager_execution()
+v1.disable_v2_behavior()
 
 
-class NoopKerasTrial(TFKerasTrial):
-    def __init__(self, context: TFKerasTrialContext):
+class NoopKerasTrial(keras.TFKerasTrial):
+    def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
 
     def build_model(self):
@@ -25,9 +28,9 @@ class NoopKerasTrial(TFKerasTrial):
         )
         model = self.context.wrap_model(model)
         # TODO MLG-443 Migrate from legacy Keras optimizers
-        optimizer = self.context.wrap_optimizer(tf.keras.optimizers.legacy.SGD())
+        optimizer = self.context.wrap_optimizer(legacy.SGD())
         model.compile(
-            loss=tf.keras.losses.MeanSquaredError(),
+            loss=losses.MeanSquaredError(),
             optimizer=optimizer,
             metrics=[],
         )

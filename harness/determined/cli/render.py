@@ -11,21 +11,21 @@ For example, the following two lines of pseudocode return similar objects:
 * _render.model_to_json(model.Model)
 """
 import csv
+import datetime
 import inspect
 import json
 import os
 import pathlib
 import sys
-from datetime import timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence, TextIO, Union
 
-import dateutil.parser
 import tabulate
 import termcolor
+from dateutil import parser
 
+from determined import experimental
 from determined import util as det_util
 from determined.common import util
-from determined.experimental import Model, Project
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
@@ -123,8 +123,8 @@ def format_object_as_yaml(source: Dict[str, Any]) -> str:
 def format_time(datetime_str: Optional[str]) -> Optional[str]:
     if datetime_str is None:
         return None
-    dt = dateutil.parser.parse(datetime_str)
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
+    dt = parser.parse(datetime_str)
+    return dt.astimezone(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S%z")
 
 
 def format_percent(f: Optional[float]) -> Optional[str]:
@@ -298,8 +298,8 @@ def report_job_launched(_type: str, _id: str) -> None:
     print(termcolor.colored(msg, "green"))
 
 
-def model_to_json(model: Model) -> Dict[str, Any]:
-    """Convert a Model to a bindings-style to_json dict."""
+def model_to_json(model: experimental.Model) -> Dict[str, Any]:
+    """Convert a experimental.Model to a bindings-style to_json dict."""
     return {
         "name": model.name,
         "id": model.model_id,
@@ -311,8 +311,8 @@ def model_to_json(model: Model) -> Dict[str, Any]:
     }
 
 
-def project_to_json(project: Project) -> Dict[str, Any]:
-    """Convert a Project to a bindings-style to_json dict."""
+def project_to_json(project: experimental.Project) -> Dict[str, Any]:
+    """Convert a experimental.Project to a bindings-style to_json dict."""
     return {
         "archived": project.archived,
         "description": project.description,

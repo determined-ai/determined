@@ -1,21 +1,19 @@
 import argparse
+import pathlib
 import sys
-from pathlib import Path
 from typing import Callable, Dict
 
 import determined
-from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
-from determined.deploy.errors import warn_version_mismatch
-from determined.deploy.local import cluster_utils
-
-from .preflight import check_docker_install
+from determined import cli
+from determined.deploy import errors
+from determined.deploy.local import cluster_utils, preflight
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
     if not args.no_preflight_checks:
-        check_docker_install()
+        preflight.check_docker_install()
 
-    warn_version_mismatch(args.det_version)
+    errors.warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
 
@@ -44,7 +42,7 @@ def handle_logs(args: argparse.Namespace) -> None:
 
 
 def handle_master_up(args: argparse.Namespace) -> None:
-    warn_version_mismatch(args.det_version)
+    errors.warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
 
@@ -70,7 +68,7 @@ def handle_master_down(args: argparse.Namespace) -> None:
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
-    warn_version_mismatch(args.det_version)
+    errors.warn_version_mismatch(args.det_version)
     if args.det_version is None:
         args.det_version = determined.__version__
     cluster_utils.agent_up(
@@ -108,65 +106,65 @@ def deploy_local(args: argparse.Namespace) -> None:
     OPERATION_TO_FN[args.command](args)
 
 
-args_description = Cmd(
+args_description = cli.Cmd(
     "local",
     None,
     "local help",
     [
-        Cmd(
+        cli.Cmd(
             "cluster-up",
             handle_cluster_up,
             "Create a Determined cluster",
             [
-                Group(
-                    Arg(
+                cli.Group(
+                    cli.Arg(
                         "--master-config-path",
-                        type=Path,
+                        type=pathlib.Path,
                         default=None,
                         help="path to master configuration",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--storage-host-path",
-                        type=Path,
+                        type=pathlib.Path,
                         default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
-                Arg(
+                cli.Arg(
                     "--agents",
                     type=int,
                     default=1,
                     help=argparse.SUPPRESS,
                 ),
-                Arg(
+                cli.Arg(
                     "--master-port",
                     type=int,
                     default=cluster_utils.MASTER_PORT_DEFAULT,
                     help="port to expose master on",
                 ),
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg(
+                cli.Arg(
                     "--det-version",
                     type=str,
                     help="version or commit to use",
                 ),
-                Arg(
+                cli.Arg(
                     "--db-password",
                     type=str,
                     default="postgres",
                     help="password for master database",
                 ),
-                Arg(
+                cli.Arg(
                     "--delete-db",
                     action="store_true",
                     help="remove current master database",
                 ),
-                BoolOptArg(
+                cli.BoolOptArg(
                     "--gpu",
                     "--no-gpu",
                     dest="gpu",
@@ -174,126 +172,126 @@ args_description = Cmd(
                     true_help="enable GPU support for agent",
                     false_help="disable GPU support for agent",
                 ),
-                Arg(
+                cli.Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                Arg(
+                cli.Arg(
                     "--auto-work-dir",
-                    type=Path,
+                    type=pathlib.Path,
                     default=None,
                     help="the default work dir, used for interactive jobs",
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "cluster-down",
             handle_cluster_down,
             "Stop a Determined cluster",
             [
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg(
+                cli.Arg(
                     "--delete-db",
                     action="store_true",
                     help="remove current master database",
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "master-up",
             handle_master_up,
             "Start a Determined master",
             [
-                Group(
-                    Arg(
+                cli.Group(
+                    cli.Arg(
                         "--master-config-path",
-                        type=Path,
+                        type=pathlib.Path,
                         default=None,
                         help="path to master configuration",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--storage-host-path",
-                        type=Path,
+                        type=pathlib.Path,
                         default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
-                Arg(
+                cli.Arg(
                     "--master-port",
                     type=int,
                     default=cluster_utils.MASTER_PORT_DEFAULT,
                     help="port to expose master on",
                 ),
-                Arg(
+                cli.Arg(
                     "--master-name",
                     type=str,
                     default=None,
                     help="name for the master instance",
                 ),
-                Arg(
+                cli.Arg(
                     "--det-version",
                     type=str,
                     help="version or commit to use",
                 ),
-                Arg(
+                cli.Arg(
                     "--db-password",
                     type=str,
                     default="postgres",
                     help="password for master database",
                 ),
-                Arg(
+                cli.Arg(
                     "--delete-db",
                     action="store_true",
                     help="remove current master database",
                 ),
-                Arg(
+                cli.Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg(
+                cli.Arg(
                     "--image-repo-prefix",
                     type=str,
                     default="determinedai",
                     help="prefix for the master image",
                 ),
-                Arg(
+                cli.Arg(
                     "--auto-work-dir",
-                    type=Path,
+                    type=pathlib.Path,
                     default=None,
                     help="the default work dir, used for interactive jobs",
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "master-down",
             handle_master_down,
             "Stop a Determined master",
             [
-                Arg(
+                cli.Arg(
                     "--master-name",
                     type=str,
                     default=None,
                     help="name for the master instance",
                 ),
-                Arg(
+                cli.Arg(
                     "--delete-db",
                     action="store_true",
                     help="remove current master database",
                 ),
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
@@ -301,51 +299,53 @@ args_description = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "logs",
             handle_logs,
             "Show the logs of a Determined cluster",
             [
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg("--no-follow", help="disable following logs", action="store_true"),
+                cli.Arg("--no-follow", help="disable following logs", action="store_true"),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "agent-up",
             handle_agent_up,
             "Start a Determined agent",
             [
-                Arg("master_host", type=str, help="master hostname"),
-                Arg(
+                cli.Arg("master_host", type=str, help="master hostname"),
+                cli.Arg(
                     "--master-port",
                     type=int,
                     default=cluster_utils.MASTER_PORT_DEFAULT,
                     help="master port",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-config-path",
-                    type=Path,
+                    type=pathlib.Path,
                     default=None,
                     help="path to agent configuration",
                 ),
-                Arg(
+                cli.Arg(
                     "--det-version",
                     type=str,
                     help="version or commit to use",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-name",
                     type=str,
                     default=cluster_utils.AGENT_NAME_DEFAULT,
                     help="agent name",
                 ),
-                Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
-                BoolOptArg(
+                cli.Arg(
+                    "--agent-resource-pool", type=str, default=None, help="agent resource pool"
+                ),
+                cli.BoolOptArg(
                     "--gpu",
                     "--no-gpu",
                     dest="gpu",
@@ -353,18 +353,18 @@ args_description = Cmd(
                     true_help="enable GPU support for agent",
                     false_help="disable GPU support for agent",
                 ),
-                Arg(
+                cli.Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                Arg(
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
                 ),
-                Arg(
+                cli.Arg(
                     "--image-repo-prefix",
                     type=str,
                     default="determinedai",
@@ -372,19 +372,19 @@ args_description = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "agent-down",
             handle_agent_down,
             "Stop a Determined agent",
             [
-                Arg(
+                cli.Arg(
                     "--agent-name",
                     type=str,
                     default=cluster_utils.AGENT_NAME_DEFAULT,
                     help="agent name",
                 ),
-                Arg("--all", help="stop all running agents", action="store_true"),
-                Arg(
+                cli.Arg("--all", help="stop all running agents", action="store_true"),
+                cli.Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",

@@ -1,14 +1,14 @@
 import io
 import os
+import pathlib
 import tempfile
 import uuid
-from pathlib import Path
 from typing import Dict, List
 
 import pytest
 
 from determined.common import storage
-from determined.tensorboard.fetchers.azure import AzureFetcher
+from determined.tensorboard.fetchers import azure
 from tests.storage import util
 
 CONTAINER_NAME = "storage-unit-tests"
@@ -16,7 +16,9 @@ CHECK_ACCESS_KEY = "check-access"
 CHECK_KEY_CONTENT = b"yo, you have access"
 
 
-def get_live_azure_manager(require_secrets: bool, tmp_path: Path) -> storage.AzureStorageManager:
+def get_live_azure_manager(
+    require_secrets: bool, tmp_path: pathlib.Path
+) -> storage.AzureStorageManager:
     """Return a working AzureStorageManager connected to a real bucket.
 
     Check for the environment variable we pass as part of circleci's "storage-unit-tests" context.
@@ -32,7 +34,7 @@ def get_live_azure_manager(require_secrets: bool, tmp_path: Path) -> storage.Azu
     """
     connection_string = os.environ.get("DET_AZURE_TEST_CREDS")
 
-    import azure.core.exceptions
+    from azure.core import exceptions
 
     try:
         manager = storage.AzureStorageManager(CONTAINER_NAME, connection_string)
@@ -48,8 +50,8 @@ def get_live_azure_manager(require_secrets: bool, tmp_path: Path) -> storage.Azu
 
     except (
         ValueError,
-        azure.core.exceptions.ClientAuthenticationError,
-        azure.core.exceptions.ResourceNotFoundError,
+        exceptions.ClientAuthenticationError,
+        exceptions.ResourceNotFoundError,
     ):
         if require_secrets:
             raise
@@ -57,7 +59,7 @@ def get_live_azure_manager(require_secrets: bool, tmp_path: Path) -> storage.Azu
 
 
 @pytest.mark.cloud
-def test_live_azure_lifecycle(require_secrets: bool, tmp_path: Path) -> None:
+def test_live_azure_lifecycle(require_secrets: bool, tmp_path: pathlib.Path) -> None:
     live_manager = get_live_azure_manager(require_secrets, tmp_path)
 
     def post_delete_cb(storage_id: str) -> None:
@@ -74,14 +76,14 @@ def test_live_azure_lifecycle(require_secrets: bool, tmp_path: Path) -> None:
 
 def get_tensorboard_fetcher_azure(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
-) -> AzureFetcher:
+) -> azure.AzureFetcher:
     connection_string = os.environ.get("DET_AZURE_TEST_CREDS")
     storage_config = {"connection_string": connection_string, "container": CONTAINER_NAME}
 
-    import azure.core.exceptions
+    from azure.core import exceptions
 
     try:
-        fetcher = AzureFetcher(storage_config, paths_to_sync, local_sync_dir)
+        fetcher = azure.AzureFetcher(storage_config, paths_to_sync, local_sync_dir)
         data = io.BytesIO()
 
         blob_client = fetcher.client.get_blob_client(CONTAINER_NAME, CHECK_ACCESS_KEY)
@@ -94,8 +96,8 @@ def get_tensorboard_fetcher_azure(
 
     except (
         ValueError,
-        azure.core.exceptions.ClientAuthenticationError,
-        azure.core.exceptions.ResourceNotFoundError,
+        exceptions.ClientAuthenticationError,
+        exceptions.ResourceNotFoundError,
     ):
         if require_secrets:
             raise
@@ -103,7 +105,7 @@ def get_tensorboard_fetcher_azure(
 
 
 @pytest.mark.cloud
-def test_tensorboard_fetcher_azure(require_secrets: bool, tmp_path: Path) -> None:
+def test_tensorboard_fetcher_azure(require_secrets: bool, tmp_path: pathlib.Path) -> None:
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, CONTAINER_NAME)
 

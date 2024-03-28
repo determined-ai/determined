@@ -5,9 +5,8 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Union, cast
 import tensorflow as tf
 
 import determined as det
-from determined import errors, keras, util
+from determined import errors, horovod, keras, util
 from determined.common import check
-from determined.horovod import hvd
 
 logger = logging.getLogger("determined.keras")
 
@@ -296,6 +295,7 @@ class TFKerasTrialContext(det.TrialContext):
                 logger.info("Dataset sharding skipped.")
             return dataset
 
+        hvd = horovod.hvd
         hvd.require_horovod_type("tensorflow.keras", "TFKerasTrialContext.wrap_dataset was called.")
         dataset = dataset.shard(hvd.size(), hvd.rank())
         logger.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
@@ -312,6 +312,7 @@ class TFKerasTrialContext(det.TrialContext):
             raise det.errors.InvalidExperimentException("string optimizers are not supported")
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
+        hvd = horovod.hvd
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
         horovod_kwargs = {
             "average_aggregated_gradients": self._average_aggregated_gradients,
@@ -343,6 +344,7 @@ class TFKerasTrialContext(det.TrialContext):
             self._wrapped_optimizers.append(optimizer)
             return optimizer
 
+        hvd = horovod.hvd
         hvd.require_horovod_type(
             "tensorflow.keras", "TFKerasTrialContext.wrap_optimizer was called."
         )

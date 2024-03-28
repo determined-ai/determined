@@ -1,10 +1,10 @@
 import abc
+import dataclasses
 import logging
 import pathlib
 import queue
 import threading
 import time
-from dataclasses import dataclass
 from typing import Any, Callable, List
 
 from determined import tensorboard
@@ -13,7 +13,7 @@ from determined.common import util
 logger = logging.getLogger("determined.tensorboard")
 
 
-@dataclass
+@dataclasses.dataclass
 class PathUploadInfo:
     path: pathlib.Path
     mangled_relative_path: pathlib.Path

@@ -2,12 +2,12 @@ import importlib
 import os
 import pathlib
 import re
-import unittest.mock
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
+from unittest import mock
 
+import mypy_extensions
 import numpy as np
 import pytest
-from mypy_extensions import DefaultNamedArg
 
 import determined as det
 from determined import core, gpu, workload
@@ -329,9 +329,9 @@ def reproducibility_test(
 RestorableMakeControllerFn = Callable[
     [
         workload.Stream,
-        DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
-        DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
-        DefaultNamedArg(int, "steps_completed"),  # noqa: F821
+        mypy_extensions.DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
+        mypy_extensions.DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
+        mypy_extensions.DefaultNamedArg(int, "steps_completed"),  # noqa: F821
     ],
     det.TrialController,
 ]
@@ -473,8 +473,8 @@ def get_mock_distributed_context(
     rank: int = 0,
     all_gather_return_value: Optional[Any] = None,
     gather_return_value: Optional[Any] = None,
-) -> unittest.mock.MagicMock:
-    mock_distributed_context = unittest.mock.MagicMock()
+) -> mock.MagicMock:
+    mock_distributed_context = mock.MagicMock()
     mock_distributed_context.get_rank.return_value = rank
     mock_distributed_context.broadcast.return_value = "mock_checkpoint_uuid"
     mock_distributed_context.allgather.return_value = all_gather_return_value

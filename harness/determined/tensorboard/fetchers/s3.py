@@ -1,15 +1,15 @@
 import datetime
 import logging
 import os
-import urllib.parse
 from typing import Any, Callable, Dict, Generator, List
+from urllib import parse
 
-from .base import Fetcher
+from determined.tensorboard.fetchers import base
 
 logger = logging.getLogger("determined.tensorboard.s3")
 
 
-class S3Fetcher(Fetcher):
+class S3Fetcher(base.Fetcher):
     def __init__(
         self, storage_config: Dict[str, Any], storage_paths: List[str], local_dir: str
     ) -> None:
@@ -35,7 +35,7 @@ class S3Fetcher(Fetcher):
         logger.debug(
             f"Listing keys in bucket: '{self.bucket_name}' with storage_path: '{storage_path}'"
         )
-        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
+        prefix = parse.urlparse(storage_path).path.lstrip("/")
 
         paginator = self.client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket_name, Prefix=prefix)

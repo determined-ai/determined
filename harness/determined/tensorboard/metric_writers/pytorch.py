@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from packaging import version
 
-from determined import tensorboard
+from determined import tensorboard as det_tensorboard
 
 # As of torch v1.9.0, torch.utils.tensorboard has a bug that is exposed by setuptools 59.6.0.  The
 # bug is that it attempts to import distutils then access distutils.version without actually
@@ -18,14 +18,16 @@ if version.parse("1.9.0") <= version.parse(torch.__version__) < version.parse("1
     except ImportError:
         pass
 
-from torch.utils.tensorboard import SummaryWriter  # isort:skip
+from torch.utils import tensorboard  # isort:skip
 
 
-class _TorchWriter(tensorboard.MetricWriter):
+class _TorchWriter(det_tensorboard.MetricWriter):
     def __init__(self) -> None:
         super().__init__()
 
-        self.writer: Any = SummaryWriter(log_dir=tensorboard.get_base_path({}))  # type: ignore
+        self.writer: Any = tensorboard.SummaryWriter(
+            log_dir=det_tensorboard.get_base_path({})
+        )  # type: ignore
 
     def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
         self.writer.add_scalar(name, value, step)

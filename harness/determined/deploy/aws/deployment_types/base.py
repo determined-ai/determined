@@ -2,10 +2,9 @@ import abc
 from typing import Any, Dict, Iterable, List, Optional
 
 import pkg_resources
-from termcolor import colored
+import termcolor
 
 import determined
-import determined.deploy
 from determined.common.api import certs
 from determined.deploy import healthcheck
 from determined.deploy.aws import aws, constants
@@ -51,16 +50,16 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
     template_parameter_keys = []  # type: List[str]
     template = None  # type: Optional[str]
 
-    master_info = "Configure the Determined CLI: " + colored(
+    master_info = "Configure the Determined CLI: " + termcolor.colored(
         "export DET_MASTER={master_url}", "yellow"
     )
-    ui_info = "View the Determined UI: " + colored("{master_url}", "blue")
-    logs_info = "View Logs at: " + colored(
+    ui_info = "View the Determined UI: " + termcolor.colored("{master_url}", "blue")
+    logs_info = "View Logs at: " + termcolor.colored(
         "https://{region}.console.aws.amazon.com/cloudwatch/home?"
         "region={region}#logStream:group={log_group}",
         "blue",
     )
-    ssh_info = "SSH to master Instance: " + colored(
+    ssh_info = "SSH to master Instance: " + termcolor.colored(
         "ssh -i <pem-file> ubuntu@{master_ip}", "yellow"
     )
 
