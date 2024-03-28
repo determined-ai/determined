@@ -1522,7 +1522,7 @@ jobs:
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - run: apt-get update && apt-get -y install make python-pip
+      - run: apt-get update && apt-get -y install make python3-pip
       - setup-python-venv:
           determined: True
           executor: <<parameters.docker-image>>
