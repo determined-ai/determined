@@ -16,7 +16,7 @@ T = TypeVar("T", bound="BaseSession")
 
 # Default retry logic
 DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
-    total=50,
+    total=5,
     backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
     status_forcelist=[502, 503, 504],  # Bad Gateway, Service Unavailable, Gateway Timeout
 )
