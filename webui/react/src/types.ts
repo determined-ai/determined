@@ -479,6 +479,7 @@ export const ExperimentAction = {
   Move: 'Move',
   OpenTensorBoard: 'View in TensorBoard',
   Pause: 'Pause',
+  RetainLogs: 'Retain Logs',
   Retry: 'Retry',
   SwitchPin: 'Switch Pin',
   Unarchive: 'Unarchive',
@@ -675,6 +676,7 @@ export interface TrialItem extends StartEndTimes {
   totalBatchesProcessed: number;
   totalCheckpointSize: number;
   searcherMetricsVal?: number;
+  logRetentionDays?: number;
 }
 
 export interface TrialDetails extends TrialItem {

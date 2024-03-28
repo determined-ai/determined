@@ -19,6 +19,7 @@ import ColumnsCustomizeModalComponent from 'components/ColumnsCustomizeModal';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import FilterCounter from 'components/FilterCounter';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
@@ -102,6 +103,7 @@ const batchActions = [
   Action.OpenTensorBoard,
   Action.Activate,
   Action.Move,
+  Action.RetainLogs,
   Action.Pause,
   Action.Archive,
   Action.Unarchive,
@@ -124,6 +126,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
+  const [batchRetainLogsExperimentIds, setBatchRetainLogsExperimentIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [batchAction, setBatchAction] = useState<Action>();
@@ -706,6 +709,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
 
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
@@ -726,6 +730,19 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           ),
         );
         ExperimentMoveModal.open();
+      }
+      if (action === Action.RetainLogs) {
+        if ((settings?.row ?? []).length === 0) return;
+        setBatchRetainLogsExperimentIds(
+          settings.row.filter(
+            (id) =>
+              canActionExperiment(Action.RetainLogs, experimentMap[id]) &&
+              permissions.canModifyExperiment({
+                workspace: { id: experimentMap[id].workspaceId },
+              }),
+          ),
+        );
+        ExperimentRetainLogsModal.open();
       }
 
       return Promise.all(
@@ -751,7 +768,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }),
       );
     },
-    [settings.row, experimentMap, permissions, ExperimentMoveModal, project?.workspaceId],
+    [
+      settings.row,
+      experimentMap,
+      permissions,
+      ExperimentMoveModal,
+      ExperimentRetainLogsModal,
+      project?.workspaceId,
+    ],
   );
 
   const submitBatchAction = useCallback(
@@ -789,7 +813,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleBatchAction = useCallback(
     (action?: string) => {
-      if (action === Action.OpenTensorBoard || action === Action.Move) {
+      if (
+        action === Action.OpenTensorBoard ||
+        action === Action.Move ||
+        action === Action.RetainLogs
+      ) {
         submitBatchAction(action);
       } else {
         setBatchAction(action as Action);
@@ -982,6 +1010,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         experimentIds={batchMovingExperimentIds ?? []}
         sourceProjectId={project?.id}
         sourceWorkspaceId={project?.workspaceId}
+        onSubmit={handleActionComplete}
+      />
+      <ExperimentRetainLogsModal.Component
+        experimentIds={batchRetainLogsExperimentIds}
         onSubmit={handleActionComplete}
       />
     </>

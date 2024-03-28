@@ -580,6 +580,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             ),
           );
           break;
+        case ExperimentAction.RetainLogs:
+          break;
         // Exhaustive cases to ignore.
         default:
           break;

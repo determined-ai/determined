@@ -550,6 +550,7 @@ class TrialSortBy(enum.Enum):
     DURATION = _tsb.DURATION.value
     RESTARTS = _tsb.RESTARTS.value
     CHECKPOINT_SIZE = _tsb.CHECKPOINT_SIZE.value
+    LOG_RETENTION_DAYS = _tsb.LOG_RETENTION_DAYS.value
 
     def _to_bindings(self) -> bindings.v1GetExperimentTrialsRequestSortBy:
         return _tsb(self.value)
