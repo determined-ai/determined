@@ -172,6 +172,16 @@ func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error
 	return rmerrors.ErrNotSupported
 }
 
+// HealthCheck tries to call the KubeAPI.
+func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
+	return []model.ResourceManagerHealth{
+		{
+			Name:   k.config.Name,
+			Status: k.podsService.HealthStatus(),
+		},
+	}
+}
+
 // GetAgent implements rm.ResourceManager.
 func (k *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
 	return k.podsService.GetAgent(msg), nil

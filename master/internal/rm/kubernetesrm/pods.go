@@ -295,6 +295,21 @@ func (p *pods) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse {
 	return p.handleGetSlotRequest(msg.AgentId, msg.SlotId)
 }
 
+func (p *pods) HealthStatus() model.HealthStatus {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, podInterface := range p.podInterfaces {
+		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
+		if err != nil {
+			return model.Unhealthy
+		}
+		return model.Healthy
+	}
+
+	logrus.Error("expected podInterfaces to be non empty")
+	return model.Unhealthy
+}
+
 func (p *pods) GetAgents() *apiv1.GetAgentsResponse {
 	p.mu.Lock()
 	defer p.mu.Unlock()

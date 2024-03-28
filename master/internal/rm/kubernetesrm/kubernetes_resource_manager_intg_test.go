@@ -16,6 +16,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -529,6 +530,41 @@ func TestGetResourcePools(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, string(expected), string(actual))
+}
+
+func TestHealthCheck(t *testing.T) {
+	mockPodInterface := &mocks.PodInterface{}
+	kubernetesRM := &ResourceManager{
+		config: &config.KubernetesResourceManagerConfig{
+			Name: "testname",
+		},
+		podsService: &pods{
+			podInterfaces: map[string]typedV1.PodInterface{
+				"namespace": mockPodInterface,
+			},
+		},
+	}
+
+	t.Run("healthy", func(t *testing.T) {
+		mockPodInterface.On("List", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		require.Equal(t, []model.ResourceManagerHealth{
+			{
+				Name:   "testname",
+				Status: model.Healthy,
+			},
+		}, kubernetesRM.HealthCheck())
+	})
+
+	t.Run("unhealthy", func(t *testing.T) {
+		mockPodInterface.On("List", mock.Anything, mock.Anything).
+			Return(nil, fmt.Errorf("error")).Once()
+		require.Equal(t, []model.ResourceManagerHealth{
+			{
+				Name:   "testname",
+				Status: model.Unhealthy,
+			},
+		}, kubernetesRM.HealthCheck())
+	})
 }
 
 func TestROCmPodsService(t *testing.T) {

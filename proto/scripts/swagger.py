@@ -96,7 +96,17 @@ def clean(path: str, patch: str) -> None:
                 spec["paths"][url][method]["operationId"] = cur_id[len(operationid_prefix) :]
 
     with open(patch, "r") as f:
-        merge_dict(spec, json.load(f))
+        # TODO(DET-10185) Swaggo supports types like
+        #
+        # //	@Success 200     {object} model.HealthCheck
+        #
+        # but then we generate Python/Typescript types like
+        #
+        # class model.HealthCheck
+        #
+        # This is a syntax error. This is a small hack to get around this just
+        # by removing the "model." prefix.
+        merge_dict(spec, json.loads(f.read().replace("model.", "")))
 
     with open(path, "w") as f:
         json.dump(spec, f)
