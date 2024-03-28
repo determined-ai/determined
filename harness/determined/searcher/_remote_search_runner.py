@@ -41,7 +41,7 @@ class RemoteSearchRunner(searcher.SearchRunner):
         Args:
             exp_config (dictionary, string): experiment config filename (.yaml) or a dict.
             model_dir (string): directory containing model definition.
-            includes (Iterable[Union[str, pathlib.pathlib.Path]], optional): Additional files
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files
                 or directories to include in the model definition.  (default: ``None``)
         """
         logger.info("RemoteSearchRunner.run")
