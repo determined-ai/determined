@@ -1095,7 +1095,7 @@ export interface V1Agent {
      * @type {V1SlotStats}
      * @memberof V1Agent
      */
-    slotStats: V1SlotStats;
+    slotStats?: V1SlotStats;
 }
 /**
  * AgentUserGroup represents a username and primary group for a user on an agent host machine.

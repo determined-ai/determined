@@ -1024,6 +1024,7 @@ class v1Agent(Printable):
     label: "typing.Optional[str]" = None
     registeredTime: "typing.Optional[str]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
+    slotStats: "typing.Optional[v1SlotStats]" = None
     slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None
     version: "typing.Optional[str]" = None
 
@@ -1031,7 +1032,6 @@ class v1Agent(Printable):
         self,
         *,
         id: str,
-        slotStats: "v1SlotStats",
         addresses: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         containers: "typing.Union[typing.Dict[str, v1Container], None, Unset]" = _unset,
         draining: "typing.Union[bool, None, Unset]" = _unset,
@@ -1039,11 +1039,11 @@ class v1Agent(Printable):
         label: "typing.Union[str, None, Unset]" = _unset,
         registeredTime: "typing.Union[str, None, Unset]" = _unset,
         resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        slotStats: "typing.Union[v1SlotStats, None, Unset]" = _unset,
         slots: "typing.Union[typing.Dict[str, v1Slot], None, Unset]" = _unset,
         version: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
-        self.slotStats = slotStats
         if not isinstance(addresses, Unset):
             self.addresses = addresses
         if not isinstance(containers, Unset):
@@ -1058,6 +1058,8 @@ class v1Agent(Printable):
             self.registeredTime = registeredTime
         if not isinstance(resourcePools, Unset):
             self.resourcePools = resourcePools
+        if not isinstance(slotStats, Unset):
+            self.slotStats = slotStats
         if not isinstance(slots, Unset):
             self.slots = slots
         if not isinstance(version, Unset):
@@ -1067,7 +1069,6 @@ class v1Agent(Printable):
     def from_json(cls, obj: Json) -> "v1Agent":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
-            "slotStats": v1SlotStats.from_json(obj["slotStats"]),
         }
         if "addresses" in obj:
             kwargs["addresses"] = obj["addresses"]
@@ -1083,6 +1084,8 @@ class v1Agent(Printable):
             kwargs["registeredTime"] = obj["registeredTime"]
         if "resourcePools" in obj:
             kwargs["resourcePools"] = obj["resourcePools"]
+        if "slotStats" in obj:
+            kwargs["slotStats"] = v1SlotStats.from_json(obj["slotStats"]) if obj["slotStats"] is not None else None
         if "slots" in obj:
             kwargs["slots"] = {k: v1Slot.from_json(v) for k, v in obj["slots"].items()} if obj["slots"] is not None else None
         if "version" in obj:
@@ -1092,7 +1095,6 @@ class v1Agent(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
-            "slotStats": self.slotStats.to_json(omit_unset),
         }
         if not omit_unset or "addresses" in vars(self):
             out["addresses"] = self.addresses
@@ -1108,6 +1110,8 @@ class v1Agent(Printable):
             out["registeredTime"] = self.registeredTime
         if not omit_unset or "resourcePools" in vars(self):
             out["resourcePools"] = self.resourcePools
+        if not omit_unset or "slotStats" in vars(self):
+            out["slotStats"] = None if self.slotStats is None else self.slotStats.to_json(omit_unset)
         if not omit_unset or "slots" in vars(self):
             out["slots"] = None if self.slots is None else {k: v.to_json(omit_unset) for k, v in self.slots.items()}
         if not omit_unset or "version" in vars(self):

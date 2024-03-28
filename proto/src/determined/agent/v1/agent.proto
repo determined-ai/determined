@@ -38,7 +38,7 @@ message SlotStats {
 // Agent is a pool of resources where containers are run.
 message Agent {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "slot_stats" ] }
+    json_schema: { required: [ "id" ] }
   };
   // The unique id of the agent.
   string id = 1;
