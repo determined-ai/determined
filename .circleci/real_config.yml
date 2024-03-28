@@ -1522,7 +1522,7 @@ jobs:
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - run: apt-get update && apt-get -y install make sudo python3-pip iproute2
+      - run: apt-get update && apt-get -y install make sudo python3-pip iproute2 docker-ce docker-ce-cli containerd.io
       - setup-python-venv:
           determined: True
           executor: <<parameters.docker-image>>
