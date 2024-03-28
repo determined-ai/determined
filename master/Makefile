@@ -237,7 +237,6 @@ package-small: export GORELEASER_CURRENT_TAG := $(VERSION)
 package-small: gen buildx-small
 	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_sharedcluster.yml
 
-
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=

@@ -11,6 +11,9 @@ spec:
   - port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
     targetPort: {{- include "determined.masterPort" . | indent 1 }}
     protocol: TCP
+  {{- if .Values.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml .Values.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
 
 {{- if ((.Values.openshiftRoute).enabled | default false) }}
   type: ClusterIP
@@ -19,4 +22,3 @@ spec:
 {{- end }}
   selector:
     app: determined-master-{{ .Release.Name }}
-    
