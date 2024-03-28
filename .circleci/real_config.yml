@@ -1515,7 +1515,7 @@ jobs:
         type: string
         default: mcr.microsoft.com/playwright:v1.40.0-focal
     docker:
-      - image: <<pipeline.parameters.docker-image>>
+      - image: <<parameters.docker-image>>
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1526,7 +1526,7 @@ jobs:
       - react-get-deps
       - setup-python-venv:
           determined: True
-          executor: <<pipeline.parameters.docker-image>>
+          executor: <<parameters.docker-image>>
       - install-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
