@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
@@ -12,7 +13,7 @@ import (
 
 func TestSummarizeSlots_EmptySlots(t *testing.T) {
 	slots := make(map[string]*agentv1.Slot)
-	stats := SummarizeSlots(slots)
+	stats := model.SummarizeSlots(slots)
 
 	assert.Equal(t, 0, len(stats.TypeStats))
 	assert.Equal(t, 0, len(stats.BrandStats))
@@ -47,7 +48,7 @@ func TestSummarizeSlots_VariousStates(t *testing.T) {
 		},
 	}
 
-	stats := SummarizeSlots(slots)
+	stats := model.SummarizeSlots(slots)
 
 	assert.Equal(t, 2, int(stats.TypeStats[devicev1.Type_TYPE_CUDA.String()].Total))
 	assert.Equal(t, 1, int(stats.TypeStats[devicev1.Type_TYPE_CPU.String()].Total))
