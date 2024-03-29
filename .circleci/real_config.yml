@@ -1541,7 +1541,9 @@ jobs:
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: ./webui/react/run-mocked-playwright.sh
-      - run: tar czf playwright-report.tar.gz webui/react/src/e2e/playwright-report
+      - run: 
+          when: always 
+          command: tar cf playwright-report.tar webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
