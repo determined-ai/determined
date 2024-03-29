@@ -38,6 +38,10 @@ export class UserManagement extends AdminPage {
 }
 
 class UserHeadRow extends HeadRow {
-  readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });
+  readonly user: BaseComponent = new BaseComponent({ parent: this, selector: `data-testid="User"` });
+  readonly status: BaseComponent = new BaseComponent({ parent: this, selector: `data-testid="Status"` });
+  readonly lastSeen: BaseComponent = new BaseComponent({ parent: this, selector: `data-testid="Last Seen"` });
+  readonly role: BaseComponent = new BaseComponent({ parent: this, selector: `data-testid="Role"` });
+  readonly modified: BaseComponent = new BaseComponent({ parent: this, selector: `data-testid="Modified"` });
 }
 class UserRow extends Row {}
