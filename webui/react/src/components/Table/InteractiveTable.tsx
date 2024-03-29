@@ -659,6 +659,7 @@ const InteractiveTable = <
           <SkeletonTable columns={renderColumns?.length} />
         ) : (
           <Table
+            data-testid="table"
             bordered
             columns={renderColumns}
             components={components}

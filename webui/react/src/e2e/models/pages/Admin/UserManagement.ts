@@ -3,7 +3,7 @@ import { CreateUserModal } from 'e2e/models/components/CreateUserModal';
 import { ChangeUserStatusModal } from 'e2e/models/components/ChangeUserStatusModal';
 import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
-import { InteractiveTable } from 'e2e/models/components/Table/InteractiveTable';
+import { InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { BaseComponent } from 'e2e/models/BaseComponent';
 
@@ -17,11 +17,15 @@ export class UserManagement extends AdminPage {
   static url: string = 'admin/user-management';
 
   readonly actionRow: BaseComponent = new BaseComponent({ parent: this.content, selector: `data-testid="actionRow"` });
-  readonly table: InteractiveTable = new InteractiveTable({ parent: this.content });
+  readonly table: InteractiveTable<UserRow> = new InteractiveTable({ parent: this.content, rowType: UserRow });
   readonly skeletonTable: SkeletonTable = new SkeletonTable({ parent: this.content });
 
   readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });
   readonly changeUserStatusModal: ChangeUserStatusModal = new ChangeUserStatusModal({ parent: this });
   readonly setUserRolesModal: SetUserRolesModal = new SetUserRolesModal({ parent: this });
   readonly addUsersToGroupsModal: AddUsersToGroupsModal = new AddUsersToGroupsModal({ parent: this });
+}
+
+class UserRow extends Row {
+    
 }
