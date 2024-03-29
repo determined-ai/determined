@@ -1523,7 +1523,7 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - run: |
-          apt-get update && apt-get install -y ca-certificates curl make sudo python3-pip iproute2
+          apt-get update && apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
           # Docker repo setup
           sudo install -m 0755 -d /etc/apt/keyrings
           sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -1541,6 +1541,7 @@ jobs:
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - run: ./webui/react/run-mocked-playwright.sh
+      - run: tar czf playwright-report.tar.gz webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
