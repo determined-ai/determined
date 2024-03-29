@@ -1519,6 +1519,8 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - react-get-deps
+      - attach_workspace:
+          at: .
       - run: |
           apt-get update && apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
           # Docker repo setup
@@ -1534,6 +1536,7 @@ jobs:
       - setup-python-venv:
           determined: True
           executor: <<pipeline.parameters.machine-image>>
+      - reinstall-go
       - install-protoc
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build

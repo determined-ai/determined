@@ -15,6 +15,16 @@ set -e
 if [ $test_result -ne 0 ]; then
     echo "Tests failed, re-running without mocks"
     cd ../..
+    make package
+    echo "ls"
+    ls 
+    echo "home tools"
+    ls /home/circleci/project/tools
+    echo "master build"
+    ls master/build/determined-master
+    echo "home project"
+    ls /home/circleci/project
+    echo $PWD
     devcluster --oneshot -c .circleci/devcluster/double.devcluster.yaml --target-stage agent1
     cd webui/react
     make mb-stop
