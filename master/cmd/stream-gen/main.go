@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -601,6 +602,9 @@ func main() {
 	verifyArgs(results)
 
 	// generate the language bindings
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
 	var content []byte
 	switch lang {
 	case python:
