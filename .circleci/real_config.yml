@@ -2701,9 +2701,9 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      - skip-if-docs-only
-      - skip-if-github-only
-      - skip-if-webui-only
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
       - set-slack-user-id
       - attach_workspace:
           at: .
