@@ -1542,7 +1542,7 @@ jobs:
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
           host: "localhost"
-          port: 8080
+          port: "8080"
       - run: ./webui/react/run-mocked-playwright.sh
       - run: 
           when: always 
