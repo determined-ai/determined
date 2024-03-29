@@ -1,7 +1,6 @@
 import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import { SettingsConfig } from 'hooks/useSettings';
 import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 
@@ -80,38 +79,3 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSet
   },
   storagePath: `flatRunsForProject${id}`,
 });
-
-export interface FlatRunsGlobalSettings {
-  rowHeight: RowHeight;
-  tableViewMode: TableViewMode;
-}
-
-export const flatRunsGlobalSettingsConfig = t.partial({
-  rowHeight: ioRowHeight,
-  tableViewMode: ioTableViewMode,
-});
-
-export const flatRunsGlobalSettingsDefaults = {
-  rowHeight: RowHeight.MEDIUM,
-  tableViewMode: 'scroll',
-} as const;
-
-export const flatRunsGlobalSettingsPath = 'globalTableSettings';
-
-export const settingsConfigGlobal: SettingsConfig<FlatRunsGlobalSettings> = {
-  settings: {
-    rowHeight: {
-      defaultValue: RowHeight.MEDIUM,
-      skipUrlEncoding: true,
-      storageKey: 'rowHeight',
-      type: ioRowHeight,
-    },
-    tableViewMode: {
-      defaultValue: 'scroll',
-      skipUrlEncoding: true,
-      storageKey: 'tableViewMode',
-      type: ioTableViewMode,
-    },
-  },
-  storagePath: flatRunsGlobalSettingsPath,
-};

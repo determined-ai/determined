@@ -47,6 +47,11 @@ import {
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import {
+  DataGridGlobalSettings,
+  rowHeightMap,
+  settingsConfigGlobal,
+} from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -84,11 +89,9 @@ import css from './F_ExperimentList.module.scss';
 import {
   DEFAULT_SELECTION,
   defaultProjectSettings,
-  F_ExperimentListGlobalSettings,
   ProjectSettings,
   ProjectUrlSettings,
   SelectionType as SelectionState,
-  settingsConfigGlobal,
   settingsPathForProject,
 } from './F_ExperimentList.settings';
 
@@ -124,13 +127,6 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
 
 const STATIC_COLUMNS = [MULTISELECT];
 
-const rowHeightMap: Record<RowHeight, number> = {
-  [RowHeight.EXTRA_TALL]: 44,
-  [RowHeight.TALL]: 40,
-  [RowHeight.MEDIUM]: 36,
-  [RowHeight.SHORT]: 32,
-};
-
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -162,7 +158,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {

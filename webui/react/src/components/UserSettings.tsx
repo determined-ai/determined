@@ -34,17 +34,17 @@ import {
   FeatureSettingsConfig,
   ValidFeature,
 } from 'hooks/useFeature';
-import {
-  experimentListGlobalSettingsConfig,
-  experimentListGlobalSettingsDefaults,
-  experimentListGlobalSettingsPath,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
+import {
+  dataGridGlobalSettingsConfig,
+  dataGridGlobalSettingsDefaults,
+  dataGridGlobalSettingsPath,
+} from './OptionsMenu.settings';
 import css from './UserSettings.module.scss';
 import UserSettingsModalComponent from './UserSettingsModal';
 
@@ -130,22 +130,16 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
   return Loadable.match(
     Loadable.all([
-      useObservable(
-        userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
-      ),
+      useObservable(userSettings.get(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath)),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
       useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
       Failed: () => null,
-      Loaded: ([
-        savedExperimentListGlobalSettings,
-        savedShortcutSettings,
-        savedFeatureSettings,
-      ]) => {
-        const experimentListGlobalSettings = {
-          ...experimentListGlobalSettingsDefaults,
-          ...(savedExperimentListGlobalSettings ?? {}),
+      Loaded: ([savedDataGridGlobalSettings, savedShortcutSettings, savedFeatureSettings]) => {
+        const dataGridGlobalSettings = {
+          ...dataGridGlobalSettingsDefaults,
+          ...(savedDataGridGlobalSettings ?? {}),
         };
         const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
 
@@ -236,18 +230,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   </Select>
                 </InlineForm>
                 <InlineForm<RowHeight>
-                  initialValue={experimentListGlobalSettings.rowHeight}
+                  initialValue={dataGridGlobalSettings.rowHeight}
                   label="Table Density"
                   valueFormatter={(rh) => rowHeightLabels[rh]}
                   onSubmit={(rh) => {
-                    userSettings.set(
-                      experimentListGlobalSettingsConfig,
-                      experimentListGlobalSettingsPath,
-                      {
-                        ...experimentListGlobalSettings,
-                        rowHeight: rh,
-                      },
-                    );
+                    userSettings.set(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath, {
+                      ...dataGridGlobalSettings,
+                      rowHeight: rh,
+                    });
                   }}>
                   <Select searchable={false}>
                     {rowHeightItems.map(({ rowHeight, label }) => (
@@ -258,15 +248,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   </Select>
                 </InlineForm>
                 <InlineForm<TableViewMode>
-                  initialValue={experimentListGlobalSettings.tableViewMode}
+                  initialValue={dataGridGlobalSettings.tableViewMode}
                   label="Infinite Scroll"
                   valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
                   onSubmit={(mode) => {
-                    userSettings.set(
-                      experimentListGlobalSettingsConfig,
-                      experimentListGlobalSettingsPath,
-                      { ...experimentListGlobalSettings, tableViewMode: mode },
-                    );
+                    userSettings.set(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath, {
+                      ...dataGridGlobalSettings,
+                      tableViewMode: mode,
+                    });
                   }}>
                   <Select searchable={false}>
                     <Option key="scroll" value="scroll">

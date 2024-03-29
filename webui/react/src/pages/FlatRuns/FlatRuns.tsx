@@ -41,6 +41,12 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
+import { RowHeight } from 'components/OptionsMenu';
+import {
+  DataGridGlobalSettings,
+  rowHeightMap,
+  settingsConfigGlobal,
+} from 'components/OptionsMenu.settings';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -53,19 +59,14 @@ import {
 import { paths } from 'routes/utils';
 import { getProjectColumns, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import usersStore from 'stores/users';
-import { ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
+import userStore from 'stores/users';
+import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { pluralizer } from 'utils/string';
 
 import { getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
-import {
-  FlatRunsGlobalSettings,
-  FlatRunsSettings,
-  settingsConfigForProject,
-  settingsConfigGlobal,
-} from './FlatRuns.settings';
+import { FlatRunsSettings, settingsConfigForProject } from './FlatRuns.settings';
 
 export const PAGE_SIZE = 100;
 const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
@@ -103,7 +104,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     settings,
     updateSettings,
   } = useSettings<FlatRunsSettings>(settingsConfig);
-  const { settings: globalSettings } = useSettings<FlatRunsGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
   const isPagedView = globalSettings.tableViewMode === 'paged';
@@ -125,7 +126,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
-  const users = useObservable(usersStore.getUsers());
+  const users = useObservable<Loadable<DetailedUser[]>>(userStore.getUsers());
 
   const {
     ui: { theme: appTheme },
@@ -218,7 +219,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
+          return defaultSelectionColumn(selection.rows, selectAll);
         }
         if (columnName in columnDefs) return columnDefs[columnName];
 
@@ -253,16 +254,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             break;
         }
         switch (currentColumn.type) {
-          case V1ColumnType.NUMBER: {
+          case V1ColumnType.NUMBER:
             columnDefs[currentColumn.column] = defaultNumberColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column],
               dataPath,
             );
-            // }
             break;
-          }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn.column,
@@ -338,7 +337,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           tableOffset,
           loadedRuns.length,
           ...loadedRuns.map((experiment) => Loaded(experiment)),
-          ...INITIAL_LOADING_RUNS,
         );
       });
       setTotal(
@@ -511,138 +509,154 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
-    if (columnId === MULTISELECT) {
+  const getHeaderMenuItems = useCallback(
+    (columnId: string, colIdx: number): MenuItem[] => {
+      if (columnId === MULTISELECT) {
+        const items: MenuItem[] = [
+          selection.rows.length > 0
+            ? {
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  handleSelectionChange?.('remove-all');
+                },
+              }
+            : null,
+          ...[5, 10, 25].map((n) => ({
+            key: `select-${n}`,
+            label: `Select first ${n}`,
+            onClick: () => {
+              handleSelectionChange?.('set', [0, n]);
+              dataGridRef.current?.scrollToTop();
+            },
+          })),
+          {
+            key: 'select-all',
+            label: 'Select all',
+            onClick: () => {
+              handleSelectionChange?.('add-all');
+            },
+          },
+        ];
+        return items;
+      }
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) {
+        return [];
+      }
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
+      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal', 'searcherType'];
+      const loadableFormset = formStore.formset.get();
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
+        );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: Loadable.match(loadableFormset, {
+            _: () => 0,
+            Loaded: (formset) => formset.filterGroup.children.length,
+          }),
+          item: {
+            columnName: column.column,
+            id: uuidv4(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+      };
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
-        selection.rows.length > 0
+        // Column is pinned if the index is inside of the frozen columns
+        colIdx < STATIC_COLUMNS.length || isMobile
+          ? null
+          : !isPinned
+            ? {
+                icon: <Icon decorative name="pin" />,
+                key: 'pin',
+                label: 'Pin column',
+                onClick: () => {
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+                  handleColumnsOrderChange?.(newColumnsOrder);
+                  handlePinnedColumnsCountChange?.(
+                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                  );
+                },
+              }
+            : {
+                disabled: settings.pinnedColumnsCount <= 1,
+                icon: <Icon decorative name="pin" />,
+                key: 'unpin',
+                label: 'Unpin column',
+                onClick: () => {
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                  handleColumnsOrderChange?.(newColumnsOrder);
+                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                },
+              },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+            handleColumnsOrderChange?.(newColumnsOrder);
+            if (isPinned) {
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            }
+          },
+        },
+        { type: 'divider' as const },
+        ...(BANNED_FILTER_COLUMNS.includes(column.column)
+          ? []
+          : [
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+              { type: 'divider' as const },
+              {
+                icon: <Icon decorative name="filter" />,
+                key: 'filter',
+                label: 'Add Filter',
+                onClick: () => {
+                  setTimeout(filterMenuItemsForColumn, 5);
+                },
+              },
+            ]),
+        filterCount > 0
           ? {
-              key: 'select-none',
-              label: 'Clear selected',
+              icon: <Icon decorative name="filter" />,
+              key: 'filter-clear',
+              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
               onClick: () => {
-                handleSelectionChange?.('remove-all');
+                setTimeout(clearFilterForColumn, 5);
               },
             }
           : null,
-        ...[5, 10, 25].map((n) => ({
-          key: `select-${n}`,
-          label: `Select first ${n}`,
-          onClick: () => {
-            handleSelectionChange?.('set', [0, n]);
-            dataGridRef.current?.scrollToTop();
-          },
-        })),
-        {
-          key: 'select-all',
-          label: 'Select all',
-          onClick: () => {
-            handleSelectionChange?.('add-all');
-          },
-        },
       ];
       return items;
-    }
-    const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-    if (!column) {
-      return [];
-    }
-
-    const filterCount = formStore.getFieldCount(column.column).get();
-
-    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal', 'searcherType'];
-    const loadableFormset = formStore.formset.get();
-    const filterMenuItemsForColumn = () => {
-      const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
-      formStore.addChild(ROOT_ID, FormKind.Field, {
-        index: Loadable.match(loadableFormset, {
-          _: () => 0,
-          Loaded: (formset) => formset.filterGroup.children.length,
-        }),
-        item: {
-          columnName: column.column,
-          id: uuidv4(),
-          kind: FormKind.Field,
-          location: column.location,
-          operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
-          type: column.type,
-          value: null,
-        },
-      });
-    };
-    const clearFilterForColumn = () => {
-      formStore.removeByField(column.column);
-    };
-
-    const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
-    const items: MenuItem[] = [
-      // Column is pinned if the index is inside of the frozen columns
-      colIdx < STATIC_COLUMNS.length || isMobile
-        ? null
-        : !isPinned
-          ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
-                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                );
-              },
-            }
-          : {
-              disabled: settings.pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-              },
-            },
-      {
-        icon: <Icon decorative name="eye-close" />,
-        key: 'hide',
-        label: 'Hide column',
-        onClick: () => {
-          const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-          handleColumnsOrderChange?.(newColumnsOrder);
-          if (isPinned) {
-            handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-          }
-        },
-      },
-      { type: 'divider' as const },
-      ...(BANNED_FILTER_COLUMNS.includes(column.column)
-        ? []
-        : [
-            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Add Filter',
-              onClick: () => {
-                setTimeout(filterMenuItemsForColumn, 5);
-              },
-            },
-          ]),
-      filterCount > 0
-        ? {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          }
-        : null,
-    ];
-    return items;
-  };
+    },
+    [
+      columnsIfLoaded,
+      handleColumnsOrderChange,
+      handlePinnedColumnsCountChange,
+      handleSelectionChange,
+      handleSortChange,
+      isMobile,
+      projectColumns,
+      selection.rows.length,
+      settings.pinnedColumnsCount,
+      sorts,
+    ],
+  );
 
   // TODO: poll?
   useEffect(() => {
@@ -711,6 +725,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             page={page}
             pageSize={PAGE_SIZE}
             pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
+            rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
             selection={selection}
             sorts={sorts}
             staticColumns={STATIC_COLUMNS}
