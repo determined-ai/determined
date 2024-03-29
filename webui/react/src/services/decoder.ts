@@ -345,7 +345,7 @@ export const ioToExperimentConfig = (
   io: ioTypes.ioTypeExperimentConfig | undefined,
 ): types.ExperimentConfig => {
   if (io === undefined) {
-    const defaultConfig: types.ExperimentConfig = {
+    return {
       checkpointPolicy: '',
       hyperparameters: {},
       maxRestarts: 0,
@@ -358,7 +358,6 @@ export const ioToExperimentConfig = (
         sourceTrialId: undefined,
       },
     };
-    return defaultConfig;
   }
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
