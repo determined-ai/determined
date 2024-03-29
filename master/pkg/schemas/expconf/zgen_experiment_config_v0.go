@@ -108,12 +108,12 @@ func (e *ExperimentConfigV0) SetLogPolicies(val LogPoliciesConfigV0) {
 	e.RawLogPolicies = val
 }
 
-func (e ExperimentConfigV0) LogRetentionDays() *int16 {
-	return e.RawLogRetentionDays
+func (e ExperimentConfigV0) RetentionPolicy() *RetentionPolicyConfigV0 {
+	return e.RawRetentionPolicy
 }
 
-func (e *ExperimentConfigV0) SetLogRetentionDays(val *int16) {
-	e.RawLogRetentionDays = val
+func (e *ExperimentConfigV0) SetRetentionPolicy(val *RetentionPolicyConfigV0) {
+	e.RawRetentionPolicy = val
 }
 
 func (e ExperimentConfigV0) MaxRestarts() int {
