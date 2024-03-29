@@ -14,10 +14,6 @@ test_result=$?
 set -e
 if [ $test_result -ne 0 ]; then
     echo "Tests failed, re-running without mocks"
-    cd ../..
-    echo $PWD
-    det deploy local cluster-up --det-version="$CIRCLE_SHA1" --no-gpu
-    cd webui/react
     make mb-stop
     make mb-start
     make mb-record-imposters

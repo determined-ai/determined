@@ -1536,15 +1536,11 @@ jobs:
       - setup-python-venv:
           determined: True
           executor: <<pipeline.parameters.machine-image>>
-      - reinstall-go
-      - install-protoc
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
-      - run: make -C master get-deps
-      - run: make -C agent get-deps
       - install-devcluster
+      - start-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
+      - wait-for-master
       - run: ./webui/react/run-mocked-playwright.sh
       - run: 
           when: always 
