@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -43,6 +44,9 @@ func (a *apiServer) GetAgents(
 
 	// PERF: can perhaps be done before RBAC.
 	for _, agent := range resp.Agents {
+		if agent.SlotStats == nil {
+			agent.SlotStats = model.SummarizeSlots(agent.Slots)
+		}
 		if req.ExcludeSlots {
 			agent.Slots = nil
 		}
