@@ -1511,7 +1511,7 @@ jobs:
 
   test-e2e-react:      
     machine:
-      - image: <<parameters.pipeline.machine-image>>
+      - image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout-with-sm
@@ -1533,7 +1533,7 @@ jobs:
           sudo systemctl start docker
       - setup-python-venv:
           determined: True
-          executor: <<parameters.pipeline.machine-image>>
+          executor: <<pipeline.parameters.machine-image>>
       - install-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
