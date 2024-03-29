@@ -88,7 +88,7 @@ useNodePortForMaster: false
 tlsSecret:
 
 
-# TLS Security setting (TODO populate this comment)
+# TLS Security setting for the Determined master. The following settings are available:
 security:
   tls:
     cert:
@@ -241,7 +241,7 @@ checkpointStorage:
 maxSlotsPerPod:
 
 
-# TODO( POPULATE THIS COMMENT)
+# should non-namespaced objects be created
 createNonNamespacedObjects:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
