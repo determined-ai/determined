@@ -507,7 +507,7 @@ const UserManagement: React.FC = () => {
               <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                    <Button>Actions</Button>
+                    <Button data-testid="actions">Actions</Button>
                   </Dropdown>
                 )}
                 <Button

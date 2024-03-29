@@ -58,6 +58,8 @@ export class Row extends NamedComponent {
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Row.defaultSelector });
   }
+  readonly select: BaseComponent = new BaseComponent({parent: this, selector: ".ant-table-selection-column"})
+  // TODO get a single row
 }
 
 export class HeadRow extends NamedComponent {
@@ -65,4 +67,5 @@ export class HeadRow extends NamedComponent {
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || HeadRow.defaultSelector });
   }
+  readonly selection: BaseComponent = new BaseComponent({parent: this, selector: ".ant-table-selection-column"})
 }

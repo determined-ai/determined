@@ -37,5 +37,7 @@ export class UserManagement extends AdminPage {
   });
 }
 
+class UserHeadRow extends HeadRow {
+  readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });
+}
 class UserRow extends Row {}
-class UserHeadRow extends HeadRow {}

@@ -284,11 +284,12 @@ const HeaderCell = ({
 
   if (!columnName) return <th className={className} {...props} />;
 
-  if (!interactiveColumns) return <th className={headerCellClasses.join(' ')} {...props} />;
+  if (!interactiveColumns) return <th data-testid={columnName} className={headerCellClasses.join(' ')} {...props} />;
 
   const tableCell = (
     <th className={headerCellClasses.join(' ')}>
       <div
+        data-testid={columnName}
         className={`${className} ${css.columnDraggingDiv}`}
         ref={drag}
         title={columnName}
