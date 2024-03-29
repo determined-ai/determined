@@ -146,6 +146,16 @@ func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.D
 	return agent.DisableAgent(msg)
 }
 
+// HealthCheck always returns healthy for agentrm.
+func (a *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
+	return []model.ResourceManagerHealth{
+		{
+			Name:   a.config.Name,
+			Status: model.Healthy,
+		},
+	}
+}
+
 // DisableSlot implements rm.ResourceManager.
 func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error) {
 	deviceIDStr, err := strconv.Atoi(req.SlotId)
