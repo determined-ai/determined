@@ -4,6 +4,10 @@ import (
 	"context"
 	"crypto/sha512"
 	"fmt"
+	"strings"
+	"unicode"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -31,6 +35,10 @@ func ReplicateClientSideSaltAndHash(password string) string {
 
 // SetUserPassword sets the password of the user with the given username to the plaintext string provided.
 func SetUserPassword(ctx context.Context, username, password string) error {
+	if err := CheckPasswordComplexity(password); err != nil {
+		return err
+	}
+
 	u, err := ByUsername(ctx, username)
 	if err != nil {
 		return fmt.Errorf("retrieving user %s: %w", username, err)
@@ -44,6 +52,31 @@ func SetUserPassword(ctx context.Context, username, password string) error {
 	err = Update(ctx, u, []string{"password_hash"}, nil)
 	if err != nil {
 		return fmt.Errorf("updating password hash for user %s: %w", username, err)
+	}
+	return nil
+}
+
+// ErrPasswordLowComplexity indicates that a password can't be set
+// because it fails to meet current complexity requirements.
+var ErrPasswordLowComplexity = errors.New(
+	"passwords must be at least 8 characters long, not be entirely upper-case " +
+		"or lower-case, and contain at least one number or symbol",
+)
+
+// CheckPasswordComplexity returns an error if the provided password does not satisfy
+// current complexity requirements.
+func CheckPasswordComplexity(password string) error {
+	if len(password) < 8 {
+		return ErrPasswordLowComplexity
+	}
+	if !strings.ContainsFunc(password, unicode.IsUpper) {
+		return ErrPasswordLowComplexity
+	}
+	if !strings.ContainsFunc(password, unicode.IsLower) {
+		return ErrPasswordLowComplexity
+	}
+	if !strings.ContainsFunc(password, func(r rune) bool { return unicode.IsNumber(r) || unicode.IsSymbol(r) }) {
+		return ErrPasswordLowComplexity
 	}
 	return nil
 }

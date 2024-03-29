@@ -806,6 +806,7 @@ func TestGetExperiments(t *testing.T) {
 			DisplayName: uuid.New().String(),
 			Active:      true,
 		},
+		Password: "abcDEF123!",
 	})
 	require.NoError(t, err)
 

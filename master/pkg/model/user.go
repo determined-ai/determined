@@ -15,6 +15,9 @@ import (
 
 var (
 	// EmptyPassword is the empty password (i.e., the empty string).
+	// With [DFR-455] and related issues this is no longer allowed
+	// for new users or new passwords, but users who already have
+	// no-password logins might need time to change to a new password.
 	EmptyPassword = null.NewString("", false)
 
 	// NoPasswordLogin is a password that prevents the user from logging in
@@ -113,15 +116,14 @@ func (user User) ValidatePassword(password string) bool {
 // techniques.
 func (user *User) UpdatePasswordHash(password string) error {
 	if password == "" {
-		user.PasswordHash = EmptyPassword
-	} else {
-		passwordHash, err := HashPassword(password)
-		if err != nil {
-			return errors.Wrap(err, "error updating user password")
-		}
-
-		user.PasswordHash = null.StringFrom(passwordHash)
+		return errors.New("cannot hash empty password")
 	}
+	passwordHash, err := HashPassword(password)
+	if err != nil {
+		return errors.Wrap(err, "error updating user password")
+	}
+
+	user.PasswordHash = null.StringFrom(passwordHash)
 	return nil
 }
 

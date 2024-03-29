@@ -14,11 +14,23 @@ import (
 
 func TestUpdateDefaultUserPasswords(t *testing.T) {
 	u := db.RequireMockUser(t, db.SingleDB())
-	err := SetUserPassword(context.Background(), u.Username, "abc")
+	err := SetUserPassword(context.Background(), u.Username, "abcDEF123!")
 	require.NoError(t, err)
 
 	nu, err := ByUsername(context.Background(), u.Username)
 	require.NoError(t, err)
-	ok := nu.ValidatePassword(ReplicateClientSideSaltAndHash("abc"))
+	ok := nu.ValidatePassword(ReplicateClientSideSaltAndHash("abcDEF123!"))
 	require.True(t, ok, "couldn't login after default changes")
+}
+
+func TestUpdateUserPasswordComplexityCheck(t *testing.T) {
+	u := db.RequireMockUser(t, db.SingleDB())
+	err := SetUserPassword(context.Background(), u.Username, "abc")
+	require.ErrorIs(t, err, ErrPasswordLowComplexity)
+
+	// empty passwords are grandfathered in, for now
+	nu, err := ByUsername(context.Background(), u.Username)
+	require.NoError(t, err)
+	ok := nu.ValidatePassword("")
+	require.True(t, ok, "couldn't login after changes")
 }
