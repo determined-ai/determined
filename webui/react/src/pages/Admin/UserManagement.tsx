@@ -472,19 +472,19 @@ const UserManagement: React.FC = () => {
   return (
     <>
       <Section className={css.usersTable}>
-        <div data-testid="actionRow" className={css.actionBar}>
+        <div className={css.actionBar} data-testid="actionRow">
           <Row>
             <Column>
               <Row>
                 {/* input is uncontrolled */}
                 <Input
-                  data-testid="search"
                   allowClear
+                  data-testid="search"
                   defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
                   onChange={handleNameSearchApply}
-                  />
+                />
                 <Select
                   data-testid="roleSelect"
                   options={roleOptions}
@@ -492,7 +492,7 @@ const UserManagement: React.FC = () => {
                   value={roleFilter}
                   width={120}
                   onChange={handleRoleFilterApply}
-                  />
+                />
                 <Select
                   data-testid="statusSelect"
                   options={statusOptions}
@@ -500,7 +500,7 @@ const UserManagement: React.FC = () => {
                   value={statusFilter}
                   width={170}
                   onChange={handleStatusFilterApply}
-                  />
+                />
               </Row>
             </Column>
             <Column align="right">
@@ -511,8 +511,8 @@ const UserManagement: React.FC = () => {
                   </Dropdown>
                 )}
                 <Button
-                  data-testid="addUser"
                   aria-label={CREATE_USER_LABEL}
+                  data-testid="addUser"
                   disabled={!info.userManagementEnabled || !canModifyUsers}
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}

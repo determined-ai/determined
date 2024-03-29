@@ -8,13 +8,16 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Pivot extends NamedComponent {
-  static defaultSelector = `div.ant-tabs`;
+  static defaultSelector = 'div.ant-tabs';
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Pivot.defaultSelector });
   }
   static selectorTemplateTabs(id: string): string {
-    return `div.ant-tabs-tab-btn[id$="${id}"]`
+    return `div.ant-tabs-tab-btn[id$="${id}"]`;
   }
-  readonly tablist: BaseComponent = new BaseComponent({ parent: this, selector: `.ant-tabs-nav` });
-  readonly tabContent: BaseComponent = new BaseComponent({ parent: this, selector: `.ant-tabs-content-holder` });
+  readonly tablist: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-tabs-nav' });
+  readonly tabContent: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '.ant-tabs-content-holder',
+  });
 }

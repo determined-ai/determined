@@ -9,5 +9,8 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class SetUserRolesModal extends Modal {
-  readonly roles: BaseComponent = new BaseComponent({ parent: this.body, selector: `[data-testid="roles"]` });
+  readonly roles: BaseComponent = new BaseComponent({
+    parent: this.body,
+    selector: '[data-testid="roles"]',
+  });
 }

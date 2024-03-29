@@ -8,12 +8,12 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Modal extends NamedComponent {
-  static defaultSelector = `.ant-modal-content`;
+  static defaultSelector = '.ant-modal-content';
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Modal.defaultSelector });
   }
-  readonly body: BaseComponent = new BaseComponent({ parent: this, selector: `.ant-modal-body` });
-  readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: `ant-modal-footer` });
+  readonly body: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-modal-body' });
+  readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: 'ant-modal-footer' });
 }
 
 /**
@@ -24,6 +24,6 @@ export class Modal extends NamedComponent {
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 class ModalFooter extends BaseComponent {
-  readonly submit: BaseComponent = new BaseComponent({ parent: this, selector: `[type="submit"]` });
-  readonly cancel: BaseComponent = new BaseComponent({ parent: this, selector: `[type="cancel"]` });
+  readonly submit: BaseComponent = new BaseComponent({ parent: this, selector: '[type="submit"]' });
+  readonly cancel: BaseComponent = new BaseComponent({ parent: this, selector: '[type="cancel"]' });
 }

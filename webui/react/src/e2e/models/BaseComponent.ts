@@ -32,7 +32,7 @@ export class BaseComponent {
     }
     return this._locator;
   }
-  
+
   /**
    * Returns the root of the component tree
    */
@@ -94,11 +94,11 @@ export type NamedComponentArgs = {
 export abstract class NamedComponent extends BaseComponent {
   constructor({ parent, selector }: { parent: parentTypes; selector: string }) {
     super({ parent, selector });
-    requireStaticArgs(this.constructor, ['defaultSelector'])
+    requireStaticArgs(this.constructor, ['defaultSelector']);
   }
 }
 
-export function requireStaticArgs(obj: any, requiredProperties: string[]):void {
+export function requireStaticArgs<T extends object>(obj: T, requiredProperties: string[]): void {
   requiredProperties.forEach((requiredProp) => {
     if (!Object.hasOwn(obj, requiredProp)) {
       throw new Error(`${obj} must declare a static ${requiredProp}!`);

@@ -137,8 +137,8 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
   return (
     <Modal
-      data-test-component="createUserModal"
       cancel
+      data-test-component="createUserModal"
       size="small"
       submit={{
         disabled: hasErrors(form),
@@ -165,13 +165,28 @@ const CreateUserModalComponent: React.FC<Props> = ({
             name={USER_NAME_NAME}
             required
             validateTrigger={['onSubmit']}>
-            <Input data-testid="username" autoFocus disabled={!!user} maxLength={128} placeholder="Username" />
+            <Input
+              autoFocus
+              data-testid="username"
+              disabled={!!user}
+              maxLength={128}
+              placeholder="Username"
+            />
           </Form.Item>
           <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
-            <Input data-testid="displayName" disabled={viewOnly} maxLength={128} placeholder="Display Name" />
+            <Input
+              data-testid="displayName"
+              disabled={viewOnly}
+              maxLength={128}
+              placeholder="Display Name"
+            />
           </Form.Item>
           {!rbacEnabled && (
-            <Form.Item data-testid="isAdmin" label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
+            <Form.Item
+              data-testid="isAdmin"
+              label={ADMIN_LABEL}
+              name={ADMIN_NAME}
+              valuePropName="checked">
               <Toggle disabled={viewOnly} />
             </Form.Item>
           )}

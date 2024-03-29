@@ -8,9 +8,12 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class SkeletonSection extends NamedComponent {
-  static defaultSelector = `div[data-test-component='skeletonSection']`;
+  static defaultSelector = 'div[data-test-component="skeletonSection"]';
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || SkeletonSection.defaultSelector });
   }
-  readonly header: BaseComponent = new BaseComponent({ parent: this, selector: `\[data-testid="skeletonHeader"\]` });
+  readonly header: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="skeletonHeader"]',
+  });
 }

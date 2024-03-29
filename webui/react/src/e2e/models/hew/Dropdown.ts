@@ -9,7 +9,10 @@ import { BaseComponent } from 'e2e/models/BaseComponent';
  */
 export class Dropdown extends BaseComponent {
   static selectorTemplate(id: string): string {
-    return `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`
+    return `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`;
   }
-  readonly headerDropdownMenu: BaseComponent = new BaseComponent({ parent: this.root, selector: `ul.ant-dropdown-menu` });
+  readonly headerDropdownMenu: BaseComponent = new BaseComponent({
+    parent: this.root,
+    selector: 'ul.ant-dropdown-menu',
+  });
 }

@@ -1,4 +1,5 @@
-import { Page, expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
+
 import { BaseComponent, parentTypes } from 'e2e/models/BaseComponent';
 import { BasePage } from 'e2e/models/BasePage';
 
@@ -14,14 +15,14 @@ export class DevFixture {
     await this.#page.reload();
   }
 
-  async debugComponentVisible(component: BaseComponent): Promise<void> {
-    let componentTree: parentTypes[] = []
+  debugComponentVisible(component: BaseComponent): void {
+    const componentTree: parentTypes[] = [];
     let root: parentTypes = component;
     for (; !(root instanceof BasePage); root = root._parent) {
-      componentTree.unshift(root)
+      componentTree.unshift(root);
     }
-    componentTree.forEach(async branch => {
-      await expect(branch.pwLocator).toBeVisible()
+    componentTree.forEach(async (branch) => {
+      await expect(branch.pwLocator).toBeVisible();
     });
   }
 }

@@ -9,7 +9,16 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  */
 export abstract class AdminPage extends BasePage {
   readonly pivot: Pivot = new Pivot({ parent: this });
-  readonly userTab: BaseComponent = new BaseComponent({ parent: this, selector: Pivot.selectorTemplateTabs("user-management") });
-  readonly groupTab: BaseComponent = new BaseComponent({ parent: this, selector: Pivot.selectorTemplateTabs("group-management") });
-  readonly content: BaseComponent = new BaseComponent({ parent: this, selector: `.ant-tabs-content-holder` });
+  readonly userTab: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: Pivot.selectorTemplateTabs('user-management'),
+  });
+  readonly groupTab: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: Pivot.selectorTemplateTabs('group-management'),
+  });
+  readonly content: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '.ant-tabs-content-holder',
+  });
 }

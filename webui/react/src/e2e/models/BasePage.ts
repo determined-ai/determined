@@ -1,6 +1,7 @@
 import { Locator, type Page } from '@playwright/test';
-import { Navigation } from 'e2e/models/components/Navigation';
+
 import { requireStaticArgs } from 'e2e/models/BaseComponent';
+import { Navigation } from 'e2e/models/components/Navigation';
 
 /**
  * Returns the representation of a Page.
@@ -10,10 +11,10 @@ import { requireStaticArgs } from 'e2e/models/BaseComponent';
 export abstract class BasePage {
   readonly _page: Page;
   readonly nav: Navigation = new Navigation({ parent: this });
-  
+
   constructor(page: Page) {
     this._page = page;
-    requireStaticArgs(this.constructor, ["url", "title"])
+    requireStaticArgs(this.constructor, ['url', 'title']);
   }
 
   /**
@@ -29,7 +30,7 @@ export abstract class BasePage {
    * @param {Page} [waitForURL] - Whether for the URL to change
    */
   goto(waitForURL: boolean = true): BasePage {
-    const url: string = Object.getPrototypeOf(this).url
+    const url: string = Object.getPrototypeOf(this).url;
     this._page.goto(url);
     if (waitForURL) {
       this._page.waitForURL(url);
