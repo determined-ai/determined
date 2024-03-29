@@ -81,7 +81,9 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 		`INSERT INTO workspaces (name) VALUES ('test_workspace');
 		INSERT INTO projects (name, workspace_id) VALUES ('test_project_1', 2);
 		INSERT INTO models (name, workspace_id, creation_time, user_id) VALUES ('test_model_1', 2, NOW(), 1);
-		INSERT INTO model_versions (name, version, model_id, creation_time, user_id, checkpoint_uuid) VALUES ('test_model_version_1',1, 1, NOW(), 1, uuid_in(md5(random()::text || random()::text)::cstring));
+		INSERT INTO model_versions (name, version, model_id, creation_time, user_id, checkpoint_uuid) 
+		VALUES ('test_model_version_1',1, 1, NOW(), 1, 
+		uuid_in(md5(random()::text || random()::text)::cstring));
 		`,
 	).Exec(ctx)
 	if err != nil {
@@ -530,7 +532,7 @@ func TestMultipleSubscriptions(t *testing.T) {
 	testModelVersion := ModelVersionMsg{
 		ID:             2,
 		Name:           uuid.NewString(),
-		CheckpointUuid: uuid.NewString(),
+		CheckpointUUID: uuid.NewString(),
 		Version:        2,
 		ModelID:        1,
 		UserID:         1,
@@ -542,10 +544,18 @@ func TestMultipleSubscriptions(t *testing.T) {
 				startupMsg: buildStartupMsg(
 					"1",
 					map[string]string{projects: "2", models: "1", modelVersions: "1"},
-					map[string]map[string]interface{}{projects: {"workspaces": []int{2}}, models: {"workspaces": []int{2}}, modelVersions: {models: []int{1}}},
+					map[string]map[string]interface{}{
+						projects:      {"workspaces": []int{2}},
+						models:        {"workspaces": []int{2}},
+						modelVersions: {models: []int{1}},
+					},
 				),
-				expectedUpserts:   []string{},
-				expectedDeletions: []string{"key: projects_deleted, deleted: ", "key: models_deleted, deleted: ", "key: modelversions_deleted, deleted: "},
+				expectedUpserts: []string{},
+				expectedDeletions: []string{
+					"key: projects_deleted, deleted: ",
+					"key: models_deleted, deleted: ",
+					"key: modelversions_deleted, deleted: ",
+				},
 			},
 			description: "multiple subscriptions",
 			queries: []streamdata.ExecutableQuery{

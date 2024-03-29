@@ -38,7 +38,7 @@ type ModelVersionMsg struct {
 	// mutable attributes
 	Name            string    `bun:"name" json:"name"`
 	Version         int       `bun:"version" json:"version"`
-	CheckpointUuid  string    `bun:"checkpoint_uuid" json:"checkpoint_uuid"`
+	CheckpointUUID  string    `bun:"checkpoint_uuid" json:"checkpoint_uuid"`
 	CreationTime    time.Time `bun:"creation_time" json:"creation_time"`
 	LastUpdatedTime time.Time `bun:"last_updated_time" json:"last_updated_time"`
 	Metadata        JSONB     `bun:"metadata,type:jsonb" json:"metadata"`
@@ -185,7 +185,8 @@ func ModelVersionCollectStartupMsgs(
 func ModelVersionMakeFilter(spec *ModelVersionSubscriptionSpec) (func(*ModelVersionMsg) bool, error) {
 	// should this filter even run?
 	if len(spec.ModelVersionIDs) == 0 && len(spec.ModelIDs) == 0 && len(spec.UserIDs) == 0 {
-		return nil, errors.Errorf("invalid subscription spec arguments: %v %v %v", spec.ModelVersionIDs, spec.ModelIDs, spec.UserIDs)
+		return nil, errors.Errorf("invalid subscription spec arguments: %v %v %v",
+			spec.ModelVersionIDs, spec.ModelIDs, spec.UserIDs)
 	}
 
 	// create sets based on subscription spec
