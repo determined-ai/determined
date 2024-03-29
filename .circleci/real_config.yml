@@ -1509,19 +1509,16 @@ jobs:
           paths:
             - webui/react/build
 
-  test-e2e-react:
-    parameters:
-      docker-image:
-        type: string
-        default: mcr.microsoft.com/playwright:v1.40.0-focal
-    docker:
-      - image: <<parameters.docker-image>>
+  test-e2e-react:      
+    machine:
+      - image: <<parameters.pipeline.machine-image>>
     resource_class: large
     steps:
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
+      - react-get-deps
       - run: |
           apt-get update && apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
           # Docker repo setup
@@ -1536,8 +1533,7 @@ jobs:
           sudo systemctl start docker
       - setup-python-venv:
           determined: True
-          executor: <<parameters.docker-image>>
-      - react-get-deps
+          executor: <<parameters.pipeline.machine-image>>
       - install-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
