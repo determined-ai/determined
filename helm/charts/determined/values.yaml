@@ -353,3 +353,6 @@ resourcePools:
 ## Configure the set of IP ranges allowed to connect to the Determined master service on a public
 ## GKE cluster.
 loadBalancerSourceRanges: []
+
+## sharedClusterTag is used to identify if this is using the shared cluster.
+sharedClusterTag: ""

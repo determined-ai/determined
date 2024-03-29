@@ -936,7 +936,7 @@ commands:
                 command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create CPU node pool
 
-  setup-shared-cluster:
+  setup-shared-gke-namespace:
     parameters:
       cluster-id:
         type: string
@@ -1012,6 +1012,9 @@ commands:
             export FORMATTED_RANGES=${formattedRange}
             echo 'export HELM_VALUES="${HELM_VALUES}${FORMATTED_RANGES}"' >> "$BASH_ENV"
           name: Setup Firewall Config
+      - run:
+          command: echo 'export HELM_VALUES="${HELM_VALUES},sharedClusterTag="gke-ci-testing"' >> "$BASH_ENV"'
+          name: Setup Shared Cluster Tag
       - gcloud/install:
           version: "412.0.0"
       - kubernetes/install-kubectl
@@ -2717,7 +2720,7 @@ jobs:
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}\"" >> $BASH_ENV
       - generate-tls-cert
-      - setup-shared-cluster:
+      - setup-shared-gke-namespace:
           det-version: ${CIRCLE_SHA1}
           labels: test-mark=<<parameters.mark>>
           master-tls-cert: ${MASTER_TLS_CERT}
