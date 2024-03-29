@@ -1543,7 +1543,7 @@ jobs:
       - run: ./webui/react/run-mocked-playwright.sh
       - run: 
           when: always 
-          command: tar cf playwright-report.tar webui/react/src/e2e/playwright-report
+          command: tar cf webui/react/src/e2e/test-results/playwright-report.tar webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
