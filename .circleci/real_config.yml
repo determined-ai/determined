@@ -1511,7 +1511,7 @@ jobs:
 
   test-e2e-react:      
     machine:
-      - image: <<pipeline.parameters.machine-image>>
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
       - checkout-with-sm

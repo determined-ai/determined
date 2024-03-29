@@ -117,7 +117,10 @@ get-playwright:
 
 .PHONY: get-playwright-ci
 get-playwright-ci:
-	npx playwright install --with-deps && npx playwright install chrome
+	npx playwright install --with-deps 
+	npx playwright install chrome 
+	npx playwright install webkit
+	npx playwright install firefox
 
 .PHONY: mb-start
 mb-start:
