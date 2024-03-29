@@ -9,7 +9,10 @@ export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
 export PW_SERVER_ADDRESS="http://localhost:3001"
 export PW_TEST_HTML_REPORT_OPEN='never'
 set +e
-PW_SERVER_ADDRESS="http://localhost:3001" DET_WEBSOCKET_PROXY_URL="ws://localhost:4546" DET_WEBPACK_PROXY_URL="http://localhost:4545" npm run e2e
+PW_USER_NAME="admin" PW_PASSWORD="" \
+PW_SERVER_ADDRESS="http://localhost:3001"\
+DET_WEBSOCKET_PROXY_URL="ws://localhost:4546" DET_WEBPACK_PROXY_URL="http://localhost:4545" \
+npm run e2e
 test_result=$?
 set -e
 if [ $test_result -ne 0 ]; then
@@ -18,6 +21,9 @@ if [ $test_result -ne 0 ]; then
     make mb-start
     make mb-record-imposters
     set +e
+    PW_USER_NAME="admin" PW_PASSWORD="" \
+    PW_SERVER_ADDRESS="http://localhost:3001"\
+    DET_WEBSOCKET_PROXY_URL="ws://localhost:4546" DET_WEBPACK_PROXY_URL="http://localhost:4545" \
     npm run e2e
     test_result=$?
     set -e
