@@ -2831,6 +2831,8 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          requires:
+            - build-go
           context: playwright
           filters: *any-upstream
       - build-docs:
