@@ -1467,7 +1467,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
+          model-hub: false
           executor: <<pipeline.parameters.docker-image>>
       - reinstall-go
       - setup_remote_docker:
