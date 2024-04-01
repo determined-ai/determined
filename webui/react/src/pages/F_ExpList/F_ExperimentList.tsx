@@ -38,8 +38,6 @@ import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/Filte
 import {
   AvailableOperators,
   FilterFormSet,
-  FormField,
-  FormGroup,
   FormKind,
   IOFilterFormSet,
   Operator,
@@ -62,7 +60,7 @@ import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
@@ -177,9 +175,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
-  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
-    _: () => [],
-    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
+  const numFilters: number = Loadable.match(loadableFormset, {
+    _: () => 0,
+    Loaded: (formset: FilterFormSet) => formset.filterGroup.children.length,
   });
   const isMobile = useMobile();
   const { openToast } = useToast();
@@ -292,21 +290,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
 
-  const experimentFilters = useMemo(() => {
-    const filters: V1BulkExperimentFilters = {
-      projectId: project.id,
-    };
-    return filters;
-  }, [project.id]);
-
-  const numFilters = useMemo(() => {
-    return (
-      Object.values(experimentFilters).filter((x) => x !== undefined).length -
-      1 +
-      rootFilterChildren.length
-    );
-  }, [experimentFilters, rootFilterChildren.length]);
-
   const handleSortChange = useCallback(
     (sorts: Sort[]) => {
       setSorts(sorts);
@@ -350,10 +333,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(
         {
-          ...experimentFilters,
           filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          projectId: project.id,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -392,12 +375,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [
     canceler.signal,
-    experimentFilters,
     filtersString,
     isLoadingSettings,
     isPagedView,
     loadableFormset,
     page,
+    project.id,
     sortString,
     settings.pageLimit,
   ]);
