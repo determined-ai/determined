@@ -83,13 +83,14 @@ class ForbiddenException(BadRequestException):
 class UnauthenticatedException(BadRequestException):
     """The internal API's analog to a 401 Unauthorized HTTP status code."""
 
-    MSG = (
-        "Unauthenticated: Please use 'det user login <username>' for password login, or"
-        " for Enterprise users logging in with an SSO provider,"
-        " use 'det auth login --provider=<provider>'."
-    )
-
-    def __init__(self, message=MSG) -> None:
+    def __init__(
+        self,
+        message: str = (
+            "Unauthenticated: Please use 'det user login <username>' for password login, or"
+            " for Enterprise users logging in with an SSO provider,"
+            " use 'det auth login --provider=<provider>'."
+        ),
+    ) -> None:
         super().__init__(message=message)
 
 
