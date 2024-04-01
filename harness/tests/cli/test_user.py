@@ -1,4 +1,3 @@
-import contextlib
 from unittest import mock
 
 import responses
@@ -70,7 +69,8 @@ def test_login_with_invalid_credentials_error_message(
         mock_die.assert_has_calls(
             [
                 mock.call(
-                    "Failed to log in user: Invalid username/password combination. Please try again."
+                    "Failed to log in user: Invalid username/password combination. "
+                    "Please try again."
                 )
             ]
         )
