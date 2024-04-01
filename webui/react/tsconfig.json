@@ -22,5 +22,5 @@
     "jsx": "react-jsx",
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "typings/**/*.ts", "*.ts", "__mocks__/**/*", "src/e2e/models/components/SetUserRolesModal.ts"],
+  "include": ["src/**/*", "typings/**/*.ts", "*.ts", "__mocks__/**/*"]
 }
