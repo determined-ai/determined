@@ -152,13 +152,13 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
-//	@Summary	Get health of Determined and the dependencies.
-//	@Tags		Cluster
-//	@ID			health
-//	@Produce	json
-//	@Success	200	{object}	model.HealthCheck
-//	@Failure	503	{object}	model.HealthCheck
-//	@Router		/health [get]
+//	@Summary Get health of Determined and the dependencies.
+//	@Tags	 Cluster
+//	@ID		 health
+//	@Produce json
+//	@Success 200     {object} model.HealthCheck
+//	@Failure 503     {object} model.HealthCheck
+//	@Router	 /health [get]
 //
 // nolint:lll
 func (m *Master) healthCheckEndpoint(c echo.Context) error {
