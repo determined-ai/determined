@@ -43,7 +43,7 @@ class DeepSpeedTrialController(det.TrialController):
         ), "DeepSpeedTrialController needs a DeepSpeedTrial"
         self.trial = trial_inst
         self.context = cast(det_ds.DeepSpeedTrialContext, self.context)
-        self._dsat_mode = self.context.get_hparams().get(dsat._defaults.USE_DSAT_MODE_KEY, False)
+        self._dsat_mode = self.context.get_hparams().get(dsat.defaults.USE_DSAT_MODE_KEY, False)
         if self._dsat_mode:
             searcher_name = self.context.get_experiment_config()["searcher"]["name"]
             assert (

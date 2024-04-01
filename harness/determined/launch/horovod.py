@@ -14,9 +14,8 @@ import time
 from typing import List, Tuple
 
 import determined as det
-from determined import horovod, util
+from determined import constants, horovod, util
 from determined.common.api import authentication, certs
-from determined.constants import DTRAIN_SSH_PORT
 
 logger = logging.getLogger("determined.launch.horovod")
 
@@ -45,7 +44,7 @@ def create_sshd_worker_cmd(
     run_sshd_command = [
         "/usr/sbin/sshd",
         "-p",
-        str(DTRAIN_SSH_PORT),
+        str(constants.DTRAIN_SSH_PORT),
         "-f",
         "/run/determined/ssh/sshd_config",
         "-D",
@@ -148,7 +147,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
     # close to in-step by now because all machines just finished synchronizing rendezvous info.
     deadline = time.time() + 20
     for peer_addr in info.container_addrs[1:]:
-        util.check_sshd(peer_addr, deadline, DTRAIN_SSH_PORT)
+        util.check_sshd(peer_addr, deadline, constants.DTRAIN_SSH_PORT)
 
     # The chief has several layers of wrapper processes:
     # - a top-level pid_server, which causes the whole container to exit if any local worker dies.

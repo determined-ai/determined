@@ -3,7 +3,6 @@ from typing import Any, List
 
 from determined import cli
 from determined.cli import render
-from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
 
@@ -40,15 +39,15 @@ def remove_client(args: argparse.Namespace) -> None:
 # fmt: off
 
 args_description = [
-    Cmd("oauth", None, "manage OAuth", [
-        Cmd("client", None, "manage clients", [
-            Cmd("list ls", list_clients, "list OAuth client applications", [], is_default=True),
-            Cmd("add", add_client, "add OAuth client application", [
-                Arg("name", type=str, help="descriptive name"),
-                Arg("domain", type=str, help="redirect domain"),
+    cli.Cmd("oauth", None, "manage OAuth", [
+        cli.Cmd("client", None, "manage clients", [
+            cli.Cmd("list ls", list_clients, "list OAuth client applications", [], is_default=True),
+            cli.Cmd("add", add_client, "add OAuth client application", [
+                cli.Arg("name", type=str, help="descriptive name"),
+                cli.Arg("domain", type=str, help="redirect domain"),
             ]),
-            Cmd("remove", remove_client, "remove OAuth client application", [
-                Arg("client_id", help="OAuth client ID to remove"),
+            cli.Cmd("remove", remove_client, "remove OAuth client application", [
+                cli.Arg("client_id", help="OAuth client ID to remove"),
             ]),
         ])
     ])

@@ -1,16 +1,15 @@
 import contextlib
 import json
+import pathlib
 import ssl
 import threading
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from pathlib import Path
+from http import server
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
 import determined
-from determined.common.api import bindings
-from determined.common.api.authentication import salt_and_hash
+from determined.common.api import authentication, bindings
 
-CERTS_DIR = Path(__file__).parent / "multimaster-certs"
+CERTS_DIR = pathlib.Path(__file__).parent / "multimaster-certs"
 CERTS1 = {
     "keyfile": CERTS_DIR / "key1.pem",
     "certfile": CERTS_DIR / "cert1.pem",
@@ -26,7 +25,7 @@ DEFAULT_USER = "user1"
 DEFAULT_PASSWORD = "password1"
 DEFAULT_TOKEN = "token1"
 
-FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+FIXTURES_DIR = pathlib.Path(__file__).parent.parent / "fixtures"
 
 
 def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
@@ -54,13 +53,13 @@ def sample_get_experiment(**kwargs: Any) -> bindings.v1GetExperimentResponse:
 def run_api_server(
     address: Tuple[str, int] = (DEFAULT_HOST, DEFAULT_PORT),
     credentials: Tuple[str, str, str] = (DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_TOKEN),
-    ssl_keys: Optional[Dict[str, Path]] = CERTS1,
+    ssl_keys: Optional[Dict[str, pathlib.Path]] = CERTS1,
 ) -> Iterator[str]:
     user, password, token = credentials
     lock = threading.RLock()
     state: Dict[str, Any] = {}
 
-    class RequestHandler(SimpleHTTPRequestHandler):
+    class RequestHandler(server.SimpleHTTPRequestHandler):
         def _info(self) -> Dict[str, Any]:
             return {"cluster_id": "fake-cluster", "version": determined.__version__}
 
@@ -71,7 +70,7 @@ def run_api_server(
             content_length = int(self.headers["Content-Length"])
             post_data = self.rfile.read(content_length)
             posted_credentials = json.loads(post_data)
-            expected_password = salt_and_hash(password)
+            expected_password = authentication.salt_and_hash(password)
             assert posted_credentials.get("username") == user
             assert posted_credentials.get("password") == expected_password
             fake_user = {"username": user, "admin": True, "active": True}
@@ -167,17 +166,17 @@ def run_api_server(
             self.end_headers()
             self.wfile.write(response)
 
-    server = HTTPServer(address, RequestHandler)
+    http_server = server.HTTPServer(address, RequestHandler)
 
     if ssl_keys is not None:
-        server.socket = ssl.wrap_socket(
-            server.socket,
+        http_server.socket = ssl.wrap_socket(
+            http_server.socket,
             keyfile=str(ssl_keys["keyfile"]),
             certfile=str(ssl_keys["certfile"]),
             server_side=True,
         )
 
-    thread = threading.Thread(target=server.serve_forever, args=[0.1])
+    thread = threading.Thread(target=http_server.serve_forever, args=[0.1])
     thread.start()
     try:
         host = address[0]
@@ -185,5 +184,5 @@ def run_api_server(
         protocol = "https" if ssl_keys is not None else "http"
         yield f"{protocol}://{host}:{port}"
     finally:
-        server.shutdown()
+        http_server.shutdown()
         thread.join()

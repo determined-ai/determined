@@ -1,15 +1,15 @@
 import datetime
 import logging
 import os
-import urllib
 from typing import Any, Callable, Dict, Generator, List
+from urllib import parse
 
-from .base import Fetcher
+from determined.tensorboard.fetchers import base
 
 logger = logging.getLogger("determined.tensorboard.azure")
 
 
-class AzureFetcher(Fetcher):
+class AzureFetcher(base.Fetcher):
     def __init__(self, storage_config: Dict[str, Any], storage_paths: List[str], local_dir: str):
         from azure.storage import blob
 
@@ -40,7 +40,7 @@ class AzureFetcher(Fetcher):
             " with storage_path: '{storage_path}'"
         )
         container = self.client.get_container_client(self.container_name)
-        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
+        prefix = parse.urlparse(storage_path).path.lstrip("/")
 
         blobs = container.list_blobs(name_starts_with=prefix)
         for blob in blobs:

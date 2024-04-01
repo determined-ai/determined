@@ -39,7 +39,7 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getMetricValue } from 'utils/metric';
 import { routeToReactUrl } from 'utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
-import { humanReadableBytes } from 'utils/string';
+import { humanReadableBytes, pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
@@ -166,6 +166,20 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       );
     };
 
+    const logRetentionDaysRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      const logRetentionDays = record.logRetentionDays;
+      if (logRetentionDays === undefined) {
+        return <span>-</span>;
+      }
+      return (
+        <span>
+          {logRetentionDays === -1
+            ? 'Forever'
+            : `${logRetentionDays} ${pluralizer(logRetentionDays, 'day')}`}
+        </span>
+      );
+    };
+
     const validationRenderer = (key: keyof TrialItem) => {
       return function renderer(_: string, record: TrialItem): React.ReactNode {
         const hasMetric = (obj: TrialItem[keyof TrialItem]): obj is MetricsWorkload => {
@@ -235,6 +249,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = actionRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE) {
         column.render = (value: number) => (value ? humanReadableBytes(value) : '');
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.LOGRETENTIONDAYS) {
+        column.render = logRetentionDaysRenderer;
       }
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';

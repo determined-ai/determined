@@ -106,6 +106,52 @@ class GetTrialWorkloadsRequestFilterOption(DetEnum):
     VALIDATION = "FILTER_OPTION_VALIDATION"
     CHECKPOINT_OR_VALIDATION = "FILTER_OPTION_CHECKPOINT_OR_VALIDATION"
 
+class HealthCheck(Printable):
+    database: "typing.Optional[HealthStatus]" = None
+    resource_managers: "typing.Optional[typing.Sequence[ResourceManagerHealth]]" = None
+    status: "typing.Optional[HealthStatus]" = None
+
+    def __init__(
+        self,
+        *,
+        database: "typing.Union[HealthStatus, None, Unset]" = _unset,
+        resource_managers: "typing.Union[typing.Sequence[ResourceManagerHealth], None, Unset]" = _unset,
+        status: "typing.Union[HealthStatus, None, Unset]" = _unset,
+    ):
+        if not isinstance(database, Unset):
+            self.database = database
+        if not isinstance(resource_managers, Unset):
+            self.resource_managers = resource_managers
+        if not isinstance(status, Unset):
+            self.status = status
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "HealthCheck":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "database" in obj:
+            kwargs["database"] = HealthStatus(obj["database"]) if obj["database"] is not None else None
+        if "resource_managers" in obj:
+            kwargs["resource_managers"] = [ResourceManagerHealth.from_json(x) for x in obj["resource_managers"]] if obj["resource_managers"] is not None else None
+        if "status" in obj:
+            kwargs["status"] = HealthStatus(obj["status"]) if obj["status"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "database" in vars(self):
+            out["database"] = None if self.database is None else self.database.value
+        if not omit_unset or "resource_managers" in vars(self):
+            out["resource_managers"] = None if self.resource_managers is None else [x.to_json(omit_unset) for x in self.resource_managers]
+        if not omit_unset or "status" in vars(self):
+            out["status"] = None if self.status is None else self.status.value
+        return out
+
+class HealthStatus(DetEnum):
+    up = "up"
+    down = "down"
+
 class PatchCheckpointOptionalResources(Printable):
     """Gets around not being able to do "Optional map<string, int64>".
     Not ideal but this API is marked internal for now.
@@ -219,6 +265,40 @@ class PatchExperimentPatchResources(Printable):
             out["priority"] = self.priority
         if not omit_unset or "weight" in vars(self):
             out["weight"] = None if self.weight is None else dump_float(self.weight)
+        return out
+
+class ResourceManagerHealth(Printable):
+    name: "typing.Optional[str]" = None
+    status: "typing.Optional[HealthStatus]" = None
+
+    def __init__(
+        self,
+        *,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        status: "typing.Union[HealthStatus, None, Unset]" = _unset,
+    ):
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(status, Unset):
+            self.status = status
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "ResourceManagerHealth":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "status" in obj:
+            kwargs["status"] = HealthStatus(obj["status"]) if obj["status"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "status" in vars(self):
+            out["status"] = None if self.status is None else self.status.value
         return out
 
 class ResourcesSummaryDevices(Printable):
@@ -646,6 +726,7 @@ class trialv1Trial(Printable):
     checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    logRetentionDays: "typing.Optional[int]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -670,6 +751,7 @@ class trialv1Trial(Printable):
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -696,6 +778,8 @@ class trialv1Trial(Printable):
             self.endTime = endTime
         if not isinstance(latestValidation, Unset):
             self.latestValidation = latestValidation
+        if not isinstance(logRetentionDays, Unset):
+            self.logRetentionDays = logRetentionDays
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
         if not isinstance(searcherMetricValue, Unset):
@@ -734,6 +818,8 @@ class trialv1Trial(Printable):
             kwargs["endTime"] = obj["endTime"]
         if "latestValidation" in obj:
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
+        if "logRetentionDays" in obj:
+            kwargs["logRetentionDays"] = obj["logRetentionDays"]
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
         if "searcherMetricValue" in obj:
@@ -772,6 +858,8 @@ class trialv1Trial(Printable):
             out["endTime"] = self.endTime
         if not omit_unset or "latestValidation" in vars(self):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
+        if not omit_unset or "logRetentionDays" in vars(self):
+            out["logRetentionDays"] = self.logRetentionDays
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -2111,6 +2199,29 @@ class v1CheckpointsRemoveFilesRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "checkpointGlobs": self.checkpointGlobs,
             "checkpointUuids": self.checkpointUuids,
+        }
+        return out
+
+class v1CleanupLogsResponse(Printable):
+    """Response to CleanupLogsRequest."""
+
+    def __init__(
+        self,
+        *,
+        removedCount: str,
+    ):
+        self.removedCount = removedCount
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CleanupLogsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "removedCount": obj["removedCount"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "removedCount": self.removedCount,
         }
         return out
 
@@ -4605,6 +4716,7 @@ class v1GetExperimentTrialsRequestSortBy(DetEnum):
     - SORT_BY_DURATION: Return the trials sorted by the total duration.
     - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
     - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+    - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     ID = "SORT_BY_ID"
@@ -4617,6 +4729,7 @@ class v1GetExperimentTrialsRequestSortBy(DetEnum):
     DURATION = "SORT_BY_DURATION"
     RESTARTS = "SORT_BY_RESTARTS"
     CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    LOG_RETENTION_DAYS = "SORT_BY_LOG_RETENTION_DAYS"
 
 class v1GetExperimentTrialsResponse(Printable):
     """Response to GetExperimentTrialsRequest."""
@@ -11030,6 +11143,91 @@ class v1PutExperimentResponse(Printable):
         }
         return out
 
+class v1PutExperimentRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+
+    def __init__(
+        self,
+        *,
+        experimentId: int,
+        numDays: int,
+    ):
+        self.experimentId = experimentId
+        self.numDays = numDays
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentId": obj["experimentId"],
+            "numDays": obj["numDays"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentId": self.experimentId,
+            "numDays": self.numDays,
+        }
+        return out
+
+class v1PutExperimentsRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+    filters: "typing.Optional[v1BulkExperimentFilters]" = None
+
+    def __init__(
+        self,
+        *,
+        experimentIds: "typing.Sequence[int]",
+        numDays: int,
+        filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
+    ):
+        self.experimentIds = experimentIds
+        self.numDays = numDays
+        if not isinstance(filters, Unset):
+            self.filters = filters
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentsRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": obj["experimentIds"],
+            "numDays": obj["numDays"],
+        }
+        if "filters" in obj:
+            kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "experimentIds": self.experimentIds,
+            "numDays": self.numDays,
+        }
+        if not omit_unset or "filters" in vars(self):
+            out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
+        return out
+
+class v1PutExperimentsRetainLogsResponse(Printable):
+    """Response to PutExperimentRetainLogsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1ExperimentActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutExperimentsRetainLogsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1PutProjectNotesRequest(Printable):
     """Request for setting project notes."""
 
@@ -11163,6 +11361,37 @@ class v1PutTrialResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "trial": self.trial.to_json(omit_unset),
         }
+        return out
+
+class v1PutTrialRetainLogsRequest(Printable):
+    """Request for changing the log retention policy for the an experiment."""
+    trialId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        numDays: int,
+        trialId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.numDays = numDays
+        if not isinstance(trialId, Unset):
+            self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutTrialRetainLogsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "numDays": obj["numDays"],
+        }
+        if "trialId" in obj:
+            kwargs["trialId"] = obj["trialId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "numDays": self.numDays,
+        }
+        if not omit_unset or "trialId" in vars(self):
+            out["trialId"] = self.trialId
         return out
 
 class v1QueueControl(Printable):
@@ -16201,6 +16430,25 @@ def post_CheckpointsRemoveFiles(
         return
     raise APIHttpError("post_CheckpointsRemoveFiles", _resp)
 
+def post_CleanupLogs(
+    session: "api.BaseSession",
+) -> "v1CleanupLogsResponse":
+    """Cleanup task logs according to the retention policy."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/cleanup_logs",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1CleanupLogsResponse.from_json(_resp.json())
+    raise APIHttpError("post_CleanupLogs", _resp)
+
 def get_CompareTrials(
     session: "api.BaseSession",
     *,
@@ -17332,6 +17580,7 @@ specified by `searcher.metric` in the experiment configuration.
  - SORT_BY_DURATION: Return the trials sorted by the total duration.
  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+ - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
     - states: Limit trials to those that match the provided state.
 
  - STATE_UNSPECIFIED: The state of the experiment is unknown.
@@ -21185,6 +21434,52 @@ def put_PutExperimentLabel(
         return v1PutExperimentLabelResponse.from_json(_resp.json())
     raise APIHttpError("put_PutExperimentLabel", _resp)
 
+def put_PutExperimentRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutExperimentRetainLogsRequest",
+    experimentId: int,
+) -> None:
+    """Retain logs for an experiment.
+
+    - experimentId: The ID of the experiment.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/experiments/{experimentId}/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_PutExperimentRetainLogs", _resp)
+
+def put_PutExperimentsRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutExperimentsRetainLogsRequest",
+) -> "v1PutExperimentsRetainLogsResponse":
+    """Retain logs for an experiment."""
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path="/api/v1/experiments/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutExperimentsRetainLogsResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutExperimentsRetainLogs", _resp)
+
 def put_PutProjectNotes(
     session: "api.BaseSession",
     *,
@@ -21258,6 +21553,31 @@ def put_PutTrial(
     if _resp.status_code == 200:
         return v1PutTrialResponse.from_json(_resp.json())
     raise APIHttpError("put_PutTrial", _resp)
+
+def put_PutTrialRetainLogs(
+    session: "api.BaseSession",
+    *,
+    body: "v1PutTrialRetainLogsRequest",
+    trialId: int,
+) -> None:
+    """Retain logs for a Trial.
+
+    - trialId: The ID of the trial.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/trials/{trialId}/retain_logs",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_PutTrialRetainLogs", _resp)
 
 def post_RemoveAssignments(
     session: "api.BaseSession",
@@ -22467,6 +22787,27 @@ def post_UpdateJobQueue(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UpdateJobQueue", _resp)
+
+def get_health(
+    session: "api.BaseSession",
+) -> "HealthCheck":
+    """Get health of Determined and the dependencies."""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/health",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return HealthCheck.from_json(_resp.json())
+    if _resp.status_code == 503:
+        return HealthCheck.from_json(_resp.json())
+    raise APIHttpError("get_health", _resp)
 
 # Paginated is a union type of objects whose .pagination
 # attribute is a v1Pagination-type object.

@@ -570,9 +570,7 @@ additional_resource_managers:
 	provConfig.ContainerStartupScript = containerStartupScriptSecret
 	provConfig.GCP = provconfig.DefaultGCPClusterConfig()
 	expected := Config{
-		Logging: model.LoggingConfig{
-			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
-		},
+		Logging: model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		DB: DBConfig{
 			User:     "config_file_user",
 			Password: "password",
@@ -628,9 +626,7 @@ additional_resource_managers:
 	}
 
 	unmarshaled := Config{
-		Logging: model.LoggingConfig{
-			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
-		},
+		Logging: model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 	}
 	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)

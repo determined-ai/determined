@@ -1,19 +1,18 @@
-from argparse import Namespace
-from collections import namedtuple
+import argparse
+import collections
 from typing import Any, List
 
 from determined import cli
 from determined.cli import render
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd
 
-v1UserHeaders = namedtuple(
+v1UserHeaders = collections.namedtuple(
     "v1UserHeaders",
     ["id", "username", "displayName", "admin", "active", "agentUserGroup", "modifiedAt"],
 )
 
-v1GroupHeaders = namedtuple(
+v1GroupHeaders = collections.namedtuple(
     "v1GroupHeaders",
     ["groupId", "name", "numMembers"],  # numMembers
 )
@@ -25,7 +24,7 @@ rbac_flag_disabled_message = (
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def create_group(args: Namespace) -> None:
+def create_group(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     add_users = api.usernames_to_user_ids(sess, args.add_user)
     body = bindings.v1CreateGroupRequest(name=args.group_name, addUsers=add_users)
@@ -38,7 +37,7 @@ def create_group(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def list_groups(args: Namespace) -> None:
+def list_groups(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     user_id = None
     if args.groups_user_belongs_to:
@@ -63,7 +62,7 @@ def list_groups(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def describe_group(args: Namespace) -> None:
+def describe_group(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     group_id = api.group_name_to_group_id(sess, args.group_name)
     resp = bindings.get_GetGroup(sess, groupId=group_id)
@@ -82,7 +81,7 @@ def describe_group(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def add_user_to_group(args: Namespace) -> None:
+def add_user_to_group(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     usernames = args.usernames.split(",")
     group_id = api.group_name_to_group_id(sess, args.group_name)
@@ -97,7 +96,7 @@ def add_user_to_group(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def remove_user_from_group(args: Namespace) -> None:
+def remove_user_from_group(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     usernames = args.usernames.split(",")
     group_id = api.group_name_to_group_id(sess, args.group_name)
@@ -112,7 +111,7 @@ def remove_user_from_group(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def change_group_name(args: Namespace) -> None:
+def change_group_name(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     group_id = api.group_name_to_group_id(sess, args.old_group_name)
     body = bindings.v1UpdateGroupRequest(groupId=group_id, name=args.new_group_name)
@@ -123,7 +122,7 @@ def change_group_name(args: Namespace) -> None:
 
 
 @cli.require_feature_flag("rbacEnabled", rbac_flag_disabled_message)
-def delete_group(args: Namespace) -> None:
+def delete_group(args: argparse.Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting a group will result in an unrecoverable \n"
         "deletion of the group along with all the membership  \n"
@@ -138,18 +137,18 @@ def delete_group(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "user-group",
         None,
         "manage user groups",
         [
-            Cmd(
+            cli.Cmd(
                 "create",
                 create_group,
                 "create a user group",
                 [
-                    Arg("group_name", help="name of user group to be created"),
-                    Arg(
+                    cli.Arg("group_name", help="name of user group to be created"),
+                    cli.Arg(
                         "--add-user",
                         action="append",
                         default=[],
@@ -158,60 +157,62 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "delete",
                 delete_group,
                 "delete a user group",
                 [
-                    Arg("group_name", help="name of user group to be deleted"),
-                    Arg("--yes", action="store_true", help="skip prompt asking for confirmation"),
+                    cli.Arg("group_name", help="name of user group to be deleted"),
+                    cli.Arg(
+                        "--yes", action="store_true", help="skip prompt asking for confirmation"
+                    ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list ls",
                 list_groups,
                 "list user groups",
                 [
                     *cli.make_pagination_args(),
-                    Arg("--groups-user-belongs-to", help="list groups that the username is in"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--groups-user-belongs-to", help="list groups that the username is in"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "describe",
                 describe_group,
                 "describe a user group",
                 [
-                    Arg("group_name", help="name of user group to describe"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("group_name", help="name of user group to describe"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "add-user",
                 add_user_to_group,
                 "add users to a group",
                 [
-                    Arg("group_name", help="name of user group to add users to"),
-                    Arg("usernames", help="a comma seperated list of usernames"),
+                    cli.Arg("group_name", help="name of user group to add users to"),
+                    cli.Arg("usernames", help="a comma seperated list of usernames"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "remove-user",
                 remove_user_from_group,
                 "remove user from a group",
                 [
-                    Arg("group_name", help="name of user group to remove users from"),
-                    Arg("usernames", help="a comma seperated list of usernames"),
+                    cli.Arg("group_name", help="name of user group to remove users from"),
+                    cli.Arg("usernames", help="a comma seperated list of usernames"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "change-name",
                 change_group_name,
                 "change name of a user group",
                 [
-                    Arg("old_group_name", help="name of user group to be updated"),
-                    Arg("new_group_name", help="name of user group to change to"),
+                    cli.Arg("old_group_name", help="name of user group to be updated"),
+                    cli.Arg("new_group_name", help="name of user group to change to"),
                 ],
             ),
         ],

@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+import pathlib
 from typing import Dict, List, Optional, Union
 
 from determined.common import util
@@ -52,7 +52,7 @@ class AzureStorageClient(object):
                 raise e
 
     @util.preserve_random_state
-    def put(self, container_name: str, blob_name: str, filename: Union[str, Path]) -> None:
+    def put(self, container_name: str, blob_name: str, filename: Union[str, pathlib.Path]) -> None:
         """Upload a file to the specified blob in the specified container."""
         with open(filename, "rb") as file:
             self.client.get_blob_client(container_name, blob_name).upload_blob(file, overwrite=True)
@@ -72,7 +72,7 @@ class AzureStorageClient(object):
 
     @util.preserve_random_state
     def list_files(
-        self, container_name: str, file_prefix: Optional[Union[str, Path]] = None
+        self, container_name: str, file_prefix: Optional[Union[str, pathlib.Path]] = None
     ) -> Dict[str, int]:
         """Lists files within the specified container that have the specified file prefix.
         Lists all files if file_prefix is None.

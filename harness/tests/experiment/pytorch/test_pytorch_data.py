@@ -1,4 +1,3 @@
-# type: ignore
 import logging
 import queue
 import typing
@@ -9,14 +8,13 @@ import pytest
 import torch
 
 import determined as det
-from determined.pytorch import data_length, samplers, to_device
+from determined import pytorch
+from determined.pytorch import samplers
 
 
 def make_dataset() -> torch.utils.data.Dataset:
-    training_data = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float32)
-    training_data = torch.Tensor(training_data)
-    training_labels = np.array([0, 1, 1, 0], dtype=np.float32)
-    training_labels = torch.Tensor(training_labels)
+    training_data = torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=torch.float32)
+    training_labels = torch.tensor([0, 1, 1, 0], dtype=torch.float32)
     return torch.utils.data.TensorDataset(training_data, training_labels)
 
 
@@ -24,10 +22,10 @@ def make_data_loader() -> torch.utils.data.DataLoader:
     return torch.utils.data.DataLoader(make_dataset(), batch_size=1)
 
 
-def test_skip_sampler():
+def test_skip_sampler() -> None:
     skip = 2
     sampler = torch.utils.data.SequentialSampler(range(15))
-    skip_sampler = samplers.SkipSampler(sampler, skip)
+    skip_sampler = samplers.SkipSampler(sampler, skip)  # type: ignore
 
     assert len(skip_sampler) == 15
 
@@ -35,7 +33,7 @@ def test_skip_sampler():
         assert samp == skip_samp
 
 
-def test_skip_batch_sampler():
+def test_skip_batch_sampler() -> None:
     skip = 2
     sampler = torch.utils.data.SequentialSampler(range(15))
     batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size=2, drop_last=False)
@@ -53,7 +51,7 @@ def test_skip_batch_sampler():
         assert samp == skip_samp
 
 
-def test_repeat_sampler():
+def test_repeat_sampler() -> None:
     sampler = torch.utils.data.SequentialSampler(range(10))
     repeat_sampler = samplers.RepeatSampler(sampler)
 
@@ -66,7 +64,7 @@ def test_repeat_sampler():
         assert one_pass == [next(iterator) for _ in range(len(one_pass))]
 
 
-def test_repeat_batch_sampler():
+def test_repeat_batch_sampler() -> None:
     sampler = torch.utils.data.SequentialSampler(range(10))
     batch_sampler = torch.utils.data.BatchSampler(sampler, 3, False)
     repeat_batch_sampler = samplers.RepeatBatchSampler(batch_sampler)
@@ -80,7 +78,7 @@ def test_repeat_batch_sampler():
         assert one_pass == [next(iterator) for _ in range(len(one_pass))]
 
 
-def test_distributed_sampler():
+def test_distributed_sampler() -> None:
     sampler = torch.utils.data.SequentialSampler(range(19))
 
     num_replicas = 4
@@ -98,10 +96,12 @@ def test_distributed_sampler():
         assert samples == expected_samples[rank]
 
 
-def test_distributed_batch_sampler():
+def test_distributed_batch_sampler() -> None:
     worker_batch_size = 2
-    sampler = torch.utils.data.SequentialSampler(range(19))
-    sampler = torch.utils.data.BatchSampler(sampler, batch_size=worker_batch_size, drop_last=False)
+    seq_sampler = torch.utils.data.SequentialSampler(range(19))
+    sampler = torch.utils.data.BatchSampler(
+        seq_sampler, batch_size=worker_batch_size, drop_last=False
+    )
 
     num_replicas = 4
 
@@ -118,15 +118,15 @@ def test_distributed_batch_sampler():
         assert samples == expected_samples[rank]
 
 
-def test_reproducible_shuffle_sampler():
+def test_reproducible_shuffle_sampler() -> None:
     sampler = torch.utils.data.SequentialSampler(range(5))
-    sampler = samplers.ReproducibleShuffleSampler(sampler, 777)
+    repro_sampler = samplers.ReproducibleShuffleSampler(sampler, 777)
 
-    assert list(sampler) == [0, 4, 1, 2, 3]
-    assert list(sampler) == [2, 0, 1, 3, 4]
+    assert list(repro_sampler) == [0, 4, 1, 2, 3]
+    assert list(repro_sampler) == [2, 0, 1, 3, 4]
 
 
-def test_reproducible_shuffle_batch_sampler():
+def test_reproducible_shuffle_batch_sampler() -> None:
     sampler = torch.utils.data.SequentialSampler(range(10))
     batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size=2, drop_last=False)
     shuffle_batch_sampler = samplers.ReproducibleShuffleSampler(batch_sampler, 777)
@@ -135,11 +135,7 @@ def test_reproducible_shuffle_batch_sampler():
     assert list(shuffle_batch_sampler) == [[4, 5], [0, 1], [2, 3], [6, 7], [8, 9]]
 
 
-def test_pytorch_adapt_batch_sampler():
-    def check_equality(batch0, batch1):
-        for a, b in zip(batch0, batch1):
-            assert torch.eq(a, b)
-
+def test_pytorch_adapt_batch_sampler() -> None:
     offset = 2
 
     dataloader = det.pytorch.DataLoader(make_dataset())
@@ -167,7 +163,7 @@ def test_pytorch_adapt_batch_sampler():
                 assert torch.all(torch.eq(pair[0], pair[1]))
 
 
-def test_pytorch_batch_sampler_mutual_exclusion():
+def test_pytorch_batch_sampler_mutual_exclusion() -> None:
     dataloader = det.pytorch.DataLoader(make_dataset(), drop_last=True, shuffle=True, batch_size=2)
     assert dataloader.get_data_loader() is not None
 
@@ -191,14 +187,14 @@ Data = typing.Union[typing.Dict[str, Array], Array]
 
 
 @pytest.mark.parametrize("data,length", TEST_DATA_LENGTH_SUITE)
-def test_data_length(data: Data, length: int):
-    assert data_length(data) == length
+def test_data_length(data: Data, length: int) -> None:
+    assert pytorch.data_length(data) == length
 
 
 @pytest.mark.parametrize("data,error", [({}, ValueError), (0, TypeError)])
 def test_data_type_error(data: typing.Any, error: typing.Any) -> None:
     with pytest.raises(error):
-        data_length(data)
+        pytorch.data_length(data)
 
 
 def test_to_device() -> None:
@@ -212,21 +208,23 @@ def test_to_device() -> None:
         "input_4": 1,
     }
 
-    assert to_device(data_structure, "cpu") == data_structure
-    assert np.array_equal(to_device(np.array([0, 1, 2]), "cpu"), np.array([0, 1, 2]))
+    device = torch.device("cpu")
+    assert pytorch.to_device(data_structure, device) == data_structure  # type: ignore
+    device_tensor = pytorch.to_device(torch.Tensor([0, 1, 2]), device)
+    assert torch.equal(device_tensor, torch.Tensor([0, 1, 2]))  # type: ignore
 
 
 @pytest.mark.parametrize("dedup_between_calls", [True, False])
-def test_to_device_warnings(dedup_between_calls) -> None:
+def test_to_device_warnings(dedup_between_calls: bool) -> None:
     # Capture warning logs as elements in a queue.
     logger = logging.getLogger()
-    q = queue.Queue()
+    q = queue.Queue()  # type: ignore
     handler = handlers.QueueHandler(q)
     logger.addHandler(handler)
     try:
-        warned_types = set() if dedup_between_calls else None
-        to_device(["string_data", "string_data"], "cpu", warned_types)
-        to_device(["string_data", "string_data"], "cpu", warned_types)
+        warned_types = set() if dedup_between_calls else None  # type: ignore
+        pytorch.to_device(["string_data", "string_data"], "cpu", warned_types)  # type: ignore
+        pytorch.to_device(["string_data", "string_data"], "cpu", warned_types)  # type: ignore
 
         assert q.qsize() == 1 if dedup_between_calls else 2
         while q.qsize():

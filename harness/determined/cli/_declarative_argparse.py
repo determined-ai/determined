@@ -1,9 +1,9 @@
+import argparse
 import functools
 import itertools
-from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
 
-from termcolor import colored
+import termcolor
 
 from determined.common import util
 
@@ -40,7 +40,7 @@ ArgsDescription = List[Union["Arg", "Cmd", "Group", "ArgGroup", "BoolOptArg"]]
 
 def deprecation_warning(message: str, color: bool = True) -> str:
     msg = f"DEPRECATED: {message}"
-    return colored(msg, "yellow") if color else msg
+    return termcolor.colored(msg, "yellow") if color else msg
 
 
 # Classes used to represent the structure of an argument parser setup; these
@@ -126,16 +126,16 @@ class BoolOptArg(NamedTuple):
     false_help: Optional[str] = None
 
 
-def wrap_func(parser: ArgumentParser, func: Callable) -> Callable:
+def wrap_func(parser: argparse.ArgumentParser, func: Callable) -> Callable:
     @functools.wraps(func)
-    def wrapper(args: Namespace) -> Any:
+    def wrapper(args: argparse.Namespace) -> Any:
         args.func = func
         return func(parser.parse_args([], args))
 
     return wrapper
 
 
-def help_func(parser: ArgumentParser) -> Callable:
+def help_func(parser: argparse.ArgumentParser) -> Callable:
     """
     Return a function that prints help for the given parser. Using this doesn't
     exit during the call to to `parse_args` itself, which would be ideal, but
@@ -144,13 +144,13 @@ def help_func(parser: ArgumentParser) -> Callable:
     least.
     """
 
-    def inner_func(args: Namespace) -> Any:
+    def inner_func(args: argparse.Namespace) -> Any:
         parser.print_help()
 
     return inner_func
 
 
-def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 0) -> None:
+def add_args(parser: argparse.ArgumentParser, description: ArgsDescription, depth: int = 0) -> None:
     """
     Populate the given parser with arguments, as specified by the
     description. The description is a list of Arg, Cmd, and Group objects.
@@ -186,9 +186,9 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
 
             subparser_kwargs = {
                 "aliases": aliases,
-                "formatter_class": ArgumentDefaultsHelpFormatter,
+                "formatter_class": argparse.ArgumentDefaultsHelpFormatter,
             }
-            if thing.help_str != SUPPRESS:
+            if thing.help_str != argparse.SUPPRESS:
                 if thing.deprecation_message:
                     thing.help_str += " " + deprecation_warning(
                         thing.deprecation_message, color=False
@@ -235,7 +235,7 @@ def add_args(parser: ArgumentParser, description: ArgsDescription, depth: int = 
                 dest=thing.dest,
                 action="store_false",
                 help=thing.false_help,
-                default=SUPPRESS,
+                default=argparse.SUPPRESS,
             )
 
     # If there are any subcommands but none claimed the default action, make

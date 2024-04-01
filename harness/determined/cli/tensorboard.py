@@ -1,23 +1,21 @@
+import argparse
+import functools
+import pathlib
+import typing
 import webbrowser
-from argparse import ONE_OR_MORE, ArgumentError, FileType, Namespace
-from functools import partial
-from pathlib import Path
-from typing import cast
 
-from termcolor import colored
+import termcolor
 
 from determined import cli
 from determined.cli import ntsc, render, task
-from determined.common import api, context
+from determined.common import api, check, context
 from determined.common.api import bindings
-from determined.common.check import check_none
-from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
-def start_tensorboard(args: Namespace) -> None:
+def start_tensorboard(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     if not (args.trial_ids or args.experiment_ids):
-        raise ArgumentError(None, "Either experiment_ids or trial_ids must be specified.")
+        raise argparse.ArgumentError(None, "Either experiment_ids or trial_ids must be specified.")
 
     config = ntsc.parse_config(args.config_file, None, args.config, [])
 
@@ -59,15 +57,15 @@ def start_tensorboard(args: Namespace) -> None:
     url = f"{args.master}/{tb_path}"
     if not args.no_browser:
         webbrowser.open(url)
-    print(colored(f"Tensorboard is running at: {url}", "green"))
+    print(termcolor.colored(f"Tensorboard is running at: {url}", "green"))
 
 
-def open_tensorboard(args: Namespace) -> None:
+def open_tensorboard(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    tensorboard_id = cast(str, ntsc.expand_uuid_prefixes(sess, args))
+    tensorboard_id = typing.cast(str, ntsc.expand_uuid_prefixes(sess, args))
 
     task = bindings.get_GetTask(sess, taskId=tensorboard_id).task
-    check_none(task.endTime, "Tensorboard has ended")
+    check.check_none(task.endTime, "Tensorboard has ended")
 
     tsb = bindings.get_GetTensorboard(sess, tensorboardId=tensorboard_id).tensorboard
     assert tsb.serviceAddress is not None, "missing tensorboard serviceAddress"
@@ -82,36 +80,36 @@ def open_tensorboard(args: Namespace) -> None:
     webbrowser.open(f"{args.master}/{tb_path}")
 
 
-args_description: ArgsDescription = [
-    Cmd(
+args_description: cli.ArgsDescription = [
+    cli.Cmd(
         "tensorboard",
         None,
         "manage TensorBoard instances",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
-                partial(ntsc.list_tasks),
+                functools.partial(ntsc.list_tasks),
                 "list TensorBoard instances",
                 ntsc.ls_sort_args
                 + [
-                    Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
-                    Arg(
+                    cli.Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
+                    cli.Arg(
                         "--all",
                         "-a",
                         action="store_true",
                         help="show all TensorBoards (including other users')",
                     ),
                     cli.workspace.workspace_arg,
-                    Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                    cli.Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "start",
                 start_tensorboard,
                 "start new TensorBoard instance",
                 [
-                    Arg(
+                    cli.Arg(
                         "experiment_ids",
                         type=int,
                         nargs="*",
@@ -120,37 +118,39 @@ args_description: ArgsDescription = [
                         "experiment has more trials, the 100 best-performing trials will "
                         "be used.",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-t",
                         "--trial-ids",
-                        nargs=ONE_OR_MORE,
+                        nargs=argparse.ONE_OR_MORE,
                         type=int,
                         help="trial IDs to load into TensorBoard; at most 100 trials are "
                         "allowed per TensorBoard instance",
                     ),
                     cli.workspace.workspace_arg,
-                    Arg(
+                    cli.Arg(
                         "--config-file",
                         default=None,
-                        type=FileType("r"),
+                        type=argparse.FileType("r"),
                         help="command config file (.yaml)",
                     ),
-                    Arg("-c", "--context", default=None, type=Path, help=ntsc.CONTEXT_DESC),
-                    Arg(
+                    cli.Arg(
+                        "-c", "--context", default=None, type=pathlib.Path, help=ntsc.CONTEXT_DESC
+                    ),
+                    cli.Arg(
                         "-i",
                         "--include",
                         default=[],
                         action="append",
-                        type=Path,
+                        type=pathlib.Path,
                         help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
-                    Arg(
+                    cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                    cli.Arg(
                         "--no-browser",
                         action="store_true",
                         help="don't open TensorBoard in a browser after startup",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-d",
                         "--detach",
                         action="store_true",
@@ -158,48 +158,48 @@ args_description: ArgsDescription = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "config",
-                partial(ntsc.config),
+                functools.partial(ntsc.config),
                 "display TensorBoard config",
-                [Arg("tensorboard_id", type=str, help="TensorBoard ID")],
+                [cli.Arg("tensorboard_id", type=str, help="TensorBoard ID")],
             ),
-            Cmd(
+            cli.Cmd(
                 "open",
                 open_tensorboard,
                 "open existing TensorBoard instance",
-                [Arg("tensorboard_id", help="TensorBoard ID")],
+                [cli.Arg("tensorboard_id", help="TensorBoard ID")],
             ),
-            Cmd(
+            cli.Cmd(
                 "logs",
-                partial(task.logs),
+                functools.partial(task.logs),
                 "fetch TensorBoard instance logs",
                 [
-                    Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
+                    cli.Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
                     *task.common_log_options,
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "kill",
-                partial(ntsc.kill),
+                functools.partial(ntsc.kill),
                 "kill TensorBoard instance",
                 [
-                    Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
-                    Arg("-f", "--force", action="store_true", help="ignore errors"),
+                    cli.Arg("tensorboard_id", help="TensorBoard ID", nargs=argparse.ONE_OR_MORE),
+                    cli.Arg("-f", "--force", action="store_true", help="ignore errors"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "set",
                 None,
                 "set TensorBoard attributes",
                 [
-                    Cmd(
+                    cli.Cmd(
                         "priority",
-                        partial(ntsc.set_priority),
+                        functools.partial(ntsc.set_priority),
                         "set TensorBoard priority",
                         [
-                            Arg("tensorboard_id", help="TensorBoard ID"),
-                            Arg("priority", type=int, help="priority"),
+                            cli.Arg("tensorboard_id", help="TensorBoard ID"),
+                            cli.Arg("priority", type=int, help="priority"),
                         ],
                     ),
                 ],

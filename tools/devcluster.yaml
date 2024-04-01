@@ -51,6 +51,11 @@ stages:
           cache_dir: /tmp/determined-cache
         log:
           level: debug
+        logging:
+          type: default
+        logging_retention:
+          days: 7
+          schedule: 60m
         enable_cors: true
         observability:
           enable_prometheus: true

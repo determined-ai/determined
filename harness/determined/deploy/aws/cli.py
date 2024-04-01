@@ -2,21 +2,18 @@ import argparse
 import base64
 import getpass
 import json
+import pathlib
 import re
-from pathlib import Path
 from typing import Callable, Dict, Tuple, Type
 
 import boto3
-from botocore.exceptions import NoCredentialsError
-from termcolor import colored
+import termcolor
+from botocore import exceptions
 
-from determined.cli.errors import CliError
-from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
-from determined.deploy.aws import aws, constants
-from determined.deploy.errors import MasterTimeoutExpired, warn_version_mismatch
-
-from .deployment_types import base, govcloud, secure, simple, vpc
-from .preflight import check_quotas, get_default_cf_parameter
+from determined import cli
+from determined.deploy import errors
+from determined.deploy.aws import aws, constants, preflight
+from determined.deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
 
 
 def validate_spot_max_price() -> Callable:
@@ -57,10 +54,10 @@ def parse_add_tag() -> Callable:
 
 def error_no_credentials() -> None:
     print(
-        colored("Unable to locate AWS credentials.", "red"),
-        "Did you run %s?" % colored("aws configure", "yellow"),
+        termcolor.colored("Unable to locate AWS credentials.", "red"),
+        "Did you run %s?" % termcolor.colored("aws configure", "yellow"),
     )
-    raise CliError(
+    raise cli.CliError(
         "See the AWS Documentation for information on how to use AWS credentials: "
         "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
     )
@@ -90,15 +87,15 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             f"`det deploy` is only supported in {constants.misc.SUPPORTED_REGIONS} - "
             f"tried to deploy to {boto3_session.region_name}"
         )
-        raise CliError("use the --region argument to deploy to a supported region")
+        raise cli.CliError("use the --region argument to deploy to a supported region")
 
     if command == "list":
         try:
             output = aws.list_stacks(boto3_session)
-        except NoCredentialsError:
+        except exceptions.NoCredentialsError:
             error_no_credentials()
         except Exception:
-            raise CliError(
+            raise cli.CliError(
                 "Listing stacks failed. Check the AWS CloudFormation Console for details.",
             )
         for item in output:
@@ -114,7 +111,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     #     sys.exit(1)
 
     if not re.match(constants.misc.CLOUDFORMATION_REGEX, args.cluster_id):
-        raise CliError("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
+        raise cli.CliError("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
 
     if command == "down":
         if not args.yes:
@@ -129,10 +126,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
         try:
             aws.delete(args.cluster_id, boto3_session)
-        except NoCredentialsError:
+        except exceptions.NoCredentialsError:
             error_no_credentials()
         except Exception:
-            raise CliError(
+            raise cli.CliError(
                 "Stack Deletion Failed. Check the AWS CloudFormation Console for details.",
             )
 
@@ -142,7 +139,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if (args.cpu_env_image and not args.gpu_env_image) or (
         args.gpu_env_image and not args.cpu_env_image
     ):
-        raise CliError("If a CPU or GPU environment image is specified, both should be.")
+        raise cli.CliError("If a CPU or GPU environment image is specified, both should be.")
 
     if (
         args.deployment_type != constants.deployment_types.SIMPLE
@@ -155,7 +152,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"deployment-type={args.deployment_type}."
             )
 
-    warn_version_mismatch(args.det_version)
+    errors.warn_version_mismatch(args.det_version)
 
     if args.deployment_type == constants.deployment_types.GOVCLOUD:
         if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
@@ -196,7 +193,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             raise ValueError("--genai-version can only be specified for 'genai' deployments")
     else:
         print(
-            colored(
+            termcolor.colored(
                 "GenAI deployment type is experimental and not ready for production use.",
                 "yellow",
             )
@@ -204,7 +201,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         if args.genai_version is not None and is_full_git_commit_hash(args.genai_version):
             short_hash = args.genai_version[:7]
             print(
-                colored(
+                termcolor.colored(
                     f"GenAI tags are not full commit hashes. Using {short_hash} instead.",
                     "yellow",
                 )
@@ -297,7 +294,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     deployment_object = get_deployment_class(args.deployment_type)(det_configs)
 
     if not args.no_preflight_checks:
-        check_quotas(det_configs, deployment_object)
+        preflight.check_quotas(det_configs, deployment_object)
 
     if not deployment_object.exists():
         initial_user_password = args.initial_user_password
@@ -316,24 +313,24 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     print("Starting Determined Deployment")
     try:
         deployment_object.deploy(args.yes, args.update_terminate_agents)
-    except NoCredentialsError:
+    except exceptions.NoCredentialsError:
         error_no_credentials()
     except Exception as e:
-        raise CliError(
+        raise cli.CliError(
             f"Stack Deployment Failed: {e}\nCheck the AWS CloudFormation Console for details.",
         )
 
     if not args.no_wait_for_master:
         try:
             deployment_object.wait_for_master(timeout=5 * 60)
-        except MasterTimeoutExpired:
+        except errors.MasterTimeoutExpired:
             print(
-                colored(
+                termcolor.colored(
                     "Determined cluster has been deployed, but master health check has failed.",
                     "red",
                 )
             )
-            raise CliError(
+            raise cli.CliError(
                 "For details, SSH to master instance and check /var/log/cloud-init-output.log."
             )
 
@@ -341,14 +338,14 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         assert isinstance(deployment_object, vpc.Lore)
         try:
             deployment_object.wait_for_genai(timeout=5 * 60)
-        except MasterTimeoutExpired:
+        except errors.MasterTimeoutExpired:
             print(
-                colored(
+                termcolor.colored(
                     "Determined cluster has been deployed, but GenAI health check has failed.",
                     "red",
                 )
             )
-            raise CliError(
+            raise cli.CliError(
                 "For details, SSH to master instance and check /var/log/cloud-init-output.log."
             )
 
@@ -369,41 +366,41 @@ def handle_down(args: argparse.Namespace) -> None:
 
 def handle_dump_master_config_template(args: argparse.Namespace) -> None:
     deployment_object = get_deployment_class(args.deployment_type)({})
-    default_template = get_default_cf_parameter(
+    default_template = preflight.get_default_cf_parameter(
         deployment_object, constants.cloudformation.MASTER_CONFIG_TEMPLATE
     )
     print(default_template)
 
 
-args_description = Cmd(
+args_description = cli.Cmd(
     "aws",
     None,
     "AWS help",
     [
-        Cmd(
+        cli.Cmd(
             "list ls",
             handle_list,
             "list CloudFormation stacks",
             [
-                Arg(
+                cli.Arg(
                     "--region",
                     type=str,
                     default=None,
                     help="AWS region",
                 ),
-                Arg("--profile", type=str, default=None, help="AWS profile"),
+                cli.Arg("--profile", type=str, default=None, help="AWS profile"),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "down",
             handle_down,
             "delete CloudFormation stack",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "required named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=str,
                             help="stack name for CloudFormation cluster",
@@ -411,42 +408,42 @@ args_description = Cmd(
                         ),
                     ],
                 ),
-                Arg(
+                cli.Arg(
                     "--region",
                     type=str,
                     default=None,
                     help="AWS region",
                 ),
-                Arg("--profile", type=str, default=None, help="AWS profile"),
-                Arg(
+                cli.Arg("--profile", type=str, default=None, help="AWS profile"),
+                cli.Arg(
                     "--no-prompt",
                     dest="yes",
                     action="store_true",
                     help=argparse.SUPPRESS,
                 ),
-                Arg(
+                cli.Arg(
                     "--yes",
                     action="store_true",
                     help="no prompt when deleting resources",
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "up",
             handle_up,
             "deploy/update CloudFormation stack",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "required named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=str,
                             help="stack name for CloudFormation cluster",
                             required=True,
                         ),
-                        Arg(
+                        cli.Arg(
                             "--keypair",
                             type=str,
                             help="aws ec2 keypair for master and agent",
@@ -454,203 +451,203 @@ args_description = Cmd(
                         ),
                     ],
                 ),
-                Arg(
+                cli.Arg(
                     "--region",
                     type=str,
                     default=None,
                     help="AWS region",
                 ),
-                Arg(
+                cli.Arg(
                     "--add-tag",
                     type=parse_add_tag(),
                     action="append",
                     default=None,
                     help="Stack tag to in key=value format, declare repeatedly to add more flags",
                 ),
-                Arg("--profile", type=str, default=None, help="AWS profile"),
-                Arg(
+                cli.Arg("--profile", type=str, default=None, help="AWS profile"),
+                cli.Arg(
                     "--master-instance-type",
                     type=str,
                     help="instance type for master",
                 ),
-                Arg(
+                cli.Arg(
                     "--enable-cors",
                     action="store_true",
                     help="allow CORS requests or not: true/false",
                 ),
-                Arg("--master-tls-cert"),
-                Arg("--master-tls-key"),
-                Arg("--master-cert-name"),
-                Arg(
+                cli.Arg("--master-tls-cert"),
+                cli.Arg("--master-tls-key"),
+                cli.Arg("--master-cert-name"),
+                cli.Arg(
                     "--compute-agent-instance-type",
                     "--gpu-agent-instance-type",
                     type=str,
                     help="instance type for agents in the compute resource pool",
                 ),
-                Arg(
+                cli.Arg(
                     "--aux-agent-instance-type",
                     "--cpu-agent-instance-type",
                     type=str,
                     help="instance type for agents in the auxiliary resource pool",
                 ),
-                Arg(
+                cli.Arg(
                     "--deployment-type",
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,
                     default=constants.defaults.DEPLOYMENT_TYPE,
                     help="deployment type. GenAI support is experimental.",
                 ),
-                Arg(
+                cli.Arg(
                     "--inbound-cidr",
                     type=str,
                     help="inbound IP Range in CIDR format",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-subnet-id",
                     type=str,
                     help="subnet to deploy agents into. Optional. "
                     "Only used with simple deployment type",
                 ),
-                Arg(
+                cli.Arg(
                     "--det-version",
                     type=str,
                     help=argparse.SUPPRESS,
                 ),
-                Arg(
+                cli.Arg(
                     "--db-password",
                     type=str,
                     default=constants.defaults.DB_PASSWORD,
                     help="password for master database",
                 ),
-                Arg(
+                cli.Arg(
                     "--db-snapshot",
                     type=str,
                     default=constants.defaults.DB_SNAPSHOT,
                     help="ARN of RDS snapshot to start database with on creation",
                 ),
-                Arg(
+                cli.Arg(
                     "--db-instance-type",
                     type=str,
                     default=constants.defaults.DB_INSTANCE_TYPE,
                     help="instance type for master database (only for simple-rds)",
                 ),
-                Arg(
+                cli.Arg(
                     "--db-size",
                     type=int,
                     default=constants.defaults.DB_SIZE,
                     help="storage size in GB for master database (only for simple-rds)",
                 ),
-                Arg(
+                cli.Arg(
                     "--max-idle-agent-period",
                     type=str,
                     help="max agent idle time",
                 ),
-                Arg(
+                cli.Arg(
                     "--max-agent-starting-period",
                     type=str,
                     help="max agent starting time",
                 ),
-                Arg(
+                cli.Arg(
                     "--max-aux-containers-per-agent",
                     "--max-cpu-containers-per-agent",
                     type=int,
                     help="maximum number of containers on agents in the auxiliary resource pool",
                 ),
-                Arg(
+                cli.Arg(
                     "--min-dynamic-agents",
                     type=int,
                     help="minimum number of dynamic agent instances at one time",
                 ),
-                Arg(
+                cli.Arg(
                     "--max-dynamic-agents",
                     type=int,
                     help="maximum number of dynamic agent instances at one time",
                 ),
-                Arg(
+                cli.Arg(
                     "--spot",
                     action="store_true",
                     help="whether to use spot instances or not",
                 ),
-                Arg(
+                cli.Arg(
                     "--spot-max-price",
                     type=validate_spot_max_price(),
                     help="maximum hourly price for spot instances "
                     "(do not include the dollar sign)",
                 ),
-                Arg(
+                cli.Arg(
                     "--scheduler-type",
                     type=str,
                     choices=["fair_share", "priority", "round_robin"],
                     default="fair_share",
                     help="scheduler to use",
                 ),
-                Arg(
+                cli.Arg(
                     "--preemption-enabled",
                     type=str,
                     default="false",
                     help="whether task preemption is supported in the scheduler "
                     "(only configurable for priority scheduler).",
                 ),
-                Arg(
+                cli.Arg(
                     "--cpu-env-image",
                     type=str,
                     help="Docker image for CPU tasks",
                 ),
-                Arg(
+                cli.Arg(
                     "--gpu-env-image",
                     type=str,
                     help="Docker image for GPU tasks",
                 ),
-                Arg(
+                cli.Arg(
                     "--log-group-prefix",
                     type=str,
                     help="prefix for output CloudWatch log group",
                 ),
-                Arg(
+                cli.Arg(
                     "--retain-log-group",
                     action="store_const",
                     const="true",
                     help="whether to retain CloudWatch log group after the stack is deleted"
                     " (only available for the simple template)",
                 ),
-                Arg(
+                cli.Arg(
                     "--master-config-template-path",
-                    type=Path,
+                    type=pathlib.Path,
                     default=None,
                     help="path to master yaml template",
                 ),
-                Arg(
+                cli.Arg(
                     "--efs-id",
                     type=str,
                     help="preexisting EFS that will be mounted into the task containers; "
                     "if not provided, a new EFS instance will be created. The agents must be "
                     "able to connect to the EFS instance.",
                 ),
-                Arg(
+                cli.Arg(
                     "--fsx-id",
                     type=str,
                     help="preexisting FSx that will be mounted into the task containers; "
                     "if not provided, a new FSx instance will be created. The agents must be "
                     "able to connect to the FSx instance.",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-reattach-enabled",
                     type=str,
                     help="whether master & agent try to recover running containers after a restart",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-reconnect-attempts",
                     type=int,
                     default=5,
                     help="max attempts an agent has to reconnect",
                 ),
-                Arg(
+                cli.Arg(
                     "--agent-reconnect-backoff",
                     type=int,
                     default=5,
                     help="time between reconnect attempts, with the exception of the first.",
                 ),
-                BoolOptArg(
+                cli.BoolOptArg(
                     "--shut-down-agents-on-connection-loss",
                     "--no-shut-down-agents-on-connection-loss",
                     dest="shut_down_on_connection_loss",
@@ -658,7 +655,7 @@ args_description = Cmd(
                     true_help="shut down agent instances on connection loss",
                     false_help="do not shut down agent instances on connection loss",
                 ),
-                BoolOptArg(
+                cli.BoolOptArg(
                     "--update-terminate-agents",
                     "--no-update-terminate-agents",
                     dest="update_terminate_agents",
@@ -666,57 +663,57 @@ args_description = Cmd(
                     true_help="terminate running agents on stack update",
                     false_help="do not terminate running agents on stack update",
                 ),
-                Arg(
+                cli.Arg(
                     "--yes",
                     action="store_true",
                     help="no prompt when deployment would delete existing database",
                 ),
-                Arg(
+                cli.Arg(
                     "--no-prompt",
                     dest="yes",
                     action="store_true",
                     help=argparse.SUPPRESS,
                 ),
-                Arg(
+                cli.Arg(
                     "--enterprise-edition",
                     action="store_true",
                     help="Deploy the enterprise edition of Determined",
                 ),
-                Arg(
+                cli.Arg(
                     "--docker-user",
                     type=str,
                     help="Docker user to pull the Determined master and agent images",
                 ),
-                Arg(
+                cli.Arg(
                     "--docker-pass",
                     type=str,
                     help="Docker password used to pull the Determined master and agent images",
                 ),
-                Arg(
+                cli.Arg(
                     "--notebook-timeout",
                     type=int,
                     help="Specifies the duration in seconds before idle notebook instances "
                     "are automatically terminated",
                 ),
-                Arg(
+                cli.Arg(
                     "--genai-version",
                     type=str,
                     help="Specifies the version of GenAI to install. The value must be a valid"
                     + " GenAI tag available on Docker Hub.",
                 ),
-                Arg(
+                cli.Arg(
                     "--initial-user-password",
                     type=str,
                     help="Password for the default 'determined' and 'admin' users.",
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "dump-master-config-template",
             handle_dump_master_config_template,
             "dump default master config template",
             [
-                Arg(
+                cli.Arg(
                     "--deployment-type",
                     type=str,
                     choices=constants.deployment_types.DEPLOYMENT_TYPES,

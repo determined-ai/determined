@@ -1,7 +1,7 @@
-import importlib.util
 import json
 import logging
 import time
+from importlib import util as importutil
 from typing import Any, Dict, List, Optional, Set, Type, Union, cast
 
 import deepspeed
@@ -9,9 +9,8 @@ import torch
 from deepspeed.runtime import config_utils
 
 import determined as det
-from determined import pytorch
+from determined import pytorch, util
 from determined.pytorch import deepspeed as det_ds
-from determined.util import merge_dicts
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -40,7 +39,7 @@ def overwrite_deepspeed_config(
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")
 
-    return merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
+    return util.merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
@@ -77,7 +76,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         # DeepSpeed supports mixed precision through Nvidia Apex AMP.  ZeRO optimizer requires
         # Apex AMP and cannot be used with more complex AMP modes.
-        apex_available = importlib.util.find_spec("apex") is not None
+        apex_available = importutil.find_spec("apex") is not None
         if not apex_available:
             logger.warning(
                 "Missing package APEX is required for ZeRO optimizer support through DeepSpeed."
@@ -394,9 +393,11 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             except ImportError:
                 pass
 
-            from torch.utils.tensorboard import SummaryWriter
+            from torch.utils import tensorboard
 
-            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+            self._tbd_writer = tensorboard.SummaryWriter(
+                self.get_tensorboard_path()
+            )  # type: ignore
 
         return self._tbd_writer
 

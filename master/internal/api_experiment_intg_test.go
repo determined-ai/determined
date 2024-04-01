@@ -491,6 +491,88 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 	require.ErrorIs(t, err, errContinueHPSearchCompleted)
 }
 
+func TestPutExperimentRetainLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+
+	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	numDays := -1
+	res, err := api.PutExperimentRetainLogs(ctx, &apiv1.PutExperimentRetainLogsRequest{
+		ExperimentId: int32(exp.ID), NumDays: int32(numDays),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	var logRetentionDays []int
+	err = db.Bun().NewSelect().Table("tasks").
+		Column("log_retention_days").
+		Where("task_id IN (?)", bun.In(taskIDs)).
+		Scan(ctx, &logRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range logRetentionDays {
+		require.Equal(t, v, numDays)
+	}
+}
+
+func TestPutExperimentsRetainLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	var expIDs []int32
+	var intExpIDS []int
+	var trialIDs []int
+	for i := 0; i <= 5; i++ {
+		trial, _ := createTestTrial(t, api, curUser)
+		expIDs = append(expIDs, int32(trial.ExperimentID))
+		intExpIDS = append(intExpIDS, trial.ExperimentID)
+		trialIDs = append(trialIDs, trial.ID)
+	}
+
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(expIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	numDays := 10
+	res, err := api.PutExperimentsRetainLogs(ctx, &apiv1.PutExperimentsRetainLogsRequest{
+		ExperimentIds: expIDs, NumDays: int32(numDays),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
+	require.NoError(t, err)
+
+	var logRetentionDays []int
+	err = db.Bun().NewSelect().Table("tasks").
+		Column("log_retention_days").
+		Where("task_id IN (?)", bun.In(taskIDs)).
+		Scan(ctx, &logRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range logRetentionDays {
+		require.Equal(t, v, numDays)
+	}
+}
+
 func TestParseAndMergeContinueConfig(t *testing.T) {
 	// Blank config.
 	api, curUser, ctx := setupAPITest(t, nil)

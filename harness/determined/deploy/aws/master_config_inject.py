@@ -10,18 +10,18 @@
 # If you need to change the template, edit `injector/master.yaml.tmpl`,
 # then run this tool to update all the CF files.
 
+import itertools
+import pathlib
 import re
-from itertools import chain
-from pathlib import Path
 from typing import Dict
 
 START_MARKER = re.compile(r"INJECT CODE: (.+)")
 END_MARKER = re.compile("END INJECT CODE")
 
 
-def template_rewrite(template_path: Path, context: Dict[str, str]) -> None:
+def template_rewrite(template_path: pathlib.Path, context: Dict[str, str]) -> None:
     with template_path.open("r") as fin:
-        temp_path = Path(str(template_path) + ".temp")
+        temp_path = pathlib.Path(str(template_path) + ".temp")
         with temp_path.open("w") as fout:
             matching = False
             for line in fin:
@@ -45,15 +45,21 @@ def _indent_line(line: str, n: int) -> str:
     return (" " * n + line) if line != "\n" else line
 
 
-def inject_master_config(target_path: Path, content_path: Path, indent: int) -> None:
+def inject_master_config(
+    target_path: pathlib.Path, content_path: pathlib.Path, indent: int
+) -> None:
     CONTENT_KEY = "MasterConfigTemplate"
     with content_path.open("r") as fin:
-        context = {CONTENT_KEY: "".join(_indent_line(line, indent) for line in chain(["|\n"], fin))}
+        context = {
+            CONTENT_KEY: "".join(
+                _indent_line(line, indent) for line in itertools.chain(["|\n"], fin)
+            )
+        }
     template_rewrite(target_path, context)
 
 
 if __name__ == "__main__":
-    deploy_aws_dir = Path(__file__).parent.resolve()
+    deploy_aws_dir = pathlib.Path(__file__).parent.resolve()
     templates_dir = deploy_aws_dir / "templates"
     content_path = deploy_aws_dir / "injector" / "master.yaml.tmpl"
     for target_path in templates_dir.glob("*.yaml"):

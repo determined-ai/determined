@@ -10,7 +10,6 @@ import torch.distributed as dist
 
 import determined as det
 from determined import core, gpu, horovod, pytorch
-from determined.horovod import hvd
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -209,6 +208,7 @@ def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
 
     distributed_backend = det._DistributedBackend()
     if distributed_backend.use_horovod():
+        hvd = horovod.hvd
         hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
         hvd.init()
         return core.DistributedContext.from_horovod(horovod.hvd)

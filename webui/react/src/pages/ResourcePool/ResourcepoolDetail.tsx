@@ -24,10 +24,10 @@ import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
 import Topology from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
-import { getJobQStats } from 'services/api';
+import { getAgents, getJobQStats } from 'services/api';
 import { V1ResourcePoolDetail, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
-import { JobState, JsonObject, ResourceState, ValueOf } from 'types';
+import { Agent, JobState, JsonObject, ResourceState, ValueOf } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -52,6 +52,10 @@ type TabType = ValueOf<typeof TabType>;
 
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
+// PERF: hide topology if nodes or slots are huge to avoid rendering issue
+const MAX_USABLE_NODES = 1_000;
+const MAX_USABLE_SLOTS = 10_000;
+
 const MenuKey = {
   ManageNodes: 'manage-nodes',
 } as const;
@@ -60,34 +64,70 @@ const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
   const { canManageResourcePoolBindings } = usePermissions();
-  const agents = Loadable.getOrElse([], useObservable(clusterStore.agents));
+  const agents = useObservable(clusterStore.agents);
   const resourcePools = useObservable(clusterStore.resourcePools);
+  const navigate = useNavigate();
+  const [canceler] = useState(new AbortController());
+
+  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
+  const [poolsStats, setPoolsStats] = useState<V1RPQueueStat[]>();
+  const [agentsWithSlots, setAgentsWithSlots] = useState<Agent[]>([]);
+
   const pool = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools)) return;
 
     return resourcePools.data.find((pool) => pool.name === poolname);
   }, [poolname, resourcePools]);
 
+  const totalSlots = useMemo(() => {
+    const total = agents
+      .getOrElse([])
+      .reduce(
+        (totalVal, { slotStats }) =>
+          totalVal +
+          Object.values(slotStats.typeStats ?? {}).reduce(
+            (localTotal, { total }) => localTotal + total,
+            0,
+          ),
+        0,
+      );
+    return total;
+  }, [agents]);
+
+  const isTopologyAvailable =
+    agents.isLoaded && agents.data.length <= MAX_USABLE_NODES && totalSlots <= MAX_USABLE_SLOTS;
+
+  const fetchAgentsWithSlots = useCallback(async () => {
+    if (!isTopologyAvailable) {
+      setAgentsWithSlots([]);
+      return;
+    }
+    try {
+      const response = await getAgents({ excludeSlots: false });
+      setAgentsWithSlots(response);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Could not get agents with slots' });
+      setAgentsWithSlots([]);
+    }
+  }, [isTopologyAvailable]);
+
   const usage = useMemo(() => {
     if (!pool) return 0;
     const totalSlots = pool.slotsAvailable;
-    const resourceStates = getSlotContainerStates(agents || [], pool.slotType, pool.name);
+    const resourceStates = getSlotContainerStates(agentsWithSlots, pool.slotType, pool.name);
     const runningState = resourceStates.filter((s) => s === ResourceState.Running).length;
     const slotsPotential = maxPoolSlotCapacity(pool);
     const slotsAvaiablePer =
       slotsPotential && slotsPotential > totalSlots ? totalSlots / slotsPotential : 1;
     return totalSlots < 1 ? 0 : (runningState / totalSlots) * slotsAvaiablePer;
-  }, [pool, agents]);
-
-  const navigate = useNavigate();
-  const [canceler] = useState(new AbortController());
-
-  const [tabKey, setTabKey] = useState<TabType>(tab ?? DEFAULT_POOL_TAB_KEY);
-  const [poolsStats, setPoolsStats] = useState<V1RPQueueStat[]>();
+  }, [pool, agentsWithSlots]);
 
   const topologyAgentPool = useMemo(
-    () => (poolname ? agents.filter(({ resourcePools }) => resourcePools.includes(poolname)) : []),
-    [poolname, agents],
+    () =>
+      poolname
+        ? agentsWithSlots.filter(({ resourcePools }) => resourcePools.includes(poolname))
+        : [],
+    [poolname, agentsWithSlots],
   );
 
   const fetchStats = useCallback(async () => {
@@ -105,7 +145,11 @@ const ResourcepoolDetailInner: React.FC = () => {
     }
   }, [canceler.signal]);
 
-  usePolling(fetchStats, { rerunOnNewFn: true });
+  const fetchAll = useCallback(async () => {
+    await Promise.all([fetchStats(), fetchAgentsWithSlots()]);
+  }, [fetchAgentsWithSlots, fetchStats]);
+
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   const rpStats = useMemo<V1RPQueueStat[]>(() => {
     if (!Loadable.isLoaded(resourcePools)) return [];
@@ -130,6 +174,12 @@ const ResourcepoolDetailInner: React.FC = () => {
   useEffect(() => {
     setTabKey(tab ?? DEFAULT_POOL_TAB_KEY);
   }, [tab]);
+
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -277,7 +327,11 @@ const ResourcepoolDetailInner: React.FC = () => {
             size={ShirtSize.Large}
           />
         </Section>
-        {!!topologyAgentPool.length && poolname && <Topology nodes={topologyAgentPool} />}
+        {isTopologyAvailable && (
+          <>
+            {topologyAgentPool.length !== 0 && poolname && <Topology nodes={topologyAgentPool} />}
+          </>
+        )}
         <Section>
           {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
             <Section>

@@ -3,11 +3,12 @@ import random
 import numpy as np
 import tensorflow as tf
 from packaging import version
+from tensorflow.keras import metrics
 
-from determined.keras import TFKerasTrial, TFKerasTrialContext
+from determined import keras
 
 
-class RandomMetric(tf.keras.metrics.Metric):
+class RandomMetric(metrics.Metric):
     def update_state(self, *args, **kwargs):
         return None
 
@@ -18,7 +19,7 @@ class RandomMetric(tf.keras.metrics.Metric):
         return tf.compat.v1.py_func(my_func, [tf.ones([1], dtype=tf.float64)], tf.float64)
 
 
-class NumPyRandomMetric(tf.keras.metrics.Metric):
+class NumPyRandomMetric(metrics.Metric):
     def update_state(self, *args, **kwargs):
         return None
 
@@ -29,7 +30,7 @@ class NumPyRandomMetric(tf.keras.metrics.Metric):
         return tf.compat.v1.py_func(my_func, [tf.ones([1], dtype=tf.float64)], tf.float64)
 
 
-class TensorFlowRandomMetric(tf.keras.metrics.Metric):
+class TensorFlowRandomMetric(metrics.Metric):
     def update_state(*args, **kargs):
         pass
 
@@ -43,8 +44,8 @@ class TensorFlowRandomMetric(tf.keras.metrics.Metric):
         return tf.compat.v1.py_func(my_func, [tf.ones([1], dtype=tf.float64)], tf.float64)
 
 
-class NoopKerasTrial(TFKerasTrial):
-    def __init__(self, context: TFKerasTrialContext):
+class NoopKerasTrial(keras.TFKerasTrial):
+    def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
 
     def build_model(self):

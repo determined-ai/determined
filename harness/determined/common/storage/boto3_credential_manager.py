@@ -5,20 +5,12 @@ import time
 from typing import Any
 
 import boto3
-from botocore import session
-from botocore.compat import ensure_unicode
-from botocore.credentials import (
-    CredentialProvider,
-    Credentials,
-    ReadOnlyCredentials,
-    SharedCredentialProvider,
-)
-from botocore.session import get_session
+from botocore import compat, credentials, session
 
 logger = logging.getLogger("determined.common.storage.s3")
 
 
-class RefreshableCredentialProvider(CredentialProvider):  # type: ignore
+class RefreshableCredentialProvider(credentials.CredentialProvider):  # type: ignore
     """
     Creates a refreshable credential provider class given an existing credential provider in
     the boto3 credential chain.
@@ -27,22 +19,24 @@ class RefreshableCredentialProvider(CredentialProvider):  # type: ignore
 
     METHOD = "managed-refresh-cred"
 
-    def __init__(self, credential_provider: SharedCredentialProvider, check_every: int = 2) -> None:
+    def __init__(
+        self, credential_provider: credentials.SharedCredentialProvider, check_every: int = 2
+    ) -> None:
         super().__init__()
         self.check_every = check_every
         self.credential_provider = credential_provider
 
-    def load(self) -> Credentials:
+    def load(self) -> credentials.Credentials:
         return self.credential_provider.load() and RefreshableSharedCredentials(
             credentials_provider=self.credential_provider, check_every=self.check_every
         )
 
 
-class RefreshableSharedCredentials(Credentials):  # type: ignore
+class RefreshableSharedCredentials(credentials.Credentials):  # type: ignore
     def __init__(
         self,
         check_every: int,
-        credentials_provider: SharedCredentialProvider,
+        credentials_provider: credentials.SharedCredentialProvider,
     ):
         self._credentials_provider = credentials_provider
         self._check_every = check_every
@@ -56,7 +50,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
         self.access_key = credentials.access_key
         self.secret_key = credentials.secret_key
         self.token = credentials.token
-        self._frozen_credentials = ReadOnlyCredentials(
+        self._frozen_credentials = credentials.ReadOnlyCredentials(
             credentials.access_key, credentials.secret_key, credentials.token
         )
 
@@ -87,10 +81,10 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
                 logger.info("credential file changes detected, refreshing credentials")
                 self._load_and_set_credentials()
 
-    def get_frozen_credentials(self) -> ReadOnlyCredentials:
+    def get_frozen_credentials(self) -> credentials.ReadOnlyCredentials:
         self._refresh()
         with self._lock:
-            return ReadOnlyCredentials(self._access_key, self._secret_key, self._token)
+            return credentials.ReadOnlyCredentials(self._access_key, self._secret_key, self._token)
 
     @property
     def access_key(self) -> Any:
@@ -99,7 +93,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
 
     @access_key.setter
     def access_key(self, value: str) -> None:
-        self._access_key = ensure_unicode(value)
+        self._access_key = compat.ensure_unicode(value)
 
     @property
     def secret_key(self) -> Any:
@@ -108,7 +102,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
 
     @secret_key.setter
     def secret_key(self, value: str) -> None:
-        self._secret_key = ensure_unicode(value)
+        self._secret_key = compat.ensure_unicode(value)
 
     @property
     def token(self) -> str:
@@ -132,6 +126,6 @@ def register_credential_provider(session: session, provider_name: str) -> None:
 
 
 def initialize_boto3_credential_providers() -> None:
-    session = get_session()
-    register_credential_provider(session, provider_name=SharedCredentialProvider.METHOD)
-    boto3.setup_default_session(botocore_session=session)
+    sess = session.get_session()
+    register_credential_provider(sess, provider_name=credentials.SharedCredentialProvider.METHOD)
+    boto3.setup_default_session(botocore_session=sess)

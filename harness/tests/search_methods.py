@@ -1,14 +1,14 @@
 import dataclasses
 import json
 import logging
+import pathlib
 import pickle
 import random
 import sys
 import uuid
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from urllib3.connectionpool import HTTPConnectionPool, MaxRetryError
+from urllib3 import connectionpool
 
 from determined import searcher
 
@@ -155,7 +155,7 @@ class RandomSearchMethod(searcher.SearchMethod):
         logging.info(f"hparams={hparams}")
         return hparams
 
-    def save_method_state(self, path: Path) -> None:
+    def save_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("save_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("w") as f:
@@ -170,7 +170,7 @@ class RandomSearchMethod(searcher.SearchMethod):
             }
             json.dump(state, f)
 
-    def load_method_state(self, path: Path) -> None:
+    def load_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("r") as f:
@@ -195,8 +195,8 @@ class RandomSearchMethod(searcher.SearchMethod):
             and exception_id == self.exception_points[0]
         ):
             logging.info(f"Raising exception in {exception_id}")
-            ex = MaxRetryError(
-                HTTPConnectionPool(host="dummyhost", port=8080),
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080),
                 "http://dummyurl",
             )
             raise ex
@@ -518,7 +518,7 @@ class ASHASearchMethod(searcher.SearchMethod):
 
         return progress
 
-    def save_method_state(self, path: Path) -> None:
+    def save_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("save_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("wb") as f:
@@ -528,7 +528,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         with exception_path.open("wb") as f:
             pickle.dump(self.exception_points, f)
 
-    def load_method_state(self, path: Path) -> None:
+    def load_method_state(self, path: pathlib.Path) -> None:
         self.raise_exception("load_method_state")
         checkpoint_path = path.joinpath("method_state")
         with checkpoint_path.open("rb") as f:
@@ -549,5 +549,7 @@ class ASHASearchMethod(searcher.SearchMethod):
             and exception_id == self.exception_points[0]
         ):
             logging.info(f"Raising exception in {exception_id}")
-            ex = MaxRetryError(HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl")
+            ex = connectionpool.MaxRetryError(
+                connectionpool.HTTPConnectionPool(host="dummyhost", port=8080), "http://dummyurl"
+            )
             raise ex

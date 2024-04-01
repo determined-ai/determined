@@ -247,19 +247,21 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 	// create task
 	tID := model.NewTaskID()
 	tIn := &model.Task{
-		TaskID:    tID,
-		JobID:     &jID,
-		TaskType:  model.TaskTypeTrial,
-		StartTime: time.Now().UTC().Truncate(time.Millisecond),
+		TaskID:           tID,
+		JobID:            &jID,
+		TaskType:         model.TaskTypeTrial,
+		StartTime:        time.Now().UTC().Truncate(time.Millisecond),
+		LogRetentionDays: masterConfig.LoggingRetention.Days,
 	}
 	if err = db.AddTask(ctx, tIn); err != nil {
 		return err
 	}
 
 	tr := model.Trial{
-		ExperimentID: exp.ID,
-		State:        model.CompletedState,
-		StartTime:    time.Now(),
+		ExperimentID:     exp.ID,
+		State:            model.CompletedState,
+		StartTime:        time.Now(),
+		LogRetentionDays: masterConfig.LoggingRetention.Days,
 	}
 	if err = db.AddTrial(ctx, &tr, tID); err != nil {
 		return err

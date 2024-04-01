@@ -1,15 +1,12 @@
+import argparse
 import json
-from argparse import ArgumentError, Namespace
-from time import sleep
+import time
 from typing import Any, Dict, List, Optional, Sequence
 
-import determined.cli.render
 from determined import cli
-from determined.cli import render
-from determined.cli.user import AGENT_USER_GROUP_ARGS
+from determined.cli import render, user
 from determined.common import api, util
 from determined.common.api import bindings, errors
-from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import workspace
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
@@ -25,16 +22,16 @@ WORKSPACE_HEADERS = [
     "Default Aux Pool",
 ]
 
-workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
+workspace_arg: cli.Arg = cli.Arg("-w", "--workspace-name", type=str, help="workspace name")
 
 
-def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
+def get_workspace_id_from_args(args: argparse.Namespace) -> Optional[int]:
     sess = cli.setup_session(args)
     workspace_id = None
     if args.workspace_name:
         workspace = api.workspace_by_name(sess, args.workspace_name)
         if workspace.archived:
-            raise ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
+            raise argparse.ArgumentError(None, f'Workspace "{args.workspace_name}" is archived.')
         workspace_id = workspace.id
     return workspace_id
 
@@ -75,7 +72,7 @@ def render_workspaces(
     render.tabulate_or_csv(headers, values, False)
 
 
-def list_workspaces(args: Namespace) -> None:
+def list_workspaces(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     orderArg = bindings.v1OrderBy[args.order_by.upper()]
     sortArg = bindings.v1GetWorkspacesRequestSortBy[args.sort_by.upper()]
@@ -95,12 +92,12 @@ def list_workspaces(args: Namespace) -> None:
             break
 
     if args.json:
-        determined.cli.render.print_json([w.to_json() for w in all_workspaces])
+        render.print_json([w.to_json() for w in all_workspaces])
     else:
         render_workspaces(all_workspaces, from_list_api=True)
 
 
-def list_workspace_projects(args: Namespace) -> None:
+def list_workspace_projects(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     all_projects = workspace.Workspace(
         session=sess, workspace_name=args.workspace_name
@@ -119,7 +116,7 @@ def list_workspace_projects(args: Namespace) -> None:
     projects = all_projects[offset : offset + limit]
 
     if args.json:
-        determined.cli.render.print_json([render.project_to_json(p) for p in projects])
+        render.print_json([render.project_to_json(p) for p in projects])
     else:
         values = [
             [
@@ -134,7 +131,7 @@ def list_workspace_projects(args: Namespace) -> None:
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
 
-def list_pools(args: Namespace) -> None:
+def list_pools(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     resp = bindings.get_ListRPsBoundToWorkspace(sess, workspaceId=w.id)
@@ -149,7 +146,7 @@ def list_pools(args: Namespace) -> None:
     )
 
 
-def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
+def _parse_agent_user_group_args(args: argparse.Namespace) -> Optional[bindings.v1AgentUserGroup]:
     if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
         return bindings.v1AgentUserGroup(
             agentUid=args.agent_uid,
@@ -160,7 +157,7 @@ def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUs
     return None
 
 
-def _parse_checkpoint_storage_args(args: Namespace) -> Any:
+def _parse_checkpoint_storage_args(args: argparse.Namespace) -> Any:
     if (args.checkpoint_storage_config is not None) and (
         args.checkpoint_storage_config_file is not None
     ):
@@ -173,7 +170,7 @@ def _parse_checkpoint_storage_args(args: Namespace) -> Any:
     return checkpoint_storage
 
 
-def create_workspace(args: Namespace) -> None:
+def create_workspace(args: argparse.Namespace) -> None:
     agent_user_group = _parse_agent_user_group_args(args)
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
@@ -188,21 +185,21 @@ def create_workspace(args: Namespace) -> None:
     w = bindings.post_PostWorkspace(sess, body=content).workspace
 
     if args.json:
-        determined.cli.render.print_json(w.to_json())
+        render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
 
-def describe_workspace(args: Namespace) -> None:
+def describe_workspace(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     if args.json:
-        determined.cli.render.print_json(w.to_json())
+        render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
 
-def delete_workspace(args: Namespace) -> None:
+def delete_workspace(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     if args.yes or render.yes_or_no(
@@ -218,7 +215,7 @@ def delete_workspace(args: Namespace) -> None:
         else:
             print(f"Started deletion of workspace {args.workspace_name}...")
             while True:
-                sleep(2)
+                time.sleep(2)
                 try:
                     w = bindings.get_GetWorkspace(sess, id=w.id).workspace
                     if w.state == bindings.v1WorkspaceState.DELETE_FAILED:
@@ -232,21 +229,21 @@ def delete_workspace(args: Namespace) -> None:
         print("Aborting workspace deletion.")
 
 
-def archive_workspace(args: Namespace) -> None:
+def archive_workspace(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     current = api.workspace_by_name(sess, args.workspace_name)
     bindings.post_ArchiveWorkspace(sess, id=current.id)
     print(f"Successfully archived workspace {args.workspace_name}.")
 
 
-def unarchive_workspace(args: Namespace) -> None:
+def unarchive_workspace(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     current = api.workspace_by_name(sess, args.workspace_name)
     bindings.post_UnarchiveWorkspace(sess, id=current.id)
     print(f"Successfully un-archived workspace {args.workspace_name}.")
 
 
-def edit_workspace(args: Namespace) -> None:
+def edit_workspace(args: argparse.Namespace) -> None:
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
     sess = cli.setup_session(args)
@@ -262,7 +259,7 @@ def edit_workspace(args: Namespace) -> None:
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
     if args.json:
-        determined.cli.render.print_json(w.to_json())
+        render.print_json(w.to_json())
     else:
         render_workspaces([w])
 
@@ -273,12 +270,12 @@ def yaml_file_arg(val: str) -> Any:
 
 
 CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
-    Arg(
+    cli.Arg(
         "--checkpoint-storage-config",
         type=str,
         help="Storage config (JSON-formatted string). To remove storage config use '{}'",
     ),
-    Arg(
+    cli.Arg(
         "--checkpoint-storage-config-file",
         type=yaml_file_arg,
         help="Storage config (path to YAML or JSON formatted file)",
@@ -286,12 +283,12 @@ CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
 ]
 
 DEFAULT_POOL_ARGS = [
-    Arg(
+    cli.Arg(
         "--default-compute-pool",
         type=str,
         help="name of the pool to set as the default compute pool",
     ),
-    Arg(
+    cli.Arg(
         "--default-aux-pool",
         type=str,
         help="name of the pool to set as the default auxiliary pool",
@@ -302,13 +299,13 @@ DEFAULT_POOL_ARGS = [
 # do not use util.py's pagination_args because behavior here is
 # to hide pagination and unify all pages of experiments into one output
 pagination_args = [
-    Arg(
+    cli.Arg(
         "--limit",
         type=int,
         default=200,
         help="Maximum items per page of results",
     ),
-    Arg(
+    cli.Arg(
         "--offset",
         type=int,
         default=None,
@@ -316,24 +313,24 @@ pagination_args = [
     ),
 ]
 args_description = [
-    Cmd(
+    cli.Cmd(
         "w|orkspace",
         None,
         "manage workspaces",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
                 list_workspaces,
                 "list all workspaces",
                 [
-                    Arg(
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         choices=["id", "name"],
                         default="id",
                         help="sort workspaces by the given field",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--order-by",
                         type=str,
                         choices=["asc", "desc"],
@@ -341,24 +338,24 @@ args_description = [
                         help="order workspaces in either ascending or descending order",
                     ),
                     *pagination_args,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "list-projects",
                 list_workspace_projects,
                 "list the projects associated with a workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         choices=["id", "name"],
                         default="id",
                         help="sort workspaces by the given field",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--order-by",
                         type=str,
                         choices=["asc", "desc"],
@@ -366,36 +363,36 @@ args_description = [
                         help="order workspaces in either ascending or descending order",
                     ),
                     *pagination_args,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list-pools",
                 list_pools,
                 "list the resource pools available to a workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "create",
                 create_workspace,
                 "create workspace",
                 [
-                    Arg("name", type=str, help="unique name of the workspace"),
-                    *AGENT_USER_GROUP_ARGS,
+                    cli.Arg("name", type=str, help="unique name of the workspace"),
+                    *user.AGENT_USER_GROUP_ARGS,
                     *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     *DEFAULT_POOL_ARGS,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "delete",
                 delete_workspace,
                 "delete workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg(
                         "--yes",
                         action="store_true",
                         default=False,
@@ -403,42 +400,42 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "describe",
                 describe_workspace,
                 "describe workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "edit",
                 edit_workspace,
                 "edit workspace",
                 [
-                    Arg("workspace_name", type=str, help="current name of the workspace"),
-                    Arg("--name", type=str, help="new name of the workspace"),
-                    *AGENT_USER_GROUP_ARGS,
+                    cli.Arg("workspace_name", type=str, help="current name of the workspace"),
+                    cli.Arg("--name", type=str, help="new name of the workspace"),
+                    *user.AGENT_USER_GROUP_ARGS,
                     *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     *DEFAULT_POOL_ARGS,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "archive",
                 archive_workspace,
                 "archive workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "unarchive",
                 unarchive_workspace,
                 "unarchive workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
                 ],
             ),
         ],

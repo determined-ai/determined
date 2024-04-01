@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import boto3
 import tqdm
-from botocore.exceptions import ClientError, WaiterError
+from botocore import exceptions
 
 from determined.deploy.aws import constants
 
@@ -53,7 +53,7 @@ def stop_master(master_id: str, boto3_session: boto3.session.Session, delete: bo
     waiter = ec2.get_waiter("instance_stopped")
     try:
         ec2.stop_instances(InstanceIds=[master_id])
-    except ClientError as ex:
+    except exceptions.ClientError as ex:
         if delete:
             error_code = ex.response.get("Error", {}).get("Code")
             if error_code in DELETE_MASTER_IGNORE_ERRORS:
@@ -74,7 +74,7 @@ def stop_master(master_id: str, boto3_session: boto3.session.Session, delete: bo
         try:
             waiter.wait(InstanceIds=[master_id], WaiterConfig={"Delay": 10})
             break
-        except WaiterError as e:
+        except exceptions.WaiterError as e:
             if n == NUM_WAITS - 1:
                 raise e
 
@@ -149,7 +149,7 @@ def stack_exists(stack_name: str, boto3_session: boto3.session.Session) -> bool:
 
     try:
         cfn.describe_stacks(StackName=stack_name)
-    except ClientError:
+    except exceptions.ClientError:
         return False
 
     return True
@@ -227,7 +227,7 @@ def update_stack(
             Capabilities=["CAPABILITY_IAM"],
             Tags=tags,
         )
-    except ClientError as e:
+    except exceptions.ClientError as e:
         if e.response["Error"]["Message"] != "No updates are to be performed.":
             raise e
 
@@ -471,7 +471,7 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
             try:
                 waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
                 break
-            except WaiterError as e:
+            except exceptions.WaiterError as e:
                 if n == NUM_WAITS - 1:
                     raise e
 
@@ -584,7 +584,7 @@ def clean_up_spot(
             try:
                 waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
                 break
-            except WaiterError as e:
+            except exceptions.WaiterError as e:
                 if n == NUM_WAITS - 1:
                     raise e
 
@@ -596,6 +596,6 @@ def empty_bucket(bucket_name: str, boto3_session: boto3.session.Session) -> None
         bucket = s3.Bucket(bucket_name)
         bucket.objects.all().delete()
 
-    except ClientError as e:
+    except exceptions.ClientError as e:
         if e.response["Error"]["Code"] != "NoSuchBucket":
             raise e

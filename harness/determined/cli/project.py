@@ -1,18 +1,16 @@
-from argparse import Namespace
-from time import sleep
+import argparse
+import time
 from typing import Any, Dict, List, Sequence, Tuple
 
-import determined.cli.render
 from determined import cli
-from determined.cli import render
+from determined.cli import render, workspace
 from determined.common import api
 from determined.common.api import bindings, errors
-from determined.common.declarative_argparse import Arg, Cmd
-
-from .workspace import list_workspace_projects, pagination_args
 
 
-def render_experiments(args: Namespace, experiments: Sequence[bindings.v1Experiment]) -> None:
+def render_experiments(
+    args: argparse.Namespace, experiments: Sequence[bindings.v1Experiment]
+) -> None:
     def format_experiment(e: bindings.v1Experiment) -> List[Any]:
         result = [
             e.id,
@@ -68,7 +66,7 @@ def project_by_name(
     return (w, p[0])
 
 
-def list_project_experiments(args: Namespace) -> None:
+def list_project_experiments(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     kwargs: Dict[str, Any] = {
@@ -93,12 +91,12 @@ def list_project_experiments(args: Namespace) -> None:
             break
 
     if args.json:
-        determined.cli.render.print_json([e.to_json() for e in all_experiments])
+        render.print_json([e.to_json() for e in all_experiments])
     else:
         render_experiments(args, all_experiments)
 
 
-def create_project(args: Namespace) -> None:
+def create_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1PostProjectRequest(
@@ -106,16 +104,16 @@ def create_project(args: Namespace) -> None:
     )
     p = bindings.post_PostProject(sess, body=content, workspaceId=w.id).project
     if args.json:
-        determined.cli.render.print_json(p.to_json())
+        render.print_json(p.to_json())
     else:
         render_project(p)
 
 
-def describe_project(args: Namespace) -> None:
+def describe_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     if args.json:
-        determined.cli.render.print_json(p.to_json())
+        render.print_json(p.to_json())
     else:
         render_project(p)
         print("\nAssociated Experiments")
@@ -124,7 +122,7 @@ def describe_project(args: Namespace) -> None:
         list_project_experiments(args)
 
 
-def delete_project(args: Namespace) -> None:
+def delete_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     if args.yes or render.yes_or_no(
@@ -139,7 +137,7 @@ def delete_project(args: Namespace) -> None:
         else:
             print(f"Started deletion of project {args.project_name}...")
             while True:
-                sleep(2)
+                time.sleep(2)
                 try:
                     p = bindings.get_GetProject(sess, id=p.id).project
                     if p.state == bindings.v1WorkspaceState.DELETE_FAILED:
@@ -153,26 +151,26 @@ def delete_project(args: Namespace) -> None:
         print("Aborting project deletion.")
 
 
-def edit_project(args: Namespace) -> None:
+def edit_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     updated = bindings.v1PatchProject(name=args.new_name, description=args.description)
     new_p = bindings.patch_PatchProject(sess, body=updated, id=p.id).project
 
     if args.json:
-        determined.cli.render.print_json(new_p.to_json())
+        render.print_json(new_p.to_json())
     else:
         render_project(new_p)
 
 
-def archive_project(args: Namespace) -> None:
+def archive_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     bindings.post_ArchiveProject(sess, id=p.id)
     print(f"Successfully archived project {args.project_name}.")
 
 
-def unarchive_project(args: Namespace) -> None:
+def unarchive_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
     bindings.post_UnarchiveProject(sess, id=p.id)
@@ -180,86 +178,86 @@ def unarchive_project(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "p|roject",
         None,
         "manage projects",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
-                list_workspace_projects,
+                workspace.list_workspace_projects,
                 "list the projects associated with a workspace",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         choices=["id", "name"],
                         default="id",
                         help="sort workspaces by the given field",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--order-by",
                         type=str,
                         choices=["asc", "desc"],
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
-                    *pagination_args,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    *workspace.pagination_args,
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list-experiments",
                 list_project_experiments,
                 "list the experiments associated with a project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg(
                         "--all",
                         "-a",
                         action="store_true",
                         default=False,
                         help="show all experiments (including archived and other users')",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         choices=["id", "name"],
                         default="id",
                         help="sort workspaces by the given field",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--order-by",
                         type=str,
                         choices=["asc", "desc"],
                         default="asc",
                         help="order workspaces in either ascending or descending order",
                     ),
-                    *pagination_args,
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    *workspace.pagination_args,
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "create",
                 create_project,
                 "create project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("name", type=str, help="name of the project"),
-                    Arg("--description", type=str, help="description of the project"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("name", type=str, help="name of the project"),
+                    cli.Arg("--description", type=str, help="description of the project"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "delete",
                 delete_project,
                 "delete project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg(
                         "--yes",
                         action="store_true",
                         default=False,
@@ -267,51 +265,51 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "archive",
                 archive_project,
                 "archive project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "unarchive",
                 unarchive_project,
                 "unarchive project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "describe",
                 describe_project,
                 "describe project",
                 [
-                    Arg("workspace_name", type=str, help="name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
-                    Arg(
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg(
                         "--all",
                         "-a",
                         action="store_true",
                         default=False,
                         help="show all experiments (including archived and other users')",
                     ),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "edit",
                 edit_project,
                 "edit project",
                 [
-                    Arg("workspace_name", type=str, help="current name of the workspace"),
-                    Arg("project_name", type=str, help="name of the project"),
-                    Arg("--new_name", type=str, help="new name of the project"),
-                    Arg("--description", type=str, help="description of the project"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("workspace_name", type=str, help="current name of the workspace"),
+                    cli.Arg("project_name", type=str, help="name of the project"),
+                    cli.Arg("--new_name", type=str, help="new name of the project"),
+                    cli.Arg("--description", type=str, help="description of the project"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
         ],

@@ -3,7 +3,7 @@ import logging
 import pathlib
 from typing import List, Optional, cast
 
-from tensorflow.python.training.tracking.tracking import AutoTrackable
+from tensorflow.python.training.tracking import tracking
 
 import determined as det
 from determined import keras
@@ -11,7 +11,9 @@ from determined import keras
 logger = logging.getLogger("determined.keras")
 
 
-def load_model_from_checkpoint_path(path: str, tags: Optional[List[str]] = None) -> AutoTrackable:
+def load_model_from_checkpoint_path(
+    path: str, tags: Optional[List[str]] = None
+) -> tracking.AutoTrackable:
     """
     Loads a checkpoint written by a TFKerasTrial.
 

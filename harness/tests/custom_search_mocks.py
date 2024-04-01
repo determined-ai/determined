@@ -1,8 +1,8 @@
 import abc
 import logging
-from pathlib import Path
+import pathlib
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
-from unittest.mock import Mock
+from unittest import mock
 
 from determined import searcher
 from determined.common import api
@@ -106,7 +106,7 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         self,
         search_method: searcher.SearchMethod,
         mock_master_object: MockMaster,
-        searcher_dir: Optional[Path] = None,
+        searcher_dir: Optional[pathlib.Path] = None,
     ):
         super(MockMasterSearchRunner, self).__init__(search_method, searcher_dir)
         self.mock_master_obj = mock_master_object
@@ -136,7 +136,7 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         context_dir: Optional[str] = None,
-        includes: Optional[Iterable[Union[str, Path]]] = None,
+        includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> int:
         logging.info("MockMasterSearchRunner.run")
         experiment_id_file = self.searcher_dir.joinpath("experiment_id")
@@ -151,11 +151,11 @@ class MockMasterSearchRunner(searcher.LocalSearchRunner):
         super(MockMasterSearchRunner, self).save_state(exp_id, [])
         experiment_id = exp_id
         operations: Optional[List[searcher.Operation]] = None
-        session: api.Session = Mock()
+        session: api.Session = mock.Mock()
         super(MockMasterSearchRunner, self).run_experiment(
             experiment_id, session, operations, sleep_time=0.0
         )
         return exp_id
 
-    def _get_state_path(self, experiment_id: int) -> Path:
+    def _get_state_path(self, experiment_id: int) -> pathlib.Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")

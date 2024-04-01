@@ -9,8 +9,7 @@ import torch
 from torch import nn
 
 import determined as det
-from determined import pytorch, util
-from determined.horovod import hvd
+from determined import horovod, pytorch, util
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -360,6 +359,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 if fp16_compression is None:
                     fp16_compression = self._fp16_compression_default
 
+                hvd = horovod.hvd
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
@@ -1016,9 +1016,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             except ImportError:
                 pass
 
-            from torch.utils.tensorboard import SummaryWriter
+            from torch.utils import tensorboard
 
-            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+            self._tbd_writer = tensorboard.SummaryWriter(
+                self.get_tensorboard_path()
+            )  # type: ignore
 
         return self._tbd_writer
 

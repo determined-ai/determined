@@ -8,7 +8,6 @@ import urllib3.exceptions
 
 from determined import errors
 from determined.common import storage, util
-from determined.common.storage.s3 import normalize_prefix
 
 logger = logging.getLogger("determined.common.storage.gcs")
 
@@ -50,7 +49,7 @@ class GCSStorageManager(storage.CloudStorageManager):
             raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
         self.bucket = self.client.bucket(bucket)
-        self.prefix = normalize_prefix(prefix)
+        self.prefix = storage.normalize_prefix(prefix)
 
     def get_storage_prefix(self, storage_id: str) -> str:
         return os.path.join(self.prefix, storage_id)

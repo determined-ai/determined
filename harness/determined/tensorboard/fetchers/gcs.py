@@ -2,19 +2,19 @@ import datetime
 import logging
 import os
 import posixpath
-import urllib
 from typing import Any, Callable, Dict, Generator, List
+from urllib import parse
 
-from .base import Fetcher
+from determined.tensorboard.fetchers import base
 
 logger = logging.getLogger("determined.tensorboard.gcs")
 
 
-class GCSFetcher(Fetcher):
+class GCSFetcher(base.Fetcher):
     def __init__(self, storage_config: Dict[str, Any], storage_paths: List[str], local_dir: str):
-        import google.cloud.storage
+        from google.cloud import storage
 
-        self.client = google.cloud.storage.Client()
+        self.client = storage.Client()
         self.bucket_name = str(storage_config["bucket"])
         self.bucket = self.client.bucket(self.bucket_name)
 
@@ -26,7 +26,7 @@ class GCSFetcher(Fetcher):
         logger.debug(
             f"Listing keys in bucket: '{self.bucket_name}' with storage_path: '{storage_path}'"
         )
-        prefix = urllib.parse.urlparse(storage_path).path.lstrip("/")
+        prefix = parse.urlparse(storage_path).path.lstrip("/")
         blobs = self.client.list_blobs(self.bucket_name, prefix=prefix)
 
         for blob in blobs:
