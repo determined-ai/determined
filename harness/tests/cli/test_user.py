@@ -1,5 +1,7 @@
+import contextlib
 from unittest import mock
 
+import responses
 from responses import matchers
 
 from determined.cli import cli
@@ -46,4 +48,29 @@ def test_user_edit_no_fields(mock_die: mock.MagicMock) -> None:
         cli.main(["user", "edit", "det-user"])
         mock_die.assert_has_calls(
             [mock.call("No field provided. Use 'det user edit -h' for usage.", exit_code=1)]
+        )
+
+
+@mock.patch("getpass.getpass")
+@mock.patch("determined.cli.cli.die")
+def test_login_with_invalid_credentials_error_message(
+    mock_die: mock.MagicMock, mock_getpass: mock.MagicMock
+) -> None:
+    mock_getpass.side_effect = lambda *_: "newpass"
+    with responses.RequestsMock(
+        registry=responses.registries.OrderedRegistry, assert_all_requests_are_fired=True
+    ) as rsps:
+        util.expect_get_info(rsps)
+        rsps.post(
+            "http://localhost:8080/api/v1/auth/login",
+            status=401,
+        )
+
+        cli.main(["user", "login", "test-user"])
+        mock_die.assert_has_calls(
+            [
+                mock.call(
+                    "Failed to log in user: Invalid username/password combination. Please try again."
+                )
+            ]
         )

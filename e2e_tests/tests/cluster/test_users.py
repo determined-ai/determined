@@ -1,6 +1,4 @@
-import argparse
 import contextlib
-import getpass
 import logging
 import os
 import pathlib
@@ -12,7 +10,6 @@ from typing import Generator, List, Tuple
 import appdirs
 import pytest
 
-from determined.cli import user
 from determined.common import api, util
 from determined.common.api import bindings, errors
 from determined.experimental import client
@@ -755,44 +752,3 @@ def test_user_list() -> None:
     # User still appears with --all
     output = detproc.check_output(admin, ["det", "user", "ls", "--all"])
     assert sess.username in output
-
-
-class GetpassLike:
-    """A class for testing code path with getpass.getpass.
-
-    getpass.getpass takes value from /dev/tty.
-    """
-
-    def __init__(self, password):
-        def noop(*args, **kwargs):
-            return password
-
-        self.old_getpass = getpass.getpass
-        self.new_getpass = noop
-
-    def __enter__(self):
-        getpass.getpass = self.new_getpass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        getpass.getpass = self.old_getpass
-
-
-@pytest.mark.e2e_cpu
-def test_login_wrong_password_error_message() -> None:
-    sess, _ = api_utils.create_test_user()
-    master_url = conf.make_master_url()
-    args = argparse.Namespace(username=sess.username, master=master_url)
-
-    with GetpassLike("password"):
-        with pytest.raises(errors.InvalidCredentialsException):
-            user.log_in_user(args)
-
-
-@pytest.mark.e2e_cpu
-def test_login_as_non_existent_user_error_message() -> None:
-    master_url = conf.make_master_url()
-    args = argparse.Namespace(username="nOtArEaLuSeR", master=master_url)
-
-    with GetpassLike("password"):
-        with pytest.raises(errors.InvalidCredentialsException):
-            user.log_in_user(args)
