@@ -9,6 +9,7 @@ import { SkeletonSection } from 'e2e/models/components/SkeletonSection';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class SkeletonTable extends SkeletonSection {
+  static override defaultSelector = SkeletonSection.defaultSelector;
   readonly table: BaseComponent = new BaseComponent({
     parent: this,
     selector: '[data-testid="skeletonTable"]',

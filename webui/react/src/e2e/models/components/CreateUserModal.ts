@@ -9,6 +9,8 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class CreateUserModal extends Modal {
+  static override defaultSelector: string = Modal.defaultSelector;
+
   readonly username: BaseComponent = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="username"]',

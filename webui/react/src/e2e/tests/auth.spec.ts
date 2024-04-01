@@ -8,7 +8,8 @@ test.describe('Authentication', () => {
     await dev.setServerAddress();
   });
   test.afterEach(async ({ page, auth }) => {
-    if ((await page.title()) !== SignIn.title) {
+    const signInPage = new SignIn(page);
+    if ((await page.title()) !== signInPage.title) {
       await auth.logout();
     }
   });
@@ -21,8 +22,9 @@ test.describe('Authentication', () => {
     });
 
     await test.step('Logout', async () => {
+      const signInPage = new SignIn(page);
       await auth.logout();
-      await expect(page).toHaveTitle(SignIn.title);
+      await expect(page).toHaveTitle(signInPage.title);
       await expect(page).toHaveURL(/login/);
     });
   });
@@ -42,7 +44,7 @@ test.describe('Authentication', () => {
   test('Bad Credentials should throw an error', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     await auth.login(/login/, { password: 'superstar', username: 'jcom' });
-    await expect(page).toHaveTitle(SignIn.title);
+    await expect(page).toHaveTitle(signInPage.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
     expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(

@@ -21,8 +21,8 @@ export class DevFixture {
     for (; !(root instanceof BasePage); root = root._parent) {
       componentTree.unshift(root);
     }
-    componentTree.forEach(async (branch) => {
-      await expect(branch.pwLocator).toBeVisible();
+    componentTree.forEach(async (node) => {
+      await expect(node.pwLocator).toBeVisible();
     });
   }
 }

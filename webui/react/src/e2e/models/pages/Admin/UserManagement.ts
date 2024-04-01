@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
 import { ChangeUserStatusModal } from 'e2e/models/components/ChangeUserStatusModal';
@@ -15,14 +16,33 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class UserManagement extends AdminPage {
-  static title: string = 'Determined';
-  static url: string = 'admin/user-management';
+  readonly title: string = 'Determined';
+  readonly url: string = 'admin/user-management';
   readonly getRowByID: (value: string) => UserRow;
 
-  readonly actionRow: BaseComponent = new BaseComponent({
+  readonly #actionRow: BaseComponent = new BaseComponent({
     parent: this.content,
-    selector: 'data-testid="actionRow"',
+    selector: '[data-testid="actionRow"]',
   });
+  readonly search: BaseComponent = new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="search"]',
+  });
+  // TODO do these selects work?
+  readonly filterRole: BaseComponent = new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="roleSelect"]',
+  });
+  // TODO do these selects work?
+  readonly filterStatus: BaseComponent = new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="statusSelect"]',
+  });
+  readonly addUser: BaseComponent = new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="addUser"]',
+  });
+
   readonly table: InteractiveTable<UserRow, UserHeadRow> = new InteractiveTable({
     headRowType: UserHeadRow,
     parent: this.content,
@@ -40,38 +60,42 @@ export class UserManagement extends AdminPage {
   });
 
   constructor(page: Page) {
-    super(page)
+    super(page);
     this.getRowByID = this.table.table.getRowByDataKey;
   }
 }
 
 class UserHeadRow extends HeadRow {
+  static override defaultSelector: string = HeadRow.defaultSelector;
+
   readonly user: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="User"',
+    selector: '[data-testid="User"]',
   });
   readonly status: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="Status"',
+    selector: '[data-testid="Status"]',
   });
   readonly lastSeen: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="Last Seen"',
+    selector: '[data-testid="Last Seen"]',
   });
   readonly role: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="Role"',
+    selector: '[data-testid="Role"]',
   });
   readonly remote: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="Remote"',
+    selector: '[data-testid="Remote"]',
   });
   readonly modified: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'data-testid="Modified"',
+    selector: '[data-testid="Modified"]',
   });
 }
 class UserRow extends Row {
+  static override defaultSelector: string = Row.defaultSelector;
+
   /**
    * Returns a templated selector for children components.
    * TODO DANGER - dependant on order or elements. This is a smelly practice
@@ -115,16 +139,16 @@ class UserRow extends Row {
 }
 
 class UserActionDropdown extends Dropdown {
-  readonly admin: BaseComponent = new BaseComponent({
-    parent: this.menu,
+  readonly edit: BaseComponent = new BaseComponent({
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('edit'),
   });
-  readonly settings: BaseComponent = new BaseComponent({
-    parent: this.menu,
+  readonly agent: BaseComponent = new BaseComponent({
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('agent'),
   });
-  readonly theme: BaseComponent = new BaseComponent({
-    parent: this.menu,
+  readonly state: BaseComponent = new BaseComponent({
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('state'),
   });
 }

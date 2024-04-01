@@ -13,7 +13,7 @@ export class Modal extends NamedComponent {
     super({ parent: parent, selector: selector || Modal.defaultSelector });
   }
   readonly body: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-modal-body' });
-  readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: 'ant-modal-footer' });
+  readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: '.ant-modal-footer' });
 }
 
 /**

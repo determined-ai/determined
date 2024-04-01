@@ -37,13 +37,14 @@ export class InteractiveTable<
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
-  static defaultSelector = 'data-testid="table"';
+  static defaultSelector = '[data-testid="table"]';
+  static #rowKeyAttribute = 'data-row-key';
   constructor({ parent, selector, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || Table.defaultSelector });
     this.#rowType = rowType;
     this.rows = new rowType({ parent: this.#body });
     this.headRow = new headRowType({ parent: this.#head });
-    this.getRowByDataKey = this.rowByAttributeGenerator('data-row-key');
+    this.getRowByDataKey = this.rowByAttributeGenerator(Table.#rowKeyAttribute);
   }
   readonly #rowType: RowTypeGeneric<RowType>;
   readonly rows: RowType;
@@ -76,6 +77,25 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
   }
 
   readonly getRowByDataKey: (value: string) => RowType;
+
+  async allRowKeys(): Promise<string[]> {
+    const keys: string[] = [];
+    for (const row of await this.rows.pwLocator.all()) {
+      const value = await row.getAttribute(Table.#rowKeyAttribute);
+      if (value === null) {
+        throw new Error(`All rows should have the attribute ${Table.#rowKeyAttribute}`);
+      }
+      keys.push(value);
+    }
+    return keys;
+  }
+
+  async newRowKeys(oldKeys: string[]): Promise<string[]> {
+    const newKeys = await this.allRowKeys();
+    return newKeys.filter((value) => {
+      return oldKeys.indexOf(value) === -1;
+    });
+  }
 }
 
 export class Row extends NamedComponent {

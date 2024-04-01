@@ -15,7 +15,7 @@ export class Dropdown extends BaseComponent {
   static selectorTemplate(id: string): string {
     return `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`;
   }
-  readonly menu: BaseComponent = new BaseComponent({
+  protected readonly _menu: BaseComponent = new BaseComponent({
     parent: this.root,
     selector: 'ul.ant-dropdown-menu',
   });

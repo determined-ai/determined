@@ -25,19 +25,19 @@ export class NavigationSideBar extends BaseReactFragment {
 
 class HeaderDropdown extends Dropdown {
   readonly admin: BaseComponent = new BaseComponent({
-    parent: this.menu,
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('admin'),
   });
   readonly settings: BaseComponent = new BaseComponent({
-    parent: this.menu,
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('settings'),
   });
   readonly theme: BaseComponent = new BaseComponent({
-    parent: this.menu,
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('theme-toggle'),
   });
   readonly signOut: BaseComponent = new BaseComponent({
-    parent: this.menu,
+    parent: this._menu,
     selector: Dropdown.selectorTemplate('sign-out'),
   });
 }
