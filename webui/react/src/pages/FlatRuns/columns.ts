@@ -36,14 +36,13 @@ export const runColumns = [
   'duration',
   'experimentProgress',
   'experimentId',
-  'name',
+  'experimentName',
   'experimentDescription',
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
   'externalExperimentId',
   'externalRunId',
-  'experimentDescription',
   'isExpMultitrial',
   'parentArchived',
 ] as const;
@@ -161,6 +160,95 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.duration,
   },
+  endTime: {
+    id: 'endTime',
+    isNumerical: true,
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      copyData: record.endTime ? getTimeInEnglish(new Date(record.endTime)) : '',
+      data: { kind: TEXT_CELL },
+      kind: GridCellKind.Custom,
+    }),
+    title: 'End Time',
+    tooltip: () => undefined,
+    width: columnWidths.endTime,
+  },
+  experimentDescription: {
+    id: 'experimentDescription',
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      copyData: String(record.experiment?.description),
+      data: { kind: TEXT_CELL },
+      kind: GridCellKind.Custom,
+    }),
+    title: 'Searcher Description',
+    tooltip: () => undefined,
+    width: columnWidths.experimentDescription,
+  },
+  experimentId: {
+    id: 'experimentId',
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      copyData: String(record.id),
+      cursor: 'pointer',
+      data: {
+        kind: LINK_CELL,
+        link: record.experiment?.id
+          ? {
+              href: paths.experimentDetails(record.experiment.id),
+              title: String(record.experiment.id),
+              unmanaged: record.experiment.unmanaged,
+            }
+          : undefined,
+        navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          if (record.experiment) {
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(record.experiment.id),
+            });
+          }
+        },
+        underlineOffset: 6,
+      },
+      kind: GridCellKind.Custom,
+      readonly: true,
+    }),
+    title: 'Searcher ID',
+    tooltip: () => undefined,
+    width: columnWidths.experimentId,
+  },
+  experimentName: {
+    id: 'experimentName',
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      copyData: String(record.experiment?.name),
+      cursor: 'pointer',
+      data: {
+        kind: LINK_CELL,
+        link: record.experiment?.id
+          ? {
+              href: paths.experimentDetails(record.experiment?.id),
+              title: String(record.experiment?.name),
+              unmanaged: record.experiment.unmanaged,
+            }
+          : undefined,
+        navigateOn: 'click',
+        onClick: (e: CellClickedEventArgs) => {
+          if (record.experiment) {
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(record.experiment.id),
+            });
+          }
+        },
+        underlineOffset: 6,
+      },
+      kind: GridCellKind.Custom,
+      readonly: true,
+    }),
+    title: 'Searcher Name',
+    tooltip: () => undefined,
+    width: columnWidths.experimentName,
+  },
   externalExperimentId: {
     id: 'externalExperimentId',
     renderer: (record: FlatRun) => ({
@@ -252,38 +340,17 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.id,
   },
-  name: {
-    id: 'experimentName',
+  isExpMultitrial: {
+    id: 'isExpMultitrial',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.name),
-      cursor: 'pointer',
-      data: {
-        kind: LINK_CELL,
-        link: record.experiment?.id
-          ? {
-              href: paths.experimentDetails(record.experiment?.id),
-              title: String(record.experiment?.name),
-              unmanaged: record.experiment.unmanaged,
-            }
-          : undefined,
-        navigateOn: 'click',
-        onClick: (e: CellClickedEventArgs) => {
-          if (record.experiment) {
-            handlePath(e as unknown as AnyMouseEvent, {
-              path: paths.experimentDetails(record.experiment.id),
-            });
-          }
-        },
-        underlineOffset: 6,
-      },
-      kind: GridCellKind.Custom,
-
-      readonly: true,
+      data: String(record.experiment?.isMultitrial),
+      displayData: record.experiment?.isMultitrial ? '✔️' : '',
+      kind: GridCellKind.Text,
     }),
-    title: 'Searcher Name',
+    title: 'Searcher Multitrial',
     tooltip: () => undefined,
-    width: columnWidths.name,
+    width: columnWidths.isExpMultitrial,
   },
   progress: {
     id: 'experimentProgress',
@@ -445,12 +512,13 @@ export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
   checkpointSize: 110,
   duration: 86,
   experimentDescription: 148,
+  experimentId: 60,
+  experimentName: 290,
   experimentProgress: 65,
   externalExperimentId: 160,
   externalRunId: 130,
   forkedFrom: 86,
   id: 50,
-  name: 290,
   parentArchived: 80,
   resourcePool: 140,
   searcherMetric: 120,
