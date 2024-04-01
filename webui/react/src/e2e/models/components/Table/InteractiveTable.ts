@@ -1,8 +1,10 @@
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
+type RowTypeGeneric<RowType> = new ({ parent, selector }: NamedComponentArgs) => RowType;
+
 export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
-  rowType: new ({ parent, selector }: NamedComponentArgs) => RowType;
+  rowType: RowTypeGeneric<RowType>;
   headRowType: new ({ parent, selector }: NamedComponentArgs) => HeadRowType;
 };
 
@@ -21,10 +23,12 @@ export class InteractiveTable<
   constructor({ selector, parent, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || InteractiveTable.defaultSelector });
     this.table = new Table({ headRowType, parent: this, rowType });
+    this.getRowByID = this.table.getRowByDataKey;
   }
 
   readonly table: Table<RowType, HeadRowType>;
   readonly skeleton: SkeletonTable = new SkeletonTable({ parent: this });
+  readonly getRowByID: (value: string) => RowType;
 }
 
 /**
@@ -38,9 +42,12 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
   static defaultSelector = 'data-testid="table"';
   constructor({ parent, selector, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || Table.defaultSelector });
+    this.#rowType = rowType;
     this.rows = new rowType({ parent: this.#body });
     this.headRow = new headRowType({ parent: this.#head });
+    this.getRowByDataKey = this.rowByAttributeGenerator();
   }
+  readonly #rowType: RowTypeGeneric<RowType>;
   readonly rows: RowType;
   readonly headRow: HeadRowType;
   readonly #body: BaseComponent = new BaseComponent({
@@ -51,6 +58,26 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
     parent: this,
     selector: 'theader.ant-table-thead',
   });
+
+  /**
+   * Returns a function that gets a row by an attribute value.
+   * @param {string} [key] - name of the row attribute
+   */
+  rowByAttributeGenerator(key: string = 'data-row-key'): (value: string) => RowType {
+    /**
+     * Returns a row by an attribute value.
+     * @param {string} [value] - value of the row attribute
+     */
+    return (value: string) => {
+      // TODO default selector should be instance property to make this easier. We want RowType.defaultSelector
+      return new this.#rowType({
+        parent: this,
+        selector: Row.defaultSelector + `[${key}="${value}"]`,
+      });
+    };
+  }
+
+  readonly getRowByDataKey: (value: string) => RowType;
 }
 
 export class Row extends NamedComponent {
@@ -58,8 +85,10 @@ export class Row extends NamedComponent {
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Row.defaultSelector });
   }
-  readonly select: BaseComponent = new BaseComponent({parent: this, selector: ".ant-table-selection-column"})
-  // TODO get a single row
+  readonly select: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '.ant-table-selection-column',
+  });
 }
 
 export class HeadRow extends NamedComponent {
@@ -67,5 +96,8 @@ export class HeadRow extends NamedComponent {
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || HeadRow.defaultSelector });
   }
-  readonly selection: BaseComponent = new BaseComponent({parent: this, selector: ".ant-table-selection-column"})
+  readonly selection: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '.ant-table-selection-column',
+  });
 }

@@ -284,13 +284,14 @@ const HeaderCell = ({
 
   if (!columnName) return <th className={className} {...props} />;
 
-  if (!interactiveColumns) return <th data-testid={columnName} className={headerCellClasses.join(' ')} {...props} />;
+  if (!interactiveColumns)
+    return <th className={headerCellClasses.join(' ')} data-testid={columnName} {...props} />;
 
   const tableCell = (
     <th className={headerCellClasses.join(' ')}>
       <div
-        data-testid={columnName}
         className={`${className} ${css.columnDraggingDiv}`}
+        data-testid={columnName}
         ref={drag}
         title={columnName}
         onClick={(e) => e.stopPropagation()}
