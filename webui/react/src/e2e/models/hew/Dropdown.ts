@@ -8,10 +8,14 @@ import { BaseComponent } from 'e2e/models/BaseComponent';
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Dropdown extends BaseComponent {
+  /**
+   * Returns a templated selector for children components.
+   * @param {string} id - menu item id
+   */
   static selectorTemplate(id: string): string {
     return `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`;
   }
-  readonly headerDropdownMenu: BaseComponent = new BaseComponent({
+  readonly menu: BaseComponent = new BaseComponent({
     parent: this.root,
     selector: 'ul.ant-dropdown-menu',
   });

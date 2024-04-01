@@ -12,6 +12,11 @@ export class Pivot extends NamedComponent {
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Pivot.defaultSelector });
   }
+
+  /**
+   * Returns a templated selector for children components.
+   * @param {string} id - tab id
+   */
   static selectorTemplateTabs(id: string): string {
     return `div.ant-tabs-tab-btn[id$="${id}"]`;
   }

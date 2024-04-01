@@ -18,25 +18,26 @@ export class NavigationSideBar extends BaseReactFragment {
     selector: '[data-testid="headerDropdown"]',
   });
   // TODO the rest of the sidebar items
+  // TODO nameplate with parent = this.headerDropdown
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
-  // readonly userSettings: UserSettings = new UserSettings({ parent: this });
+  // TODO readonly userSettings: UserSettings = new UserSettings({ parent: this });
 }
 
 class HeaderDropdown extends Dropdown {
   readonly admin: BaseComponent = new BaseComponent({
-    parent: this.headerDropdownMenu,
+    parent: this.menu,
     selector: Dropdown.selectorTemplate('admin'),
   });
   readonly settings: BaseComponent = new BaseComponent({
-    parent: this.headerDropdownMenu,
+    parent: this.menu,
     selector: Dropdown.selectorTemplate('settings'),
   });
   readonly theme: BaseComponent = new BaseComponent({
-    parent: this.headerDropdownMenu,
+    parent: this.menu,
     selector: Dropdown.selectorTemplate('theme-toggle'),
   });
   readonly signOut: BaseComponent = new BaseComponent({
-    parent: this.headerDropdownMenu,
+    parent: this.menu,
     selector: Dropdown.selectorTemplate('sign-out'),
   });
 }

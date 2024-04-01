@@ -23,12 +23,10 @@ export class InteractiveTable<
   constructor({ selector, parent, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || InteractiveTable.defaultSelector });
     this.table = new Table({ headRowType, parent: this, rowType });
-    this.getRowByID = this.table.getRowByDataKey;
   }
 
   readonly table: Table<RowType, HeadRowType>;
   readonly skeleton: SkeletonTable = new SkeletonTable({ parent: this });
-  readonly getRowByID: (value: string) => RowType;
 }
 
 /**
@@ -45,7 +43,7 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
     this.#rowType = rowType;
     this.rows = new rowType({ parent: this.#body });
     this.headRow = new headRowType({ parent: this.#head });
-    this.getRowByDataKey = this.rowByAttributeGenerator();
+    this.getRowByDataKey = this.rowByAttributeGenerator('data-row-key');
   }
   readonly #rowType: RowTypeGeneric<RowType>;
   readonly rows: RowType;
@@ -61,12 +59,12 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
 
   /**
    * Returns a function that gets a row by an attribute value.
-   * @param {string} [key] - name of the row attribute
+   * @param {string} key - name of the row attribute
    */
-  rowByAttributeGenerator(key: string = 'data-row-key'): (value: string) => RowType {
+  rowByAttributeGenerator(key: string): (value: string) => RowType {
     /**
      * Returns a row by an attribute value.
-     * @param {string} [value] - value of the row attribute
+     * @param {string} value - value of the row attribute
      */
     return (value: string) => {
       // TODO default selector should be instance property to make this easier. We want RowType.defaultSelector
