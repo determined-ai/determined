@@ -17,7 +17,7 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: 3 * 60 * 1000, // 3 min
+  globalTimeout: process.env.PWDEBUG ? 0 : 3 * 60 * 1000, // 3 min unless debugging
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',

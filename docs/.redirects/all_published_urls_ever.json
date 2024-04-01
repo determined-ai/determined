@@ -232,6 +232,7 @@
     "model-dev-guide/prepare-container/index",
     "model-dev-guide/prepare-container/overview",
     "model-dev-guide/prepare-container/set-environment-images",
+    "model-dev-guide/profiling",
     "model-dev-guide/submit-experiment",
     "model-hub-library/_index",
     "model-hub-library/index",

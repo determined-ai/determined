@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/mathx"
 )
 
@@ -69,7 +70,7 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	req *sproto.AllocateRequest, agents map[agentID]*agentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[aproto.ID]*agentState, fittingMethod SoftConstraint,
 	allowHeterogeneousFits bool,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
@@ -104,7 +105,7 @@ func isViable(
 }
 
 func findDedicatedAgentFits(
-	req *sproto.AllocateRequest, agentStates map[agentID]*agentState,
+	req *sproto.AllocateRequest, agentStates map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint, allowHeterogeneousFits bool,
 ) []*fittingState {
 	if len(agentStates) == 0 {
@@ -219,7 +220,7 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	req *sproto.AllocateRequest, agents map[agentID]*agentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[aproto.ID]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {

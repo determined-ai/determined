@@ -237,6 +237,29 @@ def test_model_cli() -> None:
         detproc.check_call(sess, command)
         model_1 = d.get_model(test_model_1_name)
         assert model_1.workspace_id == test_workspace.id
-        # Delete test models (workspace deleted in setup_workspace)
+
+        # delete test_model_2
+        command = [
+            "det",
+            "model",
+            "delete",
+            test_model_2_name,
+        ]
+        detproc.check_call(sess, command)
+        with pytest.raises(errors.APIException) as e:
+            # should be "not found" now
+            model_2 = d.get_model(test_model_2_name)
+        assert e.value.status_code == http.HTTPStatus.NOT_FOUND
+
+        # Test det model list -w workspace_name and det model describe
+        command = ["det", "model", "list", "-w", test_workspace.name]
+        output = detproc.check_output(sess, command)
+        assert (
+            "Workspace ID" in output
+            and str(test_workspace.id) in output
+            and test_model_1_name in output
+            and test_model_2_name not in output
+        )  # we moved model_1 to the workspace, but deleted model_2
+
+        # Delete test models (workspace deleted in setup_workspace, and model_2 already deleted)
         model_1.delete()
-        model_2.delete()

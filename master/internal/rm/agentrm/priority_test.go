@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -743,7 +744,7 @@ func TestPrioritySchedulingNoPreemptionByPosition(t *testing.T) {
 
 func AllocateTasks(
 	toAllocate []*sproto.AllocateRequest,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	taskList *tasklist.TaskList,
 ) {
 	for _, req := range toAllocate {

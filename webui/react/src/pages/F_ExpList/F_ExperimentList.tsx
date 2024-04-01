@@ -1,22 +1,54 @@
-import { CompactSelection, GridSelection, Rectangle } from '@glideapps/glide-data-grid';
+import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
+import {
+  ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
+  defaultDateColumn,
+  defaultNumberColumn,
+  defaultSelectionColumn,
+  defaultTextColumn,
+  MIN_COLUMN_WIDTH,
+  MULTISELECT,
+} from 'hew/DataGrid/columns';
+import DataGrid, {
+  DataGridHandle,
+  HandleSelectionChangeType,
+  RangelessSelectionType,
+  SelectionType,
+  Sort,
+  validSort,
+  ValidSort,
+} from 'hew/DataGrid/DataGrid';
+import { MenuItem } from 'hew/Dropdown';
+import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
-import { useTheme } from 'hew/Theme';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { observable, useObservable } from 'micro-observables';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import ComparisonView from 'components/ComparisonView';
+import { Error, NoExperiments } from 'components/exceptions';
+import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
+  AvailableOperators,
   FilterFormSet,
   FormField,
   FormGroup,
+  FormKind,
   IOFilterFormSet,
+  Operator,
+  SpecialColumnNames,
 } from 'components/FilterForm/components/type';
+import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
+import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import TableActionBar from 'components/TableActionBar';
+import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -26,6 +58,7 @@ import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
   ExperimentAction,
@@ -37,9 +70,16 @@ import {
   RunState,
 } from 'types';
 import handleError from 'utils/error';
+import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { eagerSubscribe } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 
-import ComparisonView from './ComparisonView';
+import {
+  ExperimentColumn,
+  experimentColumns,
+  getColumnDefs,
+  searcherMetricsValColumn,
+} from './expListColumns';
 import css from './F_ExperimentList.module.scss';
 import {
   DEFAULT_SELECTION,
@@ -51,19 +91,6 @@ import {
   settingsConfigGlobal,
   settingsPathForProject,
 } from './F_ExperimentList.settings';
-import {
-  columnWidthsFallback,
-  ExperimentColumn,
-  experimentColumns,
-  MIN_COLUMN_WIDTH,
-  MULTISELECT,
-  NO_PINS_WIDTH,
-} from './glide-table/columns';
-import { Error, NoExperiments } from './glide-table/exceptions';
-import GlideTable, { SCROLL_SET_COUNT_NEEDED, TableViewMode } from './glide-table/GlideTable';
-import { EMPTY_SORT, Sort, validSort, ValidSort } from './glide-table/MultiSortMenu';
-import { RowHeight } from './glide-table/OptionsMenu';
-import TableActionBar from './glide-table/TableActionBar';
 
 interface Props {
   project: Project;
@@ -71,12 +98,7 @@ interface Props {
 
 type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
 
-type RangelessSelectionType = 'add-all' | 'remove-all';
-type SelectionType = 'add' | 'remove' | 'set';
-export interface HandleSelectionChangeType {
-  (selectionType: RangelessSelectionType): void;
-  (selectionType: SelectionType, range: [number, number]): void;
-}
+const NO_PINS_WIDTH = 200;
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -102,7 +124,15 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
 
 const STATIC_COLUMNS = [MULTISELECT];
 
+const rowHeightMap: Record<RowHeight, number> = {
+  [RowHeight.EXTRA_TALL]: 44,
+  [RowHeight.TALL]: 40,
+  [RowHeight.MEDIUM]: 36,
+  [RowHeight.SHORT]: 32,
+};
+
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
+  const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
@@ -162,8 +192,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [isLoadingSettings, settings.selection],
   );
 
-  const { getThemeVar } = useTheme();
-
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
     [updateSettings],
@@ -190,15 +218,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       if (!prevPs?.isLoaded) {
         ps.forEach((s) => {
           cleanup?.();
-          // init formset
-          if (!s?.filterset) return;
-          const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
-          if (isLeft(formSetValidation)) {
-            handleError(formSetValidation.left, {
-              publicSubject: 'Unable to initialize filterset from settings',
-            });
+          if (!s?.filterset) {
+            formStore.init();
           } else {
-            formStore.init(formSetValidation.right);
+            const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+            if (isLeft(formSetValidation)) {
+              handleError(formSetValidation.left, {
+                publicSubject: 'Unable to initialize filterset from settings',
+              });
+            } else {
+              formStore.init(formSetValidation.right);
+            }
           }
           cleanup = formStore.asJsonString.subscribe(() => {
             resetPagination();
@@ -263,18 +293,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
 
   const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
-  const { height: containerHeight, width: containerWidth } = useResize(contentRef);
-  const height =
-    containerHeight - 2 * parseInt(getThemeVar('strokeWidth')) - (isPagedView ? 40 : 0);
-  const [scrollPositionSetCount] = useState(observable(0));
-
-  const handleScroll = useCallback(
-    ({ y, height }: Rectangle) => {
-      if (scrollPositionSetCount.get() < SCROLL_SET_COUNT_NEEDED) return;
-      setPage(Math.floor((y + height) / PAGE_SIZE));
-    },
-    [scrollPositionSetCount, setPage],
-  );
+  const { width: containerWidth } = useResize(contentRef);
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {
@@ -576,9 +595,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [handleActionSuccess],
   );
 
-  const handleVisibleColumnChange = useCallback(
-    (newColumns: string[]) => {
-      updateSettings({ columns: newColumns });
+  const handleColumnsOrderChange = useCallback(
+    (newColumnsOrder: string[]) => {
+      updateSettings({ columns: newColumnsOrder });
     },
     [updateSettings],
   );
@@ -640,7 +659,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       containerWidth - 30,
       pinnedColumns.reduce(
         (totalWidth, curCol) =>
-          totalWidth + (settings.columnWidths[curCol] ?? columnWidthsFallback),
+          totalWidth + (settings.columnWidths[curCol] ?? DEFAULT_COLUMN_WIDTH),
         scrollbarWidth,
       ),
     );
@@ -653,11 +672,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       // Negative widthDifference: Table pane shrinking/compare pane growing
       const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
       pinnedColumns
-        .filter(
-          (col) =>
-            col !== MULTISELECT &&
-            (widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH),
-        )
+        .filter((col) => widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH)
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
@@ -672,10 +687,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleColumnWidthChange = useCallback(
-    (newWidths: Record<string, number>) => {
-      updateSettings({ columnWidths: newWidths });
+    (columnId: string, width: number) => {
+      updateSettings({
+        columnWidths: {
+          ...settings.columnWidths,
+          [columnId]: width,
+        },
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.columnWidths],
   );
 
   const handleHeatmapToggle = useCallback(
@@ -723,6 +743,313 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
+  const {
+    ui: { theme: appTheme },
+    isDarkMode,
+  } = useUI();
+
+  const users = useObservable(usersStore.getUsers());
+
+  const columns: ColumnDef<ExperimentWithTrial>[] = useMemo(() => {
+    const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
+      projectColumns,
+      (columns) => {
+        return columns.reduce((acc, col) => ({ ...acc, [col.column]: col }), {});
+      },
+    );
+    const columnDefs = getColumnDefs({
+      appTheme,
+      columnWidths: settings.columnWidths,
+      themeIsDark: isDarkMode,
+      users,
+    });
+    const gridColumns = (
+      settings.compare
+        ? [...STATIC_COLUMNS, ...columnsIfLoaded.slice(0, settings.pinnedColumnsCount)]
+        : [...STATIC_COLUMNS, ...columnsIfLoaded]
+    )
+      .map((columnName) => {
+        if (columnName === MULTISELECT) {
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
+        }
+        if (columnName in columnDefs) return columnDefs[columnName];
+        if (!Loadable.isLoaded(projectColumnsMap)) return;
+        const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) return;
+        let dataPath: string | undefined = undefined;
+        switch (currentColumn.location) {
+          case V1LocationType.EXPERIMENT:
+            dataPath = `experiment.${currentColumn.column}`;
+            break;
+          case V1LocationType.HYPERPARAMETERS:
+            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
+              'hp.',
+              '',
+            )}.val`;
+            break;
+          case V1LocationType.VALIDATIONS:
+            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
+              'validation.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.TRAINING:
+            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
+              'training.',
+              '',
+            )}`;
+            break;
+          case V1LocationType.CUSTOMMETRIC:
+            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
+            break;
+          case V1LocationType.UNSPECIFIED:
+          default:
+            break;
+        }
+        switch (currentColumn.type) {
+          case V1ColumnType.NUMBER: {
+            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+            if (
+              heatmap &&
+              settings.heatmapOn &&
+              !settings.heatmapSkipped.includes(currentColumn.column)
+            ) {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
+                settings.columnWidths[currentColumn.column],
+                dataPath,
+                {
+                  max: heatmap.max,
+                  min: heatmap.min,
+                },
+              );
+            } else {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
+                settings.columnWidths[currentColumn.column],
+                dataPath,
+              );
+            }
+            break;
+          }
+          case V1ColumnType.DATE:
+            columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
+            break;
+          case V1ColumnType.TEXT:
+          case V1ColumnType.UNSPECIFIED:
+          default:
+            columnDefs[currentColumn.column] = defaultTextColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
+        }
+        if (currentColumn.column === 'searcherMetricsVal') {
+          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
+          if (
+            heatmap &&
+            settings.heatmapOn &&
+            !settings.heatmapSkipped.includes(currentColumn.column)
+          ) {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              settings.columnWidths[currentColumn.column],
+              {
+                max: heatmap.max,
+                min: heatmap.min,
+              },
+            );
+          } else {
+            columnDefs[currentColumn.column] = searcherMetricsValColumn(
+              settings.columnWidths[currentColumn.column],
+            );
+          }
+        }
+        return columnDefs[currentColumn.column];
+      })
+      .flatMap((col) => (col ? [col] : []));
+    return gridColumns;
+  }, [
+    settings.compare,
+    settings.pinnedColumnsCount,
+    projectColumns,
+    settings.columnWidths,
+    settings.heatmapSkipped,
+    projectHeatmap,
+    settings.heatmapOn,
+    columnsIfLoaded,
+    appTheme,
+    isDarkMode,
+    selectAll,
+    selection.rows,
+    users,
+  ]);
+
+  const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
+    if (columnId === MULTISELECT) {
+      const items: MenuItem[] = [
+        selection.rows.length > 0
+          ? {
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
+          : null,
+        ...[5, 10, 25].map((n) => ({
+          key: `select-${n}`,
+          label: `Select first ${n}`,
+          onClick: () => {
+            handleSelectionChange?.('set', [0, n]);
+            dataGridRef.current?.scrollToTop();
+          },
+        })),
+        {
+          key: 'select-all',
+          label: 'Select all',
+          onClick: () => {
+            handleSelectionChange?.('add-all');
+          },
+        },
+      ];
+      return items;
+    }
+    const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+    if (!column) {
+      return [];
+    }
+
+    const filterCount = formStore.getFieldCount(column.column).get();
+
+    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
+    const loadableFormset = formStore.formset.get();
+    const filterMenuItemsForColumn = () => {
+      const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
+      formStore.addChild(ROOT_ID, FormKind.Field, {
+        index: Loadable.match(loadableFormset, {
+          _: () => 0,
+          Loaded: (formset) => formset.filterGroup.children.length,
+        }),
+        item: {
+          columnName: column.column,
+          id: uuidv4(),
+          kind: FormKind.Field,
+          location: column.location,
+          operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+          type: column.type,
+          value: null,
+        },
+      });
+      handleIsOpenFilterChange?.(true);
+    };
+    const clearFilterForColumn = () => {
+      formStore.removeByField(column.column);
+    };
+
+    const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
+    const items: MenuItem[] = [
+      // Column is pinned if the index is inside of the frozen columns
+      colIdx < STATIC_COLUMNS.length || isMobile
+        ? null
+        : !isPinned
+          ? {
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
+              },
+            }
+          : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              },
+            },
+      {
+        icon: <Icon decorative name="eye-close" />,
+        key: 'hide',
+        label: 'Hide column',
+        onClick: () => {
+          const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+          handleColumnsOrderChange?.(newColumnsOrder);
+          if (isPinned) {
+            handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+          }
+        },
+      },
+      { type: 'divider' as const },
+      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+        ? []
+        : [
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
+              },
+            },
+          ]),
+      filterCount > 0
+        ? {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
+        : null,
+      settings.heatmapOn &&
+      (column.column === 'searcherMetricsVal' ||
+        (column.type === V1ColumnType.NUMBER &&
+          (column.location === V1LocationType.VALIDATIONS ||
+            column.location === V1LocationType.TRAINING)))
+        ? {
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !settings.heatmapSkipped.includes(column.column)
+              ? 'Cancel heatmap'
+              : 'Apply heatmap',
+            onClick: () => {
+              handleHeatmapSelection?.(
+                settings.heatmapSkipped.includes(column.column)
+                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                  : [...settings.heatmapSkipped, column.column],
+              );
+            },
+          }
+        : null,
+    ];
+    return items;
+  };
+
+  const getRowAccentColor = (rowData: ExperimentWithTrial) => {
+    return colorMap[rowData.experiment.id];
+  };
+
   return (
     <>
       <TableActionBar
@@ -752,7 +1079,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
         onTableViewModeChange={handleTableViewModeChange}
-        onVisibleColumnChange={handleVisibleColumnChange}
+        onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>
         {!isLoading && experiments.length === 0 ? (
@@ -772,37 +1099,53 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <GlideTable
-                colorMap={colorMap}
-                columnWidths={settings.columnWidths}
-                comparisonViewOpen={settings.compare}
+              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+                columns={columns}
                 data={experiments}
-                dataTotal={isPagedView ? experiments.length : Loadable.getOrElse(PAGE_SIZE, total)}
-                formStore={formStore}
-                heatmapOn={settings.heatmapOn}
-                heatmapSkipped={settings.heatmapSkipped}
-                height={height}
+                getHeaderMenuItems={getHeaderMenuItems}
+                getRowAccentColor={getRowAccentColor}
+                hideUnpinned={settings.compare}
+                imperativeRef={dataGridRef}
+                isPaginated={isPagedView}
                 page={page}
+                pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
-                project={project}
-                projectColumns={projectColumns}
-                projectHeatmap={projectHeatmap}
-                rowHeight={globalSettings.rowHeight}
-                scrollPositionSetCount={scrollPositionSetCount}
-                selectAll={selectAll}
+                renderContextMenuComponent={({
+                  cell,
+                  rowData,
+                  link,
+                  open,
+                  onComplete,
+                  onClose,
+                  onVisibleChange,
+                }) => {
+                  return (
+                    <ExperimentActionDropdown
+                      cell={cell}
+                      experiment={getProjectExperimentForExperimentItem(
+                        rowData.experiment,
+                        project,
+                      )}
+                      link={link}
+                      makeOpen={open}
+                      onComplete={onComplete}
+                      onLink={onClose}
+                      onVisibleChange={onVisibleChange}>
+                      <div />
+                    </ExperimentActionDropdown>
+                  );
+                }}
+                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
                 selection={selection}
-                sortableColumnIds={columnsIfLoaded}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
+                total={Loadable.getOrElse(PAGE_SIZE, total)}
                 onColumnResize={handleColumnWidthChange}
+                onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onHeatmapSelection={handleHeatmapSelection}
-                onIsOpenFilterChange={handleIsOpenFilterChange}
+                onPageUpdate={setPage}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
-                onScroll={isPagedView ? undefined : handleScroll}
                 onSelectionChange={handleSelectionChange}
-                onSortableColumnChange={handleVisibleColumnChange}
-                onSortChange={handleSortChange}
               />
             </ComparisonView>
             {showPagination && (

@@ -108,6 +108,12 @@ def list_versions(args: Namespace) -> None:
         _render_model_versions(model.list_versions())
 
 
+def delete(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
+    model.delete()
+
+
 def create(args: Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
@@ -222,6 +228,14 @@ args_description = [
                 [
                     Arg("name", type=str, help="unique name of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
+                ],
+            ),
+            Cmd(
+                "delete",
+                delete,
+                "delete model",
+                [
+                    Arg("name", type=str, help="unique name of the model"),
                 ],
             ),
             Cmd(

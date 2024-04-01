@@ -38,7 +38,7 @@ type agents struct {
 	syslog *logrus.Entry
 	mu     sync.Mutex
 
-	agents       *tasklist.Registry[agentID, *agent]
+	agents       *tasklist.Registry[aproto.ID, *agent]
 	agentUpdates *queue.Queue[agentUpdatedEvent]
 	poolConfigs  []config.ResourcePoolConfig
 	opts         *aproto.MasterSetAgentOptions
@@ -51,7 +51,7 @@ func newAgentService(
 	agentUpdates := queue.New[agentUpdatedEvent]()
 	a := &agents{
 		syslog:       logrus.WithField("component", "agents"),
-		agents:       tasklist.NewRegistry[agentID, *agent](),
+		agents:       tasklist.NewRegistry[aproto.ID, *agent](),
 		agentUpdates: agentUpdates,
 		poolConfigs:  poolConfigs,
 		opts:         opts,
@@ -66,7 +66,7 @@ func newAgentService(
 	}
 
 	a.syslog.Debugf("agent states to restore: %d", len(agentStates))
-	badAgentIds := []agentID{}
+	badAgentIds := []aproto.ID{}
 
 	for agentID, state := range agentStates {
 		state := state
@@ -100,9 +100,9 @@ func newAgentService(
 }
 
 // list implements agentService.
-func (a *agents) list(resourcePoolName string) map[agentID]*agentState {
+func (a *agents) list(resourcePoolName string) map[aproto.ID]*agentState {
 	agents := a.agents.Snapshot()
-	result := make(map[agentID]*agentState, len(agents))
+	result := make(map[aproto.ID]*agentState, len(agents))
 	for id, a := range agents {
 		state, err := a.State()
 		if err != nil {
@@ -117,7 +117,7 @@ func (a *agents) list(resourcePoolName string) map[agentID]*agentState {
 	return result
 }
 
-func (a *agents) get(id agentID) (*agent, bool) {
+func (a *agents) get(id aproto.ID) (*agent, bool) {
 	return a.agents.Load(id)
 }
 
@@ -143,7 +143,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 		}
 	}
 
-	id := msg.echoCtx.QueryParam("id")
+	id := aproto.ID(msg.echoCtx.QueryParam("id"))
 	reconnect, err := msg.isReconnect()
 	if err != nil {
 		return errors.Wrapf(err, "parsing reconnect query param")
@@ -153,7 +153,7 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 	// accept it. Whether it is a network failure or a crash/restart, we will just try
 	// to reattach whatever containers still exist.
 	// That logic is located in agent.receive(ws.WebSocketRequest).
-	existingRef, ok := a.agents.Load(agentID(id))
+	existingRef, ok := a.agents.Load(id)
 	if ok {
 		a.syslog.WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
 		return existingRef.HandleWebsocketConnection(msg)
@@ -168,12 +168,12 @@ func (a *agents) HandleWebsocketConnection(msg webSocketRequest) error {
 
 	// Finally, this must not be a recovery flow, so just create the agent actor.
 	resourcePool := msg.echoCtx.QueryParam("resource_pool")
-	ref, err := a.createAgent(agentID(id), resourcePool, a.opts, nil, func() { _ = a.agents.Delete(agentID(id)) })
+	ref, err := a.createAgent(id, resourcePool, a.opts, nil, func() { _ = a.agents.Delete(id) })
 	if err != nil {
 		return err
 	}
 
-	err = a.agents.Add(agentID(id), ref)
+	err = a.agents.Add(id, ref)
 	if err != nil {
 		return fmt.Errorf("adding agent because of incoming websocket: %w", err)
 	}
@@ -189,7 +189,7 @@ func (a *agents) getAgents() *apiv1.GetAgentsResponse {
 }
 
 func (a *agents) createAgent(
-	id agentID,
+	id aproto.ID,
 	resourcePool string,
 	opts *aproto.MasterSetAgentOptions,
 	restoredAgentState *agentState,

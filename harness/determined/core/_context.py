@@ -28,6 +28,7 @@ class Context:
     -  ``.preempt``, a :class:`~PreemptContext`
     -  ``.searcher``, a :class:`~SearcherContext`
     -  ``.train``, a :class:`~TrainContext`
+    -  ``.profiler``, a :class:`~ProfilerContext`
 
     ``core.Context`` is a tool for integrating arbitrary distributed tasks into a Determined
     cluster.
@@ -45,6 +46,7 @@ class Context:
         searcher: Optional[core.SearcherContext] = None,
         info: Optional[det.ClusterInfo] = None,
         experimental: Optional[core.ExperimentalCoreContext] = None,
+        profiler: Optional[core.ProfilerContext] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
         _heartbeat: Optional[core._Heartbeat] = None,
         _log_shipper: Optional[core._LogShipper] = None,
@@ -56,6 +58,7 @@ class Context:
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self.info = info
         self.experimental = experimental or core.DummyExperimentalCoreContext()
+        self.profiler = profiler or core.DummyProfilerContext()
         self._tensorboard_manager = _tensorboard_manager
         self._heartbeat = _heartbeat
         self._log_shipper = _log_shipper
@@ -81,6 +84,7 @@ class Context:
     ) -> None:
         self.preempt.close()
         self.distributed.close()
+        self.profiler._close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
         if self._heartbeat is not None:
@@ -165,6 +169,7 @@ def _dummy_init(
 
     train = core.DummyTrainContext(tensorboard_path)
     searcher = core.DummySearcherContext(distributed)
+    profiler = core.DummyProfilerContext()
 
     _install_stacktrace_on_sigusr1()
 
@@ -174,6 +179,7 @@ def _dummy_init(
         preempt=preempt,
         train=train,
         searcher=searcher,
+        profiler=profiler,
     )
 
 
@@ -243,6 +249,7 @@ def init(
     searcher = None
     tensorboard_manager = None
     experimental = None
+    profiler = None
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
@@ -305,6 +312,13 @@ def init(
 
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
         experimental = core.ExperimentalCoreContext(session, info.trial.trial_id)
+        profiler = core.ProfilerContext(
+            session=session,
+            agent_id=info.agent_id,
+            trial_id=info.trial.trial_id,
+            run_id=info.trial._trial_run_id,
+            distributed=distributed,
+        )
 
     else:
         # TODO: support checkpointing for non-trial tasks.
@@ -324,6 +338,7 @@ def init(
         train=train,
         searcher=searcher,
         experimental=experimental,
+        profiler=profiler,
         _tensorboard_manager=tensorboard_manager,
     )
 
