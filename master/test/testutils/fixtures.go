@@ -84,6 +84,9 @@ func RunMaster(ctx context.Context, c *config.Config) (
 
 	// TODO(DET-10193) stop working around this race condition when it gets fixed in bun.
 	pgDB, _, err := db.Setup(&c.DB)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("opening temp db: %w", err)
+	}
 	if _, err := db.Bun().NewUpdate().Table("experiments").
 		Set("state = ?", model.CompletedState).
 		Where("state != ?", model.CompletedState).
