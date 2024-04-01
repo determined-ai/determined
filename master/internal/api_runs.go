@@ -334,27 +334,27 @@ func (a *apiServer) MoveRuns(
 				Error: "Run is archived.",
 				Id:    check.ID,
 			})
-		} else {
-			if check.IsMultitrial && req.CloneMultitrial {
-				err := cloneExperimentAndRun(ctx, *check.ExpID, check.ID, req.DestinationProjectId)
-				if err != nil {
-					results = append(results, &apiv1.RunActionResult{
-						Error: fmt.Sprintf(`Failed to clone multi-trial run: %s`, err),
-						Id:    check.ID,
-					})
-				} else {
-					results = append(results, &apiv1.RunActionResult{
-						Error: "",
-						Id:    check.ID,
-					})
-				}
-				continue
-			}
-			if check.ExpID != nil {
-				expMoveIds = append(expMoveIds, *check.ExpID)
-			}
-			validIDs = append(validIDs, check.ID)
+			continue
 		}
+		if check.IsMultitrial && req.CloneMultitrial {
+			err := cloneExperimentAndRun(ctx, *check.ExpID, check.ID, req.DestinationProjectId)
+			if err != nil {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf(`Failed to clone multi-trial run: %s`, err),
+					Id:    check.ID,
+				})
+			} else {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "",
+					Id:    check.ID,
+				})
+			}
+			continue
+		}
+		if check.ExpID != nil {
+			expMoveIds = append(expMoveIds, *check.ExpID)
+		}
+		validIDs = append(validIDs, check.ID)
 	}
 	if req.Filter == nil {
 		for _, originalID := range req.RunIds {
@@ -444,7 +444,10 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 		cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
 	if err != nil {
 		// Delete cloned experiment if run cloning fails
-		err = db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+		delErr := db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+		if delErr != nil {
+			return fmt.Errorf("failed to clone run and delete cloned experiment: run error: %s, delete error: %s", err, delErr)
+		}
 		return err
 	}
 	return nil
