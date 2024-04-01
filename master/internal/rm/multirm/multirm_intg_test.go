@@ -1,10 +1,8 @@
-//go:build integration
-// +build integration
-
 package multirm
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -19,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
@@ -26,6 +25,7 @@ const (
 	additionalRMName = "additional"
 	defaultRMName    = "default"
 	rp               = "resource-pool"
+	emptyRPName      = rm.ResourcePoolName("")
 )
 
 var testMultiRM *MultiRMRouter
@@ -39,6 +39,8 @@ func TestMain(m *testing.M) {
 		},
 		syslog: logrus.WithField("component", "resource-router"),
 	}
+
+	os.Exit(m.Run())
 }
 
 func TestGetAllocationSummaries(t *testing.T) {
@@ -267,10 +269,10 @@ func TestGetResourcePools(t *testing.T) {
 func TestGetDefaultResourcePools(t *testing.T) {
 	cases := []struct {
 		name string
-		res  string
+		res  rm.ResourcePoolName
 		err  error
 	}{
-		{"route to default pool", "default", nil},
+		{"route to default pool", rm.ResourcePoolName("default"), nil},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -310,7 +312,7 @@ func TestResolveResourcePool(t *testing.T) {
 		rpName rm.ResourcePoolName
 		err    error
 	}{
-		{"empty RP name will default", "", nil},
+		{"empty RP name will default", emptyRPName, nil},
 		{"defined RP in default", defaultRMName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
@@ -330,7 +332,7 @@ func TestTaskContainerDefaults(t *testing.T) {
 		rpName rm.ResourcePoolName
 		err    error
 	}{
-		{"empty RP name will default", "", nil},
+		{"empty RP name will default", emptyRPName, nil},
 		{"defined RP in default", defaultRMName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
@@ -349,7 +351,7 @@ func TestGetJobQ(t *testing.T) {
 		rpName rm.ResourcePoolName
 		err    error
 	}{
-		{"empty RP name will default", "", nil},
+		{"empty RP name will default", emptyRPName, nil},
 		{"defined RP in default", defaultRMName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
@@ -368,8 +370,7 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		req  *apiv1.GetJobQueueStatsRequest
 		err  error
 	}{
-		// TODO CAROLINA -- this test should obvs fail, but it doesn't
-		{"empty request", &apiv1.GetJobQueueStatsRequest{}, ErrRPNotDefined("bogus")},
+		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil},
 		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil},
 		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil},
 		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil},
@@ -688,22 +689,25 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("SetGroupWeight", mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything).Return(nil)
 	mockRM.On("IsReattachableOnlyAfterStarted", mock.Anything).Return(true)
-	mockRM.On("GetDefaultComputeResourcePool").Return("default", nil)
-	mockRM.On("GetDefaultAuxResourcePool").Return("default", nil)
+	mockRM.On("GetDefaultComputeResourcePool").Return(poolName, nil)
+	mockRM.On("GetDefaultAuxResourcePool").Return(poolName, nil)
 	mockRM.On("ValidateResourcePool", mock.Anything).Return(nil)
-	mockRM.On("ResolveResourcePool", poolName, 0, 0).Return(poolName, nil)
-	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("GetJobQ", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(mock.Anything, nil)
+
+	mockRM.On("ResolveResourcePool", poolName, mock.Anything, mock.Anything).Return(poolName, nil)
+	mockRM.On("ResolveResourcePool", emptyRPName, mock.Anything, mock.Anything).Return(emptyRPName, nil)
+
+	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(model.TaskContainerDefaultsConfig{}, nil)
+	mockRM.On("GetJobQ", mock.Anything).Return(map[model.JobID]*sproto.RMJobInfo{}, nil)
+	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(&apiv1.GetJobQueueStatsResponse{}, nil)
 	mockRM.On("MoveJob", mock.Anything).Return(nil)
-	mockRM.On("GetExternalJobs", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("GetAgent", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("EnableAgent", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("DisableAgent", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("GetSlots", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("GetSlot", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("EnableSlot", mock.Anything).Return(mock.Anything, nil)
-	mockRM.On("DisableSlot", mock.Anything).Return(mock.Anything, nil)
+	mockRM.On("GetExternalJobs", mock.Anything).Return([]*jobv1.Job{}, nil)
+	mockRM.On("GetAgent", mock.Anything).Return(&apiv1.GetAgentResponse{}, nil)
+	mockRM.On("EnableAgent", mock.Anything).Return(&apiv1.EnableAgentResponse{}, nil)
+	mockRM.On("DisableAgent", mock.Anything).Return(&apiv1.DisableAgentResponse{}, nil)
+	mockRM.On("GetSlots", mock.Anything).Return(&apiv1.GetSlotsResponse{}, nil)
+	mockRM.On("GetSlot", mock.Anything).Return(&apiv1.GetSlotResponse{}, nil)
+	mockRM.On("EnableSlot", mock.Anything).Return(&apiv1.EnableSlotResponse{}, nil)
+	mockRM.On("DisableSlot", mock.Anything).Return(&apiv1.DisableSlotResponse{}, nil)
 
 	return &mockRM
 }

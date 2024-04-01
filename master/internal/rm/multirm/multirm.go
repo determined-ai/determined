@@ -234,40 +234,42 @@ func (m *MultiRMRouter) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sp
 func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsRequest) (
 	*apiv1.GetJobQueueStatsResponse, error,
 ) {
-	/*
-		filteredRMs := map[string]rm.ResourceManager{}
-		for _, rName := range req.ResourcePools {
-			if r, ok := m.rms[rName]; ok {
-				filteredRMs[rName] = r
-			}
-		}
-
-		tmpM := &MultiRMRouter{
-			defaultRMName: m.defaultRMName,
-			syslog:        m.syslog,
-			rms:           filteredRMs,
-		}
-
-		res, err := fanOutRMCall(tmpM, func(rm rm.ResourceManager) (*apiv1.GetJobQueueStatsResponse, error) {
-			return rm.GetJobQueueStatsRequest(req)
-		})
+	filteredRMs := map[string]rm.ResourceManager{}
+	for _, rName := range req.ResourcePools {
+		resolvedRMName, err := m.getRM(rm.ResourcePoolName(rName))
 		if err != nil {
 			return nil, err
 		}
+		filteredRMs[rName] = m.rms[resolvedRMName]
+	}
 
-		all := &apiv1.GetJobQueueStatsResponse{}
-		for _, r := range res {
-			all.Results = append(all.Results, r.Results...)
-		}
-		return all, nil
-	*/
+	tmpM := &MultiRMRouter{
+		defaultRMName: m.defaultRMName,
+		syslog:        m.syslog,
+		rms:           filteredRMs,
+	}
 
-	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePools[0]))
+	res, err := fanOutRMCall(tmpM, func(rm rm.ResourceManager) (*apiv1.GetJobQueueStatsResponse, error) {
+		return rm.GetJobQueueStatsRequest(req)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return m.rms[resolvedRMName].GetJobQueueStatsRequest(req)
+	all := &apiv1.GetJobQueueStatsResponse{}
+	for _, r := range res {
+		all.Results = append(all.Results, r.Results...)
+	}
+	return all, nil
+
+	/*
+		resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePools[0]))
+		if err != nil {
+			return nil, err
+		}
+
+		return m.rms[resolvedRMName].GetJobQueueStatsRequest(req)
+	*/
 }
 
 // MoveJob routes a MoveJob call to a specified resource manager/pool.
