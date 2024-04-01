@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -80,6 +81,18 @@ func RunMaster(ctx context.Context, c *config.Config) (
 	m := internal.New(logs, c)
 	logrus.AddHook(logs)
 	logrus.SetLevel(logrus.DebugLevel)
+
+	// TODO(DET-10193) stop working around this race condition when it gets fixed in bun.
+	pgDB, _, err := db.Setup(&c.DB)
+	if _, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("state != ?", model.CompletedState).
+		Exec(ctx); err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("closing open expeirments: %w", err)
+	}
+	if err := pgDB.Close(); err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("closing db: %w", err)
+	}
 
 	ctx, cancel := context.WithCancel(ctx)
 	gRPCLogInitDone := make(chan struct{})
