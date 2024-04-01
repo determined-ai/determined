@@ -253,7 +253,7 @@ export const getColumnDefs = ({
     width: columnWidths.id,
   },
   name: {
-    id: 'name',
+    id: 'experimentName',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.experiment?.name),
