@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/filter"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
@@ -221,7 +222,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 			queryArgs = append(queryArgs, bun.Safe(sortDirection))
 			runQuery.OrderExpr(fmt.Sprintf(`r.hparams->%s ?`, hpQuery), queryArgs...)
 		case strings.Contains(paramDetail[0], "."):
-			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
+			metricGroup, metricName, metricQualifier, err := filter.ParseMetricsName(paramDetail[0])
 			if err != nil {
 				return err
 			}
@@ -243,13 +244,13 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 }
 
 func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, error) {
-	var efr experimentFilterRoot
+	var efr filter.ExperimentFilterRoot
 	err := json.Unmarshal([]byte(*filter), &efr)
 	if err != nil {
 		return nil, err
 	}
 	getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		_, err = efr.toSQL(q)
+		_, err = efr.ToSQL(q)
 		return q
 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !efr.ShowArchived {

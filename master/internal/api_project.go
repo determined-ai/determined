@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	exputil "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/filter"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/mathx"
@@ -256,12 +257,12 @@ func (a *apiServer) getProjectColumnsByID(
 
 		columnPrefix := stats.JSONPath
 		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
-		if stats.JSONPath == metricGroupTraining {
-			columnPrefix = metricIDTraining
+		if stats.JSONPath == filter.MetricGroupTraining {
+			columnPrefix = filter.MetricIDTraining
 			columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
 		}
-		if stats.JSONPath == metricGroupValidation {
-			columnPrefix = metricIDValidation
+		if stats.JSONPath == filter.MetricGroupValidation {
+			columnPrefix = filter.MetricIDValidation
 			columnLocation = projectv1.LocationType_LOCATION_TYPE_VALIDATIONS
 		}
 		// don't surface aggregates that don't make sense for non-numbers
@@ -488,11 +489,11 @@ func (a *apiServer) getProjectNumericMetricsRange(
 
 					for _, aggregate := range SummaryMetricStatistics {
 						group := metricsGroup
-						if metricsGroup == metricGroupTraining {
-							group = metricIDTraining
+						if metricsGroup == filter.MetricGroupTraining {
+							group = filter.MetricIDTraining
 						}
-						if metricsGroup == metricGroupValidation {
-							group = metricIDValidation
+						if metricsGroup == filter.MetricGroupValidation {
+							group = filter.MetricIDValidation
 						}
 						tMetricsName := fmt.Sprintf("%s.%s.%s", group, name, aggregate)
 						var tMetricsValue interface{}

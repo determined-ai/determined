@@ -7,7 +7,8 @@ import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
-import { Loadable } from 'hew/utils/loadable';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
+import { useObservable } from 'micro-observables';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -16,6 +17,12 @@ import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import {
+  Conjunction,
+  FilterFormSetWithoutId,
+  FormKind,
+  Operator,
+} from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
@@ -32,11 +39,12 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { BulkActionParams } from 'services/types';
 import {
   BulkActionResult,
   ExperimentAction,
-  ExperimentWithTrial,
+  BulkExperimentItem,
   Project,
   ProjectColumn,
   ProjectExperiment,
@@ -82,9 +90,6 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  excludedExperimentIds?: Map<number, unknown>;
-  experiments: Loadable<ExperimentWithTrial>[];
-  filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
   heatmapBtnVisible?: boolean;
   heatmapOn?: boolean;
@@ -102,8 +107,7 @@ interface Props {
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectAll: boolean;
-  selectedExperimentIds: Map<number, unknown>;
+  selectedExperimentsMap: Map<number, { experiment: BulkExperimentItem }>;
   selection: SelectionType;
   sorts: Sort[];
   tableViewMode: TableViewMode;
@@ -115,9 +119,6 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   compareViewOn,
-  excludedExperimentIds,
-  experiments,
-  filters,
   formStore,
   heatmapBtnVisible,
   heatmapOn,
@@ -136,8 +137,7 @@ const TableActionBar: React.FC<Props> = ({
   projectColumns,
   rowHeight,
   selection,
-  selectAll,
-  selectedExperimentIds,
+  selectedExperimentsMap,
   sorts,
   tableViewMode,
   total,
@@ -154,54 +154,93 @@ const TableActionBar: React.FC<Props> = ({
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
-  const experimentIds = useMemo(
-    () => Array.from(selectedExperimentIds.keys()),
-    [selectedExperimentIds],
-  );
+  const validFilterSet = useObservable(formStore.validFilterSet);
 
-  const experimentMap = useMemo(() => {
-    return experiments.filter(Loadable.isLoaded).reduce(
-      (acc, experiment) => {
-        acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
-          experiment.data.experiment,
-          project,
-        );
+  const selectedProjectExperimentMap = useMemo(() => {
+    return [...selectedExperimentsMap].reduce(
+      (acc, [id, { experiment }]) => {
+        acc[id] = getProjectExperimentForExperimentItem(experiment, project);
         return acc;
       },
       {} as Record<number, ProjectExperiment>,
     );
-  }, [experiments, project]);
+  }, [selectedExperimentsMap, project]);
 
   const selectedExperiments = useMemo(
-    () =>
-      Array.from(selectedExperimentIds.keys()).flatMap((id) =>
-        id in experimentMap ? [experimentMap[id]] : [],
-      ),
-    [experimentMap, selectedExperimentIds],
+    () => Object.values(selectedProjectExperimentMap),
+    [selectedProjectExperimentMap],
   );
 
   const availableBatchActions = useMemo(() => {
-    if (selectAll)
+    if (selection.type === 'ALL_EXCEPT')
       return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
-    const experiments = experimentIds.map((id) => experimentMap[id]) ?? [];
-    return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
+    return getActionsForExperimentsUnion(selectedExperiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentIds, experimentMap, permissions, selectAll]);
+  }, [permissions, selectedExperiments, selection.type]);
+
+  const completeFilterSet: Loadable<FilterFormSetWithoutId | undefined> = useMemo(() => {
+    if (selection.type === 'ONLY_IN') {
+      return NotLoaded;
+    }
+    return validFilterSet.map((fs) => {
+      // filter group consisting of all excluded ids and project id
+      const filterGroup = {
+        children: [
+          ...selection.exclusions.map((e) => ({
+            columnName: 'id',
+            kind: FormKind.Field,
+            location: V1LocationType.EXPERIMENT,
+            operator: Operator.NotEq,
+            type: V1ColumnType.NUMBER,
+            value: e,
+          })),
+          {
+            columnName: 'projectId',
+            kind: FormKind.Field,
+            location: V1LocationType.EXPERIMENT,
+            operator: Operator.Eq,
+            type: V1ColumnType.NUMBER,
+            value: project.id,
+          },
+        ],
+        conjunction: Conjunction.And,
+        kind: FormKind.Group,
+      };
+      return {
+        ...fs,
+        filterGroup: {
+          children: [filterGroup, fs.filterGroup],
+          conjunction: Conjunction.And,
+          kind: FormKind.Group,
+        },
+      };
+    });
+  }, [selection, validFilterSet, project.id]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
+      let params: BulkActionParams;
       const managedExperimentIds = selectedExperiments
         .filter((exp) => !exp.unmanaged)
         .map((exp) => exp.id);
-      const params = {
-        experimentIds: managedExperimentIds,
-        filters: selectAll ? filters : undefined,
-      };
-      if (excludedExperimentIds?.size) {
-        params.filters = {
-          ...filters,
-          excludedExperimentIds: Array.from(excludedExperimentIds.keys()),
+      if (selection.type === 'ONLY_IN') {
+        // TODO: when the selection spans pages, this check will not work --
+        // should probably warn the user and/handle on the backend
+        params = {
+          experimentIds: selectedExperiments.filter((exp) => !exp.unmanaged).map((exp) => exp.id),
         };
+      } else {
+        params = completeFilterSet.match({
+          _: () => ({
+            experimentIds: [],
+          }),
+          Loaded: (filterSet) => {
+            return {
+              experimentIds: [],
+              searchFilter: JSON.stringify(filterSet),
+            };
+          },
+        });
       }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
@@ -239,14 +278,13 @@ const TableActionBar: React.FC<Props> = ({
       }
     },
     [
-      selectedExperiments,
-      selectAll,
-      filters,
-      excludedExperimentIds,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
+      completeFilterSet,
       openExperimentTensorBoardModal,
       project?.workspaceId,
+      selectedExperiments,
+      selection.type,
     ],
   );
 
@@ -425,7 +463,7 @@ const TableActionBar: React.FC<Props> = ({
               onRowHeightChange={onRowHeightChange}
               onTableViewModeChange={onTableViewModeChange}
             />
-            {(selectAll || selectedExperimentIds.size > 0) && (
+            {(selection.type === 'ALL_EXCEPT' || selection.selections.length > 0) && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>
               </Dropdown>
@@ -463,31 +501,37 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        excludedExperimentIds={excludedExperimentIds}
-        experimentIds={experimentIds.filter(
-          (id) =>
-            canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
-            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
-        )}
-        filters={selectAll ? filters : undefined}
+        experimentIds={selectedExperiments.reduce((acc, experiment) => {
+          if (
+            canActionExperiment(ExperimentAction.Move, experiment) &&
+            permissions.canMoveExperiment({ experiment })
+          ) {
+            acc.push(experiment.id);
+          }
+          return acc;
+        }, [] as number[])}
+        filters={completeFilterSet.getOrElse(undefined)}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
-        excludedExperimentIds={excludedExperimentIds}
-        experimentIds={experimentIds.filter(
-          (id) =>
-            canActionExperiment(ExperimentAction.RetainLogs, experimentMap[id]) &&
+        experimentIds={selectedExperiments.reduce((acc, experiment) => {
+          if (
+            canActionExperiment(ExperimentAction.RetainLogs, experiment) &&
             permissions.canModifyExperiment({
-              workspace: { id: experimentMap[id].workspaceId },
-            }),
-        )}
-        filters={selectAll ? filters : undefined}
+              workspace: { id: experiment.workspaceId },
+            })
+          ) {
+            acc.push(experiment.id);
+          }
+          return acc;
+          }, [] as number[])}
+        filters={completeFilterSet.getOrElse(undefined)}
         onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent
-        filters={selectAll ? filters : undefined}
+        filters={completeFilterSet.getOrElse(undefined)}
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />

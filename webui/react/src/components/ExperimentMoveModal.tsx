@@ -10,11 +10,11 @@ import { List } from 'immutable';
 import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
 
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
@@ -29,16 +29,14 @@ type FormInputs = {
 };
 
 interface Props {
-  excludedExperimentIds?: Map<number, unknown>;
   experimentIds: number[];
-  filters?: V1BulkExperimentFilters;
+  filters?: FilterFormSetWithoutId;
   onSubmit?: (successfulIds?: number[]) => void;
   sourceProjectId?: number;
   sourceWorkspaceId?: number;
 }
 
 const ExperimentMoveModalComponent: React.FC<Props> = ({
-  excludedExperimentIds,
   experimentIds,
   filters,
   onSubmit,
@@ -80,14 +78,10 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     const values = await form.validateFields();
     const projId = values.projectId ?? 1;
 
-    if (excludedExperimentIds?.size) {
-      filters = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds.keys()) };
-    }
-
     const results = await moveExperiments({
       destinationProjectId: projId,
-      experimentIds,
-      filters,
+      experimentIds: filters ? [] : experimentIds,
+      searchFilter: filters && JSON.stringify(filters),
     });
 
     onSubmit?.(results.successful);

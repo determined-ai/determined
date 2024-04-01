@@ -1,15 +1,15 @@
 import { Modal } from 'hew/Modal';
 
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import { UNMANAGED_EXPERIMENT_ANNOTATION_MESSAGE } from 'constant';
 import { openOrCreateTensorBoard } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
-import { ProjectExperiment } from 'types';
+import { ExperimentItem } from 'types';
 import handleError from 'utils/error';
 import { openCommandResponse } from 'utils/wait';
 
 interface Props {
-  selectedExperiments: ProjectExperiment[];
-  filters?: V1BulkExperimentFilters;
+  selectedExperiments: ExperimentItem[];
+  filters?: FilterFormSetWithoutId;
   workspaceId?: number;
 }
 
@@ -19,11 +19,15 @@ const ExperimentTensorBoardModal = ({
   filters,
 }: Props): JSX.Element => {
   const handleSubmit = async () => {
-    const managedExperimentIds = selectedExperiments
-      .filter((exp) => !exp.unmanaged)
-      .map((exp) => exp.id);
+    const managedExperimentIds = filters
+      ? []
+      : selectedExperiments.filter((exp) => !exp.unmanaged).map((exp) => exp.id);
     openCommandResponse(
-      await openOrCreateTensorBoard({ experimentIds: managedExperimentIds, filters, workspaceId }),
+      await openOrCreateTensorBoard({
+        experimentIds: managedExperimentIds,
+        searchFilters: filters && JSON.stringify(filters),
+        workspaceId,
+      }),
     );
   };
 

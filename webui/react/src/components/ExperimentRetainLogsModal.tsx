@@ -5,8 +5,8 @@ import { Modal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import React, { useCallback, useId, useState } from 'react';
 
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import { changeExperimentLogRetention } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import handleError from 'utils/error';
 import { pluralizer } from 'utils/string';
 
@@ -19,14 +19,12 @@ type FormInputs = {
 };
 
 interface Props {
-  excludedExperimentIds?: Map<number, unknown>;
   experimentIds: number[];
-  filters?: V1BulkExperimentFilters;
+  filters?: FilterFormSetWithoutId;
   onSubmit?: (successfulIds?: number[]) => void;
 }
 
 const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
-  excludedExperimentIds,
   experimentIds,
   filters,
   onSubmit,
@@ -53,15 +51,11 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
     const numberDays = values.numDays;
-    let filt = filters;
-    if (excludedExperimentIds && excludedExperimentIds.size > 0) {
-      filt = { ...filters, excludedExperimentIds: Array.from(excludedExperimentIds.keys()) };
-    }
     try {
       const results = await changeExperimentLogRetention({
-        experimentIds,
-        filters: filt,
+        experimentIds: filters ? [] : experimentIds,
         numDays: numberDays,
+        searchFilter: filters && JSON.stringify(filters),
       });
 
       onSubmit?.(results.successful);
@@ -102,7 +96,7 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to retain logs' });
     }
-  }, [form, excludedExperimentIds, experimentIds, filters, onSubmit, openToast]);
+  }, [form, experimentIds, filters, onSubmit, openToast]);
 
   return (
     <Modal

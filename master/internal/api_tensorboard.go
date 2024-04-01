@@ -475,16 +475,29 @@ type tensorboardConfig struct {
 }
 
 func (a *apiServer) getTensorBoardConfigsFromReq(
-	ctx context.Context, db *db.PgDB, req *apiv1.LaunchTensorboardRequest,
+	ctx context.Context, pgdb *db.PgDB, req *apiv1.LaunchTensorboardRequest,
 ) ([]*tensorboardConfig, error) {
 	confByID := map[int32]*tensorboardConfig{}
 
 	var err error
 	var originalExpIDs []int32
-	if req.Filters == nil {
+	if req.Filters == nil && req.SearchFilter == nil {
 		originalExpIDs = req.ExperimentIds
 	} else {
-		originalExpIDs, err = exputil.FilterToExperimentIds(ctx, req.Filters)
+		query := db.Bun().NewSelect().
+			Model(&originalExpIDs).
+			ModelTableExpr("experiments as e").
+			Column("e.id")
+
+		if req.SearchFilter == nil {
+			query = exputil.QueryBulkExperiments(query, req.Filters)
+		} else {
+			query, err = exputil.ApplyExperimentFilterToQuery(query, req.SearchFilter)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err = query.Scan(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -496,7 +509,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 			return nil, err
 		}
 
-		conf, err := db.LegacyExperimentConfigByID(int(expID))
+		conf, err := pgdb.LegacyExperimentConfigByID(int(expID))
 		if err != nil {
 			return nil, err
 		}
@@ -510,12 +523,12 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 			return nil, err
 		}
 
-		expID, err := db.ExperimentIDByTrialID(int(trialID))
+		expID, err := pgdb.ExperimentIDByTrialID(int(trialID))
 		if err != nil {
 			return nil, err
 		}
 
-		conf, err := db.LegacyExperimentConfigByID(expID)
+		conf, err := pgdb.LegacyExperimentConfigByID(expID)
 		if err != nil {
 			return nil, err
 		}

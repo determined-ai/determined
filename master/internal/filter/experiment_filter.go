@@ -1,4 +1,4 @@
-package internal
+package filter
 
 import (
 	"fmt"
@@ -26,10 +26,12 @@ const (
 	empty              operator          = "isEmpty"
 	notEmpty           operator          = "notEmpty"
 
-	metricGroupValidation string = "validation_metrics"
-	metricGroupTraining   string = "avg_metrics"
-	metricIDTraining      string = "training"
-	metricIDValidation    string = "validation"
+	//revive:disable:exported
+	MetricGroupValidation string = "validation_metrics"
+	MetricGroupTraining   string = "avg_metrics"
+	MetricIDTraining      string = "training"
+	MetricIDValidation    string = "validation"
+	//revive:enable:exported
 )
 
 var metricIDTemplate = regexp.MustCompile(
@@ -52,7 +54,9 @@ type experimentFilter struct {
 	Type        *string
 }
 
-type experimentFilterRoot struct {
+// ExperimentFilterRoot represents a filter structure -- it describes a search
+// of experiments or runs.
+type ExperimentFilterRoot struct {
 	FilterGroup  experimentFilter
 	ShowArchived bool
 }
@@ -106,7 +110,7 @@ func expColumnNameToSQL(columnName string) (string, error) {
 		"user":            "e.owner_id",
 		"forkedFrom":      "e.parent_id",
 		"resourcePool":    "e.config->'resources'->>'resource_pool'",
-		"projectId":       "project_id",
+		"projectId":       "e.project_id",
 		"checkpointSize":  "e.checkpoint_size",
 		"checkpointCount": "e.checkpoint_count",
 		"searcherMetricsVal": `(
@@ -446,7 +450,9 @@ func expRunOperatorQuery(o operator, col string, oSQL string, val *interface{}) 
 	return queryString, queryArgs
 }
 
-func (e experimentFilterRoot) toSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+// ToSQL applies an experiment filter struct to a query. it assumes that `e` is
+// mapped to the experiments table and `r` is mapped to the runs table.
+func (e ExperimentFilterRoot) ToSQL(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 	q, err := e.FilterGroup.toSQL(q, nil)
 	if err != nil {
 		return nil, err
@@ -511,7 +517,7 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			if e.Type != nil {
 				queryColumnType = *e.Type
 			}
-			metricGroup, metricName, metricQualifier, err := parseMetricsName(e.ColumnName)
+			metricGroup, metricName, metricQualifier, err := ParseMetricsName(e.ColumnName)
 			if err != nil {
 				return nil, err
 			}
@@ -580,10 +586,12 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 	return q, nil
 }
 
+// ParseMetricsName maps metric column names to paths in the metrics object with
+// the following pattern:
 // training.loss.min -> avg_metrics, loss, min
 // group_a.value.last -> group_a, value, last
 // group_b.value.a.last -> group_b, value.a, last .
-func parseMetricsName(str string) (string, string, string, error) {
+func ParseMetricsName(str string) (string, string, string, error) {
 	matches := metricIDTemplate.FindStringSubmatch(str)
 	if len(matches) < 4 {
 		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
@@ -593,11 +601,11 @@ func parseMetricsName(str string) (string, string, string, error) {
 	metricName := matches[2]
 	metricQualifier := matches[3]
 
-	if metricGroup == metricIDTraining {
-		metricGroup = metricGroupTraining
+	if metricGroup == MetricIDTraining {
+		metricGroup = MetricGroupTraining
 	}
-	if metricGroup == metricIDValidation {
-		metricGroup = metricGroupValidation
+	if metricGroup == MetricIDValidation {
+		metricGroup = MetricGroupValidation
 	}
 
 	return metricGroup, metricName, metricQualifier, nil

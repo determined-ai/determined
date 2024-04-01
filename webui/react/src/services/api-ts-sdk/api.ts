@@ -1016,6 +1016,12 @@ export interface V1ActivateExperimentsRequest {
      * @memberof V1ActivateExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to ActivateExperimentsRequest.
@@ -1490,6 +1496,12 @@ export interface V1ArchiveExperimentsRequest {
      * @memberof V1ArchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1ArchiveExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to ArchiveExperimentsRequest.
@@ -1714,6 +1726,12 @@ export interface V1CancelExperimentsRequest {
      * @memberof V1CancelExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1CancelExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to CancelExperimentsRequest.
@@ -2509,6 +2527,12 @@ export interface V1DeleteExperimentsRequest {
      * @memberof V1DeleteExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to DeleteExperimentsRequest.
@@ -5404,6 +5428,12 @@ export interface V1KillExperimentsRequest {
      * @memberof V1KillExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1KillExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to KillExperimentsRequest.
@@ -5762,6 +5792,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to LaunchTensorboardRequest.
@@ -6512,6 +6548,12 @@ export interface V1MoveExperimentsRequest {
      * @memberof V1MoveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1MoveExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to MoveExperimentsRequest.
@@ -7383,6 +7425,12 @@ export interface V1PauseExperimentsRequest {
      * @memberof V1PauseExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1PauseExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to PauseExperimentsRequest.
@@ -8280,6 +8328,12 @@ export interface V1PutExperimentsRetainLogsRequest {
      * @memberof V1PutExperimentsRetainLogsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to PutExperimentRetainLogsRequest.
@@ -11246,6 +11300,12 @@ export interface V1UnarchiveExperimentsRequest {
      * @memberof V1UnarchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Same as filters but using the searchExperiments format
+     * @type {string}
+     * @memberof V1UnarchiveExperimentsRequest
+     */
+    searchFilter?: string;
 }
 /**
  * Response to UnarchiveExperimentsRequest.

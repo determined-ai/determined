@@ -114,6 +114,8 @@ message LaunchTensorboardRequest {
   int32 workspace_id = 6;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 7;
+  // same as filters but using the searchExperiments format
+  optional string search_filter = 8;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {

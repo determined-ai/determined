@@ -56,21 +56,21 @@ export class FilterFormStore {
     return this.#formset.readOnly();
   }
 
-  public get asJsonString(): Observable<string> {
+  public get validFilterSet(): Observable<Loadable<FilterFormSetWithoutId>> {
     const replacer = (key: string, value: unknown): unknown => {
       return key === 'id' ? undefined : value;
     };
     return this.#formset.select((loadableFormset) =>
-      Loadable.match(loadableFormset, {
-        _: () => '',
-        Loaded: (formset) => {
-          const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
-          const newFormSet: FilterFormSetWithoutId = JSON.parse(
-            JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
-          );
-          return JSON.stringify(newFormSet);
-        },
+      loadableFormset.map((formset) => {
+        const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
+        return JSON.parse(JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer));
       }),
+    );
+  }
+
+  public get asJsonString(): Observable<string> {
+    return this.validFilterSet.select((loadableFilterSet) =>
+      loadableFilterSet.map(JSON.stringify).getOrElse(''),
     );
   }
 

@@ -106,6 +106,7 @@ export interface BulkActionParams {
   excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
+  searchFilters?: string;
 }
 
 export interface GetExperimentParams {
@@ -280,6 +281,7 @@ export interface LaunchTensorBoardParams {
   trialIds?: Array<number>;
   workspaceId?: number;
   filters?: Api.V1BulkExperimentFilters;
+  searchFilters?: string;
 }
 
 export interface LaunchJupyterLabParams {

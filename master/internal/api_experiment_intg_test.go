@@ -38,6 +38,7 @@ import (
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/filter"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -1938,10 +1939,10 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	}
 	for _, c := range invalidTestCases {
 		q := db.Bun().NewSelect()
-		var efr experimentFilterRoot
+		var efr filter.ExperimentFilterRoot
 		err := json.Unmarshal([]byte(c), &efr)
 		require.NoError(t, err)
-		_, err = efr.toSQL(q)
+		_, err = efr.ToSQL(q)
 		require.Error(t, err)
 	}
 	validTestCases := [][2]string{
@@ -2074,11 +2075,11 @@ func TestExperimentSearchApiFilterParsing(t *testing.T) {
 	}
 	for _, c := range validTestCases {
 		q := db.Bun().NewSelect()
-		var efr experimentFilterRoot
+		var efr filter.ExperimentFilterRoot
 		err := json.Unmarshal([]byte(c[0]), &efr)
 		require.NoError(t, err)
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
+			_, err = efr.ToSQL(q)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {

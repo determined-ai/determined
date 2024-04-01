@@ -33,6 +33,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/filter"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/prom"
@@ -382,7 +383,7 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	results, _, err := experiment.DeleteExperiments(ctx,
-		[]int32{req.ExperimentId}, nil)
+		[]int32{req.ExperimentId}, nil, nil)
 	// report error from the multi-experiment selection code
 	if err != nil {
 		return nil, err
@@ -419,7 +420,7 @@ func (a *apiServer) DeleteExperiments(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	results, experiments, err := experiment.DeleteExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, experiments, err := experiment.DeleteExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -966,14 +967,14 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) ActivateExperiments(
 	ctx context.Context, req *apiv1.ActivateExperimentsRequest,
 ) (*apiv1.ActivateExperimentsResponse, error) {
-	results, err := experiment.ActivateExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.ActivateExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.ActivateExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	results, err := experiment.PauseExperiments(ctx, []int32{req.Id}, nil)
+	results, err := experiment.PauseExperiments(ctx, []int32{req.Id}, nil, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -989,14 +990,14 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) PauseExperiments(
 	ctx context.Context, req *apiv1.PauseExperimentsRequest,
 ) (*apiv1.PauseExperimentsResponse, error) {
-	results, err := experiment.PauseExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.PauseExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.PauseExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	results, err := experiment.CancelExperiments(ctx, []int32{req.Id}, nil)
+	results, err := experiment.CancelExperiments(ctx, []int32{req.Id}, nil, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1012,14 +1013,14 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) CancelExperiments(
 	ctx context.Context, req *apiv1.CancelExperimentsRequest,
 ) (*apiv1.CancelExperimentsResponse, error) {
-	results, err := experiment.CancelExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.CancelExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.CancelExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	results, err := experiment.KillExperiments(ctx, []int32{req.Id}, nil)
+	results, err := experiment.KillExperiments(ctx, []int32{req.Id}, nil, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1035,14 +1036,14 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) KillExperiments(
 	ctx context.Context, req *apiv1.KillExperimentsRequest,
 ) (*apiv1.KillExperimentsResponse, error) {
-	results, err := experiment.KillExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.KillExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.KillExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	results, err := experiment.ArchiveExperiments(ctx, []int32{req.Id}, nil)
+	results, err := experiment.ArchiveExperiments(ctx, []int32{req.Id}, nil, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1058,14 +1059,14 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) ArchiveExperiments(
 	ctx context.Context, req *apiv1.ArchiveExperimentsRequest,
 ) (*apiv1.ArchiveExperimentsResponse, error) {
-	results, err := experiment.ArchiveExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.ArchiveExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.ArchiveExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	results, err := experiment.UnarchiveExperiments(ctx, []int32{req.Id}, nil)
+	results, err := experiment.UnarchiveExperiments(ctx, []int32{req.Id}, nil, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1081,7 +1082,7 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) UnarchiveExperiments(
 	ctx context.Context, req *apiv1.UnarchiveExperimentsRequest,
 ) (*apiv1.UnarchiveExperimentsResponse, error) {
-	results, err := experiment.UnarchiveExperiments(ctx, req.ExperimentIds, req.Filters)
+	results, err := experiment.UnarchiveExperiments(ctx, req.ExperimentIds, req.Filters, req.SearchFilter)
 	return &apiv1.UnarchiveExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
@@ -1723,7 +1724,7 @@ func (a *apiServer) CreateExperiment(
 func (a *apiServer) PutExperimentRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
 ) (*apiv1.PutExperimentRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, []int32{req.ExperimentId}, nil, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, []int32{req.ExperimentId}, nil, nil, int16(req.NumDays))
 	if err != nil {
 		return nil, err
 	}
@@ -1738,7 +1739,7 @@ func (a *apiServer) PutExperimentRetainLogs(
 func (a *apiServer) PutExperimentsRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentsRetainLogsRequest,
 ) (*apiv1.PutExperimentsRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, req.ExperimentIds, req.Filters, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, req.ExperimentIds, req.Filters, req.SearchFilter, int16(req.NumDays))
 	if err != nil {
 		return nil, err
 	}
@@ -2391,7 +2392,7 @@ func (a *apiServer) MoveExperiment(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	results, err := experiment.MoveExperiments(ctx, []int32{req.ExperimentId}, nil,
+	results, err := experiment.MoveExperiments(ctx, []int32{req.ExperimentId}, nil, nil,
 		req.DestinationProjectId)
 
 	if err == nil {
@@ -2427,7 +2428,7 @@ func (a *apiServer) MoveExperiments(
 	}
 
 	results, err := experiment.MoveExperiments(ctx, req.ExperimentIds,
-		req.Filters, req.DestinationProjectId)
+		req.Filters, req.SearchFilter, req.DestinationProjectId)
 	return &apiv1.MoveExperimentsResponse{Results: experiment.ToAPIResults(results)}, err
 }
 
@@ -2518,7 +2519,7 @@ func sortExperiments(sortString *string, experimentQuery *bun.SelectQuery) error
 			experimentQuery.OrderExpr(
 				fmt.Sprintf("e.config->'hyperparameters'->'%s' %s", hps, sortDirection))
 		case strings.Contains(paramDetail[0], "."):
-			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
+			metricGroup, metricName, metricQualifier, err := filter.ParseMetricsName(paramDetail[0])
 			if err != nil {
 				return err
 			}
@@ -2573,13 +2574,13 @@ func (a *apiServer) SearchExperiments(
 	}
 
 	if req.Filter != nil {
-		var efr experimentFilterRoot
+		var efr filter.ExperimentFilterRoot
 		err := json.Unmarshal([]byte(*req.Filter), &efr)
 		if err != nil {
 			return nil, err
 		}
 		experimentQuery = experimentQuery.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
+			_, err = efr.ToSQL(q)
 			return q
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if !efr.ShowArchived {
