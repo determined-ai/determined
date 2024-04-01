@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import tempfile
 from typing import Dict, List, Optional, Union
 
@@ -10,16 +9,6 @@ from determined import errors
 from determined.common import storage, util
 
 logger = logging.getLogger("determined.common.storage.s3")
-
-
-def normalize_prefix(prefix: Optional[str]) -> str:
-    new_prefix = ""
-    if prefix is not None and prefix != "":
-        banned_patterns = (r"^.*\/\.\.\/.*$", r"^\.\.\/.*", r".*\/\.\.$", r"^\.\.$")
-        if any(re.match(bp, prefix) for bp in banned_patterns):
-            raise ValueError(f"prefix must not match: {' '.join(banned_patterns)}")
-        new_prefix = os.path.normpath(prefix).lstrip("/")
-    return new_prefix
 
 
 class S3StorageManager(storage.CloudStorageManager):
@@ -51,7 +40,7 @@ class S3StorageManager(storage.CloudStorageManager):
         )
         self.bucket = self.s3.Bucket(self.bucket_name)
 
-        self.prefix = normalize_prefix(prefix)
+        self.prefix = storage.normalize_prefix(prefix)
 
         # Detect if we are talking to minio, because boto3 has a client-side bug parsing the output
         # of the minio server.

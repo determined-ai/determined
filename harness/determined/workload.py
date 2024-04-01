@@ -1,13 +1,13 @@
 import abc
-from enum import Enum, unique
+import enum
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
 from determined.common import check
 
 
 class Workload:
-    @unique
-    class Kind(Enum):
+    @enum.unique
+    class Kind(enum.Enum):
         RUN_STEP = 1
         COMPUTE_VALIDATION_METRICS = 2
         CHECKPOINT_MODEL = 3

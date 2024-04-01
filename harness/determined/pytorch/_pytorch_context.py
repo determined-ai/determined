@@ -9,8 +9,7 @@ import torch
 from torch import nn
 
 import determined as det
-from determined import profiler, pytorch, util
-from determined.horovod import hvd
+from determined import horovod, pytorch, util
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -120,7 +119,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
         self.experimental = pytorch.PyTorchExperimentalContext(self)
         self._reducers = pytorch._PyTorchReducerContext()
-        self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
         self._managed_training = managed_training
 
@@ -361,6 +359,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 if fp16_compression is None:
                     fp16_compression = self._fp16_compression_default
 
+                hvd = horovod.hvd
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
@@ -461,17 +460,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             **kwargs,
         )
 
-    def _set_determined_profiler(self, prof: profiler.ProfilerAgent) -> None:
-        self._determined_profiler = prof
-
-    @contextlib.contextmanager
-    def _record_timing(self, metric_name: str, accumulate: bool = False) -> Iterator[None]:
-        if not self._determined_profiler:
-            yield
-            return
-        with self._determined_profiler.record_timing(metric_name, accumulate):
-            yield
-
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
@@ -512,8 +500,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        with self._record_timing("to_device", accumulate=True):
-            return pytorch.to_device(data, self.device, self._to_device_warned_types)
+        return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def wrap_scaler(self, scaler: Any) -> Any:
         """
@@ -775,10 +762,9 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             with apex.amp.scale_loss(
                 loss, self.optimizers, loss_id=self._loss_ids[loss]
             ) as scaled_loss:
-                with self._record_timing("train_batch.backward", accumulate=True):
-                    scaled_loss.backward(
-                        gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
-                    )
+                scaled_loss.backward(
+                    gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
+                )
 
                 if (
                     self.distributed.size > 1
@@ -794,29 +780,27 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                     # multiple backward passes on one loss. A long-term solution is
                     # to integrate torch native AMP (https://pytorch.org/docs/stable/amp.html),
                     # which will come out soon.
-                    with self._record_timing("train_batch.sync_optimizers", accumulate=True):
-                        for optimizer in self.optimizers:
-                            optimizer.synchronize()  # type: ignore
+                    for optimizer in self.optimizers:
+                        optimizer.synchronize()  # type: ignore
         else:
             if self._scaler and self.experimental._auto_amp:
                 loss = self._scaler.scale(loss)
 
-            with self._record_timing("train_batch.backward", accumulate=True):
-                if (
-                    self.distributed.size > 1
-                    and self._distributed_backend.use_torch()
-                    and not self._should_communicate_and_update()
-                ):
-                    # PyTorch DDP automatically syncs gradients by default on every backward pass.
-                    # no_sync() disables gradient all-reduce until the last iteration.
-                    with self._no_sync():
-                        loss.backward(  # type: ignore
-                            gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
-                        )
-                else:
+            if (
+                self.distributed.size > 1
+                and self._distributed_backend.use_torch()
+                and not self._should_communicate_and_update()
+            ):
+                # PyTorch DDP automatically syncs gradients by default on every backward pass.
+                # no_sync() disables gradient all-reduce until the last iteration.
+                with self._no_sync():
                     loss.backward(  # type: ignore
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
+            else:
+                loss.backward(  # type: ignore
+                    gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
+                )
 
     @staticmethod
     def _average_gradients(parameters: Any, divisor: int) -> None:
@@ -887,8 +871,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             and self._distributed_backend.use_horovod()
             and not self._use_apex
         ):
-            with self._record_timing("train_batch.sync_optimizers", accumulate=True):
-                optimizer.synchronize()  # type: ignore
+            optimizer.synchronize()  # type: ignore
 
         parameters = (
             [p for group in optimizer.param_groups for p in group.get("params", [])]
@@ -1033,9 +1016,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             except ImportError:
                 pass
 
-            from torch.utils.tensorboard import SummaryWriter
+            from torch.utils import tensorboard
 
-            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+            self._tbd_writer = tensorboard.SummaryWriter(
+                self.get_tensorboard_path()
+            )  # type: ignore
 
         return self._tbd_writer
 

@@ -1,15 +1,9 @@
+import argparse
 import hashlib
 import os
 import socket
 import ssl
 import sys
-from argparse import (
-    ArgumentDefaultsHelpFormatter,
-    ArgumentError,
-    ArgumentParser,
-    FileType,
-    Namespace,
-)
 from typing import List, Sequence, Union, cast
 from urllib import parse
 
@@ -17,51 +11,45 @@ import argcomplete
 import argcomplete.completers
 import requests
 import tabulate
+import termcolor
 from OpenSSL import SSL, crypto
-from termcolor import colored
 
 import determined as det
-import determined.errors
 from determined import cli
-from determined.cli import errors, render
-from determined.cli.agent import args_description as agent_args_description
-from determined.cli.checkpoint import args_description as checkpoint_args_description
-from determined.cli.command import args_description as command_args_description
-from determined.cli.dev import args_description as dev_args_description
-from determined.cli.experiment import args_description as experiment_args_description
-from determined.cli.job import args_description as job_args_description
-from determined.cli.master import args_description as master_args_description
-from determined.cli.model import args_description as model_args_description
-from determined.cli.notebook import args_description as notebook_args_description
-from determined.cli.oauth import args_description as oauth_args_description
-from determined.cli.project import args_description as project_args_description
-from determined.cli.rbac import args_description as rbac_args_description
-from determined.cli.resource_pool import args_description as resource_pool_args_description
-from determined.cli.resources import args_description as resources_args_description
-from determined.cli.shell import args_description as shell_args_description
-from determined.cli.sso import args_description as auth_args_description
-from determined.cli.task import args_description as task_args_description
-from determined.cli.template import args_description as template_args_description
-from determined.cli.tensorboard import args_description as tensorboard_args_description
-from determined.cli.top_arg_descriptions import deploy_cmd
-from determined.cli.trial import args_description as trial_args_description
-from determined.cli.user import args_description as user_args_description
-from determined.cli.user_groups import args_description as user_groups_args_description
-from determined.cli.version import args_description as version_args_description
-from determined.cli.version import check_version
-from determined.cli.workspace import args_description as workspace_args_description
+from determined.cli import (
+    agent,
+    checkpoint,
+    command,
+    dev,
+    errors,
+    experiment,
+    job,
+    master,
+    model,
+    notebook,
+    oauth,
+    project,
+    rbac,
+    render,
+    resource_pool,
+    resources,
+    shell,
+    sso,
+    task,
+    template,
+    tensorboard,
+    top_arg_descriptions,
+    trial,
+    user,
+    user_groups,
+    version,
+    workspace,
+)
 from determined.common import api, util, yaml
 from determined.common.api import bindings, certs
-from determined.common.declarative_argparse import (
-    Arg,
-    ArgsDescription,
-    Cmd,
-    add_args,
-    generate_aliases,
-)
 
 
-def preview_search(args: Namespace) -> None:
+def preview_search(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     experiment_config = util.safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
@@ -110,7 +98,7 @@ def preview_search(args: Namespace) -> None:
         (count, render_sequence(operations.split())) for operations, count in j["results"].items()
     ]
 
-    print(colored("Using search configuration:", "green"))
+    print(termcolor.colored("Using search configuration:", "green"))
     yml = yaml.YAML()
     yml.indent(mapping=2, sequence=4, offset=2)
     yml.dump(experiment_config["searcher"], sys.stdout)
@@ -120,8 +108,8 @@ def preview_search(args: Namespace) -> None:
 
 
 args_description = [
-    Arg("-u", "--user", help="run as the given user", metavar="username", default=None),
-    Arg(
+    cli.Arg("-u", "--user", help="run as the given user", metavar="username", default=None),
+    cli.Arg(
         "-m",
         "--master",
         help="master address",
@@ -129,54 +117,59 @@ args_description = [
         type=api.canonicalize_master_url,
         default=api.get_default_master_url(),
     ),
-    Arg(
+    cli.Arg(
         "-v",
         "--version",
         action="version",
         help="print CLI version and exit",
         version="%(prog)s {}".format(det.__version__),
     ),
-    Cmd(
+    cli.Cmd(
         "preview-search",
         preview_search,
         "preview search",
-        [Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)")],
+        [
+            cli.Arg(
+                "config_file", type=argparse.FileType("r"), help="experiment config file (.yaml)"
+            )
+        ],
     ),
-    deploy_cmd,
-]  # type: ArgsDescription
+    top_arg_descriptions.deploy_cmd,
+]  # type: cli.ArgsDescription
 
-all_args_description: ArgsDescription = (
+all_args_description: cli.ArgsDescription = (
     args_description
-    + experiment_args_description
-    + checkpoint_args_description
-    + master_args_description
-    + model_args_description
-    + agent_args_description
-    + notebook_args_description
-    + job_args_description
-    + resources_args_description
-    + resource_pool_args_description
-    + project_args_description
-    + shell_args_description
-    + task_args_description
-    + template_args_description
-    + tensorboard_args_description
-    + trial_args_description
-    + command_args_description
-    + user_args_description
-    + user_groups_args_description
-    + rbac_args_description
-    + version_args_description
-    + workspace_args_description
-    + auth_args_description
-    + oauth_args_description
-    + dev_args_description
+    + experiment.args_description
+    + checkpoint.args_description
+    + master.args_description
+    + model.args_description
+    + agent.args_description
+    + notebook.args_description
+    + job.args_description
+    + resources.args_description
+    + resource_pool.args_description
+    + project.args_description
+    + shell.args_description
+    + task.args_description
+    + template.args_description
+    + tensorboard.args_description
+    + trial.args_description
+    + command.args_description
+    + user.args_description
+    + user_groups.args_description
+    + rbac.args_description
+    + version.args_description
+    + workspace.args_description
+    + sso.args_description
+    + oauth.args_description
+    + dev.args_description
 )
 
 
-def make_parser() -> ArgumentParser:
-    return ArgumentParser(
-        description="Determined command-line client", formatter_class=ArgumentDefaultsHelpFormatter
+def make_parser() -> argparse.ArgumentParser:
+    return argparse.ArgumentParser(
+        description="Determined command-line client",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
 
@@ -186,7 +179,7 @@ def die(message: str, always_print_traceback: bool = False, exit_code: int = 1) 
 
         traceback.print_exc(file=sys.stderr)
 
-    print(colored(message, "red"), file=sys.stderr, end="\n")
+    print(termcolor.colored(message, "red"), file=sys.stderr, end="\n")
     exit(exit_code)
 
 
@@ -200,14 +193,14 @@ def main(
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
     parser = make_parser()
 
-    full_cmd, aliases = generate_aliases(deploy_cmd.name)
+    full_cmd, aliases = cli.generate_aliases(top_arg_descriptions.deploy_cmd.name)
     is_deploy_cmd = len(args) > 0 and any(args[0] == alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
-        from determined.deploy.cli import args_description as deploy_args_description
+        from determined.deploy import cli as deploy_cli
 
-        add_args(parser, [deploy_args_description])
+        cli.add_args(parser, [deploy_cli.args_description])
     else:
-        add_args(parser, all_args_description)
+        cli.add_args(parser, all_args_description)
 
     try:
         argcomplete.autocomplete(parser)
@@ -229,7 +222,7 @@ def main(
             cli.cert = certs.default_load(parsed_args.master)
 
             try:
-                check_version(cli.unauth_session(parsed_args), parsed_args)
+                version.check_version(cli.unauth_session(parsed_args), parsed_args)
             except requests.exceptions.SSLError:
                 # An SSLError usually means that we queried a master over HTTPS and got an untrusted
                 # cert, so allow the user to store and trust the current cert. (It could also mean
@@ -276,7 +269,7 @@ def main(
                 old_cert_name = cli.cert.name
                 cli.cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
 
-                check_version(cli.unauth_session(parsed_args), parsed_args)
+                version.check_version(cli.unauth_session(parsed_args), parsed_args)
 
             parsed_args.func(parsed_args)
         except KeyboardInterrupt as e:
@@ -294,7 +287,7 @@ def main(
             die(f"Master does not support this operation: {e}")
         except errors.CliError as e:
             die(e.message, exit_code=e.exit_code)
-        except ArgumentError as e:
+        except argparse.ArgumentError as e:
             die(e.message, exit_code=2)
         except bindings.APIHttpError as e:
             die(f"Failed on operation {e.operation_name}: {e.message}")

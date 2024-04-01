@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -50,7 +51,7 @@ func (p priorityScheduler) prioritySchedule(
 	taskList *tasklist.TaskList,
 	groups map[model.JobID]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []model.AllocationID) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
@@ -83,7 +84,7 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 	taskList *tasklist.TaskList,
 	groups map[model.JobID]*tasklist.Group,
 	jobPositions tasklist.JobSortState,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint,
 	filter func(*sproto.AllocateRequest) bool,
 ) ([]*sproto.AllocateRequest, []model.AllocationID) {
@@ -202,11 +203,11 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 	allocationPriority int,
 	jobPositions tasklist.JobSortState,
 	fittingMethod SoftConstraint,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	priorityToScheduledTaskMap map[int][]*sproto.AllocateRequest,
 	tasksAlreadyPreempted map[model.AllocationID]bool,
 	filter func(*sproto.AllocateRequest) bool,
-) (bool, map[agentID]*agentState, map[model.AllocationID]bool) {
+) (bool, map[aproto.ID]*agentState, map[model.AllocationID]bool) {
 	localAgentsState := deepCopyAgents(agents)
 	preemptedTasks := make(map[model.AllocationID]bool)
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
@@ -252,7 +253,7 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 // are listed.
 func (p priorityScheduler) trySchedulingPendingTasksInPriority(
 	allocationRequests []*sproto.AllocateRequest,
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*sproto.AllocateRequest) {
 	successfulAllocations := make([]*sproto.AllocateRequest, 0)
@@ -307,8 +308,8 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
 }
 
-func deepCopyAgents(agents map[agentID]*agentState) map[agentID]*agentState {
-	copiedAgents := make(map[agentID]*agentState)
+func deepCopyAgents(agents map[aproto.ID]*agentState) map[aproto.ID]*agentState {
+	copiedAgents := make(map[aproto.ID]*agentState)
 	for key, agent := range agents {
 		copiedAgents[key] = agent.deepCopy()
 	}
@@ -324,7 +325,7 @@ func addTaskToAgents(fits []*fittingState) {
 }
 
 func removeTaskFromAgents(
-	agents map[agentID]*agentState,
+	agents map[aproto.ID]*agentState,
 	resourcesAllocated *sproto.ResourcesAllocated,
 ) {
 	for _, allocation := range resourcesAllocated.Resources {

@@ -108,6 +108,7 @@ SELECT
   row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
   t.id AS id,
   t.experiment_id,
+  t.log_retention_days,
   'STATE_' || t.state AS state,
   t.start_time,
   t.end_time,

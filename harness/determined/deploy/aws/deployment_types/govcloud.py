@@ -1,11 +1,11 @@
-from termcolor import colored
+import termcolor
 
 from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
 
 
 class Govcloud(base.DeterminedDeployment):
-    logs_info = "View Logs at: " + colored(
+    logs_info = "View Logs at: " + termcolor.colored(
         "https://{region}.console.amazonaws-us-gov.com/cloudwatch/home?"
         "region={region}#logsV2:log-groups/log-group/{log_group}",
         "blue",

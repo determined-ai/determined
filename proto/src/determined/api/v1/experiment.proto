@@ -148,6 +148,43 @@ message GetExperimentLabelsResponse {
   repeated string labels = 1;
 }
 
+// Request for changing the log retention policy for the an experiment.
+message PutExperimentRetainLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_id", "num_days" ] }
+  };
+  // The ID of the experiment.
+  int32 experiment_id = 1;
+
+  // The number of days to retain logs, starting from the time of creation.
+  int32 num_days = 2;
+}
+
+// Response to PutExperimentRetainLogsRequest.
+message PutExperimentRetainLogsResponse {}
+
+// Request for changing the log retention policy for the an experiment.
+message PutExperimentsRetainLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "experiment_ids", "num_days" ] }
+  };
+  // The ids of the experiments being moved.
+  repeated int32 experiment_ids = 1;
+  // The number of days to retain logs, starting from the time of creation.
+  int32 num_days = 2;
+  // Targets all experiments matching filters.
+  BulkExperimentFilters filters = 3;
+}
+
+// Response to PutExperimentRetainLogsRequest.
+message PutExperimentsRetainLogsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+  // Details on success or error for each experiment.
+  repeated ExperimentActionResult results = 1;
+}
+
 // Request for adding a new experiment label.
 message PutExperimentLabelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -631,6 +668,8 @@ enum MetricType {
   METRIC_TYPE_TRAINING = 1;
   // For metrics emitted during validation.
   METRIC_TYPE_VALIDATION = 2;
+  // For metrics emitted during profiling.
+  METRIC_TYPE_PROFILING = 3;
 }
 
 // Request the milestones (in batches processed) at which a metric is recorded

@@ -45,6 +45,13 @@ export const columns: ColumnDef<TrialItem>[] = [
     title: 'Latest Validation Metric',
   },
   {
+    dataIndex: 'logRetentionDays',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['logRetentionDays'],
+    key: V1GetExperimentTrialsRequestSortBy.LOGRETENTIONDAYS,
+    sorter: true,
+    title: 'Log Retention Days',
+  },
+  {
     dataIndex: 'startTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
     key: V1GetExperimentTrialsRequestSortBy.STARTTIME,

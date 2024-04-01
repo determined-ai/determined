@@ -1,15 +1,13 @@
 import argparse
-from argparse import Namespace
 from typing import Any, List, Optional
 
 from determined import cli
 from determined.cli import render
 from determined.common import util
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-def show_config(args: Namespace) -> None:
+def show_config(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     resp = bindings.get_GetMasterConfig(sess).config
     if args.json:
@@ -18,7 +16,7 @@ def show_config(args: Namespace) -> None:
         print(util.yaml_safe_dump(resp, default_flow_style=False))
 
 
-def set_master_config(args: Namespace) -> None:
+def set_master_config(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     log_config = bindings.v1LogConfig()
     field_masks = []
@@ -47,7 +45,7 @@ def set_master_config(args: Namespace) -> None:
     print("Successfully made changes to the master config.")
 
 
-def get_master(args: Namespace) -> None:
+def get_master(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     resp = bindings.get_GetMaster(sess)
     if args.json:
@@ -62,7 +60,7 @@ def format_log_entry(log: bindings.v1LogEntry) -> str:
     return f"{log.timestamp} [{log_level}]: {log.message}"
 
 
-def logs(args: Namespace) -> None:
+def logs(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     offset: Optional[int] = None
     if args.tail:
@@ -75,47 +73,55 @@ def logs(args: Namespace) -> None:
 # fmt: off
 
 args_description = [
-    Cmd("master", None, "manage master", [
-        Cmd(
+    cli.Cmd("master", None, "manage master", [
+        cli.Cmd(
             "config",
             None,
             "manage master config",
             [
-                Cmd(
+                cli.Cmd(
                     "show",
                     show_config,
                     "show master config",
                     [
-                        Group(cli.output_format_args["json"],
-                              cli.output_format_args["yaml"])
+                        cli.Group(
+                            cli.output_format_args["json"],
+                            cli.output_format_args["yaml"]
+                        )
                     ],
                     is_default=True,
                 ),
-                Cmd(
+                cli.Cmd(
                     "set",
                     set_master_config,
                     "set master config",
                     [
-                        Arg("--log.level", type=str, default=argparse.SUPPRESS, required=False,
+                        cli.Arg(
+                            "--log.level", type=str, default=argparse.SUPPRESS, required=False,
                             help="set log level in the master config", dest="log_level",
                             choices=[lvl.name for lvl in bindings.v1LogLevel
-                                     if lvl != bindings.v1LogLevel.UNSPECIFIED]),
-                        Arg("--log.color", type=str, default=argparse.SUPPRESS, required=False,
+                                     if lvl != bindings.v1LogLevel.UNSPECIFIED]
+                        ),
+                        cli.Arg(
+                            "--log.color", type=str, default=argparse.SUPPRESS, required=False,
                             help="set log color in the master config", dest="log_color",
-                            choices=["on", "off"])
+                            choices=["on", "off"]
+                        )
                     ]
                 ),
-                Group(cli.output_format_args["json"],
-                      cli.output_format_args["yaml"]),
+                cli.Group(
+                    cli.output_format_args["json"],
+                    cli.output_format_args["yaml"]
+                ),
             ]
         ),
-        Cmd("info", get_master, "fetch master info", [
-            Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
+        cli.Cmd("info", get_master, "fetch master info", [
+            cli.Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
         ]),
-        Cmd("logs", logs, "fetch master logs", [
-            Arg("-f", "--follow", action="store_true",
+        cli.Cmd("logs", logs, "fetch master logs", [
+            cli.Arg("-f", "--follow", action="store_true",
                 help="follow the logs of master, similar to tail -f"),
-            Arg("--tail", type=int,
+            cli.Arg("--tail", type=int,
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
         ]),

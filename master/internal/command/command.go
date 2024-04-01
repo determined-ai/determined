@@ -187,11 +187,12 @@ func (c *Command) registerJobAndTask(ctx context.Context, tx bun.Tx) error {
 	}
 
 	if err := internaldb.AddTaskTx(ctx, tx, &model.Task{
-		TaskID:     c.taskID,
-		TaskType:   c.taskType,
-		StartTime:  c.registeredTime,
-		JobID:      &c.jobID,
-		LogVersion: model.CurrentTaskLogVersion,
+		TaskID:           c.taskID,
+		TaskType:         c.taskType,
+		StartTime:        c.registeredTime,
+		JobID:            &c.jobID,
+		LogVersion:       model.CurrentTaskLogVersion,
+		LogRetentionDays: c.Base.LogRetentionDays,
 	}); err != nil {
 		return fmt.Errorf("persisting task %v: %w", c.taskID, err)
 	}

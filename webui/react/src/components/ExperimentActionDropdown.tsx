@@ -1,5 +1,6 @@
 import { GridCell } from '@glideapps/glide-data-grid';
 import Button from 'hew/Button';
+import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
@@ -11,6 +12,7 @@ import React, { MouseEvent, useCallback, useMemo } from 'react';
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
+import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
@@ -37,11 +39,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: (
-    action: ExperimentAction,
-    id: number,
-    data?: Partial<ExperimentItem>,
-  ) => void | Promise<void>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
@@ -66,6 +64,7 @@ const dropdownActions = [
   Action.Kill,
   Action.Edit,
   Action.Move,
+  Action.RetainLogs,
   Action.OpenTensorBoard,
   Action.HyperparameterSearch,
   Action.Delete,
@@ -85,6 +84,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const id = experiment.id;
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
+  const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
   const confirm = useConfirm();
   const { openToast } = useToast();
@@ -98,6 +98,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleMoveComplete = useCallback(() => {
     onComplete?.(ExperimentAction.Move, id);
+  }, [id, onComplete]);
+
+  const handleRetainLogsComplete = useCallback(() => {
+    onComplete?.(ExperimentAction.RetainLogs, id);
   }, [id, onComplete]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
@@ -215,6 +219,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           case Action.Move:
             ExperimentMoveModal.open();
             break;
+          case Action.RetainLogs:
+            ExperimentRetainLogsModal.open();
+            break;
           case Action.HyperparameterSearch:
             HyperparameterSearchModal.open();
             break;
@@ -247,6 +254,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       confirm,
       ExperimentEditModal,
       ExperimentMoveModal,
+      ExperimentRetainLogsModal,
       HyperparameterSearchModal,
       cell,
       openToast,
@@ -280,6 +288,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
+      />
+      <ExperimentRetainLogsModal.Component
+        experimentIds={[id]}
+        onSubmit={handleRetainLogsComplete}
       />
       <HyperparameterSearchModal.Component
         closeModal={HyperparameterSearchModal.close}

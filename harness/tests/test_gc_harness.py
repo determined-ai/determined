@@ -6,7 +6,7 @@ from typing import Any, List
 import pytest
 
 from determined.common import storage
-from determined.exec.gc_checkpoints import delete_checkpoints
+from determined.exec import gc_checkpoints
 from tests.storage import util as storage_util
 
 
@@ -29,10 +29,14 @@ def to_delete(request: Any, manager: storage.StorageManager) -> List[str]:
 
 
 def test_delete_checkpoints(manager: storage.StorageManager, to_delete: List[str]) -> None:
-    delete_checkpoints(manager, to_delete, ["**/*.dontmatchanything", "**/*"], dry_run=False)
+    gc_checkpoints.delete_checkpoints(
+        manager, to_delete, ["**/*.dontmatchanything", "**/*"], dry_run=False
+    )
     assert len(os.listdir(manager._base_path)) == 0
 
 
 def test_dry_run(manager: storage.StorageManager, to_delete: List[str]) -> None:
-    delete_checkpoints(manager, to_delete, ["**/*.dontmatchanything", "**/*"], dry_run=True)
+    gc_checkpoints.delete_checkpoints(
+        manager, to_delete, ["**/*.dontmatchanything", "**/*"], dry_run=True
+    )
     assert len(os.listdir(manager._base_path)) == len(to_delete)

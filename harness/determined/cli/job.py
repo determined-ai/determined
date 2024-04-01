@@ -1,13 +1,11 @@
+import argparse
 import datetime
-from argparse import ONE_OR_MORE, Namespace
 from typing import Any, List, Union
 
 from determined import cli
 from determined.cli import render
 from determined.common import api, util
 from determined.common.api import bindings
-from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.util import parse_protobuf_timestamp
 
 
 def parse_jobv2_resp(
@@ -21,7 +19,7 @@ def parse_jobv2_resp(
     return jobs
 
 
-def ls(args: Namespace) -> None:
+def ls(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     pools = bindings.get_GetResourcePools(sess)
     is_priority = check_is_priority(pools, args.resource_pool)
@@ -75,7 +73,7 @@ def ls(args: Namespace) -> None:
             j.type.value,
             computed_job_name(j) if isinstance(j, bindings.v1Job) else render.OMITTED_VALUE,
             j.priority if is_priority else j.weight,
-            parse_protobuf_timestamp(j.submissionTime).astimezone(datetime.timezone.utc)
+            util.parse_protobuf_timestamp(j.submissionTime).astimezone(datetime.timezone.utc)
             if isinstance(j, bindings.v1Job)
             else render.OMITTED_VALUE,
             f"{j.allocatedSlots}/{j.requestedSlots}",
@@ -87,7 +85,7 @@ def ls(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, as_csv=args.csv)
 
 
-def update(args: Namespace) -> None:
+def update(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     update = bindings.v1QueueControl(
         jobId=args.job_id,
@@ -100,7 +98,7 @@ def update(args: Namespace) -> None:
     bindings.post_UpdateJobQueue(sess, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
 
-def process_updates(args: Namespace) -> None:
+def process_updates(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     for arg in args.operation:
         inputs = validate_operation_args(arg)
@@ -171,24 +169,24 @@ def validate_operation_args(operation: str) -> dict:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "j|ob",
         None,
         "manage jobs",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
                 ls,
                 "list jobs",
                 [
-                    Arg(
+                    cli.Arg(
                         "-p",
                         "--resource-pool",
                         type=str,
                         help="The target resource pool, if any.",
                     ),
                     *cli.make_pagination_args(limit=100, supports_reverse=True),
-                    Group(
+                    cli.Group(
                         cli.output_format_args["json"],
                         cli.output_format_args["yaml"],
                         cli.output_format_args["table"],
@@ -197,36 +195,36 @@ args_description = [
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "u|pdate",
                 update,
                 "update job",
                 [
-                    Arg("job_id", type=str, help="The target job ID"),
-                    Group(
-                        Arg(
+                    cli.Arg("job_id", type=str, help="The target job ID"),
+                    cli.Group(
+                        cli.Arg(
                             "-p",
                             "--priority",
                             type=int,
                             help="The new priority. Exclusive to priority scheduler.",
                         ),
-                        Arg(
+                        cli.Arg(
                             "-w",
                             "--weight",
                             type=float,
                             help="The new weight. Exclusive to fair_share scheduler.",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--resource-pool",
                             type=str,
                             help="The target resource pool to move the job to.",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--ahead-of",
                             type=str,
                             help="The job ID of the job to be put ahead of in the queue.",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--behind-of",
                             type=str,
                             help="The job ID of the job to be put behind in the queue.",
@@ -234,14 +232,14 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "update-batch",
                 process_updates,
                 "batch update jobs",
                 [
-                    Arg(
+                    cli.Arg(
                         "operation",
-                        nargs=ONE_OR_MORE,
+                        nargs=argparse.ONE_OR_MORE,
                         type=str,
                         help="The target job ID(s) and target operation(s), formatted as "
                         "<jobID>.<operation>=<value>. Operations include priority, weight, "

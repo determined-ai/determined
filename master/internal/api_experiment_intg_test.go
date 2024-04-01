@@ -292,6 +292,139 @@ func TestMoveExperimentRunID(t *testing.T) {
 	})
 }
 
+func TestMoveExperiments(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	t.Run("Move an experiement without filters", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp.ID)},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), 1)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move multiple experiments without filters", func(t *testing.T) {
+		exp1 := createTestExp(t, api, curUser)
+		exp2 := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), 2)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move experiments with filters", func(t *testing.T) {
+		const numNewExp = 13
+		label := uuid.New().String()
+		for i := 0; i < numNewExp; i++ {
+			createTestExp(t, api, curUser, label)
+		}
+
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters: &apiv1.BulkExperimentFilters{
+				Labels: []string{label},
+			},
+		})
+		for _, v := range result.Results {
+			require.Equal(t, v.Error, "")
+		}
+		require.Equal(t, len(result.Results), numNewExp)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move no experiments with filters (no filter match)", func(t *testing.T) {
+		notExsistentLable := uuid.New().String()
+		createTestExp(t, api, curUser)
+
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters: &apiv1.BulkExperimentFilters{
+				Labels:   []string{notExsistentLable},
+				Archived: &wrappers.BoolValue{Value: true},
+			},
+		})
+		require.Equal(t, len(result.Results), 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move multiple experiments to non-existent project", func(t *testing.T) {
+		exp1 := createTestExp(t, api, curUser)
+		exp2 := createTestExp(t, api, curUser)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
+			DestinationProjectId: 0,
+			Filters:              nil,
+		})
+		require.Nil(t, result)
+		require.Error(t, err)
+	})
+
+	t.Run("Move 0 experiments", func(t *testing.T) {
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		require.Equal(t, len(result.Results), 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move a non-existent experiement", func(t *testing.T) {
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{-1, 0},
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		require.Equal(t, len(result.Results), 2)
+		require.NoError(t, err)
+	})
+
+	t.Run("Move mixed of existent and non-existent experiments", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+		expIds := []int32{-1, 0, int32(exp.ID)}
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        expIds,
+			DestinationProjectId: int32(projectID),
+			Filters:              nil,
+		})
+		successIDList := make([]int32, 0)
+		errorIDList := make([]int32, 0)
+		for _, v := range result.Results {
+			if v.Error == "" {
+				require.Equal(t, v.Error, "")
+				successIDList = append(successIDList, v.Id)
+			} else {
+				require.Equal(
+					t,
+					v.Error,
+					fmt.Sprintf("rpc error: code = NotFound desc = experiment '%d' not found", v.Id),
+				)
+				errorIDList = append(errorIDList, v.Id)
+			}
+		}
+		require.Equal(t, len(successIDList), 1)
+		require.Equal(t, len(errorIDList), 2)
+		require.Equal(t, successIDList[0], int32(exp.ID))
+		require.Equal(t, len(result.Results), len(expIds))
+		require.NoError(t, err)
+	})
+}
+
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
@@ -356,6 +489,88 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 		Id: int32(trial.ExperimentID),
 	})
 	require.ErrorIs(t, err, errContinueHPSearchCompleted)
+}
+
+func TestPutExperimentRetainLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+
+	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
+	require.NoError(t, err)
+
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", exp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	numDays := -1
+	res, err := api.PutExperimentRetainLogs(ctx, &apiv1.PutExperimentRetainLogsRequest{
+		ExperimentId: int32(exp.ID), NumDays: int32(numDays),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	var logRetentionDays []int
+	err = db.Bun().NewSelect().Table("tasks").
+		Column("log_retention_days").
+		Where("task_id IN (?)", bun.In(taskIDs)).
+		Scan(ctx, &logRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range logRetentionDays {
+		require.Equal(t, v, numDays)
+	}
+}
+
+func TestPutExperimentsRetainLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	var expIDs []int32
+	var intExpIDS []int
+	var trialIDs []int
+	for i := 0; i <= 5; i++ {
+		trial, _ := createTestTrial(t, api, curUser)
+		expIDs = append(expIDs, int32(trial.ExperimentID))
+		intExpIDS = append(intExpIDS, trial.ExperimentID)
+		trialIDs = append(trialIDs, trial.ID)
+	}
+
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(expIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id IN (?)", bun.In(trialIDs)).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	numDays := 10
+	res, err := api.PutExperimentsRetainLogs(ctx, &apiv1.PutExperimentsRetainLogsRequest{
+		ExperimentIds: expIDs, NumDays: int32(numDays),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
+	require.NoError(t, err)
+
+	var logRetentionDays []int
+	err = db.Bun().NewSelect().Table("tasks").
+		Column("log_retention_days").
+		Where("task_id IN (?)", bun.In(taskIDs)).
+		Scan(ctx, &logRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range logRetentionDays {
+		require.Equal(t, v, numDays)
+	}
 }
 
 func TestParseAndMergeContinueConfig(t *testing.T) {

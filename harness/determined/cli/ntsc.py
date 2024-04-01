@@ -1,24 +1,23 @@
 """Shared CLI interface for NTSCs (notebooks, tensorboards, shells, and commands)."""
 
+import argparse
 import base64
+import collections
+import functools
 import json
 import operator
 import os
+import pathlib
 import re
-from argparse import Namespace
-from collections import OrderedDict
-from functools import reduce
-from pathlib import Path
+import urllib
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
-from urllib import parse
 
-from termcolor import colored
+import termcolor
 
-import determined.cli.render
-from determined import cli
-from determined.cli import render
-from determined.common import api, context, declarative_argparse, util
-from determined.util import merge_dicts
+from determined import cli, util
+from determined.cli import render, workspace
+from determined.common import api, context
+from determined.common import util as common_util
 
 CONFIG_DESC = """
 Additional configuration arguments for setting up a command.
@@ -60,7 +59,7 @@ TASK_ID_REGEX = re.compile(
     r"^(?:[0-9]+\.)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
 )
 
-CommandTableHeader = OrderedDict(
+CommandTableHeader = collections.OrderedDict(
     [
         ("id", "id"),
         ("username", "username"),
@@ -72,7 +71,7 @@ CommandTableHeader = OrderedDict(
     ]
 )
 
-TensorboardTableHeader = OrderedDict(
+TensorboardTableHeader = collections.OrderedDict(
     [
         ("id", "id"),
         ("username", "username"),
@@ -134,15 +133,15 @@ RemoteTaskGetIDsFunc = {
 }
 
 
-ls_sort_args: declarative_argparse.ArgsDescription = [
-    declarative_argparse.Arg(
+ls_sort_args: cli.ArgsDescription = [
+    cli.Arg(
         "--sort-by",
         type=str,
         help="sort by the given field",
         choices=list(CommandTableHeader.keys()) + ["startTime"],
         default="startTime",
     ),
-    declarative_argparse.Arg(
+    cli.Arg(
         "--order-by",
         type=str,
         choices=["asc", "desc"],
@@ -153,7 +152,7 @@ ls_sort_args: declarative_argparse.ArgsDescription = [
 
 
 def expand_uuid_prefixes(
-    sess: api.Session, args: Namespace, prefixes: Optional[Union[str, List[str]]] = None
+    sess: api.Session, args: argparse.Namespace, prefixes: Optional[Union[str, List[str]]] = None
 ) -> Union[str, List[str]]:
     if prefixes is None:
         prefixes = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
@@ -194,7 +193,7 @@ def expand_uuid_prefixes(
     return prefixes
 
 
-def list_tasks(args: Namespace) -> None:
+def list_tasks(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     api_path = RemoteTaskNewAPIs[args._command]
     api_full_path = "api/v1/{}".format(api_path)
@@ -203,9 +202,9 @@ def list_tasks(args: Namespace) -> None:
     params: Dict[str, Any] = {}
 
     if "workspace_name" in args and args.workspace_name is not None:
-        workspace = api.workspace_by_name(sess, args.workspace_name)
+        workspace_obj = api.workspace_by_name(sess, args.workspace_name)
 
-        params["workspaceId"] = workspace.id
+        params["workspaceId"] = workspace_obj.id
 
     if not args.all:
         params["users"] = [sess.username]
@@ -218,7 +217,7 @@ def list_tasks(args: Namespace) -> None:
         return
 
     # swap workspace_id for workspace name.
-    w_names = cli.workspace.get_workspace_names(sess)
+    w_names = workspace.get_workspace_names(sess)
 
     for item in res:
         if item["state"].startswith("STATE_"):
@@ -232,7 +231,7 @@ def list_tasks(args: Namespace) -> None:
     res.sort(key=operator.itemgetter(args.sort_by), reverse=args.order_by == "desc")
 
     if getattr(args, "json", None):
-        determined.cli.render.print_json(res)
+        render.print_json(res)
         return
 
     values = render.select_values(res, table_header)
@@ -240,7 +239,7 @@ def list_tasks(args: Namespace) -> None:
     render.tabulate_or_csv(table_header, values, getattr(args, "csv", False))
 
 
-def kill(args: Namespace) -> None:
+def kill(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     task_ids = expand_uuid_prefixes(sess, args)
     name = RemoteTaskName[args._command]
@@ -248,20 +247,20 @@ def kill(args: Namespace) -> None:
     for i, task_id in enumerate(task_ids):
         try:
             _kill(sess, args._command, task_id)
-            print(colored("Killed {} {}".format(name, task_id), "green"))
+            print(termcolor.colored("Killed {} {}".format(name, task_id), "green"))
         except api.errors.APIException as e:
             if not args.force:
                 for ignored in task_ids[i + 1 :]:
                     print("Cowardly not killing {}".format(ignored))
                 raise e
-            print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
+            print(termcolor.colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
 
 
 def _kill(sess: api.Session, task_type: str, task_id: str) -> None:
     sess.post(f"api/v1/{RemoteTaskNewAPIs[task_type]}/{task_id}/kill")
 
 
-def set_priority(args: Namespace) -> None:
+def set_priority(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     task_id = expand_uuid_prefixes(sess, args)
     name = RemoteTaskName[args._command]
@@ -269,12 +268,12 @@ def set_priority(args: Namespace) -> None:
     try:
         api_full_path = f"api/v1/{RemoteTaskNewAPIs[args._command]}/{task_id}/set_priority"
         sess.post(api_full_path, json={"priority": args.priority})
-        print(colored(f"Set priority of {name} {task_id} to {args.priority}", "green"))
+        print(termcolor.colored(f"Set priority of {name} {task_id} to {args.priority}", "green"))
     except api.errors.APIException as e:
-        print(colored(f"Skipping: {e} ({type(e).__name__})", "red"))
+        print(termcolor.colored(f"Skipping: {e} ({type(e).__name__})", "red"))
 
 
-def config(args: Namespace) -> None:
+def config(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     task_id = expand_uuid_prefixes(sess, args)
     res_json = sess.get(f"api/v1/{RemoteTaskNewAPIs[args._command]}/{task_id}").json()
@@ -290,7 +289,7 @@ def config(args: Namespace) -> None:
 def _dot_to_json(key: Any, value: Any) -> Any:
     json_output: Any = {}
     path = key.split(".")
-    target = reduce(lambda d, k: d.setdefault(k, {}), path[:-1], json_output)
+    target = functools.reduce(lambda d, k: d.setdefault(k, {}), path[:-1], json_output)
     target[path[-1]] = value
     return json_output
 
@@ -329,15 +328,15 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST and value.startswith("{"):
-                value = [util.yaml_safe_load(value)]
+                value = [common_util.yaml_safe_load(value)]
             else:
-                value = util.yaml_safe_load(value)
+                value = common_util.yaml_safe_load(value)
         # Separate values if a comma exists. Use yaml_safe_load() to cast
         # the value(s) to the type YAML would use, e.g., "4" -> 4.
         elif "," in value:
-            value = [util.yaml_safe_load(v) for v in value.split(",")]
+            value = [common_util.yaml_safe_load(v) for v in value.split(",")]
         else:
-            value = util.yaml_safe_load(value)
+            value = common_util.yaml_safe_load(value)
             # Certain configurations keys are expected to have list values.
             # Convert a single value to a singleton list if needed.
             if key in _CONFIG_PATHS_COERCE_TO_LIST:
@@ -362,7 +361,7 @@ def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> 
         # function.
         _replace_value(config, key.split("."), None, {})
         # Merge two objects in json format
-        config = merge_dicts(config, config_arg_in_json)
+        config = util.merge_dicts(config, config_arg_in_json)
 
     return config
 
@@ -376,7 +375,7 @@ def parse_config(
     config = {}  # type: Dict[str, Any]
     if config_file:
         with config_file:
-            config = util.safe_load_yaml_with_exceptions(config_file)
+            config = common_util.safe_load_yaml_with_exceptions(config_file)
 
     config = parse_config_overrides(config, overrides)
 
@@ -404,8 +403,8 @@ def launch_command(
     endpoint: str,
     config: Dict[str, Any],
     template: str,
-    context_path: Optional[Path] = None,
-    includes: Iterable[Path] = (),
+    context_path: Optional[pathlib.Path] = None,
+    includes: Iterable[pathlib.Path] = (),
     data: Optional[Dict[str, Any]] = None,
     workspace_id: Optional[int] = None,
     preview: Optional[bool] = False,
@@ -461,9 +460,9 @@ def make_interactive_task_url(
         public_url,
         task_id,
         task_type,
-        parse.quote(description),
+        urllib.parse.quote(description),
         resource_pool,
-        parse.quote_plus(wait_page_url),
+        urllib.parse.quote_plus(wait_page_url),
         f"currentSlotsExceeded={str(currentSlotsExceeded).lower()}",
     )
     # Return a relative path that can be joined to the master_url with a simple "/" separator.

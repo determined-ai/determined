@@ -1,12 +1,10 @@
+import argparse
 import json
-from argparse import Namespace
 from typing import Any, List
 
-import determined.cli.render
 from determined import cli
-from determined.cli import render
+from determined.cli import render, workspace
 from determined.common import api
-from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
 
@@ -58,7 +56,7 @@ def _render_model_versions(model_versions: List[client.ModelVersion]) -> None:
     render.tabulate_or_csv(headers, values, False)
 
 
-def list_models(args: Namespace) -> None:
+def list_models(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     workspace_names = None
@@ -70,7 +68,7 @@ def list_models(args: Namespace) -> None:
         workspace_names=workspace_names,
     )
     if args.json:
-        determined.cli.render.print_json([render.model_to_json(m) for m in models])
+        render.print_json([render.model_to_json(m) for m in models])
     else:
         headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
@@ -94,13 +92,13 @@ def model_by_name(sess: api.Session, name: str) -> client.Model:
     return d.get_model(identifier=name)
 
 
-def list_versions(args: Namespace) -> None:
+def list_versions(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     model = model_by_name(sess, args.name)
     if args.json:
         r = sess.get(f"api/v1/models/{model.model_id}/versions")
         data = r.json()
-        determined.cli.render.print_json(data)
+        render.print_json(data)
 
     else:
         render_model(model)
@@ -108,29 +106,35 @@ def list_versions(args: Namespace) -> None:
         _render_model_versions(model.list_versions())
 
 
-def create(args: Namespace) -> None:
+def delete(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    model = model_by_name(sess, args.name)
+    model.delete()
+
+
+def create(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     model = d.create_model(args.name, args.description, workspace_name=args.workspace_name)
     if args.json:
-        determined.cli.render.print_json(render.model_to_json(model))
+        render.print_json(render.model_to_json(model))
     else:
         render_model(model)
 
 
-def move(args: Namespace) -> None:
+def move(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     model = model_by_name(sess, args.name)
     model.move_to_workspace(args.workspace_name)
 
 
-def describe(args: Namespace) -> None:
+def describe(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     model = model_by_name(sess, args.name)
     model_version = model.get_version(args.version)
 
     if args.json:
-        determined.cli.render.print_json(render.model_to_json(model))
+        render.print_json(render.model_to_json(model))
     else:
         render_model(model)
         if model_version is not None:
@@ -138,7 +142,7 @@ def describe(args: Namespace) -> None:
             _render_model_versions([model_version])
 
 
-def register_version(args: Namespace) -> None:
+def register_version(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     model = model_by_name(sess, args.name)
     if args.json:
@@ -147,7 +151,7 @@ def register_version(args: Namespace) -> None:
             json={"checkpointUuid": args.uuid},
         )
 
-        determined.cli.render.print_json(resp.json())
+        render.print_json(resp.json())
     else:
         model_version = model.register_version(args.uuid)
         render_model(model)
@@ -156,58 +160,60 @@ def register_version(args: Namespace) -> None:
 
 
 args_description = [
-    Cmd(
+    cli.Cmd(
         "m|odel",
         None,
         "manage models",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
                 list_models,
                 "list all models in the registry",
                 [
-                    Arg(
+                    cli.Arg(
                         "-w",
                         "--workspace-names",
                         type=str,
                         help="list models in given list of comma-separated workspaces",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--sort-by",
                         type=str,
                         choices=["name", "description", "creation_time", "last_updated_time"],
                         default="last_updated_time",
                         help="sort models by the given field",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--order-by",
                         type=str,
                         choices=["asc", "desc"],
                         default="asc",
                         help="order models in either ascending or descending order",
                     ),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "register-version",
                 register_version,
                 "register a new version of a model",
                 [
-                    Arg("name", type=str, help="name of the model"),
-                    Arg("uuid", type=str, help="uuid to register as the next version of the model"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("name", type=str, help="name of the model"),
+                    cli.Arg(
+                        "uuid", type=str, help="uuid to register as the next version of the model"
+                    ),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "describe",
                 describe,
                 "describe model",
                 [
-                    Arg("name", type=str, help="name of model to describe"),
-                    Arg("--json", action="store_true", help="print as JSON"),
-                    Arg(
+                    cli.Arg("name", type=str, help="name of model to describe"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg(
                         "--version",
                         type=int,
                         default=-1,
@@ -215,33 +221,41 @@ args_description = [
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "list-versions",
                 list_versions,
                 "list the versions of a model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("name", type=str, help="unique name of the model"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
+                "delete",
+                delete,
+                "delete model",
+                [
+                    cli.Arg("name", type=str, help="unique name of the model"),
+                ],
+            ),
+            cli.Cmd(
                 "create",
                 create,
                 "create model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
-                    cli.workspace.workspace_arg,
-                    Arg("--description", type=str, help="description of the model"),
-                    Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Arg("name", type=str, help="unique name of the model"),
+                    workspace.workspace_arg,
+                    cli.Arg("--description", type=str, help="description of the model"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "move",
                 move,
                 "move model to given workspace",
                 [
-                    Arg("name", type=str, help="name of model"),
-                    cli.workspace.workspace_arg,
+                    cli.Arg("name", type=str, help="name of model"),
+                    workspace.workspace_arg,
                 ],
             ),
         ],

@@ -1,10 +1,10 @@
-from determined.common.experimental.determined import Determined
+from determined.common.experimental import determined
+from tests import confdir
 from tests.common import api_server
-from tests.confdir import use_test_config_dir
 
 
 def test_multimaster() -> None:
-    with use_test_config_dir():
+    with confdir.use_test_config_dir():
         conf1 = {
             "address": ("localhost", 12345),
             "credentials": ("user1", "password1", "token1"),
@@ -19,13 +19,13 @@ def test_multimaster() -> None:
 
         with api_server.run_api_server(**conf1) as master_url1:  # type: ignore
             with api_server.run_api_server(**conf2) as master_url2:  # type: ignore
-                d1 = Determined(
+                d1 = determined.Determined(
                     master_url1,
                     user="user1",
                     password="password1",
                     cert_path=str(api_server.CERTS1["certfile"]),
                 )
-                d2 = Determined(
+                d2 = determined.Determined(
                     master_url2,
                     user="user2",
                     password="password2",

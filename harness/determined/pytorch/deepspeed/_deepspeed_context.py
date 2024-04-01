@@ -1,18 +1,16 @@
-import contextlib
-import importlib.util
 import json
 import logging
 import time
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
+from importlib import util as importutil
+from typing import Any, Dict, List, Optional, Set, Type, Union, cast
 
 import deepspeed
 import torch
 from deepspeed.runtime import config_utils
 
 import determined as det
-from determined import profiler, pytorch
+from determined import pytorch, util
 from determined.pytorch import deepspeed as det_ds
-from determined.util import merge_dicts
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -41,7 +39,7 @@ def overwrite_deepspeed_config(
         if not isinstance(base_ds_config, dict):
             raise TypeError("Expected string or dict for base_ds_config argument.")
 
-    return merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
+    return util.merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
@@ -78,7 +76,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         # DeepSpeed supports mixed precision through Nvidia Apex AMP.  ZeRO optimizer requires
         # Apex AMP and cannot be used with more complex AMP modes.
-        apex_available = importlib.util.find_spec("apex") is not None
+        apex_available = importutil.find_spec("apex") is not None
         if not apex_available:
             logger.warning(
                 "Missing package APEX is required for ZeRO optimizer support through DeepSpeed."
@@ -93,7 +91,6 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._last_backward_batch_idx = None  # type: Optional[int]
         self._current_batch_idx = None  # type: Optional[int]
 
-        self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
         self.profiler = None  # type: Any
 
         self._mpu = det_ds.make_data_parallel_mpu(
@@ -264,17 +261,6 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             )
         return self._num_micro_batches_per_slot
 
-    def _set_determined_profiler(self, prof: profiler.ProfilerAgent) -> None:
-        self._determined_profiler = prof
-
-    @contextlib.contextmanager
-    def _record_timing(self, metric_name: str, accumulate: bool = False) -> Iterator[None]:
-        if not self._determined_profiler:
-            yield
-            return
-        with self._determined_profiler.record_timing(metric_name, accumulate):
-            yield
-
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
         if not self.n_gpus:
@@ -293,8 +279,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         for DeepSpeedTrial, the user is responsible for moving data to GPU if needed.  This is
         basically a helper function to make that easier.
         """
-        with self._record_timing("to_device", accumulate=True):
-            return pytorch.to_device(data, self.device, self._to_device_warned_types)
+        return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def is_epoch_start(self) -> bool:
         """
@@ -408,9 +393,11 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             except ImportError:
                 pass
 
-            from torch.utils.tensorboard import SummaryWriter
+            from torch.utils import tensorboard
 
-            self._tbd_writer = SummaryWriter(self.get_tensorboard_path())  # type: ignore
+            self._tbd_writer = tensorboard.SummaryWriter(
+                self.get_tensorboard_path()
+            )  # type: ignore
 
         return self._tbd_writer
 

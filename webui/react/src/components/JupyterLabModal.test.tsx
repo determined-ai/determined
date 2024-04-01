@@ -16,6 +16,7 @@ const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
 vi.mock('services/api', () => ({
+  getAvailableResourcePools: () => Promise.resolve([]),
   getCurrentUser: () => Promise.resolve({ id: 1 }),
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),

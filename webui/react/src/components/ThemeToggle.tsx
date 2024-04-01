@@ -17,17 +17,17 @@ interface ThemeOption {
 export const ThemeOptions: Record<Mode, ThemeOption> = {
   [Mode.Light]: {
     className: Mode.Light,
-    displayName: 'Light Mode',
+    displayName: 'Day Theme',
     next: Mode.Dark,
   },
   [Mode.Dark]: {
     className: Mode.Dark,
-    displayName: 'Dark Mode',
+    displayName: 'Night Theme',
     next: Mode.System,
   },
   [Mode.System]: {
     className: Mode.System,
-    displayName: 'System Mode',
+    displayName: 'System Theme',
     next: Mode.Light,
   },
 };

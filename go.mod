@@ -21,7 +21,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.4
 	github.com/google/go-cmp v0.5.8
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -46,7 +46,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.9.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.20.0
 	golang.org/x/net v0.21.0
@@ -149,7 +149,6 @@ require (
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -167,17 +166,20 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4
+	github.com/go-co-op/gocron/v2 v2.1.1
 	github.com/go-test/deep v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jinzhu/copier v0.3.5
+	github.com/jonboulle/clockwork v0.4.0
 	github.com/lib/pq v1.10.2
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/uptrace/bun v1.1.14
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
 	github.com/uptrace/bun/extra/bundebug v1.1.14
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
-	golang.org/x/tools v0.6.0
+	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848
+	golang.org/x/tools v0.16.0
 )
 
 require (
@@ -193,11 +195,11 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
 )
 
 require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.5.0
 )

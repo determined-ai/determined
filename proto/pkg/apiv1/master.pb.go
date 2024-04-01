@@ -969,6 +969,94 @@ func (x *ResourceAllocationAggregatedResponse) GetResourceEntries() []*masterv1.
 	return nil
 }
 
+// Get telemetry information.
+type CleanupLogsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *CleanupLogsRequest) Reset() {
+	*x = CleanupLogsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_master_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CleanupLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CleanupLogsRequest) ProtoMessage() {}
+
+func (x *CleanupLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_master_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CleanupLogsRequest.ProtoReflect.Descriptor instead.
+func (*CleanupLogsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_master_proto_rawDescGZIP(), []int{15}
+}
+
+// Response to CleanupLogsRequest.
+type CleanupLogsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// How many row of logs were removed.
+	RemovedCount int64 `protobuf:"varint,1,opt,name=removed_count,json=removedCount,proto3" json:"removed_count,omitempty"`
+}
+
+func (x *CleanupLogsResponse) Reset() {
+	*x = CleanupLogsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_master_proto_msgTypes[16]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CleanupLogsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CleanupLogsResponse) ProtoMessage() {}
+
+func (x *CleanupLogsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_master_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CleanupLogsResponse.ProtoReflect.Descriptor instead.
+func (*CleanupLogsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_master_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CleanupLogsResponse) GetRemovedCount() int64 {
+	if x != nil {
+		return x.RemovedCount
+	}
+	return 0
+}
+
 var File_determined_api_v1_master_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_master_proto_rawDesc = []byte{
@@ -1134,11 +1222,18 @@ var file_determined_api_v1_master_proto_rawDesc = []byte{
 	0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x65, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52,
 	0x0f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73,
 	0x3a, 0x17, 0x92, 0x41, 0x14, 0x0a, 0x12, 0xd2, 0x01, 0x0f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x63, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73, 0x22, 0x14, 0x0a, 0x12, 0x43, 0x6c, 0x65,
+	0x61, 0x6e, 0x75, 0x70, 0x4c, 0x6f, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22,
+	0x51, 0x0a, 0x13, 0x43, 0x6c, 0x65, 0x61, 0x6e, 0x75, 0x70, 0x4c, 0x6f, 0x67, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65,
+	0x64, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x72,
+	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x64, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x15, 0x92, 0x41, 0x12,
+	0x0a, 0x10, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x64, 0x5f, 0x63, 0x6f, 0x75,
+	0x6e, 0x74, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64,
+	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -1154,7 +1249,7 @@ func file_determined_api_v1_master_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_master_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_master_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_determined_api_v1_master_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_determined_api_v1_master_proto_goTypes = []interface{}{
 	(GetMasterResponse_Product)(0),                     // 0: determined.api.v1.GetMasterResponse.Product
 	(*SSOProvider)(nil),                                // 1: determined.api.v1.SSOProvider
@@ -1172,27 +1267,29 @@ var file_determined_api_v1_master_proto_goTypes = []interface{}{
 	(*ResourceAllocationRawResponse)(nil),              // 13: determined.api.v1.ResourceAllocationRawResponse
 	(*ResourceAllocationAggregatedRequest)(nil),        // 14: determined.api.v1.ResourceAllocationAggregatedRequest
 	(*ResourceAllocationAggregatedResponse)(nil),       // 15: determined.api.v1.ResourceAllocationAggregatedResponse
-	(*_struct.Struct)(nil),                             // 16: google.protobuf.Struct
-	(*masterv1.Config)(nil),                            // 17: determined.master.v1.Config
-	(*field_mask.FieldMask)(nil),                       // 18: google.protobuf.FieldMask
-	(*logv1.LogEntry)(nil),                             // 19: determined.log.v1.LogEntry
-	(*timestamp.Timestamp)(nil),                        // 20: google.protobuf.Timestamp
-	(*masterv1.ResourceAllocationRawEntry)(nil),        // 21: determined.master.v1.ResourceAllocationRawEntry
-	(masterv1.ResourceAllocationAggregationPeriod)(0),  // 22: determined.master.v1.ResourceAllocationAggregationPeriod
-	(*masterv1.ResourceAllocationAggregatedEntry)(nil), // 23: determined.master.v1.ResourceAllocationAggregatedEntry
+	(*CleanupLogsRequest)(nil),                         // 16: determined.api.v1.CleanupLogsRequest
+	(*CleanupLogsResponse)(nil),                        // 17: determined.api.v1.CleanupLogsResponse
+	(*_struct.Struct)(nil),                             // 18: google.protobuf.Struct
+	(*masterv1.Config)(nil),                            // 19: determined.master.v1.Config
+	(*field_mask.FieldMask)(nil),                       // 20: google.protobuf.FieldMask
+	(*logv1.LogEntry)(nil),                             // 21: determined.log.v1.LogEntry
+	(*timestamp.Timestamp)(nil),                        // 22: google.protobuf.Timestamp
+	(*masterv1.ResourceAllocationRawEntry)(nil),        // 23: determined.master.v1.ResourceAllocationRawEntry
+	(masterv1.ResourceAllocationAggregationPeriod)(0),  // 24: determined.master.v1.ResourceAllocationAggregationPeriod
+	(*masterv1.ResourceAllocationAggregatedEntry)(nil), // 25: determined.master.v1.ResourceAllocationAggregatedEntry
 }
 var file_determined_api_v1_master_proto_depIdxs = []int32{
 	1,  // 0: determined.api.v1.GetMasterResponse.sso_providers:type_name -> determined.api.v1.SSOProvider
 	0,  // 1: determined.api.v1.GetMasterResponse.product:type_name -> determined.api.v1.GetMasterResponse.Product
-	16, // 2: determined.api.v1.GetMasterConfigResponse.config:type_name -> google.protobuf.Struct
-	17, // 3: determined.api.v1.PatchMasterConfigRequest.config:type_name -> determined.master.v1.Config
-	18, // 4: determined.api.v1.PatchMasterConfigRequest.field_mask:type_name -> google.protobuf.FieldMask
-	19, // 5: determined.api.v1.MasterLogsResponse.log_entry:type_name -> determined.log.v1.LogEntry
-	20, // 6: determined.api.v1.ResourceAllocationRawRequest.timestamp_after:type_name -> google.protobuf.Timestamp
-	20, // 7: determined.api.v1.ResourceAllocationRawRequest.timestamp_before:type_name -> google.protobuf.Timestamp
-	21, // 8: determined.api.v1.ResourceAllocationRawResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationRawEntry
-	22, // 9: determined.api.v1.ResourceAllocationAggregatedRequest.period:type_name -> determined.master.v1.ResourceAllocationAggregationPeriod
-	23, // 10: determined.api.v1.ResourceAllocationAggregatedResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationAggregatedEntry
+	18, // 2: determined.api.v1.GetMasterConfigResponse.config:type_name -> google.protobuf.Struct
+	19, // 3: determined.api.v1.PatchMasterConfigRequest.config:type_name -> determined.master.v1.Config
+	20, // 4: determined.api.v1.PatchMasterConfigRequest.field_mask:type_name -> google.protobuf.FieldMask
+	21, // 5: determined.api.v1.MasterLogsResponse.log_entry:type_name -> determined.log.v1.LogEntry
+	22, // 6: determined.api.v1.ResourceAllocationRawRequest.timestamp_after:type_name -> google.protobuf.Timestamp
+	22, // 7: determined.api.v1.ResourceAllocationRawRequest.timestamp_before:type_name -> google.protobuf.Timestamp
+	23, // 8: determined.api.v1.ResourceAllocationRawResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationRawEntry
+	24, // 9: determined.api.v1.ResourceAllocationAggregatedRequest.period:type_name -> determined.master.v1.ResourceAllocationAggregationPeriod
+	25, // 10: determined.api.v1.ResourceAllocationAggregatedResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationAggregatedEntry
 	11, // [11:11] is the sub-list for method output_type
 	11, // [11:11] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
@@ -1386,6 +1483,30 @@ func file_determined_api_v1_master_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_master_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CleanupLogsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_master_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CleanupLogsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1393,7 +1514,7 @@ func file_determined_api_v1_master_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_master_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

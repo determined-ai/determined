@@ -1,3 +1,4 @@
+import abc
 import inspect
 import json
 import logging
@@ -6,46 +7,35 @@ import pickle
 import random
 import sys
 import time
-from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import h5py
 import numpy as np
 import tensorflow as tf
 from packaging import version
-from tensorflow.keras.models import Model
-from tensorflow.python.framework.ops import EagerTensor
+from tensorflow.keras import models
+from tensorflow.python.framework import ops
 
 import determined as det
-from determined import keras, layers, tensorboard, util, workload
-from determined._tf_rng import get_rng_state, set_rng_state
+from determined import horovod, keras, layers, tensorboard, util, workload
 from determined.common import check
-from determined.horovod import hvd
+from determined.keras import callbacks as det_callbacks
 from determined.tensorboard.metric_writers import tensorflow
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
 if version.parse(tf.__version__) >= version.parse("2.6.0"):
-    from keras.callbacks import CallbackList, make_logs, set_callback_parameters
+    from keras import callbacks
 
     # TODO MLG-444 Migrate from legacy Keras hdf5 saving methods
     if version.parse(tf.__version__) >= version.parse("2.11.0"):
-        from keras.saving.legacy.hdf5_format import (
-            load_optimizer_weights_from_hdf5_group,
-            save_optimizer_weights_to_hdf5_group,
-        )
+        from keras.saving.legacy import hdf5_format
     else:
-        from keras.saving.hdf5_format import (
-            load_optimizer_weights_from_hdf5_group,
-            save_optimizer_weights_to_hdf5_group,
-        )
-    from keras.utils.mode_keys import ModeKeys
+        from keras.saving import hdf5_format  # noqa: I2041
+    from keras.utils import mode_keys
 else:
-    from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
-    from tensorflow.python.keras.saving.hdf5_format import (
-        load_optimizer_weights_from_hdf5_group,
-        save_optimizer_weights_to_hdf5_group,
-    )
-    from tensorflow.python.keras.utils.mode_keys import ModeKeys
+    from tensorflow.python.keras import callbacks
+    from tensorflow.python.keras.saving import hdf5_format
+    from tensorflow.python.keras.utils import mode_keys
 
 logger = logging.getLogger("determined.keras")
 
@@ -67,7 +57,7 @@ def is_tf2_enabled() -> bool:
 
 
 def load_optimizer_weights(
-    model: Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
+    model: models.Model, h5group: Any, optimizer: tf.keras.optimizers.Optimizer
 ) -> None:
     """
     Load the optimizer states from a tf.keras model saved with
@@ -92,7 +82,7 @@ def load_optimizer_weights(
             # _make_train_function() and so can't load optimizer weights.
             model._make_train_function()
 
-        optimizer_weight_values = load_optimizer_weights_from_hdf5_group(h5group)
+        optimizer_weight_values = hdf5_format.load_optimizer_weights_from_hdf5_group(h5group)
         try:
             optimizer.set_weights(optimizer_weight_values)
         except ValueError:
@@ -111,7 +101,7 @@ def load_optimizer_weights(
         )
 
 
-class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
+class TrialControllerMultiplexer(det_callbacks._MultiplexerBase):
     """
     Extend _MultiplexerBase with the logic for triggering on_train_workload_end, and on_test_end
     and based on master-requested workloads.
@@ -185,6 +175,7 @@ class TFKerasTrialController(det.TrialController):
     ) -> None:
         # Initialize the correct horovod.
         if distributed_backend.use_horovod():
+            hvd = horovod.hvd
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
             hvd.init()
 
@@ -213,6 +204,7 @@ class TFKerasTrialController(det.TrialController):
             if use_horovod:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
+                hvd = horovod.hvd
                 session_config.gpu_options.visible_device_list = str(hvd.local_rank())
 
             session = tf.compat.v1.Session(
@@ -226,6 +218,7 @@ class TFKerasTrialController(det.TrialController):
             gpus = tf.config.experimental.list_physical_devices("GPU")
 
             if len(gpus) > 0:
+                hvd = horovod.hvd
                 local_rank = hvd.local_rank() if use_horovod else 0
                 gpu = gpus[local_rank]
                 tf.config.experimental.set_visible_devices(gpu, "GPU")
@@ -248,7 +241,7 @@ class TFKerasTrialController(det.TrialController):
                 compile_args.arguments["optimizer"]
             )
 
-        # context.model is Optional[Model]. This assert signals to mypy it can't
+        # context.model is Optional[models.Model]. This assert signals to mypy it can't
         # be none because we check that in `from_trial`.
         assert context.model is not None
 
@@ -319,7 +312,7 @@ class TFKerasTrialController(det.TrialController):
 
     def __init__(
         self,
-        model: tf.keras.models.Model,
+        model: models.Model,
         session: tf.compat.v1.ConfigProto,
         train_config: keras.TFKerasTrainConfig,
         trial: "TFKerasTrial",
@@ -410,8 +403,8 @@ class TFKerasTrialController(det.TrialController):
     def _configure_callbacks(self, user_callbacks: Optional[List]) -> None:
         """
         If we pass a callbacks parameter to model.fit() or model.evaluate() which is a
-        pre-constructed CallbackList, Keras will not alter it.  We can use this property to
-        configure the exact callback order that we want in our system.
+        pre-constructed CallbackList, Keras will not alter it.  We can use this
+        property to configure the exact callback order that we want in our system.
 
         The implementation is based closely on from the real
         tf.keras.callbacks.configure_callbacks(), with the following differences:
@@ -421,19 +414,19 @@ class TFKerasTrialController(det.TrialController):
           - We create a det.keras.CallbackList instead of the normal tf.keras one.
         """
 
-        callbacks = user_callbacks or []
+        callbacks_list = user_callbacks or []
         check.is_instance(
-            callbacks,
+            callbacks_list,
             list,
             "the callbacks parameter of model.fit() or model.eval() must be a list of Callbacks",
         )
 
         if self.env.experiment_config.get_records_per_epoch() is None:
-            for cb in callbacks:
-                if util.is_overridden(cb.on_epoch_end, tf.keras.callbacks.Callback) and not getattr(
+            for cb in callbacks_list:
+                if util.is_overridden(cb.on_epoch_end, callbacks.Callback) and not getattr(
                     cb, "_skip_epoch_end_check", False
                 ):
-                    if isinstance(cb, keras.callbacks.Callback):
+                    if isinstance(cb, det_callbacks.Callback):
                         # New callbacks must obey the rules.
                         raise AssertionError(
                             "it is unsupported to use a Callback that defines on_epoch_end "
@@ -452,19 +445,12 @@ class TFKerasTrialController(det.TrialController):
         # Standard post-callback from the real configure_callbacks().
         # Note that we are not including BaseLogger since it is only for averaging metrics over an
         # entire epoch, and we don't report any metrics in on_epoch_end at all.
-        self.model.history = keras.callbacks._DeterminedHistory()
-        callbacks = callbacks + [self.model.history]
+        self.model.history = det_callbacks._DeterminedHistory()
+        callbacks_list = callbacks_list + [self.model.history]
 
         if self.context._fit_verbose:
             # Our implementation of verbose=True.
-            callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
-
-        profiler = keras.callbacks._DeterminedProfiler(
-            self.prof,
-            self.context.get_global_batch_size(),
-        )
-
-        callbacks = callbacks + [profiler]
+            callbacks_list = [det_callbacks._DeterminedProgress()] + callbacks_list
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
@@ -477,25 +463,26 @@ class TFKerasTrialController(det.TrialController):
         # We wrap all of the callbacks in a single Multiplexer.
         self.multiplexer = TrialControllerMultiplexer(
             self,
-            callbacks,
+            callbacks_list,
             self.is_chief,
             self.context.get_per_slot_batch_size(),
             batches_per_epoch,
             self.multiplexer_load_state,
         )
-        callbacks = [self.multiplexer]
+        callbacks_list = [self.multiplexer]
 
         if self.context.distributed.size > 1:
             # Horovod synchronization of initial variables should happen even before we enter our
             # control loop, in case we have an initial validation requested.
-            callbacks = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks
+            hvd = horovod.hvd
+            callbacks_list = [hvd.callbacks.BroadcastGlobalVariablesCallback(0)] + callbacks_list
 
-        # The remainder of Determined control logic is done with a custom CallbackList
-        self.callback_list = CallbackList(callbacks)
+        # The remainder of Determined control logic is done with a custom callbacks.CallbackList
+        self.callback_list = callbacks.CallbackList(callbacks_list)
 
         # Disable timing of callbacks in some versions of keras. This can fail in some corner-cases
-        # because CallbackList is not designed to allow some callbacks to call other callbacks, and
-        # they can interact very poorly.
+        # because callbacks.CallbackList is not designed to allow some callbacks to call other
+        # callbacks, and they can interact very poorly.
         if hasattr(self.callback_list, "_timing"):
             self.callback_list._timing["on_train_batch_begin"] = True
             self.callback_list._timing["on_train_batch_end"] = True
@@ -510,7 +497,7 @@ class TFKerasTrialController(det.TrialController):
         self.callback_list.set_model(callback_model)
 
         # Fill in bogus values for most of these... some of them are very complex to calculate.
-        set_callback_parameters(
+        callbacks.set_callback_parameters(
             self.callback_list,
             self.model,
             do_validation=False,
@@ -519,7 +506,7 @@ class TFKerasTrialController(det.TrialController):
             steps_per_epoch=None,
             samples=None,
             verbose=False,
-            mode=ModeKeys.TRAIN,
+            mode=mode_keys.ModeKeys.TRAIN,
         )
 
         self.callback_list.model.stop_training = False
@@ -538,10 +525,10 @@ class TFKerasTrialController(det.TrialController):
         with h5py.File(path.joinpath("determined-keras-optimizer-weights.h5"), "w") as h5file:
             for idx, optimizer in enumerate(self.context._optimizers):
                 opt_group = h5file.create_group(f"optimizer-{idx}")
-                save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
+                hdf5_format.save_optimizer_weights_to_hdf5_group(opt_group, optimizer)
 
         # Save RNG state.
-        rng_state = get_rng_state()
+        rng_state = keras.get_rng_state()
 
         with open(path.joinpath("rng_state.pkl"), "wb") as f:
             pickle.dump(rng_state, f)
@@ -613,7 +600,7 @@ class TFKerasTrialController(det.TrialController):
             with open(load_path.joinpath("rng_state.pkl"), "rb") as f:
                 rng_state = pickle.load(f)
 
-            set_rng_state(rng_state)
+            keras.set_rng_state(rng_state)
         except IOError:
             logger.warning("Checkpoint did not include RNG state.")
 
@@ -630,13 +617,15 @@ class TFKerasTrialController(det.TrialController):
                 self.wlsq.load_state(pickle.load(f))
 
     def run(self) -> None:
-        with self.prof:
-            try:
-                self._launch_fit()
-            except det.errors.WorkerFinishedGracefully:
-                pass
-            finally:
-                self._stop_enqueuers()
+        # Start Determined system metrics profiling if enabled.
+        if self.profiling_enabled:
+            self.context._core.profiler.on()
+        try:
+            self._launch_fit()
+        except det.errors.WorkerFinishedGracefully:
+            pass
+        finally:
+            self._stop_enqueuers()
 
     def _launch_fit(self) -> None:
         training_data = self.training_data
@@ -751,7 +740,9 @@ class TFKerasTrialController(det.TrialController):
             metrics_values = (metrics_values,)
 
         if use_model_metrics:
-            metrics = make_logs(self.model, {}, metrics_values, ModeKeys.TEST, prefix="val_")
+            metrics = callbacks.make_logs(
+                self.model, {}, metrics_values, mode_keys.ModeKeys.TEST, prefix="val_"
+            )
         else:
             check.is_instance(metrics_values, dict)
             metrics = {f"val_{k}": v for k, v in metrics_values.items()}
@@ -817,6 +808,7 @@ class TFKerasTrialController(det.TrialController):
             return logs
         # Reduce logs in key-sorted to be deterministic across workers.
         keys = sorted(logs)
+        hvd = horovod.hvd
         logger.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
         return {
             key: np.array(self._hvd_allreduce(logs[key], average=True, name=key)) for key in keys
@@ -824,6 +816,7 @@ class TFKerasTrialController(det.TrialController):
 
     def _hvd_allreduce(self, value: Any, average: bool, name: str) -> Any:
         # The signature of our horovod allreduce changed after we rebased onto 0.21.
+        hvd = horovod.hvd
         hvd_sig = inspect.signature(hvd.allreduce)
         horovod_kwargs = {
             "value": value,
@@ -844,7 +837,7 @@ class TFKerasTrialController(det.TrialController):
         return hvd.allreduce(**horovod_kwargs)
 
     def _convert_possible_tensor(self, possible_tensor: Any) -> Any:
-        if isinstance(possible_tensor, EagerTensor):
+        if isinstance(possible_tensor, ops.EagerTensor):
             # Horovod and / or TensorFlow may promote scalars to tensors in eager mode.
             return possible_tensor.numpy()
         return possible_tensor
@@ -932,14 +925,15 @@ class TFKerasTrialController(det.TrialController):
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.
+            hvd = horovod.hvd
             _ = self.context.distributed.gather(None)
 
             num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
-            if isinstance(num_inputs, EagerTensor):
+            if isinstance(num_inputs, ops.EagerTensor):
                 # Horovod will promote an int to a tensor in eager mode.
                 num_inputs = num_inputs.numpy()
             num_batches = hvd.allreduce(num_batches, average=False, name="validation_num_batches")
-            if isinstance(num_batches, EagerTensor):
+            if isinstance(num_batches, ops.EagerTensor):
                 num_batches = num_batches.numpy()
 
         metrics = self._allreduce_logs(metrics)
@@ -1008,8 +1002,8 @@ class TFKerasTrial(det.LegacyTrial):
         """
         self.context = context
 
-    @abstractmethod
-    def build_model(self) -> tf.keras.models.Model:
+    @abc.abstractmethod
+    def build_model(self) -> models.Model:
         """
         Returns the deep learning architecture associated with a trial.  The
         architecture might depend on the current values of the model's
@@ -1027,7 +1021,7 @@ class TFKerasTrial(det.LegacyTrial):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def build_training_data_loader(self) -> keras.InputData:
         """
         Defines the data loader to use during training.
@@ -1062,7 +1056,7 @@ class TFKerasTrial(det.LegacyTrial):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def build_validation_data_loader(self) -> keras.InputData:
         """
         Defines the data loader to use during validation.
@@ -1100,9 +1094,9 @@ class TFKerasTrial(det.LegacyTrial):
         """
         return tf.compat.v1.ConfigProto(allow_soft_placement=True)
 
-    def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
+    def keras_callbacks(self) -> List[callbacks.Callback]:
         """
-        Specifies a list of :class:`determined.keras.callbacks.Callback` objects to be used during
+        Specifies a list of :class:`determined.keras.callback.Callback` objects to be used during
         training.
 
         .. note:

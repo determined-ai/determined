@@ -16,12 +16,11 @@ from typing import Dict, List, Mapping, Optional
 
 import deepspeed
 import filelock
-from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
+from deepspeed.launcher import runner
 from packaging import version
 
 import determined as det
-import determined.common
-from determined import constants, util
+from determined import common, constants, util
 from determined.common.api import authentication, certs
 
 hostfile_path = None
@@ -170,7 +169,7 @@ def filter_env_vars(env: Mapping[str, str]) -> Dict[str, str]:
 
 def create_deepspeed_env_file() -> None:
     """Create an env var export file to pass Determined vars to the deepspeed launcher."""
-    with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
+    with open(runner.DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         for k, v in filter_env_vars(os.environ).items():
             # We need to turn our envvars into shell-escaped strings to export them correctly
             # since values may contain spaces and quotes.  shlex.quote was removed from the
@@ -236,7 +235,7 @@ def main(script: List[str]) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
     experiment_config = det.ExperimentConfig(info.trial._config)
-    determined.common.set_logger(experiment_config.debug_enabled())
+    common.set_logger(experiment_config.debug_enabled())
 
     multi_machine = len(info.container_addrs) > 1
     check_deepspeed_version(multi_machine)

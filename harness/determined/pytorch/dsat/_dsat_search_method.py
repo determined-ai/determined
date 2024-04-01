@@ -1,22 +1,22 @@
+import abc
 import argparse
+import collections
 import copy
+import dataclasses
 import json
 import logging
 import pathlib
 import pickle
 import random
 import uuid
-from abc import abstractmethod
-from collections import defaultdict, deque
-from dataclasses import dataclass
 from typing import Any, Deque, Dict, Iterable, Iterator, List, Optional, Set, Tuple, Union, cast
 
 import numpy as np
 
-from determined import searcher
-from determined.experimental.client import create_experiment
-from determined.pytorch.dsat import _defaults, _utils
-from determined.util import merge_dicts
+from determined import searcher, util
+from determined.experimental import client
+from determined.pytorch import dsat
+from determined.pytorch.dsat import defaults
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -66,9 +66,9 @@ class DSATTrial:
         # The DS config json file may either be in the specified model directory or in the base of
         # the workdir, if it was added as an `--include` arg.
         try:
-            self.ds_config = _utils.get_ds_config_from_hparams(self.hparams, self.model_dir)
+            self.ds_config = dsat.get_ds_config_from_hparams(self.hparams, self.model_dir)
         except FileNotFoundError:
-            self.ds_config = _utils.get_ds_config_from_hparams(self.hparams)
+            self.ds_config = dsat.get_ds_config_from_hparams(self.hparams)
 
         self._error_in_direct_history = False
 
@@ -195,13 +195,13 @@ class DSATTrialTracker:
         self.slots_per_trial: int = self.exp_config["resources"]["slots_per_trial"]
         self.hparams: Dict[str, Any] = self.exp_config["hyperparameters"]
 
-        self.smaller_is_better = _utils.smaller_is_better(self.searcher_metric)
+        self.smaller_is_better = dsat.smaller_is_better(self.searcher_metric)
 
         self.model_profile_info_trial: Optional["DSATTrial"] = None
         self.num_trials_since_best_result: int = 0
         self.successful_stages: Set[int] = set()
         self._all_trials_dict: Dict[uuid.UUID, "DSATTrial"] = {}
-        self.queue: Deque["DSATTrial"] = deque()
+        self.queue: Deque["DSATTrial"] = collections.deque()
 
         self._mem_per_gpu_per_stage: Optional[Dict[int, int]] = None
         self._approx_max_mbs_per_stage: Optional[Dict[int, int]] = None
@@ -260,9 +260,9 @@ class DSATTrialTracker:
     ) -> DSATModelProfileInfoTrial:
         # Create the special hp dictionary used for the model profile info run.
         model_profile_info_hps = copy.deepcopy(self.hparams)
-        model_profile_info_hps[_defaults.OVERWRITE_KEY] = merge_dicts(
-            model_profile_info_hps.get(_defaults.OVERWRITE_KEY, {}),
-            _defaults.MODEL_INFO_PROFILE_DS_CONFIG,
+        model_profile_info_hps[defaults.OVERWRITE_KEY] = util.merge_dicts(
+            model_profile_info_hps.get(defaults.OVERWRITE_KEY, {}),
+            defaults.MODEL_INFO_PROFILE_DS_CONFIG,
         )
         self.enforce_consistent_batch_config(model_profile_info_hps)
 
@@ -292,15 +292,15 @@ class DSATTrialTracker:
     def enforce_consistent_batch_config(self, hparams: Dict[str, Any]) -> None:
         """Enforces a consistent batch size configuration by altering `hparams` in-place."""
         try:
-            ds_config = _utils.get_ds_config_from_hparams(hparams, self.model_dir)
+            ds_config = dsat.get_ds_config_from_hparams(hparams, self.model_dir)
         except FileNotFoundError:
             # In case the DS json config was added as an `--include` arg.
-            ds_config = _utils.get_ds_config_from_hparams(hparams)
-        batch_size_config = _utils.get_batch_config_from_mbs_gas_and_slots(
+            ds_config = dsat.get_ds_config_from_hparams(hparams)
+        batch_size_config = dsat.get_batch_config_from_mbs_gas_and_slots(
             ds_config, slots=self.slots_per_trial
         )
-        hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
-            hparams[_defaults.OVERWRITE_KEY], batch_size_config
+        hparams[defaults.OVERWRITE_KEY] = util.merge_dicts(
+            hparams[defaults.OVERWRITE_KEY], batch_size_config
         )
 
     def update_trial_metric(
@@ -541,7 +541,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         self._py_rand_ckpt_path = "py_random_state.pkl"
         self._np_rand_ckpt_path = "np_rng.pkl"
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_trials_after_validation_completed(
         self,
         searcher_state: searcher.SearcherState,
@@ -554,7 +554,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_trials_after_early_exit(
         self,
         searcher_state: searcher.SearcherState,
@@ -659,14 +659,14 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         new_ops_list: List[searcher.Operation] = []
         if self.should_shutdown():
             if self.trial_tracker.best_trial is not None and self.args.run_full_experiment:
-                submitted_config = _utils.get_dict_from_yaml_or_json_path(self.args.config_path)
-                optimal_config = merge_dicts(
+                submitted_config = dsat.get_dict_from_yaml_or_json_path(self.args.config_path)
+                optimal_config = util.merge_dicts(
                     submitted_config, {"hyperparameters": self.trial_tracker.best_trial.hparams}
                 )
                 # Delete the keys which enforce autotuning code paths
-                del optimal_config["hyperparameters"][_defaults.OVERWRITE_KEY]["autotuning"]
-                del optimal_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY]
-                create_experiment(optimal_config, self.args.model_dir, self.args.include)
+                del optimal_config["hyperparameters"][defaults.OVERWRITE_KEY]["autotuning"]
+                del optimal_config["hyperparameters"][defaults.USE_DSAT_MODE_KEY]
+                client.create_experiment(optimal_config, self.args.model_dir, self.args.include)
 
             new_ops_list.append(searcher.Shutdown(failure=self.trial_tracker.should_be_failure))
         else:
@@ -735,7 +735,7 @@ class BaseDSATSearchMethod(searcher.SearchMethod):
         return False
 
 
-@dataclass
+@dataclasses.dataclass
 class DSATSearchData:
     """Basic binary-search type data used to guide DS AT."""
 
@@ -796,7 +796,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
             mbs = self.get_random_mbs_from_search_data(new_search_data)
             new_hparams = copy.deepcopy(last_trial.hparams)
-            new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+            new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
 
             trial = self.trial_tracker.create_trial(
                 hparams=new_hparams,
@@ -848,7 +848,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
         mbs = self.get_random_mbs_from_search_data(new_search_data)
 
         new_hparams = copy.deepcopy(last_trial.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         trial = self.trial_tracker.create_trial(
             hparams=new_hparams,
             search_data=new_search_data,
@@ -904,10 +904,10 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        zero_optim_config = dsat.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
-            new_hparams.get(_defaults.OVERWRITE_KEY, {}),
+        new_hparams[defaults.OVERWRITE_KEY] = util.merge_dicts(
+            new_hparams.get(defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},
         )
 
@@ -938,7 +938,7 @@ class RandomDSATSearchMethod(BaseDSATSearchMethod):
 
         # Randomly choose the actual batch size.
         mbs = self.get_random_mbs_from_search_data(new_search_data)
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
 
     def get_random_trial(self) -> DSATTrial:
@@ -1011,7 +1011,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
         mbs = (new_search_data.hi + new_search_data.lo) // 2
         new_hparams = copy.deepcopy(last_trial.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
 
         trial = self.trial_tracker.create_trial(
             hparams=new_hparams,
@@ -1045,7 +1045,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
 
         mbs = (new_search_data.hi + new_search_data.lo) // 2
         new_hparams = copy.deepcopy(last_trial.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         trial = self.trial_tracker.create_trial(
             hparams=new_hparams,
             search_data=new_search_data,
@@ -1056,10 +1056,10 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], DSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        zero_optim_config = dsat.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
-            new_hparams.get(_defaults.OVERWRITE_KEY, {}),
+        new_hparams[defaults.OVERWRITE_KEY] = util.merge_dicts(
+            new_hparams.get(defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},
         )
 
@@ -1073,7 +1073,7 @@ class BinarySearchDSATSearchMethod(BaseDSATSearchMethod):
         new_search_data = DSATSearchData(lo=1, hi=hi)
 
         mbs = (new_search_data.hi + new_search_data.lo) // 2
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
 
     def get_random_trial(self) -> DSATTrial:
@@ -1213,7 +1213,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         A dictionary of lists of the latest trials in each lineage which have completed the
         specified rung.
         """
-        rungs = defaultdict(list)
+        rungs = collections.defaultdict(list)
         for root in self.get_all_latest_trials_in_lineages():
             assert isinstance(root.search_data, ASHADSATSearchData)
             rung_idx = 0
@@ -1341,7 +1341,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         mbs = (new_search_data.hi + new_search_data.lo) // 2
 
         new_hparams = copy.deepcopy(latest_trial.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         next_trial = self.trial_tracker.create_trial(
             hparams=new_hparams,
             search_data=new_search_data,
@@ -1358,10 +1358,10 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
     def get_random_hparams_and_search_data(
         self, zero_stage: int
     ) -> Tuple[Dict[str, Any], ASHADSATSearchData]:
-        zero_optim_config = _utils.get_random_zero_optim_config(zero_stage)
+        zero_optim_config = dsat.get_random_zero_optim_config(zero_stage)
         new_hparams = copy.deepcopy(self.trial_tracker.hparams)
-        new_hparams[_defaults.OVERWRITE_KEY] = merge_dicts(
-            new_hparams.get(_defaults.OVERWRITE_KEY, {}),
+        new_hparams[defaults.OVERWRITE_KEY] = util.merge_dicts(
+            new_hparams.get(defaults.OVERWRITE_KEY, {}),
             {"zero_optimization": zero_optim_config},
         )
 
@@ -1373,7 +1373,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
 
         # Randomly choose the actual batch size.
         mbs = (new_search_data.hi + new_search_data.lo) // 2
-        new_hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
+        new_hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = mbs
         return new_hparams, new_search_data
 
     def get_random_trial(self) -> DSATTrial:
@@ -1383,7 +1383,7 @@ class ASHADSATSearchMethod(BaseDSATSearchMethod):
         return random_trial
 
 
-class _TestDSATSearchMethod(BaseDSATSearchMethod):
+class TestDSATSearchMethod(BaseDSATSearchMethod):
     """Searcher for basic testing purposes.
 
     Submits Trials with linearly increasing batch sizes, from 2 up to max_trials
@@ -1402,17 +1402,17 @@ class _TestDSATSearchMethod(BaseDSATSearchMethod):
         if isinstance(last_trial, DSATModelProfileInfoTrial):
             # Delete special DS keys which force a model profiling info run.
             hparams_without_profile_info_keys = last_trial.hparams
-            del hparams_without_profile_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
+            del hparams_without_profile_info_keys[defaults.OVERWRITE_KEY]["autotuning"][
                 "model_info"
             ]
-            del hparams_without_profile_info_keys[_defaults.OVERWRITE_KEY]["autotuning"][
+            del hparams_without_profile_info_keys[defaults.OVERWRITE_KEY]["autotuning"][
                 "model_info_path"
             ]
             for tmbs in range(2, self.trial_tracker.max_trials + 1):
                 hparams = copy.deepcopy(hparams_without_profile_info_keys)
-                hparams[_defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
+                hparams[defaults.OVERWRITE_KEY]["train_micro_batch_size_per_gpu"] = tmbs
                 # Choose a random zero stage:
-                hparams[_defaults.OVERWRITE_KEY]["zero_optimization"] = {
+                hparams[defaults.OVERWRITE_KEY]["zero_optimization"] = {
                     "stage": random.choice(list(self.args.zero_stages))
                 }
                 trial = self.trial_tracker.create_trial(

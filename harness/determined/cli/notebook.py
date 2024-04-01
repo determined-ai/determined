@@ -1,20 +1,18 @@
+import argparse
+import functools
+import pathlib
+import typing
 import webbrowser
-from argparse import ONE_OR_MORE, FileType, Namespace
-from functools import partial
-from pathlib import Path
-from typing import cast
 
-from termcolor import colored
+import termcolor
 
 from determined import cli
 from determined.cli import ntsc, render, task
-from determined.common import api, context
+from determined.common import api, check, context
 from determined.common.api import bindings
-from determined.common.check import check_none
-from determined.common.declarative_argparse import Arg, ArgsDescription, Cmd, Group
 
 
-def start_notebook(args: Namespace) -> None:
+def start_notebook(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     config = ntsc.parse_config(args.config_file, None, args.config, args.volume)
 
@@ -63,15 +61,15 @@ def start_notebook(args: Namespace) -> None:
     url = f"{args.master}/{nb_path}"
     if not args.no_browser:
         webbrowser.open(url)
-    print(colored(f"Jupyter Notebook is running at: {url}", "green"))
+    print(termcolor.colored(f"Jupyter Notebook is running at: {url}", "green"))
 
 
-def open_notebook(args: Namespace) -> None:
+def open_notebook(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    notebook_id = cast(str, ntsc.expand_uuid_prefixes(sess, args))
+    notebook_id = typing.cast(str, ntsc.expand_uuid_prefixes(sess, args))
 
-    task = bindings.get_GetTask(sess, taskId=notebook_id).task
-    check_none(task.endTime, "Notebook has ended")
+    task_obj = bindings.get_GetTask(sess, taskId=notebook_id).task
+    check.check_none(task_obj.endTime, "Notebook has ended")
 
     nb = bindings.get_GetNotebook(sess, notebookId=notebook_id).notebook
     assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
@@ -88,118 +86,120 @@ def open_notebook(args: Namespace) -> None:
     webbrowser.open(f"{args.master}/{nb_path}")
 
 
-args_description: ArgsDescription = [
-    Cmd(
+args_description: cli.ArgsDescription = [
+    cli.Cmd(
         "notebook",
         None,
         "manage notebooks",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
-                partial(ntsc.list_tasks),
+                functools.partial(ntsc.list_tasks),
                 "list notebooks",
                 ntsc.ls_sort_args
                 + [
-                    Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
-                    Arg(
+                    cli.Arg("-q", "--quiet", action="store_true", help="only display the IDs"),
+                    cli.Arg(
                         "--all",
                         "-a",
                         action="store_true",
                         help="show all notebooks (including other users')",
                     ),
                     cli.workspace.workspace_arg,
-                    Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                    cli.Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "config",
-                partial(ntsc.config),
+                functools.partial(ntsc.config),
                 "display notebook config",
                 [
-                    Arg("notebook_id", type=str, help="notebook ID"),
+                    cli.Arg("notebook_id", type=str, help="notebook ID"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "start",
                 start_notebook,
                 "start a new notebook",
                 [
-                    Arg(
+                    cli.Arg(
                         "--config-file",
                         default=None,
-                        type=FileType("r"),
+                        type=argparse.FileType("r"),
                         help="command config file (.yaml)",
                     ),
                     cli.workspace.workspace_arg,
-                    Arg("-v", "--volume", action="append", default=[], help=ntsc.VOLUME_DESC),
-                    Arg("-c", "--context", default=None, type=Path, help=ntsc.CONTEXT_DESC),
-                    Arg(
+                    cli.Arg("-v", "--volume", action="append", default=[], help=ntsc.VOLUME_DESC),
+                    cli.Arg(
+                        "-c", "--context", default=None, type=pathlib.Path, help=ntsc.CONTEXT_DESC
+                    ),
+                    cli.Arg(
                         "-i",
                         "--include",
                         default=[],
                         action="append",
-                        type=Path,
+                        type=pathlib.Path,
                         help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
-                    Arg(
+                    cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                    cli.Arg(
                         "--template",
                         type=str,
                         help="name of template to apply to the notebook configuration",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--no-browser",
                         action="store_true",
                         help="don't open the notebook in a browser after startup",
                     ),
-                    Arg(
+                    cli.Arg(
                         "-d",
                         "--detach",
                         action="store_true",
                         help="run in the background and print the ID",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--preview", action="store_true", help="preview the notebook configuration"
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "open",
                 open_notebook,
                 "open an existing notebook",
-                [Arg("notebook_id", help="notebook ID")],
+                [cli.Arg("notebook_id", help="notebook ID")],
             ),
-            Cmd(
+            cli.Cmd(
                 "logs",
-                partial(task.logs),
+                functools.partial(task.logs),
                 "fetch notebook logs",
                 [
-                    Arg("task_id", help="notebook ID", metavar="notebook_id"),
+                    cli.Arg("task_id", help="notebook ID", metavar="notebook_id"),
                     *task.common_log_options,
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "kill",
-                partial(ntsc.kill),
+                functools.partial(ntsc.kill),
                 "kill a notebook",
                 [
-                    Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
-                    Arg("-f", "--force", action="store_true", help="ignore errors"),
+                    cli.Arg("notebook_id", help="notebook ID", nargs=argparse.ONE_OR_MORE),
+                    cli.Arg("-f", "--force", action="store_true", help="ignore errors"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "set",
                 None,
                 "set notebook attributes",
                 [
-                    Cmd(
+                    cli.Cmd(
                         "priority",
-                        partial(ntsc.set_priority),
+                        functools.partial(ntsc.set_priority),
                         "set notebook priority",
                         [
-                            Arg("notebook_id", help="notebook ID"),
-                            Arg("priority", type=int, help="priority"),
+                            cli.Arg("notebook_id", help="notebook ID"),
+                            cli.Arg("priority", type=int, help="priority"),
                         ],
                     ),
                 ],

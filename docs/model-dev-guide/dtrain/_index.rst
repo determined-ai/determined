@@ -33,8 +33,6 @@ Additional Resources:
 -  Learn how :ref:`Configuration Templates <config-template>` can help reduce redundancy.
 -  Discover how Determined aims to support reproducible machine learning experiments in
    :ref:`Reproducibility <reproducibility>`.
--  In :ref:`Optimizing Training <optimizing-training>`, you'll learn about out-of-the box tools you
-   can use for instrumenting training.
 
 .. toctree::
    :caption: Distributed Training
@@ -44,4 +42,3 @@ Additional Resources:
    Implementing Distributed Training <dtrain-implement>
    Configuration Templates <config-templates>
    Reproducibility <reproducibility>
-   Optimizing Training <optimize-training>
