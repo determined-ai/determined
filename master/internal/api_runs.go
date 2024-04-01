@@ -293,7 +293,7 @@ func (a *apiServer) MoveRuns(
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_id = ?", req.SourceProjectId)
+		Where("r.project_ids = ?", req.SourceProjectId)
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
@@ -315,6 +315,14 @@ func (a *apiServer) MoveRuns(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}); err != nil {
+		return nil, err
 	}
 
 	err = getQ.Scan(ctx)
