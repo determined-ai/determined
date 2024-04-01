@@ -207,8 +207,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     const columnDefs = getColumnDefs({
       appTheme,
       columnWidths: settings.columnWidths,
-      rowSelection: selection.rows,
-      selectAll,
       themeIsDark: isDarkMode,
       users,
     });
@@ -221,11 +219,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         if (columnName === MULTISELECT) {
           return defaultSelectionColumn(selection.rows, selectAll);
         }
-        if (columnName in columnDefs) return columnDefs[columnName];
 
+        if (columnName in columnDefs) return columnDefs[columnName];
         const currentColumn = projectColumnsMap.getOrElse({})[columnName];
         if (!currentColumn) return;
         let dataPath: string | undefined = undefined;
+
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -547,7 +546,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
       const filterCount = formStore.getFieldCount(column.column).get();
 
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal', 'searcherType'];
+      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
       const loadableFormset = formStore.formset.get();
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(

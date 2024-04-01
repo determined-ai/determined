@@ -1,8 +1,7 @@
-import { CellClickedEventArgs, CompactSelection, GridCellKind } from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, GridCellKind } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { ColumnDefs, MULTISELECT } from 'hew/DataGrid/columns';
+import { ColumnDefs } from 'hew/DataGrid/columns';
 import {
-  CHECKBOX_CELL,
   LINK_CELL,
   State,
   STATE_CELL,
@@ -24,7 +23,6 @@ import { getDisplayName } from 'utils/user';
 
 // order used in ColumnPickerMenu
 export const runColumns = [
-  MULTISELECT,
   'id',
   'state',
   'startTime',
@@ -38,14 +36,13 @@ export const runColumns = [
   'duration',
   'experimentProgress',
   'experimentId',
-  'experimentName',
+  'name',
   'experimentDescription',
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
-  'externalRunId',
   'externalExperimentId',
-  'externalTrialId',
+  'externalRunId',
   'experimentDescription',
   'isExpMultitrial',
   'parentArchived',
@@ -53,20 +50,7 @@ export const runColumns = [
 
 export type RunColumn = (typeof runColumns)[number];
 
-export const defaultRunColumns: RunColumn[] = [
-  'id',
-  'state',
-  'startTime',
-  'user',
-  'searcherType',
-  'searcherMetric',
-  'searcherMetricsVal',
-  'tags',
-  'duration',
-  'resourcePool',
-  'checkpointCount',
-  'checkpointSize',
-];
+export const defaultRunColumns: RunColumn[] = [...runColumns];
 
 function getCellStateFromExperimentState(expState: RunState) {
   switch (expState) {
@@ -105,17 +89,13 @@ function getCellStateFromExperimentState(expState: RunState) {
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
-  rowSelection: CompactSelection;
   themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
-  selectAll: boolean;
 }
 export const getColumnDefs = ({
   columnWidths,
-  rowSelection,
   themeIsDark,
   users,
-  selectAll,
   appTheme,
 }: Params): ColumnDefs<FlatRun> => ({
   archived: {
@@ -193,17 +173,17 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.externalExperimentId,
   },
-  externalTrialId: {
-    id: 'externalTrialId',
+  externalRunId: {
+    id: 'externalRunId',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.externalRunId ?? ''),
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
-    title: 'External Trial ID',
+    title: 'External Run ID',
     tooltip: () => undefined,
-    width: columnWidths.externalTrialId,
+    width: columnWidths.externalRunId,
   },
   forkedFrom: {
     id: 'forkedFrom',
@@ -249,7 +229,7 @@ export const getColumnDefs = ({
         kind: LINK_CELL,
         link: record.experiment?.id
           ? {
-              href: paths.experimentDetails(record.experiment.id),
+              href: paths.trialDetails(record.id, record.experiment.id),
               title: String(record.id),
               unmanaged: record.experiment.unmanaged,
             }
@@ -258,7 +238,7 @@ export const getColumnDefs = ({
         onClick: (e: CellClickedEventArgs) => {
           if (record.experiment) {
             handlePath(e as unknown as AnyMouseEvent, {
-              path: paths.experimentDetails(record.experiment.id),
+              path: paths.trialDetails(record.id, record.experiment.id),
             });
           }
         },
@@ -273,7 +253,7 @@ export const getColumnDefs = ({
     width: columnWidths.id,
   },
   name: {
-    id: 'searcherName',
+    id: 'name',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
       copyData: String(record.experiment?.name),
@@ -382,24 +362,6 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherType,
   },
-  selected: {
-    icon: selectAll ? 'allSelected' : rowSelection.length ? 'someSelected' : 'noneSelected',
-    id: MULTISELECT,
-    renderer: (_: FlatRun, idx) => ({
-      allowOverlay: false,
-      contentAlign: 'left',
-      copyData: String(rowSelection.hasIndex(idx)),
-      data: {
-        checked: rowSelection.hasIndex(idx),
-        kind: CHECKBOX_CELL,
-      },
-      kind: GridCellKind.Custom,
-    }),
-    themeOverride: { cellHorizontalPadding: 10 },
-    title: '',
-    tooltip: () => undefined,
-    width: columnWidths.selected,
-  },
   startTime: {
     id: 'startTime',
     isNumerical: true,
@@ -478,25 +440,22 @@ export const getColumnDefs = ({
   },
 });
 
-export const columnWidthsFallback = 140;
-
 export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
   checkpointCount: 120,
   checkpointSize: 110,
   duration: 86,
   experimentDescription: 148,
-  experimentName: 290,
   experimentProgress: 65,
   externalExperimentId: 160,
-  externalTrialId: 130,
+  externalRunId: 130,
   forkedFrom: 86,
   id: 50,
+  name: 290,
   parentArchived: 80,
   resourcePool: 140,
   searcherMetric: 120,
   searcherMetricsVal: 120,
   searcherType: 120,
-  selected: 40,
   startTime: 118,
   state: 60,
   tags: 106,

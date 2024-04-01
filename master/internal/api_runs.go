@@ -172,17 +172,17 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	}
 	orderColMap := map[string]string{
 		"id":                    "id",
-		"experimentDescription": "experiment_description",
-		"experimentName":        "experiment_name",
-		"searcherType":          "searcher_type",
-		"searcherMetric":        "searcher_metric",
+		"experimentDescription": "e.config->>'description'",
+		"experimentName":        "e.config->>'name'",
+		"searcherType":          "e.config->'searcher'->>'name'",
+		"searcherMetric":        "e.config->'searcher'->>'metric'",
 		"startTime":             "r.start_time",
 		"endTime":               "r.end_time",
 		"state":                 "r.state",
-		"experimentProgress":    "COALESCE(progress, 0)",
+		"experimentProgress":    "COALESCE(e.progress, 0)",
 		"user":                  "display_name",
 		"forkedFrom":            "e.parent_id",
-		"resourcePool":          "resource_pool",
+		"resourcePool":          "e.config->'resources'->>'resource_pool'",
 		"projectId":             "r.project_id",
 		"checkpointSize":        "checkpoint_size",
 		"checkpointCount":       "checkpoint_count",
@@ -191,7 +191,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
-		"isExpMultitrial":       "is_exp_multitrial",
+		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
