@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package multirm
 
 import (
@@ -365,6 +368,8 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		req  *apiv1.GetJobQueueStatsRequest
 		err  error
 	}{
+		// TODO CAROLINA -- this test should obvs fail, but it doesn't
+		{"empty request", &apiv1.GetJobQueueStatsRequest{}, ErrRPNotDefined("bogus")},
 		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil},
 		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil},
 		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil},
