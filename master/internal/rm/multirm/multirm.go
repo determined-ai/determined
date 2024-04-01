@@ -261,15 +261,6 @@ func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsReque
 		all.Results = append(all.Results, r.Results...)
 	}
 	return all, nil
-
-	/*
-		resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePools[0]))
-		if err != nil {
-			return nil, err
-		}
-
-		return m.rms[resolvedRMName].GetJobQueueStatsRequest(req)
-	*/
 }
 
 // MoveJob routes a MoveJob call to a specified resource manager/pool.
@@ -419,7 +410,7 @@ func (m *MultiRMRouter) getRM(rpName rm.ResourcePoolName) (string, error) {
 		}
 		for _, p := range rps.ResourcePools {
 			if p.Name == rpName.String() {
-				m.syslog.Debugf("RM defined as %s, %s", name, p.Name)
+				m.syslog.Infof("RM defined as %s, %s", name, p.Name)
 				return name, nil
 			}
 		}
