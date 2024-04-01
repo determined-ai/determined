@@ -26,9 +26,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-type archiveRunOKResult struct {
-	Archived bool
-	ID       int32
+type archiveKillRunOKResult struct {
+	Archived  bool
+	ID        int32
+	RequestID *string
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -248,12 +249,14 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 
 func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 ) (*apiv1.KillRunsResponse, error) {
-	var runChecks []archiveRunOKResult
+	var runChecks []archiveKillRunOKResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("t.request_id").
+		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
@@ -290,13 +293,20 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	var validIDs []int32
 	for _, check := range runChecks {
 		visibleIDs = append(visibleIDs, check.ID)
-		if check.Archived {
+		if check.RequestID == nil {
 			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is archived.",
+				Error: "Run has no associated request id.",
 				Id:    check.ID,
 			})
 		} else {
-			validIDs = append(validIDs, check.ID)
+			if check.Archived {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "Run is archived.",
+					Id:    check.ID,
+				})
+			} else {
+				validIDs = append(validIDs, check.ID)
+			}
 		}
 	}
 	if req.Filter == nil {
