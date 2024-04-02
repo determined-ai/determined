@@ -103,7 +103,7 @@ func QueryBulkExperiments(query *bun.SelectQuery,
 		query = query.Where("e.owner_id IN (?)", bun.In(filters.UserIds))
 	}
 	if filters.ProjectId != 0 {
-		query = query.Where("project_id = ?", filters.ProjectId)
+		query = query.Where("e.project_id = ?", filters.ProjectId)
 	}
 	return query
 }
