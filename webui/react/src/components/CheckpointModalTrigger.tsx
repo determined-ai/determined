@@ -14,6 +14,7 @@ import {
 } from 'types';
 
 import CheckpointModalComponent from './CheckpointModal';
+import css from './CheckpointModalTrigger.module.scss';
 
 interface Props {
   checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
@@ -53,7 +54,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
 
   return (
     <>
-      <span onClick={handleModalCheckpointClick}>
+      <span className={css.base} onClick={handleModalCheckpointClick}>
         {children !== undefined ? (
           children
         ) : (

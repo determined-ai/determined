@@ -1,8 +1,10 @@
 import Input from 'hew/Input';
 import { Modal, ModalCloseReason } from 'hew/Modal';
+import Row from 'hew/Row';
 import Select, { SelectValue } from 'hew/Select';
 import Tags, { tagsActionHelper } from 'hew/Tags';
 import { useToast } from 'hew/Toast';
+import { Title } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -167,6 +169,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   return (
     <Modal
       submit={{
+        disabled: selectedModelName === undefined,
         handleError,
         handler: handleOk,
         text: 'Register Checkpoint',
@@ -175,10 +178,10 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
       <div className={css.base}>
         <p className={css.directions}>Save this checkpoint to the Model Registry</p>
         <div>
-          <div className={css.selectModelRow}>
-            <h2>Select Model</h2>
-            <p onClick={() => launchNewModelModal()}>New Model</p>
-          </div>
+          <Row justifyContent="space-between">
+            <Title size="x-small">Select Model</Title>
+            <Link onClick={() => launchNewModelModal()}>New Model</Link>
+          </Row>
           <Select
             options={modelOptions.map((option) => ({ label: option.name, value: option.name }))}
             placeholder="Select a model..."

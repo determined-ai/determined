@@ -1,13 +1,10 @@
 import Card from 'hew/Card';
-import { useModal } from 'hew/Modal';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import CheckpointModalComponent from 'components/CheckpointModal';
-import ModelCreateModal from 'components/ModelCreateModal';
+import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import OverviewStats from 'components/OverviewStats';
-import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { getModels } from 'services/api';
@@ -43,21 +40,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const [canceler] = useState(new AbortController());
   const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
-  const [selectedModelName, setSelectedModelName] = useState<string>();
-
-  const modelCreateModal = useModal(ModelCreateModal);
-  const checkpointModal = useModal(CheckpointModalComponent);
-  const registerModal = useModal(RegisterCheckpointModal);
-
-  const handleOnCloseCreateModel = useCallback(
-    (modelName?: string) => {
-      if (modelName) {
-        setSelectedModelName(modelName);
-        registerModal.open();
-      }
-    },
-    [setSelectedModelName, registerModal],
-  );
 
   const fetchModels = useCallback(async () => {
     try {
@@ -90,10 +72,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     fetchModels();
   }, [fetchModels]);
 
-  const handleModalCheckpointClick = useCallback(() => {
-    checkpointModal.open();
-  }, [checkpointModal]);
-
   return (
     <Section>
       <Card.Group size="small">
@@ -109,24 +87,15 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
         )}
         {bestCheckpoint && (
-          <>
-            <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
+          <CheckpointModalTrigger
+            checkpoint={bestCheckpoint}
+            experiment={experiment}
+            models={models}
+            title={`Best Checkpoint for Trial ${bestCheckpoint.trialId}`}>
+            <OverviewStats title="Best Checkpoint">
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
-            <registerModal.Component
-              checkpoints={bestCheckpoint.uuid ? [bestCheckpoint.uuid] : []}
-              closeModal={() => registerModal.close('ok')}
-              modelName={selectedModelName}
-              models={models}
-              openModelModal={modelCreateModal.open}
-            />
-            <checkpointModal.Component
-              checkpoint={bestCheckpoint}
-              config={experiment.config}
-              title="Best Checkpoint"
-            />
-            <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-          </>
+          </CheckpointModalTrigger>
         )}
       </Card.Group>
     </Section>
