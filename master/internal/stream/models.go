@@ -150,7 +150,7 @@ func ModelCollectStartupMsgs(
 			spec,
 		)
 	}
-	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "seq")
 	if err != nil {
 		return nil, err
 	}

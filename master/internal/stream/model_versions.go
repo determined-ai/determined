@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
-	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
 const (
@@ -47,6 +46,7 @@ type ModelVersionMsg struct {
 	Comment         string    `bun:"comment" json:"comment"`
 	Labels          []string  `bun:"labels,array" json:"labels"`
 	Notes           string    `bun:"notes" json:"notes"`
+	WorkspaceID     string    `json:"workspace_id"`
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
 }
@@ -83,6 +83,11 @@ type ModelVersionSubscriptionSpec struct {
 	Since           int64 `json:"since"`
 }
 
+func modelVersionPermFilterQuery(q *bun.SelectQuery, accessScopes []model.AccessScopeID,
+) *bun.SelectQuery {
+	return q.Join("JOIN models ON models.id = model_id").Where("workspace_id in (?)", bun.In(accessScopes))
+}
+
 // createFilteredModelVersionIDQuery creates a select query that
 // pulls all relevant model_version ids based on permission scope and
 // subscription spec filters.
@@ -98,12 +103,12 @@ func createFilteredModelVersionIDQuery(
 
 	// add permission scope filter in event of non-global access
 	if !globalAccess {
-		q = permFilterQuery(q, accessScopes)
+		q = modelVersionPermFilterQuery(q, accessScopes)
 	}
 
 	q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		if len(spec.ModelVersionIDs) > 0 {
-			q.WhereOr("id in (?)", bun.In(spec.ModelVersionIDs))
+			q.WhereOr("m.id in (?)", bun.In(spec.ModelVersionIDs))
 		}
 		if len(spec.ModelIDs) > 0 {
 			q.WhereOr("model_id in (?)", bun.In(spec.ModelIDs))
@@ -151,7 +156,7 @@ func ModelVersionCollectStartupMsgs(
 			spec,
 		)
 	}
-	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m.seq")
 	if err != nil {
 		return nil, err
 	}
@@ -159,9 +164,9 @@ func ModelVersionCollectStartupMsgs(
 	// step 2: hydrate appeared IDs into full ModelVersionMsgs
 	var mvMsgs []*ModelVersionMsg
 	if len(appeared) > 0 {
-		query := db.Bun().NewSelect().Model(&mvMsgs).Where("id in (?)", bun.In(appeared))
+		query := db.Bun().NewSelect().Model(&mvMsgs).ExcludeColumn("workspace_id").Where("model_version_msg.id in (?)", bun.In(appeared))
 		if !globalAccess {
-			query = permFilterQuery(query, accessScopes)
+			query = modelVersionPermFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &mvMsgs)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -241,16 +246,13 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 	switch {
 	case accessScopeSet[model.GlobalAccessScopeID]:
 		// user has global access for viewing model_versions
-		return func(msg *ModelVersionMsg) bool { return true }, nil
+		return func(msg *ModelVersionMsg) bool {
+			return true
+		}, nil
 	default:
 		return func(msg *ModelVersionMsg) bool {
-			parentModel := modelv1.Model{}
-			err := db.Bun().NewSelect().Model(&parentModel).Where("id = ?", msg.ModelID).Scan(ctx)
-			if err != nil {
-				log.Errorf("error: %v\n", err)
-				return false
-			}
-			return accessScopeSet[model.AccessScopeID(parentModel.WorkspaceId)]
+			workspaceID, _ := strconv.Atoi(msg.WorkspaceID)
+			return accessScopeSet[model.AccessScopeID(workspaceID)]
 		}, nil
 	}
 }

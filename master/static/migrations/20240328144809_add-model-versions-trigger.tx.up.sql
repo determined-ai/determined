@@ -12,12 +12,24 @@ RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION stream_model_version_seq_modify_by_model() RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE model_versions SET seq = nextval('stream_model_version_seq') WHERE model_id = NEW.id;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 DROP TRIGGER IF EXISTS stream_model_version_trigger_seq ON model_versions;
 CREATE TRIGGER stream_model_version_trigger_seq
     BEFORE INSERT OR UPDATE OF
     name, version, checkpoint_uuid, last_updated_time, metadata, labels, user_id, model_id, notes, comment 
                      ON model_versions
                          FOR EACH ROW EXECUTE PROCEDURE stream_model_version_seq_modify();
+
+DROP TRIGGER IF EXISTS stream_model_version_trigger_by_model ON models;
+CREATE TRIGGER stream_model_version_trigger_by_model
+BEFORE UPDATE OF workspace_id ON models FOR EACH ROW EXECUTE PROCEDURE stream_model_version_seq_modify_by_model();
+
 
 -- helper function to create a model version jsonb object for streaming
 CREATE OR REPLACE FUNCTION stream_model_version_notify(
@@ -43,17 +55,36 @@ $$ LANGUAGE plpgsql;
 
 -- Trigger function to NOTIFY the master of changes, for INSERT/UPDATE/DELETE.
 CREATE OR REPLACE FUNCTION stream_model_version_change() RETURNS TRIGGER AS $$
-BEGIN
+DECLARE
+    n jsonb = NULL;
+    o jsonb = NULL;
+BEGIN 
     IF (TG_OP = 'INSERT') THEN
-        PERFORM stream_model_version_notify(NULL, to_jsonb(NEW));
+        n = jsonb_set(to_jsonb(NEW), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text));
+        PERFORM stream_model_version_notify(NULL, n);
     ELSEIF (TG_OP = 'UPDATE') THEN
-        PERFORM stream_model_version_notify(to_jsonb(OLD), to_jsonb(NEW));
+        n = jsonb_set(to_jsonb(NEW), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text));
+        o = jsonb_set(to_jsonb(OLD), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = OLD.model_id)::text));
+        PERFORM stream_model_version_notify(o, n);
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_model_version_notify(to_jsonb(OLD), NULL);
+        o = jsonb_set(to_jsonb(OLD), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = OLD.model_id)::text));
+        PERFORM stream_model_version_notify(o, NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
     return NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION stream_model_version_change_by_model() RETURNS TRIGGER AS $$
+DECLARE
+    f record;
+BEGIN
+    FOR f in (SELECT * FROM model_versions WHERE model_id = NEW.id)
+    LOOP
+        PERFORM stream_model_version_notify(NULL, jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(NEW.workspace_id::text)));
+    END LOOP;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -64,6 +95,10 @@ CREATE TRIGGER stream_model_version_trigger_iu
     name, version, checkpoint_uuid, last_updated_time, metadata, labels, user_id, model_id, notes, comment
                     ON model_versions
                         FOR EACH ROW EXECUTE PROCEDURE stream_model_version_change();
+
+DROP TRIGGER IF EXISTS stream_model_version_trigger_by_model_iu ON models;
+CREATE TRIGGER stream_model_version_trigger_by_model_iu
+BEFORE UPDATE OF workspace_id ON models FOR EACH ROW EXECUTE PROCEDURE stream_model_version_change_by_model();
 
 DROP TRIGGER IF EXISTS stream_model_version_trigger_d ON model_versions;
 CREATE TRIGGER stream_model_version_trigger_d

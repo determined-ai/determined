@@ -43,10 +43,11 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 			)
 		case *ModelVersionMsg:
 			return fmt.Sprintf(
-				"key: %s, model_version_id: %d, model_id: %d",
+				"key: %s, model_version_id: %d, model_id: %d, workspace_id: %v",
 				ModelVersionsUpsertKey,
 				typedMsg.ID,
 				typedMsg.ModelID,
+				typedMsg.WorkspaceID,
 			)
 		}
 	case stream.DeleteMsg:

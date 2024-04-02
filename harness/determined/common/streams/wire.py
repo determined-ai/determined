@@ -114,6 +114,7 @@ class ModelVersionMsg(ServerMsg):
         comment: "str",
         labels: "typing.List[str]",
         notes: "str",
+        workspace_id: "str",
         seq: "int",
     ) -> None:
         self.id = id
@@ -128,6 +129,7 @@ class ModelVersionMsg(ServerMsg):
         self.comment = comment
         self.labels = labels
         self.notes = notes
+        self.workspace_id = workspace_id
         self.seq = seq
 
 
