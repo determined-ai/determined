@@ -1724,7 +1724,8 @@ func (a *apiServer) CreateExperiment(
 func (a *apiServer) PutExperimentRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
 ) (*apiv1.PutExperimentRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, []int32{req.ExperimentId}, nil, nil, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(
+		ctx, a.m.db, []int32{req.ExperimentId}, nil, nil, int16(req.NumDays))
 	if err != nil {
 		return nil, err
 	}
@@ -1739,7 +1740,8 @@ func (a *apiServer) PutExperimentRetainLogs(
 func (a *apiServer) PutExperimentsRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentsRetainLogsRequest,
 ) (*apiv1.PutExperimentsRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, req.ExperimentIds, req.Filters, req.SearchFilter, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(
+		ctx, a.m.db, req.ExperimentIds, req.Filters, req.SearchFilter, int16(req.NumDays))
 	if err != nil {
 		return nil, err
 	}

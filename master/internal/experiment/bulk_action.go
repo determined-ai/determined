@@ -119,11 +119,6 @@ func ApplyExperimentFilterToQuery(query *bun.SelectQuery, searchFilter *string) 
 	return query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		_, err = efr.ToSQL(q)
 		return q
-	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		if !efr.ShowArchived {
-			return q.Where(`e.archived = false`)
-		}
-		return q
 	}), nil
 }
 
@@ -142,7 +137,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		Model(&expIDs).
 		Column("e.id").
 		Join("JOIN projects p on e.project_id = p.id").
-		Join("JOIN runs r on r.experiment_id = e.id").
+		Join("LEFT JOIN runs r on r.experiment_id = e.id").
 		Where("Not e.archived")
 
 	switch {
@@ -369,7 +364,7 @@ func DeleteExperiments(ctx context.Context,
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN checkpoints_view c ON c.experiment_id = e.id").
 		Join("LEFT JOIN model_versions ON model_versions.checkpoint_uuid = c.uuid").
-		Join("JOIN runs r ON r.experiment_id = e.id").
+		Join("LEFT JOIN runs r ON r.experiment_id = e.id").
 		Group("e.id")
 
 	switch {
@@ -471,7 +466,7 @@ func ArchiveExperiments(ctx context.Context,
 		Column("e.id").
 		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN runs r ON r.experiment_id = e.id")
+		Join("LEFT JOIN runs r ON r.experiment_id = e.id")
 
 	switch {
 	case filters == nil && searchFilter == nil:
@@ -573,7 +568,7 @@ func UnarchiveExperiments(ctx context.Context,
 		Column("e.id").
 		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN runs r ON r.experiment_id = e.id")
+		Join("LEFT JOIN runs r ON r.experiment_id = e.id")
 
 	switch {
 	case filters == nil && searchFilter == nil:
@@ -676,15 +671,18 @@ func MoveExperiments(ctx context.Context,
 		ColumnExpr("TRUE AS state").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Join("JOIN runs r on r.experiment_id = e.id")
+		Join("LEFT JOIN runs r on r.experiment_id = e.id")
 
 	switch {
 	case filters == nil && searchFilter == nil:
+		println("simple where")
 		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
 	case searchFilter == nil:
+		println("using old filters")
 		getQ = QueryBulkExperiments(getQ, filters).
 			Where("NOT (e.archived OR p.archived OR w.archived)")
 	default:
+		println("using new filters")
 		getQ, err = ApplyExperimentFilterToQuery(getQ, searchFilter)
 		if err != nil {
 			return nil, err
@@ -703,6 +701,8 @@ func MoveExperiments(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	println(getQ.String())
 
 	var results []ExperimentActionResult
 	var visibleIDs []int32
