@@ -338,3 +338,8 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 	return &apiv1.KillRunsResponse{Results: results}, nil
 }
+
+func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest,
+) (*apiv1.DeleteRunsResponse, error) {
+	return nil, nil
+}
