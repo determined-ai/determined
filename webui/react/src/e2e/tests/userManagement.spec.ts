@@ -52,6 +52,7 @@ test.describe('User Management', () => {
 
       await test.step('Set the user id', async () => {
         await userManagementPage.search.pwLocator.fill(username);
+        await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1)
         userid = await (await userManagementPage.filterRowsByUsername(username)).getID();
       });
     });
