@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/uptrace/bun"
@@ -23,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -293,7 +293,7 @@ func (a *apiServer) MoveRuns(
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_ids = ?", req.SourceProjectId)
+		Where("r.project_id = ?", req.SourceProjectId)
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
@@ -331,12 +331,12 @@ func (a *apiServer) MoveRuns(
 	}
 
 	var results []*apiv1.RunActionResult
-	var visibleIDs []int32
+	var visibleIDs set.Set[int32]
 	var validIDs []int32
 	// associated experiments to move
 	var expMoveIds []int32
 	for _, check := range runChecks {
-		visibleIDs = append(visibleIDs, check.ID)
+		visibleIDs.Insert(check.ID)
 		if check.Archived {
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is archived.",
@@ -366,7 +366,7 @@ func (a *apiServer) MoveRuns(
 	}
 	if req.Filter == nil {
 		for _, originalID := range req.RunIds {
-			if !slices.Contains(visibleIDs, originalID) {
+			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
 					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.SourceProjectId),
 					Id:    originalID,
