@@ -179,8 +179,8 @@ def build_sphinx(licenses: List[License]) -> str:
         gen_sphinx_table([license for license in licenses if license.agent]),
     ]
 
-    for license in licenses:
-        paragraphs.append(license.sphinx_entry())
+    for lic in licenses:
+        paragraphs.append(lic.sphinx_entry())
 
     return "\n\n".join(paragraphs)
 
@@ -194,8 +194,8 @@ def build_ascii(licenses: List[License], our_license_path: str) -> str:
         "This software is bundled with each of the following projects, in part or in whole:",
     ]
 
-    for license in licenses:
-        paragraphs.append(license.ascii_entry())
+    for lic in licenses:
+        paragraphs.append(lic.ascii_entry())
 
     return "\n\n".join(paragraphs)
 
@@ -210,7 +210,7 @@ def read_dir(path: str) -> List[License]:
             except AssertionError:
                 print(f"Error reading license file {lpath}", file=sys.stderr)
                 raise
-    licenses.sort(key=lambda license: license.name)
+    licenses.sort(key=lambda lic: lic.name)
     return licenses
 
 
@@ -226,11 +226,11 @@ def main(build_type: str, path_out: Optional[str]) -> int:
         gen = build_sphinx(licenses)
     elif sys.argv[1] == "master":
         gen = build_ascii(
-            [license for license in licenses if license.master or license.webui],
+            [lic for lic in licenses if lic.master or lic.webui],
             our_license_path,
         )
     elif sys.argv[1] == "agent":
-        gen = build_ascii([license for license in licenses if license.agent], our_license_path)
+        gen = build_ascii([lic for lic in licenses if lic.agent], our_license_path)
 
     gen = post_process(gen)
 
