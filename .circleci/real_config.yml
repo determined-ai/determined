@@ -2750,6 +2750,8 @@ jobs:
       environment-gpu-enabled:
         type: string
         default: "0"
+      test-type:
+        type: string
     circleci_ip_ranges: true
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
@@ -2777,7 +2779,9 @@ jobs:
             # Extract the commit hash from Git metadata
             COMMIT_HASH=$(git rev-parse --short HEAD)
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-            echo "GENERATED_NAMESPACE=\"test-${TIMESTAMP}-${COMMIT_HASH}-${CIRCLE_NODE_INDEX}\"" >> $BASH_ENV
+            uuid=$(cat /proc/sys/kernel/random/uuid)
+            uuid=${uuid:0:8}
+            echo "GENERATED_NAMESPACE=\"test-<<parameters.test-type>>-${TIMESTAMP}-${uuid}-${CIRCLE_NODE_INDEX}\"" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}-shared-cluster
@@ -3408,6 +3412,7 @@ workflows:
             - package-and-push-system-dev-small
           parallelism: 4
           mark: "e2e_gpu and not gpu_required"
+          test-type: cpu
 
       - test-det-deploy:
           name: test-det-deploy-local
