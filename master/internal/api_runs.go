@@ -415,7 +415,7 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 		var cloneExpID int32
 
 		// clone experiment into dest project
-		err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
+		err := tx.NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
 		parent_id, owner_id, progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count,
 		best_trial_id, unmanaged, external_experiment_id) 
 		SELECT 'COMPLETED'::experiment_state as state, config, model_definition, start_time,
@@ -428,7 +428,7 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 
 		var cloneRunID int32
 		// clone run into dest project
-		err = db.Bun().NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
+		err = tx.NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
 		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
 		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
 		summary_metrics_timestamp, last_activity, external_run_id, project_id)
@@ -443,7 +443,7 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 			cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
 		if err != nil {
 			// Delete cloned experiment if run cloning fails
-			delErr := db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+			delErr := tx.NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
 			if delErr != nil {
 				return fmt.Errorf("failed to clone run and delete cloned experiment: run error: %s, delete error: %s", err, delErr)
 			}
