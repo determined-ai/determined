@@ -35,7 +35,7 @@ export class InteractiveTable<
  * Returns the representation of a Table.
  * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {parentTypes} obj.parent - The parent used to locate this Table
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
@@ -82,6 +82,9 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
 
   readonly getRowByDataKey: (value: string) => RowType;
 
+  /**
+   * Returns a list of keys associated with attributes from rows from the entire table.
+   */
   async allRowKeys(): Promise<string[]> {
     const keys: string[] = [];
     for (const row of await this.rows.pwLocator.all()) {
@@ -94,6 +97,10 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return keys;
   }
 
+  /**
+   * Returns a list of new row keys
+   * @param {string[]} oldKeys - list of keys to compare the current table against
+   */
   async newRowKeys(oldKeys: string[]): Promise<string[]> {
     const newKeys = await this.allRowKeys();
     return newKeys.filter((value) => {
@@ -101,6 +108,10 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     });
   }
 
+  /**
+   * Returns a list of rows that match the condition provided
+   * @param {(row: RowType) => Promise<boolean>} condition - function which tests each row against a condition
+   */
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
     const filteredRows: RowType[] = [];
     (await this.allRowKeys()).forEach(async (key) => {
@@ -113,6 +124,13 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
   }
 }
 
+/**
+ * Returns the representation of a Table Row.
+ * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this Row
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 export class Row extends NamedComponent {
   static defaultSelector = 'tr.ant-table-row';
   readonly keyAttribute = 'data-row-key';
@@ -133,6 +151,13 @@ export class Row extends NamedComponent {
   }
 }
 
+/**
+ * Returns the representation of a Table HeadRow.
+ * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this HeadRow
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 export class HeadRow extends NamedComponent {
   static defaultSelector = 'tr';
   constructor({ parent, selector }: NamedComponentArgs) {
@@ -144,6 +169,13 @@ export class HeadRow extends NamedComponent {
   });
 }
 
+/**
+ * Returns the representation of a Table Pagination.
+ * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this Pagination
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class Pagination extends NamedComponent {
   static defaultSelector = '.ant-pagination';
   constructor({ parent, selector }: NamedComponentArgs) {

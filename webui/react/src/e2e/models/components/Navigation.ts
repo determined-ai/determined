@@ -8,7 +8,6 @@ import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this Navigation
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-
 export class Navigation extends NamedComponent {
   static defaultSelector = 'div[data-test-component="navigation"]';
   constructor({ selector, parent }: NamedComponentArgs) {

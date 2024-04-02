@@ -64,7 +64,11 @@ export class UserManagement extends AdminPage {
     this.getRowByID = this.table.table.getRowByDataKey;
   }
 
-  async filterRowsByUsername(name: string): Promise<UserRow> {
+  /**
+   * Returns a row that matches a given username
+   * @param {string} name - The username to filter UserTable rows by
+   */
+  async getRowByUsername(name: string): Promise<UserRow> {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
@@ -75,6 +79,13 @@ export class UserManagement extends AdminPage {
   }
 }
 
+/**
+ * Returns the representation of the InteractiveTable header row defined by the User Admin page.
+ * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this UserHeadRow
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class UserHeadRow extends HeadRow {
   static override defaultSelector: string = HeadRow.defaultSelector;
 
@@ -103,6 +114,14 @@ class UserHeadRow extends HeadRow {
     selector: '[data-testid="Modified"]',
   });
 }
+
+/**
+ * Returns the representation of the InteractiveTable row defined by the User Admin page.
+ * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this UserRow
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class UserRow extends Row {
   static override defaultSelector: string = Row.defaultSelector;
 
@@ -138,6 +157,13 @@ class UserRow extends Row {
   });
 }
 
+/**
+ * Returns the representation of the ActionDropdown menu defined by the User Admin page.
+ * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {parentTypes} obj.parent - The parent used to locate this UserActionDropdown
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class UserActionDropdown extends Dropdown {
   readonly edit: BaseComponent = new BaseComponent({
     parent: this._menu,

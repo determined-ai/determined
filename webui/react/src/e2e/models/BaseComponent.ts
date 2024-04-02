@@ -98,6 +98,7 @@ export abstract class NamedComponent extends BaseComponent {
   }
 }
 
+// TODO remove this for instance properties instead. static has been difficult to work with
 export function requireStaticArgs<T extends object>(obj: T, requiredProperties: string[]): void {
   requiredProperties.forEach((requiredProp) => {
     if (!Object.hasOwn(obj, requiredProp)) {

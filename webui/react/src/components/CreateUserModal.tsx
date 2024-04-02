@@ -170,7 +170,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
               data-testid="username"
               disabled={!!user}
               maxLength={128}
-              placeholder="Username"
+              placeholder="User name"
             />
           </Form.Item>
           <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
