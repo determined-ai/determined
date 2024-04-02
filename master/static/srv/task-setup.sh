@@ -53,3 +53,37 @@ if [ "$HOME" = "/" ]; then
     )" || HOME="$PWD"
     export HOME
 fi
+
+cleaned_args=()
+
+tcd_startup_hook_path=""
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --tcd_startup_hook_filename)
+            tcd_startup_hook_path="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        *)                       # keep unknown options
+            cleaned_args+=("$1") # add argument to cleaned_args
+            shift                # past argument
+            ;;
+    esac
+done
+
+set -- "${cleaned_args[@]}"
+
+if [[ -n $tcd_startup_hook_path ]]; then
+    if [[ -f $tcd_startup_hook_path ]]; then
+        cat "$tcd_startup_hook_path"
+        source "$tcd_startup_hook_path"
+    else
+        echo "{\"log\": \"error: tcd startup hook not found: $tcd_startup_hook_path\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
+        exit 1
+    fi
+fi
+
+set -- "${cleaned_args[@]}"
+echo "task-setup.sh complete."

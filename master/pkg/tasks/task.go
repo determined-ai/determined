@@ -145,7 +145,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
-		runDirHelpersArchive(t.AgentUserGroup),
+		runDirHelpersArchive(t.AgentUserGroup, t.TaskContainerDefaults.StartupHook),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
@@ -238,12 +238,30 @@ func (t TaskSpec) EnvVars() map[string]string {
 	return e
 }
 
+func (t *TaskSpec) tcdStartHookPath() string {
+	return filepath.Join(RunDir, StartupHookScript)
+}
+
+func (t *TaskSpec) tCDStartupEntrypoint() []string {
+	// create a file or pick the path from t.TaskContainerDefaults.StartupScriptFilename
+	if t.TaskContainerDefaults.StartupHook == "" {
+		return []string{}
+	}
+	return []string{"--tcd_startup_hook_filename", t.tcdStartHookPath()}
+}
+
 // LogShipperWrappedEntrypoint returns the configured Entrypoint wrapped with ship_logs.py.
 func (t *TaskSpec) LogShipperWrappedEntrypoint() []string {
 	// Prepend the entrypoint like: `ship-logs.sh ship_logs.py "$@"`.
 	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
 	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)
 	return append([]string{shipLogsShell, shipLogsPython}, t.Entrypoint...)
+}
+
+// CombinedEntrypoint collects and combines all the entrypoints.
+func (t *TaskSpec) CombinedEntrypoint() []string {
+	entryPoints := append(t.LogShipperWrappedEntrypoint(), t.tCDStartupEntrypoint()...)
+	return entryPoints
 }
 
 // ToDockerSpec converts a task spec to a docker container spec.
@@ -292,7 +310,7 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 				User:         getUser(t.AgentUserGroup),
 				ExposedPorts: toPortSet(env.Ports()),
 				Env:          envVars,
-				Cmd:          t.LogShipperWrappedEntrypoint(),
+				Cmd:          t.CombinedEntrypoint(),
 				Image:        env.Image().For(deviceType),
 				WorkingDir:   t.WorkDir,
 			},
@@ -333,8 +351,8 @@ func workDirArchive(
 }
 
 // runDirHelpersArchive ensures helper scripts exist in the run dir.
-func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
-	return wrapArchive(archive.Archive{
+func runDirHelpersArchive(aug *model.AgentUserGroup, startupHook string) cproto.RunArchive {
+	archive := archive.Archive{
 		aug.OwnedArchiveItem(
 			taskSetupScript,
 			etc.MustStaticFile(etc.TaskSetupScriptResource),
@@ -359,7 +377,16 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			singularityEntrypointWrapperMode,
 			tar.TypeReg,
 		),
-	}, RunDir)
+	}
+	if startupHook != "" {
+		archive = append(archive, aug.OwnedArchiveItem(
+			StartupHookScript,
+			[]byte(startupHook),
+			startupHookMode,
+			tar.TypeReg,
+		))
+	}
+	return wrapArchive(archive, RunDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files
