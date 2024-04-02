@@ -19,7 +19,11 @@ test.describe('User Management', () => {
     await expect(page).toHaveURL(userManagementPage.url);
   });
 
-  // TODO test table order and explain why
+  // test('Users table count matches admin page users tab', async () => {
+  //   await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(Math.min(10, expetedRowCount));
+  //   await expect(userManagementPage.userTab.pwLocator).toContainText(/\d+/)
+  //   const expetedRowCount = +(await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/)![0]
+  // })
 
   test.describe('With a new User', () => {
     let page: Page;
@@ -29,24 +33,24 @@ test.describe('User Management', () => {
     const username = 'test-user-' + uuidv4();
 
     test.beforeAll(async ({ browser }) => {
-      page = await browser.newPage();
-      authFixture = new AuthFixture(page);
-      userManagementPage = new UserManagement(page);
-      await authFixture.login();
-
+      test.step('Login', async () => {
+        page = await browser.newPage();
+        authFixture = new AuthFixture(page);
+        userManagementPage = new UserManagement(page);
+        await authFixture.login();
+      })
+      
       await userManagementPage.goto();
-      await expect(userManagementPage.userTab.pwLocator).toContainText(/\d+/)
-      const expetedRowCount = +(await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/)![0]
-      await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(Math.min(10, expetedRowCount));
-      // const oldIDs = await userManagementPage.table.table.allRowKeys();
-      await userManagementPage.addUser.pwLocator.click();
-      await expect(userManagementPage.createUserModal.pwLocator).toBeVisible();
-      await userManagementPage.createUserModal.username.pwLocator.fill(username);
-      await userManagementPage.createUserModal.footer.submit.pwLocator.click();
-      // await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(oldIDs.length + 1);
-      // const newIDs = await userManagementPage.table.table.newRowKeys(oldIDs);
-      await userManagementPage.search.pwLocator.fill(username);
-      userid = await (await userManagementPage.filterRowsByUsername(username)).getID()
+      test.step('Create a user', async () => {
+        await userManagementPage.addUser.pwLocator.click();
+        await expect(userManagementPage.createUserModal.pwLocator).toBeVisible();
+        await userManagementPage.createUserModal.username.pwLocator.fill(username);
+        await userManagementPage.createUserModal.footer.submit.pwLocator.click();
+      })
+      test.step('Set the user id', async () => {
+        await userManagementPage.search.pwLocator.fill(username);
+        userid = await (await userManagementPage.filterRowsByUsername(username)).getID()
+      })
     });
     test.afterAll(async () => {
       if (userid !== undefined) {

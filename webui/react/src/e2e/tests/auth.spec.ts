@@ -41,7 +41,7 @@ test.describe('Authentication', () => {
     });
   });
 
-  test('Bad Credentials should throw an error', async ({ page, auth }) => {
+  test('Bad credentials should throw an error', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     await auth.login(/login/, { password: 'superstar', username: 'jcom' });
     await expect(page).toHaveTitle(signInPage.title);

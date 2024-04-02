@@ -1,3 +1,4 @@
+import { Locator } from '@playwright/test';
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
@@ -36,7 +37,7 @@ export class InteractiveTable<
  * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
+export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
   static defaultSelector = '[data-testid="table"]';
   constructor({ parent, selector, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || Table.defaultSelector });
@@ -55,6 +56,9 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
   readonly #head: BaseComponent = new BaseComponent({
     parent: this,
     selector: 'theader.ant-table-thead',
+  });
+  readonly pagination: Pagination = new Pagination({
+    parent: this._parent,
   });
 
   /**
@@ -137,4 +141,30 @@ export class HeadRow extends NamedComponent {
     parent: this,
     selector: '.ant-table-selection-column',
   });
+}
+
+class Pagination extends NamedComponent {
+  static defaultSelector = ".ant-pagination"
+  constructor({ parent, selector }: NamedComponentArgs) {
+    super({ parent: parent, selector: selector || Pagination.defaultSelector });
+  }
+  readonly previous: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'li.ant-pagination-prev',
+  });
+  readonly next: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'li.ant-pagination-next',
+  });
+  readonly #options: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'li.ant-pagination-options',
+  });
+  readonly perPage: BaseComponent = new BaseComponent({
+    parent: this.#options,
+    selector: '.ant-pagination-options-size-changer',
+  });
+  pageButtonLocator(n: number): Locator {
+    return this.pwLocator.locator(`.ant-pagination-item.ant-pagination-item-${n}`)
+  }
 }

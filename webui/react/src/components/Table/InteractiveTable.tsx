@@ -124,6 +124,7 @@ interface CellProps {
   children?: React.ReactNode;
   className?: string;
   isCellRightClickable?: boolean;
+  "data-testid"?: string;
 }
 
 /*

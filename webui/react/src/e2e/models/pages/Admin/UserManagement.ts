@@ -104,45 +104,35 @@ class UserHeadRow extends HeadRow {
 class UserRow extends Row {
   static override defaultSelector: string = Row.defaultSelector;
 
-  /**
-   * Returns a templated selector for children components.
-   * TODO DANGER - dependant on order or elements. This is a smelly practice
-   * Consider grabbing column number from header, or including data-testid
-   * @param {string} n - cell number
-   */
-  static selectorTemplate(n: number): string {
-    return `td.ant-table-cell:nth-of-type(${n})`;
-  }
   // If you're wondering where (1) is, it's the checkbox column (smelly)
   // TODO consider nameplate component
   readonly user: BaseComponent = new BaseComponent({
     parent: this,
-    selector: UserRow.selectorTemplate(2),
+    selector: '[data-testid="user"]',
   });
   readonly status: BaseComponent = new BaseComponent({
     parent: this,
-    selector: UserRow.selectorTemplate(3),
+    selector: '[data-testid="status"]',
   });
   readonly lastSeen: BaseComponent = new BaseComponent({
     parent: this,
-    selector: UserRow.selectorTemplate(4),
+    selector: '[data-testid="lastSeen"]',
   });
   readonly role: BaseComponent = new BaseComponent({
     parent: this,
-    selector: UserRow.selectorTemplate(5),
+    selector: '[data-testid="role"]',
   });
   readonly remote: BaseComponent = new BaseComponent({
     parent: this,
-    // this is intentional and smelly
-    selector: UserRow.selectorTemplate(5),
+    selector: '[data-testid="remote"]',
   });
   readonly modified: BaseComponent = new BaseComponent({
     parent: this,
-    selector: UserRow.selectorTemplate(6),
+    selector: '[data-testid="modified"]',
   });
   readonly actions: UserActionDropdown = new UserActionDropdown({
     parent: this,
-    selector: UserRow.selectorTemplate(7),
+    selector: '[data-testid="actions"]',
   });
 }
 

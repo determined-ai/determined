@@ -18,8 +18,9 @@ export class DevFixture {
   debugComponentVisible(component: BaseComponent): void {
     const componentTree: parentTypes[] = [];
     let root: parentTypes = component;
-    for (; !(root instanceof BasePage); root = root._parent) {
+    while(!(root instanceof BasePage)){
       componentTree.unshift(root);
+      root = root._parent
     }
     componentTree.forEach(async (node) => {
       await expect(node.pwLocator).toBeVisible();
