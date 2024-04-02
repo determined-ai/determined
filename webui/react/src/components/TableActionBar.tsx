@@ -11,6 +11,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
@@ -20,7 +21,6 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
-import ColumnPickerMenu from 'pages/F_ExpList/ColumnPickerMenu';
 import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
@@ -32,7 +32,7 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
+import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -47,7 +47,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { pluralizer } from 'utils/string';
+import { capitalizeWord, pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './TableActionBar.module.scss';
@@ -86,8 +86,8 @@ interface Props {
   experiments: Loadable<ExperimentWithTrial>[];
   filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
-  heatmapBtnVisible: boolean;
-  heatmapOn: boolean;
+  heatmapBtnVisible?: boolean;
+  heatmapOn?: boolean;
   initialVisibleColumns: string[];
   isOpenFilter: boolean;
   onActionComplete?: () => Promise<void>;
@@ -108,6 +108,9 @@ interface Props {
   sorts: Sort[];
   tableViewMode: TableViewMode;
   total: Loadable<number>;
+  labelSingular: string;
+  labelPlural: string;
+  columnGroups: (V1LocationType | V1LocationType[])[];
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -138,6 +141,9 @@ const TableActionBar: React.FC<Props> = ({
   sorts,
   tableViewMode,
   total,
+  labelSingular,
+  labelPlural,
+  columnGroups,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -272,27 +278,30 @@ const TableActionBar: React.FC<Props> = ({
 
         if (numSuccesses === 0 && numFailures === 0) {
           openToast({
-            description: `No selected experiments were eligible for ${action.toLowerCase()}`,
-            title: 'No eligible experiments',
+            description: `No selected ${labelPlural.toLowerCase()} were eligible for ${action.toLowerCase()}`,
+            title: `No eligible ${labelPlural.toLowerCase()}`,
           });
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${results.successful.length} experiments`,
+            description: `${action} succeeded for ${
+              results.successful.length
+            } ${labelPlural.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
           openToast({
-            description: `Unable to ${action.toLowerCase()} ${numFailures} experiments`,
+            description: `Unable to ${action.toLowerCase()} ${numFailures} ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `${action} Failure`,
           });
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
-              } eligible
-            experiments`,
+            description: `${action} succeeded for ${numSuccesses} out of ${
+              numFailures + numSuccesses
+            } eligible
+            ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
           });
@@ -300,8 +309,8 @@ const TableActionBar: React.FC<Props> = ({
       } catch (e) {
         const publicSubject =
           action === ExperimentAction.OpenTensorBoard
-            ? 'Unable to View TensorBoard for Selected Experiments'
-            : `Unable to ${action} Selected Experiments`;
+            ? `Unable to View TensorBoard for Selected ${capitalizeWord(labelPlural)}`
+            : `Unable to ${action} Selected ${capitalizeWord(labelPlural)}`;
         handleError(e, {
           isUserTriggered: true,
           level: ErrorLevel.Error,
@@ -313,7 +322,7 @@ const TableActionBar: React.FC<Props> = ({
         onActionComplete?.();
       }
     },
-    [sendBatchActions, onActionComplete, onActionSuccess, openToast],
+    [sendBatchActions, onActionComplete, onActionSuccess, openToast, labelPlural],
   );
 
   const handleBatchAction = useCallback(
@@ -361,23 +370,23 @@ const TableActionBar: React.FC<Props> = ({
       Loaded: (totalExperiments) => {
         let label = `${totalExperiments.toLocaleString()} ${pluralizer(
           totalExperiments,
-          'experiment',
+          labelSingular.toLowerCase(),
         )}`;
 
         if (selection.type === 'ALL_EXCEPT') {
           const all = selection.exclusions.length === 0 ? 'All ' : '';
           const totalSelected =
             (totalExperiments - (selection.exclusions.length ?? 0)).toLocaleString() + ' ';
-          label = `${all}${totalSelected}experiments selected`;
+          label = `${all}${totalSelected}${labelPlural.toLowerCase()} selected`;
         } else if (selection.selections.length > 0) {
           label = `${selection.selections.length} of ${label} selected`;
         }
 
         return label;
       },
-      NotLoaded: () => 'Loading experiments...',
+      NotLoaded: () => `Loading ${labelPlural.toLowerCase()}...`,
     });
-  }, [selection, total]);
+  }, [selection, total, labelPlural, labelSingular]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
@@ -404,6 +413,7 @@ const TableActionBar: React.FC<Props> = ({
               isMobile={isMobile}
               projectColumns={projectColumns}
               projectId={project.id}
+              tabs={columnGroups}
               onVisibleColumnChange={onVisibleColumnChange}
             />
             <OptionsMenu
@@ -427,7 +437,7 @@ const TableActionBar: React.FC<Props> = ({
                 <Button
                   icon={<Icon name="heatmap" title="heatmap" />}
                   type={heatmapOn ? 'primary' : 'default'}
-                  onClick={() => onHeatmapToggle?.(heatmapOn)}
+                  onClick={() => onHeatmapToggle?.(heatmapOn ?? false)}
                 />
               </Tooltip>
             )}

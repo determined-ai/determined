@@ -44,6 +44,7 @@ import {
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
@@ -67,12 +68,7 @@ import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
-import {
-  ExperimentColumn,
-  experimentColumns,
-  getColumnDefs,
-  searcherMetricsValColumn,
-} from './columns';
+import { getColumnDefs, searcherMetricsValColumn } from './columns';
 import css from './Searches.module.scss';
 import {
   DEFAULT_SELECTION,
@@ -84,7 +80,6 @@ import {
   settingsConfigGlobal,
   settingsPathForProject,
 } from './Searches.settings';
-import TableActionBar from './TableActionBar';
 
 interface Props {
   project: Project;
@@ -402,13 +397,8 @@ const Searches: React.FC<Props> = ({ project }) => {
     let mounted = true;
     (async () => {
       try {
-        const columns = await getProjectColumns({ id: project.id });
-        columns.sort((a, b) =>
-          a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
-            ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-            experimentColumns.indexOf(b.column as ExperimentColumn)
-            : 0,
-        );
+        let columns = await getProjectColumns({ id: project.id });
+        columns = columns.filter((c) => c.location === V1LocationType.EXPERIMENT);
 
         if (mounted) {
           setProjectColumns(Loaded(columns));
@@ -636,10 +626,7 @@ const Searches: React.FC<Props> = ({ project }) => {
   );
 
   const showPagination = useMemo(() => {
-    return (
-      isPagedView &&
-      !isMobile
-    );
+    return isPagedView && !isMobile;
   }, [isMobile, isPagedView]);
 
   const {
@@ -662,9 +649,7 @@ const Searches: React.FC<Props> = ({ project }) => {
       themeIsDark: isDarkMode,
       users,
     });
-    const gridColumns = (
-      [...STATIC_COLUMNS, ...columnsIfLoaded]
-    )
+    const gridColumns = [...STATIC_COLUMNS, ...columnsIfLoaded]
       .map((columnName) => {
         if (columnName === MULTISELECT) {
           return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
@@ -735,12 +720,12 @@ const Searches: React.FC<Props> = ({ project }) => {
       const items: MenuItem[] = [
         selection.rows.length > 0
           ? {
-            key: 'select-none',
-            label: 'Clear selected',
-            onClick: () => {
-              handleSelectionChange?.('remove-all');
-            },
-          }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
           : null,
         ...[5, 10, 25].map((n) => ({
           key: `select-${n}`,
@@ -799,30 +784,30 @@ const Searches: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-            icon: <Icon decorative name="pin" />,
-            key: 'pin',
-            label: 'Pin column',
-            onClick: () => {
-              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-              newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-              handleColumnsOrderChange?.(newColumnsOrder);
-              handlePinnedColumnsCountChange?.(
-                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-              );
-            },
-          }
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
+              },
+            }
           : {
-            disabled: settings.pinnedColumnsCount <= 1,
-            icon: <Icon decorative name="pin" />,
-            key: 'unpin',
-            label: 'Unpin column',
-            onClick: () => {
-              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-              newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-              handleColumnsOrderChange?.(newColumnsOrder);
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              },
             },
-          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -839,26 +824,26 @@ const Searches: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-          { type: 'divider' as const },
-          {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter',
-            label: 'Add Filter',
-            onClick: () => {
-              setTimeout(filterMenuItemsForColumn, 5);
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            { type: 'divider' as const },
+            {
+              icon: <Icon decorative name="filter" />,
+              key: 'filter',
+              label: 'Add Filter',
+              onClick: () => {
+                setTimeout(filterMenuItemsForColumn, 5);
+              },
             },
-          },
-        ]),
+          ]),
       filterCount > 0
         ? {
-          icon: <Icon decorative name="filter" />,
-          key: 'filter-clear',
-          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-          onClick: () => {
-            setTimeout(clearFilterForColumn, 5);
-          },
-        }
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          }
         : null,
     ];
     return items;
@@ -871,12 +856,15 @@ const Searches: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        columnGroups={[V1LocationType.EXPERIMENT]}
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
         filters={experimentFilters}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
+        labelPlural="searches"
+        labelSingular="search"
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
@@ -927,10 +915,7 @@ const Searches: React.FC<Props> = ({ project }) => {
                 return (
                   <ExperimentActionDropdown
                     cell={cell}
-                    experiment={getProjectExperimentForExperimentItem(
-                      rowData.experiment,
-                      project,
-                    )}
+                    experiment={getProjectExperimentForExperimentItem(rowData.experiment, project)}
                     link={link}
                     makeOpen={open}
                     onComplete={onComplete}
