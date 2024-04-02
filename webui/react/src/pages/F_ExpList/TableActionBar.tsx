@@ -16,6 +16,8 @@ import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsM
 import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
+import MultiSortMenu from 'components/MultiSortMenu';
+import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import ColumnPickerMenu from 'pages/F_ExpList/ColumnPickerMenu';
@@ -48,8 +50,6 @@ import {
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
-import MultiSortMenu from './MultiSortMenu';
-import { OptionsMenu, RowHeight, TableViewMode } from './OptionsMenu';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -290,9 +290,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             experiments`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,

@@ -3,12 +3,10 @@ import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
-  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
   defaultTextColumn,
-  MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import DataGrid, {
@@ -31,7 +29,6 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import ComparisonView from 'components/ComparisonView';
 import { Error, NoExperiments } from 'components/exceptions';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
@@ -51,11 +48,9 @@ import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
-import useResize from 'hooks/useResize';
-import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
-import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
+import { getProjectColumns, searchExperiments } from 'services/api';
 import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
@@ -65,7 +60,6 @@ import {
   ExperimentWithTrial,
   Project,
   ProjectColumn,
-  ProjectMetricsRange,
   RunState,
 } from 'types';
 import handleError from 'utils/error';
@@ -78,18 +72,18 @@ import {
   experimentColumns,
   getColumnDefs,
   searcherMetricsValColumn,
-} from './expListColumns';
-import css from './F_ExperimentList.module.scss';
+} from './columns';
+import css from './Searches.module.scss';
 import {
   DEFAULT_SELECTION,
   defaultProjectSettings,
-  F_ExperimentListGlobalSettings,
   ProjectSettings,
   ProjectUrlSettings,
+  SearchesGlobalSettings,
   SelectionType as SelectionState,
   settingsConfigGlobal,
   settingsPathForProject,
-} from './F_ExperimentList.settings';
+} from './Searches.settings';
 import TableActionBar from './TableActionBar';
 
 interface Props {
@@ -97,8 +91,6 @@ interface Props {
 }
 
 type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
-
-const NO_PINS_WIDTH = 200;
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -131,7 +123,7 @@ const rowHeightMap: Record<RowHeight, number> = {
   [RowHeight.SHORT]: 32,
 };
 
-const F_ExperimentList: React.FC<Props> = ({ project }) => {
+const Searches: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -162,7 +154,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+    useSettings<SearchesGlobalSettings>(settingsConfigGlobal);
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -176,7 +168,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
-  const [projectHeatmap, setProjectHeatmap] = useState<ProjectMetricsRange[]>([]);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -293,7 +284,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
 
   const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
-  const { width: containerWidth } = useResize(contentRef);
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {
@@ -329,32 +319,32 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingSettings]);
 
-  useEffect(() => {
-    return eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
-      if (!prevPs?.isLoaded) {
-        ps.forEach(() => {
-          if (params.compare !== undefined) {
-            updateSettings({ compare: params.compare });
-          }
-        });
-      } else {
-        ps.forEach((s) => {
-          if (s) {
-            updateParams({ compare: s.compare || undefined });
-          }
-        });
-      }
-    });
-  }, [params.compare, updateSettings, updateParams, projectSettingsObs]);
-
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
+
+      // always filter out single trial experiments
+      const filters = JSON.parse(filtersString);
+      filters.filterGroup.children.push({
+        children: [
+          {
+            columnName: 'numTrials',
+            kind: 'field',
+            location: 'LOCATION_TYPE_EXPERIMENT',
+            operator: '>',
+            type: 'COLUMN_TYPE_NUMBER',
+            value: 1,
+          },
+        ],
+        conjunction: 'and',
+        kind: 'group',
+      });
+
       const response = await searchExperiments(
         {
           ...experimentFilters,
-          filter: filtersString,
+          filter: JSON.stringify(filters),
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
           sort: sortString || undefined,
@@ -406,23 +396,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   ]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const heatMap = await getProjectNumericMetricsRange({ id: project.id });
-        if (mounted) {
-          setProjectHeatmap(heatMap);
-        }
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [project.id]);
 
   // TODO: poll?
   useEffect(() => {
@@ -645,49 +618,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [page, updateSettings, setPage],
   );
 
-  const handleToggleComparisonView = useCallback(() => {
-    updateSettings({ compare: !settings.compare });
-  }, [settings.compare, updateSettings]);
-
-  const pinnedColumns = useMemo(() => {
-    return [...STATIC_COLUMNS, ...settings.columns.slice(0, settings.pinnedColumnsCount)];
-  }, [settings.columns, settings.pinnedColumnsCount]);
-
-  const scrollbarWidth = useScrollbarWidth();
-
-  const comparisonViewTableWidth = useMemo(() => {
-    if (pinnedColumns.length === 1) return NO_PINS_WIDTH;
-    return Math.min(
-      containerWidth - 30,
-      pinnedColumns.reduce(
-        (totalWidth, curCol) =>
-          totalWidth + (settings.columnWidths[curCol] ?? DEFAULT_COLUMN_WIDTH),
-        scrollbarWidth,
-      ),
-    );
-  }, [containerWidth, pinnedColumns, scrollbarWidth, settings.columnWidths]);
-
-  const handleCompareWidthChange = useCallback(
-    (newTableWidth: number) => {
-      const widthDifference = newTableWidth - comparisonViewTableWidth;
-      // Positive widthDifference: Table pane growing/compare pane shrinking
-      // Negative widthDifference: Table pane shrinking/compare pane growing
-      const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
-      pinnedColumns
-        .filter((col) => widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH)
-        .forEach((col, _, arr) => {
-          newColumnWidths[col] = Math.max(
-            MIN_COLUMN_WIDTH,
-            newColumnWidths[col] + widthDifference / arr.length,
-          );
-        });
-      updateSettings({
-        columnWidths: newColumnWidths,
-      });
-    },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
-  );
-
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
       updateSettings({
@@ -700,38 +630,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings, settings.columnWidths],
   );
 
-  const handleHeatmapToggle = useCallback(
-    (heatmapOn: boolean) => updateSettings({ heatmapOn: !heatmapOn }),
-    [updateSettings],
-  );
-
-  const handleHeatmapSelection = useCallback(
-    (selection: string[]) => updateSettings({ heatmapSkipped: selection }),
-    [updateSettings],
-  );
-
-  const heatmapBtnVisible = useMemo(() => {
-    const visibleColumns = settings.columns.slice(
-      0,
-      settings.compare ? settings.pinnedColumnsCount : undefined,
-    );
-    return Loadable.getOrElse([], projectColumns).some(
-      (column) =>
-        visibleColumns.includes(column.column) &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING))),
-    );
-  }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
-
-  const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (selectedExperimentIds.size === 0) return [];
-    return Loadable.filterNotLoaded(experiments, (experiment) =>
-      selectedExperimentIds.has(experiment.experiment.id),
-    );
-  }, [experiments, selectedExperimentIds]);
-
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -740,10 +638,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const showPagination = useMemo(() => {
     return (
       isPagedView &&
-      (!settings.compare || settings.pinnedColumnsCount !== 0) &&
-      !(isMobile && settings.compare)
+      !isMobile
     );
-  }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
+  }, [isMobile, isPagedView]);
 
   const {
     ui: { theme: appTheme },
@@ -766,9 +663,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       users,
     });
     const gridColumns = (
-      settings.compare
-        ? [...STATIC_COLUMNS, ...columnsIfLoaded.slice(0, settings.pinnedColumnsCount)]
-        : [...STATIC_COLUMNS, ...columnsIfLoaded]
+      [...STATIC_COLUMNS, ...columnsIfLoaded]
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
@@ -783,57 +678,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
             break;
-          case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
-            break;
-          case V1LocationType.VALIDATIONS:
-            dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
-              'validation.',
-              '',
-            )}`;
-            break;
-          case V1LocationType.TRAINING:
-            dataPath = `bestTrial.summaryMetrics.avgMetrics.${currentColumn.column.replace(
-              'training.',
-              '',
-            )}`;
-            break;
-          case V1LocationType.CUSTOMMETRIC:
-            dataPath = `bestTrial.summaryMetrics.${currentColumn.column}`;
-            break;
           case V1LocationType.UNSPECIFIED:
           default:
             break;
         }
         switch (currentColumn.type) {
           case V1ColumnType.NUMBER: {
-            const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-            if (
-              heatmap &&
-              settings.heatmapOn &&
-              !settings.heatmapSkipped.includes(currentColumn.column)
-            ) {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
-                currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
-                dataPath,
-                {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                },
-              );
-            } else {
-              columnDefs[currentColumn.column] = defaultNumberColumn(
-                currentColumn.column,
-                currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
-                dataPath,
-              );
-            }
+            columnDefs[currentColumn.column] = defaultNumberColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column],
+              dataPath,
+            );
             break;
           }
           case V1ColumnType.DATE:
@@ -855,37 +711,17 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             );
         }
         if (currentColumn.column === 'searcherMetricsVal') {
-          const heatmap = projectHeatmap.find((h) => h.metricsName === currentColumn.column);
-          if (
-            heatmap &&
-            settings.heatmapOn &&
-            !settings.heatmapSkipped.includes(currentColumn.column)
-          ) {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
-              {
-                max: heatmap.max,
-                min: heatmap.min,
-              },
-            );
-          } else {
-            columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
-            );
-          }
+          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+            settings.columnWidths[currentColumn.column],
+          );
         }
         return columnDefs[currentColumn.column];
       })
       .flatMap((col) => (col ? [col] : []));
     return gridColumns;
   }, [
-    settings.compare,
-    settings.pinnedColumnsCount,
     projectColumns,
     settings.columnWidths,
-    settings.heatmapSkipped,
-    projectHeatmap,
-    settings.heatmapOn,
     columnsIfLoaded,
     appTheme,
     isDarkMode,
@@ -1024,26 +860,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           },
         }
         : null,
-      settings.heatmapOn &&
-        (column.column === 'searcherMetricsVal' ||
-          (column.type === V1ColumnType.NUMBER &&
-            (column.location === V1LocationType.VALIDATIONS ||
-              column.location === V1LocationType.TRAINING)))
-        ? {
-          icon: <Icon decorative name="heatmap" />,
-          key: 'heatmap',
-          label: !settings.heatmapSkipped.includes(column.column)
-            ? 'Cancel heatmap'
-            : 'Apply heatmap',
-          onClick: () => {
-            handleHeatmapSelection?.(
-              settings.heatmapSkipped.includes(column.column)
-                ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                : [...settings.heatmapSkipped, column.column],
-            );
-          },
-        }
-        : null,
     ];
     return items;
   };
@@ -1055,13 +871,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
-        compareViewOn={settings.compare}
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
         filters={experimentFilters}
         formStore={formStore}
-        heatmapBtnVisible={heatmapBtnVisible}
-        heatmapOn={settings.heatmapOn}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
         project={project}
@@ -1075,8 +888,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
-        onComparisonViewToggle={handleToggleComparisonView}
-        onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
@@ -1094,62 +905,53 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <Error />
         ) : (
           <div className={css.paneWrapper}>
-            <ComparisonView
-              fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
-              initialWidth={comparisonViewTableWidth}
-              open={settings.compare}
-              projectId={project.id}
-              selectedExperiments={selectedExperiments}
-              onWidthChange={handleCompareWidthChange}>
-              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
-                columns={columns}
-                data={experiments}
-                getHeaderMenuItems={getHeaderMenuItems}
-                getRowAccentColor={getRowAccentColor}
-                hideUnpinned={settings.compare}
-                imperativeRef={dataGridRef}
-                isPaginated={isPagedView}
-                page={page}
-                pageSize={PAGE_SIZE}
-                pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
-                renderContextMenuComponent={({
-                  cell,
-                  rowData,
-                  link,
-                  open,
-                  onComplete,
-                  onClose,
-                  onVisibleChange,
-                }) => {
-                  return (
-                    <ExperimentActionDropdown
-                      cell={cell}
-                      experiment={getProjectExperimentForExperimentItem(
-                        rowData.experiment,
-                        project,
-                      )}
-                      link={link}
-                      makeOpen={open}
-                      onComplete={onComplete}
-                      onLink={onClose}
-                      onVisibleChange={onVisibleChange}>
-                      <div />
-                    </ExperimentActionDropdown>
-                  );
-                }}
-                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-                selection={selection}
-                sorts={sorts}
-                staticColumns={STATIC_COLUMNS}
-                total={Loadable.getOrElse(PAGE_SIZE, total)}
-                onColumnResize={handleColumnWidthChange}
-                onColumnsOrderChange={handleColumnsOrderChange}
-                onContextMenuComplete={handleContextMenuComplete}
-                onPageUpdate={setPage}
-                onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
-                onSelectionChange={handleSelectionChange}
-              />
-            </ComparisonView>
+            <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+              columns={columns}
+              data={experiments}
+              getHeaderMenuItems={getHeaderMenuItems}
+              getRowAccentColor={getRowAccentColor}
+              imperativeRef={dataGridRef}
+              isPaginated={isPagedView}
+              page={page}
+              pageSize={PAGE_SIZE}
+              pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
+              renderContextMenuComponent={({
+                cell,
+                rowData,
+                link,
+                open,
+                onComplete,
+                onClose,
+                onVisibleChange,
+              }) => {
+                return (
+                  <ExperimentActionDropdown
+                    cell={cell}
+                    experiment={getProjectExperimentForExperimentItem(
+                      rowData.experiment,
+                      project,
+                    )}
+                    link={link}
+                    makeOpen={open}
+                    onComplete={onComplete}
+                    onLink={onClose}
+                    onVisibleChange={onVisibleChange}>
+                    <div />
+                  </ExperimentActionDropdown>
+                );
+              }}
+              rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
+              selection={selection}
+              sorts={sorts}
+              staticColumns={STATIC_COLUMNS}
+              total={Loadable.getOrElse(PAGE_SIZE, total)}
+              onColumnResize={handleColumnWidthChange}
+              onColumnsOrderChange={handleColumnsOrderChange}
+              onContextMenuComplete={handleContextMenuComplete}
+              onPageUpdate={setPage}
+              onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
+              onSelectionChange={handleSelectionChange}
+            />
             {showPagination && (
               <Row>
                 <Column align="right">
@@ -1170,4 +972,4 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 };
 
-export default F_ExperimentList;
+export default Searches;

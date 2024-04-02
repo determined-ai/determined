@@ -1,0 +1,11 @@
+.base {
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+
+  :empty {
+    margin: 0;
+  }
+  .expNum {
+    color: var(--theme-stage-on-weak);
+  }
+}
