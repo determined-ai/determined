@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -760,7 +761,7 @@ func changeExperimentConfigLogRetention(ctx context.Context, database db.DB,
 			err, "unable to load config for experiment %v", exp.ID,
 		)
 	}
-	activeConfig.SetLogRetentionDays(&numDays)
+	activeConfig.SetRetentionPolicy(&expconf.RetentionPolicyConfigV0{RawLogRetentionDays: &numDays})
 
 	if err := database.SaveExperimentConfig(exp.ID, activeConfig); err != nil {
 		return errors.Wrapf(err, "patching experiment %d", exp.ID)

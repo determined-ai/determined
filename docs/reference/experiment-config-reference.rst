@@ -321,18 +321,26 @@ defaults.
 
 .. _log-retention-days:
 
-``log_retention_days``
-======================
+``retention_policy``
+====================
 
-Optional. Overrides the number of days to retain logs for a trial. Values should be between ``-1``
-and ``32767``. If set to ``-1``, logs will be retained indefinitely. If set to ``0``, logs will be
-deleted during the next cleanup.
+Optional. Defines retention policies for logs related to all trials of a given experiment.
+Parameters include:
+
+-  ``log_retention_days``: Optional. Overrides the number of days to retain logs for a trial.
+   Acceptable values range from ``-1`` to ``32767``. If set to ``-1``, logs will be retained
+   indefinitely. If set to ``0``, logs will be deleted during the next cleanup. To modify the
+   retention settings post-completion for a single trial or the entire experiment, you can use the
+   CLI command ``det t set log-retention <trial-id>`` or ``det e set log-retention <exp-id>``. Both
+   commands accept either the argument: ``--days``, which sets the number of days to retain logs
+   from the time of creation, or ``--forever`` which retains logs indefinitely.
 
 Example configuration:
 
 .. code:: yaml
 
-   log_retention_days: 90
+   retention_policy:
+      log_retention_days: 90
 
 This setting can be defined as a default setting for the entire cluster.
 
