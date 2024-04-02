@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
@@ -331,7 +329,7 @@ func (a *apiServer) MoveRuns(
 	}
 
 	var results []*apiv1.RunActionResult
-	var visibleIDs set.Set[int32]
+	visibleIDs := set.New[int32]()
 	var validIDs []int32
 	// associated experiments to move
 	var expMoveIds []int32
@@ -375,69 +373,62 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	if len(validIDs) > 0 {
-		tx, err := db.Bun().BeginTx(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			txErr := tx.Rollback()
-			if txErr != nil && txErr != sql.ErrTxDone {
-				logrus.WithError(txErr).Error("error rolling back transaction in MoveRuns")
+		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+			if err != nil {
+				return err
 			}
-		}()
-
-		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
-		if err != nil {
-			return nil, err
-		}
-		failedExpMoveIds := []int32{-1}
-		for _, res := range expMoveResults {
-			if res.Error != nil {
-				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			failedExpMoveIds := []int32{-1}
+			for _, res := range expMoveResults {
+				if res.Error != nil {
+					failedExpMoveIds = append(failedExpMoveIds, res.ID)
+				}
 			}
-		}
-		var acceptedIDs []int32
-		if _, err = tx.NewUpdate().Table("runs").
-			Set("project_id = ?", req.DestinationProjectId).
-			Where("runs.id IN (?)", bun.In(validIDs)).
-			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
-			Returning("runs.id").
-			Model(&acceptedIDs).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("updating run's project IDs: %w", err)
-		}
+			var acceptedIDs []int32
+			if _, err = tx.NewUpdate().Table("runs").
+				Set("project_id = ?", req.DestinationProjectId).
+				Where("runs.id IN (?)", bun.In(validIDs)).
+				Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+				Returning("runs.id").
+				Model(&acceptedIDs).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("updating run's project IDs: %w", err)
+			}
 
-		for _, acceptID := range acceptedIDs {
-			results = append(results, &apiv1.RunActionResult{
-				Error: "",
-				Id:    acceptID,
-			})
-		}
-		if err = tx.Commit(); err != nil {
-			return nil, err
+			for _, acceptID := range acceptedIDs {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "",
+					Id:    acceptID,
+				})
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("moving runs: %w", err)
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
 }
 
 func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destProjID int32) error {
-	var cloneExpID int32
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		var cloneExpID int32
 
-	// clone experiment into dest project
-	err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
+		// clone experiment into dest project
+		err := db.Bun().NewRaw(`INSERT INTO experiments(state, config, model_definition, start_time, end_time, archived,
 		parent_id, owner_id, progress, original_config, notes, job_id, project_id, checkpoint_size, checkpoint_count,
 		best_trial_id, unmanaged, external_experiment_id) 
 		SELECT 'COMPLETED'::experiment_state as state, config, model_definition, start_time,
 		(CASE WHEN end_time IS NULL THEN NOW() ELSE end_time END) as end_time, archived, parent_id, owner_id, progress,
 		original_config, notes, job_id, ? as project_id, checkpoint_size, checkpoint_count, best_trial_id, unmanaged,
 		external_experiment_id FROM experiments WHERE id = ? RETURNING id;`, destProjID, expID).Scan(ctx, &cloneExpID)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	var cloneRunID int32
-	// clone run into dest project
-	err = db.Bun().NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
+		var cloneRunID int32
+		// clone run into dest project
+		err = db.Bun().NewRaw(`INSERT INTO runs(experiment_id, state, start_time, end_time, hparams, warm_start_checkpoint_id,
 		best_validation_id, runner_state, restart_id, restarts, tags, checkpoint_size, checkpoint_count,
 		searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id, summary_metrics,
 		summary_metrics_timestamp, last_activity, external_run_id, project_id)
@@ -449,14 +440,16 @@ func cloneExperimentAndRun(ctx context.Context, expID int32, runID int32, destPr
 		checkpoint_count, searcher_metric_value, total_batches, searcher_metric_value_signed, latest_validation_id,
 		summary_metrics, summary_metrics_timestamp, last_activity, external_run_id, ? as project_id
 		FROM runs WHERE id = ? RETURNING id`,
-		cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
-	if err != nil {
-		// Delete cloned experiment if run cloning fails
-		delErr := db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
-		if delErr != nil {
-			return fmt.Errorf("failed to clone run and delete cloned experiment: run error: %s, delete error: %s", err, delErr)
+			cloneExpID, destProjID, runID).Scan(ctx, &cloneRunID)
+		if err != nil {
+			// Delete cloned experiment if run cloning fails
+			delErr := db.Bun().NewDelete().Table("experiments").Where("id = ?", cloneExpID).Scan(ctx)
+			if delErr != nil {
+				return fmt.Errorf("failed to clone run and delete cloned experiment: run error: %s, delete error: %s", err, delErr)
+			}
+			return err
 		}
-		return err
-	}
-	return nil
+		return nil
+	})
+	return err
 }
