@@ -30,27 +30,30 @@ test.describe('User Management', () => {
     let authFixture: AuthFixture;
     let userManagementPage: UserManagement;
     let userid: string;
-    const username = 'test-user-' + uuidv4();
+    let username: string;
 
     test.beforeAll(async ({ browser }) => {
+      username = 'test-user-' + uuidv4();
+
       await test.step('Login', async () => {
         page = await browser.newPage();
         authFixture = new AuthFixture(page);
         userManagementPage = new UserManagement(page);
         await authFixture.login();
-      })
-      
+      });
+
       await test.step('Create a user', async () => {
         await userManagementPage.goto();
         await userManagementPage.addUser.pwLocator.click();
         await expect(userManagementPage.createUserModal.pwLocator).toBeVisible();
         await userManagementPage.createUserModal.username.pwLocator.fill(username);
         await userManagementPage.createUserModal.footer.submit.pwLocator.click();
-      })
+      });
+
       await test.step('Set the user id', async () => {
         await userManagementPage.search.pwLocator.fill(username);
-        userid = await (await userManagementPage.filterRowsByUsername(username)).getID()
-      })
+        userid = await (await userManagementPage.filterRowsByUsername(username)).getID();
+      });
     });
 
     test.afterAll(async () => {
@@ -60,6 +63,7 @@ test.describe('User Management', () => {
       }
       await page.close();
     });
+
     test('User table shows correct name', async () => {
       await expect(userManagementPage.getRowByID(userid).user.pwLocator).toContainText(username);
     });

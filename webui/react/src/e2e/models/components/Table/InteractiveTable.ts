@@ -1,4 +1,5 @@
 import { Locator } from '@playwright/test';
+
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
@@ -101,14 +102,14 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
   }
 
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
-    let filteredRows: RowType[] = [];
+    const filteredRows: RowType[] = [];
     (await this.allRowKeys()).forEach(async (key) => {
-      const row = this.getRowByDataKey(key)
+      const row = this.getRowByDataKey(key);
       if (await condition(row)) {
-        filteredRows.push(row)
+        filteredRows.push(row);
       }
-    })
-    return filteredRows
+    });
+    return filteredRows;
   }
 }
 
@@ -128,7 +129,7 @@ export class Row extends NamedComponent {
     if (value === null) {
       throw new Error(`All rows should have the attribute ${this.keyAttribute}`);
     }
-    return value
+    return value;
   }
 }
 
@@ -144,7 +145,7 @@ export class HeadRow extends NamedComponent {
 }
 
 class Pagination extends NamedComponent {
-  static defaultSelector = ".ant-pagination"
+  static defaultSelector = '.ant-pagination';
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Pagination.defaultSelector });
   }
@@ -165,6 +166,6 @@ class Pagination extends NamedComponent {
     selector: '.ant-pagination-options-size-changer',
   });
   pageButtonLocator(n: number): Locator {
-    return this.pwLocator.locator(`.ant-pagination-item.ant-pagination-item-${n}`)
+    return this.pwLocator.locator(`.ant-pagination-item.ant-pagination-item-${n}`);
   }
 }

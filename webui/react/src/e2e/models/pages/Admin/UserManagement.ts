@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
@@ -66,10 +66,12 @@ export class UserManagement extends AdminPage {
 
   async filterRowsByUsername(name: string): Promise<UserRow> {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
-      return (await row.user.pwLocator.innerText()).includes(name)
+      return (await row.user.pwLocator.innerText()).includes(name);
     });
-    expect(filteredRows, `${await this.table.table.rows.pwLocator.allInnerTexts()}`).toHaveLength(1)
-    return filteredRows[0]
+    expect(filteredRows, `${await this.table.table.rows.pwLocator.allInnerTexts()}`).toHaveLength(
+      1,
+    );
+    return filteredRows[0];
   }
 }
 

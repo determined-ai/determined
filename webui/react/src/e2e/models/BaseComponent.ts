@@ -39,7 +39,7 @@ export class BaseComponent {
   get root(): BasePage {
     let root: parentTypes = this._parent;
     while (!(root instanceof BasePage)) {
-      root = root._parent
+      root = root._parent;
     }
     return root;
   }
@@ -73,7 +73,7 @@ export class BaseReactFragment {
   get root(): BasePage {
     let root: parentTypes = this._parent;
     while (!(root instanceof BasePage)) {
-      root = root._parent
+      root = root._parent;
     }
     return root;
   }

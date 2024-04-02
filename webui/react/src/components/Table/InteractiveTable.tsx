@@ -121,10 +121,10 @@ interface HeaderCellProps {
 }
 
 interface CellProps {
-  children?: React.ReactNode;
-  className?: string;
-  isCellRightClickable?: boolean;
-  "data-testid"?: string;
+  'children'?: React.ReactNode;
+  'className'?: string;
+  'isCellRightClickable'?: boolean;
+  'data-testid'?: string;
 }
 
 /*
