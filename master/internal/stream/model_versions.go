@@ -164,7 +164,9 @@ func ModelVersionCollectStartupMsgs(
 	// step 2: hydrate appeared IDs into full ModelVersionMsgs
 	var mvMsgs []*ModelVersionMsg
 	if len(appeared) > 0 {
-		query := db.Bun().NewSelect().Model(&mvMsgs).ExcludeColumn("workspace_id").Where("model_version_msg.id in (?)", bun.In(appeared))
+		query := db.Bun().NewSelect().Model(&mvMsgs).
+			ExcludeColumn("workspace_id").
+			Where("model_version_msg.id in (?)", bun.In(appeared))
 		if !globalAccess {
 			query = modelVersionPermFilterQuery(query, accessScopes)
 		}

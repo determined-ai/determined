@@ -632,7 +632,7 @@ func TestSubscribeModelVersion(t *testing.T) {
 					},
 				),
 				expectedUpserts: []string{
-					"key: modelversion, model_version_id: 1, model_id: 1, workspace_id: <nil>",
+					"key: modelversion, model_version_id: 1, model_id: 1, workspace_id: ",
 				},
 				expectedDeletions: []string{
 					"key: modelversions_deleted, deleted: ",
