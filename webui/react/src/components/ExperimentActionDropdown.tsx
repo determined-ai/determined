@@ -4,9 +4,11 @@ import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
+import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import React, { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -87,7 +89,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
-  const [experimentItem, setExperimentItem] = useState<ExperimentItem | undefined>(undefined);
+  const [experimentItem, setExperimentItem] = useState<Loadable<ExperimentItem> | 'loading'>(
+    NotLoaded,
+  );
   const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
   const { openToast } = useToast();
@@ -96,13 +100,15 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   // since we removed config. See #8765 on GitHub
   const fetchedExperimentItem = useCallback(async () => {
     try {
+      setExperimentItem('loading');
       const response: ExperimentItem = await getExperiment(
         { id: experiment.id },
         { signal: canceler.current.signal },
       );
-      setExperimentItem(response);
+      setExperimentItem(Loaded(response));
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiment data.' });
+      setExperimentItem(NotLoaded);
     }
   }, [experiment.id]);
 
@@ -121,11 +127,22 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     onComplete?.(ExperimentAction.RetainLogs, id);
   }, [id, onComplete]);
 
-  const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-    .filter((action) => action !== Action.SwitchPin)
-    .map((action) => {
-      return { danger: action === Action.Delete, key: action, label: action };
-    });
+  const permissions = usePermissions();
+  const menuItems: MenuItem[] = useMemo(() => {
+    return getActionsForExperiment(experiment, dropdownActions, permissions)
+      .filter((action) => action !== Action.SwitchPin)
+      .map((action) => {
+        if (action === Action.HyperparameterSearch) {
+          const isLoading = experimentItem === 'loading';
+          return {
+            disabled: isLoading,
+            key: action,
+            label: isLoading ? <Spinner>{action}</Spinner> : action,
+          };
+        }
+        return { danger: action === Action.Delete, key: action, label: action };
+      });
+  }, [experiment, experimentItem, permissions]);
 
   const dropdownMenu = useMemo(() => {
     const items: MenuItem[] = [...menuItems];
@@ -312,10 +329,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         onSubmit={handleRetainLogsComplete}
       />
-      {experimentItem !== undefined && (
+      {experimentItem instanceof Loadable && experimentItem.isLoaded && (
         <HyperparameterSearchModal.Component
           closeModal={HyperparameterSearchModal.close}
-          experiment={experimentItem}
+          experiment={experimentItem.data}
         />
       )}
     </>
