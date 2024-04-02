@@ -33,25 +33,26 @@ test.describe('User Management', () => {
     const username = 'test-user-' + uuidv4();
 
     test.beforeAll(async ({ browser }) => {
-      test.step('Login', async () => {
+      await test.step('Login', async () => {
         page = await browser.newPage();
         authFixture = new AuthFixture(page);
         userManagementPage = new UserManagement(page);
         await authFixture.login();
       })
       
-      await userManagementPage.goto();
-      test.step('Create a user', async () => {
+      await test.step('Create a user', async () => {
+        await userManagementPage.goto();
         await userManagementPage.addUser.pwLocator.click();
         await expect(userManagementPage.createUserModal.pwLocator).toBeVisible();
         await userManagementPage.createUserModal.username.pwLocator.fill(username);
         await userManagementPage.createUserModal.footer.submit.pwLocator.click();
       })
-      test.step('Set the user id', async () => {
+      await test.step('Set the user id', async () => {
         await userManagementPage.search.pwLocator.fill(username);
         userid = await (await userManagementPage.filterRowsByUsername(username)).getID()
       })
     });
+
     test.afterAll(async () => {
       if (userid !== undefined) {
         await userManagementPage.getRowByID(userid).actions.pwLocator.click();
