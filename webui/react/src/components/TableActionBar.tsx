@@ -526,7 +526,7 @@ const TableActionBar: React.FC<Props> = ({
             acc.push(experiment.id);
           }
           return acc;
-          }, [] as number[])}
+        }, [] as number[])}
         filters={completeFilterSet.getOrElse(undefined)}
         onSubmit={handleSubmitRetainLogs}
       />
