@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
@@ -62,6 +62,14 @@ export class UserManagement extends AdminPage {
   constructor(page: Page) {
     super(page);
     this.getRowByID = this.table.table.getRowByDataKey;
+  }
+
+  async filterRowsByUsername(name: string): Promise<UserRow> {
+    const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
+      return (await row.user.pwLocator.innerText()).includes(name)
+    });
+    expect(filteredRows, `${await this.table.table.rows.pwLocator.allInnerTexts()}`).toHaveLength(1)
+    return filteredRows[0]
   }
 }
 

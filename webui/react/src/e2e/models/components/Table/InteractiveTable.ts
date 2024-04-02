@@ -38,13 +38,12 @@ export class InteractiveTable<
  */
 class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
   static defaultSelector = '[data-testid="table"]';
-  static #rowKeyAttribute = 'data-row-key';
   constructor({ parent, selector, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
     super({ parent: parent, selector: selector || Table.defaultSelector });
     this.#rowType = rowType;
     this.rows = new rowType({ parent: this.#body });
     this.headRow = new headRowType({ parent: this.#head });
-    this.getRowByDataKey = this.rowByAttributeGenerator(Table.#rowKeyAttribute);
+    this.getRowByDataKey = this.rowByAttributeGenerator(this.rows.keyAttribute);
   }
   readonly #rowType: RowTypeGeneric<RowType>;
   readonly rows: RowType;
@@ -81,9 +80,9 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
   async allRowKeys(): Promise<string[]> {
     const keys: string[] = [];
     for (const row of await this.rows.pwLocator.all()) {
-      const value = await row.getAttribute(Table.#rowKeyAttribute);
+      const value = await row.getAttribute(this.rows.keyAttribute);
       if (value === null) {
-        throw new Error(`All rows should have the attribute ${Table.#rowKeyAttribute}`);
+        throw new Error(`All rows should have the attribute ${this.rows.keyAttribute}`);
       }
       keys.push(value);
     }
@@ -96,10 +95,22 @@ class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedCompo
       return oldKeys.indexOf(value) === -1;
     });
   }
+
+  async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
+    let filteredRows: RowType[] = [];
+    (await this.allRowKeys()).forEach(async (key) => {
+      const row = this.getRowByDataKey(key)
+      if (await condition(row)) {
+        filteredRows.push(row)
+      }
+    })
+    return filteredRows
+  }
 }
 
 export class Row extends NamedComponent {
   static defaultSelector = 'tr.ant-table-row';
+  readonly keyAttribute = 'data-row-key';
   constructor({ parent, selector }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || Row.defaultSelector });
   }
@@ -107,6 +118,14 @@ export class Row extends NamedComponent {
     parent: this,
     selector: '.ant-table-selection-column',
   });
+
+  async getID(): Promise<string> {
+    const value = await this.pwLocator.getAttribute(this.keyAttribute);
+    if (value === null) {
+      throw new Error(`All rows should have the attribute ${this.keyAttribute}`);
+    }
+    return value
+  }
 }
 
 export class HeadRow extends NamedComponent {
