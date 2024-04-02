@@ -1123,8 +1123,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 	}
-	if m.config.LoggingRetention.Schedule != nil {
-		if err := logretention.Schedule(m.config.LoggingRetention); err != nil {
+	if m.config.RetentionPolicy.Schedule != nil {
+		if err := logretention.Schedule(m.config.RetentionPolicy); err != nil {
 			return errors.Wrap(err, "initializing log retention")
 		}
 	}

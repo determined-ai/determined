@@ -24,7 +24,17 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-const pgTimeFormat = "2006-01-02T15:04:05.888738 -07:00:00"
+const (
+	pgTimeFormat               = "2006-01-02T15:04:05.888738 -07:00:00"
+	logRetentionConfig1000days = `
+retention_policy:
+  log_retention_days: 1000
+`
+	logRetentionConfigForever = `
+retention_policy:
+  log_retention_days: -1
+`
+)
 
 func setRetentionTime(timestamp string) error {
 	_, err := db.Bun().NewRaw(fmt.Sprintf(`
@@ -121,13 +131,13 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	require.Len(t, taskIDs1, 5)
 
 	// Create an experiment1 with 5 trials and a config to expire in 1000 days.
-	experiment2, trialIDs2, taskIDs2 := createTestRetentionExperiment(ctx, t, api, "log_retention_days: 1000", 5)
+	experiment2, trialIDs2, taskIDs2 := createTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
 	require.Nil(t, experiment2.EndTime)
 	require.Len(t, trialIDs2, 5)
 	require.Len(t, taskIDs2, 5)
 
 	// Create an experiment1 with 5 trials and config to never expire.
-	experiment3, trialIDs3, taskIDs3 := createTestRetentionExperiment(ctx, t, api, "log_retention_days: -1", 5)
+	experiment3, trialIDs3, taskIDs3 := createTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 	require.Nil(t, experiment3.EndTime)
 	require.Len(t, trialIDs3, 5)
 	require.Len(t, taskIDs3, 5)
@@ -292,8 +302,8 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		Days:     ptrs.Ptr(int16(100)),
-		Schedule: ptrs.Ptr("0 0 * * *"),
+		LogRetentionDays: ptrs.Ptr(int16(100)),
+		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
 
@@ -389,8 +399,8 @@ func TestScheduleRetention1000days(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		Days:     ptrs.Ptr(int16(100)),
-		Schedule: ptrs.Ptr("0 0 * * *"),
+		LogRetentionDays: ptrs.Ptr(int16(100)),
+		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
 
@@ -399,7 +409,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment with 5 trials and a config to expire in 1000 days.
-	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, "log_retention_days: 1000", 5)
+	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)
@@ -493,8 +503,8 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		Days:     ptrs.Ptr(int16(100)),
-		Schedule: ptrs.Ptr("0 0 * * *"),
+		LogRetentionDays: ptrs.Ptr(int16(100)),
+		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
 
@@ -503,7 +513,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment with 5 trials and config to never expire.
-	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, "log_retention_days: -1", 5)
+	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)

@@ -42,6 +42,7 @@ type (
 	RandomConfig              = RandomConfigV0
 	ReproducibilityConfig     = ReproducibilityConfigV0
 	ResourcesConfig           = ResourcesConfigV0
+	RetentionPolicy           = RetentionPolicyConfigV0
 	S3Config                  = S3ConfigV0
 	SearcherConfig            = SearcherConfigV0
 	SharedFSConfig            = SharedFSConfigV0

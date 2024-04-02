@@ -54,7 +54,7 @@ func Schedule(config model.LogRetentionPolicy) error {
 				TestingOnlySynchronizationHelper.Done()
 			}
 		}()
-		count, err := DeleteExpiredTaskLogs(context.Background(), config.Days)
+		count, err := DeleteExpiredTaskLogs(context.Background(), config.LogRetentionDays)
 		if err != nil {
 			log.WithError(err).Error("failed to delete expired task logs")
 		} else if count > 0 {
