@@ -24,7 +24,6 @@ import (
 const (
 	additionalRMName = "additional"
 	defaultRMName    = "default"
-	rp               = "resource-pool"
 	emptyRPName      = rm.ResourcePoolName("")
 )
 
@@ -366,20 +365,25 @@ func TestGetJobQ(t *testing.T) {
 
 func TestGetJobQueueStatsRequest(t *testing.T) {
 	cases := []struct {
-		name string
-		req  *apiv1.GetJobQueueStatsRequest
-		err  error
+		name        string
+		req         *apiv1.GetJobQueueStatsRequest
+		err         error
+		expectedLen int
 	}{
-		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil},
-		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil},
-		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil},
-		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil},
-		{"undefined RP", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus"}}, ErrRPNotDefined("bogus")},
+		// Given an empty list of RM names, pull the JobQueueStats from ALL RMs.
+		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil, 2},
+		// Given a blank resource pool name, pull the JobQueueStats only from the default RM.
+		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil, 1},
+		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil, 1},
+		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil, 1},
+		// Given an RP that's not defined in any RMs, operate the same as nil or empty case -- return ALL JobQueueStats.
+		{"undefined RP", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus"}}, nil, 2},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := testMultiRM.GetJobQueueStatsRequest(tt.req)
+			res, err := testMultiRM.GetJobQueueStatsRequest(tt.req)
 			require.Equal(t, tt.err, err)
+			require.Equal(t, tt.expectedLen, len(res.Results))
 		})
 	}
 }
@@ -698,7 +702,9 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 
 	mockRM.On("TaskContainerDefaults", mock.Anything, mock.Anything).Return(model.TaskContainerDefaultsConfig{}, nil)
 	mockRM.On("GetJobQ", mock.Anything).Return(map[model.JobID]*sproto.RMJobInfo{}, nil)
-	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(&apiv1.GetJobQueueStatsResponse{}, nil)
+	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(&apiv1.GetJobQueueStatsResponse{
+		Results: []*apiv1.RPQueueStat{{ResourcePool: poolName.String()}},
+	}, nil)
 	mockRM.On("MoveJob", mock.Anything).Return(nil)
 	mockRM.On("GetExternalJobs", mock.Anything).Return([]*jobv1.Job{}, nil)
 	mockRM.On("GetAgent", mock.Anything).Return(&apiv1.GetAgentResponse{}, nil)

@@ -234,23 +234,21 @@ func (m *MultiRMRouter) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sp
 func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsRequest) (
 	*apiv1.GetJobQueueStatsResponse, error,
 ) {
-	filteredRMs := map[string]rm.ResourceManager{}
+	filteredRMs := make(map[rm.ResourceManager]bool)
 	for _, rName := range req.ResourcePools {
 		resolvedRMName, err := m.getRM(rm.ResourcePoolName(rName))
-		if err != nil {
+		if resolvedRMName != "" && err != nil {
 			return nil, err
+		} else if resolvedRMName != "" {
+			filteredRMs[m.rms[resolvedRMName]] = true
 		}
-		filteredRMs[rName] = m.rms[resolvedRMName]
 	}
 
-	tmpM := &MultiRMRouter{
-		defaultRMName: m.defaultRMName,
-		syslog:        m.syslog,
-		rms:           filteredRMs,
-	}
-
-	res, err := fanOutRMCall(tmpM, func(rm rm.ResourceManager) (*apiv1.GetJobQueueStatsResponse, error) {
-		return rm.GetJobQueueStatsRequest(req)
+	res, err := fanOutRMCall(m, func(rm rm.ResourceManager) (*apiv1.GetJobQueueStatsResponse, error) {
+		if filteredRMs[rm] || len(filteredRMs) == 0 {
+			return rm.GetJobQueueStatsRequest(req)
+		}
+		return &apiv1.GetJobQueueStatsResponse{}, nil
 	})
 	if err != nil {
 		return nil, err
