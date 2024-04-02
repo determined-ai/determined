@@ -35,8 +35,8 @@ get-deps:
 
 build/proto.stamp: $(source_files)
 	protoc --version | tee /dev/stderr | \
-		perl -ne '(/libprotoc (?:3?\.)?(\d+)\.(?:\d+)/ && $$1>=15 && $$1<22) || \
-			(print("Please install protoc where version >= 3.15 and < 3.22\n") && exit 1)'
+		perl -ne '(/libprotoc (?:24\.)?(\d+)\.(\d+)/ && $$1>=24 && ($$1>24 || $$2>=3)) || \
+			(print("Please install protoc where version >= 24.3\n") && exit 1)'
 	rm -rf build/proto pkg
 	mkdir -p build/proto
 	# Protobuf generation.
