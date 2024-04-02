@@ -82,7 +82,9 @@ DECLARE
 BEGIN
     FOR f in (SELECT * FROM model_versions WHERE model_id = NEW.id)
     LOOP
-        PERFORM stream_model_version_notify(NULL, jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(NEW.workspace_id::text)));
+        PERFORM stream_model_version_notify(
+            jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(OLD.workspace_id::text)), 
+            jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(NEW.workspace_id::text)));
     END LOOP;
     RETURN NEW;
 END;
