@@ -60,7 +60,7 @@ func SetUserPassword(ctx context.Context, username, password string) error {
 // because it fails to meet current complexity requirements.
 var ErrPasswordLowComplexity = errors.New(
 	"passwords must be at least 8 characters long, not be entirely upper-case " +
-		"or lower-case, and contain at least one number or symbol",
+		"or lower-case, and contain at least one number",
 )
 
 // CheckPasswordComplexity returns an error if the provided password does not satisfy
@@ -75,7 +75,7 @@ func CheckPasswordComplexity(password string) error {
 	if !strings.ContainsFunc(password, unicode.IsLower) {
 		return ErrPasswordLowComplexity
 	}
-	if !strings.ContainsFunc(password, func(r rune) bool { return unicode.IsNumber(r) || unicode.IsSymbol(r) }) {
+	if !strings.ContainsFunc(password, unicode.IsNumber) {
 		return ErrPasswordLowComplexity
 	}
 	return nil
