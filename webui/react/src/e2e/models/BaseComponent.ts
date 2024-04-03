@@ -10,22 +10,22 @@ interface ComponentBasics {
 }
 
 interface NamedComponentWithDefaultSelector extends ComponentBasics {
-  attatchment?: never;
+  attachment?: never;
   sleector?: never;
 }
-interface NamedComponentWithAttatchment extends ComponentBasics {
-  attatchment: string;
+interface NamedComponentWithAttachment extends ComponentBasics {
+  attachment: string;
   sleector?: never;
 }
 export interface BaseComponentArgs extends ComponentBasics {
-  attatchment?: never;
+  attachment?: never;
   selector: string;
 }
 
 export type NamedComponentArgs =
   | BaseComponentArgs
   | NamedComponentWithDefaultSelector
-  | NamedComponentWithAttatchment;
+  | NamedComponentWithAttachment;
 
 /**
  * Returns the representation of a Component.
@@ -113,17 +113,17 @@ export class BaseReactFragment {
  */
 export abstract class NamedComponent extends BaseComponent {
   abstract readonly defaultSelector: string;
-  readonly #attatchment: string;
+  readonly #attachment: string;
 
   override get selector(): string {
-    return this._selector || this.defaultSelector + this.#attatchment;
+    return this._selector || this.defaultSelector + this.#attachment;
   }
 
   static getSelector(args: NamedComponentArgs): { selector: string; attachment: string } {
     if (NamedComponent.isBaseComponentArgs(args))
       return { attachment: '', selector: args.selector };
-    if (NamedComponent.isNamedComponentWithAttatchment(args))
-      return { attachment: args.attatchment, selector: '' };
+    if (NamedComponent.isNamedComponentWithAttachment(args))
+      return { attachment: args.attachment, selector: '' };
     else return { attachment: '', selector: '' };
   }
 
@@ -131,14 +131,14 @@ export abstract class NamedComponent extends BaseComponent {
     return 'selector' in args;
   }
 
-  static isNamedComponentWithAttatchment(
+  static isNamedComponentWithAttachment(
     args: NamedComponentArgs,
-  ): args is NamedComponentWithAttatchment {
-    return 'attatchment' in args;
+  ): args is NamedComponentWithAttachment {
+    return 'attachment' in args;
   }
   constructor(args: NamedComponentArgs) {
     const { selector, attachment } = NamedComponent.getSelector(args);
     super({ parent: args.parent, selector });
-    this.#attatchment = attachment;
+    this.#attachment = attachment;
   }
 }

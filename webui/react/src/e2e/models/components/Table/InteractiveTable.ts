@@ -75,7 +75,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return (value: string) => {
       // TODO default selector should be instance property to make this easier. We want RowType.defaultSelector
       return new this.#rowType({
-        attatchment: `[${key}="${value}"]`,
+        attachment: `[${key}="${value}"]`,
         parent: this,
       });
     };

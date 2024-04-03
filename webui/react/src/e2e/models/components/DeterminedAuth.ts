@@ -30,7 +30,7 @@ export class DeterminedAuth extends NamedComponent {
   });
   // TODO consdier a BaseComponents plural class
   readonly errors: ErrorComponent = new ErrorComponent({
-    attatchment: ErrorComponent.selectorTopRight,
+    attachment: ErrorComponent.selectorTopRight,
     parent: this.root,
   });
 }
