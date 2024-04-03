@@ -17,15 +17,6 @@
   .separator {
     border: var(--theme-surface-border) 1px solid;
   }
-  .selectModelRow {
-    display: flex;
-    justify-content: space-between;
-
-    p {
-      color: var(--theme-status-active);
-      cursor: pointer;
-    }
-  }
   h2 {
     color: var(--theme-stage-on);
     font-size: 14px;
