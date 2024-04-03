@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -20,7 +22,7 @@ func FetchAvgQueuedTime(pool string) (
 		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
 		Order("date ASC").Scan(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error fetching aggregates")
 	}
 	res := make([]*jobv1.AggregateQueueStats, 0)
 	for _, record := range aggregates {
@@ -39,7 +41,7 @@ func FetchAvgQueuedTime(pool string) (
 		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
 		Scan(context.TODO(), &today)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error fetching average queued time")
 	}
 	res = append(res, &jobv1.AggregateQueueStats{
 		PeriodStart: time.Now().Format("2006-01-02"),

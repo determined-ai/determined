@@ -343,7 +343,7 @@ func RecordTaskStats(ctx context.Context, stats *model.TaskStats) error {
 	}
 
 	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
-	return err
+	return errors.Wrap(err, "recording task stats")
 }
 
 // RecordTaskEndStats record end stats for tasks.

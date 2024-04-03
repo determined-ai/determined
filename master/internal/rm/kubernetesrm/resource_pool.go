@@ -508,7 +508,8 @@ func (k *kubernetesResourcePool) assignResources(
 	}
 
 	assigned := sproto.ResourcesAllocated{
-		ID: req.AllocationID, Resources: allocations,
+		ID:                req.AllocationID,
+		Resources:         allocations,
 		JobSubmissionTime: req.JobSubmissionTime,
 	}
 	k.reqList.AddAllocationRaw(req.AllocationID, &assigned)
