@@ -416,6 +416,39 @@ func TestGetExternalJobs(t *testing.T) {
 	}
 }
 
+func TestHealthCheck(t *testing.T) {
+	rmA := &mocks.ResourceManager{}
+	rmA.On("HealthCheck").Return([]model.ResourceManagerHealth{
+		{
+			Name:   "a",
+			Status: model.Healthy,
+		},
+	}).Once()
+
+	rmB := &mocks.ResourceManager{}
+	rmB.On("HealthCheck").Return([]model.ResourceManagerHealth{
+		{
+			Name:   "b",
+			Status: model.Unhealthy,
+		},
+	})
+
+	m := &MultiRMRouter{rms: map[string]rm.ResourceManager{
+		"a": rmA,
+		"b": rmB,
+	}}
+	require.ElementsMatch(t, []model.ResourceManagerHealth{
+		{
+			Name:   "a",
+			Status: model.Healthy,
+		},
+		{
+			Name:   "b",
+			Status: model.Unhealthy,
+		},
+	}, m.HealthCheck())
+}
+
 func TestGetAgents(t *testing.T) {
 	cases := []struct {
 		name       string
