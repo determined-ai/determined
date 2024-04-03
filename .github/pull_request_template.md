@@ -5,8 +5,7 @@ When squash-and-merging, copy this directly into the description field. Check
 the "Example Commit Body" for conventional commit semantics.
 
 For breaking changes, please lead with "BREAKING CHANGE:". This section should
-include a bracketed reference to the Jira ticket or Github issue.
-e.g. "[DET-1234]".
+include a reference to the Jira ticket or Github issue. e.g. "[DET-1234]".
 -->
 
 ## Commentary
