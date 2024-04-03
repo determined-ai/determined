@@ -102,7 +102,7 @@ def test_post_user_api() -> None:
 @pytest.mark.e2e_cpu
 def test_create_user_sdk() -> None:
     username = api_utils.get_random_string()
-    password = api_utils.get_random_string()
+    password = api_utils.get_random_string() + "aA1"
     det_obj = client.Determined._from_session(api_utils.admin_session())
     user = det_obj.create_user(username=username, admin=False, password=password)
     assert user.user_id is not None and user.username == username

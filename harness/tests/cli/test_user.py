@@ -20,7 +20,9 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
             json={"user": userobj.to_json()},
         )
 
-        patchobj = bindings.v1PatchUser(isHashed=True, password=api.salt_and_hash("newpass"))
+        patchobj = bindings.v1PatchUser(
+            isHashed=True, password=api.salt_and_hash("ce93AA76-2f62-4f29-ab5d-c56a3375e702")
+        )
         rsps.patch(
             "http://localhost:8080/api/v1/users/101",
             status=200,
@@ -33,11 +35,21 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
         cli.main(["user", "change-password", "tgt-user"])
 
         # cannot set password to blank
+        rsps.get(
+            "http://localhost:8080/api/v1/users/tgt-user/by-username",
+            status=200,
+            json={"user": userobj.to_json()},
+        )
         mock_getpass.side_effect = lambda *_: ""
         with pytest.raises(ValueError, match="password must have at least 8 characters"):
             cli.main(["user", "change-password", "tgt-user"])
 
         # cannot set password to something weak
+        rsps.get(
+            "http://localhost:8080/api/v1/users/tgt-user/by-username",
+            status=200,
+            json={"user": userobj.to_json()},
+        )
         mock_getpass.side_effect = lambda *_: "password"
         with pytest.raises(ValueError, match=r"password must contain .+"):
             cli.main(["user", "change-password", "tgt-user"])
