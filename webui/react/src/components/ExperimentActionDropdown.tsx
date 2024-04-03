@@ -246,8 +246,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           case Action.HyperparameterSearch:
             InterstitialModal.open();
-            onVisibleChange?.(false);
-            await fetchedExperimentItem();
+            fetchedExperimentItem();
             break;
           case Action.Copy:
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
