@@ -1259,6 +1259,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 			DisplayName: uuid.New().String(),
 			Active:      true,
 		},
+		Password: "abcDEF123!",
 	})
 	if err != nil {
 		b.Fatal(err)

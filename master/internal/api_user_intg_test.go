@@ -205,7 +205,7 @@ func TestAuthMiddleware(t *testing.T) {
 			Username: username,
 			Active:   true,
 		},
-		Password: "testpassword",
+		Password: "testPassword1",
 	})
 	require.NoError(t, err)
 
@@ -313,22 +313,32 @@ func TestLoginRemote(t *testing.T) {
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,
 			User: &userv1.PatchUser{
-				Password: ptrs.Ptr("pass"),
+				Password: ptrs.Ptr("testPassword1"),
 			},
 		})
 		require.ErrorContains(t, err, "Cannot set password")
 
-		// Changing back to unremote means we can login with blank password.
+		// Changing back to unremote means we must set a password.
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,
 			User: &userv1.PatchUser{
 				Remote: ptrs.Ptr(false),
 			},
 		})
+		require.ErrorAs(t, err, &user.PasswordComplexityErrors{})
+
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote:   ptrs.Ptr(false),
+				Password: ptrs.Ptr("testPassword1"),
+			},
+		})
 		require.NoError(t, err)
 
 		_, err = api.Login(ctx, &apiv1.LoginRequest{
 			Username: username,
+			Password: "testPassword1",
 		})
 		require.NoError(t, err)
 	})
@@ -348,14 +358,14 @@ func TestLoginRemote(t *testing.T) {
 			UserId: resp.User.Id,
 			User: &userv1.PatchUser{
 				Remote:   ptrs.Ptr(false),
-				Password: ptrs.Ptr("testpassword"),
+				Password: ptrs.Ptr("testPassword1"),
 			},
 		})
 		require.NoError(t, err)
 
 		_, err = api.Login(ctx, &apiv1.LoginRequest{
 			Username: username,
-			Password: "testpassword",
+			Password: "testPassword1",
 		})
 		require.NoError(t, err)
 	})
@@ -367,13 +377,13 @@ func TestLoginRemote(t *testing.T) {
 				Username: username,
 				Active:   true,
 			},
-			Password: "testpassword",
+			Password: "testPassword1",
 		})
 		require.NoError(t, err)
 
 		_, err = api.Login(ctx, &apiv1.LoginRequest{
 			Username: username,
-			Password: "testpassword",
+			Password: "testPassword1",
 		})
 		require.NoError(t, err)
 
@@ -399,18 +409,27 @@ func TestLoginRemote(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, model.NoPasswordLogin, expectedUser.PasswordHash)
 
-		// Changing back to unremote unsets password to blank.
+		// Changing back to unremote requires setting an non-blank password.
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,
 			User: &userv1.PatchUser{
-				Remote: ptrs.Ptr(true),
+				Remote: ptrs.Ptr(false),
+			},
+		})
+		require.ErrorAs(t, err, &user.PasswordComplexityErrors{})
+
+		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+			UserId: resp.User.Id,
+			User: &userv1.PatchUser{
+				Remote:   ptrs.Ptr(false),
+				Password: ptrs.Ptr("testPassword2"),
 			},
 		})
 		require.NoError(t, err)
 
 		_, err = api.Login(ctx, &apiv1.LoginRequest{
 			Username: username,
-			Password: "testpassword",
+			Password: "testPassword1",
 		})
 		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
 
@@ -418,6 +437,12 @@ func TestLoginRemote(t *testing.T) {
 			Username: username,
 		})
 		require.ErrorIs(t, err, grpcutil.ErrInvalidCredentials)
+
+		_, err = api.Login(ctx, &apiv1.LoginRequest{
+			Username: username,
+			Password: "testPassword2",
+		})
+		require.NoError(t, err)
 	})
 }
 
@@ -521,7 +546,8 @@ func TestPatchUser(t *testing.T) {
 
 	username := uuid.New().String()
 	displayName := uuid.New().String()
-	password := uuid.New().String()
+	// a v4 uuid is probably a fantastic password, but it doesn't have an upper-case letter in it...
+	password := uuid.New().String() + "aA1"
 	resp, err := api.PatchUser(ctx, &apiv1.PatchUserRequest{
 		UserId: int32(userID),
 		User: &userv1.PatchUser{
@@ -558,7 +584,7 @@ func TestPatchUser(t *testing.T) {
 	require.NoError(t, err)
 
 	// Null out display name and set a client side hashed password.
-	password = uuid.New().String()
+	password = uuid.New().String() + "aA1"
 	displayName = ""
 	resp, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 		UserId: int32(userID),
