@@ -46,7 +46,8 @@ def create_test_user(
     """
     session = admin_session()
     user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
-    password = get_random_string()
+    # passwords require an upper-case and a lower-case character, uuids tend to be all one case
+    password = get_random_string() + "aA1"
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
     sess = make_session(user.username, password)
     return sess, password
