@@ -19,27 +19,30 @@ import pathlib
 
 from ruamel import yaml
 
+
 def run(old_tag: str, new_tag: str, yaml_path: str, release: bool) -> None:
     with open(yaml_path) as f:
         conf = yaml.YAML(typ="safe", pure=True).load(f)
 
     for image_type in conf:
-        if old_tag not in conf[image_type]['new']:
+        if old_tag not in conf[image_type]["new"]:
             continue
         replace_image(conf[image_type], new_tag, release)
 
     with open(yaml_path, "w") as f:
         yaml.YAML(typ="safe", pure=True).dump(conf, f)
 
-def replace_image(subconf: str, new_tag: str, release: bool) -> None:
+
+def replace_image(subconf: dict, new_tag: str, release: bool) -> None:
     old_tag = subconf["new"].split(":")[-1]
     subconf["old"] = subconf["new"]
     if release:
-        subconf["new"] = subconf["new"].replace("-dev:"+old_tag, ":"+new_tag)
+        subconf["new"] = subconf["new"].replace("-dev:" + old_tag, ":" + new_tag)
     else:
         subconf["new"] = subconf["new"].replace(old_tag, new_tag)
 
-if __name__== "__main__":
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("yaml_path", type=pathlib.Path, help="path/to/bumpenvs.yaml")
     parser.add_argument("old_tag", type=str, help="image tag to replace")
@@ -48,4 +51,3 @@ if __name__== "__main__":
     args = parser.parse_args()
 
     run(args.old_tag, args.new_tag, args.yaml_path, args.release)
-
