@@ -148,7 +148,7 @@ func ProjectCollectStartupMsgs(
 			spec,
 		)
 	}
-	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "seq")
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "p")
 	if err != nil {
 		return nil, err
 	}
