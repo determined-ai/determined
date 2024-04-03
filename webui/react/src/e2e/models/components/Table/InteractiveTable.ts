@@ -90,7 +90,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     const rows = await pwLocator.all();
     return Promise.all(rows.map(async (row) => {
       return (await row.getAttribute(keyAttribute)) ||
-        Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`);
+        Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`));
     }));
   }
 
@@ -114,7 +114,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return (await Promise.all(rowKeys.map(async (key) => {
       const row = this.getRowByDataKey(key);
       return (await condition(row)) && row;
-    })).filter((c) c is RowType => !!c);
+    }))).filter((c): c is Awaited<RowType> => !!c);
   }
 }
 
