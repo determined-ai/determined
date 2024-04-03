@@ -8612,8 +8612,8 @@ class v1MoveProjectRequest(Printable):
 
 class v1MoveRunsRequest(Printable):
     """Request to move the run to a different project."""
-    cloneMultitrial: "typing.Optional[bool]" = None
     filter: "typing.Optional[str]" = None
+    skipMultitrial: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -8621,16 +8621,16 @@ class v1MoveRunsRequest(Printable):
         destinationProjectId: int,
         runIds: "typing.Sequence[int]",
         sourceProjectId: int,
-        cloneMultitrial: "typing.Union[bool, None, Unset]" = _unset,
         filter: "typing.Union[str, None, Unset]" = _unset,
+        skipMultitrial: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
         self.runIds = runIds
         self.sourceProjectId = sourceProjectId
-        if not isinstance(cloneMultitrial, Unset):
-            self.cloneMultitrial = cloneMultitrial
         if not isinstance(filter, Unset):
             self.filter = filter
+        if not isinstance(skipMultitrial, Unset):
+            self.skipMultitrial = skipMultitrial
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1MoveRunsRequest":
@@ -8639,10 +8639,10 @@ class v1MoveRunsRequest(Printable):
             "runIds": obj["runIds"],
             "sourceProjectId": obj["sourceProjectId"],
         }
-        if "cloneMultitrial" in obj:
-            kwargs["cloneMultitrial"] = obj["cloneMultitrial"]
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
+        if "skipMultitrial" in obj:
+            kwargs["skipMultitrial"] = obj["skipMultitrial"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -8651,10 +8651,10 @@ class v1MoveRunsRequest(Printable):
             "runIds": self.runIds,
             "sourceProjectId": self.sourceProjectId,
         }
-        if not omit_unset or "cloneMultitrial" in vars(self):
-            out["cloneMultitrial"] = self.cloneMultitrial
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
+        if not omit_unset or "skipMultitrial" in vars(self):
+            out["skipMultitrial"] = self.skipMultitrial
         return out
 
 class v1MoveRunsResponse(Printable):

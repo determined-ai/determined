@@ -79,8 +79,8 @@ message MoveRunsRequest {
   int32 destination_project_id = 3;
   // Filter expression
   optional string filter = 4;
-  // If true, clone multi-trial experiments for move.
-  bool clone_multitrial = 5;
+  // If true, skip multi-trial experiments for move.
+  bool skip_multitrial = 5;
 }
 
 // Response to MoveRunsRequest.

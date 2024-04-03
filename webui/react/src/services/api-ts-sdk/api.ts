@@ -6415,11 +6415,11 @@ export interface V1MoveRunsRequest {
      */
     filter?: string;
     /**
-     * If true, clone multi-trial experiments for move.
+     * If true, skip multi-trial experiments for move.
      * @type {boolean}
      * @memberof V1MoveRunsRequest
      */
-    cloneMultitrial?: boolean;
+    skipMultitrial?: boolean;
 }
 /**
  * Response to MoveRunsRequest.
