@@ -67,6 +67,7 @@ class Context:
         self.preempt.start()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.start()
+        self.train.start()
         if self._heartbeat is not None:
             self._heartbeat.start()
         if self._log_shipper is not None:
@@ -87,6 +88,7 @@ class Context:
         self.profiler._close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
+        self.train.close()
         if self._heartbeat is not None:
             self._heartbeat.close(exc_type, exc_val, exc_tb)
         if self._log_shipper is not None:
