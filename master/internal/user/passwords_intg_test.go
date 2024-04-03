@@ -26,7 +26,7 @@ func TestUpdateDefaultUserPasswords(t *testing.T) {
 func TestUpdateUserPasswordComplexityCheck(t *testing.T) {
 	u := db.RequireMockUser(t, db.SingleDB())
 	err := SetUserPassword(context.Background(), u.Username, "abc")
-	require.ErrorIs(t, err, ErrPasswordLowComplexity)
+	require.ErrorAs(t, err, &PasswordComplexityErrors{})
 
 	// empty passwords are grandfathered in, for now
 	nu, err := ByUsername(context.Background(), u.Username)

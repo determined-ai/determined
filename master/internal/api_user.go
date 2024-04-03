@@ -390,7 +390,7 @@ func (a *apiServer) SetUserPassword(
 	}
 
 	if err := user.CheckPasswordComplexity(req.Password); err != nil {
-		if errors.Is(err, user.ErrPasswordLowComplexity) {
+		if errors.As(err, &user.PasswordComplexityErrors{}) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		return nil, errors.Wrap(err, "error validating password")
@@ -541,7 +541,7 @@ func (a *apiServer) PatchUser(
 		hashedPassword := *req.User.Password
 		if !req.User.IsHashed {
 			if err := user.CheckPasswordComplexity(hashedPassword); err != nil {
-				if errors.Is(err, user.ErrPasswordLowComplexity) {
+				if errors.As(err, &user.PasswordComplexityErrors{}) {
 					return nil, status.Error(codes.InvalidArgument, err.Error())
 				}
 				return nil, errors.Wrap(err, "error validating password")

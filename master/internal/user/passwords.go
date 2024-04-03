@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -56,27 +54,61 @@ func SetUserPassword(ctx context.Context, username, password string) error {
 	return nil
 }
 
-// ErrPasswordLowComplexity indicates that a password can't be set
+// PasswordComplexityErrors indicates that a password can't be set
 // because it fails to meet current complexity requirements.
-var ErrPasswordLowComplexity = errors.New(
-	"passwords must be at least 8 characters long, not be entirely upper-case " +
-		"or lower-case, and contain at least one number",
+type PasswordComplexityErrors []complexityError
+
+type complexityError int
+
+const (
+	errPasswordTooShort complexityError = iota
+	errPasswordRequiresUppercase
+	errPasswordRequiresLowercase
+	errPasswordRequiresNumber
 )
+
+// Attempts to match the error strings in webui/react/src/components/UserSettings.tsx.
+var complexityErrorString = map[complexityError]string{
+	errPasswordTooShort:          "password must have at least 8 characters",
+	errPasswordRequiresUppercase: "password must include an uppercase letter",
+	errPasswordRequiresLowercase: "password must include a lowercase letter",
+	errPasswordRequiresNumber:    "password must include a number",
+}
+
+// Error satisfies the error interface builtin.
+func (e PasswordComplexityErrors) Error() string {
+	switch len(e) {
+	case 0:
+		return "you found a bug! Please file a github issue citing error ba30317b-f59a-4c2b-9832-e7e36900bbda"
+	case 1:
+		return complexityErrorString[e[0]]
+	default:
+		errs := ""
+		for _, err := range e {
+			errs += fmt.Sprintf("%s\n", complexityErrorString[err])
+		}
+		return errs
+	}
+}
 
 // CheckPasswordComplexity returns an error if the provided password does not satisfy
 // current complexity requirements.
 func CheckPasswordComplexity(password string) error {
+	var err PasswordComplexityErrors
 	if len(password) < 8 {
-		return ErrPasswordLowComplexity
+		err = append(err, errPasswordTooShort)
 	}
 	if !strings.ContainsFunc(password, unicode.IsUpper) {
-		return ErrPasswordLowComplexity
+		err = append(err, errPasswordRequiresUppercase)
 	}
 	if !strings.ContainsFunc(password, unicode.IsLower) {
-		return ErrPasswordLowComplexity
+		err = append(err, errPasswordRequiresLowercase)
 	}
 	if !strings.ContainsFunc(password, unicode.IsNumber) {
-		return ErrPasswordLowComplexity
+		err = append(err, errPasswordRequiresNumber)
+	}
+	if len(err) != 0 {
+		return err
 	}
 	return nil
 }

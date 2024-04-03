@@ -369,7 +369,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		}
 
 		if err := CheckPasswordComplexity(*params.Password); err != nil {
-			if errors.Is(err, ErrPasswordLowComplexity) {
+			if errors.As(err, &PasswordComplexityErrors{}) {
 				return nil, status.Error(codes.InvalidArgument, err.Error())
 			}
 			return nil, errors.Wrap(err, "error validating password")
