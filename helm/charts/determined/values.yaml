@@ -88,7 +88,7 @@ useNodePortForMaster: false
 tlsSecret:
 
 
-# TLS Security setting (TODO populate this comment)
+# TLS security configs for determined master.
 security:
   tls:
     cert:
@@ -241,7 +241,8 @@ checkpointStorage:
 maxSlotsPerPod:
 
 
-# TODO( POPULATE THIS COMMENT)
+# Flag for determining whether or not to create the cluster-scoped objects, when deploying multiple
+# namespaces within the same cluster, should be set to false.
 createNonNamespacedObjects:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.

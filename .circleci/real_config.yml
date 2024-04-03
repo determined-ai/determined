@@ -946,9 +946,9 @@ commands:
         default: ""
       det-version:
         type: string
-      zone:
+      region:
         type: string
-        default: ${GKE_ZONE}
+        default: ${GKE_REGION}
       gcloud-service-key:
         default: GCLOUD_SERVICE_KEY
         type: env_var_name
@@ -1021,8 +1021,6 @@ commands:
             done
             formattedRange=${formattedRange::-1}
             formattedRange+="}'"
-            echo "These are the formatted ranges:"
-            echo ${formattedRange}
             echo ${formattedRange} >> "$BASH_ENV"
           name: Setup Firewall Config
       - run:
@@ -1041,7 +1039,7 @@ commands:
             echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
           name: Install GKE auth plugin
       - run:
-          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --zone <<parameters.zone>>
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
           name: Get Kubeconfig
       - run: 
           command: kubectl create namespace ${GENERATED_NAMESPACE}
@@ -1057,7 +1055,7 @@ commands:
           version: v3.12.3
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 15apim0s --debug
           name: Helm Install
       - run:
           command: |
@@ -1467,7 +1465,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: false
           executor: <<pipeline.parameters.docker-image>>
       - reinstall-go
       - setup_remote_docker:
@@ -2770,7 +2767,7 @@ jobs:
           at: .
       - setup-python-venv:
           install-python: false
-          determined: true
+          determined: true 
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run:
@@ -2781,7 +2778,7 @@ jobs:
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             uuid=$(cat /proc/sys/kernel/random/uuid)
             uuid=${uuid:0:8}
-            echo "GENERATED_NAMESPACE=\"test-<<parameters.test-type>>-${TIMESTAMP}-${uuid}-${CIRCLE_NODE_INDEX}\"" >> $BASH_ENV
+            echo "GENERATED_NAMESPACE=test-<<parameters.test-type>>-${TIMESTAMP}-${uuid}-${CIRCLE_NODE_INDEX}" >> $BASH_ENV
       - generate-tls-cert
       - setup-shared-cluster:
           det-version: ${CIRCLE_SHA1}-shared-cluster
@@ -3466,7 +3463,7 @@ workflows:
             - gcp-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-dev-small
-          parallelism: 4
+          parallelism: 3
           mark: "e2e_gpu and not gpu_required"
           test-type: cpu
 
