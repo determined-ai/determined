@@ -232,6 +232,30 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
 
 The resource manager used to acquire resources. Defaults to ``agent``.
 
+For Kubernetes installations, if you define additional resource managers, the resource manager
+specified under the primary resource_manager key here is considered the default.
+
+``name``
+========
+
+Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
+Kubernetes installations with additional resource managers, ensure unique names for all resource
+managers in the cluster.
+
+``metadata``
+============
+
+Optional. Stores additional information about the resource manager in a yaml map, such as the zone,
+region, or location.
+
+For example:
+
+.. code:: yaml
+
+   metadata:
+      region: us-west1
+      zone: us-west1-a
+
 ``type: agent``
 ===============
 
@@ -689,7 +713,7 @@ documentation on :ref:`resource-pools` for more information. Defaults to a resou
 ``pool_name``
 =============
 
-The name of the resource pool.
+Specifies the name of the resource pool, which must be unique among all defined resource pools.
 
 ``description``
 ===============
@@ -1162,6 +1186,55 @@ those partitions/queues.
    In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be executed in
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
+
+**********************************
+ ``additional_resource_managers``
+**********************************
+
+Cluster administrators for Kubernetes installations can define additional resource managers for
+connecting the Determined master service with remote clusters. Support for notebooks and other
+workloads that require proxying on remote clusters is under development.
+
+To define a single resource manager or designate the default resource manager, do not define it
+under ``additional_resource_manager``; instead, use the primary ``resource_manager`` key.
+
+Resource manager names must be unique among all defined resource managers.
+
+Any additional resource managers must have at least one resource pool assigned to them. These
+resource pool names must be defined and must be distinct among all resource pools across all
+resource managers. You define resource pools for any additional resource managers within their
+respective elements in the resource manager list (not at the root level).
+
+For example, to define three resource managers (one default, two additional):
+
+.. code:: yaml
+
+   resource_manager: # the default resource manager
+   resource_pool: # resource pools for the resource manager defined above.
+      pool_name: "foo"
+
+   additional_resource_managers:
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "bar" # required
+      resource_pools:
+         pool_name: "abc"
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "baz" # required
+      resource_pools:
+         pool_name: "def"
+
+``resource_manager``
+====================
+
+Optional. Defines 'n'-many (multiple) resource managers under the ``additional_resource_manager``
+key, following the existing resource manager configuration pattern. Each additional resource manager
+requires a name and a nested ``resource_pools`` section.
 
 ************************
  ``checkpoint_storage``
