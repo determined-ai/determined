@@ -49,6 +49,8 @@ resources. Compatible with on-prem clusters and cloud auto-scaling (AWS and GCP)
 
 -  :ref:`topic_guide_gcp`
 
+-  :ref:`topic_guide_mldes`
+
 ************
  Kubernetes
 ************
@@ -80,6 +82,7 @@ Enable Determined to submit jobs to a Slurm cluster.
 
    Quick Installation <../get-started/basic>
    Advanced Installation <checklists/_index>
+   Deploy using HPE MLDES <mldes/_index>
    Deploy on Prem <on-prem/_index>
    Deploy on AWS <aws/_index>
    Deploy on GCP <gcp/_index>
