@@ -57,15 +57,12 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   updateSettings,
 }: Props) => {
   const models = useFetchModels();
-  const [checkpointInfo, setCheckpointInfo] = useState<{
-    checkpoint?: CheckpointWorkloadExtended;
-    title: string;
-  }>({ title: '' });
+  const [checkpoint, setCheckpoint] = useState<CheckpointWorkloadExtended>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
-    checkpoint: checkpointInfo?.checkpoint,
+    checkpoint,
     config: experiment.config,
     models,
-    title: checkpointInfo.title,
+    title: `Checkpoint for Batch ${checkpoint?.totalBatches}`,
   });
 
   const hasFiltersApplied = useMemo(() => {
@@ -77,13 +74,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   const handleOpenCheckpoint = useCallback(
     (step: Step) => {
       if (trial && step.checkpoint && hasCheckpointStep(step)) {
-        setCheckpointInfo({
-          checkpoint: {
-            ...step.checkpoint,
-            experimentId: trial.experimentId,
-            trialId: trial.id,
-          },
-          title: `Checkpoint for Batch ${step.checkpoint.totalBatches}`,
+        setCheckpoint({
+          ...step.checkpoint,
+          experimentId: trial.experimentId,
+          trialId: trial.id,
         });
         openCheckpoint();
       }

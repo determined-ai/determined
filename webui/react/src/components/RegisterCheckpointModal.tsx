@@ -59,7 +59,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
     selectedModelName: modelName,
   });
   const { selectedModelName } = modalState;
-  const checkpointsArr = ensureArray(checkpoints);
+  const checkpointsArr = useMemo(() => ensureArray(checkpoints), [checkpoints]);
 
   const selectedModelNumVersions = useMemo(() => {
     return (
@@ -198,12 +198,12 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
             <div>
               <h2>Version Name</h2>
               <Input
-                disabled={checkpointsArr?.length != null && checkpointsArr.length > 1}
+                disabled={checkpointsArr.length > 1}
                 placeholder={`Version ${selectedModelNumVersions + 1}`}
                 value={versionName}
                 onChange={updateVersionName}
               />
-              {checkpointsArr?.length != null && checkpointsArr.length > 1 && (
+              {checkpointsArr.length > 1 && (
                 <p>Cannot specify version name when batch registering.</p>
               )}
             </div>

@@ -66,15 +66,12 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
-  const [checkpointInfo, setCheckpointInfo] = useState<{
-    checkpoint?: CoreApiGenericCheckpoint;
-    title: string;
-  }>({ title: '' });
+  const [checkpoint, setCheckpoint] = useState<CoreApiGenericCheckpoint>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
-    checkpoint: checkpointInfo?.checkpoint,
+    checkpoint: checkpoint,
     config: experiment.config,
     models,
-    title: checkpointInfo.title,
+    title: `Checkpoint ${checkpoint?.uuid}`,
   });
 
   const modelCreateModal = useModal(ModelCreateModal);
@@ -197,10 +194,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const handleOpenCheckpoint = useCallback(
     (checkpoint: CoreApiGenericCheckpoint) => {
-      setCheckpointInfo({
-        checkpoint,
-        title: `Checkpoint ${checkpoint.uuid}`,
-      });
+      setCheckpoint(checkpoint);
       openCheckpoint();
     },
     [openCheckpoint],

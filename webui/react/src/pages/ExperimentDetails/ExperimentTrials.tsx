@@ -71,15 +71,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
   const models = useFetchModels();
-  const [checkpointInfo, setCheckpointInfo] = useState<{
-    checkpoint?: CheckpointWorkloadExtended;
-    title: string;
-  }>({ title: '' });
+  const [checkpoint, setCheckpoint] = useState<CheckpointWorkloadExtended>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
-    checkpoint: checkpointInfo?.checkpoint,
+    checkpoint: checkpoint,
     config: experiment.config,
     models,
-    title: checkpointInfo.title,
+    title: `Best Checkpoint for Trial ${checkpoint?.trialId}`,
   });
 
   const workspace = useMemo(() => ({ id: experiment.workspaceId }), [experiment.workspaceId]);
@@ -164,13 +161,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const handleOpenCheckpoint = useCallback(
     (trial: TrialItem) => {
       if (!trial.bestAvailableCheckpoint) return;
-      setCheckpointInfo({
-        checkpoint: {
-          ...trial.bestAvailableCheckpoint,
-          experimentId: experiment.id,
-          trialId: trial.id,
-        },
-        title: `Best Checkpoint for Trial ${trial.id}`,
+      setCheckpoint({
+        ...trial.bestAvailableCheckpoint,
+        experimentId: experiment.id,
+        trialId: trial.id,
       });
       openCheckpoint();
     },

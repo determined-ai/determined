@@ -8,28 +8,32 @@ import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 
-export const useFetchModels = (): Loadable<ModelItem[]> => {
-  return useAsync(async (canceler) => {
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      return response.models;
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-      return NotLoaded;
-    }
-  }, []);
+export const useFetchModels = (modelsIn?: Loadable<ModelItem[]>): Loadable<ModelItem[]> => {
+  return useAsync(
+    async (canceler) => {
+      if (modelsIn) return modelsIn;
+      try {
+        const response = await getModels(
+          {
+            archived: false,
+            orderBy: 'ORDER_BY_DESC',
+            sortBy: validateDetApiEnum(
+              V1GetModelsRequestSortBy,
+              V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+            ),
+          },
+          { signal: canceler.signal },
+        );
+        return response.models;
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Unable to fetch models.',
+          silent: true,
+          type: ErrorType.Api,
+        });
+        return NotLoaded;
+      }
+    },
+    [modelsIn],
+  );
 };
