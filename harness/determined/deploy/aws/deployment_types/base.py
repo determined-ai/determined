@@ -1,4 +1,5 @@
 import abc
+import json
 from typing import Any, Dict, Iterable, List, Optional
 
 import pkg_resources
@@ -11,6 +12,7 @@ from determined.deploy.aws import aws, constants
 
 COMMON_TEMPLATE_PARAMETER_KEYS = [
     constants.cloudformation.ENABLE_CORS,
+    constants.cloudformation.EXTRA_TAGS,
     constants.cloudformation.MASTER_TLS_CERT,
     constants.cloudformation.MASTER_TLS_KEY,
     constants.cloudformation.MASTER_CERT_NAME,
@@ -90,11 +92,20 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         healthcheck.wait_for_master(master_url, timeout=timeout, cert=cert)
 
     def consolidate_parameters(self) -> List[Dict[str, Any]]:
-        return [
-            {"ParameterKey": k, "ParameterValue": str(self.parameters[k])}
-            for k in self.parameters.keys()
-            if self.parameters[k] and k in self.template_parameter_keys
-        ]
+        consolidated_params = []
+        for k in self.parameters.keys():
+            if self.parameters[k] and k in self.template_parameter_keys:
+                if k == constants.cloudformation.EXTRA_TAGS:
+                    tag_list = [{"key": tag[0], "value": tag[1]} for tag in self.parameters[k]]
+                    consolidated_params.append(
+                        {"ParameterKey": k, "ParameterValue": json.dumps(tag_list)}
+                    )
+                else:
+                    consolidated_params.append(
+                        {"ParameterKey": k, "ParameterValue": str(self.parameters[k])}
+                    )
+
+        return consolidated_params
 
     def before_deploy_print(self) -> None:
         cluster_id = self.parameters[constants.cloudformation.CLUSTER_ID]
