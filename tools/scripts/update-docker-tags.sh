@@ -2,7 +2,7 @@
 # Retags all docker images from latest Environments build
 # bash tools/scripts/update-docker-tags.sh OLD_VERSION NEW_VERSION [--release]
 
-if [ "$#" -gt 2 ] || [ "$#" -eq 3 ] && [ "$3" != "--release" ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 2 ] || [ "$#" -eq 3 ] && [ "$3" != "--release" ]; then
     echo "usage: $0 OLD_VERSION NEW_VERSION [--release]" >&2
     exit 1
 fi
@@ -17,7 +17,7 @@ fi
 export OLD_TAG="$1"
 export NEW_TAG="$2"
 
-# get list of tags to replace via OLD_TAG in bumpenvs.yaml
+# get list of images to replace via OLD_TAG in bumpenvs.yaml
 export IMAGES=$(grep -oP "(?<=new: ).*(?=,)" tools/scripts/bumpenvs.yaml | grep $OLD_TAG)
 
 # update tags on dockerhub
@@ -49,4 +49,4 @@ if [[ -z "$(git status --porcelain)" ]]; then
     exit 1
 fi
 git add --update
-git commit -m "chore: bump current environment image versions to $NEW_VERSION"
+git commit -m "chore: bump current environment image versions to $NEW_TAG"
