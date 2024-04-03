@@ -1,35 +1,29 @@
-## Description
+## Commit Body
 
 <!---
-Lead with the intended commit body in this description field. For breaking
-changes, please include "BREAKING CHANGE:" at the beginning of your commit
-body.  At a minimum, this section should include a bracketed reference to the
-Jira ticket, e.g. "[DET-1234]". When squash-and-merging, copy this directly
-into the description field.
+When squash-and-merging, copy this directly into the description field. Check
+the "Example Commit Body" for conventional commit semantics.
+
+For breaking changes, please lead with "BREAKING CHANGE:". This section should
+include a bracketed reference to the Jira ticket or Github issue.
+e.g. "[DET-1234]".
 -->
 
-
-
-## Test Plan
-
-<!---
-Describe the situations in which you've tested your change, and/or a screenshot
-as appropriate.  Reviewers may ask questions about this test plan to ensure
-adequate manual coverage of changes.
--->
-
-
-
-## Commentary (optional)
+## Commentary
 
 <!---
 Use this section of your description to add context to the PR. Could be for
 particularly tricky bits of code that could use extra scrutiny, historical
 context useful for reviewers, etc.
-You may intentionally leave this section blank and remove the title.
 --->
 
+## Test Plan
 
+<!---
+Describe the scenarios in which you've tested your change, with screenshots as
+appropriate. Reviewers may ask questions about this test plan to ensure adequate
+coverage of changes.
+-->
 
 ## Checklist
 
@@ -39,22 +33,8 @@ You may intentionally leave this section blank and remove the title.
   See [Release Note](https://github.com/determined-ai/determined/blob/master/docs/release-notes/README.md) for details.
 - [ ] Licenses should be included for new code which was copied and/or modified from any external code.
 
-## Ticket
 <!---
-Retain the relevant line and replace 000 with ticket number.
-
-DET-000
-MLG-000
-WEB-000
-DESIGN-000
-No Ticket
---->
-
-
-<!---
-## Title
-
-Example title: "docs: tweak recommended "pip install" usage".
+Example Commit Body: "docs: tweak recommended "pip install" usage".
 
 Specifically, this title should contain a type and a description
 of the change being made:
@@ -83,5 +63,4 @@ The first line should also:
 - contain a description that is at most 72 characters long
 - not end with sentence-ending punctuation
 - start (after the type) with a lowercase imperative ("add", "fix")
-
 -->
