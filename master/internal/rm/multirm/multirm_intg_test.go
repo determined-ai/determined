@@ -370,14 +370,18 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		err         error
 		expectedLen int
 	}{
-		// Given an empty list of RM names, pull the JobQueueStats from ALL RMs.
+		// TODO RM-136: revist this.
+		// Per the mocks set-up, no matter the pools in the request, return the max # of responses.
 		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil, 2},
-		// Given a blank resource pool name, pull the JobQueueStats only from the default RM.
-		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil, 1},
-		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil, 1},
-		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil, 1},
-		// Given an RP that's not defined in any RMs, operate the same as nil or empty case -- return ALL JobQueueStats.
+		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil, 2},
+		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil, 2},
+		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil, 2},
 		{"undefined RP", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus"}}, nil, 2},
+		{
+			"undefined RP + defined RP",
+			&apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus", defaultRMName}},
+			nil, 2,
+		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
