@@ -717,6 +717,12 @@ func (a *apiServer) PutTrialRetainLogs(
 								Exec(ctx); err != nil {
 			return fmt.Errorf("updating log retention days for tasks: %w", err)
 		}
+		if _, err := tx.NewUpdate().Table("runs").
+			Set("log_retention_days = ?", req.NumDays).
+			Where("id = ?", req.TrialId).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("updating log retention days for trial: %w", err)
+		}
 		return nil
 	})
 	if err != nil {

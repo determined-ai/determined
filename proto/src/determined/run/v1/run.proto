@@ -109,4 +109,6 @@ message FlatRun {
   bool parent_archived = 18;
   // Data related the the experiment associated with this run.
   optional FlatRunExperiment experiment = 19;
+  // Number of days to retain logs for.
+  optional int32 log_retention_days = 20;
 }

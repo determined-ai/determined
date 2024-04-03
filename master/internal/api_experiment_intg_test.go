@@ -516,14 +516,25 @@ func TestPutExperimentRetainLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	var logRetentionDays []int
+	var taskLogRetentionDays []int
 	err = db.Bun().NewSelect().Table("tasks").
 		Column("log_retention_days").
 		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &logRetentionDays)
+		Scan(ctx, &taskLogRetentionDays)
 	require.NoError(t, err)
 
-	for _, v := range logRetentionDays {
+	for _, v := range taskLogRetentionDays {
+		require.Equal(t, v, numDays)
+	}
+
+	var trialLogRetentionDays []int
+	err = db.Bun().NewSelect().Table("runs").
+		Column("log_retention_days").
+		Where("id IN (?)", bun.In(trialIDs)).
+		Scan(ctx, &trialLogRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range trialLogRetentionDays {
 		require.Equal(t, v, numDays)
 	}
 }
@@ -561,14 +572,25 @@ func TestPutExperimentsRetainLogs(t *testing.T) {
 	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
 	require.NoError(t, err)
 
-	var logRetentionDays []int
+	var taskLogRetentionDays []int
 	err = db.Bun().NewSelect().Table("tasks").
 		Column("log_retention_days").
 		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &logRetentionDays)
+		Scan(ctx, &taskLogRetentionDays)
 	require.NoError(t, err)
 
-	for _, v := range logRetentionDays {
+	for _, v := range taskLogRetentionDays {
+		require.Equal(t, v, numDays)
+	}
+
+	var trialLogRetentionDays []int
+	err = db.Bun().NewSelect().Table("runs").
+		Column("log_retention_days").
+		Where("id IN (?)", bun.In(trialIDs)).
+		Scan(ctx, &trialLogRetentionDays)
+	require.NoError(t, err)
+
+	for _, v := range trialLogRetentionDays {
 		require.Equal(t, v, numDays)
 	}
 }
