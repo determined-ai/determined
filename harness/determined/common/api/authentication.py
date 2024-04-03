@@ -23,7 +23,7 @@ def salt_and_hash(password: str) -> str:
         return password
 
 
-def check_password_complexity(password: str):
+def check_password_complexity(password: str) -> None:
     """
     raises a ValueError if the password does not meet complexity requirements
     """
