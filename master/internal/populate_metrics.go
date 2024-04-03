@@ -251,7 +251,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 		JobID:            &jID,
 		TaskType:         model.TaskTypeTrial,
 		StartTime:        time.Now().UTC().Truncate(time.Millisecond),
-		LogRetentionDays: masterConfig.LoggingRetention.Days,
+		LogRetentionDays: masterConfig.RetentionPolicy.LogRetentionDays,
 	}
 	if err = db.AddTask(ctx, tIn); err != nil {
 		return err
@@ -261,7 +261,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 		ExperimentID:     exp.ID,
 		State:            model.CompletedState,
 		StartTime:        time.Now(),
-		LogRetentionDays: masterConfig.LoggingRetention.Days,
+		LogRetentionDays: masterConfig.RetentionPolicy.LogRetentionDays,
 	}
 	if err = db.AddTrial(ctx, &tr, tID); err != nil {
 		return err

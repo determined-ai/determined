@@ -101,7 +101,7 @@ brews:
       log_path var/"log/determined/master-stdout.log"
 
 nfpms:
-  - maintainer: "Determined AI <hello@determined.ai>"
+  - maintainer: "Determined AI <ai-open-source@hpe.com>"
     formats:
       - deb
       - rpm

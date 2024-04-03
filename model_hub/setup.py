@@ -4,7 +4,7 @@ setuptools.setup(
     name="model-hub",
     version="0.30.0-dev0",
     author="Determined AI",
-    author_email="hello@determined.ai",
+    author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
     description="Model Hub for Determined Deep Learning Training Platform",
     long_description="See https://docs.determined.ai/ for more information.",

@@ -1,20 +1,11 @@
 import Card from 'hew/Card';
-import { useModal } from 'hew/Modal';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { isEqual } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import CheckpointModalComponent from 'components/CheckpointModal';
-import ModelCreateModal from 'components/ModelCreateModal';
 import OverviewStats from 'components/OverviewStats';
-import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
-import { getModels } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import { CheckpointWorkloadExtended, ExperimentBase, ModelItem, TrialDetails } from 'types';
-import handleError, { ErrorType } from 'utils/error';
-import { validateDetApiEnum } from 'utils/service';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 
 interface Props {
@@ -35,64 +26,17 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     };
   }, [trial]);
 
+  const { openCheckpoint, checkpointModalComponents } = useCheckpointFlow({
+    checkpoint: bestCheckpoint,
+    config: experiment.config,
+    title: `Best checkpoint for Trial ${trial?.id}`,
+  });
+
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial?.totalCheckpointSize;
     if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
   }, [trial?.totalCheckpointSize]);
-
-  const [canceler] = useState(new AbortController());
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
-  const [selectedModelName, setSelectedModelName] = useState<string>();
-
-  const modelCreateModal = useModal(ModelCreateModal);
-  const checkpointModal = useModal(CheckpointModalComponent);
-  const registerModal = useModal(RegisterCheckpointModal);
-
-  const handleOnCloseCreateModel = useCallback(
-    (modelName?: string) => {
-      if (modelName) {
-        setSelectedModelName(modelName);
-        registerModal.open();
-      }
-    },
-    [setSelectedModelName, registerModal],
-  );
-
-  const fetchModels = useCallback(async () => {
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      setModels((prev) => {
-        const loadedModels = Loaded(response.models);
-        if (isEqual(prev, loadedModels)) return prev;
-        return loadedModels;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal]);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
-
-  const handleModalCheckpointClick = useCallback(() => {
-    checkpointModal.open();
-  }, [checkpointModal]);
 
   return (
     <Section>
@@ -110,22 +54,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         )}
         {bestCheckpoint && (
           <>
-            <OverviewStats title="Best Checkpoint" onClick={handleModalCheckpointClick}>
+            <OverviewStats title="Best Checkpoint" onClick={openCheckpoint}>
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
-            <registerModal.Component
-              checkpoints={bestCheckpoint.uuid ? [bestCheckpoint.uuid] : []}
-              closeModal={() => registerModal.close('ok')}
-              modelName={selectedModelName}
-              models={models}
-              openModelModal={modelCreateModal.open}
-            />
-            <checkpointModal.Component
-              checkpoint={bestCheckpoint}
-              config={experiment.config}
-              title="Best Checkpoint"
-            />
-            <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
+            {checkpointModalComponents}
           </>
         )}
       </Card.Group>

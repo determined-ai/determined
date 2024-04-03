@@ -29,7 +29,7 @@ type ExperimentConfigV0 struct {
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
 	RawLabels                   LabelsV0                    `json:"labels"`
 	RawLogPolicies              LogPoliciesConfigV0         `json:"log_policies"`
-	RawLogRetentionDays         *int16                      `json:"log_retention_days,omitempty"`
+	RawRetentionPolicy          *RetentionPolicyConfigV0    `json:"retention_policy,omitempty"`
 	RawMaxRestarts              *int                        `json:"max_restarts"`
 	RawMinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
 	RawMinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
@@ -376,4 +376,11 @@ type SecurityConfigV0 struct {
 //go:generate ../gen.sh
 type KerberosConfigV0 struct {
 	RawConfigFile string `json:"config_file"`
+}
+
+// RetentionPolicyConfigV0 has the retention policy.
+//
+//go:generate ../gen.sh
+type RetentionPolicyConfigV0 struct {
+	RawLogRetentionDays *int16 `json:"log_retention_days,omitempty"`
 }
