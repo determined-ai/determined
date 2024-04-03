@@ -47,11 +47,11 @@ spec:
           - name: RESOURCE_POOL_EXTRA_METADATA_PATH
             value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
           - name: MESSAGE_QUEUE_HOST
-            value: genai-queue-service-{{ .Release.Name }}
+            value: genai-queue-service-{{ .Release.Name }}.{{ .Release.Namespace }}
           - name: MESSAGE_QUEUE_PORT
             value: {{ .Values.genai.messageQueuePort | quote }}
           - name: GENAI_HOST
-            value: genai-backend-service-{{ .Release.Name }}
+            value: genai-backend-service-{{ .Release.Name }}.{{ .Release.Namespace }}
           - name: GENAI_HOST_PORT
             value: {{ .Values.genai.port | quote }}
         volumeMounts:
