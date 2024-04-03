@@ -79,6 +79,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     dataIndex: 'checkpoint',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
     key: 'checkpoint',
+    shouldCellUpdate: () => false,
     title: 'Best Checkpoint',
   },
   {

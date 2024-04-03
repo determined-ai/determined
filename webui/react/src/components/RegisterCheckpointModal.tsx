@@ -14,13 +14,14 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { postModelVersion } from 'services/api';
 import { Metadata, ModelItem } from 'types';
+import { ensureArray } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { pluralizer } from 'utils/string';
 
 import css from './RegisterCheckpointModal.module.scss';
 
 interface ModalProps {
-  checkpoints: string[];
+  checkpoints: string | string[];
   closeModal: (reason: ModalCloseReason) => void;
   models: Loadable<ModelItem[]>;
   modelName?: string;
@@ -58,6 +59,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
     selectedModelName: modelName,
   });
   const { selectedModelName } = modalState;
+  const checkpointsArr = ensureArray(checkpoints);
 
   const selectedModelNumVersions = useMemo(() => {
     return (
@@ -75,12 +77,12 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
   const registerModelVersion = useCallback(
     async (state: ModalState) => {
       const { versionDescription, tags, metadata, versionName } = state;
-      if (!selectedModelName || !checkpoints) return;
+      if (!selectedModelName || !checkpointsArr) return;
       try {
-        if (checkpoints.length === 1) {
+        if (checkpointsArr.length === 1) {
           const response = await postModelVersion({
             body: {
-              checkpointUuid: checkpoints[0],
+              checkpointUuid: checkpointsArr[0],
               comment: versionDescription,
               labels: tags,
               metadata,
@@ -102,7 +104,7 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
             title: 'Version Registered',
           });
         } else {
-          for (const checkpointUuid of checkpoints) {
+          for (const checkpointUuid of checkpointsArr) {
             await postModelVersion({
               body: {
                 checkpointUuid,
@@ -115,20 +117,20 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
             });
           }
           openToast({
-            description: `${checkpoints.length} versions registered`,
+            description: `${checkpointsArr.length} versions registered`,
             link: <Link path={paths.modelDetails(selectedModelName)}>View Model</Link>,
             title: 'Versions Registered',
           });
         }
       } catch (e) {
         handleError(e, {
-          publicSubject: `Unable to register ${pluralizer(checkpoints.length, 'checkpoint')}.`,
+          publicSubject: `Unable to register ${pluralizer(checkpointsArr.length, 'checkpoint')}.`,
           silent: false,
           type: ErrorType.Api,
         });
       }
     },
-    [checkpoints, selectedModelNumVersions, selectedModelName, openToast],
+    [checkpointsArr, selectedModelNumVersions, selectedModelName, openToast],
   );
 
   const handleOk = useCallback(async () => {
@@ -196,12 +198,12 @@ const RegisterCheckpointModal: React.FC<ModalProps> = ({
             <div>
               <h2>Version Name</h2>
               <Input
-                disabled={checkpoints?.length != null && checkpoints.length > 1}
+                disabled={checkpointsArr?.length != null && checkpointsArr.length > 1}
                 placeholder={`Version ${selectedModelNumVersions + 1}`}
                 value={versionName}
                 onChange={updateVersionName}
               />
-              {checkpoints?.length != null && checkpoints.length > 1 && (
+              {checkpointsArr?.length != null && checkpointsArr.length > 1 && (
                 <p>Cannot specify version name when batch registering.</p>
               )}
             </div>

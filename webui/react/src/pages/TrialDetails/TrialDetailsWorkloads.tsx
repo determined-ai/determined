@@ -1,20 +1,23 @@
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
 import Select, { Option, SelectValue } from 'hew/Select';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
 import {
+  CheckpointWorkloadExtended,
   ExperimentBase,
   Metric,
   Step,
@@ -54,6 +57,21 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   updateSettings,
 }: Props) => {
   const models = useFetchModels();
+  const [checkpointInfo, setCheckpointInfo] = useState<{
+    checkpoint?: CheckpointWorkloadExtended;
+    title: string;
+  }>({ title: '' });
+  const {
+    checkpointModalComponent,
+    modelCreateModalComponent,
+    registerModalComponent,
+    openCheckpoint,
+  } = useCheckpointFlow({
+    checkpoint: checkpointInfo?.checkpoint,
+    config: experiment.config,
+    models,
+    title: checkpointInfo.title,
+  });
 
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !_.isEqual(metrics, defaultMetrics);
@@ -61,20 +79,31 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     return metricsApplied || checkpointValidationFilterApplied;
   }, [defaultMetrics, metrics, settings.filter]);
 
+  const handleOpenCheckpoint = useCallback(
+    (step: Step) => {
+      if (trial && step.checkpoint && hasCheckpointStep(step)) {
+        setCheckpointInfo({
+          checkpoint: {
+            ...step.checkpoint,
+            experimentId: trial.experimentId,
+            trialId: trial.id,
+          },
+          title: `Checkpoint for Batch ${step.checkpoint.totalBatches}`,
+        });
+        openCheckpoint();
+      }
+    },
+    [openCheckpoint, trial],
+  );
+
   const columns = useMemo(() => {
-    const checkpointRenderer = (_: string, record: Step) => {
+    const checkpointRenderer = (_: string, record: Step): React.ReactNode => {
       if (trial && record.checkpoint && hasCheckpointStep(record)) {
-        const checkpoint = {
-          ...record.checkpoint,
-          experimentId: trial.experimentId,
-          trialId: trial.id,
-        };
         return (
-          <CheckpointModalTrigger
-            checkpoint={checkpoint}
-            experiment={experiment}
-            models={models}
-            title={`Checkpoint for Batch ${checkpoint.totalBatches}`}
+          <Button
+            aria-label="View Checkpoint"
+            icon={<Icon name="checkpoint" showTooltip title="View Checkpoint" />}
+            onClick={() => handleOpenCheckpoint(record)}
           />
         );
       }
@@ -125,7 +154,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [experiment, metrics, trial, models, settings.sortDesc, settings.sortKey]);
+  }, [
+    experiment?.config?.searcher,
+    metrics,
+    trial,
+    handleOpenCheckpoint,
+    settings.sortDesc,
+    settings.sortKey,
+  ]);
 
   const [workloads, setWorkloads] = useState<Loadable<WorkloadGroup[]>>(NotLoaded);
   const [workloadCount, setWorkloadCount] = useState<number>(0);
@@ -251,6 +287,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         size="small"
         onChange={handleTableChange}
       />
+      {registerModalComponent}
+      {modelCreateModalComponent}
+      {checkpointModalComponent}
     </Section>
   );
 };

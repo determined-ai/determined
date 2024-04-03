@@ -1,4 +1,4 @@
-import { useModal } from 'hew/Modal';
+import { ModalCloseReason, useModal } from 'hew/Modal';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
@@ -28,16 +28,18 @@ export const useCheckpointFlow = ({
   checkpoint,
   config,
   title,
+  models: modelsIn = NotLoaded,
 }: {
   checkpoint?: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
   config: ExperimentConfig;
   title: string;
+  models?: Loadable<ModelItem[]>;
 }): Return => {
   const modelCreateModal = useModal(ModelCreateModal);
   const checkpointModal = useModal(CheckpointModalComponent);
   const registerModal = useModal(RegisterCheckpointModal);
 
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
+  const [models, setModels] = useState<Loadable<ModelItem[]>>(modelsIn);
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
 
@@ -83,18 +85,25 @@ export const useCheckpointFlow = ({
   }, [canceler.signal]);
 
   useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
+    if (models.isNotLoaded) fetchModels();
+  }, [fetchModels, models.isNotLoaded]);
 
   return {
     checkpointModalComponent: (
-      <checkpointModal.Component checkpoint={checkpoint} config={config} title={title} />
+      <checkpointModal.Component
+        checkpoint={checkpoint}
+        config={config}
+        title={title}
+        onClose={(reason?: ModalCloseReason) => {
+          if (reason === 'Ok') registerModal.open();
+        }}
+      />
     ),
     modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
     openCheckpoint,
     registerModalComponent: (
       <registerModal.Component
-        checkpoints={checkpoint ? [checkpoint.uuid ?? ''] : []}
+        checkpoints={checkpoint?.uuid ?? []}
         closeModal={registerModal.close}
         modelName={selectedModelName}
         models={models}

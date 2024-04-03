@@ -1,4 +1,6 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
 import { isEqual } from 'lodash';
@@ -6,7 +8,6 @@ import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import ModelCreateModal from 'components/ModelCreateModal';
 import RegisterCheckpointModal from 'components/RegisterCheckpointModal';
 import Section from 'components/Section';
@@ -19,6 +20,7 @@ import {
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -63,6 +65,22 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
+
+  const [checkpointInfo, setCheckpointInfo] = useState<{
+    checkpoint?: CoreApiGenericCheckpoint;
+    title: string;
+  }>({ title: '' });
+  const {
+    checkpointModalComponent,
+    modelCreateModalComponent,
+    registerModalComponent,
+    openCheckpoint,
+  } = useCheckpointFlow({
+    checkpoint: checkpointInfo?.checkpoint,
+    config: experiment.config,
+    models,
+    title: checkpointInfo.title,
+  });
 
   const modelCreateModal = useModal(ModelCreateModal);
   const registerModal = useModal(RegisterCheckpointModal);
@@ -182,6 +200,17 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       [dropDownOnTrigger],
     );
 
+  const handleOpenCheckpoint = useCallback(
+    (checkpoint: CoreApiGenericCheckpoint) => {
+      setCheckpointInfo({
+        checkpoint,
+        title: `Checkpoint ${checkpoint.uuid}`,
+      });
+      openCheckpoint();
+    },
+    [openCheckpoint],
+  );
+
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
@@ -200,11 +229,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
     const checkpointRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => {
       return (
-        <CheckpointModalTrigger
-          checkpoint={record}
-          experiment={experiment}
-          models={models}
-          title={`Checkpoint ${record.uuid}`}
+        <Button
+          aria-label="View Checkpoint"
+          icon={<Icon name="checkpoint" showTooltip title="View Checkpoint" />}
+          onClick={() => handleOpenCheckpoint(record)}
         />
       );
     };
@@ -237,8 +265,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     return newColumns;
   }, [
     dropDownOnTrigger,
-    experiment,
-    models,
+    experiment.config.searcher.metric,
+    handleOpenCheckpoint,
     settings.sortDesc,
     settings.sortKey,
     stateFilterDropdown,
@@ -388,6 +416,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         models={models}
         openModelModal={modelCreateModal.open}
       />
+      {registerModalComponent}
+      {modelCreateModalComponent}
+      {checkpointModalComponent}
     </>
   );
 };
