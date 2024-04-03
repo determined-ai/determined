@@ -18,10 +18,8 @@ import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
 
 interface Return {
-  checkpointModalComponent: React.ReactNode;
+  checkpointModalComponents: React.ReactNode;
   openCheckpoint: () => void;
-  modelCreateModalComponent: React.ReactNode;
-  registerModalComponent: React.ReactNode;
 }
 
 export const useCheckpointFlow = ({
@@ -89,26 +87,26 @@ export const useCheckpointFlow = ({
   }, [fetchModels, models.isNotLoaded]);
 
   return {
-    checkpointModalComponent: (
-      <checkpointModal.Component
-        checkpoint={checkpoint}
-        config={config}
-        title={title}
-        onClose={(reason?: ModalCloseReason) => {
-          if (reason === 'Ok') registerModal.open();
-        }}
-      />
+    checkpointModalComponents: (
+      <>
+        <checkpointModal.Component
+          checkpoint={checkpoint}
+          config={config}
+          title={title}
+          onClose={(reason?: ModalCloseReason) => {
+            if (reason === 'Ok') registerModal.open();
+          }}
+        />
+        <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
+        <registerModal.Component
+          checkpoints={checkpoint?.uuid ?? []}
+          closeModal={registerModal.close}
+          modelName={selectedModelName}
+          models={models}
+          openModelModal={modelCreateModal.open}
+        />
+      </>
     ),
-    modelCreateModalComponent: <modelCreateModal.Component onClose={handleOnCloseCreateModel} />,
     openCheckpoint,
-    registerModalComponent: (
-      <registerModal.Component
-        checkpoints={checkpoint?.uuid ?? []}
-        closeModal={registerModal.close}
-        modelName={selectedModelName}
-        models={models}
-        openModelModal={modelCreateModal.open}
-      />
-    ),
   };
 };

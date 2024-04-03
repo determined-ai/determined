@@ -75,12 +75,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     checkpoint?: CheckpointWorkloadExtended;
     title: string;
   }>({ title: '' });
-  const {
-    checkpointModalComponent,
-    modelCreateModalComponent,
-    registerModalComponent,
-    openCheckpoint,
-  } = useCheckpointFlow({
+  const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
     checkpoint: checkpointInfo?.checkpoint,
     config: experiment.config,
     models,
@@ -538,9 +533,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         closeModal={HyperparameterSearchModal.close}
         experiment={experiment}
       />
-      {registerModalComponent}
-      {modelCreateModalComponent}
-      {checkpointModalComponent}
+      {checkpointModalComponents}
     </>
   );
 };

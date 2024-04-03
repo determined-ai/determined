@@ -28,12 +28,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
   children,
   models,
 }: Props) => {
-  const {
-    checkpointModalComponent,
-    modelCreateModalComponent,
-    registerModalComponent,
-    openCheckpoint,
-  } = useCheckpointFlow({
+  const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
     checkpoint: checkpoint,
     config: experiment.config,
     models,
@@ -56,9 +51,7 @@ const CheckpointModalTrigger: React.FC<Props> = ({
           />
         )}
       </span>
-      {checkpointModalComponent}
-      {modelCreateModalComponent}
-      {registerModalComponent}
+      {checkpointModalComponents}
     </>
   );
 };

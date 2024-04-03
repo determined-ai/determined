@@ -48,12 +48,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
     [trial],
   );
 
-  const {
-    openCheckpoint,
-    modelCreateModalComponent,
-    checkpointModalComponent,
-    registerModalComponent,
-  } = useCheckpointFlow({
+  const { openCheckpoint, checkpointModalComponents } = useCheckpointFlow({
     checkpoint,
     config: experiment.config,
     title: `Best checkpoint for Trial ${trial?.id}`,
@@ -180,9 +175,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
       ) : (
         <Spinner spinning />
       )}
-      {modelCreateModalComponent}
-      {registerModalComponent}
-      {checkpointModalComponent}
+      {checkpointModalComponents}
     </>
   );
 };

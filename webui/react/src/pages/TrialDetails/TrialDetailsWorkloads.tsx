@@ -61,12 +61,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     checkpoint?: CheckpointWorkloadExtended;
     title: string;
   }>({ title: '' });
-  const {
-    checkpointModalComponent,
-    modelCreateModalComponent,
-    registerModalComponent,
-    openCheckpoint,
-  } = useCheckpointFlow({
+  const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
     checkpoint: checkpointInfo?.checkpoint,
     config: experiment.config,
     models,
@@ -287,9 +282,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         size="small"
         onChange={handleTableChange}
       />
-      {registerModalComponent}
-      {modelCreateModalComponent}
-      {checkpointModalComponent}
+      {checkpointModalComponents}
     </Section>
   );
 };

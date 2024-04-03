@@ -1,17 +1,11 @@
 import Card from 'hew/Card';
-import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import { isEqual } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
-import { getModels } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
-import { CheckpointWorkloadExtended, ExperimentBase, ModelItem, TrialDetails } from 'types';
-import handleError, { ErrorType } from 'utils/error';
-import { validateDetApiEnum } from 'utils/service';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 
 interface Props {
@@ -32,45 +26,17 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     };
   }, [trial]);
 
+  const { openCheckpoint, checkpointModalComponents } = useCheckpointFlow({
+    checkpoint: bestCheckpoint,
+    config: experiment.config,
+    title: `Best checkpoint for Trial ${trial?.id}`,
+  });
+
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial?.totalCheckpointSize;
     if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
   }, [trial?.totalCheckpointSize]);
-
-  const [canceler] = useState(new AbortController());
-  const [models, setModels] = useState<Loadable<ModelItem[]>>(NotLoaded);
-
-  const fetchModels = useCallback(async () => {
-    try {
-      const response = await getModels(
-        {
-          archived: false,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: validateDetApiEnum(
-            V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
-          ),
-        },
-        { signal: canceler.signal },
-      );
-      setModels((prev) => {
-        const loadedModels = Loaded(response.models);
-        if (isEqual(prev, loadedModels)) return prev;
-        return loadedModels;
-      });
-    } catch (e) {
-      handleError(e, {
-        publicSubject: 'Unable to fetch models.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler.signal]);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
 
   return (
     <Section>
@@ -87,15 +53,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
         )}
         {bestCheckpoint && (
-          <CheckpointModalTrigger
-            checkpoint={bestCheckpoint}
-            experiment={experiment}
-            models={models}
-            title={`Best Checkpoint for Trial ${bestCheckpoint.trialId}`}>
-            <OverviewStats title="Best Checkpoint">
+          <>
+            <OverviewStats title="Best Checkpoint" onClick={openCheckpoint}>
               Batch {bestCheckpoint.totalBatches}
             </OverviewStats>
-          </CheckpointModalTrigger>
+            {checkpointModalComponents}
+          </>
         )}
       </Card.Group>
     </Section>

@@ -70,12 +70,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     checkpoint?: CoreApiGenericCheckpoint;
     title: string;
   }>({ title: '' });
-  const {
-    checkpointModalComponent,
-    modelCreateModalComponent,
-    registerModalComponent,
-    openCheckpoint,
-  } = useCheckpointFlow({
+  const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
     checkpoint: checkpointInfo?.checkpoint,
     config: experiment.config,
     models,
@@ -416,9 +411,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         models={models}
         openModelModal={modelCreateModal.open}
       />
-      {registerModalComponent}
-      {modelCreateModalComponent}
-      {checkpointModalComponent}
+      {checkpointModalComponents}
     </>
   );
 };
