@@ -51,7 +51,7 @@ class License:
         tag: str,
         text: str,
         name: Optional[str] = None,
-        type: Optional[str] = None,
+        type: Optional[str] = None,  # noqa: A002
         master: str = "false",
         agent: str = "false",
         webui: str = "false",
@@ -148,9 +148,9 @@ def gen_sphinx_table(licenses: List[License]) -> str:
         "     - License",
     ]
 
-    for license in licenses:
-        lines.append(f"   * - {license.name}")
-        lines.append(f"     - {license.sphinx_ref()}")
+    for lic in licenses:
+        lines.append(f"   * - {lic.name}")
+        lines.append(f"     - {lic.sphinx_ref()}")
 
     return "\n".join(lines)
 
@@ -172,11 +172,11 @@ def build_sphinx(licenses: List[License]) -> str:
     paragraphs = [
         sphinx_preamble,
         sphinx_format_header("WebUI", "*"),
-        gen_sphinx_table([license for license in licenses if license.webui]),
+        gen_sphinx_table([lic for lic in licenses if lic.webui]),
         sphinx_format_header("Determined Master", "*"),
-        gen_sphinx_table([license for license in licenses if license.master]),
+        gen_sphinx_table([lic for lic in licenses if lic.master]),
         sphinx_format_header("Determined Agent", "*"),
-        gen_sphinx_table([license for license in licenses if license.agent]),
+        gen_sphinx_table([lic for lic in licenses if lic.agent]),
     ]
 
     for lic in licenses:
