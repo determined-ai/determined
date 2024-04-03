@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Modal component from Hew.
@@ -8,10 +8,7 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Modal extends NamedComponent {
-  static defaultSelector = '.ant-modal-content';
-  constructor({ selector, parent }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Modal.defaultSelector });
-  }
+  readonly defaultSelector = '.ant-modal-content';
   readonly body: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-modal-body' });
   readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: '.ant-modal-footer' });
 }

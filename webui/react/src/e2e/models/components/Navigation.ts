@@ -1,4 +1,4 @@
-import { NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/BaseComponent';
 import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
 
 /**
@@ -9,10 +9,7 @@ import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class Navigation extends NamedComponent {
-  static defaultSelector = 'div[data-test-component="navigation"]';
-  constructor({ selector, parent }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Navigation.defaultSelector });
-  }
+  readonly defaultSelector = 'div[data-test-component="navigation"]';
 
   // sidebar is desktop view, tabbar is mobile view
   readonly sidebar: NavigationSideBar = new NavigationSideBar({ parent: this });

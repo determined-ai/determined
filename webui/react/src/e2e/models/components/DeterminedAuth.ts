@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { ErrorComponent } from 'e2e/models/utils/error';
 
 /**
@@ -10,10 +10,7 @@ import { ErrorComponent } from 'e2e/models/utils/error';
  */
 
 export class DeterminedAuth extends NamedComponent {
-  static defaultSelector = 'div[data-test-component="detAuth"]';
-  constructor({ selector, parent }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
-  }
+  readonly defaultSelector = 'div[data-test-component="detAuth"]';
   readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: 'form' });
   readonly username: BaseComponent = new BaseComponent({
     parent: this.#form,
@@ -33,7 +30,7 @@ export class DeterminedAuth extends NamedComponent {
   });
   // TODO consdier a BaseComponents plural class
   readonly errors: ErrorComponent = new ErrorComponent({
+    attatchment: ErrorComponent.selectorTopRight,
     parent: this.root,
-    selector: ErrorComponent.defaultSelector + ErrorComponent.selectorTopRight,
   });
 }

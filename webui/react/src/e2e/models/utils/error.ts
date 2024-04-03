@@ -7,7 +7,5 @@ import { Toast } from 'e2e/models/hew/Toast';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this error
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class ErrorComponent extends Toast {
-  // TODO defaultSelector to be instance property
-  static override defaultSelector: string = Toast.defaultSelector;
-}
+export const ErrorComponent = Toast;
+export type ErrorComponent = Toast;

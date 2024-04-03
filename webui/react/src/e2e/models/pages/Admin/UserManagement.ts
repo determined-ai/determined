@@ -72,9 +72,10 @@ export class UserManagement extends AdminPage {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
-    expect(filteredRows, `${await this.table.table.rows.pwLocator.allInnerTexts()}`).toHaveLength(
-      1,
-    );
+    expect(
+      filteredRows,
+      `name:${name}, component:${await this.table.table.rows.pwLocator.allInnerTexts()}`,
+    ).toHaveLength(1);
     return filteredRows[0];
   }
 }
@@ -87,8 +88,6 @@ export class UserManagement extends AdminPage {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserHeadRow extends HeadRow {
-  static override defaultSelector: string = HeadRow.defaultSelector;
-
   readonly user: BaseComponent = new BaseComponent({
     parent: this,
     selector: '[data-testid="User"]',
@@ -123,8 +122,6 @@ class UserHeadRow extends HeadRow {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserRow extends Row {
-  static override defaultSelector: string = Row.defaultSelector;
-
   // If you're wondering where (1) is, it's the checkbox column (smelly)
   // TODO consider nameplate component
   readonly user: BaseComponent = new BaseComponent({
