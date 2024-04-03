@@ -395,7 +395,7 @@ func (m *MultiRMRouter) getRM(rpName rm.ResourcePoolName) (string, error) {
 		}
 		for _, p := range rps.ResourcePools {
 			if p.Name == rpName.String() {
-				m.syslog.Infof("RM defined as %s, %s", name, p.Name)
+				m.syslog.Debugf("RM defined as %s, %s", name, p.Name)
 				return name, nil
 			}
 		}
