@@ -43,9 +43,9 @@ fi
 echo "Performing bumpenvs"
 python -m tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
 
-# check to see if redirects.py published resulted in any file changes or not
+# check to see if update-docker-tags.py resulted in any file changes or not
 if [[ -z "$(git status --porcelain)" ]]; then
-    echo "no change to published urls, is the proper VERSION being passed?"
+    echo "no change to files, is the proper tag being passed?"
     exit 1
 fi
 git add --update
