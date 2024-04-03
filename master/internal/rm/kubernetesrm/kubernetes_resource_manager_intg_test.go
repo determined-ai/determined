@@ -6,6 +6,8 @@ package kubernetesrm
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -20,13 +22,16 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -44,6 +49,26 @@ const (
 	cpuResourceRequests = int64(4000)
 	nonDetNodeName      = "NonDetermined"
 )
+
+func TestMain(m *testing.M) {
+	// Need to set up the DB for TestJobQueueStats
+	pgDB, err := db.ResolveTestPostgres()
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = db.MigrateTestPostgres(pgDB, "file://../../../static/migrations", "up")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = etc.SetRootPath("../../../static/srv")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestGetAgents(t *testing.T) {
 	type AgentsTestCase struct {
@@ -565,6 +590,44 @@ func TestGetResourcePools(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, string(expected), string(actual))
+}
+
+func TestGetJobQueueStatsRequest(t *testing.T) {
+	mockPods := createMockPodsService(make(map[string]*k8sV1.Node), device.CUDA, true)
+	pool1 := &kubernetesResourcePool{
+		poolConfig:  &config.ResourcePoolConfig{PoolName: "pool1"},
+		podsService: mockPods,
+		reqList:     tasklist.New(),
+	}
+	pool2 := &kubernetesResourcePool{
+		poolConfig:  &config.ResourcePoolConfig{PoolName: "pool2"},
+		podsService: mockPods,
+		reqList:     tasklist.New(),
+	}
+	k8sRM := &ResourceManager{
+		pools: map[string]*kubernetesResourcePool{
+			"pool1": pool1,
+			"pool2": pool2,
+		},
+	}
+
+	cases := []struct {
+		name        string
+		filteredRPs []string
+		expected    int
+	}{
+		{"empty, return all", []string{}, 2},
+		{"filter 1 in", []string{"pool1"}, 1},
+		{"filter 2 in", []string{"pool1", "pool2"}, 2},
+		{"filter undefined in, return none", []string{"bogus"}, 0},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := k8sRM.GetJobQueueStatsRequest(&apiv1.GetJobQueueStatsRequest{ResourcePools: tt.filteredRPs})
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, len(res.Results))
+		})
+	}
 }
 
 func TestHealthCheck(t *testing.T) {
