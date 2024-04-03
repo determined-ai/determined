@@ -110,14 +110,11 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
    * @param {(row: RowType) => Promise<boolean>} condition - function which tests each row against a condition
    */
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
-    const filteredRows: RowType[] = [];
-    (await this.allRowKeys()).forEach(async (key) => {
+    const rowKeys = await this.allRowKeys();
+    return (await Promise.all(rowKeys.map(async (key) => {
       const row = this.getRowByDataKey(key);
-      if (await condition(row)) {
-        filteredRows.push(row);
-      }
-    });
-    return filteredRows;
+      return (await condition(row)) && row;
+    })).filter((c) c is RowType => !!c);
   }
 }
 
