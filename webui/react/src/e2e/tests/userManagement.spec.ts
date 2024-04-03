@@ -19,12 +19,6 @@ test.describe('User Management', () => {
     await expect(page).toHaveURL(userManagementPage.url);
   });
 
-  // test('Users table count matches admin page users tab', async () => {
-  //   await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(Math.min(10, expetedRowCount));
-  //   await expect(userManagementPage.userTab.pwLocator).toContainText(/\d+/)
-  //   const expetedRowCount = +(await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/)![0]
-  // })
-
   test.describe('With a new User', () => {
     let page: Page;
     let authFixture: AuthFixture;
