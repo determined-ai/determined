@@ -9,7 +9,7 @@
 *******
 
 Only the ``admin`` user can create users, change users' passwords, and activate or deactivate users.
-Upon initial installation, the admin should set an admin password.
+Upon initial installation, the admin must set a strong admin password.
 
 Default Accounts
 ================
@@ -19,7 +19,7 @@ Initially, there are two accounts:
 -  ``admin`` (full privileges)
 -  ``determined`` (for single-user installations)
 
-Both have blank passwords by default.
+Both have blank passwords by default, therefore, you'll need to set a strong password.
 
 Setting the Admin Password
 ==========================
@@ -108,6 +108,8 @@ be discarded using the ``user logout`` subcommand:
 .. code::
 
    det -u <username> user logout
+
+.. _strong-password:
 
 ******************
  Change Passwords
