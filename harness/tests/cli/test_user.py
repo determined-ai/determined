@@ -1,5 +1,6 @@
 from unittest import mock
 
+import pytest
 from responses import matchers
 
 from determined.cli import cli
@@ -10,7 +11,7 @@ from tests.cli import util
 
 @mock.patch("getpass.getpass")
 def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
-    mock_getpass.side_effect = lambda *_: "newpass"
+    mock_getpass.side_effect = lambda *_: "ce93AA76-2f62-4f29-ab5d-c56a3375e702"
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=False, username="det-user", id=101)
         rsps.get(
@@ -30,6 +31,16 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
         )
 
         cli.main(["user", "change-password", "tgt-user"])
+
+        # cannot set password to blank
+        mock_getpass.side_effect = lambda *_: ""
+        with pytest.raises(ValueError, match="password must have at least 8 characters"):
+            cli.main(["user", "change-password", "tgt-user"])
+
+        # cannot set password to something weak
+        mock_getpass.side_effect = lambda *_: "password"
+        with pytest.raises(ValueError, match=r"password must contain .+"):
+            cli.main(["user", "change-password", "tgt-user"])
 
 
 @mock.patch("determined.cli.cli.die")
