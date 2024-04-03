@@ -86,15 +86,12 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
    * Returns a list of keys associated with attributes from rows from the entire table.
    */
   async allRowKeys(): Promise<string[]> {
-    const keys: string[] = [];
-    for (const row of await this.rows.pwLocator.all()) {
-      const value = await row.getAttribute(this.rows.keyAttribute);
-      if (value === null) {
-        throw new Error(`All rows should have the attribute ${this.rows.keyAttribute}`);
-      }
-      keys.push(value);
-    }
-    return keys;
+    const { pwLocator, keyAttribute } = this.rows;
+    const rows = await pwLocator.all();
+    return Promise.all(rows.map(async (row) => {
+      return (await row.getAttribute(keyAttribute)) ||
+        Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`);
+    }));
   }
 
   /**
