@@ -91,7 +91,7 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         master_url = self._get_master_url()
         healthcheck.wait_for_master(master_url, timeout=timeout, cert=cert)
 
-    def consolidate_parameters(self):
+    def consolidate_parameters(self) -> List[Dict[str, Any]]:
         consolidated_params = []
 
         for key in self.parameters.keys():
