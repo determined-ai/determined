@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Mondal component from Hew.
@@ -8,10 +8,7 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Pivot extends NamedComponent {
-  static defaultSelector = 'div.ant-tabs';
-  constructor({ selector, parent }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Pivot.defaultSelector });
-  }
+  readonly defaultSelector = 'div.ant-tabs';
 
   /**
    * Returns a templated selector for children components.

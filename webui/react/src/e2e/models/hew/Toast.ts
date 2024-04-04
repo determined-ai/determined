@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Mondal component from Hew.
@@ -9,12 +9,9 @@ import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/Ba
  */
 
 export class Toast extends NamedComponent {
-  static defaultSelector = '.ant-notification';
+  readonly defaultSelector = '.ant-notification';
   static readonly selectorTopRight = '.ant-notification-topRight';
   static readonly selectorBottomRight = '.ant-notification-bottomRight';
-  constructor({ parent, selector }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Toast.defaultSelector });
-  }
   readonly alert: BaseComponent = new BaseComponent({ parent: this, selector: '[role="alert"]' });
   readonly message: BaseComponent = new BaseComponent({
     parent: this.alert,

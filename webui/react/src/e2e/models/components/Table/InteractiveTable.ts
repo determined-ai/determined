@@ -3,11 +3,12 @@ import { Locator } from '@playwright/test';
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
-type RowTypeGeneric<RowType> = new ({ parent, selector }: NamedComponentArgs) => RowType;
+type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
+type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
 
 export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
-  rowType: RowTypeGeneric<RowType>;
-  headRowType: new ({ parent, selector }: NamedComponentArgs) => HeadRowType;
+  rowType: RowClass<RowType>;
+  headRowType: HeadRowClass<HeadRowType>;
 };
 
 /**
@@ -21,10 +22,10 @@ export class InteractiveTable<
   RowType extends Row,
   HeadRowType extends HeadRow,
 > extends NamedComponent {
-  static defaultSelector = 'div[data-test-component="interactiveTable"]';
-  constructor({ selector, parent, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
-    super({ parent: parent, selector: selector || InteractiveTable.defaultSelector });
-    this.table = new Table({ headRowType, parent: this, rowType });
+  readonly defaultSelector = 'div[data-test-component="interactiveTable"]';
+  constructor(args: TableArgs<RowType, HeadRowType>) {
+    super(args);
+    this.table = new Table({ ...args, parent: this });
   }
 
   readonly table: Table<RowType, HeadRowType>;
@@ -39,15 +40,15 @@ export class InteractiveTable<
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
-  static defaultSelector = '[data-testid="table"]';
-  constructor({ parent, selector, rowType, headRowType }: TableArgs<RowType, HeadRowType>) {
-    super({ parent: parent, selector: selector || Table.defaultSelector });
-    this.#rowType = rowType;
-    this.rows = new rowType({ parent: this.#body });
-    this.headRow = new headRowType({ parent: this.#head });
+  readonly defaultSelector = '[data-testid="table"]';
+  constructor(args: TableArgs<RowType, HeadRowType>) {
+    super(args);
+    this.#rowType = args.rowType;
+    this.rows = new args.rowType({ parent: this.#body });
+    this.headRow = new args.headRowType({ parent: this.#head });
     this.getRowByDataKey = this.rowByAttributeGenerator(this.rows.keyAttribute);
   }
-  readonly #rowType: RowTypeGeneric<RowType>;
+  readonly #rowType: RowClass<RowType>;
   readonly rows: RowType;
   readonly headRow: HeadRowType;
   readonly #body: BaseComponent = new BaseComponent({
@@ -72,10 +73,9 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
      * @param {string} value - value of the row attribute
      */
     return (value: string) => {
-      // TODO default selector should be instance property to make this easier. We want RowType.defaultSelector
       return new this.#rowType({
+        attachment: `[${key}="${value}"]`,
         parent: this,
-        selector: Row.defaultSelector + `[${key}="${value}"]`,
       });
     };
   }
@@ -134,11 +134,8 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class Row extends NamedComponent {
-  static defaultSelector = 'tr.ant-table-row';
+  readonly defaultSelector = 'tr.ant-table-row';
   readonly keyAttribute = 'data-row-key';
-  constructor({ parent, selector }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Row.defaultSelector });
-  }
   readonly select: BaseComponent = new BaseComponent({
     parent: this,
     selector: '.ant-table-selection-column',
@@ -161,10 +158,7 @@ export class Row extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class HeadRow extends NamedComponent {
-  static defaultSelector = 'tr';
-  constructor({ parent, selector }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || HeadRow.defaultSelector });
-  }
+  readonly defaultSelector = 'tr';
   readonly selection: BaseComponent = new BaseComponent({
     parent: this,
     selector: '.ant-table-selection-column',
@@ -179,10 +173,7 @@ export class HeadRow extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class Pagination extends NamedComponent {
-  static defaultSelector = '.ant-pagination';
-  constructor({ parent, selector }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || Pagination.defaultSelector });
-  }
+  readonly defaultSelector = '.ant-pagination';
   readonly previous: BaseComponent = new BaseComponent({
     parent: this,
     selector: 'li.ant-pagination-prev',
