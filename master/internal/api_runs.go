@@ -388,13 +388,10 @@ func (a *apiServer) MoveRuns(
 			})
 		}
 		var failedRunIDs []int32
-		if _, err = db.Bun().NewUpdate().Table("runs").
-			Set("project_id = ?", req.DestinationProjectId).
+		if err = db.Bun().NewSelect().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
-			Returning("runs.id").
-			Model(&failedRunIDs).
-			Exec(ctx); err != nil {
+			Scan(ctx, failedRunIDs); err != nil {
 			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
 		}
 		for _, failedRunID := range failedRunIDs {
