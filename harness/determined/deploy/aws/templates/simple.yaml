@@ -187,6 +187,11 @@ Parameters:
     Description: Contents of the agent config file
     Default: ''
 
+  ExtraTags:
+    Type: String
+    Description: Extra tags to be applied
+    Default: '[]'
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -712,6 +717,7 @@ Resources:
                   instance_type: ${ComputeAgentInstanceType}
                   agent_reattach_enabled: ${AgentReattachEnabled}
               aws:
+                custom_tags: ${ExtraTags}
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}
