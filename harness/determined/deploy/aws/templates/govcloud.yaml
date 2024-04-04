@@ -141,6 +141,11 @@ Parameters:
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
 
+  ExtraTags:
+    Type: String
+    Description: Extra tags to be applied
+    Default: '[]'
+
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -672,6 +677,7 @@ Resources:
                 compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
               aws:
+                custom_tags: ${ExtraTags}
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}

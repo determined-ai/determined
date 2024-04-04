@@ -48,7 +48,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   return (
     <Spinner spinning={ui.showSpinner}>
-      <div className={css.base}>
+      <div className={css.base} data-test-component="navigation">
         <NavigationSideBar />
         {children}
         <NavigationTabbar />

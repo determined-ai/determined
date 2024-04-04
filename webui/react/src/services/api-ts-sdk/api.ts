@@ -6497,6 +6497,56 @@ export interface V1MoveProjectRequest {
 export interface V1MoveProjectResponse {
 }
 /**
+ * Request to move the run to a different project.
+ * @export
+ * @interface V1MoveRunsRequest
+ */
+export interface V1MoveRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1MoveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    sourceProjectId: number;
+    /**
+     * The id of the new parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    destinationProjectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveRunsRequest
+     */
+    filter?: string;
+    /**
+     * If true, skip multi-trial experiments for move.
+     * @type {boolean}
+     * @memberof V1MoveRunsRequest
+     */
+    skipMultitrial?: boolean;
+}
+/**
+ * Response to MoveRunsRequest.
+ * @export
+ * @interface V1MoveRunsResponse
+ */
+export interface V1MoveRunsResponse {
+    /**
+     * Details on success or error for each experiment.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1MoveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Note is a user comment connected to a project.
  * @export
  * @interface V1Note
@@ -9390,6 +9440,25 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+/**
+ * Message for results of individual runs in a multi-run action.
+ * @export
+ * @interface V1RunActionResult
+ */
+export interface V1RunActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1RunActionResult
+     */
+    error: string;
+    /**
+     * run ID.
+     * @type {number}
+     * @memberof V1RunActionResult
+     */
+    id: number;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
@@ -19688,6 +19757,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/move`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -21878,6 +21985,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -22959,6 +23085,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).moveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of "Running" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a "Running" state until all the containers that are part of the experiment are running and not being pulled.
          * @param {string} allocationId The ID of the allocation.
          * @param {V1NotifyContainerRunningRequest} body
@@ -23851,6 +23987,18 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, group?: string, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, group, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Move runs.
+     * @param {V1MoveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public moveRuns(body: V1MoveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).moveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
