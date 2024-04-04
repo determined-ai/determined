@@ -40,7 +40,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
-	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -2148,12 +2147,6 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 		errC <- errors.New("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}
 	}, nil)
-	mockRM.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything).Return(
-		func(name rm.ResourcePoolName, _, _ int) rm.ResourcePoolName {
-			return name
-		},
-		nil,
-	)
 
 	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
 

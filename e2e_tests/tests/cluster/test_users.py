@@ -156,14 +156,14 @@ def test_change_password() -> None:
     sess, old_password = api_utils.create_test_user()
     d = client.Determined._from_session(api_utils.admin_session())
     userobj = d.get_user_by_name(sess.username)
-    userobj.change_password("newpass")
+    userobj.change_password("newPass123!")
 
     # Old password does not work anymore.
     with pytest.raises(errors.UnauthenticatedException):
         api_utils.make_session(sess.username, old_password)
 
     # New password does work.
-    api_utils.make_session(sess.username, "newpass")
+    api_utils.make_session(sess.username, "newPass123!")
 
 
 @pytest.mark.e2e_cpu
@@ -173,12 +173,12 @@ def test_change_own_password() -> None:
 
     d = client.Determined._from_session(sess)
     userobj = d.get_user_by_name(sess.username)
-    userobj.change_password("newpass")
+    userobj.change_password("newPass123!")
 
     with pytest.raises(errors.UnauthenticatedException):
         api_utils.make_session(sess.username, old_password)
 
-    api_utils.make_session(sess.username, "newpass")
+    api_utils.make_session(sess.username, "newPass123!")
 
 
 @pytest.mark.e2e_cpu

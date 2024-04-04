@@ -34,23 +34,25 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
 
         cli.main(["user", "change-password", "tgt-user"])
 
-        # cannot set password to blank
+    # cannot set password to blank
+    mock_getpass.side_effect = lambda *_: ""
+    with util.standard_cli_rsps() as rsps:
         rsps.get(
             "http://localhost:8080/api/v1/users/tgt-user/by-username",
             status=200,
             json={"user": userobj.to_json()},
         )
-        mock_getpass.side_effect = lambda *_: ""
         with pytest.raises(ValueError, match="password must have at least 8 characters"):
             cli.main(["user", "change-password", "tgt-user"])
 
-        # cannot set password to something weak
+    # cannot set password to something weak
+    mock_getpass.side_effect = lambda *_: "password"
+    with util.standard_cli_rsps() as rsps:
         rsps.get(
             "http://localhost:8080/api/v1/users/tgt-user/by-username",
             status=200,
             json={"user": userobj.to_json()},
         )
-        mock_getpass.side_effect = lambda *_: "password"
         with pytest.raises(ValueError, match=r"password must contain .+"):
             cli.main(["user", "change-password", "tgt-user"])
 
