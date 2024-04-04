@@ -14,10 +14,10 @@ simple and easy-to-use interface to deploy, manage, and work with Determined clu
 
 MLDES uses either an AWS or GCP account as a backend for Determined cluster resources. All you need
 to create a new Determined cluster via MLDES is an AWS account with a few pre-requisite IAM roles,
-or a GCP project ID. View the `MLDES Documentation <https://mldes.ext.hpe.com/docs/index.html>`__
-for more information. A simple guide to creating an MLDE cluster is described as follows:
+or a GCP project ID. View the `MLDES Documentation <https://mldes.ext.hpe.com/docs/index.html>`_ for
+more information. A simple guide to creating an MLDE cluster is described as follows:
 
-#. Go to the `MLDES Console <https://mldes.ext.hpe.com>`__ and sign in with your HPE Passport
+#. Go to the `MLDES Console <https://mldes.ext.hpe.com>`_ and sign in with your HPE Passport
    account.
 #. Create a new organization with a unique name and the necessary details.
 #. Create a new Determined cluster by clicking on the "New MLDE Cluster" button.
