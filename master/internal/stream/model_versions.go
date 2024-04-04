@@ -111,10 +111,10 @@ func createFilteredModelVersionIDQuery(
 			q.WhereOr("m.id in (?)", bun.In(spec.ModelVersionIDs))
 		}
 		if len(spec.ModelIDs) > 0 {
-			q.WhereOr("model_id in (?)", bun.In(spec.ModelIDs))
+			q.WhereOr("m.model_id in (?)", bun.In(spec.ModelIDs))
 		}
 		if len(spec.UserIDs) > 0 {
-			q.WhereOr("user_id in (?)", bun.In(spec.UserIDs))
+			q.WhereOr("m.user_id in (?)", bun.In(spec.UserIDs))
 		}
 		return q
 	})
@@ -200,7 +200,7 @@ func ModelVersionMakeFilter(spec *ModelVersionSubscriptionSpec) (func(*ModelVers
 	modelIDs := make(map[int]struct{})
 	for _, id := range spec.ModelIDs {
 		if id <= 0 {
-			return nil, fmt.Errorf("invalid workspace id: %d", id)
+			return nil, fmt.Errorf("invalid model id: %d", id)
 		}
 		modelIDs[id] = struct{}{}
 	}
