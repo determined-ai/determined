@@ -1,4 +1,4 @@
-.. _topic-guide-mldes:
+.. _topic_guide_mldes:
 
 ############################################################################################
  Deploy Using HPE Machine Learning Development Environment Software (MLDES) Managed Service
