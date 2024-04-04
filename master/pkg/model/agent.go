@@ -23,6 +23,54 @@ type AgentSummary struct {
 	Version        string       `json:"version"`
 }
 
+type slotStats map[string]*agentv1.DeviceStats
+
+// SummarizeSlots a set of slots.
+func SummarizeSlots(slots map[string]*agentv1.Slot) *agentv1.SlotStats {
+	stats := agentv1.SlotStats{
+		TypeStats:  make(slotStats),
+		BrandStats: make(slotStats),
+	}
+
+	if len(slots) == 0 {
+		return &stats
+	}
+	for _, slot := range slots {
+		deviceType := slot.Device.Type.String()
+		deviceTypeStats, ok := stats.TypeStats[deviceType]
+		if !ok {
+			deviceTypeStats = &agentv1.DeviceStats{
+				States: make(map[string]int32),
+			}
+			stats.TypeStats[deviceType] = deviceTypeStats
+		}
+		deviceBrand := slot.Device.Brand
+		deviceBrandStats, ok := stats.BrandStats[deviceBrand]
+		if !ok {
+			deviceBrandStats = &agentv1.DeviceStats{
+				States: make(map[string]int32),
+			}
+			stats.BrandStats[deviceBrand] = deviceBrandStats
+		}
+		deviceBrandStats.Total++
+		deviceTypeStats.Total++
+
+		if !slot.Enabled {
+			deviceBrandStats.Disabled++
+			deviceTypeStats.Disabled++
+		}
+		if slot.Draining {
+			deviceBrandStats.Draining++
+			deviceTypeStats.Draining++
+		}
+		if slot.Container != nil {
+			deviceBrandStats.States[slot.Container.State.String()]++
+			deviceTypeStats.States[slot.Container.State.String()]++
+		}
+	}
+	return &stats
+}
+
 // ToProto converts an agent summary to a proto struct.
 func (a AgentSummary) ToProto() *agentv1.Agent {
 	slots := make(map[string]*agentv1.Slot)
@@ -39,6 +87,7 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		Id:             a.ID,
 		RegisteredTime: protoutils.ToTimestamp(a.RegisteredTime),
 		Slots:          slots,
+		SlotStats:      SummarizeSlots(slots),
 		Containers:     containers,
 		ResourcePools:  a.ResourcePool,
 		Addresses:      a.Addresses,

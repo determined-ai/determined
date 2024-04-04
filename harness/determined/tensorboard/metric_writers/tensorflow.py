@@ -6,7 +6,7 @@ import tensorflow
 from packaging import version
 from tensorflow.core.framework import summary_pb2
 from tensorflow.core.util import event_pb2
-from tensorflow.python.summary.writer.event_file_writer import EventFileWriter
+from tensorflow.python.summary.writer import event_file_writer
 
 from determined import tensorboard
 
@@ -25,7 +25,7 @@ class TFWriter(tensorboard.MetricWriter):
 
     def __init__(self) -> None:
         super().__init__()
-        self.writer = EventFileWriter(
+        self.writer = event_file_writer.EventFileWriter(
             logdir=str(tensorboard.get_base_path({})), filename_suffix=None
         )
         self.createSummary = tf.Summary

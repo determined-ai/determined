@@ -212,6 +212,41 @@ export const GetTrialWorkloadsRequestFilterOption = {
 } as const
 export type GetTrialWorkloadsRequestFilterOption = ValueOf<typeof GetTrialWorkloadsRequestFilterOption>
 /**
+ * 
+ * @export
+ * @interface HealthCheck
+ */
+export interface HealthCheck {
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof HealthCheck
+     */
+    database?: HealthStatus;
+    /**
+     * 
+     * @type {Array<ResourceManagerHealth>}
+     * @memberof HealthCheck
+     */
+    resource_managers?: Array<ResourceManagerHealth>;
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof HealthCheck
+     */
+    status?: HealthStatus;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export const HealthStatus = {
+    up: 'up',
+    down: 'down',
+} as const
+export type HealthStatus = ValueOf<typeof HealthStatus>
+/**
  * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  * @export
  * @enum {string}
@@ -344,6 +379,25 @@ export const ProtobufNullValue = {
     NULLVALUE: 'NULL_VALUE',
 } as const
 export type ProtobufNullValue = ValueOf<typeof ProtobufNullValue>
+/**
+ * 
+ * @export
+ * @interface ResourceManagerHealth
+ */
+export interface ResourceManagerHealth {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResourceManagerHealth
+     */
+    name?: string;
+    /**
+     * 
+     * @type {HealthStatus}
+     * @memberof ResourceManagerHealth
+     */
+    status?: HealthStatus;
+}
 /**
  * A wrapper message of a list of devices.
  * @export
@@ -867,6 +921,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     searcherMetricValue?: number;
+    /**
+     * Number of days to retain logs for.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    logRetentionDays?: number;
 }
 /**
  * 
@@ -1090,6 +1150,12 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     resourcePools?: Array<string>;
+    /**
+     * The slot stats for this agent.
+     * @type {V1SlotStats}
+     * @memberof V1Agent
+     */
+    slotStats: V1SlotStats;
 }
 /**
  * AgentUserGroup represents a username and primary group for a user on an agent host machine.
@@ -1842,6 +1908,19 @@ export interface V1CheckpointWorkload {
     metadata?: any;
 }
 /**
+ * Response to CleanupLogsRequest.
+ * @export
+ * @interface V1CleanupLogsResponse
+ */
+export interface V1CleanupLogsResponse {
+    /**
+     * How many row of logs were removed.
+     * @type {string}
+     * @memberof V1CleanupLogsResponse
+     */
+    removedCount: string;
+}
+/**
  * Close a trial with given ID.
  * @export
  * @interface V1CloseTrialOperation
@@ -2542,6 +2621,37 @@ export interface V1Device {
      * @memberof V1Device
      */
     type?: Devicev1Type;
+}
+/**
+ * DeviceStats contains statistics about a single device group.
+ * @export
+ * @interface V1DeviceStats
+ */
+export interface V1DeviceStats {
+    /**
+     * The number of slots in each state if there's an associated container.
+     * @type {{ [key: string]: number; }}
+     * @memberof V1DeviceStats
+     */
+    states?: { [key: string]: number; };
+    /**
+     * the number of draining slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    draining: number;
+    /**
+     * the number of disabled slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    disabled: number;
+    /**
+     * the total number of slots.
+     * @type {number}
+     * @memberof V1DeviceStats
+     */
+    total: number;
 }
 /**
  * Disable the agent.
@@ -3648,7 +3758,7 @@ export interface V1GetExperimentsResponse {
     pagination: V1Pagination;
 }
 /**
- * Sorts trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+ * Sorts trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
  * @export
  * @enum {string}
  */
@@ -3664,6 +3774,7 @@ export const V1GetExperimentTrialsRequestSortBy = {
     DURATION: 'SORT_BY_DURATION',
     RESTARTS: 'SORT_BY_RESTARTS',
     CHECKPOINTSIZE: 'SORT_BY_CHECKPOINT_SIZE',
+    LOGRETENTIONDAYS: 'SORT_BY_LOG_RETENTION_DAYS',
 } as const
 export type V1GetExperimentTrialsRequestSortBy = ValueOf<typeof V1GetExperimentTrialsRequestSortBy>
 /**
@@ -6088,7 +6199,7 @@ export interface V1MetricsWorkload {
     totalBatches: number;
 }
 /**
- * To distinguish the different categories of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+ * To distinguish the different categories of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
  * @export
  * @enum {string}
  */
@@ -6096,6 +6207,7 @@ export const V1MetricType = {
     UNSPECIFIED: 'METRIC_TYPE_UNSPECIFIED',
     TRAINING: 'METRIC_TYPE_TRAINING',
     VALIDATION: 'METRIC_TYPE_VALIDATION',
+    PROFILING: 'METRIC_TYPE_PROFILING',
 } as const
 export type V1MetricType = ValueOf<typeof V1MetricType>
 /**
@@ -8037,6 +8149,70 @@ export interface V1PutExperimentResponse {
     config: any;
 }
 /**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutExperimentRetainLogsRequest
+ */
+export interface V1PutExperimentRetainLogsRequest {
+    /**
+     * The ID of the experiment.
+     * @type {number}
+     * @memberof V1PutExperimentRetainLogsRequest
+     */
+    experimentId: number;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutExperimentRetainLogsRequest
+     */
+    numDays: number;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutExperimentRetainLogsResponse
+ */
+export interface V1PutExperimentRetainLogsResponse {
+}
+/**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutExperimentsRetainLogsRequest
+ */
+export interface V1PutExperimentsRetainLogsRequest {
+    /**
+     * The ids of the experiments being moved.
+     * @type {Array<number>}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    experimentIds: Array<number>;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    numDays: number;
+    /**
+     * Targets all experiments matching filters.
+     * @type {V1BulkExperimentFilters}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    filters?: V1BulkExperimentFilters;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutExperimentsRetainLogsResponse
+ */
+export interface V1PutExperimentsRetainLogsResponse {
+    /**
+     * Details on success or error for each experiment.
+     * @type {Array<V1ExperimentActionResult>}
+     * @memberof V1PutExperimentsRetainLogsResponse
+     */
+    results: Array<V1ExperimentActionResult>;
+}
+/**
  * Request for setting project notes.
  * @export
  * @interface V1PutProjectNotesRequest
@@ -8112,6 +8288,32 @@ export interface V1PutTrialResponse {
      * @memberof V1PutTrialResponse
      */
     trial: Trialv1Trial;
+}
+/**
+ * Request for changing the log retention policy for the an experiment.
+ * @export
+ * @interface V1PutTrialRetainLogsRequest
+ */
+export interface V1PutTrialRetainLogsRequest {
+    /**
+     * The ID of the trial.
+     * @type {number}
+     * @memberof V1PutTrialRetainLogsRequest
+     */
+    trialId?: number;
+    /**
+     * The number of days to retain logs, starting from the time of creation.
+     * @type {number}
+     * @memberof V1PutTrialRetainLogsRequest
+     */
+    numDays: number;
+}
+/**
+ * Response to PutExperimentRetainLogsRequest.
+ * @export
+ * @interface V1PutTrialRetainLogsResponse
+ */
+export interface V1PutTrialRetainLogsResponse {
 }
 /**
  * Describes a message to control jobs in a queue.
@@ -9861,6 +10063,25 @@ export interface V1Slot {
     draining?: boolean;
 }
 /**
+ * SlotStats contains statistics about a set of slots.
+ * @export
+ * @interface V1SlotStats
+ */
+export interface V1SlotStats {
+    /**
+     * Map of device type to device stats.
+     * @type {{ [key: string]: V1DeviceStats; }}
+     * @memberof V1SlotStats
+     */
+    typeStats: { [key: string]: V1DeviceStats; };
+    /**
+     * Map of device brands to device stats.
+     * @type {{ [key: string]: V1DeviceStats; }}
+     * @memberof V1SlotStats
+     */
+    brandStats: { [key: string]: V1DeviceStats; };
+}
+/**
  * Describe one SSO provider.
  * @export
  * @interface V1SSOProvider
@@ -10587,7 +10808,13 @@ export interface V1TrialMetrics {
      * @type {number}
      * @memberof V1TrialMetrics
      */
-    stepsCompleted: number;
+    stepsCompleted?: number;
+    /**
+     * The client-reported time associated with these metrics.
+     * @type {Date | DateString}
+     * @memberof V1TrialMetrics
+     */
+    reportTime?: Date | DateString;
     /**
      * The metrics for this bit of training, including: - avg_metrics: metrics reduced over the reporting period). - batch_metrics: (optional) per-batch metrics.
      * @type {V1Metrics}
@@ -12300,10 +12527,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -12336,6 +12565,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (label !== undefined) {
                 localVarQueryParameter['label'] = label
+            }
+            
+            if (excludeSlots !== undefined) {
+                localVarQueryParameter['excludeSlots'] = excludeSlots
+            }
+            
+            if (excludeContainers !== undefined) {
+                localVarQueryParameter['excludeContainers'] = excludeContainers
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12455,6 +12692,36 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options: any = {}): FetchArgs {
+            const localVarPath = `/health`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12781,11 +13048,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12861,6 +13130,24 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<HealthCheck> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).health(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13023,11 +13310,13 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
          * @param {string} [label] This field has been deprecated and will be ignored.
+         * @param {boolean} [excludeSlots] exclude slots.
+         * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(fetch, basePath);
         },
         /**
          * 
@@ -13067,6 +13356,15 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         getSlots(agentId: string, options?: any) {
             return ClusterApiFp(configuration).getSlots(agentId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get health of Determined and the dependencies.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        health(options?: any) {
+            return ClusterApiFp(configuration).health(options)(fetch, basePath);
         },
         /**
          * 
@@ -13195,12 +13493,14 @@ export class ClusterApi extends BaseAPI {
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
      * @param {string} [label] This field has been deprecated and will be ignored.
+     * @param {boolean} [excludeSlots] exclude slots.
+     * @param {boolean} [excludeContainers] exclude containers.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath)
+    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -13248,6 +13548,17 @@ export class ClusterApi extends BaseAPI {
      */
     public getSlots(agentId: string, options?: any) {
         return ClusterApiFp(this.configuration).getSlots(agentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get health of Determined and the dependencies.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public health(options?: any) {
+        return ClusterApiFp(this.configuration).health(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -14022,7 +14333,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
@@ -14577,7 +14888,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -15360,6 +15671,88 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling putExperimentRetainLogs.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putExperimentRetainLogs.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/retain_logs`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putExperimentsRetainLogs.');
+            }
+            const localVarPath = `/api/v1/experiments/retain_logs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -15755,7 +16148,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
@@ -15969,7 +16362,7 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -16344,6 +16737,45 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentRetainLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentRetainLogs(experimentId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentsRetainLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentsRetainLogs(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -16531,7 +16963,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Array<string>} [metricNames] The names of selected metrics.
          * @param {number} [startBatches] Sample from metrics after this batch number.
          * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
          * @param {string} [timeSeriesFilterName] metric or column name for the filter.
@@ -16664,7 +17096,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -16868,6 +17300,27 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
+         * @summary Retain logs for an experiment.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {V1PutExperimentRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentRetainLogs(experimentId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Retain logs for an experiment.
+         * @param {V1PutExperimentsRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentsRetainLogs(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get experiments with grouping and search syntax
          * @param {number} [projectId] ID of the project to look at.
          * @param {number} [offset] How many experiments to skip before including in the results.
@@ -17023,7 +17476,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Array<string>} [metricNames] The names of selected metrics.
      * @param {number} [startBatches] Sample from metrics after this batch number.
      * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
      * @param {string} [timeSeriesFilterName] metric or column name for the filter.
@@ -17174,7 +17627,7 @@ export class ExperimentsApi extends BaseAPI {
      * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
      * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -17412,6 +17865,31 @@ export class ExperimentsApi extends BaseAPI {
      */
     public putExperimentLabel(experimentId: number, label: string, options?: any) {
         return ExperimentsApiFp(this.configuration).putExperimentLabel(experimentId, label, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for an experiment.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {V1PutExperimentRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public putExperimentRetainLogs(experimentId: number, body: V1PutExperimentRetainLogsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentRetainLogs(experimentId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for an experiment.
+     * @param {V1PutExperimentsRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentsRetainLogs(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17878,6 +18356,36 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Cleanup task logs according to the retention policy.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cleanupLogs(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/cleanup_logs`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -18886,7 +19394,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -19192,7 +19700,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
@@ -20312,7 +20820,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
@@ -20393,7 +20901,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -20801,6 +21309,24 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BindRPToWorkspaceResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).bindRPToWorkspace(resourcePoolName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Cleanup task logs according to the retention policy.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cleanupLogs(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CleanupLogsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).cleanupLogs(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21313,7 +21839,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -21439,7 +21965,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
@@ -21958,7 +22484,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
@@ -21986,7 +22512,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -22189,6 +22715,15 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any) {
             return InternalApiFp(configuration).bindRPToWorkspace(resourcePoolName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Cleanup task logs according to the retention policy.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        cleanupLogs(options?: any) {
+            return InternalApiFp(configuration).cleanupLogs(options)(fetch, basePath);
         },
         /**
          * 
@@ -22467,7 +23002,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -22539,7 +23074,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
          * @param {*} [options] Override http request option.
@@ -22824,7 +23359,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Get a sample of the metrics over time for a sample of the trials.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [maxTrials] Maximum number of trials to fetch data for.
          * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
@@ -22843,7 +23378,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
          * @param {number} batchesProcessed The point of progress at which to query metrics.
-         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -23019,6 +23554,17 @@ export class InternalApi extends BaseAPI {
      */
     public bindRPToWorkspace(resourcePoolName: string, body: V1BindRPToWorkspaceRequest, options?: any) {
         return InternalApiFp(this.configuration).bindRPToWorkspace(resourcePoolName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Cleanup task logs according to the retention policy.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public cleanupLogs(options?: any) {
+        return InternalApiFp(this.configuration).cleanupLogs(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -23348,7 +23894,7 @@ export class InternalApi extends BaseAPI {
      * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
      * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
      * @param {*} [options] Override http request option.
@@ -23432,7 +23978,7 @@ export class InternalApi extends BaseAPI {
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
      * @param {*} [options] Override http request option.
@@ -23769,7 +24315,7 @@ export class InternalApi extends BaseAPI {
      * @summary Get a sample of the metrics over time for a sample of the trials.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
-     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {number} [maxTrials] Maximum number of trials to fetch data for.
      * @param {number} [maxDatapoints] Maximum number of initial / historical data points.
@@ -23790,7 +24336,7 @@ export class InternalApi extends BaseAPI {
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
      * @param {number} batchesProcessed The point of progress at which to query metrics.
-     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] The type of metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {number} [batchesMargin] A range either side of batches_processed to include near-misses.
      * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -30066,7 +30612,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30252,7 +30798,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -30388,6 +30934,50 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling putTrialRetainLogs.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putTrialRetainLogs.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/retain_logs`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -30544,7 +31134,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30632,7 +31222,7 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -30678,6 +31268,26 @@ export const TrialsApiFp = function (configuration?: Configuration) {
          */
         killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTrialRetainLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).putTrialRetainLogs(trialId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30752,7 +31362,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+         * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
          * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30804,7 +31414,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
          * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
          * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+         * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
          * @param {string} [group] Metric group (training, validation, etc).
          * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
          * @param {*} [options] Override http request option.
@@ -30832,6 +31442,17 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         killTrial(id: number, options?: any) {
             return TrialsApiFp(configuration).killTrial(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Retain logs for a Trial.
+         * @param {number} trialId The ID of the trial.
+         * @param {V1PutTrialRetainLogsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any) {
+            return TrialsApiFp(configuration).putTrialRetainLogs(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -30880,7 +31501,7 @@ export class TrialsApi extends BaseAPI {
      * 
      * @summary Get the list of trials for an experiment.
      * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
-     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
+     * @param {V1GetExperimentTrialsRequestSortBy} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.  - SORT_BY_LOG_RETENTION_DAYS: Return the trials sorted by number of log retention days.
      * @param {V1OrderBy} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
@@ -30940,7 +31561,7 @@ export class TrialsApi extends BaseAPI {
      * @param {string} [sortKey] Sort workloads by batches, a training metric, or a validation metric.
      * @param {GetTrialWorkloadsRequestFilterOption} [filter] Filter workloads with validation and/or checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
      * @param {boolean} [includeBatchMetrics] Include per-batch metrics.
-     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
+     * @param {V1MetricType} [metricType] When sorting workloads by sort_key, specify training or validation form of a metric.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
      * @param {string} [group] Metric group (training, validation, etc).
      * @param {boolean} [removeDeletedCheckpoints] Remove deleted checkpoints.
      * @param {*} [options] Override http request option.
@@ -30973,6 +31594,19 @@ export class TrialsApi extends BaseAPI {
      */
     public killTrial(id: number, options?: any) {
         return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retain logs for a Trial.
+     * @param {number} trialId The ID of the trial.
+     * @param {V1PutTrialRetainLogsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TrialsApi
+     */
+    public putTrialRetainLogs(trialId: number, body: V1PutTrialRetainLogsRequest, options?: any) {
+        return TrialsApiFp(this.configuration).putTrialRetainLogs(trialId, body, options)(this.fetch, this.basePath)
     }
     
     /**

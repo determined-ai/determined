@@ -5,27 +5,30 @@ from typing import Any, Callable, Dict, List, Sequence
 import termcolor
 
 from determined import cli
+
+# avoid circular import
+from determined.cli import _declarative_argparse as detparse
 from determined.cli import errors, render
-from determined.common import api, declarative_argparse
+from determined.common import api
 from determined.common.api import authentication, bindings
 
-output_format_args: Dict[str, declarative_argparse.Arg] = {
-    "json": declarative_argparse.Arg(
+output_format_args: Dict[str, detparse.Arg] = {
+    "json": detparse.Arg(
         "--json",
         action="store_true",
         help="Output in JSON format",
     ),
-    "yaml": declarative_argparse.Arg(
+    "yaml": detparse.Arg(
         "--yaml",
         action="store_true",
         help="Output in YAML format",
     ),
-    "csv": declarative_argparse.Arg(
+    "csv": detparse.Arg(
         "--csv",
         action="store_true",
         help="Output in CSV format",
     ),
-    "table": declarative_argparse.Arg(
+    "table": detparse.Arg(
         "--table",
         action="store_true",
         help="Output in table format",
@@ -42,24 +45,24 @@ def make_pagination_args(
     offset: int = 0,
     pages: api.PageOpts = api.PageOpts.all,
     supports_reverse: bool = False,
-) -> List[declarative_argparse.Arg]:
+) -> List[detparse.Arg]:
     if pages not in PAGE_CHOICES:
         raise NotImplementedError
 
     res = [
-        declarative_argparse.Arg(
+        detparse.Arg(
             "--limit",
             type=int,
             default=limit,
             help="Maximum items per page of results",
         ),
-        declarative_argparse.Arg(
+        detparse.Arg(
             "--offset",
             type=int,
             default=offset,
             help="Number of items to skip before starting page of results",
         ),
-        declarative_argparse.Arg(
+        detparse.Arg(
             "--pages",
             type=api.PageOpts,
             choices=PAGE_CHOICES,
@@ -70,7 +73,7 @@ def make_pagination_args(
 
     if supports_reverse:
         res += [
-            declarative_argparse.Arg(
+            detparse.Arg(
                 "--reverse",
                 default=False,
                 action="store_true",

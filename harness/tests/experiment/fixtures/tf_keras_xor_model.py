@@ -2,18 +2,15 @@ from typing import Any, List, cast
 
 import tensorflow as tf
 from packaging import version
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import binary_crossentropy
-from tensorflow.keras.metrics import categorical_accuracy
-from tensorflow.keras.models import Sequential
+from tensorflow.keras import layers, losses, metrics, models
 
 if version.parse(tf.__version__) < version.parse("2.11.0"):
-    from tensorflow.keras.optimizers import SGD, Adam
+    from tensorflow.keras import optimizers as opt
 else:
-    from tensorflow.keras.optimizers.legacy import SGD, Adam  # TODO MLG-443
+    from tensorflow.keras.optimizers import legacy as opt  # TODO MLG-443
 
 from determined import keras
-from tests.experiment.tf_utils import make_xor_data_sequences  # noqa: I202, I100
+from tests.experiment import tf_utils
 
 
 class StopVeryEarlyCallback(keras.callbacks.Callback):
@@ -22,7 +19,7 @@ class StopVeryEarlyCallback(keras.callbacks.Callback):
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-    return 1.0 - categorical_accuracy(y_true, y_pred)
+    return 1.0 - metrics.categorical_accuracy(y_true, y_pred)
 
 
 def predictions(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -43,19 +40,21 @@ class XORTrial(keras.TFKerasTrial):
         # In-memory Sequences work best with workers=0.
         self.context.configure_fit(verbose=False, workers=0)
 
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
-        model.add(Dense(1))
+        model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(SGD(lr=self.context.get_hparam("learning_rate"))),
-            binary_crossentropy,
+            self.context.wrap_optimizer(opt.SGD(lr=self.context.get_hparam("learning_rate"))),
+            losses.binary_crossentropy,
             metrics=[categorical_error],
         )
-        return cast(Sequential, model)
+        return cast(models.Sequential, model)
 
     def batch_size(self) -> int:
         return self.context.get_per_slot_batch_size()
@@ -66,11 +65,11 @@ class XORTrial(keras.TFKerasTrial):
         )
 
     def build_training_data_loader(self) -> keras.InputData:
-        train, _ = make_xor_data_sequences(batch_size=4)
+        train, _ = tf_utils.make_xor_data_sequences(batch_size=4)
         return train
 
     def build_validation_data_loader(self) -> keras.InputData:
-        _, test = make_xor_data_sequences(batch_size=4)
+        _, test = tf_utils.make_xor_data_sequences(batch_size=4)
         return test
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
@@ -78,54 +77,58 @@ class XORTrial(keras.TFKerasTrial):
 
 
 class XORTrialOldOptimizerAPI(XORTrial):
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
-        model.add(Dense(1))
+        model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            SGD(lr=self.context.get_hparam("learning_rate")),
-            binary_crossentropy,
+            opt.SGD(lr=self.context.get_hparam("learning_rate")),
+            losses.binary_crossentropy,
             metrics=[categorical_error],
         )
-        return cast(Sequential, model)
+        return cast(models.Sequential, model)
 
 
 class XORTrialWithTrainingMetrics(XORTrial):
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
-        model.add(Dense(1))
+        model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(SGD(lr=self.context.get_hparam("learning_rate"))),
-            binary_crossentropy,
-            metrics=[categorical_error, categorical_accuracy, predictions],
+            self.context.wrap_optimizer(opt.SGD(lr=self.context.get_hparam("learning_rate"))),
+            losses.binary_crossentropy,
+            metrics=[categorical_error, metrics.categorical_accuracy, predictions],
         )
-        return cast(Sequential, model)
+        return cast(models.Sequential, model)
 
 
-class CustomOptimizer(SGD):  # type: ignore
+class CustomOptimizer(opt.SGD):  # type: ignore
     pass
 
 
-class CustomDenseLayer(Dense):  # type: ignore
+class CustomDenseLayer(layers.Dense):  # type: ignore
     pass
 
 
 class XORTrialWithCustomObjects(XORTrial):
     def custom_loss_fn(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-        return binary_crossentropy(y_true, y_pred)
+        return losses.binary_crossentropy(y_true, y_pred)
 
     def custom_activation_fn(self, x: tf.Tensor) -> tf.Tensor:
         return tf.keras.activations.sigmoid(x)
 
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
             CustomDenseLayer(
                 self.context.get_hparam("hidden_size"),
@@ -133,29 +136,31 @@ class XORTrialWithCustomObjects(XORTrial):
                 input_shape=(2,),
             )
         )
-        model.add(Dense(1))
+        model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
             self.context.wrap_optimizer(
                 CustomOptimizer(lr=self.context.get_hparam("learning_rate"))
             ),
             loss=self.custom_loss_fn,
-            metrics=[categorical_error, categorical_accuracy, predictions],
+            metrics=[categorical_error, metrics.categorical_accuracy, predictions],
         )
-        return cast(Sequential, model)
+        return cast(models.Sequential, model)
 
 
 class XORTrialWithOptimizerState(XORTrial):
-    def build_model(self) -> Sequential:
-        model = Sequential()
+    def build_model(self) -> models.Sequential:
+        model = models.Sequential()
         model.add(
-            Dense(self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,))
+            layers.Dense(
+                self.context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)
+            )
         )
-        model.add(Dense(1))
+        model.add(layers.Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            self.context.wrap_optimizer(Adam(lr=self.context.get_hparam("learning_rate"))),
-            binary_crossentropy,
+            self.context.wrap_optimizer(opt.Adam(lr=self.context.get_hparam("learning_rate"))),
+            losses.binary_crossentropy,
             metrics=[categorical_error],
         )
-        return cast(Sequential, model)
+        return cast(models.Sequential, model)

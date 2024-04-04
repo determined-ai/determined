@@ -2,7 +2,7 @@ import shutil
 import sys
 
 import docker
-from termcolor import colored
+import termcolor
 
 
 def _print_see_more() -> None:
@@ -16,7 +16,7 @@ def check_docker_install() -> None:
     # Do we have `docker` executable available?
     if shutil.which("docker") is None:
         print(
-            colored(
+            termcolor.colored(
                 "Docker is required for local Determined cluster. "
                 "Please ensure it is properly installed.",
                 "red",
@@ -29,9 +29,9 @@ def check_docker_install() -> None:
     try:
         docker.from_env()
     except docker.errors.DockerException as ex:
-        print(colored("Failed to connect to Docker daemon: %s" % ex, "red"))
+        print(termcolor.colored("Failed to connect to Docker daemon: %s" % ex, "red"))
         print(
-            colored(
+            termcolor.colored(
                 "Please ensure that the Docker daemon is running "
                 "and that the current user has access permissions.",
                 "red",

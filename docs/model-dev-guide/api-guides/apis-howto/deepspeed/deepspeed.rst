@@ -303,6 +303,8 @@ interleaving micro batches:
        loss = self.model_engine.eval_batch()
        return {"loss": loss}
 
+.. _deepspeed-profiler:
+
 ***********
  Profiling
 ***********

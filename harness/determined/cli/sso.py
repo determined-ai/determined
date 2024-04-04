@@ -1,16 +1,14 @@
+import argparse
+import getpass
 import sys
 import webbrowser
-from argparse import Namespace
-from getpass import getpass
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http import server
 from typing import Any, Callable, List
-from urllib.parse import parse_qs, urlparse
+from urllib import parse
 
-from determined import cli
+from determined import cli, errors
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.declarative_argparse import Arg, Cmd
-from determined.errors import EnterpriseOnlyError
 
 CLI_REDIRECT_PORT = 49176
 
@@ -27,11 +25,11 @@ def handle_token(sess: api.BaseSession, master_url: str, token: str) -> None:
 
 
 def make_handler(sess: api.BaseSession, master_url: str, close_cb: Callable[[int], None]) -> Any:
-    class TokenAcceptHandler(BaseHTTPRequestHandler):
+    class TokenAcceptHandler(server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             try:
                 """Serve a GET request."""
-                token = parse_qs(urlparse(self.path).query)["token"][0]
+                token = parse.parse_qs(parse.urlparse(self.path).query)["token"][0]
                 handle_token(sess, master_url, token)
 
                 self.send_response(200)
@@ -50,13 +48,13 @@ def make_handler(sess: api.BaseSession, master_url: str, close_cb: Callable[[int
     return TokenAcceptHandler
 
 
-def sso(args: Namespace) -> None:
+def sso(args: argparse.Namespace) -> None:
     sess = cli.unauth_session(args)
     master_info = sess.get("info").json()
     try:
         sso_providers = master_info["sso_providers"]
     except KeyError:
-        raise EnterpriseOnlyError("No SSO providers data")
+        raise errors.EnterpriseOnlyError("No SSO providers data")
     if not sso_providers:
         print("No SSO providers found.")
         return
@@ -87,7 +85,7 @@ def sso(args: Namespace) -> None:
                 " if it did not, please visit {}".format(sso_url)
             )
             print("Killing this process before signing on will cancel authentication.")
-            with HTTPServer(
+            with server.HTTPServer(
                 ("localhost", CLI_REDIRECT_PORT),
                 make_handler(sess, args.master, lambda code: sys.exit(code)),
             ) as httpd:
@@ -104,22 +102,22 @@ def sso(args: Namespace) -> None:
     )
     token = None
     while not token:
-        user_input_url = getpass(prompt="\n(hidden) localhost URL? ")
+        user_input_url = getpass.getpass(prompt="\n(hidden) localhost URL? ")
         try:
-            token = parse_qs(urlparse(user_input_url).query)["token"][0]
+            token = parse.parse_qs(parse.urlparse(user_input_url).query)["token"][0]
             handle_token(sess, args.master, token)
         except (KeyError, IndexError):
             print(f"Could not extract token from localhost URL. {example_url}")
 
 
-def list_providers(args: Namespace) -> None:
+def list_providers(args: argparse.Namespace) -> None:
     sess = cli.unauth_session(args)
     master_info = sess.get("info").json()
 
     try:
         sso_providers = master_info["sso_providers"]
     except KeyError:
-        raise EnterpriseOnlyError("No SSO providers data")
+        raise errors.EnterpriseOnlyError("No SSO providers data")
 
     if not sso_providers:
         print("No SSO providers found.")
@@ -131,14 +129,14 @@ def list_providers(args: Namespace) -> None:
 # fmt: off
 
 args_description = [
-    Cmd("auth", None, "manage auth", [
-        Cmd("login", sso, "sign on with an auth provider", [
-            Arg("-p", "--provider", type=str,
+    cli.Cmd("auth", None, "manage auth", [
+        cli.Cmd("login", sso, "sign on with an auth provider", [
+            cli.Arg("-p", "--provider", type=str,
                 help="auth provider to use (not needed if the Determined master only supports"
                 " one provider)"),
-            Arg("--headless", action="store_true", help="force headless cli auth")
+            cli.Arg("--headless", action="store_true", help="force headless cli auth")
         ]),
-        Cmd("list-providers", list_providers, "lists the available auth providers", []),
+        cli.Cmd("list-providers", list_providers, "lists the available auth providers", []),
     ])
 ]  # type: List[Any]
 

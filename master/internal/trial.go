@@ -300,6 +300,7 @@ func (t *trial) create() error {
 		model.JSONObj(t.searcher.Create.Hparams),
 		t.warmStartCheckpoint,
 		int64(t.searcher.Create.TrialSeed),
+		t.taskSpec.LogRetentionDays,
 	)
 
 	err := t.addTask(context.TODO())
@@ -477,11 +478,12 @@ func (t *trial) maybeAllocateTask() error {
 
 func (t *trial) addTask(ctx context.Context) error {
 	return db.AddTask(ctx, &model.Task{
-		TaskID:     t.taskID,
-		TaskType:   model.TaskTypeTrial,
-		StartTime:  t.jobSubmissionTime, // TODO: Why is this the job submission time..?
-		JobID:      &t.jobID,
-		LogVersion: model.CurrentTaskLogVersion,
+		TaskID:           t.taskID,
+		TaskType:         model.TaskTypeTrial,
+		StartTime:        t.jobSubmissionTime, // TODO: Why is this the job submission time..?
+		JobID:            &t.jobID,
+		LogVersion:       model.CurrentTaskLogVersion,
+		LogRetentionDays: t.taskSpec.LogRetentionDays,
 	})
 }
 

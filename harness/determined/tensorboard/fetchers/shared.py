@@ -5,12 +5,12 @@ import posixpath
 import shutil
 from typing import Any, Callable, Dict, Generator, List
 
-from .base import Fetcher
+from determined.tensorboard.fetchers import base
 
 logger = logging.getLogger("determined.tensorboard.shared")
 
 
-class SharedFSFetcher(Fetcher):
+class SharedFSFetcher(base.Fetcher):
     def __init__(self, storage_config: Dict[str, Any], storage_paths: List[str], local_dir: str):
         """Fetch tensorboard events files from storage and save to local directory"""
         _ = storage_config

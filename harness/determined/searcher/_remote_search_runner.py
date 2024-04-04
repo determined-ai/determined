@@ -1,7 +1,7 @@
 import logging
 import os
+import pathlib
 import pickle
-from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import determined as det
@@ -33,7 +33,7 @@ class RemoteSearchRunner(searcher.SearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         model_dir: Optional[str] = None,
-        includes: Optional[Iterable[Union[str, Path]]] = None,
+        includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> int:
         """
         Run custom search as a Core API experiment (on-cluster).

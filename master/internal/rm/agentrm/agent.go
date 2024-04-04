@@ -43,7 +43,7 @@ type (
 
 		mu sync.Mutex
 
-		id               agentID
+		id               aproto.ID
 		registeredTime   time.Time
 		address          string
 		agentUpdates     *queue.Queue[agentUpdatedEvent]
@@ -115,7 +115,7 @@ type (
 )
 
 func newAgent(
-	id agentID,
+	id aproto.ID,
 	agentUpdates *queue.Queue[agentUpdatedEvent],
 	resourcePoolName string,
 	rpConfig *config.ResourcePoolConfig,
@@ -150,7 +150,7 @@ func newAgent(
 		// agentReconnectWait if it never reconnects.
 		// Ensure RP is aware of the agent.
 		a.syslog.Infof("adding agent: %s", a.agentState.agentID())
-		err := a.updateAgentStartStats(a.resourcePoolName, string(a.id), a.agentState.numSlots())
+		err := a.updateAgentStartStats(a.resourcePoolName, a.id, a.agentState.numSlots())
 		if err != nil {
 			a.syslog.WithError(err).Error("failed to update agent start stats")
 		}
@@ -298,7 +298,7 @@ func (a *agent) stop(cause error) {
 	}
 
 	a.syslog.Infof("removing agent: %s", a.id)
-	err := a.updateAgentEndStats(string(a.id))
+	err := a.updateAgentEndStats(a.id)
 	if err != nil {
 		a.syslog.WithError(err).Error("failed to update agent end stats")
 	}
@@ -655,9 +655,9 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 		if a.taskNeedsRecording(msg.ContainerStatsRecord) {
 			var err error
 			if msg.ContainerStatsRecord.EndStats {
-				err = db.RecordTaskEndStatsBun(context.TODO(), msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskEndStats(context.TODO(), msg.ContainerStatsRecord.Stats)
 			} else {
-				err = db.RecordTaskStatsBun(context.TODO(), msg.ContainerStatsRecord.Stats)
+				err = db.RecordTaskStats(context.TODO(), msg.ContainerStatsRecord.Stats)
 			}
 			if err != nil {
 				a.syslog.Errorf("error recording task stats %s", err)
@@ -680,7 +680,7 @@ func (a *agent) agentStarted(agentStarted *aproto.AgentStarted) {
 	a.agentState.agentStarted(agentStarted)
 
 	a.syslog.Infof("adding agent: %s", a.agentState.agentID())
-	err := a.updateAgentStartStats(a.resourcePoolName, string(a.id), a.agentState.numSlots())
+	err := a.updateAgentStartStats(a.resourcePoolName, a.id, a.agentState.numSlots())
 	if err != nil {
 		a.syslog.WithError(err).Error("failed to update agent start stats")
 	}
@@ -915,17 +915,17 @@ func (a *agent) notifyListeners() {
 }
 
 func (a *agent) updateAgentStartStats(
-	poolName string, agentID string, slots int,
+	poolName string, agentID aproto.ID, slots int,
 ) error {
 	return db.SingleDB().RecordAgentStats(&model.AgentStats{
 		ResourcePool: poolName,
-		AgentID:      agentID,
+		AgentID:      string(agentID),
 		Slots:        slots,
 	})
 }
 
-func (a *agent) updateAgentEndStats(agentID string) error {
+func (a *agent) updateAgentEndStats(agentID aproto.ID) error {
 	return db.EndAgentStats(&model.AgentStats{
-		AgentID: agentID,
+		AgentID: string(agentID),
 	})
 }

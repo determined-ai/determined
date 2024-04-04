@@ -10,9 +10,10 @@ import (
 	"io"
 	"math"
 	"math/rand"
-	"sort"
 	"testing"
 	"time"
+
+	"github.com/golang/protobuf/ptypes/timestamp"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
-	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
@@ -51,15 +51,6 @@ func TestTrialProfilerMetrics(t *testing.T) {
 	assert.NilError(t, err, "failed to start master")
 
 	trialProfilerMetricsTests(creds, t, cl, pgDB)
-}
-
-func TestTrialProfilerMetricsAvailableSeries(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
-	defer cancel()
-	assert.NilError(t, err, "failed to start master")
-
-	trialProfilerMetricsAvailableSeriesTests(creds, t, cl, pgDB)
 }
 
 func trialDetailAPITests(
@@ -101,9 +92,10 @@ func trialDetailAPITests(
 		t.Run(tc.name, func(t *testing.T) {
 			_, activeConfig, trial := setupTrial(t, pgDB)
 
+			step := int32(id * activeConfig.SchedulingUnit())
 			metrics := trialv1.TrialMetrics{
 				TrialId:        int32(trial.ID),
-				StepsCompleted: int32(id * activeConfig.SchedulingUnit()),
+				StepsCompleted: &step,
 			}
 
 			m := structpb.Struct{}
@@ -169,9 +161,10 @@ func trialWorkloadsAPIHugeMetrics(
 		batchMetrics = append(batchMetrics, makeMetrics())
 	}
 
+	step := int32(1)
 	metrics := trialv1.TrialMetrics{
 		TrialId:        int32(trial.ID),
-		StepsCompleted: stepSize,
+		StepsCompleted: &step,
 		Metrics: &commonv1.Metrics{
 			AvgMetrics:   makeMetrics(),
 			BatchMetrics: batchMetrics,
@@ -211,33 +204,37 @@ func trialProfilerMetricsTests(
 	// If we begin to stream for metrics.
 	ctx, cancel := context.WithTimeout(creds, time.Minute)
 	defer cancel()
+	labels := trialv1.TrialProfilerMetricLabels{
+		TrialId:    int32(trial.ID),
+		GpuUuid:    "1",
+		Name:       "gpu_util",
+		AgentId:    "brads agent",
+		MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+	}
 	tlCl, err := cl.GetTrialProfilerMetrics(ctx, &apiv1.GetTrialProfilerMetricsRequest{
-		Labels: &trialv1.TrialProfilerMetricLabels{
-			TrialId:    int32(trial.ID),
-			Name:       "gpu_util",
-			AgentId:    "brad's agent",
-			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
-		},
+		Labels: &labels,
 		Follow: true,
 	})
 	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
+	reportTime := timestamppb.Now()
+	// Round off timestamps to milliseconds.
+	reportTime.Nanos = int32(math.Floor(float64(reportTime.Nanos)/float64(time.Millisecond)) *
+		float64(time.Millisecond))
 
 	for i := 0; i < 10; i++ {
 		// When we add some metrics that match our stream.
-		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brad's agent", "1")
-		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				match,
-			},
+		match := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "brads agent", "1", reportTime)
+		_, err = cl.ReportTrialMetrics(creds, &apiv1.ReportTrialMetricsRequest{
+			Metrics: match,
+			Group:   "gpu",
 		})
 		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
 
 		// And some that do not match our stream.
-		notMatch := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "someone else's agent", "1")
-		_, err = cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				notMatch,
-			},
+		notMatch := randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "someone elses agent", "1", reportTime)
+		_, err = cl.ReportTrialMetrics(creds, &apiv1.ReportTrialMetricsRequest{
+			Metrics: notMatch,
+			Group:   "gpu",
 		})
 		assert.NilError(t, err, "failed to insert mocked unmatched trial profiler metrics")
 
@@ -245,14 +242,17 @@ func trialProfilerMetricsTests(
 		recvMetricsBatch, metricErr := tlCl.Recv()
 		assert.NilError(t, metricErr, "failed to stream metrics")
 
-		// Just nil the values since the floats and timestamps lose a little precision getting thrown
-		// around so much.
-		match.Values = nil
-		match.Timestamps = nil
-		recvMetricsBatch.Batch.Values = nil
-		recvMetricsBatch.Batch.Timestamps = nil
+		expectedBatch := &trialv1.TrialProfilerMetricsBatch{
+			Values:     nil,
+			Timestamps: []*timestamp.Timestamp{reportTime},
+			Labels:     &labels,
+		}
 
-		bOrig, b0Err := protojson.Marshal(match)
+		// Just nil the values since the floats lose a little precision getting thrown
+		// around so much.
+		recvMetricsBatch.Batch.Values = nil
+
+		bOrig, b0Err := protojson.Marshal(expectedBatch)
 		assert.NilError(t, b0Err, "failed marshal original metrics")
 
 		bRecv, bRecvErr := protojson.Marshal(recvMetricsBatch.Batch)
@@ -271,113 +271,24 @@ func trialProfilerMetricsTests(
 	assert.Equal(t, err, io.EOF, "log stream didn't terminate with trial")
 }
 
-func trialProfilerMetricsAvailableSeriesTests(
-	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
-) {
-	_, _, trial := setupTrial(t, pgDB)
-
-	ctx, cancel := context.WithTimeout(creds, time.Minute)
-	defer cancel()
-	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
-		TrialId: int32(trial.ID),
-		Follow:  true,
-	})
-	assert.NilError(t, err, "failed to initiate trial profiler series stream")
-
-	testBatches := []*trialv1.TrialProfilerMetricsBatch{
-		randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "agent0", "1"),
-		randTrialProfilerSystemMetrics(trial.ID, "gpu_util", "agent1", "1"),
-		randTrialProfilerSystemMetrics(trial.ID, "cpu_util", "agent0", "1"),
-		randTrialProfilerSystemMetrics(trial.ID, "cpu_util", "agent2", "1"),
-		randTrialProfilerSystemMetrics(trial.ID, "other_metric", "", ""),
-	}
-
-	var expected []string
-	internal.TrialAvailableSeriesBatchWaitTime = 10 * time.Millisecond
-
-	for _, tb := range testBatches {
-		expected = append(expected, tb.Labels.Name)
-		_, err := cl.PostTrialProfilerMetricsBatch(creds, &apiv1.PostTrialProfilerMetricsBatchRequest{
-			Batches: []*trialv1.TrialProfilerMetricsBatch{
-				tb,
-			},
-		})
-		assert.NilError(t, err, "failed to insert mocked trial profiler metrics")
-
-		// This may need 2 or more attempts; gRPC streaming does not provide any backpressure
-		// mechanism, if the client is not ready to receive a message when it is sent to the
-		// stream server side, the server will buffer it and any calls to Send will return,
-		// allowing the code to chug along merrily and Send more and more data while the
-		// client doesn't consume it. Because of this, we give the test a chance to read
-		// out stale entries before marking the attempt as a failure. For more detail, see
-		// https://github.com/grpc/grpc-go/issues/2159.
-		shots := 5
-		var resp *apiv1.GetTrialProfilerAvailableSeriesResponse
-		for i := 1; i <= shots; i++ {
-			resp, err = tlCl.Recv()
-			assert.NilError(t, err, "failed to stream metrics")
-
-			if len(expected) == len(resp.Labels) {
-				break
-			}
-
-			if i == shots {
-				assert.Equal(t, len(expected), len(resp.Labels), "incorrect number of labels")
-			}
-		}
-
-		var actual []string
-		for _, l := range resp.Labels {
-			actual = append(actual, l.Name)
-		}
-
-		sort.Strings(expected)
-		sort.Strings(actual)
-
-		assert.DeepEqual(t, expected, actual)
-	}
-}
-
-func sequentialIntSlice(start, n int) []int32 {
-	fs := make([]int32, n)
-	for i := 0; i < n; i++ {
-		fs[i] = int32(start + i)
-	}
-	return fs
-}
-
-func randFloatSlice(n int) []float32 {
-	fs := make([]float32, n)
-	for i := 0; i < n; i++ {
-		fs[i] = rand.Float32() //nolint: gosec
-	}
-	return fs
-}
-
-func pbTimestampSlice(n int) []*timestamppb.Timestamp {
-	ts := make([]*timestamppb.Timestamp, n)
-	for i := 0; i < n; i++ {
-		ts[i] = timestamppb.Now()
-		// Round off to millis.
-		ts[i].Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
-			float64(time.Millisecond))
-	}
-	return ts
-}
-
 func randTrialProfilerSystemMetrics(
-	trialID int, name, agentID, gpuUUID string,
-) *trialv1.TrialProfilerMetricsBatch {
-	return &trialv1.TrialProfilerMetricsBatch{
-		Values:     randFloatSlice(5),
-		Batches:    sequentialIntSlice(0, 5),
-		Timestamps: pbTimestampSlice(5),
-		Labels: &trialv1.TrialProfilerMetricLabels{
-			TrialId:    int32(trialID),
-			Name:       name,
-			AgentId:    agentID,
-			GpuUuid:    gpuUUID,
-			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
+	trialID int, name, agentID, gpuUUID string, timestamp *timestamppb.Timestamp,
+) *trialv1.TrialMetrics {
+	metrics := structpb.Struct{}
+	j, _ := json.Marshal(map[string]interface{}{
+		agentID: map[string]interface{}{
+			gpuUUID: map[string]float32{
+				name: rand.Float32(), //nolint: gosec
+			},
+		},
+	})
+	_ = protojson.Unmarshal(j, &metrics)
+	return &trialv1.TrialMetrics{
+		TrialId:    int32(trialID),
+		TrialRunId: int32(0),
+		ReportTime: timestamp,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics: &metrics,
 		},
 	}
 }

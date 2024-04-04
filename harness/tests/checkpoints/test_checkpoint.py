@@ -1,6 +1,6 @@
 import io
+import pathlib
 import tarfile
-from pathlib import Path
 
 import responses
 from responses import matchers
@@ -29,7 +29,7 @@ mock_content = {
 }
 
 
-def setup_mock_checkpoint(directory: Path) -> None:
+def setup_mock_checkpoint(directory: pathlib.Path) -> None:
     for k, v in mock_content.items():
         fpath = directory / k
         if len(v) == 0:
@@ -41,7 +41,7 @@ def setup_mock_checkpoint(directory: Path) -> None:
                 f.write(v)
 
 
-def verify_test_checkpoint(directory: Path) -> None:
+def verify_test_checkpoint(directory: pathlib.Path) -> None:
     for k, v in mock_content.items():
         fpath = directory / k
         if len(v) == 0:
@@ -52,7 +52,7 @@ def verify_test_checkpoint(directory: Path) -> None:
                 assert f.read() == v
 
 
-def get_response_raw_tgz(checkpoint_path: Path) -> bytes:
+def get_response_raw_tgz(checkpoint_path: pathlib.Path) -> bytes:
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w|gz") as tf:
         for k in mock_content:
@@ -62,7 +62,7 @@ def get_response_raw_tgz(checkpoint_path: Path) -> bytes:
 
 
 @responses.activate
-def test_checkpoint_download_via_master(tmp_path: Path) -> None:
+def test_checkpoint_download_via_master(tmp_path: pathlib.Path) -> None:
     uuid_tgz = "dummy-uuid-123-tgz"
     checkpoint_path = tmp_path / "mock-checkpoint"
 

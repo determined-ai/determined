@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -42,4 +43,24 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 	assert.NilError(t, err)
 	assert.DeepEqual(t, taskSummary, make(map[model.AllocationID]sproto.AllocationSummary))
 	rm.stop()
+}
+
+func TestAgentRMHealthCheck(t *testing.T) {
+	conf := &config.ResourceConfig{
+		RootManagerInternal: &config.ResourceManagerConfig{
+			AgentRM: &config.AgentResourceManagerConfig{
+				Name: "testname",
+			},
+		},
+	}
+
+	rm, err := New(nil, echo.New(), conf.ResourceManagers()[0], nil, nil)
+	require.NoError(t, err)
+
+	require.Equal(t, []model.ResourceManagerHealth{
+		{
+			Name:   "testname",
+			Status: model.Healthy,
+		},
+	}, rm.HealthCheck())
 }

@@ -1,35 +1,39 @@
+import collections
 import itertools
 import logging
 import sys
 import threading
 import traceback
-from collections import namedtuple
 from typing import Any, Callable, List
 
 import numpy as np
 import pytest
 
-from determined import core
-from determined.pytorch import Reducer, _PyTorchReducerContext, _simple_reduce_metrics
+from determined import core, pytorch
 
 logger = logging.getLogger(__name__)
 
 
 def test_reducer() -> None:
     metrics = np.array([0.25, 0.5, 0.75, 1, 25.5, 1.9])
-    assert np.around(_simple_reduce_metrics(Reducer.AVG, metrics), decimals=2) == 4.98
-    assert _simple_reduce_metrics(Reducer.SUM, metrics) == 29.9
-    assert _simple_reduce_metrics(Reducer.MIN, metrics) == 0.25
-    assert _simple_reduce_metrics(Reducer.MAX, metrics) == 25.5
+    assert (
+        np.around(pytorch._simple_reduce_metrics(pytorch.Reducer.AVG, metrics), decimals=2) == 4.98
+    )
+    assert pytorch._simple_reduce_metrics(pytorch.Reducer.SUM, metrics) == 29.9
+    assert pytorch._simple_reduce_metrics(pytorch.Reducer.MIN, metrics) == 0.25
+    assert pytorch._simple_reduce_metrics(pytorch.Reducer.MAX, metrics) == 25.5
 
     batches_per_process = [1, 2, 5, 4, 5, 6]
     assert (
-        np.around(_simple_reduce_metrics(Reducer.AVG, metrics, batches_per_process), decimals=2)
+        np.around(
+            pytorch._simple_reduce_metrics(pytorch.Reducer.AVG, metrics, batches_per_process),
+            decimals=2,
+        )
         == 6.43
     )
 
 
-DummyDistributedReducerContext = namedtuple(
+DummyDistributedReducerContext = collections.namedtuple(
     "DummyDistributedReducerContext", "distributed_context reducer_context wrapped_reducer"
 )
 
@@ -101,7 +105,7 @@ def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
             chief_ip="localhost",
             force_tcp=False,
         )
-        reducer_context = _PyTorchReducerContext(distributed_context.allgather)
+        reducer_context = pytorch._PyTorchReducerContext(distributed_context.allgather)
         # reducer_context.wrap_reducer(lambda x: x, "dummy")
         wrapped_reducer = reducer_context.wrap_reducer(dummy_reducer)
         return DummyDistributedReducerContext(distributed_context, reducer_context, wrapped_reducer)

@@ -6,25 +6,17 @@ import pickle
 from typing import Any, Dict, Type
 
 import determined as det
-from determined import searcher
-from determined.pytorch.dsat import (
-    ASHADSATSearchMethod,
-    BaseDSATSearchMethod,
-    BinarySearchDSATSearchMethod,
-    RandomDSATSearchMethod,
-    _defaults,
-    _TestDSATSearchMethod,
-    _utils,
-)
-from determined.util import merge_dicts
+from determined import searcher, util
+from determined.pytorch import dsat
+from determined.pytorch.dsat import defaults
 
 
-def get_search_method_class(method_string: str) -> Type[BaseDSATSearchMethod]:
+def get_search_method_class(method_string: str) -> Type[dsat.BaseDSATSearchMethod]:
     string_to_class_map = {
-        "binary": BinarySearchDSATSearchMethod,
-        "random": RandomDSATSearchMethod,
-        "asha": ASHADSATSearchMethod,
-        "_test": _TestDSATSearchMethod,
+        "binary": dsat.BinarySearchDSATSearchMethod,
+        "random": dsat.RandomDSATSearchMethod,
+        "asha": dsat.ASHADSATSearchMethod,
+        "_test": dsat.TestDSATSearchMethod,
     }
     if method_string not in string_to_class_map:
         raise ValueError(
@@ -40,7 +32,7 @@ def get_custom_dsat_exp_conf_from_args(
     Helper function which alters the user-submitted configuration and args into a configuration
     for the DS AT custom searchers.
     """
-    exp_config = _utils.get_dict_from_yaml_or_json_path(
+    exp_config = dsat.get_dict_from_yaml_or_json_path(
         args.config_path
     )  # add the search runner's experiment id to the description of the corresonding Trial
     additional_description = f"(#{args.experiment_id}) generated"
@@ -54,24 +46,24 @@ def get_custom_dsat_exp_conf_from_args(
     exp_config["searcher"] = {
         "name": "custom",
         "metric": args.metric,
-        "smaller_is_better": _utils.smaller_is_better(args.metric),
+        "smaller_is_better": dsat.smaller_is_better(args.metric),
     }
-    # Add all necessary autotuning keys from defaults and user-supplied args.
-    autotuning_config = _defaults.AUTOTUNING_DICT
+    # Add all necessary autotuning keys from dsat.defaults and user-supplied args.
+    autotuning_config = defaults.AUTOTUNING_DICT
     autotuning_config["autotuning"]["start_profile_step"] = args.start_profile_step
     autotuning_config["autotuning"]["end_profile_step"] = args.end_profile_step
 
-    exp_config["hyperparameters"] = merge_dicts(
-        exp_config["hyperparameters"], {_defaults.OVERWRITE_KEY: autotuning_config}
+    exp_config["hyperparameters"] = util.merge_dicts(
+        exp_config["hyperparameters"], {defaults.OVERWRITE_KEY: autotuning_config}
     )
     # Add an internal key to the HP dict which enables the DSAT code path for Trial classes.
-    exp_config["hyperparameters"][_defaults.USE_DSAT_MODE_KEY] = True
+    exp_config["hyperparameters"][defaults.USE_DSAT_MODE_KEY] = True
 
     return exp_config
 
 
 def main(core_context: det.core.Context) -> None:
-    with pathlib.Path(_defaults.ARGS_PKL_PATH).open("rb") as f:
+    with pathlib.Path(defaults.ARGS_PKL_PATH).open("rb") as f:
         args = pickle.load(f)
     # On-cluster, the relative paths to the below files just come from the base names.
     args.config_path = os.path.basename(args.config_path)

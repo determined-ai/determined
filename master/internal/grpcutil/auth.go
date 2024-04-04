@@ -29,9 +29,12 @@ import (
 )
 
 const (
+	// GrpcMetadataPrefix is the prefix used for gRPC metadata headers.
+	GrpcMetadataPrefix = "Grpc-Metadata-"
 	//nolint:gosec // These are not potential hardcoded credentials.
-	gatewayTokenHeader    = "grpcgateway-authorization"
-	allocationTokenHeader = "x-allocation-token"
+	gatewayTokenHeader = "grpcgateway-authorization"
+	// AllocationTokenHeader is the header used to pass the allocation token.
+	AllocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"
 	cookieName            = "auth"
 )
@@ -86,7 +89,7 @@ func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, err
 	if !ok {
 		return nil, ErrTokenMissing
 	}
-	tokens := md[allocationTokenHeader]
+	tokens := md[AllocationTokenHeader]
 	if len(tokens) == 0 {
 		return nil, ErrTokenMissing
 	}

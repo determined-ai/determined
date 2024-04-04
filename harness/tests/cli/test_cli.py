@@ -1,11 +1,11 @@
+import collections
 import inspect
 import io
 import os
+import pathlib
 import sys
 import tempfile
 import uuid
-from collections import namedtuple
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 from unittest import mock
 
@@ -16,7 +16,7 @@ import requests_mock
 from determined.cli import cli, ntsc, render
 from determined.common import constants, context
 from determined.common.api import bindings
-from tests.filetree import FileTree
+from tests import filetree
 
 MINIMAL_CONFIG = '{"description": "test"}'
 
@@ -65,7 +65,7 @@ mock_experiment = {
 }
 
 
-def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
+def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: pathlib.Path) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
@@ -90,7 +90,7 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
 
     tempfile.mkstemp(dir=str(tmp_path))
 
-    with FileTree(tmp_path, {"config.yaml": MINIMAL_CONFIG}) as tree:
+    with filetree.FileTree(tmp_path, {"config.yaml": MINIMAL_CONFIG}) as tree:
         cli.main(
             ["experiment", "create", "--paused", str(tree.joinpath("config.yaml")), str(tmp_path)]
         )
@@ -140,7 +140,9 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
         cli.main(["shell", "config", "x"])
 
 
-def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
+def test_create_reject_large_model_def(
+    requests_mock: requests_mock.Mocker, tmp_path: pathlib.Path
+) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
@@ -153,40 +155,46 @@ def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_
 
     with tempfile.NamedTemporaryFile() as model_def_file:
         model_def_file.write(os.urandom(constants.MAX_CONTEXT_SIZE + 1))
-        with FileTree(tmp_path, {"config.yaml": MINIMAL_CONFIG}) as tree, pytest.raises(SystemExit):
+        with filetree.FileTree(tmp_path, {"config.yaml": MINIMAL_CONFIG}) as tree, pytest.raises(
+            SystemExit
+        ):
             cli.main(
                 ["experiment", "create", str(tree.joinpath("config.yaml")), model_def_file.name]
             )
 
 
-def test_read_context(tmp_path: Path) -> None:
-    with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
+def test_read_context(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "C.py"}
 
 
-def test_read_context_with_detignore(tmp_path: Path) -> None:
-    with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
+def test_read_context_with_detignore(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": ""}) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "C.py"}
 
-    with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\nA.py\n"}) as tree:
+    with filetree.FileTree(
+        tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\nA.py\n"}
+    ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"B.py", "C.py"}
 
-    with FileTree(tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\n*.py\n"}) as tree:
+    with filetree.FileTree(
+        tmp_path, {"A.py": "", "B.py": "", "C.py": "", ".detignore": "\n*.py\n"}
+    ) as tree:
         model_def = context.read_legacy_context(tree)
         assert model_def == []
 
 
-def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
-    with FileTree(
+def test_read_context_with_detignore_subdirs(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
             "B.py": "",
-            Path("subdir").joinpath("A.py"): "",
-            Path("subdir").joinpath("B.py"): "",
+            pathlib.Path("subdir").joinpath("A.py"): "",
+            pathlib.Path("subdir").joinpath("B.py"): "",
         },
     ) as tree:
         model_def = context.read_legacy_context(tree)
@@ -198,53 +206,53 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
             "subdir/B.py",
         }
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
             "B.py": "",
             ".detignore": "\nA.py\n",
-            Path("subdir").joinpath("A.py"): "",
-            Path("subdir").joinpath("B.py"): "",
+            pathlib.Path("subdir").joinpath("A.py"): "",
+            pathlib.Path("subdir").joinpath("B.py"): "",
         },
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"B.py", "subdir", "subdir/B.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
             "B.py": "",
-            Path("subdir").joinpath("A.py"): "",
-            Path("subdir").joinpath("B.py"): "",
+            pathlib.Path("subdir").joinpath("A.py"): "",
+            pathlib.Path("subdir").joinpath("B.py"): "",
             ".detignore": "\nsubdir/A.py\n",
         },
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py", "subdir", "subdir/B.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
             "B.py": "",
-            Path("subdir").joinpath("A.py"): "",
-            Path("subdir").joinpath("B.py"): "",
+            pathlib.Path("subdir").joinpath("A.py"): "",
+            pathlib.Path("subdir").joinpath("B.py"): "",
             ".detignore": "\n*.py\n",
         },
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert len(model_def) == 1
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {"A.py": "", "B.py": "", "subdir/A.py": "", "subdir/B.py": "", ".detignore": "\nsubdir\n"},
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "B.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
@@ -258,8 +266,8 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
         assert {f["path"] for f in model_def} == {"A.py", "B.py"}
 
 
-def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
-    with FileTree(
+def test_read_context_with_detignore_wildcard(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(
         tmp_path,
         {
             "dir/file.py": "",
@@ -272,7 +280,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "dir/file.py": "",
@@ -285,7 +293,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "dir/file.py": "",
@@ -298,7 +306,7 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
 
-    with FileTree(
+    with filetree.FileTree(
         tmp_path,
         {
             "dir/file.py": "",
@@ -312,8 +320,8 @@ def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
         assert {f["path"] for f in model_def} == {"dir"}
 
 
-def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
-    with FileTree(
+def test_read_context_ignore_pycaches(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(
         tmp_path,
         {
             "__pycache__/A.cpython-37.pyc": "",
@@ -326,8 +334,8 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
         assert {f["path"] for f in model_def} == {"A.py", "subdir", "subdir/A.py"}
 
 
-def test_includes(tmp_path: Path) -> None:
-    with FileTree(
+def test_includes(tmp_path: pathlib.Path) -> None:
+    with filetree.FileTree(
         tmp_path,
         {
             "A.py": "",
@@ -407,7 +415,7 @@ def test_cli_args_exist() -> None:
     assert e.value.code == 0
 
 
-Case = namedtuple("Case", ["input", "output", "colors"])
+Case = collections.namedtuple("Case", ["input", "output", "colors"])
 color_test_cases: List[Case] = [
     Case(1, "1", ["PRIMITIVES"]),
     Case(1.0, "1.0", ["PRIMITIVES"]),
@@ -449,7 +457,7 @@ def test_colored_str_output(case: Case) -> None:
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 def test_dev_unwrap_optional() -> None:
-    from determined.cli.dev import unwrap_optional
+    from determined.cli import dev
 
     annots = [
         Tuple[int, str],
@@ -459,9 +467,9 @@ def test_dev_unwrap_optional() -> None:
         bool,
     ]
     for annot in annots:
-        assert unwrap_optional(annot) == annot
-        assert unwrap_optional(Optional[annot]) == annot
-        assert unwrap_optional(Union[annot, None]) == annot
+        assert dev.unwrap_optional(annot) == annot
+        assert dev.unwrap_optional(Optional[annot]) == annot
+        assert dev.unwrap_optional(Union[annot, None]) == annot
 
     cases = [
         ("bool", bool),
@@ -472,12 +480,12 @@ def test_dev_unwrap_optional() -> None:
         ("typing.Union[str, NoneType]", str),
     ]
     for annot, expected in cases:
-        assert unwrap_optional(annot) == expected, annot
+        assert dev.unwrap_optional(annot) == expected, annot
 
 
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 def test_dev_bindings_parameter_inspect() -> None:
-    from determined.cli.dev import can_be_called_via_cli, is_supported_annotation
+    from determined.cli import dev
 
     ComplexType = TypeVar("ComplexType")
 
@@ -496,7 +504,7 @@ def test_dev_bindings_parameter_inspect() -> None:
     annot_expected.extend([(a, True) for a in supported])
 
     for annot, expected in annot_expected:
-        assert is_supported_annotation(annot) is expected, f"{annot} expected: {expected}"
+        assert dev.is_supported_annotation(annot) is expected, f"{annot} expected: {expected}"
 
         param1: inspect.Parameter = inspect.Parameter(
             "sth_with_default",
@@ -504,7 +512,7 @@ def test_dev_bindings_parameter_inspect() -> None:
             annotation=annot,
             default=None,
         )
-        assert can_be_called_via_cli([param1]) is True, param1
+        assert dev.can_be_called_via_cli([param1]) is True, param1
 
         param1 = inspect.Parameter(
             "no_default",
@@ -512,7 +520,7 @@ def test_dev_bindings_parameter_inspect() -> None:
             annotation=annot,
             default=inspect.Parameter.empty,
         )
-        assert can_be_called_via_cli([param1]) is expected, param1
+        assert dev.can_be_called_via_cli([param1]) is expected, param1
 
 
 args_sets = [
@@ -549,12 +557,12 @@ args_sets = [
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="requires Python3.8 or higher")
 @pytest.mark.parametrize("case", args_sets)
 def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]]) -> None:
-    from determined.cli.dev import bindings_sig, parse_args_to_kwargs
+    from determined.cli import dev
 
     args, expected = case
     for a in args:
         assert isinstance(a, str), a
 
-    _, params = bindings_sig(bindings.get_ExpMetricNames)
-    kwargs = parse_args_to_kwargs(args, params)
+    _, params = dev.bindings_sig(bindings.get_ExpMetricNames)
+    kwargs = dev.parse_args_to_kwargs(args, params)
     assert kwargs == expected, kwargs

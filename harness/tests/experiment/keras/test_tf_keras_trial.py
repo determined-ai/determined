@@ -1,6 +1,6 @@
 # type: ignore
 import os
-from pathlib import Path
+import pathlib
 from typing import Any, Callable, Dict, List, Optional
 
 import pytest
@@ -9,11 +9,11 @@ from packaging import version
 
 import determined as det
 from determined import keras, workload
-from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import tf_keras_xor_model  # noqa: I100
+from tests.experiment import utils
+from tests.experiment.fixtures import tf_keras_xor_model
 
 
-def test_executing_eagerly():
+def test_executing_eagerly() -> None:
     """
     While this may seem like a test we do not need, we actually do. This
     essentially tests that there are no side effects to our imports that would
@@ -33,7 +33,7 @@ def test_executing_eagerly():
         tf_keras_xor_model.XORTrialWithCustomObjects,
     ],
 )
-def xor_trial_controller(request):
+def xor_trial_controller(request: dict) -> det.TrialController:
     """
     This fixture provides a function that takes a hyperparameter dictionary as input and
     returns a trial controller. It is parameterized over different implementations, so that any test
@@ -108,7 +108,7 @@ class TestKerasTrial:
         controller.run()
 
     @pytest.mark.parametrize("test_checkpointing", [False, True])
-    def test_one_var_training(self, test_checkpointing, tmp_path):
+    def test_one_var_training(self, test_checkpointing, tmp_path) -> None:
         from tests.experiment.fixtures import tf_keras_one_var_model
 
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
@@ -207,7 +207,7 @@ class TestKerasTrial:
         )
         controller.run()
 
-    def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
+    def test_checkpointing(self, tmp_path: pathlib.Path, xor_trial_controller: Callable) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -263,7 +263,7 @@ class TestKerasTrial:
         model = keras.load_model_from_checkpoint_path(ckpt_path)
         assert isinstance(model, tf.keras.models.Model), type(model)
 
-    def test_optimizer_state(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
+    def test_optimizer_state(self, tmp_path: pathlib.Path, xor_trial_controller: Callable) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
@@ -309,7 +309,7 @@ class TestKerasTrial:
         )
         controller.run()
 
-    def test_callbacks(self):
+    def test_callbacks(self) -> None:
         from tests.experiment.fixtures import tf_keras_one_var_model
 
         def make_workloads() -> workload.Stream:
@@ -341,10 +341,10 @@ class TestKerasTrial:
         controller.run()
 
     @pytest.mark.parametrize("ckpt_ver", ["0.12.3", "0.13.7", "0.13.8"])
-    def test_ancient_checkpoints(self, ckpt_ver):
+    def test_ancient_checkpoints(self, ckpt_ver) -> None:
         from tests.experiment.fixtures import ancient_keras_ckpt
 
-        checkpoint_dir = Path(utils.fixtures_path("ancient-checkpoints"))
+        checkpoint_dir = pathlib.Path(utils.fixtures_path("ancient-checkpoints"))
         latest_checkpoint = f"{ckpt_ver}-keras"
 
         def make_workloads() -> workload.Stream:
@@ -369,7 +369,7 @@ class TestKerasTrial:
 
 
 @pytest.mark.tensorflow
-def test_iris(tmp_path: Path):
+def test_iris(tmp_path: pathlib.Path) -> None:
     """
     Make sure each example:
      - trains
@@ -449,7 +449,7 @@ def test_iris(tmp_path: Path):
 
 @pytest.mark.tensorflow
 @pytest.mark.gpu
-def test_tf2_no_op(tmp_path: Path):
+def test_tf2_no_op(tmp_path: pathlib.Path) -> None:
     """
     Make sure each example:
      - trains
@@ -492,13 +492,13 @@ def test_tf2_no_op(tmp_path: Path):
 
 
 @pytest.mark.parametrize("ckpt_ver", ["0.17.6", "0.17.7"])
-def test_checkpoint_loading(ckpt_ver):
+def test_checkpoint_loading(ckpt_ver) -> None:
     checkpoint_dir = os.path.join(utils.fixtures_path("ancient-checkpoints"), f"{ckpt_ver}-keras")
     model = keras.load_model_from_checkpoint_path(checkpoint_dir)
     assert isinstance(model, tf.keras.models.Model), type(model)
 
 
-def test_surface_native_error():
+def test_surface_native_error() -> None:
     from tests.experiment.fixtures import tf_keras_runtime_error
 
     def make_workloads() -> workload.Stream:
@@ -519,7 +519,7 @@ def test_surface_native_error():
 
 @pytest.mark.tensorflow
 @pytest.mark.tf1_cpu
-def test_rng_restore(tmp_path: Path):
+def test_rng_restore(tmp_path: pathlib.Path) -> None:
     checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
     latest_checkpoint = None
     steps_completed = 0

@@ -11,7 +11,7 @@ verify:
 
 .PHONY: init
 init:
-	terraform init
+	terraform init -upgrade
 
 .PHONY: plan
 plan: init
@@ -24,4 +24,4 @@ publish: init
 .PHONY: check
 check: init
 	terraform fmt -check=true -diff=true
-	terraform validate -check-variables=false
+	terraform validate

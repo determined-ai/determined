@@ -1,10 +1,10 @@
 import json
 import logging
 import os
+import pathlib
 import pickle
 import time
 import uuid
-from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
@@ -253,12 +253,12 @@ class LocalSearchRunner(SearchRunner):
     def __init__(
         self,
         search_method: searcher.SearchMethod,
-        searcher_dir: Optional[Path] = None,
+        searcher_dir: Optional[pathlib.Path] = None,
     ):
         super().__init__(search_method)
         self.state_path = None
 
-        self.searcher_dir = searcher_dir or Path.cwd()
+        self.searcher_dir = searcher_dir or pathlib.Path.cwd()
         if not self.searcher_dir.exists():
             self.searcher_dir.mkdir(parents=True)
         elif not self.searcher_dir.is_dir():
@@ -270,7 +270,7 @@ class LocalSearchRunner(SearchRunner):
         self,
         exp_config: Union[Dict[str, Any], str],
         model_dir: Optional[str] = None,
-        includes: Optional[Iterable[Union[str, Path]]] = None,
+        includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> int:
         """
         Run custom search.
@@ -349,7 +349,7 @@ class LocalSearchRunner(SearchRunner):
             f.write(str(self.state.last_event_id))
         os.replace(event_id_new_path, event_id_path)
 
-    def _get_state_path(self, experiment_id: int) -> Path:
+    def _get_state_path(self, experiment_id: int) -> pathlib.Path:
         return self.searcher_dir.joinpath(f"exp_{experiment_id}")
 
     def _show_experiment_paused_msg(self) -> None:

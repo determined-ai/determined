@@ -10,7 +10,14 @@ import {
   overwriteResourcePoolBindings,
 } from 'services/api';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
-import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
+import {
+  Agent,
+  ClusterOverview,
+  ClusterOverviewResource,
+  isResourceType,
+  ResourcePool,
+  ResourceType,
+} from 'types';
 import handleError from 'utils/error';
 import { percent } from 'utils/number';
 import { deepObservable, immutableObservable, Observable } from 'utils/observable';
@@ -132,18 +139,22 @@ class ClusterStore extends PollingStore {
   public readonly clusterOverview = this.#agents.select((agents) =>
     Loadable.map(agents, (agents) => {
       const overview: ClusterOverview = structuredClone(initClusterOverview);
-
       agents.forEach((agent) => {
-        agent.resources
-          .filter((resource) => resource.enabled)
-          .forEach((resource) => {
-            const isResourceFree = resource.container == null;
-            const availableResource = isResourceFree ? 1 : 0;
-            overview[resource.type].available += availableResource;
-            overview[resource.type].total++;
-            overview[ResourceType.ALL].available += availableResource;
-            overview[ResourceType.ALL].total++;
-          });
+        const TYPE_PREFIX = 'TYPE_';
+        const types = Object.keys(agent.slotStats.typeStats ?? {}).flatMap((key) => {
+          const type = key.replace(TYPE_PREFIX, '');
+          return isResourceType(type) ? [type] : [];
+        });
+        for (const type of types) {
+          const typeStat = agent.slotStats.typeStats[`${TYPE_PREFIX}${type}`];
+          const total = typeStat?.total ?? 0;
+          const available =
+            total - Object.values(typeStat?.states ?? {}).reduce((a, b) => a + b, 0);
+          overview[type].available += available;
+          overview[type].total += total;
+          overview[ResourceType.ALL].available += available;
+          overview[ResourceType.ALL].total += total;
+        }
       });
 
       for (const key in overview) {

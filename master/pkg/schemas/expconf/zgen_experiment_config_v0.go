@@ -108,6 +108,14 @@ func (e *ExperimentConfigV0) SetLogPolicies(val LogPoliciesConfigV0) {
 	e.RawLogPolicies = val
 }
 
+func (e ExperimentConfigV0) RetentionPolicy() *RetentionPolicyConfigV0 {
+	return e.RawRetentionPolicy
+}
+
+func (e *ExperimentConfigV0) SetRetentionPolicy(val *RetentionPolicyConfigV0) {
+	e.RawRetentionPolicy = val
+}
+
 func (e ExperimentConfigV0) MaxRestarts() int {
 	if e.RawMaxRestarts == nil {
 		panic("You must call WithDefaults on ExperimentConfigV0 before .MaxRestarts")

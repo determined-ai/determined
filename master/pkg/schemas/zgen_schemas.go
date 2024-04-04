@@ -845,6 +845,14 @@ var (
                 "$ref": "http://determined.ai/schemas/expconf/v0/log-policy.json"
             }
         },
+        "retention_policy": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/retention-policy.json"
+        },
         "max_restarts": {
             "type": [
                 "integer",
@@ -1894,6 +1902,28 @@ var (
                 "null"
             ],
             "default": 1
+        }
+    }
+}
+`)
+	textRetentionPolicyConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/retention-policy.json",
+    "title": "RetentionPolicyConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "log_retention_days"
+    ],
+    "properties": {
+        "log_retention_days": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": -1,
+            "maximum": 32767,
+            "default": null
         }
     }
 }
@@ -3235,6 +3265,8 @@ var (
 
 	schemaResourcesConfigV0 interface{}
 
+	schemaRetentionPolicyConfigV0 interface{}
+
 	schemaS3ConfigV0 interface{}
 
 	schemaAdaptiveASHAConfigV0 interface{}
@@ -4042,6 +4074,26 @@ func ParsedResourcesConfigV0() interface{} {
 	return schemaResourcesConfigV0
 }
 
+func ParsedRetentionPolicyConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaRetentionPolicyConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaRetentionPolicyConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaRetentionPolicyConfigV0 != nil {
+		return schemaRetentionPolicyConfigV0
+	}
+	err := json.Unmarshal(textRetentionPolicyConfigV0, &schemaRetentionPolicyConfigV0)
+	if err != nil {
+		panic("invalid embedded json for RetentionPolicyConfigV0")
+	}
+	return schemaRetentionPolicyConfigV0
+}
+
 func ParsedS3ConfigV0() interface{} {
 	cacheLock.RLock()
 	if schemaS3ConfigV0 != nil {
@@ -4533,6 +4585,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textReproducibilityConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/resources.json"
 	cachedSchemaBytesMap[url] = textResourcesConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/retention-policy.json"
+	cachedSchemaBytesMap[url] = textRetentionPolicyConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/s3.json"
 	cachedSchemaBytesMap[url] = textS3ConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"

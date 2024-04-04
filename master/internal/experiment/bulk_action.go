@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -632,19 +634,19 @@ func MoveExperiments(ctx context.Context,
 
 	var expChecks []archiveExperimentOKResult
 	getQ := db.Bun().NewSelect().
-		ModelTableExpr("experiments AS exp").
+		ModelTableExpr("experiments AS e").
 		Model(&expChecks).
-		Column("exp.id").
-		ColumnExpr("(exp.archived OR p.archived OR w.archived) AS archived").
+		Column("e.id").
+		ColumnExpr("(e.archived OR p.archived OR w.archived) AS archived").
 		ColumnExpr("TRUE AS state").
-		Join("JOIN projects p ON exp.project_id = p.id").
+		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	if filters == nil {
-		getQ = getQ.Where("exp.id IN (?)", bun.In(experimentIds))
+		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
 	} else {
 		getQ = queryBulkExperiments(getQ, filters).
-			Where("NOT (exp.archived OR p.archived OR w.archived)")
+			Where("NOT (e.archived OR p.archived OR w.archived)")
 	}
 
 	if getQ, err = AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
@@ -732,5 +734,100 @@ func MoveExperiments(ctx context.Context,
 			return nil, err
 		}
 	}
+	return results, nil
+}
+
+func changeExperimentConfigLogRetention(ctx context.Context, database db.DB,
+	expID int, numDays int16,
+) error {
+	exp, err := db.ExperimentByID(ctx, expID)
+	if err != nil {
+		return errors.Wrap(err, "fetching experiment from database")
+	}
+
+	// In long experiments like asha, if the user called this api right after creating the experiment,
+	// only the trials that were created at that time have the log retention days changed, any trials
+	// created after a while will have the same log retention days as in the task spec. After some
+	// discussion, we came to the conclusion that it would be simplest to not allow the users to run
+	// this command before an experiment is completed.
+	if !model.TerminalStates[exp.State] {
+		return status.Error(codes.FailedPrecondition, fmt.Sprintf(
+			"experiment in non terminal state '%s', try again later", exp.State))
+	}
+
+	activeConfig, err := database.ActiveExperimentConfig(exp.ID)
+	if err != nil {
+		return errors.Wrapf(
+			err, "unable to load config for experiment %v", exp.ID,
+		)
+	}
+	activeConfig.SetRetentionPolicy(&expconf.RetentionPolicyConfigV0{RawLogRetentionDays: &numDays})
+
+	if err := database.SaveExperimentConfig(exp.ID, activeConfig); err != nil {
+		return errors.Wrapf(err, "patching experiment %d", exp.ID)
+	}
+
+	return nil
+}
+
+// BulkUpdateLogRentention retains logs for the given list of experiments.
+func BulkUpdateLogRentention(ctx context.Context, database db.DB,
+	expIDs []int32, filters *apiv1.BulkExperimentFilters, numDays int16,
+) ([]ExperimentActionResult, error) {
+	var results []ExperimentActionResult
+	editableExperimentIDList, err := editableExperimentIds(ctx, expIDs, filters)
+	if err != nil {
+		return nil, err
+	}
+	if filters == nil {
+		for _, originalID := range expIDs {
+			if !slices.Contains(editableExperimentIDList, originalID) {
+				results = append(results, ExperimentActionResult{
+					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					ID:    originalID,
+				})
+			}
+		}
+	}
+
+	var intExpIDs []int
+	for _, v := range editableExperimentIDList {
+		err = changeExperimentConfigLogRetention(ctx, database, int(v), numDays)
+		if err != nil {
+			results = append(results, ExperimentActionResult{
+				Error: err,
+				ID:    v,
+			})
+		} else {
+			intExpIDs = append(intExpIDs, int(v))
+			results = append(results, ExperimentActionResult{
+				Error: nil,
+				ID:    v,
+			})
+		}
+	}
+
+	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiments")
+	}
+
+	if len(taskIDs) == 0 {
+		return results, nil
+	}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().Table("tasks").
+			Set("log_retention_days = ?", numDays).
+			Where("task_id IN (?)", bun.In(taskIDs)).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("updating log retention days for tasks: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return results, nil
 }

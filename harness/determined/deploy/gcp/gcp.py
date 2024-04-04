@@ -1,26 +1,24 @@
 import json
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
 import time
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import googleapiclient.discovery
-from google.auth.exceptions import DefaultCredentialsError
+import tabulate
+import termcolor
+from google.auth import exceptions
 from google.cloud import storage
-from googleapiclient.errors import HttpError
-from tabulate import tabulate
-from termcolor import colored
+from googleapiclient import discovery
+from googleapiclient import errors as google_errors
 
 from determined import util
-from determined.cli import render
-from determined.cli.errors import CliError
+from determined.cli import errors, render
 from determined.common import util as common_util
 from determined.deploy import healthcheck
-
-from .preflight import check_quota
+from determined.deploy.gcp import preflight
 
 TF_VARS_FILE = "terraform.tfvars.json"
 TF_STATE_FILE = "terraform.tfstate"
@@ -37,7 +35,7 @@ terraform {
 def deploy(configs: Dict, env: Dict, variables_to_exclude: List, dry_run: bool = False) -> None:
     set_validate_gcp_credentials(configs)
     if not configs.get("no_preflight_checks"):
-        check_quota(configs)
+        preflight.check_quota(configs)
 
     terraform_init(configs, env)
     if dry_run:
@@ -114,7 +112,7 @@ def terraform_init(configs: Dict, env: Dict) -> None:
 
     state_bucket = configs.get("tf_state_gcs_bucket_name")
     if state_bucket:
-        with (Path(terraform_dir(configs)) / "override.tf").open("w") as fout:
+        with (pathlib.Path(terraform_dir(configs)) / "override.tf").open("w") as fout:
             fout.write(TF_GCS_CONFIG % (state_bucket, configs["cluster_id"]))
 
     command = ["terraform", "init"]
@@ -301,7 +299,7 @@ def delete(configs: Dict, env: Dict, no_prompt: bool) -> None:
 
     set_gcp_credentials_env(tf_vars)
 
-    compute = googleapiclient.discovery.build("compute", "v1")
+    compute = discovery.build("compute", "v1")
 
     stop_master(compute, tf_vars)
     terminate_running_agents(compute, tf_vars)
@@ -340,12 +338,12 @@ def set_validate_gcp_credentials(
             set_gcp_credentials_env(tf_vars)
 
     try:
-        googleapiclient.discovery.build("compute", "v1")
-    except DefaultCredentialsError as exc:
+        discovery.build("compute", "v1")
+    except exceptions.DefaultCredentialsError as exc:
         err = (
-            colored("Unable to locate GCP credentials.", "red")
+            termcolor.colored("Unable to locate GCP credentials.", "red")
             + " Please set "
-            + colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow")
+            + termcolor.colored("GOOGLE_APPLICATION_CREDENTIALS", "yellow")
             + " or explicitly create credentials "
             + "and re-run the application. "
             + "For more information, please see "
@@ -353,7 +351,7 @@ def set_validate_gcp_credentials(
             + "s and "
             + "https://cloud.google.com/docs/authentication/getting-started"
         )
-        raise CliError(err) from exc
+        raise errors.CliError(err) from exc
 
 
 def set_gcp_credentials_env(tf_vars: Dict) -> None:
@@ -370,10 +368,10 @@ def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
 def check_or_create_gcsbucket(project_id: str, keypath: Optional[str] = None) -> None:
     set_validate_gcp_credentials(keypath=keypath)
     bucket_name = project_id + "-determined-deploy"
-    storage_service = googleapiclient.discovery.build("storage", "v1")
+    storage_service = discovery.build("storage", "v1")
     try:
         storage_service.buckets().get(bucket=bucket_name).execute()
-    except HttpError as err:
+    except google_errors.HttpError as err:
         if err.resp.status == 404:
             request_body = {
                 "name": bucket_name,
@@ -414,5 +412,5 @@ def list_clusters(bucket_name: str, project_id: str, print_format: str = "table"
         cluster_yaml = common_util.yaml_safe_dump(cluster_json)
         print(cluster_yaml)
     else:
-        print(tabulate(cluster_list, headers="firstrow"))
+        print(tabulate.tabulate(cluster_list, headers="firstrow"))
     return

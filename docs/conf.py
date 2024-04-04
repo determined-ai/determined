@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath('./_extensions'))
 project = "Determined"
 html_title = "Determined AI Documentation"
 copyright = time.strftime("%Y, Determined AI")
-author = "hello@determined.ai"
+author = "ai-open-source@hpe.com"
 version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text().strip()
 release = version
 language = "en"

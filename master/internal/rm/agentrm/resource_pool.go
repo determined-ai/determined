@@ -42,7 +42,7 @@ type resourcePool struct {
 	provisionerError error
 
 	agentService     *agents
-	agentStatesCache map[agentID]*agentState
+	agentStatesCache map[aproto.ID]*agentState
 	taskList         *tasklist.TaskList
 	groups           map[model.JobID]*tasklist.Group
 	queuePositions   tasklist.JobSortState // secondary sort key based on job submission time
@@ -195,7 +195,7 @@ func (rp *resourcePool) restoreResources(
 	agentStateMap := map[aproto.ID]*agentState{}
 
 	for agentRef, state := range rp.agentStatesCache {
-		agentStateMap[aproto.ID(state.agentID())] = rp.agentStatesCache[agentRef]
+		agentStateMap[state.agentID()] = rp.agentStatesCache[agentRef]
 	}
 
 	for _, cs := range containerSnapshots {

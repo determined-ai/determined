@@ -459,6 +459,7 @@ type Trial struct {
 	Restarts              int            `db:"restarts"`
 	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
+	LogRetentionDays      *int16         `db:"log_retention_days"`
 }
 
 // ToRunAndTrialV2 converts a trial to a run.
@@ -534,6 +535,7 @@ func NewTrial(
 	hparams JSONObj,
 	warmStartCheckpoint *Checkpoint,
 	trialSeed int64,
+	logRetentionDays *int16,
 ) *Trial {
 	var warmStartCheckpointID *int
 	if warmStartCheckpoint != nil {
@@ -547,6 +549,7 @@ func NewTrial(
 		HParams:               hparams,
 		WarmStartCheckpointID: warmStartCheckpointID,
 		Seed:                  trialSeed,
+		LogRetentionDays:      logRetentionDays,
 	}
 }
 

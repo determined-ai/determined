@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-MAINTAINER Determined AI <hello@determined.ai>
+MAINTAINER Determined AI <ai-open-source@hpe.com>
 
 RUN apt-get update -yq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

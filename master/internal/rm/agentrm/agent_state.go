@@ -42,7 +42,7 @@ type slot struct {
 type agentState struct {
 	syslog *log.Entry
 
-	id               agentID // TODO(DET-9976): Why agentID and aproto.ID? Let's just have one or the other.
+	id               aproto.ID
 	handler          *agent
 	Devices          map[device.Device]*cproto.ID
 	resourcePoolName string
@@ -59,7 +59,7 @@ type agentState struct {
 
 // newAgentState returns a new agent empty agent state backed by the handler.
 // TODO(DET-9977): It is error-prone that we can new up an agentState is invalid / would cause panics.
-func newAgentState(id agentID, maxZeroSlotContainers int) *agentState {
+func newAgentState(id aproto.ID, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		syslog:                log.WithField("component", "agent-state-state").WithField("id", id),
 		id:                    id,
@@ -77,7 +77,7 @@ func (a *agentState) string() string {
 	return string(a.id)
 }
 
-func (a *agentState) agentID() agentID {
+func (a *agentState) agentID() aproto.ID {
 	return a.id
 }
 
@@ -553,13 +553,13 @@ func (a *agentState) clearUnlessRecovered(
 
 // retrieveAgentStates reconstructs AgentStates from the database for all resource pools that
 // have agent_container_reattachment enabled.
-func retrieveAgentStates() (map[agentID]agentState, error) {
+func retrieveAgentStates() (map[aproto.ID]agentState, error) {
 	var snapshots []agentSnapshot
 	if err := db.Bun().NewSelect().Model(&snapshots).Scan(context.TODO()); err != nil {
 		return nil, fmt.Errorf("selecting agent snapshost: %w", err)
 	}
 
-	result := make(map[agentID]agentState, len(snapshots))
+	result := make(map[aproto.ID]agentState, len(snapshots))
 	for _, s := range snapshots {
 		state, err := newAgentStateFromSnapshot(s)
 		if err != nil {
@@ -644,7 +644,7 @@ func (a *agentState) restoreContainersField() error {
 	return nil
 }
 
-func clearAgentStates(agentIds []agentID) error {
+func clearAgentStates(agentIds []aproto.ID) error {
 	if _, err := db.Bun().NewDelete().Model((*agentSnapshot)(nil)).
 		Where("agent_id in (?)", bun.In(agentIds)).
 		Exec(context.TODO()); err != nil {

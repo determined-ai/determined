@@ -2,6 +2,7 @@ package agentrm
 
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
@@ -24,7 +25,7 @@ type resourceSummary struct {
 }
 
 func resourceSummaryFromAgentStates(
-	agentInfo map[agentID]*agentState,
+	agentInfo map[aproto.ID]*agentState,
 ) resourceSummary {
 	summary := resourceSummary{
 		numTotalSlots:          0,

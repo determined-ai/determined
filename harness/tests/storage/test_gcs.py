@@ -1,15 +1,14 @@
 import os
+import pathlib
 import uuid
-from pathlib import Path
 from typing import Dict, Iterator, List, Optional
 
-import google.auth.exceptions
-import google.cloud.storage
 import pytest
+from google.auth import exceptions
 
 from determined import errors
 from determined.common import storage
-from determined.tensorboard.fetchers.gcs import GCSFetcher
+from determined.tensorboard.fetchers import gcs
 from tests.storage import util
 
 BUCKET_NAME = "storage-unit-tests"
@@ -18,7 +17,7 @@ CHECK_KEY_CONTENT = b"yo, you have access"
 
 
 @pytest.fixture
-def prep_gcs_test_creds(tmp_path: Path) -> Iterator[None]:
+def prep_gcs_test_creds(tmp_path: pathlib.Path) -> Iterator[None]:
     """
     Check for the environment variable we pass as part of circleci's "storage-unit-tests" context.
 
@@ -45,7 +44,7 @@ def prep_gcs_test_creds(tmp_path: Path) -> Iterator[None]:
 
 
 def get_live_gcs_manager(
-    tmp_path: Path,
+    tmp_path: pathlib.Path,
     prefix: Optional[str],
     require_secrets: bool,
 ) -> storage.GCSStorageManager:
@@ -68,9 +67,7 @@ def get_live_gcs_manager(
         assert blob.download_as_bytes() == CHECK_KEY_CONTENT
     except errors.NoDirectStorageAccess as e:
         # No access detected.
-        if (not require_secrets) and isinstance(
-            e.__cause__, google.auth.exceptions.DefaultCredentialsError
-        ):
+        if (not require_secrets) and isinstance(e.__cause__, exceptions.DefaultCredentialsError):
             pytest.skip("No GCS access")
         raise
 
@@ -81,7 +78,7 @@ def get_live_gcs_manager(
 @pytest.mark.parametrize("prefix", [None, "test/prefix/"])
 def test_gcs_lifecycle(
     require_secrets: bool,
-    tmp_path: Path,
+    tmp_path: pathlib.Path,
     prefix: Optional[str],
     prep_gcs_test_creds: None,
 ) -> None:
@@ -100,18 +97,18 @@ def test_gcs_lifecycle(
 
 def get_tensorboard_fetcher_gcs(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
-) -> GCSFetcher:
+) -> gcs.GCSFetcher:
     storage_config = {"bucket": BUCKET_NAME}
 
     try:
-        fetcher = GCSFetcher(storage_config, paths_to_sync, local_sync_dir)
+        fetcher = gcs.GCSFetcher(storage_config, paths_to_sync, local_sync_dir)
 
         blob = fetcher.client.bucket(BUCKET_NAME).blob("check-access")
         assert blob.download_as_bytes() == CHECK_KEY_CONTENT
 
         return fetcher
 
-    except google.auth.exceptions.DefaultCredentialsError:
+    except exceptions.DefaultCredentialsError:
         # No access detected.
         if require_secrets:
             raise
@@ -120,7 +117,7 @@ def get_tensorboard_fetcher_gcs(
 
 @pytest.mark.cloud
 def test_tensorboard_fetcher_gcs(
-    require_secrets: bool, tmp_path: Path, prep_gcs_test_creds: None
+    require_secrets: bool, tmp_path: pathlib.Path, prep_gcs_test_creds: None
 ) -> None:
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)

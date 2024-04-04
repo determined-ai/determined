@@ -9,8 +9,7 @@ import torch
 import torch.distributed as dist
 
 import determined as det
-from determined import core, gpu, horovod, profiler, pytorch
-from determined.horovod import hvd
+from determined import core, gpu, horovod, pytorch
 
 logger = logging.getLogger("determined.pytorch")
 
@@ -29,7 +28,6 @@ class Trainer:
         self._context = context
         self._core = self._context._core
         self._distributed_backend = det._DistributedBackend()
-        self._det_profiler = None  # type: Optional[profiler.ProfilerAgent]
         self._info = det.get_cluster_info()
         self._local_training = self._info is None or self._info.task_type != "TRIAL"
 
@@ -41,6 +39,8 @@ class Trainer:
         end_after_batch: Optional[int] = None,
     ) -> None:
         """
+        @deprecated: Configure `fit(..., profiling_enabled=True) instead`.
+
         Configures the Determined profiler. This functionality is only supported for on-cluster
         training. For local training mode, this method is a no-op.
 
@@ -62,22 +62,9 @@ class Trainer:
            Profiles are collected for a maximum of 5 minutes, regardless of the settings above.
 
         """
-        if self._local_training:
-            self._det_profiler = profiler.DummyProfilerAgent()
-            return
-
-        assert self._info, "Determined profiler must be run on cluster."
-
-        self._det_profiler = profiler.ProfilerAgent(
-            session=self._core.train._session,
-            trial_id=str(self._info.trial.trial_id),
-            agent_id=self._info.agent_id,
-            profiling_is_enabled=enabled,
-            global_rank=self._core.distributed.get_rank(),
-            local_rank=self._core.distributed.get_local_rank(),
-            begin_on_batch=begin_on_batch,
-            end_after_batch=end_after_batch,
-            sync_timings=sync_timings,
+        logger.error(
+            "`trainer.configure_profiler` has been replaced with "
+            "`fit(..., profiling_enabled=True)` and will be removed in a future release."
         )
 
     def fit(
@@ -90,6 +77,7 @@ class Trainer:
         latest_checkpoint: Optional[str] = None,
         step_zero_validation: bool = False,
         test_mode: bool = False,
+        profiling_enabled: bool = False,
     ) -> None:
         """
         ``fit()`` trains a ``PyTorchTrial`` configured from the ``Trainer`` and handles
@@ -138,6 +126,8 @@ class Trainer:
                 training. Defaults to false.
             test_mode: Runs a minimal loop of training for testing and debugging purposes. Will
                 train and validate one batch. Defaults to false.
+            profiling_enabled: Enables system metric profiling functionality for on-cluster
+                training. Defaults to false.
         """
         # Set defaults.
         if checkpoint_period is None:
@@ -159,8 +149,8 @@ class Trainer:
             if not isinstance(max_length.value, int):
                 raise TypeError("max_length must be configured in TrainUnit(int) types.")
 
-            if self._det_profiler:
-                logger.warning("Determined profiler will be ignored in local training mode.")
+            if profiling_enabled:
+                logger.warning("Profiling is not supported in local training mode.")
 
             smaller_is_better = True
             searcher_metric_name = None
@@ -206,8 +196,8 @@ class Trainer:
             checkpoint_policy=checkpoint_policy,
             step_zero_validation=step_zero_validation,
             max_length=max_length,
-            det_profiler=self._det_profiler,
             global_batch_size=global_batch_size,
+            profiling_enabled=profiling_enabled,
         )
 
         trial_controller.run()
@@ -218,6 +208,7 @@ def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
 
     distributed_backend = det._DistributedBackend()
     if distributed_backend.use_horovod():
+        hvd = horovod.hvd
         hvd.require_horovod_type("torch", "PyTorchTrial is in use.")
         hvd.init()
         return core.DistributedContext.from_horovod(horovod.hvd)

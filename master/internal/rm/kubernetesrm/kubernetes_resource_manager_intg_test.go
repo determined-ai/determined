@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -16,10 +17,13 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -444,6 +448,38 @@ func TestGetSlot(t *testing.T) {
 	}
 }
 
+func TestAssignResourcesTime(t *testing.T) {
+	taskList := tasklist.New()
+	groups := make(map[model.JobID]*tasklist.Group)
+	allocateReq := sproto.AllocateRequest{
+		JobID:             model.JobID("test-job"),
+		JobSubmissionTime: time.Now(),
+		SlotsNeeded:       0,
+	}
+	groups[allocateReq.JobID] = &tasklist.Group{
+		JobID: allocateReq.JobID,
+	}
+	mockPods := createMockPodsService(make(map[string]*k8sV1.Node), device.CUDA, true)
+	poolRef := &kubernetesResourcePool{
+		poolConfig:                &config.ResourcePoolConfig{PoolName: "cpu-pool"},
+		podsService:               mockPods,
+		reqList:                   taskList,
+		groups:                    groups,
+		allocationIDToContainerID: map[model.AllocationID]cproto.ID{},
+		containerIDtoAllocationID: map[string]model.AllocationID{},
+		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
+		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
+		slotsUsedPerGroup:         map[*tasklist.Group]int{},
+		allocationIDToRunningPods: map[model.AllocationID]int{},
+		syslog:                    logrus.WithField("component", "k8s-rp"),
+	}
+
+	poolRef.assignResources(&allocateReq)
+	resourcesAllocated := poolRef.reqList.Allocation(allocateReq.AllocationID)
+	require.NotNil(t, resourcesAllocated)
+	require.False(t, resourcesAllocated.JobSubmissionTime.IsZero())
+}
+
 func TestGetResourcePools(t *testing.T) {
 	expectedName := "testname"
 	expectedMetadata := map[string]string{"x": "y*y"}
@@ -529,6 +565,41 @@ func TestGetResourcePools(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, string(expected), string(actual))
+}
+
+func TestHealthCheck(t *testing.T) {
+	mockPodInterface := &mocks.PodInterface{}
+	kubernetesRM := &ResourceManager{
+		config: &config.KubernetesResourceManagerConfig{
+			Name: "testname",
+		},
+		podsService: &pods{
+			podInterfaces: map[string]typedV1.PodInterface{
+				"namespace": mockPodInterface,
+			},
+		},
+	}
+
+	t.Run("healthy", func(t *testing.T) {
+		mockPodInterface.On("List", mock.Anything, mock.Anything).Return(nil, nil).Once()
+		require.Equal(t, []model.ResourceManagerHealth{
+			{
+				Name:   "testname",
+				Status: model.Healthy,
+			},
+		}, kubernetesRM.HealthCheck())
+	})
+
+	t.Run("unhealthy", func(t *testing.T) {
+		mockPodInterface.On("List", mock.Anything, mock.Anything).
+			Return(nil, fmt.Errorf("error")).Once()
+		require.Equal(t, []model.ResourceManagerHealth{
+			{
+				Name:   "testname",
+				Status: model.Unhealthy,
+			},
+		}, kubernetesRM.HealthCheck())
+	})
 }
 
 func TestROCmPodsService(t *testing.T) {

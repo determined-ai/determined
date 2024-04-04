@@ -5,6 +5,7 @@
   .paneWrapper {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-md);
     height: 100%;
     width: 100%;
 

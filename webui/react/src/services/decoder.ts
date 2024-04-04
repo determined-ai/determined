@@ -161,6 +161,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
       registeredTime: dayjs(agent.registeredTime).unix(),
       resourcePools: agent.resourcePools,
       resources,
+      slotStats: agent.slotStats,
     } as types.Agent;
   });
 };
@@ -634,6 +635,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     hyperparameters: flattenObject(data.hparams || {}),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
+    logRetentionDays: data.logRetentionDays,
     searcherMetricsVal: data.searcherMetricValue,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),

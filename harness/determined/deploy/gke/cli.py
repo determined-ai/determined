@@ -1,18 +1,17 @@
 import argparse
 import json
+import pathlib
 import subprocess
 import sys
-from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
-from termcolor import cprint
+import termcolor
 
 import determined
-from determined.common import yaml
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
-from determined.common.util import safe_load_yaml_with_exceptions
-from determined.deploy.errors import warn_version_mismatch
-from determined.deploy.gke.constants import defaults
+from determined import cli
+from determined.common import util, yaml
+from determined.deploy import errors
+from determined.deploy.gke import constants
 
 
 def make_spec(task_container_defaults: Dict[str, Any], key: str) -> Dict[str, Union[Dict, str]]:
@@ -96,7 +95,7 @@ def validate_accelerator_zone(args: argparse.Namespace, zone: str) -> None:
 
 
 def validate_args(args: argparse.Namespace) -> None:
-    warn_version_mismatch(args.det_version)
+    errors.warn_version_mismatch(args.det_version)
     validate_location(args.zone, isZone=True)
     validate_accelerator_type(args.gpu_type)
 
@@ -120,7 +119,7 @@ def validate_args(args: argparse.Namespace) -> None:
         args.agent_node_pool_name = args.cluster_id + "-gpu-pool"
     if args.cpu_node_pool_name is None:
         args.cpu_node_pool_name = args.cluster_id + "-cpu-pool"
-    if not Path(args.helm_dir).exists():
+    if not pathlib.Path(args.helm_dir).exists():
         raise ValueError("Please specify valid --helm-dir")
 
 
@@ -217,15 +216,15 @@ def create_nodepools(region: str, args: argparse.Namespace) -> None:
         "kubectl",
         "apply",
         "-f",
-        defaults.K8S_NVIDIA_DAEMON,
+        constants.defaults.K8S_NVIDIA_DAEMON,
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
 
 
 def configure_helm(args: argparse.Namespace) -> None:
-    helm_dir = Path(args.helm_dir)
+    helm_dir = pathlib.Path(args.helm_dir)
     with (helm_dir / "Chart.yaml").open() as f:
-        helm_chart = safe_load_yaml_with_exceptions(f)
+        helm_chart = util.safe_load_yaml_with_exceptions(f)
     if args.det_version:
         helm_chart["appVersion"] = args.det_version
     elif "dev" in helm_chart["appVersion"]:
@@ -238,7 +237,7 @@ def configure_helm(args: argparse.Namespace) -> None:
     with (helm_dir / "Chart.yaml").open("w") as f:
         yaml.round_trip_dump(helm_chart, f)
     with (helm_dir / "values.yaml").open() as f:
-        helm_values = safe_load_yaml_with_exceptions(f)
+        helm_values = util.safe_load_yaml_with_exceptions(f)
     checkpointStorage = {}
     checkpointStorage["saveExperimentBest"] = helm_values["checkpointStorage"].get(
         "saveExperimentBest", 0
@@ -289,12 +288,12 @@ def handle_up(args: argparse.Namespace) -> None:
     try:
         validate_args(args)
     except ValueError as e:
-        exc_str = "Argument Error: {}".format(e)
-        cprint(exc_str, "red")
-        cprint("Failed to create gke cluster", "red")
+        exc_str = "cli.Argument Error: {}".format(e)
+        termcolor.cprint(exc_str, "red")
+        termcolor.cprint("Failed to create gke cluster", "red")
         sys.exit(1)
     if args.gpu_coscheduler or args.preemption:
-        cprint(
+        termcolor.cprint(
             (
                 "Autoscaling is not supported with the lightweight coscheduling plugin or with the"
                 " preemptive priority-based scheduler, and so a GPU node pool with {} nodes will"
@@ -311,7 +310,7 @@ def handle_up(args: argparse.Namespace) -> None:
 
 def handle_down(args: argparse.Namespace) -> None:
     validate_location(args.region, isZone=False)
-    cprint(
+    termcolor.cprint(
         (
             "Setting kubectl config to cluster {}. Please make sure to run\n`kubectl config "
             "set-cluster <other_cluster_name>`\nto interact with other deployed clusters."
@@ -342,21 +341,21 @@ def handle_down(args: argparse.Namespace) -> None:
     print("Succesfully deleted GKE Cluster {}".format(args.cluster_id))
 
 
-args_description = Cmd(
+args_description = cli.Cmd(
     "gke-experimental",
     None,
     "GKE help",
     [
-        Cmd(
+        cli.Cmd(
             "up",
             handle_up,
             "create gke cluster",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "required named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=str,
                             default=None,
@@ -365,109 +364,109 @@ args_description = Cmd(
                         ),
                     ],
                 ),
-                ArgGroup(
+                cli.ArgGroup(
                     "optional named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--agent-node-pool-name",
                             "--gpu-node-pool-name",
                             type=str,
                             default=None,
                             help="a unique name for the GPU node pool",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gcs-bucket-name",
                             type=str,
                             default=None,
                             help="a unique name for the GCS bucket that will store your"
                             " checkpoints",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpu-type",
                             type=str,
-                            default=defaults.GPU_TYPE,
+                            default=constants.defaults.GPU_TYPE,
                             required=False,
                             help="accelerator type to use for agents",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--cpu-only",
                             required=False,
                             help="Flag to create a CPU Only Determined Instance.",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpus-per-node",
                             type=int,
-                            default=defaults.GPUS_PER_NODE,
+                            default=constants.defaults.GPUS_PER_NODE,
                             required=False,
                             help="number of GPUs per node",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--helm-dir",
                             type=str,
                             default="helm/charts/determined",
                             required=False,
                             help="directory containing Helm Chart, values.yaml and templates.",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--det-version",
                             type=str,
                             default=None,
                             help=argparse.SUPPRESS,
                         ),
-                        Arg(
+                        cli.Arg(
                             "--no-managed-bucket",
                             required=False,
                             help="flag that indicates GCS checkpointing bucket already exists",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--zone",
                             type=str,
-                            default=defaults.ZONE,
+                            default=constants.defaults.ZONE,
                             help="zone to create cluster in",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--master-machine-type",
                             type=str,
-                            default=defaults.MASTER_MACHINE_TYPE,
+                            default=constants.defaults.MASTER_MACHINE_TYPE,
                             help="machine type to use for master node group",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--agent-machine-type",
                             "--machine-type",
                             type=str,
-                            default=defaults.AGENT_MACHINE_TYPE,
+                            default=constants.defaults.AGENT_MACHINE_TYPE,
                             help="machine type to use for agent node group",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-gpu-nodes",
                             "--max-nodes",
                             type=int,
-                            default=defaults.MAX_GPU_NODES,
+                            default=constants.defaults.MAX_GPU_NODES,
                             help="maximum number of nodes for the GPU node group",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--max-cpu-nodes",
                             type=int,
-                            default=defaults.MAX_CPU_NODES,
+                            default=constants.defaults.MAX_CPU_NODES,
                             help="maximum number of nodes for the CPU node group",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--cpu-node-pool-name",
                             type=str,
                             default=None,
                             help="a unique name for the GPU node pool",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--multiple-node-pools",
                             required=False,
                             help="flag that indicates multiple node pools should be used - one"
                             " for CPU only tasks and one for GPU tasks",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gpu-coscheduler",
                             "--coscheduler",
                             required=False,
@@ -478,7 +477,7 @@ args_description = Cmd(
                             " pool at creation time.",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--preemption",
                             "--preemptive-scheduler",
                             required=False,
@@ -492,16 +491,16 @@ args_description = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "down",
             handle_down,
             "delete gke cluster",
             [
-                ArgGroup(
+                cli.ArgGroup(
                     "required named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--cluster-id",
                             type=str,
                             default=None,
@@ -510,23 +509,23 @@ args_description = Cmd(
                         )
                     ],
                 ),
-                ArgGroup(
+                cli.ArgGroup(
                     "optional named arguments",
                     None,
                     [
-                        Arg(
+                        cli.Arg(
                             "--region",
                             type=str,
                             default="us-west1",
                             help="region containing cluster to delete",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--no-managed-bucket",
                             required=False,
                             help="GCS checkpointing bucket is managed externally",
                             action="store_true",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--gcs-bucket-name",
                             type=str,
                             default=None,

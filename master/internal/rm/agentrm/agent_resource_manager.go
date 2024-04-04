@@ -139,11 +139,21 @@ func (*ResourceManager) DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, e
 
 // DisableAgent implements rm.ResourceManager.
 func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
 	return agent.DisableAgent(msg)
+}
+
+// HealthCheck always returns healthy for agentrm.
+func (a *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
+	return []model.ResourceManagerHealth{
+		{
+			Name:   a.config.Name,
+			Status: model.Healthy,
+		},
+	}
 }
 
 // DisableSlot implements rm.ResourceManager.
@@ -155,7 +165,7 @@ func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Dis
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := false
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{
 		id:      deviceID,
 		enabled: &enabled,
 		drain:   &req.Drain,
@@ -168,7 +178,7 @@ func (a *ResourceManager) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Dis
 
 // EnableAgent implements rm.ResourceManager.
 func (a *ResourceManager) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -184,7 +194,7 @@ func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.Enabl
 	deviceID := device.ID(deviceIDStr)
 
 	enabled := true
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{id: deviceID, enabled: &enabled})
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +202,7 @@ func (a *ResourceManager) EnableSlot(req *apiv1.EnableSlotRequest) (*apiv1.Enabl
 }
 
 func (a *ResourceManager) handlePatchSlotState(
-	agentID agentID, msg patchSlotState,
+	agentID aproto.ID, msg patchSlotState,
 ) (*model.SlotSummary, error) {
 	agent, ok := a.agentService.get(agentID)
 	if !ok {
@@ -225,7 +235,7 @@ func (*ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) erro
 
 // GetAgent implements rm.ResourceManager.
 func (a *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -343,7 +353,7 @@ func (a *ResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResp
 	}
 	deviceID := device.ID(deviceIDStr)
 
-	result, err := a.handlePatchSlotState(agentID(req.AgentId), patchSlotState{id: deviceID})
+	result, err := a.handlePatchSlotState(aproto.ID(req.AgentId), patchSlotState{id: deviceID})
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +362,7 @@ func (a *ResourceManager) GetSlot(req *apiv1.GetSlotRequest) (*apiv1.GetSlotResp
 
 // GetSlots implements rm.ResourceManager.
 func (a *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	agent, ok := a.agentService.get(agentID(msg.AgentId))
+	agent, ok := a.agentService.get(aproto.ID(msg.AgentId))
 	if !ok {
 		return nil, api.NotFoundErrs("agent", msg.AgentId, true)
 	}
@@ -804,39 +814,7 @@ func (a *ResourceManager) createResourcePoolSummary(
 func (a *ResourceManager) fetchAvgQueuedTime(pool string) (
 	[]*jobv1.AggregateQueueStats, error,
 ) {
-	aggregates := []model.ResourceAggregates{}
-	err := db.Bun().NewSelect().Model(&aggregates).
-		Where("aggregation_type = ?", "queued").
-		Where("aggregation_key = ?", pool).
-		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
-		Order("date ASC").Scan(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*jobv1.AggregateQueueStats, 0)
-	for _, record := range aggregates {
-		res = append(res, &jobv1.AggregateQueueStats{
-			PeriodStart: record.Date.Format("2006-01-02"),
-			Seconds:     record.Seconds,
-		})
-	}
-	today := float32(0)
-	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
-		Where("resource_pool = ?", pool).
-		Where("start_time >= CURRENT_DATE")
-	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
-		"avg(extract(epoch FROM end_time - start_time))",
-	).Where("event_type = ?", "QUEUED").
-		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
-		Scan(context.TODO(), &today)
-	if err != nil {
-		return nil, err
-	}
-	res = append(res, &jobv1.AggregateQueueStats{
-		PeriodStart: time.Now().Format("2006-01-02"),
-		Seconds:     today,
-	})
-	return res, nil
+	return rm.FetchAvgQueuedTime(pool)
 }
 
 // mostly for tests.

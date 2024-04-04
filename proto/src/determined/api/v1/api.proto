@@ -418,6 +418,42 @@ service Determined {
       tags: "Experiments"
     };
   }
+
+  // Retain logs for an experiment.
+  rpc PutExperimentRetainLogs(PutExperimentRetainLogsRequest)
+      returns (PutExperimentRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/{experiment_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Retain logs for an experiment.
+  rpc PutExperimentsRetainLogs(PutExperimentsRetainLogsRequest)
+      returns (PutExperimentsRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/experiments/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Retain logs for a Trial.
+  rpc PutTrialRetainLogs(PutTrialRetainLogsRequest)
+      returns (PutTrialRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/trials/{trial_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Trials"
+    };
+  }
   // Get the model definition of an experiment.
   rpc GetModelDef(GetModelDefRequest) returns (GetModelDefResponse) {
     option (google.api.http) = {
@@ -978,6 +1014,17 @@ service Determined {
       tags: "Experiments"
     };
   }
+
+  // Cleanup task logs according to the retention policy.
+  rpc CleanupLogs(CleanupLogsRequest) returns (CleanupLogsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/cleanup_logs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Long poll preemption signals for the given allocation. If the allocation
   // has been preempted when called, it will return so immediately. Otherwise,
   // the connection will be kept open until the timeout is reached or

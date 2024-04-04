@@ -38,15 +38,15 @@ type ProjectMsg struct {
 	ID int `bun:"id,pk" json:"id"`
 
 	// mutable attributes
-	Name        string      `bun:"name" json:"name"`
-	Description string      `bun:"description" json:"description"`
-	Archived    bool        `bun:"archived" json:"archived"`
-	CreatedAt   time.Time   `bun:"created_at" json:"created_at"`
-	Notes       JSONB       `bun:"notes" json:"notes"`
-	WorkspaceID int         `bun:"workspace_id" json:"workspace_id"`
-	UserID      int         `bun:"user_id" json:"user_id"`
-	Immutable   bool        `bun:"immutable" json:"immutable"`
-	State       model.State `bun:"state" json:"state"`
+	Name        string               `bun:"name" json:"name"`
+	Description string               `bun:"description" json:"description"`
+	Archived    bool                 `bun:"archived" json:"archived"`
+	CreatedAt   time.Time            `bun:"created_at" json:"created_at"`
+	Notes       JSONB                `bun:"notes" json:"notes"`
+	WorkspaceID int                  `bun:"workspace_id" json:"workspace_id"`
+	UserID      int                  `bun:"user_id" json:"user_id"`
+	Immutable   bool                 `bun:"immutable" json:"immutable"`
+	State       model.WorkspaceState `bun:"state" json:"state"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`

@@ -68,6 +68,14 @@
    :members:
    :member-order: bysource
 
+*************************************
+ ``determined.core.ProfilerContext``
+*************************************
+
+.. autoclass:: determined.core.ProfilerContext
+   :members:
+   :member-order: bysource
+
 ***************************************
  ``determined.core.SearcherOperation``
 ***************************************

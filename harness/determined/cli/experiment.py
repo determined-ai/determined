@@ -1,32 +1,22 @@
+import argparse
 import base64
 import json
 import numbers
 import pathlib
+import pprint
 import sys
 import time
-from argparse import ArgumentError, FileType, Namespace
-from pathlib import Path
-from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
 
 import tabulate
 import termcolor
 
 import determined as det
-import determined.cli.render
-import determined.experimental
-import determined.load
-from determined import cli
-from determined.cli import checkpoint, render
-from determined.cli.ntsc import CONFIG_DESC, parse_config_overrides
-from determined.common import api, context, set_logger, util
+from determined import cli, common, experimental, load
+from determined.cli import checkpoint, ntsc, project, render, trial
+from determined.common import api, context, util
 from determined.common.api import bindings, logs
-from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.experimental import client
-
-from .checkpoint import render_checkpoint
-from .project import project_by_name
-from .trial import logs_args_description
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
@@ -35,17 +25,17 @@ FLUSH = False
 ZERO_OR_ONE = "?"
 
 
-def activate(args: Namespace) -> None:
+def activate(args: argparse.Namespace) -> None:
     bindings.post_ActivateExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Activated experiment {args.experiment_id}")
 
 
-def archive(args: Namespace) -> None:
+def archive(args: argparse.Namespace) -> None:
     bindings.post_ArchiveExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Archived experiment {args.experiment_id}")
 
 
-def cancel(args: Namespace) -> None:
+def cancel(args: argparse.Namespace) -> None:
     bindings.post_CancelExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Canceled experiment {args.experiment_id}")
 
@@ -56,9 +46,9 @@ def _parse_config_text_or_exit(
     experiment_config = util.safe_load_yaml_with_exceptions(config_text)
 
     if not experiment_config or not isinstance(experiment_config, dict):
-        raise ArgumentError(None, f"Error: invalid experiment config file {path}")
+        raise argparse.ArgumentError(None, f"Error: invalid experiment config file {path}")
 
-    config = parse_config_overrides(experiment_config, config_overrides)
+    config = ntsc.parse_config_overrides(experiment_config, config_overrides)
 
     return config
 
@@ -172,7 +162,7 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
             time.sleep(0.2)
 
 
-def submit_experiment(args: Namespace) -> None:
+def submit_experiment(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     config_text = args.config_file.read()
     args.config_file.close()
@@ -230,7 +220,7 @@ def submit_experiment(args: Namespace) -> None:
                 _follow_experiment_logs(sess, resp.experiment.id)
 
 
-def continue_experiment(args: Namespace) -> None:
+def continue_experiment(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     if args.config_file:
         config_text = args.config_file.read()
@@ -239,7 +229,7 @@ def continue_experiment(args: Namespace) -> None:
             config_text, args.config_file.name, args.config
         )
     else:
-        experiment_config = parse_config_overrides({}, args.config)
+        experiment_config = ntsc.parse_config_overrides({}, args.config)
 
     config_text = util.yaml_safe_dump(experiment_config)
 
@@ -254,7 +244,7 @@ def continue_experiment(args: Namespace) -> None:
         _follow_experiment_logs(sess, args.experiment_id)
 
 
-def local_experiment(args: Namespace) -> None:
+def local_experiment(args: argparse.Namespace) -> None:
     if not args.test_mode:
         raise NotImplementedError(
             "Local training mode (--local mode without --test mode) is not yet supported. Please "
@@ -276,21 +266,21 @@ def local_experiment(args: Namespace) -> None:
             "directly?"
         )
 
-    set_logger(bool(experiment_config.get("debug", False)))
+    common.set_logger(bool(experiment_config.get("debug", False)))
 
     with det._local_execution_manager(args.model_def.resolve()):
-        trial_class = determined.load.trial_class_from_entrypoint(entrypoint)
-        determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
+        trial_class = load.trial_class_from_entrypoint(entrypoint)
+        experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 
-def create(args: Namespace) -> None:
+def create(args: argparse.Namespace) -> None:
     if args.local:
         local_experiment(args)
     else:
         submit_experiment(args)
 
 
-def delete_experiment(args: Namespace) -> None:
+def delete_experiment(args: argparse.Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting an experiment will result in the unrecoverable \n"
         "deletion of all associated logs, checkpoints, and other \n"
@@ -304,7 +294,7 @@ def delete_experiment(args: Namespace) -> None:
         print("Aborting experiment deletion.")
 
 
-def describe(args: Namespace) -> None:
+def describe(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     responses: List[bindings.v1GetExperimentResponse] = []
     for experiment_id in args.experiment_ids.split(","):
@@ -312,7 +302,7 @@ def describe(args: Namespace) -> None:
         responses.append(r)
 
     if args.json:
-        determined.cli.render.print_json([resp.to_json() for resp in responses])
+        render.print_json([resp.to_json() for resp in responses])
         return
     exps = [resp.experiment for resp in responses]
 
@@ -369,15 +359,15 @@ def describe(args: Namespace) -> None:
     headers = ["Trial ID", "Experiment ID", "State", "Started", "Ended", "H-Params"]
     values = [
         [
-            trial.id,
+            trial_obj.id,
             exp.id,
-            trial.state.value.replace("STATE_", ""),
-            render.format_time(trial.startTime),
-            render.format_time(trial.endTime),
-            json.dumps(trial.hparams, indent=4),
+            trial_obj.state.value.replace("STATE_", ""),
+            render.format_time(trial_obj.startTime),
+            render.format_time(trial_obj.endTime),
+            json.dumps(trial_obj.hparams, indent=4),
         ]
         for exp in exps
-        for trial in trials_for_experiment[exp.id]
+        for trial_obj in trials_for_experiment[exp.id]
     ]
     if not args.outdir:
         outfile = None
@@ -435,8 +425,8 @@ def describe(args: Namespace) -> None:
 
     values = []
     for exp in exps:
-        for trial in trials_for_experiment[exp.id]:
-            workloads = all_workloads[exp.id][trial.id]
+        for trial_obj in trials_for_experiment[exp.id]:
+            workloads = all_workloads[exp.id][trial_obj.id]
             wl_output: Dict[int, List[Any]] = {}
             for workload in workloads:
                 t_metrics_fields = []
@@ -514,7 +504,7 @@ def describe(args: Namespace) -> None:
                     else:
                         row = (
                             [
-                                trial.id,
+                                trial_obj.id,
                                 wl_detail.totalBatches,
                                 (checkpoint_state or validation_state).replace("STATE_", ""),
                                 render.format_time(wl_detail.endTime),
@@ -541,7 +531,7 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
-def experiment_logs(args: Namespace) -> None:
+def experiment_logs(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     trials = bindings.get_GetExperimentTrials(sess, experimentId=args.experiment_id).trials
     if len(trials) == 0:
@@ -578,21 +568,42 @@ def experiment_logs(args: Namespace) -> None:
         )
 
 
-def config(args: Namespace) -> None:
+def set_log_retention(args: argparse.Namespace) -> None:
+    if not args.forever and not isinstance(args.days, int):
+        raise cli.CliError(
+            "Please provide an argument to set log retention. --days sets the number of days to"
+            " retain logs from the time of creation, eg. `det e set log-retention 1 --days 50`."
+            " --forever retains logs indefinitely, eg.`det e set log-retention 1 --forever`."
+        )
+    elif isinstance(args.days, int) and (args.days < -1 or args.days > 32767):
+        raise cli.CliError(
+            "Please provide a valid value for --days. The allowed range is between -1 and "
+            "32767 days."
+        )
+    bindings.put_PutExperimentRetainLogs(
+        cli.setup_session(args),
+        body=bindings.v1PutExperimentRetainLogsRequest(
+            experimentId=args.experiment_id, numDays=-1 if args.forever else args.days
+        ),
+        experimentId=args.experiment_id,
+    )
+
+
+def config(args: argparse.Namespace) -> None:
     result = bindings.get_GetExperiment(
         cli.setup_session(args), experimentId=args.experiment_id
     ).experiment.config
     util.yaml_safe_dump(result, stream=sys.stdout, default_flow_style=False)
 
 
-def download_model_def(args: Namespace) -> None:
+def download_model_def(args: argparse.Namespace) -> None:
     resp = bindings.get_GetModelDef(cli.setup_session(args), experimentId=args.experiment_id)
     dst = f"experiment_{args.experiment_id}_model_def.tgz"
     with args.output_dir.joinpath(dst).open("wb") as f:
         f.write(base64.b64decode(resp.b64Tgz))
 
 
-def download(args: Namespace) -> None:
+def download(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = client.Experiment(args.experiment_id, sess)
 
@@ -616,16 +627,16 @@ def download(args: Namespace) -> None:
         if args.quiet:
             print(path)
         else:
-            render_checkpoint(ckpt, path)
+            checkpoint.render_checkpoint(ckpt, path)
             print()
 
 
-def kill_experiment(args: Namespace) -> None:
+def kill_experiment(args: argparse.Namespace) -> None:
     bindings.post_KillExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Killed experiment {args.experiment_id}")
 
 
-def wait(args: Namespace) -> None:
+def wait(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = client.Experiment(args.experiment_id, sess)
     state = exp.wait(interval=args.polling_interval)
@@ -633,7 +644,7 @@ def wait(args: Namespace) -> None:
         sys.exit(1)
 
 
-def list_experiments(args: Namespace) -> None:
+def list_experiments(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     def get_with_offset(offset: int) -> bindings.v1GetExperimentsResponse:
@@ -724,7 +735,7 @@ def scalar_validation_metrics_names(
     return set()
 
 
-def list_trials(args: Namespace) -> None:
+def list_trials(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     def get_with_offset(offset: int) -> bindings.v1GetExperimentTrialsResponse:
@@ -754,12 +765,12 @@ def list_trials(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-def pause(args: Namespace) -> None:
+def pause(args: argparse.Namespace) -> None:
     bindings.post_PauseExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Paused experiment {args.experiment_id}")
 
 
-def set_description(args: Namespace) -> None:
+def set_description(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = bindings.get_GetExperiment(sess, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
@@ -768,7 +779,7 @@ def set_description(args: Namespace) -> None:
     print(f"Set description of experiment {args.experiment_id} to '{args.description}'")
 
 
-def set_name(args: Namespace) -> None:
+def set_name(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = bindings.get_GetExperiment(sess, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
@@ -777,7 +788,7 @@ def set_name(args: Namespace) -> None:
     print(f"Set name of experiment {args.experiment_id} to '{args.name}'")
 
 
-def add_label(args: Namespace) -> None:
+def add_label(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = bindings.get_GetExperiment(sess, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
@@ -789,7 +800,7 @@ def add_label(args: Namespace) -> None:
     print(f"Added label '{args.label}' to experiment {args.experiment_id}")
 
 
-def remove_label(args: Namespace) -> None:
+def remove_label(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp = bindings.get_GetExperiment(sess, experimentId=args.experiment_id).experiment
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
@@ -799,7 +810,7 @@ def remove_label(args: Namespace) -> None:
     print(f"Removed label '{args.label}' from experiment {args.experiment_id}")
 
 
-def set_max_slots(args: Namespace) -> None:
+def set_max_slots(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp_patch = bindings.v1PatchExperiment(
         id=args.experiment_id,
@@ -809,7 +820,7 @@ def set_max_slots(args: Namespace) -> None:
     print(f"Set `max_slots` of experiment {args.experiment_id} to {args.max_slots}")
 
 
-def set_weight(args: Namespace) -> None:
+def set_weight(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp_patch = bindings.v1PatchExperiment(
         id=args.experiment_id, resources=bindings.PatchExperimentPatchResources(weight=args.weight)
@@ -818,7 +829,7 @@ def set_weight(args: Namespace) -> None:
     print(f"Set `weight` of experiment {args.experiment_id} to {args.weight}")
 
 
-def set_priority(args: Namespace) -> None:
+def set_priority(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     exp_patch = bindings.v1PatchExperiment(
         id=args.experiment_id,
@@ -828,7 +839,7 @@ def set_priority(args: Namespace) -> None:
     print(f"Set `priority` of experiment {args.experiment_id} to {args.priority}")
 
 
-def set_gc_policy(args: Namespace) -> None:
+def set_gc_policy(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     policy = {
         "save_experiment_best": args.save_experiment_best,
@@ -890,19 +901,19 @@ def set_gc_policy(args: Namespace) -> None:
             ),
         )
         bindings.patch_PatchExperiment(sess, body=exp_patch, experiment_id=args.experiment_id)
-        print(f"Set GC policy of experiment {args.experiment_id} to\n{pformat(policy)}")
+        print(f"Set GC policy of experiment {args.experiment_id} to\n{pprint.pformat(policy)}")
     else:
         print("Aborting operations.")
 
 
-def unarchive(args: Namespace) -> None:
+def unarchive(args: argparse.Namespace) -> None:
     bindings.post_UnarchiveExperiment(cli.setup_session(args), id=args.experiment_id)
     print(f"Unarchived experiment {args.experiment_id}")
 
 
-def move_experiment(args: Namespace) -> None:
+def move_experiment(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
+    (w, p) = project.project_by_name(sess, args.workspace_name, args.project_name)
     req = bindings.v1MoveExperimentRequest(
         destinationProjectId=p.id,
         experimentId=args.experiment_id,
@@ -911,7 +922,7 @@ def move_experiment(args: Namespace) -> None:
     print(f'Moved experiment {args.experiment_id} to project "{args.project_name}"')
 
 
-def delete_tensorboard_files(args: Namespace) -> None:
+def delete_tensorboard_files(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     d = client.Determined._from_session(sess)
     exp = d.get_experiment(args.experiment_id)
@@ -924,88 +935,92 @@ def none_or_int(string: str) -> Optional[int]:
     return int(string)
 
 
-def experiment_id_arg(help: str) -> Arg:  # noqa: A002
-    return Arg("experiment_id", type=int, help=help)
+def experiment_id_arg(help: str) -> cli.Arg:  # noqa: A002
+    return cli.Arg("experiment_id", type=int, help=help)
 
 
-main_cmd = Cmd(
+main_cmd = cli.Cmd(
     "e|xperiment",
     None,
     "manage experiments",
     [
         # Inspection commands.
-        Cmd(
+        cli.Cmd(
             "list ls",
             list_experiments,
             "list experiments",
             [
-                Arg(
+                cli.Arg(
                     "--all",
                     "-a",
                     action="store_true",
                     help="show all experiments (including archived and other users')",
                 ),
-                Arg(
+                cli.Arg(
                     "--show_project",
                     action="store_true",
                     help="include columns for workspace name and project name",
                 ),
                 *cli.default_pagination_args,
-                Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
             ],
             is_default=True,
         ),
-        Cmd("config", config, "display experiment config", [experiment_id_arg("experiment ID")]),
-        Cmd(
+        cli.Cmd(
+            "config", config, "display experiment config", [experiment_id_arg("experiment ID")]
+        ),
+        cli.Cmd(
             "describe",
             describe,
             "describe experiment",
             [
-                Arg("experiment_ids", help="comma-separated list of experiment IDs to describe"),
-                Arg("--metrics", action="store_true", help="display full metrics"),
-                Group(
+                cli.Arg(
+                    "experiment_ids", help="comma-separated list of experiment IDs to describe"
+                ),
+                cli.Arg("--metrics", action="store_true", help="display full metrics"),
+                cli.Group(
                     cli.output_format_args["csv"],
                     cli.output_format_args["json"],
-                    Arg("--outdir", type=Path, help="directory to save output"),
+                    cli.Arg("--outdir", type=pathlib.Path, help="directory to save output"),
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "logs",
             experiment_logs,
             "fetch logs of the first trial of an experiment",
             [
                 experiment_id_arg("experiment ID"),
                 cli.output_format_args["json"],
-                *logs_args_description,
+                *trial.logs_args_description,
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "download-model-def",
             download_model_def,
             "download model definition",
             [
                 experiment_id_arg("experiment ID"),
-                Arg("--output-dir", type=Path, help="output directory", default="."),
+                cli.Arg("--output-dir", type=pathlib.Path, help="output directory", default="."),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "list-trials lt",
             list_trials,
             "list trials of experiment",
             [
                 experiment_id_arg("experiment ID"),
                 *cli.default_pagination_args,
-                Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "list-checkpoints lc",
             checkpoint.list_checkpoints,
             "list checkpoints of experiment",
             [
                 experiment_id_arg("experiment ID"),
-                Arg(
+                cli.Arg(
                     "--best",
                     type=int,
                     help="Return the best N checkpoints for this experiment. "
@@ -1013,54 +1028,58 @@ main_cmd = Cmd(
                     "validation metric will be considered.",
                     metavar="N",
                 ),
-                Arg("--csv", action="store_true", help="print as CSV"),
+                cli.Arg("--csv", action="store_true", help="print as CSV"),
             ],
         ),
         # Create command.
-        Cmd(
+        cli.Cmd(
             "create",
             create,
             "create experiment",
             [
-                Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)"),
-                Arg(
+                cli.Arg(
+                    "config_file",
+                    type=argparse.FileType("r"),
+                    help="experiment config file (.yaml)",
+                ),
+                cli.Arg(
                     "model_def",
                     nargs=ZERO_OR_ONE,
                     default=None,
-                    type=Path,
+                    type=pathlib.Path,
                     help="file or directory containing model definition",
                 ),
-                Arg(
+                cli.Arg(
                     "-i",
                     "--include",
                     action="append",
                     default=[],
-                    type=Path,
+                    type=pathlib.Path,
                     help="additional files to copy into the task container",
                 ),
-                Arg(
+                cli.Arg(
                     "--local",
                     action="store_true",
                     help="Create the experiment in local mode instead of submitting it to the "
                     "cluster. Requires --test. For more information, visit How to Debug Models "
                     "(https://docs.determined.ai/latest/model-dev-guide/debug-models.html).",
                 ),
-                Arg(
+                cli.Arg(
                     "--template",
                     type=str,
                     help="name of template to apply to the experiment configuration",
                 ),
-                Arg("--project_id", type=int, help="place this experiment inside this project"),
-                Arg("--config", action="append", default=[], help=CONFIG_DESC),
-                Group(
-                    Arg(
+                cli.Arg("--project_id", type=int, help="place this experiment inside this project"),
+                cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                cli.Group(
+                    cli.Arg(
                         "-f",
                         "--follow-first-trial",
                         action="store_true",
                         help="follow the logs of the first trial that is created",
                     ),
-                    Arg("--paused", action="store_true", help="do not activate the experiment"),
-                    Arg(
+                    cli.Arg("--paused", action="store_true", help="do not activate the experiment"),
+                    cli.Arg(
                         "-t",
                         "--test-mode",
                         action="store_true",
@@ -1072,7 +1091,7 @@ main_cmd = Cmd(
                         "be archived on creation.",
                     ),
                 ),
-                Arg(
+                cli.Arg(
                     "-p",
                     "--publish",
                     action="append",
@@ -1083,15 +1102,19 @@ main_cmd = Cmd(
             ],
         ),
         # Continue experiment command.
-        Cmd(
+        cli.Cmd(
             "continue",
             continue_experiment,
             "resume or recover training for a single-searcher experiment",
             [
                 experiment_id_arg("experiment ID to continue"),
-                Arg("--config-file", type=FileType("r"), help="experiment config file (.yaml)"),
-                Arg("--config", action="append", default=[], help=CONFIG_DESC),
-                Arg(
+                cli.Arg(
+                    "--config-file",
+                    type=argparse.FileType("r"),
+                    help="experiment config file (.yaml)",
+                ),
+                cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                cli.Arg(
                     "-f",
                     "--follow-first-trial",
                     action="store_true",
@@ -1100,33 +1123,35 @@ main_cmd = Cmd(
             ],
         ),
         # Lifecycle management commands.
-        Cmd(
+        cli.Cmd(
             "activate unpause",
             activate,
             "activate experiment, i.e., unpause a paused experiment",
             [experiment_id_arg("experiment ID to activate")],
         ),
-        Cmd("cancel", cancel, "cancel experiment", [experiment_id_arg("experiment ID to cancel")]),
-        Cmd("pause", pause, "pause experiment", [experiment_id_arg("experiment ID to pause")]),
-        Cmd(
+        cli.Cmd(
+            "cancel", cancel, "cancel experiment", [experiment_id_arg("experiment ID to cancel")]
+        ),
+        cli.Cmd("pause", pause, "pause experiment", [experiment_id_arg("experiment ID to pause")]),
+        cli.Cmd(
             "archive",
             archive,
             "archive experiment",
             [experiment_id_arg("experiment ID to archive")],
         ),
-        Cmd(
+        cli.Cmd(
             "unarchive",
             unarchive,
             "unarchive experiment",
             [experiment_id_arg("experiment ID to unarchive")],
         ),
-        Cmd(
+        cli.Cmd(
             "delete",
             delete_experiment,
             "delete experiment",
             [
-                Arg("experiment_id", help="delete experiment"),
-                Arg(
+                cli.Arg("experiment_id", help="delete experiment"),
+                cli.Arg(
                     "--yes",
                     action="store_true",
                     default=False,
@@ -1134,13 +1159,13 @@ main_cmd = Cmd(
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "download",
             download,
             "download checkpoints for an experiment",
             [
                 experiment_id_arg("experiment ID to download"),
-                Arg(
+                cli.Arg(
                     "-o",
                     "--output-dir",
                     type=str,
@@ -1149,7 +1174,7 @@ main_cmd = Cmd(
                     "Checkpoints will be downloaded to "
                     "<output_dir>/<checkpoint_uuid>/<checkpoint_files>.",
                 ),
-                Arg(
+                cli.Arg(
                     "--top-n",
                     type=int,
                     default=1,
@@ -1159,7 +1184,7 @@ main_cmd = Cmd(
                     "This command will select the best N checkpoints from the "
                     "top performing N trials of the experiment.",
                 ),
-                Arg(
+                cli.Arg(
                     "--sort-by",
                     type=str,
                     default=None,
@@ -1167,7 +1192,7 @@ main_cmd = Cmd(
                     "experiment's searcher metric is assumed. If this argument is specified, "
                     "--smaller-is-better must also be specified.",
                 ),
-                Arg(
+                cli.Arg(
                     "--smaller-is-better",
                     type=lambda s: util.strtobool(s),
                     default=None,
@@ -1175,7 +1200,7 @@ main_cmd = Cmd(
                     "example, 'accuracy' would require passing '--smaller-is-better false'. If "
                     "--sort-by is specified, this argument must be specified.",
                 ),
-                Arg(
+                cli.Arg(
                     "-q",
                     "--quiet",
                     action="store_true",
@@ -1183,16 +1208,19 @@ main_cmd = Cmd(
                 ),
             ],
         ),
-        Cmd(
-            "kill", kill_experiment, "kill experiment", [Arg("experiment_id", help="experiment ID")]
+        cli.Cmd(
+            "kill",
+            kill_experiment,
+            "kill experiment",
+            [cli.Arg("experiment_id", help="experiment ID")],
         ),
-        Cmd(
+        cli.Cmd(
             "wait",
             wait,
             "wait for experiment to reach terminal state",
             [
                 experiment_id_arg("experiment ID"),
-                Arg(
+                cli.Arg(
                     "--polling-interval",
                     type=int,
                     default=5,
@@ -1201,83 +1229,83 @@ main_cmd = Cmd(
             ],
         ),
         # Attribute setting commands.
-        Cmd(
+        cli.Cmd(
             "label",
             None,
             "manage experiment labels",
             [
-                Cmd(
+                cli.Cmd(
                     "add",
                     add_label,
                     "add label",
-                    [experiment_id_arg("experiment ID"), Arg("label", help="label")],
+                    [experiment_id_arg("experiment ID"), cli.Arg("label", help="label")],
                 ),
-                Cmd(
+                cli.Cmd(
                     "remove",
                     remove_label,
                     "remove label",
-                    [experiment_id_arg("experiment ID"), Arg("label", help="label")],
+                    [experiment_id_arg("experiment ID"), cli.Arg("label", help="label")],
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "move",
             move_experiment,
             "move experiment to another project",
             [
                 experiment_id_arg("experiment ID to move"),
-                Arg("workspace_name", help="Name of destination workspace"),
-                Arg("project_name", help="Name of destination project"),
+                cli.Arg("workspace_name", help="Name of destination workspace"),
+                cli.Arg("project_name", help="Name of destination project"),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "set",
             None,
             "set experiment attributes",
             [
-                Cmd(
+                cli.Cmd(
                     "description",
                     set_description,
                     "set experiment description",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg("description", help="experiment description"),
+                        cli.Arg("description", help="experiment description"),
                     ],
                 ),
-                Cmd(
+                cli.Cmd(
                     "name",
                     set_name,
                     "set experiment name",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg("name", help="experiment name"),
+                        cli.Arg("name", help="experiment name"),
                     ],
                 ),
-                Cmd(
+                cli.Cmd(
                     "gc-policy",
                     set_gc_policy,
                     "set experiment GC policy and run GC",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg(
+                        cli.Arg(
                             "--save-experiment-best",
                             type=int,
                             required=True,
                             help="number of best checkpoints per experiment " "to save",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--save-trial-best",
                             type=int,
                             required=True,
                             help="number of best checkpoints per trial to save",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--save-trial-latest",
                             type=int,
                             required=True,
                             help="number of latest checkpoints per trial to save",
                         ),
-                        Arg(
+                        cli.Arg(
                             "--yes",
                             action="store_true",
                             default=False,
@@ -1285,41 +1313,63 @@ main_cmd = Cmd(
                         ),
                     ],
                 ),
-                Cmd(
+                cli.Cmd(
                     "max-slots",
                     set_max_slots,
                     "set `max_slots` of experiment",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg("max_slots", type=none_or_int, help="max slots"),
+                        cli.Arg("max_slots", type=none_or_int, help="max slots"),
                     ],
                 ),
-                Cmd(
+                cli.Cmd(
+                    "log-retention",
+                    set_log_retention,
+                    "set `log-retention-days` for an experiment",
+                    [
+                        experiment_id_arg("experiment ID"),
+                        cli.Group(
+                            cli.Arg(
+                                "--days",
+                                type=none_or_int,
+                                help="from the time of creation, number of days to "
+                                "retain the logs for. allowed range: -1 to 32767.",
+                            ),
+                            cli.Arg(
+                                "--forever",
+                                action="store_true",
+                                help="retain logs forever",
+                                required=False,
+                            ),
+                        ),
+                    ],
+                ),
+                cli.Cmd(
                     "weight",
                     set_weight,
                     "set `weight` of experiment",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg("weight", type=float, help="weight"),
+                        cli.Arg("weight", type=float, help="weight"),
                     ],
                 ),
-                Cmd(
+                cli.Cmd(
                     "priority",
                     set_priority,
                     "set `priority` of experiment",
                     [
                         experiment_id_arg("experiment ID to modify"),
-                        Arg("priority", type=int, help="priority"),
+                        cli.Arg("priority", type=int, help="priority"),
                     ],
                 ),
             ],
         ),
-        Cmd(
+        cli.Cmd(
             "delete-tb-files",
             delete_tensorboard_files,
             "delete TensorBoard files associated with the provided experiment ID",
             [
-                Arg("experiment_id", type=int, help="Experiment ID"),
+                cli.Arg("experiment_id", type=int, help="Experiment ID"),
             ],
         ),
     ],

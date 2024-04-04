@@ -1,27 +1,25 @@
+import argparse
+import functools
 import json
-from argparse import SUPPRESS, FileType, Namespace
-from functools import partial
-from pathlib import Path
+import pathlib
 from typing import Any, Dict, List, Union, cast
 
-from termcolor import colored
+import termcolor
 
 from determined import cli
 from determined.cli import ntsc, render
 from determined.common import api, context, util
 from determined.common.api import bindings
-from determined.common.api.bindings import v1AllocationSummary, v1CreateGenericTaskResponse
-from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None:
+def render_tasks(args: argparse.Namespace, tasks: Dict[str, bindings.v1AllocationSummary]) -> None:
     """Render tasks for JSON, tabulate or csv output.
 
-    The tasks parameter requires a map from allocation IDs to v1AllocationSummary
+    The tasks parameter requires a map from allocation IDs to bindings.v1AllocationSummary
     describing individual tasks.
     """
 
-    def agent_info(t: v1AllocationSummary) -> Union[str, List[str]]:
+    def agent_info(t: bindings.v1AllocationSummary) -> Union[str, List[str]]:
         if t.resources is None:
             return "unassigned"
         agents = [a for r in t.resources for a in (r.agentDevices or {})]
@@ -71,14 +69,14 @@ def render_tasks(args: Namespace, tasks: Dict[str, v1AllocationSummary]) -> None
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-def list_tasks(args: Namespace) -> None:
+def list_tasks(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     r = bindings.get_GetTasks(sess)
     tasks = r.allocationIdToSummary or {}
     render_tasks(args, tasks)
 
 
-def logs(args: Namespace) -> None:
+def logs(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     task_id = cast(str, ntsc.expand_uuid_prefixes(sess, args, args.task_id))
     try:
@@ -104,7 +102,7 @@ def logs(args: Namespace) -> None:
             api.pprint_logs(logs)
     finally:
         print(
-            colored(
+            termcolor.colored(
                 "Task log stream ended. To reopen log stream, run: "
                 "det task logs -f {}".format(task_id),
                 "green",
@@ -112,7 +110,7 @@ def logs(args: Namespace) -> None:
         )
 
 
-def kill(args: Namespace) -> None:
+def kill(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1KillGenericTaskRequest(taskId=args.task_id, killFromRoot=args.root)
     bindings.post_KillGenericTask(sess, taskId=args.task_id, body=req)
@@ -120,7 +118,7 @@ def kill(args: Namespace) -> None:
 
 
 def task_creation_output(
-    session: api.Session, task_resp: v1CreateGenericTaskResponse, follow: bool
+    session: api.Session, task_resp: bindings.v1CreateGenericTaskResponse, follow: bool
 ) -> None:
     print(f"Created task {task_resp.taskId}")
 
@@ -133,7 +131,7 @@ def task_creation_output(
             api.pprint_logs(logs)
         finally:
             print(
-                colored(
+                termcolor.colored(
                     "Task log stream ended. To reopen log stream, run: "
                     "det task logs -f {}".format(task_resp.taskId),
                     "green",
@@ -141,7 +139,7 @@ def task_creation_output(
             )
 
 
-def create(args: Namespace) -> None:
+def create(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     config = ntsc.parse_config(args.config_file, None, args.config, [])
     config_text = util.yaml_safe_dump(config)
@@ -160,7 +158,7 @@ def create(args: Namespace) -> None:
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
-def config(args: Namespace) -> None:
+def config(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     config_resp = bindings.get_GetGenericTaskConfig(sess, taskId=args.task_id)
     if args.json:
@@ -170,7 +168,7 @@ def config(args: Namespace) -> None:
         print(util.yaml_safe_dump(yaml_dict, default_flow_style=False))
 
 
-def fork(args: Namespace) -> None:
+def fork(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     req = bindings.v1CreateGenericTaskRequest(
         config="",
@@ -183,87 +181,92 @@ def fork(args: Namespace) -> None:
     task_creation_output(session=sess, task_resp=task_resp, follow=args.follow)
 
 
-def pause(args: Namespace) -> None:
+def pause(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_PauseGenericTask(sess, taskId=args.task_id)
     print(f"Paused task: {args.task_id}")
 
 
-def unpause(args: Namespace) -> None:
+def unpause(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.post_UnpauseGenericTask(sess, taskId=args.task_id)
     print(f"Unpaused task: {args.task_id}")
 
 
+def cleanup_logs(args: argparse.Namespace) -> None:
+    response = bindings.post_CleanupLogs(cli.setup_session(args))
+    print(f"Deleted {response.removedCount} rows of log entries.")
+
+
 common_log_options: List[Any] = [
-    Arg(
+    cli.Arg(
         "-f",
         "--follow",
         action="store_true",
         help="follow the logs of a running task, similar to tail -f",
     ),
-    Group(
+    cli.Group(
         cli.output_format_args["json"],
     ),
-    Group(
-        Arg(
+    cli.Group(
+        cli.Arg(
             "--head",
             type=int,
             help="number of lines to show, counting from the beginning of the log",
         ),
-        Arg(
+        cli.Arg(
             "--tail",
             type=int,
             help="number of lines to show, counting from the end of the log",
         ),
     ),
-    Arg(
+    cli.Arg(
         "--allocation-id",
         dest="allocation_ids",
         action="append",
         help="allocations to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--agent-id",
         dest="agent_ids",
         action="append",
         help="agents to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--container-id",
         dest="container_ids",
         action="append",
         help="containers to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--rank-id",
         dest="rank_ids",
         type=int,
         action="append",
         help="containers to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--timestamp-before",
         help="show logs only from before (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
-    Arg(
+    cli.Arg(
         "--timestamp-after",
         help="show logs only from after (RFC 3339 format), e.g. '2021-10-26T23:17:12Z'",
     ),
-    Arg(
+    cli.Arg(
         "--level",
         dest="level",
         help="show logs with this level or higher "
         + "(TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL)",
         choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     ),
-    Arg(
+    cli.Arg(
         "--source",
         dest="sources",
         action="append",
         help="sources to show logs from (repeat for multiple values)",
     ),
-    Arg(
+    cli.Arg(
         "--stdtype",
         dest="stdtypes",
         action="append",
@@ -273,137 +276,140 @@ common_log_options: List[Any] = [
 
 
 args_description: List[Any] = [
-    Cmd(
+    cli.Cmd(
         "task",
         None,
         "manage tasks (commands, experiments, notebooks, shells, tensorboards)",
         [
-            Cmd(
+            cli.Cmd(
                 "list ls",
                 list_tasks,
                 "list tasks in cluster",
                 [
-                    Group(
+                    cli.Group(
                         cli.output_format_args["csv"],
                         cli.output_format_args["json"],
                     )
                 ],
                 is_default=True,
             ),
-            Cmd(
+            cli.Cmd(
                 "logs",
                 # Since declarative argparse tries to attach the help_str to the func itself:
-                # ./harness/determined/common/declarative_argparse.py#L57
+                # ./harness/determined/cli/_declarative_argparse.py#L57
                 # Each func must be unique.
-                partial(logs),
+                functools.partial(logs),
                 "fetch task logs",
                 [
-                    Arg("task_id", help="task ID"),
+                    cli.Arg("task_id", help="task ID"),
                     *common_log_options,
                 ],
             ),
-            Cmd(
+            cli.Cmd("cleanup-logs", cleanup_logs, "cleanup expired task logs", []),
+            cli.Cmd(
                 "create",
                 create,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("config_file", type=FileType("r"), help="task config file (.yaml)"),
-                    Arg(
+                    cli.Arg(
+                        "config_file", type=argparse.FileType("r"), help="task config file (.yaml)"
+                    ),
+                    cli.Arg(
                         "--context",
                         "-c",
-                        type=Path,
+                        type=pathlib.Path,
                         help=ntsc.CONTEXT_DESC,
                     ),
-                    Arg(
+                    cli.Arg(
                         "-i",
                         "--include",
                         action="append",
                         default=[],
-                        type=Path,
+                        type=pathlib.Path,
                         help=ntsc.INCLUDE_DESC,
                     ),
-                    Arg("--project_id", type=int, help="place this task inside this project"),
-                    Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
-                    Arg(
+                    cli.Arg("--project_id", type=int, help="place this task inside this project"),
+                    cli.Arg("--config", action="append", default=[], help=ntsc.CONFIG_DESC),
+                    cli.Arg(
                         "-f",
                         "--follow",
                         action="store_true",
                         help="follow the logs of the task that is created",
                     ),
-                    Arg("--fork", type=str, help="id of parent task to fork from"),
-                    Arg(
+                    cli.Arg("--fork", type=str, help="id of parent task to fork from"),
+                    cli.Arg(
                         "-p",
                         "--parent",
                         type=str,
                         help="task id of parent task",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--inherit_context",
                         action="store_true",
                         help="inherits context directory from parent task (parent flag required)",
                     ),
-                    Arg(
+                    cli.Arg(
                         "--no_pause",
                         action="store_true",
                         help="make task unpausable",
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "config",
                 config,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("task_id", type=str, help="ID of task to pull config from"),
-                    Arg(
+                    cli.Arg("task_id", type=str, help="ID of task to pull config from"),
+                    cli.Arg(
                         "--json",
                         action="store_true",
                         help="return config in JSON format",
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "fork",
                 fork,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
-                    Arg(
+                    cli.Arg("parent_task_id", type=str, help="Id of parent task to fork from"),
+                    cli.Arg(
                         "-f",
                         "--follow",
                         action="store_true",
                         help="follow the logs of the task that is created",
                     ),
-                    Arg("--project_id", type=int, help="place this task inside this project"),
+                    cli.Arg("--project_id", type=int, help="place this task inside this project"),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "kill",
                 kill,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("task_id", type=str, help=""),
-                    Arg(
+                    cli.Arg("task_id", type=str, help=""),
+                    cli.Arg(
                         "--root",
                         action="store_true",
                         help="",
                     ),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "pause",
                 pause,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("task_id", type=str, help=""),
+                    cli.Arg("task_id", type=str, help=""),
                 ],
             ),
-            Cmd(
+            cli.Cmd(
                 "unpause",
                 unpause,
-                SUPPRESS,
+                argparse.SUPPRESS,
                 [
-                    Arg("task_id", type=str, help=""),
+                    cli.Arg("task_id", type=str, help=""),
                 ],
             ),
         ],
