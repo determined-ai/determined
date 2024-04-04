@@ -9,7 +9,6 @@ import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
-import { head } from 'lodash';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
@@ -251,7 +250,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   const usableConfig = useMemo(() => (Loadable.isLoaded(config) ? config.data : ''), [config]);
   const [field, setField] = useState([
     { name: 'config', value: usableConfig },
-    { name: 'workspaceId', value: currentWorkspace ? currentWorkspace.id : head(workspaces)?.id },
+    { name: 'workspaceId', value: currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id },
   ]);
 
   const handleConfigChange = useCallback(
@@ -277,7 +276,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   useEffect(() => {
     form.setFieldValue(
       'workspaceId',
-      currentWorkspace ? currentWorkspace.id : head(workspaces)?.id,
+      currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id,
     );
   }, [currentWorkspace, form, workspaces]);
   useEffect(() => {
@@ -423,7 +422,7 @@ const JupyterLabForm: React.FC<{
   useEffect(() => {
     form.setFieldValue(
       'workspaceId',
-      currentWorkspace ? currentWorkspace.id : head(workspaces)?.id,
+      currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id,
     );
   }, [currentWorkspace, form, workspaces]);
 
