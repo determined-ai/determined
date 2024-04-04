@@ -139,8 +139,8 @@ Spinning up or updating the Cluster
       -  default
 
    -  -  ``--add-tag``
-      -  Add an aws tag to resources created. Also adds this tag to dynamic agents launched. Provide
-         as ``key=value``. This can be specified multiple times to apply more than one tag.
+      -  Add an AWS tag to resources created including dynamic agents. Provide as ``key=value``.
+         This can be specified multiple times to apply more than one tag.
       -  Not set
 
    -  -  ``--master-instance-type``

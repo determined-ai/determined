@@ -91,19 +91,16 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         master_url = self._get_master_url()
         healthcheck.wait_for_master(master_url, timeout=timeout, cert=cert)
 
-    def consolidate_parameters(self) -> List[Dict[str, Any]]:
+    def consolidate_parameters(self):
         consolidated_params = []
-        for k in self.parameters.keys():
-            if self.parameters[k] and k in self.template_parameter_keys:
-                if k == constants.cloudformation.EXTRA_TAGS:
-                    tag_list = [{"key": tag[0], "value": tag[1]} for tag in self.parameters[k]]
-                    consolidated_params.append(
-                        {"ParameterKey": k, "ParameterValue": json.dumps(tag_list)}
-                    )
-                else:
-                    consolidated_params.append(
-                        {"ParameterKey": k, "ParameterValue": str(self.parameters[k])}
-                    )
+
+        for key in self.parameters.keys():
+            if self.parameters[key] and key in self.template_parameter_keys:
+                param_value = str(self.parameters[key])
+                if key == constants.cloudformation.EXTRA_TAGS:
+                    tag_list = [{"key": tag[0], "value": tag[1]} for tag in self.parameters[key]]
+                    param_value = json.dumps(tag_list)
+                consolidated_params.append({"ParameterKey": key, "ParameterValue": param_value})
 
         return consolidated_params
 
