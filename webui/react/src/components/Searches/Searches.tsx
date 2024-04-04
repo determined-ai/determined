@@ -46,6 +46,7 @@ import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight, TableViewMode } from 'components/OptionsMenu';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
+import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -162,7 +163,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     INITIAL_LOADING_EXPERIMENTS,
   );
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
-  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const filtersString = useObservable(formStore.asJsonString);
   const loadableFormset = useObservable(formStore.formset);
@@ -392,24 +392,14 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
 
-  // TODO: poll?
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        let columns = await getProjectColumns({ id: project.id });
-        columns = columns.filter((c) => c.location === V1LocationType.EXPERIMENT);
-
-        if (mounted) {
-          setProjectColumns(Loaded(columns));
-        }
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project columns' });
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
+  const projectColumns = useAsync(async () => {
+    try {
+      const columns = await getProjectColumns({ id: project.id });
+      return columns.filter((c) => c.location === V1LocationType.EXPERIMENT);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch project columns' });
+      return NotLoaded;
+    }
   }, [project.id]);
 
   useEffect(() => {
