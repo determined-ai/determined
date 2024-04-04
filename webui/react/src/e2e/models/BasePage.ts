@@ -1,5 +1,7 @@
 import { Locator, type Page } from '@playwright/test';
 
+import { Navigation } from 'e2e/models/components/Navigation';
+
 /**
  * Returns the representation of a Page.
  * This constructor is a base class for any component in src/pages/.
@@ -7,7 +9,9 @@ import { Locator, type Page } from '@playwright/test';
  */
 export abstract class BasePage {
   readonly _page: Page;
+  readonly nav: Navigation = new Navigation({ parent: this });
   abstract readonly url: string;
+  abstract readonly title: string;
 
   constructor(page: Page) {
     this._page = page;
@@ -25,10 +29,10 @@ export abstract class BasePage {
    * ie. await expect(thePage.goto().theElement.loc()).toBeVisible()
    * @param {Page} [waitForURL] - Whether for the URL to change
    */
-  goto(waitForURL: boolean = true): BasePage {
-    this._page.goto(this.url);
+  async goto(waitForURL: boolean = true): Promise<BasePage> {
+    await this._page.goto(this.url);
     if (waitForURL) {
-      this._page.waitForURL(this.url);
+      await this._page.waitForURL(this.url);
     }
     return this;
   }

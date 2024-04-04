@@ -121,9 +121,10 @@ interface HeaderCellProps {
 }
 
 interface CellProps {
-  children?: React.ReactNode;
-  className?: string;
-  isCellRightClickable?: boolean;
+  'children'?: React.ReactNode;
+  'className'?: string;
+  'isCellRightClickable'?: boolean;
+  'data-testid'?: string;
 }
 
 /*
@@ -284,12 +285,14 @@ const HeaderCell = ({
 
   if (!columnName) return <th className={className} {...props} />;
 
-  if (!interactiveColumns) return <th className={headerCellClasses.join(' ')} {...props} />;
+  if (!interactiveColumns)
+    return <th className={headerCellClasses.join(' ')} data-testid={columnName} {...props} />;
 
   const tableCell = (
     <th className={headerCellClasses.join(' ')}>
       <div
         className={`${className} ${css.columnDraggingDiv}`}
+        data-testid={columnName}
         ref={drag}
         title={columnName}
         onClick={(e) => e.stopPropagation()}
@@ -653,7 +656,7 @@ const InteractiveTable = <
   }, [settings.columnWidths, widthData, getUpscaledWidths]);
 
   return (
-    <div className={css.tableContainer} ref={tableRef}>
+    <div className={css.tableContainer} data-test-component="interactiveTable" ref={tableRef}>
       <Spinner spinning={!!spinning}>
         {spinning || !settings ? (
           <SkeletonTable columns={renderColumns?.length} />
@@ -662,6 +665,7 @@ const InteractiveTable = <
             bordered
             columns={renderColumns}
             components={components}
+            data-testid="table"
             dataSource={dataSource}
             rowKey={rowKey}
             scroll={scroll}

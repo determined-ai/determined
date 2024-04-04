@@ -70,9 +70,9 @@ const SkeletonSection: React.FC<Props> = ({
   }, [children, contentType]);
 
   return (
-    <div className={classes.join(' ')}>
+    <div className={classes.join(' ')} data-test-component="skeletonSection">
       {showHeader && (
-        <div className={css.header}>
+        <div className={css.header} data-testid="skeletonHeader">
           {titleSkeleton}
           {filterSkeleton}
         </div>
