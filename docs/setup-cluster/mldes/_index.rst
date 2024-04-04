@@ -6,7 +6,7 @@
 
 .. attention::
 
-   MLDES is only available on Determined Enterprise Edition.
+   MLDES only supports Determined Enterprise Edition.
 
 **********
  Overview
