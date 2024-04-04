@@ -8,7 +8,7 @@ metadata:
   {{ if .Values.addSharedClusterTag}}
   annotations:
       shared-cluster: gke-ci-testing
-  {{ end}}
+  {{ end }}
   labels:
     app: determined-db-{{ .Release.Name }}
     release: {{ .Release.Name }}
@@ -67,4 +67,4 @@ spec:
           persistentVolumeClaim:
             claimName: determined-db-pvc-{{ .Release.Name }}
       {{ end }}
-{{ end}}
+{{ end }}
