@@ -2521,4 +2521,15 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Move runs.
+  rpc MoveRuns(MoveRunsRequest) returns (MoveRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/move"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
