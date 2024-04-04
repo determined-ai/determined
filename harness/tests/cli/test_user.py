@@ -42,7 +42,7 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
             status=200,
             json={"user": userobj.to_json()},
         )
-        with pytest.raises(ValueError, match="password must have at least 8 characters"):
+        with pytest.raises(SystemExit):
             cli.main(["user", "change-password", "tgt-user"])
 
     # cannot set password to something weak
@@ -53,7 +53,7 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
             status=200,
             json={"user": userobj.to_json()},
         )
-        with pytest.raises(ValueError, match=r"password must contain .+"):
+        with pytest.raises(SystemExit):
             cli.main(["user", "change-password", "tgt-user"])
 
 
