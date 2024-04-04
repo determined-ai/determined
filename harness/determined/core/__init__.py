@@ -9,6 +9,12 @@ from determined.core._checkpoint import (
     DownloadMode,
     DummyCheckpointContext,
 )
+
+from determined.core._metrics import (
+    MetricsContext,
+    DummyMetricsContext,
+)
+
 from determined.core._train import (
     TrainContext,
     DummyTrainContext,

@@ -63,6 +63,7 @@ def _make_v2_context(
     # At present, we only support tensorboards in Trial tasks.
     tbd_writer = None
 
+    metrics = None
     train = None
     searcher = None
     tensorboard_manager = None
@@ -104,11 +105,16 @@ def _make_v2_context(
             info.trial.trial_id,
             checkpoint_storage,
         )
-        train = core.TrainContext(
+        metrics = core.MetricsContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
+        )
+        train = core.TrainContext(
+            session,
+            info.trial.trial_id,
             info.trial.experiment_id,
+            metrics,
             distributed,
             tensorboard_mode,
             tensorboard_manager,
@@ -175,6 +181,7 @@ def _make_v2_context(
         distributed=distributed,
         checkpoint=checkpoint,
         preempt=preempt,
+        metrics=metrics,
         train=train,
         searcher=searcher,
         info=info,

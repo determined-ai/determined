@@ -1,15 +1,12 @@
-import datetime
 import enum
 import logging
 import pathlib
-import queue
-import threading
 from typing import Any, Callable, Dict, List, Optional, Set
 
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, util
-from determined.common.api import bindings, errors
+from determined.common.api import errors
 
 logger = logging.getLogger("determined.core")
 
@@ -30,8 +27,8 @@ class TrainContext:
         self,
         session: api.Session,
         trial_id: int,
-        run_id: int,
         exp_id: int,
+        metrics: core.MetricsContext,
         distributed: core.DistributedContext,
         tensorboard_mode: core.TensorboardMode,
         tensorboard_manager: Optional[tensorboard.TensorboardManager],
@@ -39,7 +36,7 @@ class TrainContext:
     ) -> None:
         self._session = session
         self._trial_id = trial_id
-        self._run_id = run_id
+        self._metrics = metrics
         self._exp_id = exp_id
         self._distributed = distributed
         if tensorboard_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
@@ -47,17 +44,6 @@ class TrainContext:
         self._tensorboard_mode = tensorboard_mode
         self._tensorboard_manager = tensorboard_manager
         self._tbd_writer = tbd_writer
-        self._metrics_shipper = _Shipper(
-            session=self._session,
-            trial_id=self._trial_id,
-            run_id=self._run_id,
-        )
-
-    def start(self) -> None:
-        self._metrics_shipper.start()
-
-    def close(self) -> None:
-        self._metrics_shipper.stop()
 
     def set_status(self, status: str) -> None:
         """
@@ -98,9 +84,7 @@ class TrainContext:
         logger.info(
             f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
-        self._metrics_shipper.publish_metrics(
-            util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics
-        )
+        self._report_trial_metrics(util._LEGACY_TRAINING, steps_completed, metrics, batch_metrics)
 
     def report_validation_metrics(
         self,
@@ -116,7 +100,7 @@ class TrainContext:
         logger.info(
             f"report_validation_metrics(steps_completed={steps_completed}, metrics={metrics})"
         )
-        self._metrics_shipper.publish_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
+        self._report_trial_metrics(util._LEGACY_VALIDATION, steps_completed, metrics)
 
     def report_metrics(
         self,
@@ -140,7 +124,63 @@ class TrainContext:
         logger.info(
             f"report_metrics(group={group}, steps_completed={steps_completed}, metrics={metrics})"
         )
-        self._metrics_shipper.publish_metrics(group, steps_completed, metrics)
+        self._report_trial_metrics(group, steps_completed, metrics)
+
+    def _report_trial_metrics(
+        self,
+        group: str,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        reportable_metrics = metrics
+        if group == util._LEGACY_VALIDATION:
+            # keep the old behavior of filtering out some metrics for validations.
+            serializable_metrics = self._get_serializable_metrics(metrics)
+            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
+
+        self._metrics.report(
+            group=group,
+            metrics=reportable_metrics,
+            steps_completed=steps_completed,
+            batch_metrics=batch_metrics,
+        )
+
+        # Also sync tensorboard (all metrics, not just json-serializable ones).
+        if self._tensorboard_mode == core.TensorboardMode.AUTO:
+            if self._tbd_writer:
+                if group == util._LEGACY_TRAINING:
+                    self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
+                elif group == util._LEGACY_VALIDATION:
+                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
+            assert self._tensorboard_manager is not None
+            self._tensorboard_manager.sync()
+
+    @staticmethod
+    def _get_serializable_metrics(metrics: Dict[str, Any]) -> Set[str]:
+        serializable_metrics = set()
+        non_serializable_metrics = set()
+
+        # In the case of trial implementation bugs, validation metric functions may return None.
+        # Immediately fail any trial that encounters a None metric.
+        for metric_name, metric_value in metrics.items():
+            if metric_value is None:
+                raise RuntimeError(
+                    "Validation metric '{}' returned "
+                    "an invalid scalar value: {}".format(metric_name, metric_value)
+                )
+
+            if isinstance(metric_value, (bytes, bytearray)):
+                non_serializable_metrics.add(metric_name)
+            else:
+                serializable_metrics.add(metric_name)
+
+        if len(non_serializable_metrics):
+            logger.warning(
+                "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
+            )
+
+        return serializable_metrics
 
     def get_tensorboard_path(self) -> pathlib.Path:
         """
@@ -207,137 +247,6 @@ class TrainContext:
             # 404 means 'no validations yet'.
             return None
         return float(r.json()["metric"])
-
-
-class _TrialMetrics:
-    def __init__(
-        self,
-        group: str,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ):
-        self.group = group
-        self.steps_completed = steps_completed
-        self.metrics = metrics
-        self.batch_metrics = batch_metrics
-
-
-METRICS_QUEUE_MAXSIZE = 1000
-
-
-class _Shipper(threading.Thread):
-    def __init__(
-        self,
-        session: api.Session,
-        trial_id: int,
-        run_id: int,
-        tensorboard_mode: core.TensorboardMode,
-        tensorboard_manager: Optional[tensorboard.TensorboardManager],
-        tbd_writer: Optional[tensorboard.BatchMetricWriter],
-    ):
-        self._queue = queue.Queue(maxsize=METRICS_QUEUE_MAXSIZE)
-        self._session = session
-        self._trial_id = trial_id
-        self._run_id = run_id
-        self._tensorboard_mode = tensorboard_mode
-        self._tensorboard_manager = tensorboard_manager
-        self._tbd_writer = tbd_writer
-
-        super().__init__()
-
-    def run(self) -> None:
-        """Start the thread and ship metrics in queue to master."""
-        while True:
-            msg = self._queue.get()
-            if msg is None:
-                # Received shutdown message, exit.
-                return
-            self._report_trial_metrics(
-                group=msg.group,
-                metrics=msg.metrics,
-                batch_metrics=msg.batch_metrics,
-                steps_completed=msg.steps_completed,
-            )
-
-    def stop(self) -> None:
-        self._queue.put(None)
-        self.join()
-
-    def publish_metrics(
-        self,
-        group: str,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ):
-        self._queue.put(
-            _TrialMetrics(
-                group=group,
-                steps_completed=steps_completed,
-                metrics=metrics,
-                batch_metrics=batch_metrics,
-            )
-        )
-
-    def _report_trial_metrics(
-        self,
-        group: str,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-        reportable_metrics = metrics
-        if group == util._LEGACY_VALIDATION:
-            # keep the old behavior of filtering out some metrics for validations.
-            serializable_metrics = self._get_serializable_metrics(metrics)
-            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
-
-        v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
-        v1TrialMetrics = bindings.v1TrialMetrics(
-            metrics=v1metrics,
-            trialId=self._trial_id,
-            stepsCompleted=steps_completed,
-            trialRunId=self._run_id,
-        )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=group)
-        bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
-
-        # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tensorboard_mode == core.TensorboardMode.AUTO:
-            if self._tbd_writer:
-                if group == util._LEGACY_TRAINING:
-                    self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-                elif group == util._LEGACY_VALIDATION:
-                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            assert self._tensorboard_manager is not None
-            self._tensorboard_manager.sync()
-
-    @staticmethod
-    def _get_serializable_metrics(metrics: Dict[str, Any]) -> Set[str]:
-        serializable_metrics = set()
-        non_serializable_metrics = set()
-
-        # In the case of trial implementation bugs, validation metric functions may return None.
-        # Immediately fail any trial that encounters a None metric.
-        for metric_name, metric_value in metrics.items():
-            if metric_value is None:
-                raise RuntimeError(
-                    "Validation metric '{}' returned "
-                    "an invalid scalar value: {}".format(metric_name, metric_value)
-                )
-
-            if isinstance(metric_value, (bytes, bytearray)):
-                non_serializable_metrics.add(metric_name)
-            else:
-                serializable_metrics.add(metric_name)
-
-        if len(non_serializable_metrics):
-            logger.warning(
-                "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
-            )
-
-        return serializable_metrics
 
 
 class DummyTrainContext(TrainContext):
