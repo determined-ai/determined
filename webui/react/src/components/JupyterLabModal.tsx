@@ -9,6 +9,7 @@ import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
+import { head } from 'lodash';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
@@ -250,7 +251,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   const usableConfig = useMemo(() => (Loadable.isLoaded(config) ? config.data : ''), [config]);
   const [field, setField] = useState([
     { name: 'config', value: usableConfig },
-    { name: 'workspaceId', value: currentWorkspace?.id },
+    { name: 'workspaceId', value: currentWorkspace ? currentWorkspace.id : head(workspaces)?.id },
   ]);
 
   const handleConfigChange = useCallback(
@@ -274,8 +275,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   }, [usableConfig]);
 
   useEffect(() => {
-    form.setFieldValue('workspaceId', currentWorkspace?.id);
-  }, [currentWorkspace, form]);
+    form.setFieldValue(
+      'workspaceId',
+      currentWorkspace ? currentWorkspace.id : head(workspaces)?.id,
+    );
+  }, [currentWorkspace, form, workspaces]);
   useEffect(() => {
     form.setFieldValue('config', usableConfig);
   }, [usableConfig, form]);
@@ -417,8 +421,11 @@ const JupyterLabForm: React.FC<{
   }, [boundResourcePools, form]);
 
   useEffect(() => {
-    form.setFieldValue('workspaceId', currentWorkspace?.id);
-  }, [currentWorkspace, form]);
+    form.setFieldValue(
+      'workspaceId',
+      currentWorkspace ? currentWorkspace.id : head(workspaces)?.id,
+    );
+  }, [currentWorkspace, form, workspaces]);
 
   const onSelectWorkspace = (workspaceId?: SelectValue) => {
     const selected = workspaces.find((w) => workspaceId && w.id === workspaceId);
