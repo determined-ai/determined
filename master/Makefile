@@ -96,7 +96,7 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT))"
+	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT))" || (git diff; false)
 
 .PHONY: get-deps
 get-deps:

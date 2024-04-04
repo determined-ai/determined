@@ -23,32 +23,35 @@ import (
 //
 // There is one PublisherSet for the whole process.  It has one Publisher per streamable type.
 type PublisherSet struct {
-	DBAddress  string
-	Projects   *stream.Publisher[*ProjectMsg]
-	Models     *stream.Publisher[*ModelMsg]
-	bootemChan chan struct{}
-	bootLock   sync.Mutex
-	readyCond  sync.Cond
-	ready      bool
+	DBAddress     string
+	Projects      *stream.Publisher[*ProjectMsg]
+	Models        *stream.Publisher[*ModelMsg]
+	ModelVersions *stream.Publisher[*ModelVersionMsg]
+	bootemChan    chan struct{}
+	bootLock      sync.Mutex
+	readyCond     sync.Cond
+	ready         bool
 }
 
 // NewPublisherSet constructor for PublisherSet.
 func NewPublisherSet(dbAddress string) *PublisherSet {
 	lock := sync.Mutex{}
 	return &PublisherSet{
-		DBAddress:  dbAddress,
-		Projects:   stream.NewPublisher[*ProjectMsg](),
-		Models:     stream.NewPublisher[*ModelMsg](),
-		bootemChan: make(chan struct{}),
-		readyCond:  *sync.NewCond(&lock),
+		DBAddress:     dbAddress,
+		Projects:      stream.NewPublisher[*ProjectMsg](),
+		Models:        stream.NewPublisher[*ModelMsg](),
+		ModelVersions: stream.NewPublisher[*ModelVersionMsg](),
+		bootemChan:    make(chan struct{}),
+		readyCond:     *sync.NewCond(&lock),
 	}
 }
 
 // Start starts each Publisher in the PublisherSet.
 func (ps *PublisherSet) Start(ctx context.Context) error {
 	readyChannels := map[interface{}]chan bool{
-		ps.Projects: make(chan bool),
-		ps.Models:   make(chan bool),
+		ps.Projects:      make(chan bool),
+		ps.Models:        make(chan bool),
+		ps.ModelVersions: make(chan bool),
 	}
 
 	eg := errgroupx.WithContext(ctx)
@@ -78,6 +81,21 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 			)
 			if err != nil {
 				return fmt.Errorf("models publishLoop failed: %s", err.Error())
+			}
+			return nil
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			err := publishLoop(
+				c,
+				ps.DBAddress,
+				modelVersionChannel,
+				ps.ModelVersions,
+				readyChannels[ps.ModelVersions],
+			)
+			if err != nil {
+				return fmt.Errorf("model versions publishLoop failed: %s", err.Error())
 			}
 			return nil
 		},

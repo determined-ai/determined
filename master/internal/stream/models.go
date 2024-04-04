@@ -39,12 +39,12 @@ type ModelMsg struct {
 	Description     string    `bun:"description" json:"description"`
 	Archived        bool      `bun:"archived" json:"archived"`
 	CreationTime    time.Time `bun:"creation_time" json:"creation_time"`
-	Notes           JSONB     `bun:"notes" json:"notes"`
+	Notes           string    `bun:"notes" json:"notes"`
 	WorkspaceID     int       `bun:"workspace_id" json:"workspace_id"`
 	UserID          int       `bun:"user_id" json:"user_id"`
 	LastUpdatedTime time.Time `bun:"last_updated_time" json:"last_updated_time"`
-	Metadata        JSONB     `bun:"metadata" json:"metadata"`
-	Labels          JSONB     `bun:"labels" json:"labels"`
+	Metadata        JSONB     `bun:"metadata,type:jsonb" json:"metadata"`
+	Labels          []string  `bun:"labels,array" json:"labels"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`
@@ -150,7 +150,7 @@ func ModelCollectStartupMsgs(
 			spec,
 		)
 	}
-	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
 		return nil, err
 	}
