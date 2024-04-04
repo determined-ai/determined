@@ -99,20 +99,7 @@ func (a *apiServer) SearchRuns(
 	}
 
 	if req.Filter != nil {
-		var efr experimentFilterRoot
-		err := json.Unmarshal([]byte(*req.Filter), &efr)
-		if err != nil {
-			return nil, err
-		}
-		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if !efr.ShowArchived {
-				return q.Where(`e.archived = false`)
-			}
-			return q
-		})
+		query, err = filterRunQuery(query, req.Filter)
 		if err != nil {
 			return nil, err
 		}
@@ -250,6 +237,27 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	return nil
 }
 
+func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, error) {
+	var efr experimentFilterRoot
+	err := json.Unmarshal([]byte(*filter), &efr)
+	if err != nil {
+		return nil, err
+	}
+	getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		_, err = efr.toSQL(q)
+		return q
+	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		if !efr.ShowArchived {
+			return q.Where(`e.archived = false`)
+		}
+		return q
+	})
+	if err != nil {
+		return nil, err
+	}
+	return getQ, nil
+}
+
 func (a *apiServer) MoveRuns(
 	ctx context.Context, req *apiv1.MoveRunsRequest,
 ) (*apiv1.MoveRunsResponse, error) {
@@ -296,20 +304,7 @@ func (a *apiServer) MoveRuns(
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
 	} else {
-		var efr experimentFilterRoot
-		err := json.Unmarshal([]byte(*req.Filter), &efr)
-		if err != nil {
-			return nil, err
-		}
-		getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if !efr.ShowArchived {
-				return q.Where(`e.archived = false`)
-			}
-			return q
-		})
+		getQ, err = filterRunQuery(getQ, req.Filter)
 		if err != nil {
 			return nil, err
 		}
@@ -365,38 +360,48 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	if len(validIDs) > 0 {
-		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
-			if err != nil {
-				return err
-			}
-			failedExpMoveIds := []int32{-1}
-			for _, res := range expMoveResults {
-				if res.Error != nil {
-					failedExpMoveIds = append(failedExpMoveIds, res.ID)
-				}
-			}
-			var acceptedIDs []int32
-			if _, err = tx.NewUpdate().Table("runs").
-				Set("project_id = ?", req.DestinationProjectId).
-				Where("runs.id IN (?)", bun.In(validIDs)).
-				Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
-				Returning("runs.id").
-				Model(&acceptedIDs).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("updating run's project IDs: %w", err)
-			}
-
-			for _, acceptID := range acceptedIDs {
-				results = append(results, &apiv1.RunActionResult{
-					Error: "",
-					Id:    acceptID,
-				})
-			}
-			return nil
-		})
+		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
 		if err != nil {
-			return nil, fmt.Errorf("moving runs: %w", err)
+			return nil, err
+		}
+		failedExpMoveIds := []int32{-1}
+		for _, res := range expMoveResults {
+			if res.Error != nil {
+				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			}
+		}
+		var acceptedIDs []int32
+		if _, err = db.Bun().NewUpdate().Table("runs").
+			Set("project_id = ?", req.DestinationProjectId).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+		var failedRunIDs []int32
+		if _, err = db.Bun().NewUpdate().Table("runs").
+			Set("project_id = ?", req.DestinationProjectId).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
+			Returning("runs.id").
+			Model(&failedRunIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
+		}
+		for _, failedRunID := range failedRunIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Failed to move associated experiment",
+				Id:    failedRunID,
+			})
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
