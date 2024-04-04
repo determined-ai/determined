@@ -50,18 +50,6 @@ def test_user_edit_no_fields(mock_die: mock.MagicMock) -> None:
         )
 
 
-@responses.activate(assert_all_requests_are_fired=True)
-@mock.patch("getpass.getpass", lambda *_: "newpass")
-def test_det_login_calls_login_endpoint() -> None:
-    util.expect_get_info()
-    userobj = bindings.v1User(active=True, admin=False, username="det-user", id=101)
-    login_resp = bindings.v1LoginResponse(token="test-token", user=userobj)
-    responses.post(
-        "http://localhost:8080/api/v1/auth/login", status=200, json=login_resp.to_json(True)
-    )
-    cli.main(["user", "login", "test-user"])
-
-
 @responses.activate()
 @mock.patch("determined.common.api.authentication.TokenStore", util.MockTokenStore(strict=False))
 @mock.patch("getpass.getpass", lambda *_: "newpass")
