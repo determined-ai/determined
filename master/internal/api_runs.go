@@ -391,7 +391,7 @@ func (a *apiServer) MoveRuns(
 		if err = db.Bun().NewSelect().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
-			Scan(ctx, failedRunIDs); err != nil {
+			Scan(ctx, &failedRunIDs); err != nil {
 			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
 		}
 		for _, failedRunID := range failedRunIDs {
