@@ -187,7 +187,7 @@ const ProjectDetails: React.FC = () => {
         ]
       : [
           {
-            breadcrumbName: 'Uncategorized Experiments',
+            breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
             path: paths.projectDetails(project.id),
           },
         ];
@@ -196,7 +196,9 @@ const ProjectDetails: React.FC = () => {
       breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
-      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
+      docTitle={
+        id === 1 ? `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}` : 'Project Details'
+      }
       id="projectDetails"
       menuItems={menu.length > 0 ? menu : undefined}
       noScroll

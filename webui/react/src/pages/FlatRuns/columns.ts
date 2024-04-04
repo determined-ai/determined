@@ -26,7 +26,6 @@ export const runColumns = [
   'id',
   'state',
   'startTime',
-  'endTime',
   'user',
   'searcherType',
   'searcherMetric',
@@ -159,19 +158,6 @@ export const getColumnDefs = ({
     title: 'Duration',
     tooltip: () => undefined,
     width: columnWidths.duration,
-  },
-  endTime: {
-    id: 'endTime',
-    isNumerical: true,
-    renderer: (record: FlatRun) => ({
-      allowOverlay: false,
-      copyData: record.endTime ? getTimeInEnglish(new Date(record.endTime)) : '',
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
-    title: 'End Time',
-    tooltip: () => undefined,
-    width: columnWidths.endTime,
   },
   experimentDescription: {
     id: 'experimentDescription',

@@ -29,17 +29,10 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Error } from 'components/exceptions';
-import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
-import {
-  AvailableOperators,
-  FormKind,
-  IOFilterFormSet,
-  Operator,
-  SpecialColumnNames,
-} from 'components/FilterForm/components/type';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { IOFilterFormSet } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight } from 'components/OptionsMenu';
 import {
@@ -62,7 +55,6 @@ import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
-import { pluralizer } from 'utils/string';
 
 import { getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
@@ -539,38 +531,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         ];
         return items;
       }
+      console.log(columnId);
+      console.log(Loadable.getOrElse([], projectColumns));
       const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
       if (!column) {
         return [];
       }
-
-      const filterCount = formStore.getFieldCount(column.column).get();
-
       const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
-      const loadableFormset = formStore.formset.get();
-      const filterMenuItemsForColumn = () => {
-        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
-          column.column,
-        );
-        formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: Loadable.match(loadableFormset, {
-            _: () => 0,
-            Loaded: (formset) => formset.filterGroup.children.length,
-          }),
-          item: {
-            columnName: column.column,
-            id: uuidv4(),
-            kind: FormKind.Field,
-            location: column.location,
-            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
-            type: column.type,
-            value: null,
-          },
-        });
-      };
-      const clearFilterForColumn = () => {
-        formStore.removeByField(column.column);
-      };
 
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
@@ -603,43 +570,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                   handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
                 },
               },
-        {
-          icon: <Icon decorative name="eye-close" />,
-          key: 'hide',
-          label: 'Hide column',
-          onClick: () => {
-            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-            handleColumnsOrderChange?.(newColumnsOrder);
-            if (isPinned) {
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-            }
-          },
-        },
-        { type: 'divider' as const },
         ...(BANNED_FILTER_COLUMNS.includes(column.column)
           ? []
           : [
-              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
               { type: 'divider' as const },
-              {
-                icon: <Icon decorative name="filter" />,
-                key: 'filter',
-                label: 'Add Filter',
-                onClick: () => {
-                  setTimeout(filterMenuItemsForColumn, 5);
-                },
-              },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
             ]),
-        filterCount > 0
-          ? {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter-clear',
-              label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-              onClick: () => {
-                setTimeout(clearFilterForColumn, 5);
-              },
-            }
-          : null,
       ];
       return items;
     },

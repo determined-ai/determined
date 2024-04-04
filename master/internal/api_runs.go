@@ -180,7 +180,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"endTime":               "r.end_time",
 		"state":                 "r.state",
 		"experimentProgress":    "COALESCE(e.progress, 0)",
-		"user":                  "display_name",
+		"user":                  "COALESCE(u.username, u.display_name)",
 		"forkedFrom":            "e.parent_id",
 		"resourcePool":          "e.config->'resources'->>'resource_pool'",
 		"projectId":             "r.project_id",
