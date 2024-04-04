@@ -3,12 +3,12 @@ import { Locator } from '@playwright/test';
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
-type RowTypeGeneric<RowType> = new (args: NamedComponentArgs) => RowType;
-type HeadRowTypeGeneric<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
+type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
+type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
 
 export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
-  rowType: RowTypeGeneric<RowType>;
-  headRowType: HeadRowTypeGeneric<HeadRowType>;
+  rowType: RowClass<RowType>;
+  headRowType: HeadRowClass<HeadRowType>;
 };
 
 /**
@@ -48,7 +48,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     this.headRow = new args.headRowType({ parent: this.#head });
     this.getRowByDataKey = this.rowByAttributeGenerator(this.rows.keyAttribute);
   }
-  readonly #rowType: RowTypeGeneric<RowType>;
+  readonly #rowType: RowClass<RowType>;
   readonly rows: RowType;
   readonly headRow: HeadRowType;
   readonly #body: BaseComponent = new BaseComponent({
