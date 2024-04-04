@@ -87,13 +87,6 @@ useNodePortForMaster: false
 # the same namespace in which Determined is being installed.
 tlsSecret:
 
-
-# TLS Security setting (TODO populate this comment)
-security:
-  tls:
-    cert:
-    key:
-
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
   # environments contain an unprivileged user named det-nobody, which does have a writable HOME
@@ -240,10 +233,6 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
-
-# TODO( POPULATE THIS COMMENT)
-createNonNamespacedObjects:
-
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
 # slotResourceRequests:
@@ -332,6 +321,8 @@ telemetry:
   #   tls:
   #     enabled: true
   #     skipVerify: false
+  #     cert:
+  #     key:
 
   #     # The name to use when verifying the certificate, if different from the name used to connect.
   #     certificateName: <name>
@@ -353,3 +344,6 @@ resourcePools:
 
 ## Configure the initial user password for the cluster
 # initialUserPassword
+
+# For Shared Cluster deployments, set addSharedClusterTag to true. 
+addSharedClusterTag: false

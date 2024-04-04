@@ -17,6 +17,9 @@ spec:
         app: determined-master-{{ .Release.Name }}
         determined-system: master
       annotations:
+        {{ if .Values.addSharedClusterTag}}
+          shared-cluster: gke-ci-testing
+        {{ end}}
         # This is added so that the master deployment restarts when an upgrade occurs that
         # changes the master-config.yaml.
         checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}

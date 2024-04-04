@@ -5,6 +5,10 @@ kind: Deployment
 metadata:
   name: determined-db-deployment-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
+  {{ if .Values.addSharedClusterTag}}
+  annotations:
+      shared-cluster: gke-ci-testing
+  {{ end}}
   labels:
     app: determined-db-{{ .Release.Name }}
     release: {{ .Release.Name }}

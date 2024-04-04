@@ -1052,7 +1052,15 @@ commands:
       - run: 
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
-          command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
+          command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket --placement ${GKE_REGION}
+          name: Create checkpoint storage bucket
+      - run:
+          command: |
+            gcloud resource-manager tags bindings create \
+            --tag-value=${SHARED_CLUSTER_TAG_VALUE_ID} \
+            --parent=//storage.googleapis.com/projects/_/buckets/${GENERATED_NAMESPACE}-bucket \
+            --location={GKE_REGION}
+          name: Add shared-cluster tag to checkpoint bucket
       - helm/install-helm-client:
           version: v3.12.3
       - run:
