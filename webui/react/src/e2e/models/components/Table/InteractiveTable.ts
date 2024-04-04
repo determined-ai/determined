@@ -88,10 +88,14 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
   async allRowKeys(): Promise<string[]> {
     const { pwLocator, keyAttribute } = this.rows;
     const rows = await pwLocator.all();
-    return Promise.all(rows.map(async (row) => {
-      return (await row.getAttribute(keyAttribute)) ||
-        Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`));
-    }));
+    return Promise.all(
+      rows.map(async (row) => {
+        return (
+          (await row.getAttribute(keyAttribute)) ||
+          Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`))
+        );
+      }),
+    );
   }
 
   /**
@@ -111,10 +115,14 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
    */
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
     const rowKeys = await this.allRowKeys();
-    return (await Promise.all(rowKeys.map(async (key) => {
-      const row = this.getRowByDataKey(key);
-      return (await condition(row)) && row;
-    }))).filter((c): c is Awaited<RowType> => !!c);
+    return (
+      await Promise.all(
+        rowKeys.map(async (key) => {
+          const row = this.getRowByDataKey(key);
+          return (await condition(row)) && row;
+        }),
+      )
+    ).filter((c): c is Awaited<RowType> => !!c);
   }
 }
 
