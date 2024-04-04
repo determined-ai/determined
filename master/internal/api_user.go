@@ -461,6 +461,11 @@ func (a *apiServer) PatchUser(
 			if willBeRemote {
 				updatedUser.PasswordHash = model.NoPasswordLogin
 				insertColumns = append(insertColumns, "password_hash")
+			} else if req.User.Password == nil {
+				return nil, status.Errorf(
+					codes.InvalidArgument,
+					"non-remote users must have passwords",
+				)
 			} else if err := user.CheckPasswordComplexity(*req.User.Password); err != nil {
 				return nil, status.Errorf(
 					codes.InvalidArgument,

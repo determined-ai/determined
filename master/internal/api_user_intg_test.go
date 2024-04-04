@@ -325,7 +325,7 @@ func TestLoginRemote(t *testing.T) {
 				Remote: ptrs.Ptr(false),
 			},
 		})
-		require.ErrorAs(t, err, &user.PasswordComplexityErrors{})
+		require.Error(t, err)
 
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,
@@ -416,7 +416,7 @@ func TestLoginRemote(t *testing.T) {
 				Remote: ptrs.Ptr(false),
 			},
 		})
-		require.ErrorAs(t, err, &user.PasswordComplexityErrors{})
+		require.Error(t, err)
 
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
 			UserId: resp.User.Id,
@@ -661,11 +661,13 @@ func TestPatchUsers(t *testing.T) {
 
 func TestRenameUserThenReuseName(t *testing.T) {
 	username := uuid.New().String()
+	password := uuid.New().String() + "aA1"
 	api, _, ctx := setupAPITest(t, nil)
 	resp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
 		User: &userv1.User{
 			Username: username,
 		},
+		Password: password,
 	})
 	require.NoError(t, err)
 
@@ -690,6 +692,7 @@ func TestRenameUserThenReuseName(t *testing.T) {
 		User: &userv1.User{
 			Username: username,
 		},
+		Password: password,
 	})
 	require.NoError(t, err)
 }
@@ -800,16 +803,17 @@ func TestAuthzPostUserDuplicate(t *testing.T) {
 		Admin:          true,
 		AgentUserGroup: nil,
 	}
+	password := "testPassword1234!"
 
 	authzUsers.On("CanCreateUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	// Successfully post user once.
-	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{User: user})
+	_, err := api.PostUser(ctx, &apiv1.PostUserRequest{User: user, Password: password})
 	require.NoError(t, err)
 
 	// Post duplicate user & receive expected error.
 	expectedErr := apiPkg.ErrUserExists
-	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{User: user})
+	_, err = api.PostUser(ctx, &apiv1.PostUserRequest{User: user, Password: password})
 	require.Contains(t, expectedErr.Error(), err.Error())
 }
 
