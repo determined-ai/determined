@@ -1,29 +1,30 @@
-## Commit Body
-
 <!---
-When squash-and-merging, copy this directly into the description field. Check
-the "Example Commit Body" for conventional commit semantics.
-
-For breaking changes, please lead with "BREAKING CHANGE:". This section should
-include a bracketed reference to the Jira ticket or Github issue.
-e.g. "[DET-1234]".
+## PR TITLE (Commit Body)
+When squash-and-merging, copy this directly into the description field.
+Check the "Example Commit Body" for conventional commit semantics.
+-->
+## Ticket
+<!---
+A reference to the Jira ticket or Github issue. e.g. "[DET-1234]".
 -->
 
-## Commentary
 
+
+## Description
 <!---
-Use this section of your description to add context to the PR. Could be for
-particularly tricky bits of code that could use extra scrutiny, historical
-context useful for reviewers, etc.
+A description of the PR. For breaking changes, lead with "BREAKING CHANGE:".
 --->
 
-## Test Plan
 
+
+## Test Plan
 <!---
 Describe the scenarios in which you've tested your change, with screenshots as
 appropriate. Reviewers may ask questions about this test plan to ensure adequate
 coverage of changes.
 -->
+
+
 
 ## Checklist
 
