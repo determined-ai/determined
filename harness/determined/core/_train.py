@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, util
-from determined.common.api import errors
+from determined.common.api import bindings, errors
 
 logger = logging.getLogger("determined.core")
 
@@ -36,8 +36,8 @@ class TrainContext:
     ) -> None:
         self._session = session
         self._trial_id = trial_id
-        self._metrics = metrics
         self._exp_id = exp_id
+        self._metrics = metrics
         self._distributed = distributed
         if tensorboard_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
             raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
@@ -67,6 +67,43 @@ class TrainContext:
         steps_completed = val.get("totalBatches")
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
+
+    def _report_trial_metrics(
+        self,
+        group: str,
+        steps_completed: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        Report trial metrics to the master.
+
+        You can include a list of ``batch_metrics``.  Batch metrics are not be shown in the WebUI
+        but may be accessed from the master using the CLI for post-processing.
+        """
+
+        reportable_metrics = metrics
+        if group == util._LEGACY_VALIDATION:
+            # keep the old behavior of filtering out some metrics for validations.
+            serializable_metrics = self._get_serializable_metrics(metrics)
+            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
+
+        self._metrics.report(
+            group=group,
+            steps_completed=steps_completed,
+            metrics=reportable_metrics,
+            batch_metrics=batch_metrics,
+        )
+
+        # Also sync tensorboard (all metrics, not just json-serializable ones).
+        if self._tensorboard_mode == core.TensorboardMode.AUTO:
+            if self._tbd_writer:
+                if group == util._LEGACY_TRAINING:
+                    self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
+                elif group == util._LEGACY_VALIDATION:
+                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
+            assert self._tensorboard_manager is not None
+            self._tensorboard_manager.sync()
 
     def report_training_metrics(
         self,
@@ -126,62 +163,6 @@ class TrainContext:
         )
         self._report_trial_metrics(group, steps_completed, metrics)
 
-    def _report_trial_metrics(
-        self,
-        group: str,
-        steps_completed: int,
-        metrics: Dict[str, Any],
-        batch_metrics: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
-        reportable_metrics = metrics
-        if group == util._LEGACY_VALIDATION:
-            # keep the old behavior of filtering out some metrics for validations.
-            serializable_metrics = self._get_serializable_metrics(metrics)
-            reportable_metrics = {k: metrics[k] for k in serializable_metrics}
-
-        self._metrics.report(
-            group=group,
-            metrics=reportable_metrics,
-            steps_completed=steps_completed,
-            batch_metrics=batch_metrics,
-        )
-
-        # Also sync tensorboard (all metrics, not just json-serializable ones).
-        if self._tensorboard_mode == core.TensorboardMode.AUTO:
-            if self._tbd_writer:
-                if group == util._LEGACY_TRAINING:
-                    self._tbd_writer.on_train_step_end(steps_completed, metrics, batch_metrics)
-                elif group == util._LEGACY_VALIDATION:
-                    self._tbd_writer.on_validation_step_end(steps_completed, metrics)
-            assert self._tensorboard_manager is not None
-            self._tensorboard_manager.sync()
-
-    @staticmethod
-    def _get_serializable_metrics(metrics: Dict[str, Any]) -> Set[str]:
-        serializable_metrics = set()
-        non_serializable_metrics = set()
-
-        # In the case of trial implementation bugs, validation metric functions may return None.
-        # Immediately fail any trial that encounters a None metric.
-        for metric_name, metric_value in metrics.items():
-            if metric_value is None:
-                raise RuntimeError(
-                    "Validation metric '{}' returned "
-                    "an invalid scalar value: {}".format(metric_name, metric_value)
-                )
-
-            if isinstance(metric_value, (bytes, bytearray)):
-                non_serializable_metrics.add(metric_name)
-            else:
-                serializable_metrics.add(metric_name)
-
-        if len(non_serializable_metrics):
-            logger.warning(
-                "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
-            )
-
-        return serializable_metrics
-
     def get_tensorboard_path(self) -> pathlib.Path:
         """
         Get TensorBoard log directory path.
@@ -210,6 +191,31 @@ class TrainContext:
             raise ValueError("tensorboard manager is required for this method")
         assert self._tensorboard_manager is not None
         self._tensorboard_manager.sync(selector, mangler, self._distributed.rank)
+
+    def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
+        serializable_metrics = set()
+        non_serializable_metrics = set()
+
+        # In the case of trial implementation bugs, validation metric functions may return None.
+        # Immediately fail any trial that encounters a None metric.
+        for metric_name, metric_value in metrics.items():
+            if metric_value is None:
+                raise RuntimeError(
+                    "Validation metric '{}' returned "
+                    "an invalid scalar value: {}".format(metric_name, metric_value)
+                )
+
+            if isinstance(metric_value, (bytes, bytearray)):
+                non_serializable_metrics.add(metric_name)
+            else:
+                serializable_metrics.add(metric_name)
+
+        if len(non_serializable_metrics):
+            logger.warning(
+                "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
+            )
+
+        return serializable_metrics
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         """
