@@ -4,6 +4,10 @@
  Deploy using HPE MLDES (Machine Learning Development Environment Software) Managed Service
 ############################################################################################
 
+.. attention::
+
+   Only Determined Enterprise Edition is available through MLDES.
+
 .. note::
 
    Determined is referred to as "MLDE" in MLDES documentation and UI.
