@@ -2705,9 +2705,9 @@ jobs:
         cluster-id:
           type: string
           default: ${GKE_CLUSTER_NAME}
-        zone:
+        region:
           type: string
-          default: ${GKE_ZONE}
+          default: ${GKE_REGION}
         gcloud-service-key:
           default: GCLOUD_SERVICE_KEY
           description: The gcloud service key
@@ -2746,7 +2746,7 @@ jobs:
             name: Install GKE auth plugin
         - run:
             name: Get Kubeconfig
-            command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --zone <<parameters.zone>>
+            command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
         - run:
             name: Delete GKE CI Cluster Namespaces
             command: |
@@ -2754,30 +2754,30 @@ jobs:
         - run:
             name: Delete GCS CI Buckets
             command: |
-              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil rm -r || true
+              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil -m rm -r || true
         - run:
             name: Delete Firewall Rules
             command: |
-              gcloud compute networks get-effective-firewalls $GCP_NETWORK_NAME --project "$GCP_PROJECT_ID" \
+              gcloud compute networks get-effective-firewalls $GCP_NETWORK_NAME --project "$GOOGLE_PROJECT_ID" \
                 --format="table(name)" | tail -n +2 | \
                 while read fw; do
                   if [[ $fw =~ "k8s" ]]; then
-                    gcloud compute firewall-rules delete "$fw" --quiet --project "$GCP_PROJECT_ID"
+                    gcloud compute firewall-rules delete "$fw" --quiet --project "$GOOGLE_PROJECT_ID"
                   fi
                 done
         - run:
             name: Delete Forwarding Rules
             command: |
-              gcloud compute forwarding-rules list --format="table(name)" --project "$GCP_PROJECT_ID" | tail -n +2 | \
+              gcloud compute forwarding-rules list --format="table(name)" --project "$GOOGLE_PROJECT_ID" | tail -n +2 | \
                 while read fr; do   
-                  gcloud compute forwarding-rules delete "$fr" --quiet --project "$GCP_PROJECT_ID"
+                  gcloud compute forwarding-rules delete "$fr" --quiet --project "$GOOGLE_PROJECT_ID"
                 done
         - run:
             name: Delete Target Pools
             command: |
-              gcloud compute target-pools list --format="table(name)" --project "$GCP_PROJECT_ID" | tail -n +2 | \
+              gcloud compute target-pools list --format="table(name)" --project "$GOOGLE_PROJECT_ID" | tail -n +2 | \
                 while read tp; do   
-                  gcloud compute target-pools delete "$tp" --quiet --project "$GCP_PROJECT_ID"
+                  gcloud compute target-pools delete "$tp" --quiet --project "$GOOGLE_PROJECT_ID"
                 done
 
 
@@ -3227,6 +3227,10 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+      
+      - run-shared-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
 
   test-e2e-longrunning:
     jobs:
@@ -3663,10 +3667,6 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
-          
-      - run-shared-cluster-cleanup:
-          name: gke-cleanup
-          context: gcp-shared-cluster
 
   release:
     jobs:
