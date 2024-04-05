@@ -2750,11 +2750,11 @@ jobs:
         - run:
             name: Delete GKE CI Cluster Namespaces
             command: |
-              kubectl get namespace | grep -Eo "^test-[a-z0-9]+-[a-z0-9]+-[0-9]" | xargs -L1 kubectl delete namespace || true
+              kubectl get namespace | grep -Eo "^test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]" | xargs -L1 kubectl delete namespace || true
         - run:
             name: Delete GCS CI Buckets
             command: |
-              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil rm -r || true
+              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil rm -r || true
         - run:
             name: Delete Firewall Rules
             command: |
@@ -3663,7 +3663,7 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
-
+          
       - run-shared-cluster-cleanup:
           name: gke-cleanup
           context: gcp-shared-cluster
