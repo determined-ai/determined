@@ -3149,8 +3149,6 @@ workflows:
               only:
                 - main
 
-      - package-and-push-system-dev-small
-
       - upload-docs-search-index:
           requires:
             - build-docs
@@ -3456,6 +3454,20 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
 
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+    
+  test-e2e-gke-shared-cluster:
+    jobs:
+      - package-and-push-system-dev-small
+      
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
           context: 
@@ -3466,16 +3478,6 @@ workflows:
           parallelism: 3
           mark: "e2e_gpu and not gpu_required"
           test-type: cpu
-
-      - test-det-deploy:
-          name: test-det-deploy-local
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [2]
-              mark: ["det_deploy_local"]
-              det-version: [$CIRCLE_SHA1]
 
   test-e2e-longrunning:
     jobs:
