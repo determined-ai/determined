@@ -1055,7 +1055,7 @@ commands:
           version: v3.12.3
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 15apim0s --debug
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 10m0s
           name: Helm Install
       - run:
           command: |
@@ -2774,7 +2774,6 @@ jobs:
           name: Create Namespace & Cert Name
           command: |
             # Extract the commit hash from Git metadata
-            COMMIT_HASH=$(git rev-parse --short HEAD)
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             uuid=$(cat /proc/sys/kernel/random/uuid)
             uuid=${uuid:0:8}
@@ -2787,10 +2786,6 @@ jobs:
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
       - set-google-application-credentials
-      - run:
-          name: Show public IP address
-          command: |
-            curl ifconfig.me
       - run:
           name: Set initial user password
           command: |
