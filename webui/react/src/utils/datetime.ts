@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import humanizeDuration from 'humanize-duration';
 
-import { StartEndTimes } from 'types';
+import { ExperimentItem, StartEndTimes } from 'types';
 
 dayjs.extend(utc);
 
@@ -82,4 +82,40 @@ export const secondToHour = (seconds: number): number => seconds / 3600;
 export const stripTimezone = (datetime: string): string => {
   const timezoneRegex = /(Z|(-|\+)\d{2}:\d{2})$/;
   return datetime.replace(timezoneRegex, '');
+};
+
+export const getDurationInEnglish = (record: ExperimentItem): string => {
+  const duration = getDuration(record);
+  const options = {
+    conjunction: ' ',
+    delimiter: ' ',
+    largest: 2,
+    serialComma: false,
+    unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
+  };
+  return durationInEnglish(duration, options);
+};
+
+const JUST_NOW = 'Just Now';
+
+const DATE_FORMAT = 'MMM D, YYYY';
+export const getTimeInEnglish = (d: Date): string => {
+  const options = {
+    conjunction: ' ',
+    delimiter: ' ',
+    largest: 1,
+    serialComma: false,
+  };
+
+  const now = Date.now();
+  const milliseconds = d.valueOf();
+  const delta = milliseconds === undefined ? 0 : now - milliseconds;
+
+  if (delta < DURATION_MINUTE) {
+    return JUST_NOW;
+  } else if (delta >= DURATION_YEAR) {
+    return dayjs(milliseconds).format(DATE_FORMAT);
+  } else {
+    return `${durationInEnglish(delta, options)} ago`;
+  }
 };

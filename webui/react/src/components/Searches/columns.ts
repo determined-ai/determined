@@ -1,12 +1,6 @@
-import { CellClickedEventArgs, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, GridCellKind } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import {
-  ColumnDef,
-  ColumnDefs,
-  DEFAULT_COLUMN_WIDTH,
-  getHeatmapColor,
-  HeatmapProps,
-} from 'hew/DataGrid/columns';
+import { ColumnDef, ColumnDefs, DEFAULT_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import {
   LINK_CELL,
   State,
@@ -446,25 +440,13 @@ export const getColumnDefs = ({
   },
 });
 
-export const searcherMetricsValColumn = (
-  columnWidth?: number,
-  heatmapProps?: HeatmapProps,
-): ColumnDef<ExperimentWithTrial> => {
+export const searcherMetricsValColumn = (columnWidth?: number): ColumnDef<ExperimentWithTrial> => {
   return {
     id: 'searcherMetricsVal',
     isNumerical: true,
     renderer: (record: ExperimentWithTrial) => {
       const sMetricValue = record.bestTrial?.searcherMetricsVal;
 
-      let theme: Partial<GTheme> = {};
-      if (heatmapProps && sMetricValue) {
-        const { min, max } = heatmapProps;
-        theme = {
-          accentLight: getHeatmapColor(min, max, sMetricValue),
-          bgCell: getHeatmapColor(min, max, sMetricValue),
-          textDark: 'white',
-        };
-      }
       return {
         allowOverlay: false,
         copyData: sMetricValue
@@ -474,7 +456,6 @@ export const searcherMetricsValColumn = (
           : '',
         data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
-        themeOverride: theme,
       };
     },
     title: 'Searcher Metric Value',

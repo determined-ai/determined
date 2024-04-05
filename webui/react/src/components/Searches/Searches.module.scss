@@ -1,0 +1,16 @@
+.content {
+  height: 100%;
+  overflow: hidden;
+
+  .paneWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    height: 100%;
+    width: 100%;
+
+    & > *:first-child {
+      min-height: 0;
+    }
+  }
+}
