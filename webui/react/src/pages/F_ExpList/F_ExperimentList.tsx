@@ -63,6 +63,7 @@ import userSettings from 'stores/userSettings';
 import {
   ExperimentAction,
   ExperimentItem,
+  ExperimentItemWithoutConfig,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -96,7 +97,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+type ExperimentWithIndex = { index: number; experiment: ExperimentItemWithoutConfig };
 
 const NO_PINS_WIDTH = 200;
 

@@ -32,7 +32,13 @@ import {
 } from 'services/api';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
+import {
+  CommandTask,
+  DetailedUser,
+  ExperimentItem,
+  ExperimentItemWithoutConfig,
+  Project,
+} from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
@@ -44,7 +50,7 @@ const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
 const Dashboard: React.FC = () => {
-  const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
+  const [experiments, setExperiments] = useState<ExperimentItemWithoutConfig[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);

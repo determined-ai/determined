@@ -228,9 +228,6 @@ export const ioExperimentConfig = io.type({
 });
 export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;
 
-export const ioOptionalExperimentConfig = io.union([ioExperimentConfig, io.undefined]);
-export type ioTypeOptionalExperimentConfig = io.TypeOf<typeof ioOptionalExperimentConfig>;
-
 export const ioExperiment = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,

@@ -342,23 +342,8 @@ const ioToHyperparametereters = (io: ioTypes.ioTypeHyperparameters): types.Hyper
 };
 
 export const ioToExperimentConfig = (
-  io: ioTypes.ioTypeExperimentConfig | undefined,
+  io: ioTypes.ioTypeExperimentConfig,
 ): types.ExperimentConfig => {
-  if (io === undefined) {
-    return {
-      checkpointPolicy: '',
-      hyperparameters: {},
-      maxRestarts: 0,
-      name: '',
-      resources: {},
-      searcher: {
-        metric: '',
-        name: types.ExperimentSearcherName.Unknown,
-        smallerIsBetter: false,
-        sourceTrialId: undefined,
-      },
-    };
-  }
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
     checkpointStorage: io.checkpoint_storage
@@ -477,7 +462,8 @@ export const mapSearchExperiment = (
 ): types.ExperimentWithTrial => {
   return {
     bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
-    experiment: data.experiment && mapV1Experiment(data.experiment),
+    experiment:
+      data.experiment && (mapV1Experiment(data.experiment) as types.ExperimentItemWithoutConfig),
   };
 };
 
@@ -485,9 +471,45 @@ export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
   config?: Sdk.V1GetExperimentResponse['config'],
-): types.ExperimentItem => {
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeOptionalExperimentConfig>(
-    ioTypes.ioOptionalExperimentConfig,
+): types.ExperimentItem | types.ExperimentItemWithoutConfig => {
+  if (config === undefined) {
+    const a: types.ExperimentItemWithoutConfig = {
+      archived: data.archived,
+      checkpoints: data.checkpointCount,
+      checkpointSize: parseInt(data?.checkpointSize || '0'),
+      description: data.description,
+      duration: data.duration,
+      endTime: data.endTime as unknown as string,
+      externalExperimentId: data.externalExperimentId,
+      externalTrialId: data.externalTrialId,
+      forkedFrom: data.forkedFrom,
+      hyperparameters: {},
+      id: data.id,
+      jobId: data.jobId,
+      jobSummary: jobSummary,
+      labels: data.labels || [],
+      modelDefinitionSize: data.modelDefinitionSize,
+      name: data.name,
+      notes: data.notes,
+      numTrials: data.numTrials || 0,
+      progress: data.progress != null ? data.progress : undefined,
+      projectId: data.projectId,
+      projectName: data.projectName,
+      resourcePool: data.resourcePool || '',
+      searcherMetricValue: data.bestTrialSearcherMetric,
+      searcherType: data.searcherType,
+      startTime: data.startTime as unknown as string,
+      state: decodeExperimentState(data.state),
+      trialIds: data.trialIds || [],
+      unmanaged: data.unmanaged,
+      userId: data.userId ?? 0,
+      workspaceId: data.workspaceId,
+      workspaceName: data.workspaceName,
+    };
+    return a;
+  }
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
     config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
@@ -533,9 +555,11 @@ export const mapV1Experiment = (
   };
 };
 
-export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
+export const mapV1ExperimentList = (
+  data: Sdk.V1Experiment[],
+): types.ExperimentItemWithoutConfig[] => {
   // empty JobSummary
-  return data.map((e) => mapV1Experiment(e));
+  return data.map((e) => mapV1Experiment(e)) as types.ExperimentItemWithoutConfig[];
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {

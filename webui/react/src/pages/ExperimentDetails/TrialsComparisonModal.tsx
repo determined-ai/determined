@@ -19,7 +19,14 @@ import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { ExperimentItem, Metric, MetricSummary, Primitive, TrialDetails, XOR } from 'types';
+import {
+  ExperimentItemWithoutConfig,
+  Metric,
+  MetricSummary,
+  Primitive,
+  TrialDetails,
+  XOR,
+} from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { humanReadableBytes, pluralizer } from 'utils/string';
@@ -27,7 +34,7 @@ import { humanReadableBytes, pluralizer } from 'utils/string';
 import css from './TrialsComparisonModal.module.scss';
 
 interface TablePropsBase {
-  experiment: ExperimentItem | ExperimentItem[];
+  experiment: ExperimentItemWithoutConfig | ExperimentItemWithoutConfig[];
   onUnselect?: (trialId: number) => void;
 }
 
@@ -130,7 +137,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     return Array.isArray(experiment)
       ? experiment.reduce(
           (acc, cur) => ({ ...acc, [cur.id]: cur }),
-          {} as Record<number, ExperimentItem>,
+          {} as Record<number, ExperimentItemWithoutConfig>,
         )
       : { [experiment.id]: experiment };
   }, [experiment]);

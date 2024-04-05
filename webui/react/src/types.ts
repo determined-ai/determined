@@ -495,7 +495,7 @@ export interface BulkActionResult {
 }
 
 export interface ExperimentPagination extends WithPagination {
-  experiments: ExperimentItem[];
+  experiments: ExperimentItemWithoutConfig[];
 }
 
 export interface SearchExperimentPagination extends WithPagination {
@@ -772,12 +772,52 @@ export const ExperimentItem = t.intersection([
 ]);
 export type ExperimentItem = t.TypeOf<typeof ExperimentItem>;
 
+export const ExperimentItemWithoutConfig = t.intersection([
+  t.partial({
+    checkpoints: t.number,
+    checkpointSize: t.number,
+    description: t.string,
+    duration: t.number,
+    endTime: t.string,
+    externalExperimentId: t.string,
+    externalTrialId: t.string,
+    forkedFrom: t.number,
+    jobSummary: JobSummary,
+    modelDefinitionSize: t.number,
+    notes: t.string,
+    progress: t.number,
+    projectName: t.string,
+    searcherMetric: t.string,
+    searcherMetricValue: t.number,
+    trialIds: t.array(t.number),
+    unmanaged: t.boolean,
+    workspaceId: t.number,
+    workspaceName: t.string,
+  }),
+  t.type({
+    archived: t.boolean,
+    hyperparameters: t.record(t.string, Hyperparameter),
+    id: t.number,
+    jobId: t.string,
+    labels: t.array(t.string),
+    name: t.string,
+    numTrials: t.number,
+    projectId: t.number,
+    resourcePool: t.string,
+    searcherType: t.string,
+    startTime: t.string,
+    state: t.union([valueof(RunState), valueof(Api.Jobv1State)]),
+    userId: t.number,
+  }),
+]);
+export type ExperimentItemWithoutConfig = t.TypeOf<typeof ExperimentItemWithoutConfig>;
+
 export interface ExperimentWithTrial {
-  experiment: ExperimentItem;
+  experiment: ExperimentItemWithoutConfig;
   bestTrial?: TrialItem;
 }
 
-export interface ProjectExperiment extends ExperimentItem {
+export interface ProjectExperiment extends ExperimentItemWithoutConfig {
   parentArchived: boolean;
   projectName: string;
   projectOwnerId: number;

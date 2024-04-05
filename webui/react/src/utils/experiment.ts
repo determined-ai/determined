@@ -11,6 +11,7 @@ import {
   ExperimentAction,
   ExperimentBase,
   ExperimentItem,
+  ExperimentItemWithoutConfig,
   ExperimentPermissionsArgs,
   ExperimentSearcherName,
   Hyperparameters,
@@ -269,7 +270,7 @@ export const getActionsForExperimentsUnion = (
 };
 
 export const getProjectExperimentForExperimentItem = (
-  experiment: ExperimentItem,
+  experiment: ExperimentItemWithoutConfig,
   project?: Project,
 ): ProjectExperiment =>
   ({

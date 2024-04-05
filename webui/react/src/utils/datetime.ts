@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import humanizeDuration from 'humanize-duration';
 
-import { ExperimentItem, StartEndTimes } from 'types';
+import { ExperimentItemWithoutConfig, StartEndTimes } from 'types';
 
 dayjs.extend(utc);
 
@@ -84,7 +84,7 @@ export const stripTimezone = (datetime: string): string => {
   return datetime.replace(timezoneRegex, '');
 };
 
-export const getDurationInEnglish = (record: ExperimentItem): string => {
+export const getDurationInEnglish = (record: ExperimentItemWithoutConfig): string => {
   const duration = getDuration(record);
   const options = {
     conjunction: ' ',

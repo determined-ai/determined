@@ -29,7 +29,13 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ExperimentAction, ExperimentItem, ProjectExperiment, ValueOf } from 'types';
+import {
+  ExperimentAction,
+  ExperimentItem,
+  ExperimentItemWithoutConfig,
+  ProjectExperiment,
+  ValueOf,
+} from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -42,7 +48,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItemWithoutConfig>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;

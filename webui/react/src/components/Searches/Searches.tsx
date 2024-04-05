@@ -59,6 +59,7 @@ import userSettings from 'stores/userSettings';
 import {
   ExperimentAction,
   ExperimentItem,
+  ExperimentItemWithoutConfig,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -86,7 +87,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+type ExperimentWithIndex = { index: number; experiment: ExperimentItemWithoutConfig };
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
