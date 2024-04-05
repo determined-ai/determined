@@ -20,10 +20,10 @@
          non-compliant password, but we recommend setting good passwords for such users as soon as
          possible.
 
--  CLI: Allow and require passwords to be set when non-remote users are created with ``det user
+-  CLI: Require and allow passwords to be set when creating non-remote users with ``det user
    create``.
 
-      -  This may be done interactively by following prompts.
+      -  This may be done interactively by following the prompts.
       -  This may be done noninteractively by using the ``--password`` option.
-      -  This is not required when creating a user with ``--remote`` since SSO will be used to log
-         in instead.
+      -  This is not required when creating a user with ``--remote`` since Single Sign-On will be
+         used.
