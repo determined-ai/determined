@@ -105,7 +105,7 @@ def setup_session(args: argparse.Namespace) -> api.Session:
 
 def session(
     fn: Callable[[argparse.Namespace, api.Session], None]
-) -> Callable[[argparse.Namespace, api.Session], None]:
+) -> Callable[[argparse.Namespace], None]:
     """
     A decorator that sets up an api.Session with a persistent HTTP connection
     that is closed when the wrapped function exits.

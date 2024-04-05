@@ -573,7 +573,9 @@ class Experiment:
                 states=[bindings.checkpointv1State.COMPLETED],
             )
 
-        resps = api.read_paginated(get_with_offset=get_with_offset, session=self._session)
+        resps = api.read_paginated_with_session(
+            get_with_offset=get_with_offset, session=self._session
+        )
 
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)
