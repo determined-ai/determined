@@ -321,20 +321,20 @@ const Searches: React.FC<Props> = ({ project }) => {
 
       // always filter out single trial experiments
       const filters = JSON.parse(filtersString);
-      filters.filterGroup.children.push({
-        children: [
-          {
-            columnName: 'numTrials',
-            kind: 'field',
-            location: 'LOCATION_TYPE_EXPERIMENT',
-            operator: '>',
-            type: 'COLUMN_TYPE_NUMBER',
-            value: 1,
-          },
-        ],
+      const existingFilterGroup = { ...filters.filterGroup };
+      const singleTrialFilter = {
+        columnName: 'numTrials',
+        kind: 'field',
+        location: 'LOCATION_TYPE_EXPERIMENT',
+        operator: '>',
+        type: 'COLUMN_TYPE_NUMBER',
+        value: 1,
+      };
+      filters.filterGroup = {
+        children: [existingFilterGroup, singleTrialFilter],
         conjunction: 'and',
         kind: 'group',
-      });
+      };
 
       const response = await searchExperiments(
         {
@@ -354,12 +354,8 @@ const Searches: React.FC<Props> = ({ project }) => {
           return loadedExperiments.map((experiment) => Loaded(experiment));
         }
 
-        let newExperiments = prev;
-
-        // Fill out the loadable experiments array with total count.
-        if (prev.length !== total) {
-          newExperiments = new Array(total).fill(NotLoaded);
-        }
+        // Ensure experiments array has enough space for full result set
+        const newExperiments = prev.length !== total ? new Array(total).fill(NotLoaded) : [...prev];
 
         // Update the list with the fetched results.
         Array.prototype.splice.apply(newExperiments, [
