@@ -1,27 +1,27 @@
-import { Modal, ModalCloseReason } from 'hew/Modal';
+import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import { useCallback, useEffect } from 'react';
 
+export type onInterstitialCloseActionType = (reason: 'ok' | 'close' | 'failed') => void;
+
 interface Props<T> {
-  close: (reason: ModalCloseReason) => void;
+  onCloseAction: (reason: 'ok' | 'close' | 'failed') => void;
   loadableData: Loadable<T>;
-  then: () => void;
 }
 
-function InterstitialModalComponent<T>({ close, loadableData, then }: Props<T>): JSX.Element {
+function InterstitialModalComponent<T>({ onCloseAction, loadableData }: Props<T>): JSX.Element {
   useEffect(() => {
     if (loadableData.isLoaded) {
-      close('ok');
-      then();
+      onCloseAction('ok');
     } else if (loadableData.isFailed) {
-      close('failed');
+      onCloseAction('failed');
     }
-  }, [close, loadableData.isFailed, loadableData.isLoaded, then]);
+  }, [onCloseAction, loadableData.isLoaded, loadableData.isFailed]);
 
   const onClose = useCallback(() => {
-    close('close');
-  }, [close]);
+    onCloseAction('close');
+  }, [onCloseAction]);
 
   return (
     <Modal footer={<></>} size="small" title="Loading" onClose={onClose}>

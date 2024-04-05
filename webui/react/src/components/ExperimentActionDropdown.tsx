@@ -15,7 +15,9 @@ import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
-import InterstitialModalComponent from 'components/InterstitialModalComponent';
+import InterstitialModalComponent, {
+  type onInterstitialCloseActionType,
+} from 'components/InterstitialModalComponent';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 import {
@@ -94,8 +96,16 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
-  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
-  const InterstitialModal = useModal(InterstitialModalComponent);
+  const {
+    Component: HyperparameterSearchModal,
+    open: hyperparameterSearchModalOpen,
+    close: hyperparameterSearchModalClose,
+  } = useModal(HyperparameterSearchModalComponent);
+  const {
+    Component: InterstitialModal,
+    open: interstitialModalOpen,
+    close: interstitialModalClose,
+  } = useModal(InterstitialModalComponent);
   const [experimentItem, setExperimentItem] = useState<Loadable<FullExperimentItem>>(NotLoaded);
   const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
@@ -116,6 +126,24 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       setExperimentItem(Failed(new Error('experiment data failure')));
     }
   }, [experiment.id]);
+
+  const onInterstitalClose: onInterstitialCloseActionType = useCallback(
+    (reason) => {
+      switch (reason) {
+        case 'ok':
+          hyperparameterSearchModalOpen();
+          break;
+        case 'failed':
+          break;
+        case 'close':
+          canceler.current.abort();
+          canceler.current = new AbortController();
+          break;
+      }
+      interstitialModalClose(reason);
+    },
+    [hyperparameterSearchModalOpen, interstitialModalClose],
+  );
 
   const handleEditComplete = useCallback(
     (data: Partial<FullExperimentItem>) => {
@@ -251,7 +279,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             ExperimentRetainLogsModal.open();
             break;
           case Action.HyperparameterSearch:
-            InterstitialModal.open();
+            interstitialModalOpen();
             fetchedExperimentItem();
             break;
           case Action.Copy:
@@ -284,8 +312,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       ExperimentEditModal,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
+      interstitialModalOpen,
       fetchedExperimentItem,
-      InterstitialModal,
       cell,
       openToast,
       experiment.workspaceId,
@@ -324,16 +352,12 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onSubmit={handleRetainLogsComplete}
       />
       {experimentItem.isLoaded && (
-        <HyperparameterSearchModal.Component
-          closeModal={HyperparameterSearchModal.close}
+        <HyperparameterSearchModal
+          closeModal={hyperparameterSearchModalClose}
           experiment={experimentItem.data}
         />
       )}
-      <InterstitialModal.Component
-        close={InterstitialModal.close}
-        loadableData={experimentItem}
-        then={HyperparameterSearchModal.open}
-      />
+      <InterstitialModal loadableData={experimentItem} onCloseAction={onInterstitalClose} />
     </>
   );
 

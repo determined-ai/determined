@@ -657,8 +657,8 @@ export const getExperiment: DetApi<
     const exp = decoder.mapV1Experiment(response.experiment, undefined, response.config);
     return exp as Type.FullExperimentItem;
   },
-  request: (params: Service.GetExperimentParams) => {
-    return detApi.Experiments.getExperiment(params.id);
+  request: (params: Service.GetExperimentParams, options) => {
+    return detApi.Experiments.getExperiment(params.id, options);
   },
 };
 
