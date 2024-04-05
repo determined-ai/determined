@@ -495,7 +495,7 @@ func TestPutExperimentRetainLogs(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
-	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
+	trialIDs, _, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
 	require.NoError(t, err)
 
 	_, err = db.Bun().NewUpdate().Table("experiments").
@@ -515,17 +515,6 @@ func TestPutExperimentRetainLogs(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
-
-	var taskLogRetentionDays []int
-	err = db.Bun().NewSelect().Table("tasks").
-		Column("log_retention_days").
-		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &taskLogRetentionDays)
-	require.NoError(t, err)
-
-	for _, v := range taskLogRetentionDays {
-		require.Equal(t, v, numDays)
-	}
 
 	var trialLogRetentionDays []int
 	err = db.Bun().NewSelect().Table("runs").
@@ -569,19 +558,8 @@ func TestPutExperimentsRetainLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
+	_, _, err = db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
 	require.NoError(t, err)
-
-	var taskLogRetentionDays []int
-	err = db.Bun().NewSelect().Table("tasks").
-		Column("log_retention_days").
-		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &taskLogRetentionDays)
-	require.NoError(t, err)
-
-	for _, v := range taskLogRetentionDays {
-		require.Equal(t, v, numDays)
-	}
 
 	var trialLogRetentionDays []int
 	err = db.Bun().NewSelect().Table("runs").

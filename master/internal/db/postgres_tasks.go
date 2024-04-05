@@ -35,7 +35,7 @@ func AddTask(ctx context.Context, t *model.Task) error {
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
 		Column("task_id", "task_type", "start_time", "job_id", "log_version",
-			"config", "forked_from", "parent_id", "task_state", "no_pause", "log_retention_days").
+			"config", "forked_from", "parent_id", "task_state", "no_pause").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
@@ -46,7 +46,6 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 		Set("parent_id=EXCLUDED.parent_id").
 		Set("task_state=EXCLUDED.task_state").
 		Set("no_pause=EXCLUDED.no_pause").
-		Set("log_retention_days=EXCLUDED.log_retention_days").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }

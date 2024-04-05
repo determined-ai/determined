@@ -817,12 +817,6 @@ func BulkUpdateLogRentention(ctx context.Context, database db.DB,
 	}
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Table("tasks").
-			Set("log_retention_days = ?", numDays).
-			Where("task_id IN (?)", bun.In(taskIDs)).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("updating log retention days for tasks: %w", err)
-		}
 		if _, err := tx.NewUpdate().Table("runs").
 			Set("log_retention_days = ?", numDays).
 			Where("id IN (?)", bun.In(trialIDs)).
