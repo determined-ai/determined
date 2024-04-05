@@ -110,16 +110,30 @@ func QueryBulkExperiments(query *bun.SelectQuery,
 
 // ApplyExperimentFilterToQuery parses a string representing a search filter and
 // applies it to a query.
-func ApplyExperimentFilterToQuery(query *bun.SelectQuery, searchFilter *string) (*bun.SelectQuery, error) {
+func ApplyExperimentFilterToQuery(
+	query *bun.SelectQuery, searchFilter *string, applyArchiveFilter bool,
+) (*bun.SelectQuery, error) {
 	var efr filter.ExperimentFilterRoot
 	err := json.Unmarshal([]byte(*searchFilter), &efr)
 	if err != nil {
 		return nil, err
 	}
-	return query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+	qu := query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		_, err = efr.ToSQL(q)
 		return q
-	}), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if applyArchiveFilter {
+		qu = qu.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if !efr.ShowArchived {
+				return q.Where(`e.archived = false`)
+			}
+			return q
+		})
+	}
+	return qu, nil
 }
 
 // A Bun query for editable experiments in multi-experiment actions.
@@ -146,7 +160,7 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 	case searchFilter == nil:
 		query = QueryBulkExperiments(query, filters)
 	default:
-		query, err = ApplyExperimentFilterToQuery(query, searchFilter)
+		query, err = ApplyExperimentFilterToQuery(query, searchFilter, false)
 		if err != nil {
 			return nil, err
 		}
@@ -374,7 +388,7 @@ func DeleteExperiments(ctx context.Context,
 		query = QueryBulkExperiments(query, filters).
 			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	default:
-		query, err = ApplyExperimentFilterToQuery(query, searchFilter)
+		query, err = ApplyExperimentFilterToQuery(query, searchFilter, true)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -476,7 +490,7 @@ func ArchiveExperiments(ctx context.Context,
 			Where("NOT e.archived").
 			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	default:
-		query, err = ApplyExperimentFilterToQuery(query, searchFilter)
+		query, err = ApplyExperimentFilterToQuery(query, searchFilter, false)
 		if err != nil {
 			return nil, err
 		}
@@ -575,15 +589,15 @@ func UnarchiveExperiments(ctx context.Context,
 		query = query.Where("e.id IN (?)", bun.In(experimentIds))
 	case searchFilter == nil:
 		query = QueryBulkExperiments(query, filters).
-			Where("archived").
+			Where("e.archived").
 			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	default:
-		query, err = ApplyExperimentFilterToQuery(query, searchFilter)
+		query, err = ApplyExperimentFilterToQuery(query, searchFilter, false)
 		if err != nil {
 			return nil, err
 		}
 		query = query.
-			Where("archived").
+			Where("e.archived").
 			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
 	}
 
@@ -675,15 +689,12 @@ func MoveExperiments(ctx context.Context,
 
 	switch {
 	case filters == nil && searchFilter == nil:
-		println("simple where")
 		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
 	case searchFilter == nil:
-		println("using old filters")
 		getQ = QueryBulkExperiments(getQ, filters).
 			Where("NOT (e.archived OR p.archived OR w.archived)")
 	default:
-		println("using new filters")
-		getQ, err = ApplyExperimentFilterToQuery(getQ, searchFilter)
+		getQ, err = ApplyExperimentFilterToQuery(getQ, searchFilter, false)
 		if err != nil {
 			return nil, err
 		}

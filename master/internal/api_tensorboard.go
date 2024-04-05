@@ -492,7 +492,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 		if req.SearchFilter == nil {
 			query = exputil.QueryBulkExperiments(query, req.Filters)
 		} else {
-			query, err = exputil.ApplyExperimentFilterToQuery(query, req.SearchFilter)
+			query, err = exputil.ApplyExperimentFilterToQuery(query, req.SearchFilter, true)
 			if err != nil {
 				return nil, err
 			}
