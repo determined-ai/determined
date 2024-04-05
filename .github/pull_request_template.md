@@ -1,11 +1,11 @@
 <!---
 ## PR TITLE (Commit Body)
-When squash-and-merging, copy this directly into the description field.
+When squash-merging, GitHub will use this as the commit message.
 Check the "Example Commit Body" for conventional commit semantics.
 -->
 ## Ticket
 <!---
-A reference to the Jira ticket or Github issue. e.g. "[DET-1234]".
+A reference to the Jira ticket or Github issue. e.g. "[DET-1234]" or #123.
 -->
 
 
@@ -35,7 +35,8 @@ coverage of changes.
 - [ ] Licenses should be included for new code which was copied and/or modified from any external code.
 
 <!---
-Example Commit Body: "docs: tweak recommended "pip install" usage".
+Example Commit Body:
+docs: tweak recommended "pip install" usage [DET-123]
 
 Specifically, this title should contain a type and a description
 of the change being made:
