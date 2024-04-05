@@ -2238,3 +2238,81 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	}
 	t.Error("expected experiments to delete after 15 seconds and they did not")
 }
+
+// nolint: lll
+func TestDeleteExperimentsSearchFilter(t *testing.T) {
+	var mockRM mocks.ResourceManager
+	// Need _anything_ to error to check the error flow leaves things in DELETE_FAILED and that they are delete-able
+	// still after that.
+	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
+		errC := make(chan error, 1)
+		errC <- errors.New("something real bad")
+		return sproto.DeleteJobResponse{Err: errC}
+	}, nil)
+
+	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
+
+	var expIDs []int32
+	for i := 0; i < 3; i++ {
+		exp := createTestExp(t, api, curUser)
+		_, err := db.Bun().NewUpdate().Table("experiments").
+			Set("state = ?", model.CompletedState).
+			Where("id = ?", exp.ID).Exec(ctx)
+		require.NoError(t, err)
+		expIDs = append(expIDs, int32(exp.ID))
+	}
+
+	filter := `{"filterGroup":{"children":[{"columnName":"projectId","kind":"field","operator":"=","value":1,"location":"LOCATION_TYPE_EXPERIMENT"}],"conjunction":"and","kind":"group"},"showArchived":false}`
+	t.Log("if DeleteExperiment with filter fails, all experiments become DELETE_FAILED")
+	// Try delete experiments using a filter, this tests the branch condition
+	// where we have a filter with the experiment delete request.
+	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
+		ExperimentIds: []int32{},
+		SearchFilter:  &filter,
+	})
+	require.NoError(t, err)
+
+	var success bool
+	for i := 0; i < 15; i++ {
+		var inDeleteFailed int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			require.NoError(t, err, "expected experiment to go to DELETE_FAILED")
+			if e.Experiment.State == experimentv1.State_STATE_DELETE_FAILED {
+				inDeleteFailed++
+			}
+		}
+		if len(expIDs) == inDeleteFailed {
+			success = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if !success {
+		t.Error("expected experiments to move to DELETE_FAILED after 15 seconds and they did not")
+	}
+
+	t.Log("and if the RM then succeeds, the experiments are then successfully deleted")
+	api.m.rm = MockRM()
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	require.NoError(t, err)
+
+	// Delete is async so we need to retry until it completes.
+	for i := 0; i < 15; i++ {
+		var deleted int
+		for _, expID := range expIDs {
+			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
+			if err != nil {
+				require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(expID), true), err)
+				deleted++
+				continue
+			}
+			require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+		}
+		if len(expIDs) == deleted {
+			return
+		}
+		time.Sleep(1 * time.Second)
+	}
+	t.Error("expected experiments to delete after 15 seconds and they did not")
+}

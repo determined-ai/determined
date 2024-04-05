@@ -425,27 +425,33 @@ func (a *apiServer) DeleteExperiments(
 		return nil, err
 	}
 
+	// gather resolved ids
+	var expIDs []int32
+	for _, exp := range experiments {
+		expIDs = append(expIDs, int32(exp.ID))
+	}
+
 	go func() {
 		err := a.deleteExperiments(experiments, curUser)
 		if err != nil {
 			// set experiment state to DeleteFailed
-			for _, id := range req.ExperimentIds {
+			for _, id := range expIDs {
 				log.WithError(err).Errorf("deleting experiment %d", id)
 			}
 			_, err = db.Bun().NewUpdate().
 				ModelTableExpr("experiments as e").
 				Set("state = ?", model.DeleteFailedState).
-				Where("id IN (?)", bun.In(req.ExperimentIds)).
+				Where("id IN (?)", bun.In(expIDs)).
 				Exec(ctx)
 			if err != nil {
-				for _, id := range req.ExperimentIds {
+				for _, id := range expIDs {
 					log.WithError(err).Errorf("transitioning experiment %d to %s", id,
 						model.DeleteFailedState)
 				}
 			}
 			return
 		}
-		for _, id := range req.ExperimentIds {
+		for _, id := range expIDs {
 			log.Infof("deleted experiment %d", id)
 		}
 	}()

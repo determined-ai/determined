@@ -414,7 +414,7 @@ func DeleteExperiments(ctx context.Context,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
