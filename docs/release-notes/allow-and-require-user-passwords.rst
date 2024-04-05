@@ -2,8 +2,8 @@
 
 **Breaking Changes**
 
--  SDK and CLI: Enforce password requirements for all non-remote users matching what is required
-   when setting a password via the Web UI.
+-  Python SDK and CLI: Enforce password requirements for all non-remote users, aligning with WebUI
+   password standards and having the following requirements:
 
       -  Passwords must be at least 8 characters long (and not None).
 
