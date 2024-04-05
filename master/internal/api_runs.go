@@ -243,9 +243,9 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	return nil
 }
 
-func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, error) {
+func filterRunQuery(getQ *bun.SelectQuery, searchFilter *string) (*bun.SelectQuery, error) {
 	var efr filter.ExperimentFilterRoot
-	err := json.Unmarshal([]byte(*filter), &efr)
+	err := json.Unmarshal([]byte(*searchFilter), &efr)
 	if err != nil {
 		return nil, err
 	}
@@ -374,7 +374,7 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	if len(validIDs) > 0 {
-		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, nil, req.DestinationProjectId)
 		if err != nil {
 			return nil, err
 		}
