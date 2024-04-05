@@ -155,7 +155,7 @@ class _Shipper(threading.Thread):
                 else:
                     logger.info(f"_Shipper cleanup complete.")
         else:
-            self._queue.join()
+            self.join()
 
     def _post_metrics(
         self,
