@@ -228,8 +228,11 @@
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is 300 (5 minutes).
 
+-  ``initialUserPassword``: Specifies a string containing the default password for the admin and
+   determined user accounts. (Preferred over ``defaultPassword``.)
+
 -  ``defaultPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts.
+   determined user accounts. (Deprecated; prefer ``initialUserPassword``)
 
 -  ``logging``: Configures where trial logs are stored. This section takes the same shape as the
    logging configuration in the :ref:`cluster configuration <cluster-configuration>`, except that

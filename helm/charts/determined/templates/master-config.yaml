@@ -57,7 +57,7 @@ stringData:
 
     security:
       {{- if .Values.initialUserPassword }}
-      initial_user_password: {{ .Values.initialUserPassword | quote }}
+      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote }}
       {{- end }}
       {{- if .Values.tlsSecret }}
       tls:
