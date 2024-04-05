@@ -423,7 +423,8 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id")
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
