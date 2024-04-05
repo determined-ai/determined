@@ -55,11 +55,12 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 @pytest.mark.e2e_cpu
 def test_post_user_api() -> None:
     new_username = api_utils.get_random_string()
+    new_password = api_utils.get_random_string() + "aA1"
 
     sess = api_utils.admin_session()
 
     user = bindings.v1User(active=True, admin=False, username=new_username)
-    body = bindings.v1PostUserRequest(password="", user=user)
+    body = bindings.v1PostUserRequest(password=new_password, user=user)
     resp = bindings.post_PostUser(sess, body=body)
     assert resp and resp.user
     assert resp.to_json()["user"]["username"] == new_username
@@ -73,7 +74,9 @@ def test_post_user_api() -> None:
             agentUid=1000, agentGid=1001, agentUser="username", agentGroup="groupname"
         ),
     )
-    resp = bindings.post_PostUser(sess, body=bindings.v1PostUserRequest(user=user))
+    resp = bindings.post_PostUser(
+        sess, body=bindings.v1PostUserRequest(user=user, password=new_password)
+    )
     assert resp and resp.user and resp.user.agentUserGroup
     assert resp.user.agentUserGroup.agentUser == "username"
     assert resp.user.agentUserGroup.agentGroup == "groupname"
@@ -91,13 +94,15 @@ def test_post_user_api() -> None:
     )
 
     with pytest.raises(errors.APIException):
-        bindings.post_PostUser(sess, body=bindings.v1PostUserRequest(user=user))
+        bindings.post_PostUser(
+            sess, body=bindings.v1PostUserRequest(user=user, password=new_password)
+        )
 
 
 @pytest.mark.e2e_cpu
 def test_create_user_sdk() -> None:
     username = api_utils.get_random_string()
-    password = api_utils.get_random_string()
+    password = api_utils.get_random_string() + "aA1"
     det_obj = client.Determined._from_session(api_utils.admin_session())
     user = det_obj.create_user(username=username, admin=False, password=password)
     assert user.user_id is not None and user.username == username
@@ -151,14 +156,14 @@ def test_change_password() -> None:
     sess, old_password = api_utils.create_test_user()
     d = client.Determined._from_session(api_utils.admin_session())
     userobj = d.get_user_by_name(sess.username)
-    userobj.change_password("newpass")
+    userobj.change_password("newPass123!")
 
     # Old password does not work anymore.
     with pytest.raises(errors.UnauthenticatedException):
         api_utils.make_session(sess.username, old_password)
 
     # New password does work.
-    api_utils.make_session(sess.username, "newpass")
+    api_utils.make_session(sess.username, "newPass123!")
 
 
 @pytest.mark.e2e_cpu
@@ -168,12 +173,12 @@ def test_change_own_password() -> None:
 
     d = client.Determined._from_session(sess)
     userobj = d.get_user_by_name(sess.username)
-    userobj.change_password("newpass")
+    userobj.change_password("newPass123!")
 
     with pytest.raises(errors.UnauthenticatedException):
         api_utils.make_session(sess.username, old_password)
 
-    api_utils.make_session(sess.username, "newpass")
+    api_utils.make_session(sess.username, "newPass123!")
 
 
 @pytest.mark.e2e_cpu
