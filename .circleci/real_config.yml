@@ -2755,31 +2755,6 @@ jobs:
             name: Delete GCS CI Buckets
             command: |
               gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil -m rm -r || true
-        - run:
-            name: Delete Firewall Rules
-            command: |
-              gcloud compute networks get-effective-firewalls $GCP_NETWORK_NAME --project "$GOOGLE_PROJECT_ID" \
-                --format="table(name)" | tail -n +2 | \
-                while read fw; do
-                  if [[ $fw =~ "k8s" ]]; then
-                    gcloud compute firewall-rules delete "$fw" --quiet --project "$GOOGLE_PROJECT_ID"
-                  fi
-                done
-        - run:
-            name: Delete Forwarding Rules
-            command: |
-              gcloud compute forwarding-rules list --format="table(name)" --project "$GOOGLE_PROJECT_ID" | tail -n +2 | \
-                while read fr; do   
-                  gcloud compute forwarding-rules delete "$fr" --quiet --project "$GOOGLE_PROJECT_ID"
-                done
-        - run:
-            name: Delete Target Pools
-            command: |
-              gcloud compute target-pools list --format="table(name)" --project "$GOOGLE_PROJECT_ID" | tail -n +2 | \
-                while read tp; do   
-                  gcloud compute target-pools delete "$tp" --quiet --project "$GOOGLE_PROJECT_ID"
-                done
-
 
 workflows:
   lint:
@@ -3227,10 +3202,6 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
-      
-      - run-shared-cluster-cleanup:
-          name: gke-cleanup
-          context: gcp-shared-cluster
 
   test-e2e-longrunning:
     jobs:
@@ -3667,6 +3638,10 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
+
+      - run-shared-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
 
   release:
     jobs:
