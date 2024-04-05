@@ -74,7 +74,10 @@ class Determined:
     ) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
-        if password is not None:
+        if not remote:
+            if password is None:
+                raise ValueError("password can't be blank")
+            api.check_password_complexity(password)
             hashedPassword = api.salt_and_hash(password)
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
