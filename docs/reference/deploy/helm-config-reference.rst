@@ -229,10 +229,10 @@
    any HTTP traffic. The default timeout is 300 (5 minutes).
 
 -  ``initialUserPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts. (Preferred over ``defaultPassword``.)
+   determined user accounts.
 
--  ``defaultPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts. (Deprecated; prefer ``initialUserPassword``)
+-  ``defaultPassword``: (*Deprecated*) Specifies a string containing the default password for the
+   admin and determined user accounts. Use ``initialUserPassword`` instead.
 
 -  ``logging``: Configures where trial logs are stored. This section takes the same shape as the
    logging configuration in the :ref:`cluster configuration <cluster-configuration>`, except that
