@@ -89,7 +89,7 @@ message MoveRunsResponse {
     json_schema: { required: [ "results" ] }
   };
 
-  // Details on success or error for each experiment.
+  // Details on success or error for each run.
   repeated RunActionResult results = 1;
 }
 
@@ -108,6 +108,6 @@ message KillRunsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "results" ] }
   };
-  // Details on success or error for each experiment.
+  // Details on success or error for each run.
   repeated RunActionResult results = 1;
 }

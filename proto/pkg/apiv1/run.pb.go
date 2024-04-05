@@ -421,7 +421,7 @@ type MoveRunsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Details on success or error for each experiment.
+	// Details on success or error for each run.
 	Results []*RunActionResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 }
 
@@ -528,7 +528,7 @@ type KillRunsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Details on success or error for each experiment.
+	// Details on success or error for each run.
 	Results []*RunActionResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 }
 
