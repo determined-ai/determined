@@ -42,7 +42,8 @@
 /e2e_tests/tests/template @determined-ai/backend
 
 # Owned by @determined-ai/web except for generated files
-/webui    @determined-ai/web
+/webui                @determined-ai/web
+/webui/react/src/e2e  @determined-ai/test
 /webui/react/src/services/api-ts-sdk/
 
 # Owned by resource management, so far this is only the stuff that is obvious and in its own dir.
