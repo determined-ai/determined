@@ -47,7 +47,7 @@ func setRetentionTime(timestamp string) error {
 	return err
 }
 
-func completeExpAndTrials(ctx context.Context, expID int32, trialIDs []int) error {
+func CompleteExpAndTrials(ctx context.Context, expID int32, trialIDs []int) error {
 	_, err := db.Bun().NewUpdate().Table("experiments").
 		Set("state = ?", model.CompletedState).
 		Where("id = ?", expID).
@@ -74,7 +74,7 @@ func resetRetentionTime() error {
 }
 
 // nolint: exhaustruct
-func createTestRetentionExperiment(
+func CreateTestRetentionExperiment(
 	ctx context.Context, t *testing.T, api *apiServer, config string, numTrials int,
 ) (*experimentv1.Experiment, []int, []model.TaskID) {
 	conf := fmt.Sprintf(`
@@ -125,19 +125,19 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment1 with 5 trials and no special config.
-	experiment1, trialIDs1, taskIDs1 := createTestRetentionExperiment(ctx, t, api, "", 5)
+	experiment1, trialIDs1, taskIDs1 := CreateTestRetentionExperiment(ctx, t, api, "", 5)
 	require.Nil(t, experiment1.EndTime)
 	require.Len(t, trialIDs1, 5)
 	require.Len(t, taskIDs1, 5)
 
 	// Create an experiment1 with 5 trials and a config to expire in 1000 days.
-	experiment2, trialIDs2, taskIDs2 := createTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
+	experiment2, trialIDs2, taskIDs2 := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
 	require.Nil(t, experiment2.EndTime)
 	require.Len(t, trialIDs2, 5)
 	require.Len(t, taskIDs2, 5)
 
 	// Create an experiment1 with 5 trials and config to never expire.
-	experiment3, trialIDs3, taskIDs3 := createTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
+	experiment3, trialIDs3, taskIDs3 := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 	require.Nil(t, experiment3.EndTime)
 	require.Len(t, trialIDs3, 5)
 	require.Len(t, taskIDs3, 5)
@@ -312,7 +312,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment1 with 5 trials and no special config.
-	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, "", 5)
+	experiment, trialIDs, taskIDs := CreateTestRetentionExperiment(ctx, t, api, "", 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)
@@ -361,7 +361,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	}
 
 	// Mark experiments and trials as completed.
-	err = completeExpAndTrials(ctx, experiment.Id, trialIDs)
+	err = CompleteExpAndTrials(ctx, experiment.Id, trialIDs)
 	require.NoError(t, err)
 
 	// Advance time by 1 day.
@@ -409,7 +409,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment with 5 trials and a config to expire in 1000 days.
-	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
+	experiment, trialIDs, taskIDs := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)
@@ -458,7 +458,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 	}
 
 	// Mark experiments and trials as completed.
-	err = completeExpAndTrials(ctx, experiment.Id, trialIDs)
+	err = CompleteExpAndTrials(ctx, experiment.Id, trialIDs)
 	require.NoError(t, err)
 
 	// Advance time by 998 days.
@@ -513,7 +513,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment with 5 trials and config to never expire.
-	experiment, trialIDs, taskIDs := createTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
+	experiment, trialIDs, taskIDs := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)
@@ -562,7 +562,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	}
 
 	// Mark experiments and trials as completed.
-	err = completeExpAndTrials(ctx, experiment.Id, trialIDs)
+	err = CompleteExpAndTrials(ctx, experiment.Id, trialIDs)
 	require.NoError(t, err)
 
 	// Advance time by 100 days.

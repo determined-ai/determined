@@ -2752,12 +2752,11 @@ func (a *apiServer) createTrialTx(
 		a.m.taskSpec.LogRetentionDays)
 
 	if err := db.AddTask(ctx, &model.Task{
-		TaskID:           taskID,
-		TaskType:         model.TaskTypeTrial,
-		StartTime:        time.Now(),
-		JobID:            nil,
-		LogVersion:       model.CurrentTaskLogVersion,
-		LogRetentionDays: a.m.taskSpec.LogRetentionDays,
+		TaskID:     taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  time.Now(),
+		JobID:      nil,
+		LogVersion: model.CurrentTaskLogVersion,
 	}); err != nil {
 		return nil, err
 	}

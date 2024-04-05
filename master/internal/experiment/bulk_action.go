@@ -807,7 +807,7 @@ func BulkUpdateLogRentention(ctx context.Context, database db.DB,
 		}
 	}
 
-	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDs)
+	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to gather trial IDs for experiments")
 	}
@@ -817,14 +817,15 @@ func BulkUpdateLogRentention(ctx context.Context, database db.DB,
 	}
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Table("tasks").
+		if _, err := tx.NewUpdate().Table("runs").
 			Set("log_retention_days = ?", numDays).
-			Where("task_id IN (?)", bun.In(taskIDs)).
+			Where("id IN (?)", bun.In(trialIDs)).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("updating log retention days for tasks: %w", err)
 		}
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
