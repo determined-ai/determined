@@ -32,13 +32,7 @@ import {
 } from 'services/api';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import {
-  CommandTask,
-  DetailedUser,
-  ExperimentItem,
-  ExperimentItemWithoutConfig,
-  Project,
-} from 'types';
+import { BulkExperimentItem, CommandTask, DetailedUser, FullExperimentItem, Project } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
@@ -50,7 +44,7 @@ const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
 const Dashboard: React.FC = () => {
-  const [experiments, setExperiments] = useState<ExperimentItemWithoutConfig[]>([]);
+  const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -60,7 +54,7 @@ const Dashboard: React.FC = () => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
-  type Submission = ExperimentItem & CommandTask;
+  type Submission = FullExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {

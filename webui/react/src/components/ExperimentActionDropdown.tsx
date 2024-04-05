@@ -30,9 +30,9 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import {
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentItem,
-  ExperimentItemWithoutConfig,
+  FullExperimentItem,
   ProjectExperiment,
   ValueOf,
 } from 'types';
@@ -48,7 +48,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItemWithoutConfig>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, BulkExperimentItem>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
@@ -96,7 +96,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
   const InterstitialModal = useModal(InterstitialModalComponent);
-  const [experimentItem, setExperimentItem] = useState<Loadable<ExperimentItem>>(NotLoaded);
+  const [experimentItem, setExperimentItem] = useState<Loadable<FullExperimentItem>>(NotLoaded);
   const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
   const { openToast } = useToast();
@@ -106,7 +106,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const fetchedExperimentItem = useCallback(async () => {
     try {
       setExperimentItem(NotLoaded);
-      const response: ExperimentItem = await getExperiment(
+      const response: FullExperimentItem = await getExperiment(
         { id: experiment.id },
         { signal: canceler.current.signal },
       );
@@ -118,7 +118,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   }, [experiment.id]);
 
   const handleEditComplete = useCallback(
-    (data: Partial<ExperimentItem>) => {
+    (data: Partial<FullExperimentItem>) => {
       onComplete?.(ExperimentAction.Edit, id, data);
     },
     [id, onComplete],

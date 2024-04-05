@@ -61,7 +61,7 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   };
 }
 
-export const generateExperiment = (id = 1): Type.ExperimentItem => {
+export const generateExperiment = (id = 1): Type.FullExperimentItem => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers.random();
   const config = {
@@ -100,10 +100,10 @@ export const generateExperiment = (id = 1): Type.ExperimentItem => {
     searcherType: 'single',
     userId: user.id,
     username: user.username,
-  } as Type.ExperimentItem;
+  } as Type.FullExperimentItem;
 };
 
-export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
+export const generateExperiments = (count = 30): Type.FullExperimentItem[] => {
   return new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
 };
 
@@ -117,7 +117,7 @@ export const isExperimentTask = (task: Type.AnyTask): task is Type.ExperimentTas
 };
 
 export const isTaskKillable = (
-  task: Type.AnyTask | Type.ExperimentItem,
+  task: Type.AnyTask | Type.FullExperimentItem,
   canModifyWorkspaceNSC: boolean,
 ): boolean => {
   return (
@@ -127,7 +127,7 @@ export const isTaskKillable = (
   );
 };
 
-const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
+const matchesSearch = <T extends Type.AnyTask | Type.FullExperimentItem>(
   task: T,
   search = '',
 ): boolean => {
@@ -135,7 +135,7 @@ const matchesSearch = <T extends Type.AnyTask | Type.ExperimentItem>(
   return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
 };
 
-const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
+const matchesState = <T extends Type.AnyTask | Type.FullExperimentItem>(
   task: T,
   states: string[],
 ): boolean => {
@@ -143,7 +143,7 @@ const matchesState = <T extends Type.AnyTask | Type.ExperimentItem>(
   return states.includes(task.state as string);
 };
 
-const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
+const matchesUser = <T extends Type.AnyTask | Type.FullExperimentItem>(
   task: T,
   users?: string[],
 ): boolean => {
@@ -151,7 +151,7 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
 };
 
-const matchesWorkspace = <T extends Type.AnyTask | Type.ExperimentItem>(
+const matchesWorkspace = <T extends Type.AnyTask | Type.FullExperimentItem>(
   task: T,
   workspaces?: string[],
 ): boolean => {

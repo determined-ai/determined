@@ -57,9 +57,8 @@ import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentItem,
-  ExperimentItemWithoutConfig,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -87,7 +86,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItemWithoutConfig };
+type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -483,9 +482,13 @@ const Searches: React.FC<Props> = ({ project }) => {
   }, [handleSelectionChange, fetchExperiments]);
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
+    (
+      action: ExperimentAction,
+      successfulIds: number[],
+      data?: Partial<BulkExperimentItem>,
+    ): void => {
       const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+      const updateExperiment = (updated: Partial<BulkExperimentItem>) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
@@ -542,7 +545,7 @@ const Searches: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+    (action: ExperimentAction, id: number, data?: Partial<BulkExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
@@ -880,7 +883,7 @@ const Searches: React.FC<Props> = ({ project }) => {
           <Error />
         ) : (
           <div className={css.paneWrapper}>
-            <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+            <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
               columns={columns}
               data={experiments}
               getHeaderMenuItems={getHeaderMenuItems}

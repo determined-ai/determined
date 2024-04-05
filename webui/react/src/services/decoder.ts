@@ -462,8 +462,7 @@ export const mapSearchExperiment = (
 ): types.ExperimentWithTrial => {
   return {
     bestTrial: data.bestTrial && decodeV1TrialToTrialItem(data.bestTrial),
-    experiment:
-      data.experiment && (mapV1Experiment(data.experiment) as types.ExperimentItemWithoutConfig),
+    experiment: data.experiment && (mapV1Experiment(data.experiment) as types.BulkExperimentItem),
   };
 };
 
@@ -471,9 +470,9 @@ export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
   config?: Sdk.V1GetExperimentResponse['config'],
-): types.ExperimentItem | types.ExperimentItemWithoutConfig => {
+): types.FullExperimentItem | types.BulkExperimentItem => {
   if (config === undefined) {
-    const a: types.ExperimentItemWithoutConfig = {
+    const bulkExpItem: types.BulkExperimentItem = {
       archived: data.archived,
       checkpoints: data.checkpointCount,
       checkpointSize: parseInt(data?.checkpointSize || '0'),
@@ -506,7 +505,7 @@ export const mapV1Experiment = (
       workspaceId: data.workspaceId,
       workspaceName: data.workspaceName,
     };
-    return a;
+    return bulkExpItem;
   }
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
@@ -518,7 +517,7 @@ export const mapV1Experiment = (
     { continueFn },
   ) as types.HyperparametersFlattened;
 
-  return {
+  const fullExpItem: types.FullExperimentItem = {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
@@ -553,13 +552,12 @@ export const mapV1Experiment = (
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,
   };
+  return fullExpItem;
 };
 
-export const mapV1ExperimentList = (
-  data: Sdk.V1Experiment[],
-): types.ExperimentItemWithoutConfig[] => {
+export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.BulkExperimentItem[] => {
   // empty JobSummary
-  return data.map((e) => mapV1Experiment(e)) as types.ExperimentItemWithoutConfig[];
+  return data.map((e) => mapV1Experiment(e)) as types.BulkExperimentItem[];
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {

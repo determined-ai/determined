@@ -61,10 +61,10 @@ import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentItem,
-  ExperimentItemWithoutConfig,
   ExperimentWithTrial,
+  FullExperimentItem,
   Project,
   ProjectColumn,
   ProjectMetricsRange,
@@ -97,7 +97,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItemWithoutConfig };
+type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
@@ -534,9 +534,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [handleSelectionChange, fetchExperiments]);
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
+    (
+      action: ExperimentAction,
+      successfulIds: number[],
+      data?: Partial<FullExperimentItem>,
+    ): void => {
       const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+      const updateExperiment = (updated: Partial<FullExperimentItem>) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
@@ -593,7 +597,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+    (action: ExperimentAction, id: number, data?: Partial<FullExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
@@ -1106,7 +1110,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+              <DataGrid<ExperimentWithTrial, ExperimentAction, FullExperimentItem>
                 columns={columns}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}

@@ -292,7 +292,7 @@ export const searchExperiments = generateDetApi<
 export const getExperiment = generateDetApi<
   Service.GetExperimentParams,
   Api.V1GetExperimentResponse,
-  Type.ExperimentItem
+  Type.FullExperimentItem
 >(Config.getExperiment);
 
 export const getExperimentDetails = generateDetApi<
