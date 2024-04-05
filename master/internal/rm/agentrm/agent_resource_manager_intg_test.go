@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/syncx/queue"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -244,4 +245,37 @@ func TestGetResourcePools(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, string(expected), string(actual))
+}
+
+func TestGetJobQueueStatsRequest(t *testing.T) {
+	agentRM := &ResourceManager{
+		pools: map[string]*resourcePool{
+			"pool1": setupResourcePool(
+				t, nil, &config.ResourcePoolConfig{PoolName: "pool1"},
+				nil, nil, []*MockAgent{{ID: "agent1", Slots: 0}},
+			),
+			"pool2": setupResourcePool(
+				t, nil, &config.ResourcePoolConfig{PoolName: "pool2"},
+				nil, nil, []*MockAgent{{ID: "agent2", Slots: 0}},
+			),
+		},
+	}
+
+	cases := []struct {
+		name        string
+		filteredRPs []string
+		expected    int
+	}{
+		{"empty, return all", []string{}, 2},
+		{"filter 1 in", []string{"pool1"}, 1},
+		{"filter 2 in", []string{"pool1", "pool2"}, 2},
+		{"filter undefined in, return none", []string{"bogus"}, 0},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := agentRM.GetJobQueueStatsRequest(&apiv1.GetJobQueueStatsRequest{ResourcePools: tt.filteredRPs})
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, len(res.Results))
+		})
+	}
 }

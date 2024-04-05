@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -239,13 +240,17 @@ func (k *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*
 
 // GetJobQueueStatsRequest implements rm.ResourceManager.
 func (k *ResourceManager) GetJobQueueStatsRequest(
-	*apiv1.GetJobQueueStatsRequest,
+	msg *apiv1.GetJobQueueStatsRequest,
 ) (*apiv1.GetJobQueueStatsResponse, error) {
 	resp := &apiv1.GetJobQueueStatsResponse{
 		Results: make([]*apiv1.RPQueueStat, 0),
 	}
 
 	for poolName, rp := range k.pools {
+		if len(msg.ResourcePools) != 0 && !slices.Contains(msg.ResourcePools, poolName) {
+			continue
+		}
+
 		qStats := apiv1.RPQueueStat{
 			ResourcePool: poolName,
 			Stats:        rp.GetJobQStats(),

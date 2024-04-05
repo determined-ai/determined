@@ -370,8 +370,8 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		err         error
 		expectedLen int
 	}{
-		// TODO RM-136: revist this.
-		// Per the mocks set-up, no matter the pools in the request, return the max # of responses.
+		// Per the mocks set-up, no matter the pools in the request, return the max # of responses because of
+		// the fan-out call to all RMs.
 		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil, 2},
 		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil, 2},
 		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil, 2},
