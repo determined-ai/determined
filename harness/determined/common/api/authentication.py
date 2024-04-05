@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 from urllib import parse
 
@@ -20,6 +21,23 @@ def salt_and_hash(password: str) -> str:
         return hashlib.sha512((PASSWORD_SALT + password).encode()).hexdigest()
     else:
         return password
+
+
+def check_password_complexity(password: str) -> None:
+    """
+    raises a ValueError if the password does not meet complexity requirements
+    """
+    if len(password) < 8:
+        raise ValueError("password must have at least 8 characters")
+
+    if re.search(r"[A-Z]", password) is None:
+        raise ValueError("password must include an uppercase letter")
+
+    if re.search(r"[a-z]", password) is None:
+        raise ValueError("password must include a lowercase letter")
+
+    if re.search(r"\d", password) is None:
+        raise ValueError("password must include a number")
 
 
 def get_det_username_from_env() -> Optional[str]:
