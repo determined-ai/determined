@@ -86,7 +86,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run preview',
     port: 3001,
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
   },
 
   workers: process.env.CI ? 4 : 1,

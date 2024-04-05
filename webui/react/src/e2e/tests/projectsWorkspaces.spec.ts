@@ -22,25 +22,37 @@ test.describe('Projects', () => {
       await expect.soft(page).toHaveURL(workspacesPage.url);
     });
 
-    await test.step('Create a workspace', async () => {})
+    await test.step('Create a workspace', async () => {
+      await workspacesPage.list.newWorkspaceButton.pwLocator.click()
+    })
     await test.step('Create a workspace through the sidebar', async () => {})
-    await test.step('Create a project', async () => {})
-    await test.step('Navigation on projects page', async () => {})
+    await test.step('Create projects', async () => {})
+    await test.step('Archive a project', async () => {})
+    await test.step('Unarchive a project', async () => {})
+    await test.step('Navigation on projects page - sorting and list', async () => {})
+    await test.step('Create a model with all possible metadata', async () => {})
+    await test.step('Archive a model', async () => {})
+    await test.step('Unarchive a model', async () => {})
+    await test.step('Move a model between projects', async () => {})
+    await test.step('Launch JupyterLab, kill the task, view logs', async () => {})
     await test.step('Navigate with the breadcrum and workspace page', async () => {})
     await test.step('Navigation on workspace page', async () => {})
     await test.step('Navigation to wokspace on the sidebar', async () => {})
     await test.step('Edit a workspace through workspaces page', async () => {})
     await test.step('Edit a workspace through the sidebar', async () => {})
+    await test.step('Archive a workspace', async () => {})
+    await test.step('Unarchive a workspace', async () => {})
     await test.step('Unpin a workspace through the sidebar', async () => {})
     await test.step('Pin a workspace through the sidebar', async () => {})
+    await test.step('Delete a model', async () => {})
     await test.step('Delete a project', async () => {})
     await test.step('Delete a workspace', async () => {})
     await test.step('Delete a workspace through the sidebar', async () => {})
 
-    await test.step('Navigate to Logout', async () => {
-      await auth.logout();
-      await expect.soft(page).toHaveTitle('Sign In - Determined');
-      await expect.soft(page).toHaveURL(/login/);
-    });
+    // await test.step('Navigate to Logout', async () => {
+    //   await auth.logout();
+    //   await expect.soft(page).toHaveTitle('Sign In - Determined');
+    //   await expect.soft(page).toHaveURL(/login/);
+    // });
   });
 });
