@@ -2150,9 +2150,11 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 
 	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
 
+	_, project := createProjectAndWorkspace(ctx, t, api)
+
 	var expIDs []int32
 	for i := 0; i < 3; i++ {
-		exp := createTestExpWithProjectID(t, api, curUser, 4228892)
+		exp := createTestExpWithProjectID(t, api, curUser, project)
 		_, err := db.Bun().NewUpdate().Table("experiments").
 			Set("state = ?", model.CompletedState).
 			Where("id = ?", exp.ID).Exec(ctx)
@@ -2165,7 +2167,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	// where we have a filter with the experiment delete request.
 	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
 		ExperimentIds: expIDs,
-		Filters:       &apiv1.BulkExperimentFilters{ProjectId: 4228892},
+		Filters:       &apiv1.BulkExperimentFilters{ProjectId: int32(project)},
 	})
 	require.NoError(t, err)
 
