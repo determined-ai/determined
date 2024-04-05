@@ -531,13 +531,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         ];
         return items;
       }
-      console.log(columnId);
-      console.log(Loadable.getOrElse([], projectColumns));
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-      if (!column) {
-        return [];
-      }
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
 
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
@@ -550,8 +543,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 key: 'pin',
                 label: 'Pin column',
                 onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
                   handleColumnsOrderChange?.(newColumnsOrder);
                   handlePinnedColumnsCountChange?.(
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
@@ -564,19 +557,28 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 key: 'unpin',
                 label: 'Unpin column',
                 onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
                   handleColumnsOrderChange?.(newColumnsOrder);
                   handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
                 },
               },
-        ...(BANNED_FILTER_COLUMNS.includes(column.column)
-          ? []
-          : [
-              { type: 'divider' as const },
-              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            ]),
       ];
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
+      if (!column) return items;
+
+      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
+      const sortOptions = sortMenuItemsForColumn(column, sorts, handleSortChange);
+      if (sortOptions.length > 0) {
+        items.push(
+          ...(BANNED_FILTER_COLUMNS.includes(column.column)
+            ? []
+            : [
+                { type: 'divider' as const },
+                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+              ]),
+        );
+      }
       return items;
     },
     [
