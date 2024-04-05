@@ -1,13 +1,14 @@
 import { TablePaginationConfig } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
+import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
+import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import { isEqual } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ActionDropdown from 'components/ActionDropdown';
 import Badge, { BadgeType } from 'components/Badge';
-import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
 import Link from 'components/Link';
@@ -17,6 +18,7 @@ import { defaultRowClassName, getFullPaginationConfig, Renderer } from 'componen
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { terminalRunStates } from 'constants/states';
+import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -69,10 +71,20 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
   const models = useFetchModels();
+  const [checkpoint, setCheckpoint] = useState<CheckpointWorkloadExtended>();
+  const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
+    checkpoint: checkpoint,
+    config: experiment.config,
+    models,
+    title: `Best Checkpoint for Trial ${checkpoint?.trialId}`,
+  });
 
-  const workspace = { id: experiment.workspaceId };
+  const workspace = useMemo(() => ({ id: experiment.workspaceId }), [experiment.workspaceId]);
   const { canCreateExperiment, canViewExperimentArtifacts } = usePermissions();
-  const canHparam = canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace });
+  const canHparam = useMemo(
+    () => canCreateExperiment({ workspace }) && canViewExperimentArtifacts({ workspace }),
+    [canCreateExperiment, canViewExperimentArtifacts, workspace],
+  );
 
   const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
 
@@ -146,9 +158,20 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     ],
   );
 
-  const columns = useMemo(() => {
-    const { metric } = experiment.config?.searcher || {};
+  const handleOpenCheckpoint = useCallback(
+    (trial: TrialItem) => {
+      if (!trial.bestAvailableCheckpoint) return;
+      setCheckpoint({
+        ...trial.bestAvailableCheckpoint,
+        experimentId: experiment.id,
+        trialId: trial.id,
+      });
+      openCheckpoint();
+    },
+    [experiment.id, openCheckpoint],
+  );
 
+  const columns = useMemo(() => {
     const idRenderer: Renderer<TrialItem> = (_, record) => (
       <Link path={paths.trialDetails(record.id, experiment.id)}>
         <span>Trial {record.id}</span>
@@ -187,24 +210,19 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         };
 
         const item: TrialItem[keyof TrialItem] = record[key];
-        const value = getMetricValue(hasMetric(item) ? item : undefined, metric);
+        const value = getMetricValue(hasMetric(item) ? item : undefined, experiment.searcherMetric);
         return <HumanReadableNumber num={value} />;
       };
     };
 
     const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
       if (!record.bestAvailableCheckpoint) return;
-      const checkpoint: CheckpointWorkloadExtended = {
-        ...record.bestAvailableCheckpoint,
-        experimentId: experiment.id,
-        trialId: record.id,
-      };
+
       return (
-        <CheckpointModalTrigger
-          checkpoint={checkpoint}
-          experiment={experiment}
-          models={models}
-          title={`Best Checkpoint for Trial ${checkpoint.trialId}`}
+        <Button
+          aria-label="View Checkpoint"
+          icon={<Icon name="checkpoint" showTooltip title="View Checkpoint" />}
+          onClick={() => handleOpenCheckpoint(record)}
         />
       );
     };
@@ -260,8 +278,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
     return newColumns;
   }, [
-    experiment,
-    models,
+    experiment.id,
+    experiment.config.maxRestarts,
+    experiment.searcherMetric,
+    handleOpenCheckpoint,
     dropDownOnTrigger,
     settings.sortKey,
     settings.sortDesc,
@@ -312,19 +332,23 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         { signal: canceler.signal },
       );
       setTotal(responsePagination?.total || 0);
-      if (!isEqual(trials, experimentTrials)) {
-        setTrials(experimentTrials);
-      }
-      setIsLoading(false);
+      setTrials((prev) => {
+        if (!isEqual(prev, experimentTrials)) {
+          return experimentTrials;
+        } else {
+          return prev;
+        }
+      });
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
         type: ErrorType.Api,
       });
+    } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString, trials]);
+  }, [experiment.id, canceler, settings, stateString]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
@@ -453,7 +477,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   );
 
   return (
-    <div className={css.base}>
+    <>
       <Section>
         <TableBatch
           actions={[
@@ -490,7 +514,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           updateSettings={updateSettings}
           onChange={handleTableChange}
         />
-      </Section>{' '}
+      </Section>
       {settings.compare && (
         <trialsComparisonModal.Component
           experiment={experiment}
@@ -503,7 +527,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         closeModal={HyperparameterSearchModal.close}
         experiment={experiment}
       />
-    </div>
+      {checkpointModalComponents}
+    </>
   );
 };
 

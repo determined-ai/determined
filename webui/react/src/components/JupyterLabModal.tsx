@@ -250,7 +250,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   const usableConfig = useMemo(() => (Loadable.isLoaded(config) ? config.data : ''), [config]);
   const [field, setField] = useState([
     { name: 'config', value: usableConfig },
-    { name: 'workspaceId', value: currentWorkspace?.id },
+    { name: 'workspaceId', value: currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id },
   ]);
 
   const handleConfigChange = useCallback(
@@ -274,8 +274,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   }, [usableConfig]);
 
   useEffect(() => {
-    form.setFieldValue('workspaceId', currentWorkspace?.id);
-  }, [currentWorkspace, form]);
+    form.setFieldValue(
+      'workspaceId',
+      currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id,
+    );
+  }, [currentWorkspace, form, workspaces]);
   useEffect(() => {
     form.setFieldValue('config', usableConfig);
   }, [usableConfig, form]);
@@ -417,8 +420,11 @@ const JupyterLabForm: React.FC<{
   }, [boundResourcePools, form]);
 
   useEffect(() => {
-    form.setFieldValue('workspaceId', currentWorkspace?.id);
-  }, [currentWorkspace, form]);
+    form.setFieldValue(
+      'workspaceId',
+      currentWorkspace ? currentWorkspace.id : workspaces.at(0)?.id,
+    );
+  }, [currentWorkspace, form, workspaces]);
 
   const onSelectWorkspace = (workspaceId?: SelectValue) => {
     const selected = workspaces.find((w) => workspaceId && w.id === workspaceId);

@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.30.0-dev0
+    Default: 0.30.1-dev0
 
   DBPassword:
     Type: String
@@ -195,6 +195,10 @@ Parameters:
     Description: Contents of the agent config file
     Default: ''
 
+  ExtraTags:
+    Type: String
+    Description: Extra tags to be applied
+    Default: '[]'
 
   CpuEnvImage:
     Type: String
@@ -890,6 +894,7 @@ Resources:
                   instance_type: ${ComputeAgentInstanceType}
                   agent_reattach_enabled: ${AgentReattachEnabled}
               aws:
+                custom_tags: ${ExtraTags}
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}

@@ -122,7 +122,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.30.0-dev0
+    Default: 0.30.1-dev0
 
   DBPassword:
     Type: String
@@ -195,6 +195,11 @@ Parameters:
     Type: String
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
+
+  ExtraTags:
+    Type: String
+    Description: Extra tags to be applied
+    Default: '[]'
 
   CpuEnvImage:
     Type: String
@@ -876,6 +881,7 @@ Resources:
                 compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
               aws:
+                custom_tags: ${ExtraTags}
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}

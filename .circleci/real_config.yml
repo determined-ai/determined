@@ -22,7 +22,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.30.0-dev0
+    default: 0.30.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -936,6 +936,137 @@ commands:
                 command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create CPU node pool
 
+  setup-shared-cluster:
+    parameters:
+      cluster-id:
+        type: string
+        default: ${GKE_CLUSTER_NAME}
+      labels:
+        type: string
+        default: ""
+      det-version:
+        type: string
+      region:
+        type: string
+        default: ${GKE_REGION}
+      gcloud-service-key:
+        default: GCLOUD_SERVICE_KEY
+        type: env_var_name
+      google-compute-zone:
+        default: GOOGLE_COMPUTE_ZONE
+        description: The Google compute zone to connect with via the gcloud CLI
+        type: env_var_name
+      google-project-id:
+        default: GOOGLE_PROJECT_ID
+        description: The Google project ID to connect with via the gcloud CLI
+        type: env_var_name
+      gpus-per-machine:
+        type: integer
+        default: 20
+      slot-type:
+        type: string
+        default: "cpu"
+      slot-resource-requests-cpu:
+        type: integer
+        default: 1
+      master-tls-cert:
+        type: string
+      master-tls-key:
+        type: string
+      master-cert-name:
+        type: string
+    steps:
+      - set-cluster-id:
+          cluster-id: <<parameters.cluster-id>>
+      - set-cluster-labels:
+          labels: <<parameters.labels>>
+      - gcloud/install:
+          version: "412.0.0"
+      - kubernetes/install-kubectl
+      - gcloud/initialize:
+          gcloud-service-key: <<parameters.gcloud-service-key>>
+          google-compute-zone: <<parameters.google-compute-zone>>
+          google-project-id: <<parameters.google-project-id>>
+      - run:
+          command: |
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=${GENERATED_NAMESPACE}-bucket,createNonNamespacedObjects=false"' >> "$BASH_ENV"
+          name: Prepare helm overrides
+      - when:
+          condition:
+            and:
+            - <<parameters.gpus-per-machine>>
+            - equal: [ "gpu", <<parameters.slot-type>> ]
+          steps:
+            - run:
+                command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+                name: Install NVIDIA drivers
+      - unless:
+          condition:
+            equal: [ "gpu", <<parameters.slot-type>> ]
+          steps:
+            - run:
+                command: |
+                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>,resourcePools[0].agent_reattach_enabled=true,resourcePools[0].pool_name=default,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].effect=NoSchedule,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].effect=NoSchedule"' >> "$BASH_ENV"
+                name: CPU setup helm overrides
+      - run:
+          command: |
+            echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tlsSecret=<<parameters.master-cert-name>>"' >> "$BASH_ENV"
+          name: Setup TLS Helm Values
+      - run:
+          command: |
+            ip_addresses=($(echo "${CI_RANGES}" | tr -d '" ' | tr ',' ' '))
+            formattedRange="export HELM_VALUES=${HELM_VALUES},'loadBalancerSourceRanges={"
+            for i in ${ip_addresses[@]}; do
+              formattedRange+="${i}," 
+            done
+            formattedRange=${formattedRange::-1}
+            formattedRange+="}'"
+            echo ${formattedRange} >> "$BASH_ENV"
+          name: Setup Firewall Config
+      - run:
+          command: |
+            echo 'export HELM_VALUES="${HELM_VALUES},initialUserPassword=${INITIAL_USER_PASSWORD}"' >> "$BASH_ENV"
+      - run:
+          command: |
+            tries=5
+            until gcloud components install gke-gcloud-auth-plugin --quiet; do
+              if [[ $((--tries)) -eq 0 ]]; then
+                exit 1
+              fi
+              sleep 15
+            done
+
+            echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
+          name: Install GKE auth plugin
+      - run:
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
+          name: Get Kubeconfig
+      - run: 
+          command: kubectl create namespace ${GENERATED_NAMESPACE}
+          name: Create namespace
+      - run:
+          command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
+          name: Set context to the created namespace
+      - run: 
+          command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
+      - run:
+          command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
+      - helm/install-helm-client:
+          version: v3.12.3
+      - run:
+          command: |
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 10m0s
+          name: Helm Install
+      - run:
+          command: |
+            helm get values ${GENERATED_NAMESPACE} --namespace="${GENERATED_NAMESPACE}"
+          name: Get Helm Values
+      - set-master-address-gke:
+          release-name: ${GENERATED_NAMESPACE}
+          namespace: ${GENERATED_NAMESPACE}
+          master-tls-cert: <<parameters.master-tls-cert>>
+          master-tls-key: <<parameters.master-tls-key>>
+
   generate-tls-cert:
     steps:
       - run: |
@@ -965,6 +1096,12 @@ commands:
         type: string
       namespace:
         type: string
+      master-tls-cert:
+        type: string
+        default: "" 
+      master-tls-key:
+        type: string
+        default: ""
     steps:
       - run:
           name: Set Master Address
@@ -973,7 +1110,11 @@ commands:
             --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
             echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
             echo "${MASTER_HOST}"
-
+            if [ -n "<<parameters.master-tls-cert>>" ] && [ -n "<<parameters.master-tls-key>>" ]; then
+              echo "export MASTER_PORT=8443" >> $BASH_ENV
+              echo "export MASTER_SCHEME=https" >> $BASH_ENV
+            fi
+  
   set-google-application-credentials:
     steps:
       - run:
@@ -1084,6 +1225,14 @@ commands:
       - run:
           no_output_timeout: 30m
           command: make package
+
+  make-package-small:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          no_output_timeout: 30m
+          command: make -C master package-small
 
   install-devcluster:
     steps:
@@ -1298,6 +1447,39 @@ jobs:
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
+
+  package-and-push-system-dev-small:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: xlarge
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          executor: <<pipeline.parameters.docker-image>>
+      - reinstall-go
+      - setup_remote_docker:
+          version: 20.10.18
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system:
+          check: false
+      - make-package-small
+      - run: tools/scripts/retry.sh make -C master publish-dev-small
+      - persist_to_workspace:
+          root: .
+          paths:
+            - harness/dist
 
   package-and-push-system-rc:
     docker:
@@ -2489,8 +2671,8 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1
         type: string
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
       accel-node-taints:
         type: string
         default: ""
@@ -2554,6 +2736,79 @@ jobs:
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
+
+  test-e2e-shared-cluster:
+    parameters:
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      environment-gpu-enabled:
+        type: string
+        default: "0"
+      test-type:
+        type: string
+    circleci_ip_ranges: true
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
+      SHARED_CLUSTER: true
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - set-slack-user-id
+      - attach_workspace:
+          at: .
+      - setup-python-venv:
+          install-python: false
+          determined: true 
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - run:
+          name: Create Namespace & Cert Name
+          command: |
+            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+            uuid=$(cat /proc/sys/kernel/random/uuid)
+            uuid=${uuid:0:8}
+            echo "GENERATED_NAMESPACE=test-<<parameters.test-type>>-${TIMESTAMP}-${uuid}-${CIRCLE_NODE_INDEX}" >> $BASH_ENV
+      - generate-tls-cert
+      - setup-shared-cluster:
+          det-version: ${CIRCLE_SHA1}-shared-cluster
+          labels: test-mark=<<parameters.mark>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
+      - set-google-application-credentials
+      - run:
+          name: Set initial user password
+          command: |
+            echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> $BASH_ENV
+      - run:
+          name: Wait for master connection
+          command: |
+            set +o pipefail
+            export DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD}
+            export DET_MASTER_TLS_CERT=${MASTER_TLS_CERT} DET_MASTER_CERT_NAME=${MASTER_CERT_NAME}
+            for i in {1..10}; do
+              yes | det -m https://${MASTER_HOST}:${MASTER_PORT} user whoami | grep "logged in" && break || \
+              echo "Trying to connect to master host again in 5 seconds" && sleep 5
+            done
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          master-host: ${MASTER_HOST}
+          master-scheme: ${MASTER_SCHEME:-http}
+          master-port: ${MASTER_PORT:-8080}
+          master-cert: ${MASTER_TLS_CERT}
+          master-cert-name: ${MASTER_CERT_NAME}
+          wait-for-master: false
+      - store_test_results:
+          path: /tmp/test-results/
 
   test-det-deploy:
     parameters:
@@ -2699,6 +2954,62 @@ jobs:
           failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
+
+  run-shared-cluster-cleanup:
+      parameters:
+        cluster-id:
+          type: string
+          default: ${GKE_CLUSTER_NAME}
+        region:
+          type: string
+          default: ${GKE_REGION}
+        gcloud-service-key:
+          default: GCLOUD_SERVICE_KEY
+          description: The gcloud service key
+          type: env_var_name
+        google-compute-zone:
+          default: GOOGLE_COMPUTE_ZONE
+          description: The Google compute zone to connect with via the gcloud CLI
+          type: env_var_name
+        google-project-id:
+          default: GOOGLE_PROJECT_ID
+          description: The Google project ID to connect with via the gcloud CLI
+          type: env_var_name
+      circleci_ip_ranges: true
+      docker:
+        - image: <<pipeline.parameters.docker-image>>
+      steps:
+        - set-cluster-id:
+              cluster-id: <<parameters.cluster-id>>
+        - gcloud/install:
+              version: "412.0.0"
+        - kubernetes/install-kubectl
+        - gcloud/initialize:
+            gcloud-service-key: <<parameters.gcloud-service-key>>
+            google-compute-zone: <<parameters.google-compute-zone>>
+            google-project-id: <<parameters.google-project-id>>
+        - run:
+            command: |
+              tries=5
+              until gcloud components install gke-gcloud-auth-plugin --quiet; do
+                if [[ $((--tries)) -eq 0 ]]; then
+                  exit 1
+                fi
+                sleep 15
+              done
+              echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
+            name: Install GKE auth plugin
+        - run:
+            name: Get Kubeconfig
+            command: gcloud container clusters get-credentials ${CLUSTER_ID} --project ${GOOGLE_PROJECT_ID} --region <<parameters.region>>
+        - run:
+            name: Delete GKE CI Cluster Namespaces
+            command: |
+              kubectl get namespace | grep -Eo "^test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]" | xargs -L1 kubectl delete namespace || true
+        - run:
+            name: Delete GCS CI Buckets
+            command: |
+              gsutil ls -p ${GOOGLE_PROJECT_ID} | grep -Eo "^gs://test-cpu-[a-z0-9]+-[a-z0-9]+-[0-9]-bucket" | xargs -L1 gsutil -m rm -r || true
 
 workflows:
   lint:
@@ -3146,6 +3457,22 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+    
+  test-e2e-gke-shared-cluster:
+    unless: << pipeline.parameters.do_nightly_tests >>
+    jobs:
+      - package-and-push-system-dev-small
+      
+      - test-e2e-shared-cluster:
+          name: test-e2e-shared-cluster-cpu
+          context: 
+            - gcp-shared-cluster
+            - gcp-ci-cluster-default-user-credentials
+          requires:
+            - package-and-push-system-dev-small
+          parallelism: 3
+          mark: "e2e_gpu and not gpu_required"
+          test-type: cpu
 
   test-e2e-longrunning:
     jobs:
@@ -3582,6 +3909,10 @@ workflows:
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
+
+      - run-shared-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
 
   release:
     jobs:

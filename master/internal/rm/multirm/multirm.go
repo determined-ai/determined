@@ -234,12 +234,18 @@ func (m *MultiRMRouter) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*sp
 func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsRequest) (
 	*apiv1.GetJobQueueStatsResponse, error,
 ) {
-	resolvedRMName, err := m.getRM(rm.ResourcePoolName(req.ResourcePools[0]))
+	res, err := fanOutRMCall(m, func(rm rm.ResourceManager) (*apiv1.GetJobQueueStatsResponse, error) {
+		return rm.GetJobQueueStatsRequest(req)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return m.rms[resolvedRMName].GetJobQueueStatsRequest(req)
+	all := &apiv1.GetJobQueueStatsResponse{}
+	for _, r := range res {
+		all.Results = append(all.Results, r.Results...)
+	}
+	return all, nil
 }
 
 // MoveJob routes a MoveJob call to a specified resource manager/pool.

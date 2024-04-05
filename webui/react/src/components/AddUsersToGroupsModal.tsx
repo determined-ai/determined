@@ -63,7 +63,7 @@ const AddUsersToGroupsModalComponent = ({
           label="Groups"
           name={GROUPS_NAME}
           rules={[{ message: 'This field is required', required: true }]}>
-          <Select mode="multiple" placeholder="Select Groups">
+          <Select data-testid="groups" mode="multiple" placeholder="Select Groups">
             {groupOptions.map((go) => (
               <Option key={go.group.groupId} value={go.group.groupId}>
                 {go.group.name}

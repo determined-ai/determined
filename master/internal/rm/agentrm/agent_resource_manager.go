@@ -814,39 +814,7 @@ func (a *ResourceManager) createResourcePoolSummary(
 func (a *ResourceManager) fetchAvgQueuedTime(pool string) (
 	[]*jobv1.AggregateQueueStats, error,
 ) {
-	aggregates := []model.ResourceAggregates{}
-	err := db.Bun().NewSelect().Model(&aggregates).
-		Where("aggregation_type = ?", "queued").
-		Where("aggregation_key = ?", pool).
-		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
-		Order("date ASC").Scan(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*jobv1.AggregateQueueStats, 0)
-	for _, record := range aggregates {
-		res = append(res, &jobv1.AggregateQueueStats{
-			PeriodStart: record.Date.Format("2006-01-02"),
-			Seconds:     record.Seconds,
-		})
-	}
-	today := float32(0)
-	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
-		Where("resource_pool = ?", pool).
-		Where("start_time >= CURRENT_DATE")
-	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
-		"avg(extract(epoch FROM end_time - start_time))",
-	).Where("event_type = ?", "QUEUED").
-		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
-		Scan(context.TODO(), &today)
-	if err != nil {
-		return nil, err
-	}
-	res = append(res, &jobv1.AggregateQueueStats{
-		PeriodStart: time.Now().Format("2006-01-02"),
-		Seconds:     today,
-	})
-	return res, nil
+	return rm.FetchAvgQueuedTime(pool)
 }
 
 // mostly for tests.

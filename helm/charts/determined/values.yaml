@@ -57,7 +57,9 @@ masterPort: 8080
 #
 # WARNING
 # The first installation must run with the createNonNamespacedObjects flag set to true to ensure
-# the non-namespaced objects are created.
+# the non-namespaced objects are created. 
+# When deploying multiple namespaces within the same shared cluster, this should be set to false
+# with helm overrides.
 createNonNamespacedObjects: true
 
 # External ca.crt injection certificate/s secret name
@@ -85,7 +87,14 @@ useNodePortForMaster: false
 # Determined master and the task containers it launches, but does not include communication between
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
-# tlsSecret:
+tlsSecret:
+
+
+# TLS security configs for determined master.
+security:
+  tls:
+    cert:
+    key:
 
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
@@ -297,6 +306,7 @@ telemetry:
 ## This behavior is disabled by default.
 # notebookTimeout: 1800
 
+## deprecated, use initialUserPassword instead.
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
 
@@ -317,9 +327,9 @@ telemetry:
   # security:
     # username: <username>
     # password: <password>
-    # tls:
-      # enabled: true
-      # skipVerify: false
+      # tls:
+        # enabled: true
+        # skipVerify: false
 
       ## The name to use when verifying the certificate, if different from the name used to connect.
       # certificateName: <name>
@@ -338,3 +348,6 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+## Configure the initial user password for the cluster
+# initialUserPassword
