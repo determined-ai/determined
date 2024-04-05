@@ -184,8 +184,8 @@ class DummyMetricsContext(MetricsContext):
     def report(
         self,
         group: str,
-        steps_completed: int,
         metrics: Dict[str, Any],
+        steps_completed: Optional[int] = None,
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
         report_time: Optional[datetime.datetime] = None,
     ) -> None:
