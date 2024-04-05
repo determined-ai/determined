@@ -57,7 +57,9 @@ masterPort: 8080
 #
 # WARNING
 # The first installation must run with the createNonNamespacedObjects flag set to true to ensure
-# the non-namespaced objects are created.
+# the non-namespaced objects are created. 
+# When deploying multiple namespaces within the same shared cluster, this should be set to false
+# with helm overrides.
 createNonNamespacedObjects: true
 
 # External ca.crt injection certificate/s secret name
@@ -239,11 +241,6 @@ checkpointStorage:
 # you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set `maxSlotsPerPod` to
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
-
-
-# Flag for determining whether or not to create the cluster-scoped objects, when deploying multiple
-# namespaces within the same cluster, should be set to false.
-createNonNamespacedObjects:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu

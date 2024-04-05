@@ -2773,7 +2773,6 @@ jobs:
       - run:
           name: Create Namespace & Cert Name
           command: |
-            # Extract the commit hash from Git metadata
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             uuid=$(cat /proc/sys/kernel/random/uuid)
             uuid=${uuid:0:8}
@@ -3460,6 +3459,7 @@ workflows:
               det-version: [$CIRCLE_SHA1]
     
   test-e2e-gke-shared-cluster:
+    unless: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - package-and-push-system-dev-small
       
