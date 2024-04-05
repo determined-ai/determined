@@ -957,6 +957,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableBatch
+        data-test-component="experiementList-tableBatch"
         actions={batchActions.map((action) => ({
           disabled: !availableBatchActions.includes(action),
           label: action,
