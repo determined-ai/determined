@@ -100,7 +100,7 @@ func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 			JOIN run_id_task_id as r_t ON r.id = r_t.run_id
 			JOIN tasks as t ON r_t.task_id = t.task_id
 			WHERE t.end_time IS NOT NULL
-				)
+		)
 		DELETE FROM task_logs
 		WHERE task_id IN (
 			SELECT task_id FROM log_retention_tasks

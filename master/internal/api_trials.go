@@ -710,13 +710,6 @@ func (a *apiServer) PutTrialRetainLogs(
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewUpdate().Table("tasks"). // TODO(nick-runs) call runs package.
-								Set("log_retention_days = ?", req.NumDays).
-								TableExpr("run_id_task_id as r").
-								Where("r.run_id = ? and tasks.task_id = r.task_id", req.TrialId).
-								Exec(ctx); err != nil {
-			return fmt.Errorf("updating log retention days for tasks: %w", err)
-		}
 		if _, err := tx.NewUpdate().Table("runs").
 			Set("log_retention_days = ?", req.NumDays).
 			Where("id = ?", req.TrialId).

@@ -492,40 +492,23 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 }
 
 func TestPutExperimentRetainLogs(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t, nil)
-	exp := createTestExp(t, api, curUser)
+	api, _, ctx := setupAPITest(t, nil)
+	exp, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 
-	trialIDs, _, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
-	require.NoError(t, err)
-
-	_, err = db.Bun().NewUpdate().Table("experiments").
-		Set("state = ?", model.CompletedState).
-		Where("id = ?", exp.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.Bun().NewUpdate().Table("runs").
-		Set("state = ?", model.CompletedState).
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(ctx)
+	err := CompleteExpAndTrials(ctx, exp.Id, trialIDs)
 	require.NoError(t, err)
 
 	numDays := -1
 	res, err := api.PutExperimentRetainLogs(ctx, &apiv1.PutExperimentRetainLogsRequest{
-		ExperimentId: int32(exp.ID), NumDays: int32(numDays),
+		ExperimentId: exp.Id, NumDays: int32(numDays),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	var trialLogRetentionDays []int
-	err = db.Bun().NewSelect().Table("runs").
-		Column("log_retention_days").
-		Where("id IN (?)", bun.In(trialIDs)).
-		Scan(ctx, &trialLogRetentionDays)
+	newLogRetentionDays := []int32{-1, -1, -1, -1, -1}
+	updatedLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
 	require.NoError(t, err)
-
-	for _, v := range trialLogRetentionDays {
-		require.Equal(t, v, numDays)
-	}
+	require.Equal(t, updatedLogRetentionDays, newLogRetentionDays)
 }
 
 func TestPutExperimentsRetainLogs(t *testing.T) {
