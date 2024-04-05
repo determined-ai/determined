@@ -17,6 +17,24 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this.#nav,
     selector: '[data-testid="headerDropdown"]',
   });
+  readonly home: BaseComponent = this.sidebarItem('Home');
+  readonly uncategorized: BaseComponent = this.sidebarItem('Uncategorized');
+  readonly modelRegistry: BaseComponent = this.sidebarItem('Model Registry');
+  readonly tasks: BaseComponent = this.sidebarItem('Tasks');
+  readonly webhooks: BaseComponent = this.sidebarItem('Webhooks');
+  readonly cluster: BaseComponent = this.sidebarItem('Cluster');
+  readonly workspaces: BaseComponent = this.sidebarItem('Workspaces');
+  /**
+ * Returns a representation of a sidebar NavigationItem with the specified label.
+ * For example, a rokspace pinned to the sidebar is accessible through it's label here.
+ * @param {string} [label] - the label of the tab, generally the name
+ */
+  private sidebarItem(label: string): BaseComponent {
+    return new BaseComponent({
+      parent: this.#nav,
+      selector: `a[aria-label="${label}"]`,
+    });
+  }
   // TODO the rest of the sidebar items
   // TODO nameplate with parent = this.headerDropdown
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
@@ -41,3 +59,4 @@ class HeaderDropdown extends Dropdown {
     selector: Dropdown.selectorTemplate('sign-out'),
   });
 }
+

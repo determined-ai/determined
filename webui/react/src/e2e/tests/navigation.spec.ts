@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { Workspaces } from 'e2e/models/pages/Workspaces';
 
 test.describe('Navigation', () => {
   const USERNAME = process.env.PW_USER_NAME ?? '';
@@ -59,11 +60,11 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to Workspaces', async () => {
-      await page.getByRole('link', { name: 'Workspaces' }).click();
-      const expectedURL = /workspaces/;
-      await page.waitForURL(expectedURL);
-      await expect.soft(page).toHaveTitle('Workspaces - Determined');
-      await expect.soft(page).toHaveURL(expectedURL);
+      const workspacesPage = new Workspaces(page);
+      await workspacesPage.nav.sidebar.workspaces.pwLocator.click()
+      await page.waitForURL(workspacesPage.url);
+      await expect.soft(page).toHaveTitle(workspacesPage.title);
+      await expect.soft(page).toHaveURL(workspacesPage.url);
     });
 
     await test.step('Navigate to Admin', async () => {
