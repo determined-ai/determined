@@ -59,12 +59,12 @@ class ModelMsg(ServerMsg):
         description: "str",
         archived: "bool",
         creation_time: "float",
-        notes: "typing.Any",
+        notes: "str",
         workspace_id: "int",
         user_id: "int",
         last_updated_time: "float",
         metadata: "typing.Any",
-        labels: "typing.Any",
+        labels: "typing.List[str]",
         seq: "int",
     ) -> None:
         self.id = id
@@ -95,6 +95,58 @@ class ModelSubscriptionSpec(ClientMsg):
     ) -> None:
         self.workspace_ids = workspace_ids
         self.model_ids = model_ids
+        self.user_ids = user_ids
+        self.since = since
+
+
+class ModelVersionMsg(ServerMsg):
+    def __init__(
+        self,
+        id: "int",
+        name: "str",
+        version: "int",
+        checkpoint_uuid: "str",
+        creation_time: "float",
+        last_updated_time: "float",
+        metadata: "typing.Any",
+        model_id: "int",
+        user_id: "int",
+        comment: "str",
+        labels: "typing.List[str]",
+        notes: "str",
+        workspace_id: "str",
+        seq: "int",
+    ) -> None:
+        self.id = id
+        self.name = name
+        self.version = version
+        self.checkpoint_uuid = checkpoint_uuid
+        self.creation_time = creation_time
+        self.last_updated_time = last_updated_time
+        self.metadata = metadata
+        self.model_id = model_id
+        self.user_id = user_id
+        self.comment = comment
+        self.labels = labels
+        self.notes = notes
+        self.workspace_id = workspace_id
+        self.seq = seq
+
+
+class ModelVersionsDeleted(DeleteMsg):
+    pass
+
+
+class ModelVersionSubscriptionSpec(ClientMsg):
+    def __init__(
+        self,
+        model_ids: "typing.Optional[typing.List[int]]" = None,
+        model_version_ids: "typing.Optional[typing.List[int]]" = None,
+        user_ids: "typing.Optional[typing.List[int]]" = None,
+        since: "typing.Optional[int]" = None,
+    ) -> None:
+        self.model_ids = model_ids
+        self.model_version_ids = model_version_ids
         self.user_ids = user_ids
         self.since = since
 

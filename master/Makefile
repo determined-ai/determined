@@ -16,7 +16,9 @@ FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-master
 ARCHS = amd64 arm64 ppc64
+ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+SHARED_CLUSTER_IMAGE=$(shell echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$(ARCH_SMALL))
 
 NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
 
@@ -28,6 +30,10 @@ PUB_MANIFESTS = \
 DEV_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+
+DEV_MANIFESTS_SMALL = \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-shared-cluster \
+	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)-shared-cluster
 
 NVCR_TAGS = \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
@@ -96,7 +102,7 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT))"
+	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT))" || (git diff; false)
 
 .PHONY: get-deps
 get-deps:
@@ -180,6 +186,13 @@ pre-package:
 	cp -r ../webui/react/build/* build/webui/react
 	cp ../harness/dist/*.whl build/wheels/
 
+.PHONY: pre-package-small
+pre-package-small:
+	rm -rf build
+	mkdir -p build/wheels/
+	cp -r ../proto/build/swagger build/swagger
+	cp ../harness/dist/*.whl build/wheels/
+
 .PHONY: buildx
 buildx:
 	docker context rm -f buildx-context || true
@@ -197,6 +210,17 @@ buildx:
 	docker buildx ls
 
 $(LICENSE): $(shell find ../tools/scripts/licenses -type f)
+
+.PHONY: buildx-small
+buildx-small:
+	docker context rm -f buildx-context-sharedcluster || true
+	docker context create buildx-context-sharedcluster
+	docker buildx rm -f buildx-build-sharedcluster || true
+
+	docker --context=buildx-context-sharedcluster buildx create --platform "linux/amd64" --bootstrap --use --name buildx-build-sharedcluster;
+	docker buildx ls
+
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py master $@
 
 .PHONY: package
@@ -205,6 +229,13 @@ package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package: gen buildx
 	$(GORELEASER) --snapshot --rm-dist
+
+.PHONY: package-small
+package-small: export DET_SEGMENT_MASTER_KEY ?=
+package-small: export DET_SEGMENT_WEBUI_KEY ?=
+package-small: export GORELEASER_CURRENT_TAG := $(VERSION)
+package-small: gen buildx-small
+	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_sharedcluster.yml
 
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
@@ -229,6 +260,10 @@ endef
 .PHONY: publish-dev
 publish-dev:
 	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-dev-small
+publish-dev-small:
+	@$(call manifest_publish, $(DEV_MANIFESTS_SMALL), $(SHARED_CLUSTER_IMAGE))
 
 .PHONY: publish
 publish:

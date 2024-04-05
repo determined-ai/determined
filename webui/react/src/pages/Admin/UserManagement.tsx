@@ -392,7 +392,7 @@ const UserManagement: React.FC = () => {
           defaultSortKey === V1GetUsersRequestSortBy.NAME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'user' }),
         render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
         sorter: (a: DetailedUser, b: DetailedUser) => {
           return alphaNumericSorter(a.displayName || a.username, b.displayName || b.username);
@@ -405,7 +405,7 @@ const UserManagement: React.FC = () => {
           defaultSortKey === V1GetUsersRequestSortBy.ACTIVE ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isActive'],
         key: V1GetUsersRequestSortBy.ACTIVE,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'status' }),
         render: (isActive: boolean) => <>{isActive ? 'Active' : 'Inactive'}</>,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.isActive, a.isActive),
         title: 'Status',
@@ -416,7 +416,7 @@ const UserManagement: React.FC = () => {
           defaultSortKey === V1GetUsersRequestSortBy.ADMIN ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['isAdmin'],
         key: V1GetUsersRequestSortBy.ADMIN,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'role' }),
         render: (isAdmin: boolean) => <>{isAdmin ? 'Admin' : 'Member'}</>,
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(a.isAdmin, b.isAdmin),
         title: 'Role',
@@ -425,7 +425,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'remote',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['remote'],
         key: V1GetUsersRequestSortBy.REMOTE,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'remote' }),
         render: (value: boolean): React.ReactNode => (value ? 'Remote' : 'Local'),
         sorter: (a: DetailedUser, b: DetailedUser) => booleanSorter(b.remote, a.remote),
         title: 'Remote',
@@ -436,7 +436,7 @@ const UserManagement: React.FC = () => {
           defaultSortKey === V1GetUsersRequestSortBy.MODIFIEDTIME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['modifiedAt'],
         key: V1GetUsersRequestSortBy.MODIFIEDTIME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'modified' }),
         render: (value: number): React.ReactNode => relativeTimeRenderer(new Date(value)),
         sorter: (a: DetailedUser, b: DetailedUser) => numericSorter(a.modifiedAt, b.modifiedAt),
         title: 'Modified',
@@ -447,7 +447,7 @@ const UserManagement: React.FC = () => {
           defaultSortKey === V1GetUsersRequestSortBy.LASTAUTHTIME ? defaultSortOrder : undefined,
         defaultWidth: DEFAULT_COLUMN_WIDTHS['lastAuthAt'],
         key: V1GetUsersRequestSortBy.LASTAUTHTIME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'lastSeen' }),
         render: (value: number | undefined): React.ReactNode => {
           return value ? relativeTimeRenderer(new Date(value)) : 'N/A';
         },
@@ -459,7 +459,7 @@ const UserManagement: React.FC = () => {
         dataIndex: 'action',
         defaultWidth: 46,
         key: 'action',
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actions' }),
         render: actionRenderer,
         title: '',
       },
@@ -472,19 +472,21 @@ const UserManagement: React.FC = () => {
   return (
     <>
       <Section className={css.usersTable}>
-        <div className={css.actionBar}>
+        <div className={css.actionBar} data-testid="actionRow">
           <Row>
             <Column>
               <Row>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
+                  data-testid="search"
                   defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
                   onChange={handleNameSearchApply}
                 />
                 <Select
+                  data-testid="roleSelect"
                   options={roleOptions}
                   searchable={false}
                   value={roleFilter}
@@ -492,6 +494,7 @@ const UserManagement: React.FC = () => {
                   onChange={handleRoleFilterApply}
                 />
                 <Select
+                  data-testid="statusSelect"
                   options={statusOptions}
                   searchable={false}
                   value={statusFilter}
@@ -504,11 +507,12 @@ const UserManagement: React.FC = () => {
               <Row>
                 {selectedUserIds.length > 0 && (
                   <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                    <Button>Actions</Button>
+                    <Button data-testid="actions">Actions</Button>
                   </Dropdown>
                 )}
                 <Button
                   aria-label={CREATE_USER_LABEL}
+                  data-testid="addUser"
                   disabled={!info.userManagementEnabled || !canModifyUsers}
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}
