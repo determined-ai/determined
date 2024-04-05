@@ -325,10 +325,8 @@ def init(
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
         experimental = core.ExperimentalCoreContext(session, info.trial.trial_id)
         profiler = core.ProfilerContext(
-            session=session,
             agent_id=info.agent_id,
-            trial_id=info.trial.trial_id,
-            run_id=info.trial._trial_run_id,
+            metrics=metrics,
             distributed=distributed,
         )
 

@@ -1,3 +1,4 @@
+import datetime
 import logging
 import queue
 import threading
@@ -37,29 +38,38 @@ class MetricsContext:
     def report(
         self,
         group: str,
-        steps_completed: int,
         metrics: Dict[str, Any],
+        steps_completed: Optional[int] = None,
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        report_time: Optional[datetime.datetime] = None,
     ) -> None:
-        # Check for thread exceptions here since we're not polling.
-        if not self._error_queue.empty():
-            err_msg = self._error_queue.get(block=False)
-            logger.error(f"Error reporting metrics: {err_msg}")
-            raise err_msg
+        """Adds metrics to a queue to be reported.
 
+        Before publishing to the queue, check for exceptions that might have occurred in the
+        background reporting thread from a previous report and raise them.
+        """
+        self._maybe_raise_exception()
         self._shipper.publish_metrics(
             group=group,
             steps_completed=steps_completed,
             metrics=metrics,
             batch_metrics=batch_metrics,
+            report_time=report_time,
         )
+
+    def _maybe_raise_exception(self) -> None:
+        """Check the error queue for exceptions and raise if there are any."""
+        if not self._error_queue.empty():
+            err_msg = self._error_queue.get(block=False)
+            logger.error(f"Error reporting metrics: {err_msg}")
+            raise err_msg
 
     def start(self) -> None:
         self._shipper.start()
 
     def close(self) -> None:
+        self._maybe_raise_exception()
         self._shipper.stop()
-        self._shipper.join()
 
 
 class _TrialMetrics:
@@ -69,11 +79,13 @@ class _TrialMetrics:
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        report_time: Optional[datetime.datetime] = None,
     ):
         self.group = group
         self.steps_completed = steps_completed
         self.metrics = metrics
         self.batch_metrics = batch_metrics
+        self.report_time = report_time
 
 
 class _Shipper(threading.Thread):
@@ -100,6 +112,7 @@ class _Shipper(threading.Thread):
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        report_time: Optional[datetime.datetime] = None,
     ):
         self._queue.put(
             _TrialMetrics(
@@ -107,6 +120,7 @@ class _Shipper(threading.Thread):
                 steps_completed=steps_completed,
                 metrics=metrics,
                 batch_metrics=batch_metrics,
+                report_time=report_time,
             )
         )
 
@@ -123,12 +137,25 @@ class _Shipper(threading.Thread):
                     metrics=msg.metrics,
                     batch_metrics=msg.batch_metrics,
                     steps_completed=msg.steps_completed,
+                    report_time=msg.report_time,
                 )
         except Exception as e:
             self._error_queue.put(e)
 
     def stop(self) -> None:
         self._queue.put(None)
+        if self._queue.empty():
+            # Join with timeout to avoid hangs and add logs to help debug.
+            self.join(timeout=1)
+            if self.is_alive():
+                logger.info(f"Waiting for _Shipper thread to finish...")
+                self.join(timeout=5)
+                if self.is_alive():
+                    logger.warning(f"Failed to complete _Shipper cleanup.")
+                else:
+                    logger.info(f"_Shipper cleanup complete.")
+        else:
+            self._queue.join()
 
     def _post_metrics(
         self,
@@ -136,6 +163,7 @@ class _Shipper(threading.Thread):
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        report_time: Optional[datetime.datetime] = None,
     ):
         v1metrics = bindings.v1Metrics(avgMetrics=metrics, batchMetrics=batch_metrics)
         v1TrialMetrics = bindings.v1TrialMetrics(
@@ -143,6 +171,7 @@ class _Shipper(threading.Thread):
             trialId=self._trial_id,
             stepsCompleted=steps_completed,
             trialRunId=self._run_id,
+            reportTime=report_time.isoformat() if report_time else None,
         )
         body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=group)
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
@@ -158,6 +187,7 @@ class DummyMetricsContext(MetricsContext):
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        report_time: Optional[datetime.datetime] = None,
     ) -> None:
         pass
 

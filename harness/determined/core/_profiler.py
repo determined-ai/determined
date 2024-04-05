@@ -1,7 +1,6 @@
 import abc
 import datetime
 import logging
-import queue
 import threading
 import time
 from typing import Any, Dict, List, Optional
@@ -9,8 +8,7 @@ from typing import Any, Dict, List, Optional
 import psutil
 
 from determined import core
-from determined.common import api, constants
-from determined.common.api import bindings
+from determined.common import constants
 
 try:
     import pynvml
@@ -42,21 +40,16 @@ class ProfilerContext:
 
     def __init__(
         self,
-        session: api.Session,
         agent_id: str,
-        trial_id: int,
-        run_id: int,
+        metrics: core.MetricsContext,
         distributed: core.DistributedContext,
     ) -> None:
-        self._session = session
+        self._metrics = metrics
         self._agent_id = agent_id
-        self._trial_id = trial_id
-        self._run_id = run_id
         self._distributed = distributed
         self._on = False
 
         self._collector: Optional[_Collector] = None
-        self._shipper: Optional[_Shipper] = None
 
     def on(self, sampling_interval: int = 1, samples_per_report: int = 10) -> None:
         """Turns system profiling functionality on.
@@ -97,22 +90,14 @@ class ProfilerContext:
 
         logger.info("Starting system metrics profiling.")
 
-        metrics_queue: queue.Queue = queue.Queue()
         self._collector = _Collector(
-            metrics_queue=metrics_queue,
+            metrics=self._metrics,
+            agent_id=self._agent_id,
             sampling_interval=sampling_interval,
             aggregation_period=samples_per_report,
         )
-        self._shipper = _Shipper(
-            session=self._session,
-            agent_id=self._agent_id,
-            trial_id=self._trial_id,
-            run_id=self._run_id,
-            metrics_queue=metrics_queue,
-        )
 
         self._collector.start()
-        self._shipper.start()
         self._on = True
 
     def off(self) -> None:
@@ -136,8 +121,6 @@ class ProfilerContext:
         """Shuts down any threads that were created."""
         if self._collector:
             self._collector.stop()
-        if self._shipper:
-            self._shipper.stop()
 
 
 class DummyProfilerContext(ProfilerContext):
@@ -407,18 +390,6 @@ class _GPU(_MetricGroupCollector):
         self.metric_samples.append(metrics)
 
 
-class _Metric:
-    def __init__(
-        self,
-        group: str,
-        metrics: Dict[str, Any],
-        timestamp: datetime.datetime,
-    ):
-        self.group = group
-        self.metrics = metrics
-        self.timestamp = timestamp
-
-
 class _Collector(threading.Thread):
     """Samples metrics from a set list of ``_MetricGroupCollector``s.
 
@@ -427,13 +398,15 @@ class _Collector(threading.Thread):
 
     def __init__(
         self,
-        metrics_queue: queue.Queue,
+        metrics: core.MetricsContext,
+        agent_id: str,
         sampling_interval: int = 1,
         aggregation_period: int = 10,
     ):
         self._sampling_interval = sampling_interval
         self._aggregation_period = aggregation_period
-        self._metrics_queue = metrics_queue
+        self._metrics = metrics
+        self._agent_id = agent_id
         self._metric_collectors = [
             _GPU(),
             _CPU(),
@@ -458,7 +431,7 @@ class _Collector(threading.Thread):
 
                 self._aggregate_metrics()
         finally:
-            self._metrics_queue.put(None)
+            self.stop()
 
     def stop(self) -> None:
         self._should_exit.set()
@@ -470,62 +443,14 @@ class _Collector(threading.Thread):
             if not aggregated_metrics:
                 continue
             timestamp = datetime.datetime.now(datetime.timezone.utc)
-            group_metrics = _Metric(
+            # Append agent ID to all metrics before reporting.
+            aggregated_metrics = {self._agent_id: aggregated_metrics}
+
+            self._metrics.report(
                 group=collector.group,
                 metrics=aggregated_metrics,
-                timestamp=timestamp,
+                report_time=timestamp,
             )
-            self._metrics_queue.put(group_metrics)
 
             # Reset the aggregated metrics on each group collector for the next iteration.
             collector.reset()
-
-
-class _Shipper(threading.Thread):
-    def __init__(
-        self,
-        session: api.Session,
-        agent_id: str,
-        trial_id: int,
-        run_id: int,
-        metrics_queue: queue.Queue,
-    ):
-        self._metrics_queue = metrics_queue
-        self._session = session
-        self._agent_id = agent_id
-        self._trial_id = trial_id
-        self._run_id = run_id
-
-        self._metrics: List[_Metric] = []
-
-        super().__init__(daemon=True)
-
-    def run(self) -> None:
-        """Start the thread and periodically ship metrics in queue to master.
-
-        This thread batches metrics and reports every metric that arrives in the queue.
-        Currently we make one API call per metric reported, but in the future we should report each
-        batch with one API call.
-        """
-        while True:
-            msg = self._metrics_queue.get()
-            if msg is None:
-                # Received shutdown message, exit.
-                return
-            self._ship_metrics(msg)
-
-    def stop(self) -> None:
-        self._metrics_queue.put(None)
-
-    def _ship_metrics(self, m: _Metric) -> None:
-        # Append agent ID to every metric reported.
-        metric = {self._agent_id: m.metrics}
-        v1metrics = bindings.v1Metrics(avgMetrics=metric)
-        v1TrialMetrics = bindings.v1TrialMetrics(
-            metrics=v1metrics,
-            trialId=self._trial_id,
-            trialRunId=self._run_id,
-            reportTime=m.timestamp.isoformat(),
-        )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=m.group)
-        bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
