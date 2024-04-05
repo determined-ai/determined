@@ -17,13 +17,7 @@ def test_session_non_persistent_http_sessions():
 
         # Make a few requests using the same session object.
         for i in range(num_requests):
-            resp = session.get(
-                path="/info",
-                params=None,
-                headers=None,
-                timeout=None,
-                stream=False,
-            )
+            resp = session.get(path="/info")
 
             # The underlying HTTP connection should be closed immediately after request.
             # To requests and underlying urllib3, this means there are no pools in the poolmanager
@@ -49,13 +43,7 @@ def test_session_persistent_http_sessions():
 
             num_requests = 5
             for i in range(num_requests):
-                resp = persistent_session.get(
-                    path="/info",
-                    params=None,
-                    headers=None,
-                    timeout=None,
-                    stream=False,
-                )
+                resp = persistent_session.get(path="/info")
 
                 # There should always be one HTTP connection pool open.
                 assert len(resp.connection.poolmanager.pools) == 1

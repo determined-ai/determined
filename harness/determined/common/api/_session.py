@@ -1,4 +1,5 @@
 import abc
+import copy
 import json as _json
 from typing import Any, Dict, Optional, TypeVar, Union
 
@@ -224,11 +225,13 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     def with_retry(self: T, max_retries: GeneralizedRetry) -> T:
         """Generate a new session with a different retry policy."""
-        self._max_retries = max_retries
+        new_session = copy.copy(self)
+        new_session._max_retries = max_retries
         if self._http_session:
-            self._http_session.close()
-            self._http_session = self._make_http_session()
-        return self
+            # If the current session had a persistent HTTP session, create another one on the
+            # new session reflecting the new retry policy.
+            new_session._http_session = self._make_http_session()
+        return new_session
 
 
 class UnauthSession(BaseSession):
