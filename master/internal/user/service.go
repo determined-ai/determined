@@ -13,6 +13,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -364,6 +366,13 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		if err = AuthZProvider.Get().CanSetUsersPassword(ctx, currUser, *user); err != nil {
 			return nil, canViewUserErrorHandle(currUser, *user,
 				errors.Wrap(forbiddenError, err.Error()), userNotFoundErr)
+		}
+
+		if err := CheckPasswordComplexity(*params.Password); err != nil {
+			if errors.As(err, &PasswordComplexityErrors{}) {
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			}
+			return nil, errors.Wrap(err, "error validating password")
 		}
 
 		if err = user.UpdatePasswordHash(*params.Password); err != nil {

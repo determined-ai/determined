@@ -806,6 +806,7 @@ func TestGetExperiments(t *testing.T) {
 			DisplayName: uuid.New().String(),
 			Active:      true,
 		},
+		Password: "abcDEF123!",
 	})
 	require.NoError(t, err)
 
@@ -1258,6 +1259,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 			DisplayName: uuid.New().String(),
 			Active:      true,
 		},
+		Password: "abcDEF123!",
 	})
 	if err != nil {
 		b.Fatal(err)
@@ -2148,9 +2150,11 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 
 	api, curUser, ctx := setupAPITest(t, nil, &mockRM)
 
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
 	var expIDs []int32
 	for i := 0; i < 3; i++ {
-		exp := createTestExp(t, api, curUser)
+		exp := createTestExpWithProjectID(t, api, curUser, projectID)
 		_, err := db.Bun().NewUpdate().Table("experiments").
 			Set("state = ?", model.CompletedState).
 			Where("id = ?", exp.ID).Exec(ctx)
@@ -2163,7 +2167,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	// where we have a filter with the experiment delete request.
 	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
 		ExperimentIds: expIDs,
-		Filters:       &apiv1.BulkExperimentFilters{ProjectId: 1},
+		Filters:       &apiv1.BulkExperimentFilters{ProjectId: int32(projectID)},
 	})
 	require.NoError(t, err)
 
