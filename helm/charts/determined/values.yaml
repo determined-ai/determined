@@ -85,7 +85,14 @@ useNodePortForMaster: false
 # Determined master and the task containers it launches, but does not include communication between
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
-# tlsSecret:
+tlsSecret:
+
+
+# TLS security configs for determined master.
+security:
+  tls:
+    cert:
+    key:
 
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
@@ -233,6 +240,11 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
+
+# Flag for determining whether or not to create the cluster-scoped objects, when deploying multiple
+# namespaces within the same cluster, should be set to false.
+createNonNamespacedObjects:
+
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
 # slotType: cpu
 # slotResourceRequests:
@@ -297,6 +309,7 @@ telemetry:
 ## This behavior is disabled by default.
 # notebookTimeout: 1800
 
+## deprecated, use initialUserPassword instead.
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
 
@@ -317,9 +330,9 @@ telemetry:
   # security:
     # username: <username>
     # password: <password>
-    # tls:
-      # enabled: true
-      # skipVerify: false
+      # tls:
+        # enabled: true
+        # skipVerify: false
 
       ## The name to use when verifying the certificate, if different from the name used to connect.
       # certificateName: <name>
@@ -338,3 +351,6 @@ resourcePools:
   - pool_name: default
 # defaultAuxResourcePool: default
 # defaultComputeResourcePool: default
+
+## Configure the initial user password for the cluster
+# initialUserPassword
