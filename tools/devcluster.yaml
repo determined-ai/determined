@@ -53,8 +53,8 @@ stages:
           level: debug
         logging:
           type: default
-        logging_retention:
-          days: 7
+        retention_policy:
+          log_retention_days: 7
           schedule: 60m
         enable_cors: true
         observability:

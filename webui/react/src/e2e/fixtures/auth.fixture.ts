@@ -40,8 +40,8 @@ export class AuthFixture {
   }
 
   async logout(): Promise<void> {
-    await this.#page.locator('header').getByText(this.#USERNAME).click();
-    await this.#page.getByRole('link', { name: 'Sign Out' }).click();
+    await this.signInPage.nav.sidebar.headerDropdown.pwLocator.click();
+    await this.signInPage.nav.sidebar.headerDropdown.signOut.pwLocator.click();
     await this.#page.waitForURL(/login/);
   }
 }

@@ -87,7 +87,7 @@ func (o *ElasticSecurityConfig) Resolve() error {
 // LogRetentionPolicy configures the default log retention policy for trials and tasks.
 type LogRetentionPolicy struct {
 	// Days is the default number of days to retain logs for.
-	Days *int16 `json:"days"`
+	LogRetentionDays *int16 `json:"log_retention_days"`
 	// Schedule is a time duration or cron expression interval to cleanup logs.
 	Schedule *string `json:"schedule"`
 }
@@ -100,7 +100,7 @@ var (
 // Validate implements the check.Validatable interface.
 func (p LogRetentionPolicy) Validate() []error {
 	var errs []error
-	if p.Days != nil && *p.Days < -1 {
+	if p.LogRetentionDays != nil && *p.LogRetentionDays < -1 {
 		errs = append(errs, errLogRetentionDaysParse)
 	}
 	if p.Schedule != nil {

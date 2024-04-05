@@ -152,7 +152,7 @@ type Config struct {
 	LaunchError           bool                              `json:"launch_error"`
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
-	LoggingRetention      model.LogRetentionPolicy          `json:"logging_retention"`
+	RetentionPolicy       model.LogRetentionPolicy          `json:"retention_policy"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
 	Webhooks              WebhooksConfig                    `json:"webhooks"`

@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"slices"
 	"time"
 
@@ -102,13 +103,13 @@ func getStreamableScopes(accessMap map[model.AccessScopeID]bool) (bool, []model.
 func processQuery(
 	ctx context.Context,
 	createFilteredIDQuery func() *bun.SelectQuery,
-	since int64, known string,
+	since int64, known string, entityTableAlias string,
 ) (string, []int64, error) {
 	// step 1: calculate all ids matching this subscription
 	oldEventsQuery := createFilteredIDQuery()
 	newEventsQuery := createFilteredIDQuery()
 	// get events that happened prior to since that are relevant (appearance)
-	oldEventsQuery.Where("seq <= ?", since)
+	oldEventsQuery.Where(fmt.Sprintf("%s.seq <= ?", entityTableAlias), since)
 	var exist []int64
 	err := oldEventsQuery.Scan(ctx, &exist)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
@@ -116,7 +117,7 @@ func processQuery(
 		return "", nil, err
 	}
 	// and events that happened since the last time this streamer checked
-	newEventsQuery.Where("seq > ?", since)
+	newEventsQuery.Where(fmt.Sprintf("%s.seq > ?", entityTableAlias), since)
 	var newEntities []int64
 	err = newEventsQuery.Scan(ctx, &newEntities)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {

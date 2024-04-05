@@ -66,6 +66,7 @@ const SetUserRolesModalComponent = ({
           name={ROLE_NAME}
           rules={[{ message: 'This field is required', required: true }]}>
           <Select
+            data-testid="roles"
             loading={Loadable.isNotLoaded(knownRoles)}
             mode="multiple"
             placeholder="Select Roles">

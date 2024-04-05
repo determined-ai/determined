@@ -6,11 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 import "determined/api/v1/pagination.proto";
-import "google/protobuf/wrappers.proto";
-import "determined/experiment/v1/experiment.proto";
-import "determined/trial/v1/trial.proto";
 import "determined/run/v1/run.proto";
-import "determined/common/v1/common.proto";
 
 // Request to prepare to start reporting to a run.
 message RunPrepareForReportingRequest {
@@ -67,6 +63,36 @@ message RunActionResult {
   int32 id = 2;
 }
 
+// Request to move the run to a different project.
+message MoveRunsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "source_project_id", "destination_project_id", "run_ids" ]
+    }
+  };
+
+  // The ids of the runs being moved.
+  repeated int32 run_ids = 1;
+  // The id of the current parent project.
+  int32 source_project_id = 2;
+  // The id of the new parent project.
+  int32 destination_project_id = 3;
+  // Filter expression
+  optional string filter = 4;
+  // If true, skip multi-trial experiments for move.
+  bool skip_multitrial = 5;
+}
+
+// Response to MoveRunsRequest.
+message MoveRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each run.
+  repeated RunActionResult results = 1;
+}
+
 // Kill runs.
 message KillRunsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -82,7 +108,7 @@ message KillRunsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "results" ] }
   };
-  // Details on success or error for each experiment.
+  // Details on success or error for each run.
   repeated RunActionResult results = 1;
 }
 
