@@ -158,7 +158,15 @@ def create_user(args: argparse.Namespace) -> None:
     username = args.username
     admin = bool(args.admin)
     remote = bool(args.remote)
-    d.create_user(username=username, admin=admin, remote=remote)
+    password = args.password
+
+    if not remote and not password:
+        password = getpass.getpass("New password for user '{}': ".format(username))
+        check_password = getpass.getpass("Confirm password: ")
+        if password != check_password:
+            raise errors.CliError("Passwords do not match")
+
+    d.create_user(username=username, admin=admin, password=password, remote=remote)
 
 
 def whoami(args: argparse.Namespace) -> None:
@@ -251,6 +259,7 @@ args_description = [
         cli.Cmd("create", create_user, "create user", [
             cli.Arg("username", help="name of new user"),
             cli.Arg("--admin", action="store_true", help="give new user admin rights"),
+            cli.Arg("--password", help="password of new user"),
             cli.Arg(
                 "--remote",
                 action="store_true",
