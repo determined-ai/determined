@@ -56,7 +56,7 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
   }, []);
 
   return (
-    <TabBarContext.Provider value={updateTabBarContent}>
+    <TabBarContext.Provider data-test-component="dynamicTabs" value={updateTabBarContent}>
       <Pivot
         {...props}
         activeKey={activeKey}

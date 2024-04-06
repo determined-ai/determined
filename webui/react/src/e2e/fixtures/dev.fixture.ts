@@ -1,6 +1,6 @@
 import { expect, Page } from '@playwright/test';
 
-import { BaseComponent, parentTypes } from 'e2e/models/BaseComponent';
+import { BaseComponent, CanBeParent } from 'e2e/models/BaseComponent';
 import { BasePage } from 'e2e/models/BasePage';
 
 export class DevFixture {
@@ -23,8 +23,8 @@ export class DevFixture {
    * @param {BaseComponent} component - The component to debug
    */
   debugComponentVisible(component: BaseComponent): void {
-    const componentTree: parentTypes[] = [];
-    let root: parentTypes = component;
+    const componentTree: CanBeParent[] = [];
+    let root: CanBeParent = component;
     while (!(root instanceof BasePage)) {
       componentTree.unshift(root);
       root = root._parent;

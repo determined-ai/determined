@@ -2,7 +2,7 @@ import { type Locator } from '@playwright/test';
 
 import { ModelBasics, BasePage } from './BasePage';
 
-type CanBeParent = ComponentBasics | BasePage
+export type CanBeParent = ComponentBasics | BasePage
 
 export interface ComponentBasics extends ModelBasics {
   _parent: CanBeParent
@@ -35,7 +35,7 @@ export type NamedComponentArgs =
  * Returns the representation of a Component.
  * This constructor is a base class for any component in src/components/.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class BaseComponent implements ModelBasics {
@@ -80,7 +80,7 @@ export class BaseComponent implements ModelBasics {
  * React Fragment Components are special in that they group elements, but not under a dir.
  * Fragments cannot have selectors
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  */
 export class BaseReactFragment implements ModelBasics {
   readonly _parent: CanBeParent;
@@ -112,7 +112,7 @@ export class BaseReactFragment implements ModelBasics {
 /**
  * Returns a representation of a named component. These components need a defaultSelector.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this NamedComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this NamedComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export abstract class NamedComponent extends BaseComponent {
