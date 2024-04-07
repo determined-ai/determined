@@ -52,6 +52,9 @@ parameters:
   master-build-resource-class:
     type: string
     default: xlarge
+  default-slack-channel:
+    type: string
+    default: C04PTNKLR8W # ci-bots-ee
   do_nightly_tests:
     type: boolean
     default: false
@@ -65,6 +68,15 @@ release-and-rc-filters: &release-and-rc-filters
       - /(\d)+(\.(\d)+)+/
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
+release-and-rc-filters-ee: &release-and-rc-filters-ee
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /(\d)+(\.(\d)+)+-ee/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
+
 rc-filters: &rc-filters
   branches:
     ignore:
@@ -73,6 +85,14 @@ rc-filters: &rc-filters
     only:
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
+rc-filters-ee: &rc-filters-ee
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
+
 release-filters: &release-filters
   branches:
     ignore:
@@ -80,6 +100,14 @@ release-filters: &release-filters
   tags:
     only:
       - /(\d)+(\.(\d)+)+/
+
+release-filters-ee: &release-filters-ee
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /(\d)+(\.(\d)+)+-ee/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
