@@ -472,7 +472,7 @@ commands:
           steps:
             - install-wheel:
                 package-name: determined
-                package-location: ~/project/harness
+                package-location: ./harness
       - when:
           condition: <<parameters.model-hub>>
           steps:
@@ -483,7 +483,7 @@ commands:
                   sudo apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
-                package-location: ~/project/model_hub
+                package-location: ./model_hub
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -597,13 +597,25 @@ commands:
 
       - run:
           name: Run e2e tests
-          working_directory: ~/project/e2e_tests
+          working_directory: ./e2e_tests
           no_output_timeout: 30m
           command: |
+
+            # Remove prior test results
+            rm -f "<<parameters.junit-path>>"
+            
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
             if [ ! -s /tmp/all-relevant-files ]; then
               echo 'No test files found!'
               exit 1
+            fi
+            
+            if nc -zv <<parameters.master-host>> <<parameters.master-port>> 2>/dev/null; then
+              echo "Determined user list from master '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
+              DET_MASTER_CERT_FILE=noverify DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
+              det --master "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>" user list
+            else
+              echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
@@ -611,7 +623,8 @@ commands:
             DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            xargs pytest -vv -s \
+            IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
+            xargs pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
@@ -622,6 +635,11 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>>" \
             --verbose --split-by=timings
+
+            pytest_status=$?
+            echo Pytest exited with $pytest_status
+            exit $pytest_status
+
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
@@ -637,7 +655,8 @@ commands:
     steps:
       - run:
           name: Run det-deploy tests
-          working_directory: ~/project/e2e_tests
+          # TODO(Brad): backport workdir fixes to oss determined
+          working_directory: ./e2e_tests
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
