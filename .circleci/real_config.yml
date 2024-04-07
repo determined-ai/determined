@@ -198,6 +198,23 @@ commands:
       - skip-if-only-dir:
           dir: .github
 
+  skip-on-dev-branch:
+    steps:
+      # Install the GitHub CLI.
+      - gh/install
+      - run:
+          name: Check if extra GCP tests specfied
+          command: |
+            # Check if the 'ci-run-allgcp' label was set on the pull request,
+            # which indicates that we want the GCP tests to run on demand.
+            if gh pr view --json labels -q '.labels.[] | .name' | grep -w ci-run-allgcp
+            then
+              echo "The 'ci-run-allgcp' label was found in github pull request. Proceeding to run test-e2e-slurm-*-gcp tests."
+            else
+              echo "The 'ci-run-allgcp' label was not found in github pull request. Skipping job."
+              circleci-agent step halt
+            fi
+
   set-slack-user-id:
     steps:
       - run:
@@ -219,6 +236,13 @@ commands:
             else
               echo "Unable to find Slack user ID for  \"${AUTHOR_EMAIL}\"."
             fi
+
+  license-gen:
+    steps:
+      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/license-key-gen.git
+      - run: cd ../license-key-gen && go run ./licensegen.go
+      - run: mv ../license-key-gen/license.txt ./license.txt
+      - run: mv ../license-key-gen/public.txt ./public.txt
 
   pull-task-images:
     parameters:
