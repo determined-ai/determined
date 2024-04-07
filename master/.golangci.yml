@@ -81,6 +81,7 @@ linters-settings:
       - 'bundebug.WithVerbose'
       - 'http.Client' # Use cleanhttp instead.
       - 'http.Transport' # Use cleanhttp instead.
+      - 'defer *.Unlock()'
   staticcheck:
     go: "1.20"
 

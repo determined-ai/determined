@@ -32,8 +32,10 @@ import (
 
 var pAuthZ *mocks.ProjectAuthZ
 
+const mockName = "mock"
+
 func isMockAuthZ() bool {
-	return config.GetMasterConfig().Security.AuthZ.Type == "mock"
+	return config.GetMasterConfig().Security.AuthZ.Type == mockName
 }
 
 // pgdb can be nil to use the singleton database for testing.
@@ -45,7 +47,7 @@ func setupProjectAuthZTest(
 
 	if pAuthZ == nil {
 		pAuthZ = &mocks.ProjectAuthZ{}
-		project.AuthZProvider.Register("mock", pAuthZ)
+		project.AuthZProvider.Register(mockName, pAuthZ)
 	}
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
