@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source /run/determined/task-setup.sh
+## trial entry point
+
+source /run/determined/task-setup.sh "$@"
 
 set -e
 

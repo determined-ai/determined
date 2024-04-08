@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /run/determined/task-setup.sh
+source /run/determined/task-setup.sh "$@"
 
 set -e
 
