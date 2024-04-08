@@ -1,9 +1,9 @@
-import { Locator, type Page, expect } from '@playwright/test';
+import { expect, Locator, type Page } from '@playwright/test';
 
 import { Navigation } from 'e2e/models/components/Navigation';
 
 export interface ModelBasics {
-  get pwLocator(): Locator
+  get pwLocator(): Locator;
 }
 
 /**
@@ -15,7 +15,7 @@ export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
   readonly nav: Navigation = new Navigation({ parent: this });
   abstract readonly url: string | RegExp;
-  abstract readonly title: string| RegExp;
+  abstract readonly title: string | RegExp;
 
   constructor(page: Page) {
     this._page = page;
@@ -35,9 +35,11 @@ export abstract class BasePage implements ModelBasics {
    * @param {string} args.url - A URL to visit. It can be different from the URL to verify
    * @param {boolean} [args.verify] - Whether for the URL to change
    */
-  async goto({url, verify = true}: {url: string | RegExp, verify?: boolean} = this ): Promise<BasePage> {
+  async goto(
+    { url, verify = true }: { url: string | RegExp; verify?: boolean } = this,
+  ): Promise<BasePage> {
     if (url instanceof RegExp) {
-      throw new Error(`${typeof this}.url is a regular expression. Please provide a url to visit.`)
+      throw new Error(`${typeof this}.url is a regular expression. Please provide a url to visit.`);
     }
     await this._page.goto(url);
     if (verify) {

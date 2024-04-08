@@ -10,5 +10,5 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  */
 export class DynamicTabs extends NamedComponent {
   readonly defaultSelector = 'div[data-test-component="dynamicTabs"]';
-  readonly pivot = new Pivot({ parent: this })
+  readonly pivot = new Pivot({ parent: this });
 }

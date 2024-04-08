@@ -8,6 +8,6 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class TableActionBar extends NamedComponent {
-  defaultSelector = `[data-test-component="tableActionBar"]`;
+  defaultSelector = '[data-test-component="tableActionBar"]';
   // TODO - filter, sort, column, menu, actions, heatmap toggle, compare
 }

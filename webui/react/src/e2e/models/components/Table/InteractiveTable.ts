@@ -74,7 +74,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return (value: string) => {
       return new this.#rowType({
         attachment: `[${key}="${value}"]`,
-        parent: this,
+        parent: this.#body,
       });
     };
   }

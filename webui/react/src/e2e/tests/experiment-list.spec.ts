@@ -13,6 +13,5 @@ test.describe('Experiement List', () => {
     const experiementListPage = new ProjectDetails(page);
     await experiementListPage.gotoProject();
     await expect(page).toHaveTitle(experiementListPage.title);
-
   });
 });

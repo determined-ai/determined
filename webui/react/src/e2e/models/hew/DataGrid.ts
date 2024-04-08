@@ -1,4 +1,21 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+
+type RowClass<RowType extends Row<RowType, HeadRowType>, HeadRowType extends HeadRow> = new (
+  args: RowArgs<RowType, HeadRowType>,
+) => RowType;
+type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
+
+export type RowArgs<
+  RowType extends Row<RowType, HeadRowType>,
+  HeadRowType extends HeadRow,
+> = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
+export type TableArgs<
+  RowType extends Row<RowType, HeadRowType>,
+  HeadRowType extends HeadRow,
+> = NamedComponentArgs & {
+  rowType: RowClass<RowType, HeadRowType>;
+  headRowType: HeadRowClass<HeadRowType>;
+};
 
 /**
  * Returns a representation of the DataGrid component.
@@ -7,11 +24,198 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this DataGrid
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class DataGrid extends NamedComponent {
-  defaultSelector: string = 'class^="DataGrid_base"'
-  // TODO, the same thing I did with interactivetable.ts
-  // TODO, method to get row
+export class DataGrid<
+  RowType extends Row<RowType, HeadRowType>,
+  HeadRowType extends HeadRow,
+> extends NamedComponent {
+  readonly defaultSelector: string = 'class^="DataGrid_base"';
+  constructor(args: TableArgs<RowType, HeadRowType>) {
+    super(args);
+    this.#rowType = args.rowType;
+    this.rows = new args.rowType({
+      parent: this.#body,
+      parentTable: this,
+    });
+    this.headRow = new args.headRowType({ parent: this.#head });
+  }
+  readonly #canvas: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'canvas[data-testid="data-grid-canvas"]',
+  });
+  readonly #otherCanvas: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'canvas:not([data-testid])',
+  });
+  #columnheight: number | undefined;
+  readonly #rowType: RowClass<RowType, HeadRowType>;
+  readonly rows: RowType;
+  readonly headRow: HeadRowType;
+  readonly #body: BaseComponent = new BaseComponent({
+    parent: this.#canvas,
+    selector: 'tbody',
+  });
+  readonly #head: BaseComponent = new BaseComponent({
+    parent: this.#canvas,
+    selector: 'theader',
+  });
+
+  get columnHeight(): number {
+    if (this.#columnheight === undefined) {
+      throw new Error('Please use setColumnHeight to set the column height');
+    }
+    return this.#columnheight;
+  }
+  async setColumnHeight(): Promise<number> {
+    const style = await this.#otherCanvas.pwLocator.getAttribute('style');
+    if (style === null) {
+      throw new Error("Couldn't find style attribute.");
+    }
+    const matches = style.match(/height: (\d+)px;/);
+    if (matches === null) {
+      throw new Error("Couldn't find height in style attribute.");
+    }
+    this.#columnheight = +matches[0];
+    return this.columnHeight;
+  }
+
+  /**
+   * Returns a row from an index. Start counting at 1.
+   */
+  rowByIndex(n: number): RowType {
+    return new this.#rowType({
+      attachment: `[${this.rows.indexAttribute}="${n + 1}"]`,
+      parent: this.#body,
+      parentTable: this,
+    });
+  }
+
+  /**
+   * Returns a list of keys associated with attributes from rows from the entire table.
+   */
+  async allRows(): Promise<string[]> {
+    const { pwLocator, indexAttribute } = this.rows;
+    const rows = await pwLocator.all();
+    return Promise.all(
+      rows.map(async (row) => {
+        return (
+          (await row.getAttribute(indexAttribute)) ||
+          Promise.reject(new Error(`all rows should have the attribute ${indexAttribute}`))
+        );
+      }),
+    );
+  }
+
+  /**
+   * Returns a list of rows that match the condition provided
+   * @param {(row: RowType) => Promise<boolean>} condition - function which tests each row against a condition
+   */
+  async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
+    return (
+      await Promise.all(
+        Array.from(Array(await this.rows.pwLocator.count()).keys()).map(async (key) => {
+          // .keys() counts from 0 and we want to count from 1
+          const row = this.rowByIndex(key + 1);
+          return (await condition(row)) && row;
+        }),
+      )
+    ).filter((c): c is Awaited<RowType> => !!c);
+  }
 }
 
-// TODO datagrid row and maybe head row
-// TODO, method to click checkbox
+/**
+ * Returns the representation of a Table Row.
+ * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this Row
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
+export class Row<
+  RowType extends Row<RowType, HeadRowType>,
+  HeadRowType extends HeadRow,
+> extends NamedComponent {
+  readonly defaultSelector = 'tr';
+  readonly indexAttribute = 'aria-rowindex';
+  constructor(args: RowArgs<RowType, HeadRowType>) {
+    super(args);
+    this.parentTable = args.parentTable;
+  }
+  parentTable: DataGrid<RowType, HeadRowType>;
+  readonly select: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '[aria-colindex="1"]',
+  });
+
+  /**
+   * Returns the index of the row. Start counting at 1.
+   */
+  async getIndex(): Promise<number> {
+    const value = await this.pwLocator.getAttribute(this.indexAttribute);
+    if (value === null) {
+      throw new Error(`All rows should have the attribute ${this.indexAttribute}`);
+    }
+    return +value - 1;
+  }
+
+  protected getY(index: number): number {
+    return index * this.parentTable.columnHeight + 5;
+  }
+  async clickSelect(): Promise<void> {
+    await this.pwLocator.click({ position: { x: 5, y: this.getY(await this.getIndex()) } });
+  }
+
+  /**
+   * Returns a cell from an index. Start counting at 1.
+   */
+  cellByIndex(n: number): BaseComponent {
+    return new BaseComponent({
+      parent: this,
+      selector: `[aria-colindex="${n}"]`,
+    });
+  }
+}
+
+/**
+ * Returns the representation of a Table HeadRow.
+ * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
+export class HeadRow extends NamedComponent {
+  readonly defaultSelector = 'tr';
+  readonly selection: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '[aria-colindex="1"]',
+  });
+  #columnDefs = new Map<string, number>();
+
+  get columnDefs(): Map<string, number> {
+    if (this.#columnDefs.size === 0) {
+      throw new Error('Please set the column definitions using setColumnDefs first!');
+    }
+    return this.#columnDefs;
+  }
+  async setColumnDefs(): Promise<Map<string, number>> {
+    const cells = await this.pwLocator.locator('th').all();
+    await Promise.all(
+      cells.map(async (cell) => {
+        try {
+          const index = await cell.getAttribute('aria-colindex');
+          if (index === null) throw new Error();
+          this.#columnDefs.set(await cell.innerText(), +index);
+        } catch {
+          Promise.reject(
+            new Error(`all header cells should have the attribute ${'aria-colindex'}`),
+          );
+        }
+      }),
+    );
+    return this.#columnDefs;
+  }
+
+  async clickSelectAll(): Promise<void> {
+    await this.pwLocator.click({ position: { x: 5, y: 5 } });
+  }
+
+  // TODO add a modal for select all actions
+}

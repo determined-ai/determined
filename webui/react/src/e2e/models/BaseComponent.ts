@@ -1,12 +1,12 @@
 import { type Locator } from '@playwright/test';
 
-import { ModelBasics, BasePage } from './BasePage';
+import { BasePage, ModelBasics } from './BasePage';
 
-export type CanBeParent = ComponentBasics | BasePage
+export type CanBeParent = ComponentBasics | BasePage;
 
 export interface ComponentBasics extends ModelBasics {
-  _parent: CanBeParent
-  get root(): BasePage
+  _parent: CanBeParent;
+  get root(): BasePage;
 }
 
 interface ComponentArgBasics {

@@ -1,4 +1,4 @@
-import { Dropdown } from "e2e/models/hew/Dropdown";
+import { Dropdown } from 'e2e/models/hew/Dropdown';
 
 /**
  * Returns the representation of the ActionDropdown menu defined by the User Admin page.
