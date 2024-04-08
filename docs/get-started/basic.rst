@@ -4,8 +4,7 @@
  Quick Installation
 ####################
 
-If you have not used Determined before, and you want to quickly set up a new training environment,
-you are at the right place!
+If you have not used Determined before, and you want to quickly set up a new training environment, you are at the right place!
 
 ***************
  Prerequisites

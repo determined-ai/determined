@@ -3018,6 +3018,7 @@ workflows:
       - check-py-bindings:
           requires:
             - build-proto
+          context: github-write
       - check-ts-bindings:
           requires:
             - build-proto
