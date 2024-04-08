@@ -41,6 +41,7 @@ import {
   settingsConfigGlobal,
 } from 'components/OptionsMenu.settings';
 import useUI from 'components/ThemeProvider';
+import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -103,7 +104,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
-  const [projectColumns, setProjectColumns] = useState<Loadable<ProjectColumn[]>>(NotLoaded);
 
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -124,6 +124,21 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     ui: { theme: appTheme },
     isDarkMode,
   } = useUI();
+
+  const projectColumns = useAsync(async () => {
+    try {
+      const columns = await getProjectColumns({ id: project.id });
+      columns.sort((a, b) =>
+        a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
+          ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
+          : 0,
+      );
+      return columns;
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch project columns' });
+      return NotLoaded;
+    }
+  }, [project.id]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -594,23 +609,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       sorts,
     ],
   );
-
-  // TODO: poll?
-  useEffect(() => {
-    (async () => {
-      try {
-        const columns = await getProjectColumns({ id: project.id });
-        columns.sort((a, b) =>
-          a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
-            ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
-            : 0,
-        );
-        setProjectColumns(Loaded(columns));
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch project columns' });
-      }
-    })();
-  }, [project.id]);
 
   useEffect(
     () =>

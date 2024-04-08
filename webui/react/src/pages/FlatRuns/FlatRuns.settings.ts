@@ -7,19 +7,16 @@ import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentLi
 import { defaultColumnWidths, defaultRunColumns } from './columns';
 
 // have to intersect with an empty object bc of settings store type issue
-export const FlatRunsSettings = t.intersection([
-  t.type({}),
-  t.type({
-    columns: t.array(t.string),
-    columnWidths: t.record(t.string, t.number),
-    compare: t.boolean,
-    filterset: t.string, // save FilterFormSet as string
-    pageLimit: t.number,
-    pinnedColumnsCount: t.number,
-    selection: SelectionType,
-    sortString: t.string,
-  }),
-]);
+export const FlatRunsSettings = t.type({
+  columns: t.array(t.string),
+  columnWidths: t.record(t.string, t.number),
+  compare: t.boolean,
+  filterset: t.string, // save FilterFormSet as string
+  pageLimit: t.number,
+  pinnedColumnsCount: t.number,
+  selection: SelectionType,
+  sortString: t.string,
+});
 export type FlatRunsSettings = t.TypeOf<typeof FlatRunsSettings>;
 
 export const ProjectUrlSettings = t.partial({
