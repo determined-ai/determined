@@ -4,29 +4,31 @@
     "title": "PachydermPachdConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
+    "required": [
+        "host",
+        "port",
+        "token"],
     "properties": {
         "host": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "port": {
             "type": [
                 "integer",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "token": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }

@@ -4,7 +4,7 @@
     "title": "PachydermConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
+    "required": ["pachd", "proxy", "dataset"],
     "eventuallyRequired": [],
     "properties": {
         "pachd": {
@@ -12,7 +12,7 @@
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
@@ -20,7 +20,7 @@
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "dataset": {
@@ -28,7 +28,7 @@
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
         }
     }

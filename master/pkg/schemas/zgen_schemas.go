@@ -776,7 +776,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/integration.json"
         },
         "data_layer": {
@@ -1399,15 +1399,13 @@ var (
     "title": "IntegrationConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
     "properties": {
         "pachyderm": {
             "type": [
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
         }
     }
@@ -1667,36 +1665,37 @@ var (
     "title": "PachydermDatasetConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
+    "required": [
+        "project",
+        "repo"],
     "properties": {
         "project": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "repo": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "commit": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "branch": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
@@ -1707,29 +1706,31 @@ var (
     "title": "PachydermPachdConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
+    "required": [
+        "host",
+        "port",
+        "token"],
     "properties": {
         "host": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "port": {
             "type": [
                 "integer",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "token": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
@@ -1740,29 +1741,31 @@ var (
     "title": "PachydermProxyConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
+    "required": [
+        "scheme",
+        "host",
+        "port"],
     "properties": {
         "scheme": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "host": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "port": {
             "type": [
                 "integer",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
@@ -1773,7 +1776,7 @@ var (
     "title": "PachydermConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
+    "required": ["pachd", "proxy", "dataset"],
     "eventuallyRequired": [],
     "properties": {
         "pachd": {
@@ -1781,7 +1784,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
@@ -1789,7 +1792,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "dataset": {
@@ -1797,7 +1800,7 @@ var (
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
         }
     }

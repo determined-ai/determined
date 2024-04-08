@@ -4,15 +4,13 @@
     "title": "IntegrationConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
     "properties": {
         "pachyderm": {
             "type": [
                 "object",
                 "null"
             ],
-            "default": {},
+            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
         }
     }

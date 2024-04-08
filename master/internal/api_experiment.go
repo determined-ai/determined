@@ -207,13 +207,14 @@ func (a *apiServer) getExperimentTx(
 	WHERE e.id = ?
 	`
 	err := db.MatchSentinelError(idb.NewRaw(query, experimentID, experimentID).Scan(ctx, &expMap))
+	log.Infof("Experiment Query Map Result: %v", expMap)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, expNotFound
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", experimentID)
 	}
 	// Cast string -> []byte `ParseMapToProto` magic.
-	jsonFields := []string{"config", "trial_ids", "labels"}
+	jsonFields := []string{"config", "trial_ids", "labels", "pachyderm_integration"}
 	for _, field := range jsonFields {
 		switch sVal := expMap[field].(type) {
 		case string:

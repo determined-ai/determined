@@ -4,36 +4,37 @@
     "title": "PachydermDatasetConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [],
-    "eventuallyRequired": [],
+    "required": [
+        "project",
+        "repo"],
     "properties": {
         "project": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "repo": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "commit": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         },
         "branch": {
             "type": [
                 "string",
                 "null"
             ],
-            "default": ""
+            "default": null
         }
     }
 }
