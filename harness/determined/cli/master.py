@@ -73,18 +73,20 @@ def logs(args: Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
-@authentication.required
-def maintain(args: Namespace) -> None:
+# @authentication.required
+def set_maintenance_message(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    if args.clear:
-        bindings.delete_DeleteMaintenanceMessage(sess)
-        return
+
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")
     body = bindings.v1SetMaintenanceMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message
     )
     bindings.put_SetMaintenanceMessage(sess, body=body)
+
+def clear_maintenance_message(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.delete_DeleteMaintenanceMessage(sess)
 
 
 # fmt: off
@@ -134,18 +136,22 @@ args_description = [
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
         ]),
-        Cmd("maintain", maintain, "set maintenance message", [
-            Arg("-c", "--clear", action="store_true", default=False,
-                help="Clear all maintenance messages"),
-            Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-                help="Timestamp to start displaying message (RFC 3339 format), "
-                + "e.g. '2021-10-26T23:17:12Z'; default is now."),
-            Arg("-e", "--end", default=None,
-                help="Timestamp to end displaying message (RFC 3339 format), "
-                + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
-            Arg("-m", "--message", default=None,
-                help="Text to display to users during maintenance time"),
-        ]),
+        Cmd("maintain", None, "set or clear maintenance message", [
+            Cmd("set", set_maintenance_message, "set maintenance message", [
+                Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    help="Timestamp to start displaying message (RFC 3339 format), "
+                    + "e.g. '2021-10-26T23:17:12Z'; default is now."),
+                Arg("-e", "--end", default=None,
+                    help="Timestamp to end displaying message (RFC 3339 format), "
+                    + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
+                Arg("-m", "--message", default=None,
+                    help="Text to display to users during maintenance time"),
+            ]),
+            Cmd("clear", clear_maintenance_message, "clear maintenance message", [
+                Arg("-c", "--clear", action="store_true", default=False,
+                    help="Clear all maintenance messages"),
+            ]),
+        ])
     ])
 ]  # type: List[Any]
 

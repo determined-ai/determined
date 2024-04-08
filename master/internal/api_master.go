@@ -54,24 +54,32 @@ func (a *apiServer) GetMaster(
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
-		MaintenanceMessage:    &apiv1.MaintenanceMessage{},
+		MaintenanceMessage:    nil,
 	}
 
-	query := db.Bun().NewSelect().
-		Model(masterResp.MaintenanceMessage).
-		Column("id").
-		Column("message").
-		ColumnExpr("proto_time(start_time) AS start_time").
-		ColumnExpr("proto_time(end_time) AS end_time").
-		Where("start_time <= NOW()").
-		Where("end_time IS NULL OR end_time >= NOW()").
-		OrderExpr("maintenance_message.start_time DESC").
-		Limit(1)
-	err := query.Scan(ctx)
-	if err == sql.ErrNoRows {
-		masterResp.MaintenanceMessage = nil
-	} else if err != nil {
+	var msg model.MaintenanceMessage
+	// var msg apiv1.MaintenanceMessage
+	err := db.Bun().NewRaw(`
+		WITH newest_message AS (
+			SELECT message, start_time, end_time, created_time
+			FROM maintenance_messages
+			ORDER BY created_time DESC
+			LIMIT 1
+		)
+
+		SELECT
+			message, start_time,
+			end_time, created_time
+		FROM newest_message
+		WHERE
+			1=1
+			AND start_time < NOW()
+			AND (end_time IS NULL OR end_time > NOW())
+	`).Scan(ctx, &msg)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.Wrap(err, "error fetching server maintenance messages")
+	} else if err != sql.ErrNoRows {
+		masterResp.MaintenanceMessage = msg.ToProto()
 	}
 
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
@@ -282,7 +290,7 @@ func (a *apiServer) SetMaintenanceMessage(
 	}
 
 	mm := model.MaintenanceMessage{
-		CreatorID: int(u.ID),
+		CreatedBy: int(u.ID),
 		Message:   req.Message,
 		StartTime: req.StartTime.AsTime(),
 	}
@@ -312,7 +320,10 @@ func (a *apiServer) SetMaintenanceMessage(
 			return errors.Wrap(err, "error clearing previous server maintenance messages")
 		}
 
-		_, err = tx.NewInsert().Model(&mm).Exec(ctx)
+		_, err = tx.NewInsert().
+			Model(&mm).
+			ExcludeColumn("created_time").
+			Exec(ctx)
 		if err != nil {
 			return errors.Wrap(err, "error setting the server maintenance message")
 		}
@@ -348,30 +359,6 @@ func (a *apiServer) DeleteMaintenanceMessage(
 		Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error clearing the server maintenance message")
-	}
-
-	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
-}
-
-func (a *apiServer) DeleteMaintenanceMessage(
-	ctx context.Context,
-	req *apiv1.DeleteMaintenanceMessageRequest,
-) (*apiv1.DeleteMaintenanceMessageResponse, error) {
-	u, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
-	if err != nil {
-		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
-	}
-
-	holder := &apiv1.MaintenanceMessage{}
-	if err := a.m.db.QueryProto("delete_maintenance_message", holder, req.Id); err != nil {
-		return nil, errors.Wrap(err, "error deleting a server maintenance message")
 	}
 
 	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
