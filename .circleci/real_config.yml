@@ -1561,6 +1561,36 @@ jobs:
       - store_artifacts:
           path: /tmp/pkgs
 
+  package-and-push-system-dev-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: xlarge
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - license-gen
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system:
+          check: false
+      - make-package
+      - run: tools/scripts/retry.sh make -C master publish-dev
+      - run: tools/scripts/retry.sh make -C agent publish-dev
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
   package-and-push-system-dev-small:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1624,6 +1654,31 @@ jobs:
       - store_artifacts:
           path: /tmp/pkgs
 
+  package-and-push-system-rc-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - license-gen
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system
+      - make-package
+      - run: make -C master publish
+      - run: make -C agent publish
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
   package-and-push-system-release:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1653,6 +1708,34 @@ jobs:
           command: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
+  package-and-push-system-release-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - license-gen
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system
+      - run:
+          no_output_timeout: 30m
+          command: make -C master release-ee
+      - run:
+          no_output_timeout: 30m
+          command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1753,8 +1836,8 @@ jobs:
       - skip-if-only-webui
       - attach_workspace:
           at: .
-      - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
-      - run: sudo apt-get install -y $(pwd)/agent/dist/determined-agent*.deb
+      - run: sudo apt-get install -y $(pwd)/master/dist/hpe-mlde-master*.deb
+      - run: sudo apt-get install -y $(pwd)/agent/dist/hpe-mlde-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
@@ -1767,6 +1850,7 @@ jobs:
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
       - run: sudo systemctl restart determined-agent
       - run: ./.circleci/scripts/sanity.sh
+      # we won't have an OSS version - just an EE version
 
   lint-react:
     docker:
@@ -3247,6 +3331,7 @@ jobs:
           mentions: "${SLACK_USER_ID}"
           channel: <<pipeline.parameters.default-slack-channel>>
 
+  # TODO (eliu): check this out
   deploy-latest-gke:
     parameters:
       det-version:
@@ -3748,6 +3833,7 @@ jobs:
           command: |
             ./.circleci/scripts/terminate-vpc-circleci.sh
 
+  # TODO (eliu): check this out
   run-shared-cluster-cleanup:
       parameters:
         cluster-id:
@@ -3917,24 +4003,42 @@ workflows:
           requires:
             - build-helm
             - build-proto
-      - build-go
+      - build-go:
+          context: github-read
       - package-and-push-system-local:
           requires:
             - build-react
             - build-docs
+          context: github-read
           filters:
             branches:
               only:
                 - main
 
+      # TODO (eliu): might need an ee version with 
       - package-and-push-system-dev:
           requires:
             - build-react
             - build-docs
+          context:
+            - determined-ee
+            - github-read # TODO (eliu): check these contexts
           filters:
             branches:
               only:
                 - main
+
+      - package-and-push-system-dev-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read # TODO (eliu): check these contexts
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
 
       - upload-docs-search-index:
           requires:
@@ -4264,6 +4368,7 @@ workflows:
               only:
                 - main
 
+      # deploy might have some issues....we'll have to see how that turns out
       - deploy:
           # TODO (eliu): check deploy latest main and deploy latest gke
           name: deploy-latest-main-cluster
@@ -4369,7 +4474,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters:
             branches:
               only: main
@@ -4487,14 +4594,15 @@ workflows:
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
-          filters: *any-upstream
+          # filters: *any-upstream
+          # TODO (eliu): I suspect we want to keep these
       - build-proto:
-          filters: *any-upstream
+          # filters: *any-upstream
       - build-react:
           dev-mode: true
-          filters: *any-upstream
+          # filters: *any-upstream
       - build-docs:
-          filters: *any-upstream
+          # filters: *any-upstream
           requires:
             - build-helm
             - build-proto
@@ -4502,6 +4610,14 @@ workflows:
           requires:
             - build-react
             - build-docs
+          filters: *any-upstream
+      - package-and-push-system-dev-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read # TODO (eliu): might want an ee specific version?
           filters: *any-upstream
 
       # Distributed tests
@@ -4518,7 +4634,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-e2e-cpu-distributed
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -5111,8 +5227,27 @@ workflows:
           context: determined-production
           filters: *rc-filters
 
+      - package-and-push-system-rc-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters: *rc-filters
+
       - publish-python-package:
           name: publish-python-package-rc
+          matrix:
+            parameters:
+              path: ["harness", "model_hub"]
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc
+
+      - publish-python-package:
+          name: publish-python-package-rc-ee
           matrix:
             parameters:
               path: ["harness", "model_hub"]
