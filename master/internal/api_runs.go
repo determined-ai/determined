@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -512,14 +513,16 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	}
 	// Get active runs and kill
 	var activeRuns []int32
-	activeStates := []trialv1.State{trialv1.State_STATE_ACTIVE, trialv1.State_STATE_PAUSED,
-		trialv1.State_STATE_QUEUED, trialv1.State_STATE_RUNNING, trialv1.State_STATE_PULLING,
-		trialv1.State_STATE_STARTING}
+	activeStates := []model.State{model.ActiveState, model.PausedState, model.RunningState}
 
 	killQuery := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&activeRuns).
 		Column("r.id").
+		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("r.state IN (?)", bun.In(activeStates)).
 		Where("r.project_id = ?", req.ProjectId)
 
@@ -538,7 +541,8 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	}
 
 	killReq := apiv1.KillRunsRequest{
-		RunIds: activeRuns,
+		RunIds:    activeRuns,
+		ProjectId: req.ProjectId,
 	}
 	killResp, err := a.KillRuns(ctx, &killReq)
 	if err != nil {
@@ -546,7 +550,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	}
 	// log kill results
 	var results []*apiv1.RunActionResult
-	var failedKills []int32
+	failedKills := []int32{-1}
 	for _, killRes := range killResp.Results {
 		if killRes.Error != "" {
 			results = append(results, killRes)
@@ -592,7 +596,6 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	var expDeleteIds []int32
 	for _, check := range runChecks {
 		visibleIDs.Insert(check.ID)
 		if check.Archived {
@@ -601,9 +604,6 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 				Id:    check.ID,
 			})
 			continue
-		}
-		if check.ExpID != nil && !check.IsMultitrial {
-			expDeleteIds = append(expDeleteIds, *check.ExpID)
 		}
 		validIDs = append(validIDs, check.ID)
 	}
@@ -618,18 +618,9 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		}
 	}
 	if len(validIDs) > 0 {
-		// Delete experiment for single trial
-		expRes, _, err := experiment.DeleteExperiments(ctx, expDeleteIds, nil)
-		failedExpDeleteIds := []int32{-1}
-		for _, deleteRes := range expRes {
-			if deleteRes.Error != nil {
-				failedExpDeleteIds = append(failedExpDeleteIds, deleteRes.ID)
-			}
-		}
 		var acceptedIDs []int32
 		if _, err = db.Bun().NewDelete().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
-			Where("runs.experiment_id NOT IN", bun.In(failedExpDeleteIds)).
 			Returning("runs.id").
 			Model(&acceptedIDs).
 			Exec(ctx); err != nil {
@@ -642,21 +633,6 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 				Id:    acceptID,
 			})
 		}
-
-		var failedRunIDs []int32
-		if err = db.Bun().NewSelect().Table("runs").
-			Where("runs.id IN (?)", bun.In(validIDs)).
-			Where("runs.id NOT IN (?)", bun.In(failedKills)).
-			Where("runs.experiment_id IN (?)", bun.In(failedExpDeleteIds)).
-			Scan(ctx, &failedRunIDs); err != nil {
-			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
-		}
-		for _, failedRunID := range failedRunIDs {
-			results = append(results, &apiv1.RunActionResult{
-				Error: "Failed to delete associated experiment",
-				Id:    failedRunID,
-			})
-		}
 	}
-	return nil, nil
+	return &apiv1.DeleteRunsResponse{Results: results}, nil
 }
