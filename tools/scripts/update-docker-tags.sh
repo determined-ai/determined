@@ -31,6 +31,9 @@ for NAME in $IMAGES; do
 	docker buildx imagetools create $NAME --tag $NEW_NAME
 done
 
+# update environments-target.txt
+echo $NEW_TAG > tools/scripts/environments-target.txt
+
 # bumpenvs
 echo "Updating bumpenvs.yaml"
 if [ "$3" == "--release" ]; then
