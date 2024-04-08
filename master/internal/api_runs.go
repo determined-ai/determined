@@ -403,3 +403,106 @@ func (a *apiServer) MoveRuns(
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
 }
+
+func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
+) (*apiv1.PauseRunsResponse, error) {
+	// Get experiment ids
+	var err error
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.experiment_id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", req.ProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	expIDs := set.New[int32]()
+	expToRun := make(map[int32][]int32)
+	for _, check := range runChecks {
+		visibleIDs.Insert(check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+			continue
+		}
+		if check.IsMultitrial && req.SkipMultitrial {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", check.ID),
+				Id:    check.ID,
+			})
+			continue
+		}
+		if check.ExpID == nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Cannot pause run '%d' (no associated experiment).", check.ID),
+				Id:    check.ID,
+			})
+			continue
+		}
+		_, ok := expToRun[*check.ExpID]
+		if ok {
+			expToRun[*check.ExpID] = append(expToRun[*check.ExpID], check.ID)
+		} else {
+			expToRun[*check.ExpID] = []int32{check.ID}
+		}
+		expIDs.Insert(*check.ExpID)
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.ProjectId),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	// Pause experiments
+	expResults, err := experiment.PauseExperiments(ctx, expIDs.ToSlice(), nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, expRes := range expResults {
+		val, ok := expToRun[expRes.ID]
+		if !ok {
+			val = []int32{-1}
+		}
+		for _, runID := range val {
+			if expRes.Error != nil {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Failed to pause associated experiment: %s", expRes.Error),
+					Id:    runID,
+				})
+			} else {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "",
+					Id:    runID,
+				})
+			}
+		}
+	}
+	return &apiv1.PauseRunsResponse{Results: results}, nil
+}

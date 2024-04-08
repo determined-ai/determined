@@ -92,3 +92,31 @@ message MoveRunsResponse {
   // Details on success or error for each experiment.
   repeated RunActionResult results = 1;
 }
+
+// Request to pause the experiment associated witha run.
+message PauseRunsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "project_id", "run_ids", "skip_multitrial" ]
+    }
+  };
+
+  // The ids of the runs being moved.
+  repeated int32 run_ids = 1;
+  // The id of the project of the runs being paused.
+  int32 project_id = 2;
+  // Filter expression
+  optional string filter = 3;
+  // If true, skip multi-trial experiments for move.
+  bool skip_multitrial = 4;
+}
+
+// Response to {aiseRunsRequest.
+message PauseRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each run.
+  repeated RunActionResult results = 1;
+}

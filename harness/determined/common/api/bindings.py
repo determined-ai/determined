@@ -9972,6 +9972,68 @@ class v1PauseExperimentsResponse(Printable):
         }
         return out
 
+class v1PauseRunsRequest(Printable):
+    """Request to pause the experiment associated witha run."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        skipMultitrial: bool,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        self.skipMultitrial = skipMultitrial
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+            "skipMultitrial": obj["skipMultitrial"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+            "skipMultitrial": self.skipMultitrial,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1PauseRunsResponse(Printable):
+    """Response to {aiseRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1Permission(Printable):
     name: "typing.Optional[str]" = None
     scopeTypeMask: "typing.Optional[v1ScopeTypeMask]" = None
@@ -20962,6 +21024,27 @@ def post_PauseGenericTask(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseGenericTask", _resp)
+
+def post_PauseRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1PauseRunsRequest",
+) -> "v1PauseRunsResponse":
+    """Pause experiment associated with provided runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/pause",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PauseRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_PauseRuns", _resp)
 
 def post_PinWorkspace(
     session: "api.BaseSession",
