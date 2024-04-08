@@ -766,6 +766,9 @@ commands:
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
               --deployment-type <<parameters.deployment-type>> \
+              --enterprise-edition \
+              --docker-user $DOCKER_USER \
+              --docker-pass $DOCKER_PASS \
               --retain-log-group \
               --initial-user-password ${INITIAL_USER_PASSWORD} \
               --yes
@@ -945,6 +948,11 @@ commands:
           command: |
             echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
           name: Prepare helm overrides
+      - run:
+          command: |
+            echo 'export HELM_VALUES="${HELM_VALUES},enterpriseEdition=true,imagePullSecretName=docker-cred"' >> "$BASH_ENV"
+            kubectl create secret docker-registry docker-cred --docker-username=$DOCKER_USER --docker-password=$DOCKER_PASS
+          name: Set EE helm overrides and create docker secret
       - when:
           condition: <<parameters.gpus-per-machine>>
           steps:
