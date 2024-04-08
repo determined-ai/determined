@@ -54,12 +54,17 @@ import { paths } from 'routes/utils';
 import { getProjectColumns, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
+import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 
 import { getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
-import { FlatRunsSettings, settingsConfigForProject } from './FlatRuns.settings';
+import {
+  defaultFlatRunsSettings,
+  FlatRunsSettings,
+  settingsPathForProject,
+} from './FlatRuns.settings';
 
 export const PAGE_SIZE = 100;
 const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
@@ -91,12 +96,26 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const settingsConfig = useMemo(() => settingsConfigForProject(project.id), [project.id]);
-  const {
-    isLoading: isLoadingSettings,
-    settings,
-    updateSettings,
-  } = useSettings<FlatRunsSettings>(settingsConfig);
+
+  const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
+  const flatRunsSettingsObs = useMemo(
+    () => userSettings.get(FlatRunsSettings, settingsPath),
+    [settingsPath],
+  );
+  const flatRunsSettings = useObservable(flatRunsSettingsObs);
+  const isLoadingSettings = useMemo(() => flatRunsSettings.isNotLoaded, [flatRunsSettings]);
+  const updateSettings = useCallback(
+    (p: Partial<FlatRunsSettings>) => userSettings.setPartial(FlatRunsSettings, settingsPath, p),
+    [settingsPath],
+  );
+  const settings = useMemo(
+    () =>
+      flatRunsSettings
+        .map((s) => ({ ...defaultFlatRunsSettings, ...s }))
+        .getOrElse(defaultFlatRunsSettings),
+    [flatRunsSettings],
+  );
+
   const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);

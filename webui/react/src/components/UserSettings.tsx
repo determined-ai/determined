@@ -234,10 +234,13 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   label="Table Density"
                   valueFormatter={(rh) => rowHeightLabels[rh]}
                   onSubmit={(rh) => {
-                    userSettings.set(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath, {
-                      ...dataGridGlobalSettings,
-                      rowHeight: rh,
-                    });
+                    userSettings.setPartial(
+                      dataGridGlobalSettingsConfig,
+                      dataGridGlobalSettingsPath,
+                      {
+                        rowHeight: rh,
+                      },
+                    );
                   }}>
                   <Select searchable={false}>
                     {rowHeightItems.map(({ rowHeight, label }) => (
@@ -252,10 +255,13 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   label="Infinite Scroll"
                   valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
                   onSubmit={(mode) => {
-                    userSettings.set(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath, {
-                      ...dataGridGlobalSettings,
-                      tableViewMode: mode,
-                    });
+                    userSettings.setPartial(
+                      dataGridGlobalSettingsConfig,
+                      dataGridGlobalSettingsPath,
+                      {
+                        tableViewMode: mode,
+                      },
+                    );
                   }}>
                   <Select searchable={false}>
                     <Option key="scroll" value="scroll">

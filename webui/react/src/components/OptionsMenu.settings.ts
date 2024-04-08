@@ -16,10 +16,13 @@ export interface DataGridGlobalSettings {
   tableViewMode: TableViewMode;
 }
 
-export const dataGridGlobalSettingsConfig = t.partial({
-  rowHeight: ioRowHeight,
-  tableViewMode: ioTableViewMode,
-});
+export const dataGridGlobalSettingsConfig = t.intersection([
+  t.type({}),
+  t.partial({
+    rowHeight: ioRowHeight,
+    tableViewMode: ioTableViewMode,
+  }),
+]);
 
 export const dataGridGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,

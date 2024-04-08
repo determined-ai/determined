@@ -44,6 +44,7 @@ import {
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
@@ -76,9 +77,7 @@ import {
   defaultProjectSettings,
   ProjectSettings,
   ProjectUrlSettings,
-  SearchesGlobalSettings,
   SelectionType as SelectionState,
-  settingsConfigGlobal,
   settingsPathForProject,
 } from './Searches.settings';
 
@@ -150,7 +149,8 @@ const Searches: React.FC<Props> = ({ project }) => {
   );
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<SearchesGlobalSettings>(settingsConfigGlobal);
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {

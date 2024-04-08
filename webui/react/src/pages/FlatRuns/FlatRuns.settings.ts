@@ -19,10 +19,23 @@ export const FlatRunsSettings = t.type({
 });
 export type FlatRunsSettings = t.TypeOf<typeof FlatRunsSettings>;
 
+export const defaultFlatRunsSettings: Required<FlatRunsSettings> = {
+  columns: defaultRunColumns,
+  columnWidths: defaultColumnWidths,
+  compare: false,
+  filterset: JSON.stringify(INIT_FORMSET),
+  pageLimit: 20,
+  pinnedColumnsCount: 3,
+  selection: DEFAULT_SELECTION,
+  sortString: 'id=desc',
+};
+
 export const ProjectUrlSettings = t.partial({
   compare: t.boolean,
   page: t.number,
 });
+
+export const settingsPathForProject = (id: number): string => `flatRunsForProject${id}`;
 
 export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSettings> => ({
   settings: {
@@ -74,5 +87,5 @@ export const settingsConfigForProject = (id: number): SettingsConfig<FlatRunsSet
       type: t.string,
     },
   },
-  storagePath: `flatRunsForProject${id}`,
+  storagePath: settingsPathForProject(id),
 });
