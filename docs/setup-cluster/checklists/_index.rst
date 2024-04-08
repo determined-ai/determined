@@ -509,9 +509,8 @@ Test your setup to ensure it is functioning correctly.
             det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
       #. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept
-         ``determined`` as the default username, and click **Sign In**. A password is not initially
-         required. After signing in you can set a strong password using the **Settings** within your
-         profile.
+         ``determined`` as the default username, and click **Sign In**. After signing in, create a
+         strong password using the **Settings** within your profile.
 
       #. Click the **Experiment** name to view the experiment’s trial display.
 
@@ -522,9 +521,8 @@ Test your setup to ensure it is functioning correctly.
       Test that your users can access the cluster.
 
       To view the WebUI dashboard, enter the cluster address in the browser address bar, accept the
-      default username of ``determined``, and click **Sign In**. A password is not initially
-      required. After signing in you can set a strong password using the **Settings** within your
-      profile.
+      default username of ``determined``, and click **Sign In**. After signing in, create a strong
+      password using the **Settings** within your profile.
 
 ************
  Next Steps

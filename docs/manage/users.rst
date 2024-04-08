@@ -19,7 +19,8 @@ Initially, there are two accounts:
 -  ``admin`` (full privileges)
 -  ``determined`` (for single-user installations)
 
-Both have blank passwords by default, therefore, you'll need to set a strong password.
+Setting an ``initialUserPassword`` for the ``admin`` and ``determined`` user accounts is a required
+step and is configured in the :ref:`Helm Chart <helm-config-reference>`.
 
 Setting the Admin Password
 ==========================
@@ -30,8 +31,10 @@ Use the following CLI command to set the admin password:
 
    det -u admin user change-password
 
-Creating Individual User Accounts
-=================================
+.. include:: ../_shared/password-note.txt
+
+Creating Individual User (Member) Accounts
+==========================================
 
 You can add, edit, and manage users manually via the CLI or the WebUI.
 
@@ -39,7 +42,7 @@ To create users via the CLI, use the following command:
 
 .. code::
 
-   det -u admin user create <username>
+   det -u admin user create <username> --password <password>
 
 To ensure that no one can access the Determined cluster as the ``determined`` user, deactivate it.
 Deactivating the ``determined`` user does not remove any objects created by the user.
@@ -57,6 +60,17 @@ Admins can configure Determined to auto-provision users who have been added to y
 are known as remote users.
 
 To find out more, visit :ref:`remote-users`.
+
+Password Requirements
+=====================
+
+Passwords:
+
+-  cannot be blank
+-  must be at least 8 characters
+-  must contain at least one upper-case letter
+-  must contain at least one lower-case letter
+-  must contain at least one number
 
 ****************
  Authentication
@@ -115,10 +129,7 @@ be discarded using the ``user logout`` subcommand:
  Change Passwords
 ******************
 
-Users have blank passwords by default. This might be sufficient for low-security or experimental
-clusters, and it still provides the organizational benefits of associating each Determined object
-with the user that created it. If desired, a user can change their own password using the ``user
-change-password`` subcommand:
+A user can change their own password via the ``user change-password`` subcommand:
 
 .. code::
 

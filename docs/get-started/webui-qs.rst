@@ -89,6 +89,8 @@ You must have a running Determined cluster with the CLI installed.
       If you are changing your password, the system asks you to confirm your change. The system lets
       you know your changes have been saved.
 
+      .. include:: ../_shared/password-note.txt
+
    .. tab::
 
       remotely
