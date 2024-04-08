@@ -4708,6 +4708,7 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
+      # TODO (eliu): double check below
       # mmdetection tests
       - request-mmdetection-tests:
           type: approval
@@ -4759,6 +4760,7 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+      # TODO (eliu): double check above
 
       # Request AWS FS tests
       - request-aws-fs-tests:
