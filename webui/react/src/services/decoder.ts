@@ -481,7 +481,13 @@ export function mapV1Experiment(
   jobSummary?: types.JobSummary,
   config?: Sdk.V1GetExperimentResponse['config'],
 ): types.FullExperimentItem | types.BulkExperimentItem {
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+
   if (config === undefined) {
+    const hyperparameters = flattenObject<types.HyperparameterBase>(data?.hyperparameters ?? {}, {
+      continueFn,
+    }) as types.HyperparametersFlattened;
+
     const bulkExpItem: types.BulkExperimentItem = {
       archived: data.archived,
       checkpoints: data.checkpointCount,
@@ -492,7 +498,7 @@ export function mapV1Experiment(
       externalExperimentId: data.externalExperimentId,
       externalTrialId: data.externalTrialId,
       forkedFrom: data.forkedFrom,
-      hyperparameters: {},
+      hyperparameters,
       id: data.id,
       jobId: data.jobId,
       jobSummary: jobSummary,
@@ -521,7 +527,6 @@ export function mapV1Experiment(
     ioTypes.ioExperimentConfig,
     config,
   );
-  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
   const hyperparameters = flattenObject<types.HyperparameterBase>(
     data?.hyperparameters ?? ioConfig?.hyperparameters ?? {},
     { continueFn },
@@ -532,7 +537,7 @@ export function mapV1Experiment(
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
-    configRaw: config ?? {},
+    configRaw: config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,

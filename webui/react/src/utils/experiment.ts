@@ -45,8 +45,10 @@ export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
 
 // Differentiate Experiment from Task.
-export const isExperiment = (obj: AnyTask | FullExperimentItem): obj is FullExperimentItem => {
-  return 'config' in obj && 'archived' in obj;
+export const isExperiment = <T extends BulkExperimentItem | FullExperimentItem>(
+  obj: AnyTask | T,
+): obj is T => {
+  return 'hyperparameters' in obj && 'archived' in obj;
 };
 
 export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => {

@@ -19,10 +19,10 @@ import { OMITTED_STR } from 'constants/accessControl';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import {
+  BulkExperimentItem,
   CommandTask,
   CommandType,
   DetailedUser,
-  FullExperimentItem,
   ModelItem,
   ModelVersion,
   Pagination,
@@ -38,7 +38,7 @@ import { openCommand } from 'utils/wait';
 
 import css from './Table.module.scss';
 
-type TableRecord = CommandTask | FullExperimentItem | TrialItem | Project | Workspace;
+type TableRecord = CommandTask | BulkExperimentItem | TrialItem | Project | Workspace;
 
 export interface TablePaginationConfig {
   current: number;
@@ -59,7 +59,7 @@ export type GenericRenderer<T extends TableRecord> = (
 
 export type ExperimentRenderer = (
   text: string,
-  record: FullExperimentItem,
+  record: BulkExperimentItem,
   index: number,
 ) => React.ReactNode;
 
@@ -203,7 +203,7 @@ export const experimentDurationRenderer: ExperimentRenderer = (_, record) => (
 
 export const experimentNameRenderer = (
   value: string | number | undefined,
-  record: FullExperimentItem,
+  record: BulkExperimentItem,
 ): React.ReactNode => (
   <Label truncate={{ tooltip: true }}>
     <Link path={paths.experimentDetails(record.id)}>

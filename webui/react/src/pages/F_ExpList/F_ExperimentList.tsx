@@ -64,7 +64,6 @@ import {
   BulkExperimentItem,
   ExperimentAction,
   ExperimentWithTrial,
-  FullExperimentItem,
   Project,
   ProjectColumn,
   ProjectMetricsRange,
@@ -537,10 +536,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     (
       action: ExperimentAction,
       successfulIds: number[],
-      data?: Partial<FullExperimentItem>,
+      data?: Partial<BulkExperimentItem>,
     ): void => {
       const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<FullExperimentItem>) => {
+      const updateExperiment = (updated: Partial<BulkExperimentItem>) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
@@ -597,7 +596,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<FullExperimentItem>) =>
+    (action: ExperimentAction, id: number, data?: Partial<BulkExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
@@ -1110,7 +1109,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <DataGrid<ExperimentWithTrial, ExperimentAction, FullExperimentItem>
+              <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}

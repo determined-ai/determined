@@ -81,7 +81,6 @@ export const generateExperiment = (id = 1): Type.FullExperimentItem => {
         storagePath: 'determined-integration-checkpoints',
         type: 'shared_fs',
       },
-      dataLayer: { type: 'shared_fs' },
       hyperparameters: {},
       maxRestarts: 5,
       name: experimentTask.name,
@@ -99,8 +98,7 @@ export const generateExperiment = (id = 1): Type.FullExperimentItem => {
     resourcePool: `ResourcePool-${Math.floor(Math.random() * 3)}`,
     searcherType: 'single',
     userId: user.id,
-    username: user.username,
-  } as Type.FullExperimentItem;
+  };
 };
 
 export const generateExperiments = (count = 30): Type.FullExperimentItem[] => {

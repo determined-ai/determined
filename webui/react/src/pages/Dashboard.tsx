@@ -32,7 +32,7 @@ import {
 } from 'services/api';
 import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
-import { BulkExperimentItem, CommandTask, DetailedUser, FullExperimentItem, Project } from 'types';
+import { BulkExperimentItem, CommandTask, DetailedUser, Project } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { dateTimeStringSorter } from 'utils/sort';
@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
-  type Submission = FullExperimentItem & CommandTask;
+  type Submission = BulkExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {

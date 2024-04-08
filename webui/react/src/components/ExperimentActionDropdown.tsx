@@ -146,7 +146,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   );
 
   const handleEditComplete = useCallback(
-    (data: Partial<FullExperimentItem>) => {
+    (data: Partial<BulkExperimentItem>) => {
       onComplete?.(ExperimentAction.Edit, id, data);
     },
     [id, onComplete],
