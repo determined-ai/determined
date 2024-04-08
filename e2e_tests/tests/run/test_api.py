@@ -92,6 +92,7 @@ def test_run_kill_filter() -> None:
         assert res.error == ""
         wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
 
+
 @pytest.mark.e2e_cpu
 def test_run_delete() -> None:
     sess = api_utils.user_session()
@@ -108,7 +109,6 @@ def test_run_delete() -> None:
         + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
     )
 
-    
     run_id = searchResp.runs[0].id
     deleteResp = bindings.post_DeleteRuns(
         sess, body=bindings.v1DeleteRunsRequest(runIds=[run_id], projectId=1)
@@ -142,7 +142,7 @@ def test_run_delete_filter() -> None:
     )
 
     runFilter = (
-       """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
         "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
         + str(exp_id)
         + """}],"conjunction":"and","kind":"group"},"showArchived":false}"""
@@ -150,18 +150,19 @@ def test_run_delete_filter() -> None:
     originalAmount = bindings.get_SearchRuns(sess, filter=runFilter)
 
     deleteResp = bindings.post_DeleteRuns(
-        sess, body=bindings.v1DeleteRunsRequest(runIds=[], filter= """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}""", projectId=1)
-    )
-    
-    # ensure that runs are deleted
-    searchResp = bindings.get_SearchRuns(
         sess,
-        filter=runFilter
+        body=bindings.v1DeleteRunsRequest(
+            runIds=[],
+            filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
+            + str(exp_id)
+            + """}, {"columnName":"hp.n_filters2","kind":"field",
+            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
+            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            projectId=1,
+        ),
     )
-    assert len(searchResp.runs) == (len(originalAmount.runs) - len(deleteResp.results))
 
+    # ensure that runs are deleted
+    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
+    assert len(searchResp.runs) == (len(originalAmount.runs) - len(deleteResp.results))

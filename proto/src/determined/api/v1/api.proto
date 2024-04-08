@@ -2544,8 +2544,8 @@ service Determined {
     };
   }
 
-   // Delete a list of runs.
-   rpc DeleteRuns(DeleteRunsRequest) returns (DeleteRunsResponse) {
+  // Delete a list of runs.
+  rpc DeleteRuns(DeleteRunsRequest) returns (DeleteRunsResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/delete"
       body: "*"
