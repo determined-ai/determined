@@ -4149,6 +4149,24 @@ workflows:
           devcluster-config: double-priority.devcluster.yaml
 
       - test-e2e:
+          name: test-e2e-cpu-oauth
+          requires:
+            - build-go
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+
+      - test-e2e:
+          name: test-e2e-cpu-model-registry-rbac
+          requires:
+            - build-go
+          parallelism: 1
+          devcluster-config: rbac-model-registry.yaml
+          mark: test_model_registry_rbac
+          target-stage: agent1
+
+      - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
@@ -4247,6 +4265,7 @@ workflows:
                 - main
 
       - deploy:
+          # TODO (eliu): check deploy latest main and deploy latest gke
           name: deploy-latest-main-cluster
           enable-cors: true
           reattach-enabled: true
@@ -4277,6 +4296,17 @@ workflows:
           max-dynamic-agents: 1
           cluster-id: determined-preview
           compute-agent-instance-type: t2.medium
+
+      - deploy-latest-gke:
+          name: deploy-latest-gke-master
+          context: gcp
+          det-version: $CIRCLE_SHA1
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
