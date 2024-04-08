@@ -3245,6 +3245,62 @@ jobs:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
+          channel: <<pipeline.parameters.default-slack-channel>>
+
+  deploy-latest-gke:
+    parameters:
+      det-version:
+        type: string
+      cluster-id:
+        type: string
+        default: latest-ee-gke
+      region:
+        type: string
+        default: us-west1
+      gcloud-service-key:
+        default: GCLOUD_SERVICE_KEY
+        description: The gcloud service key
+        type: env_var_name
+      google-compute-zone:
+        default: GOOGLE_COMPUTE_ZONE
+        description: The Google compute zone to connect with via the gcloud CLI
+        type: env_var_name
+      google-project-id:
+        default: GOOGLE_PROJECT_ID
+        description: The Google project ID to connect with via the gcloud CLI
+        type: env_var_name
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - set-slack-user-id
+      - gcloud/install:
+          version: "319.0.0"
+      - kubernetes/install-kubectl
+      - gcloud/initialize:
+          gcloud-service-key: <<parameters.gcloud-service-key>>
+          google-compute-zone: <<parameters.google-compute-zone>>
+          google-project-id: <<parameters.google-project-id>>
+      - run:
+          command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project determined-ai --region <<parameters.region>>
+          name: Get Kubeconfig
+      - helm/upgrade-helm-chart:
+          chart: helm/charts/determined
+          helm-version: v3.2.4
+          namespace: "default"
+          wait: true
+          release-name: <<parameters.cluster-id>>
+          values-to-override: |
+            detVersion=<<parameters.det-version>>,\
+            maxSlotsPerPod=4,\
+            checkpointStorage.type=gcs,\
+            checkpointStorage.bucket=det-ci,\
+            imagePullSecretName=release-cred,\
+            masterPort=80,\
+            security.authz.type=rbac,\
+            enterpriseEdition=true
 
   test-e2e-aws:
     parameters:
