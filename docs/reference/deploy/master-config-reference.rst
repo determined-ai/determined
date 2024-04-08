@@ -226,6 +226,8 @@ notebook instance is considered to be idle if it is not receiving any HTTP traff
 otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`task configuration
 <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
 
+.. _master-config-resource-manager:
+
 **********************
  ``resource_manager``
 **********************
@@ -1186,6 +1188,8 @@ those partitions/queues.
    In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will be executed in
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
+
+.. _master-config-additional-resource-managers:
 
 **********************************
  ``additional_resource_managers``
