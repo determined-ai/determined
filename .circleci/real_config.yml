@@ -1120,13 +1120,13 @@ commands:
       - run:
           command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
           name: Get Kubeconfig
-      - run: 
+      - run:
           command: kubectl create namespace ${GENERATED_NAMESPACE}
           name: Create namespace
       - run:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
-      - run: 
+      - run:
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
@@ -1177,7 +1177,7 @@ commands:
         type: string
       master-tls-cert:
         type: string
-        default: "" 
+        default: ""
       master-tls-key:
         type: string
         default: ""
@@ -1193,7 +1193,7 @@ commands:
               echo "export MASTER_PORT=8443" >> $BASH_ENV
               echo "export MASTER_SCHEME=https" >> $BASH_ENV
             fi
-  
+
   set-google-application-credentials:
     steps:
       - run:
