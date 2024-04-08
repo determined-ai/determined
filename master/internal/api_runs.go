@@ -412,7 +412,7 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
-		Column("r.experiment_id").
+		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
