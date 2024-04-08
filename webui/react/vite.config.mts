@@ -132,8 +132,8 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 3001,
     proxy: {
-      '/api': { target: webpackProxyUrl},
-      '/proxy': { target: webpackProxyUrl},
+      '/api': { target: webpackProxyUrl },
+      '/proxy': { target: webpackProxyUrl },
       '/stream': {
         target: websocketProxyUrl,
         ws: true,
@@ -164,7 +164,11 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       ...configDefaults.coverage,
       include: ['src'],
-      exclude: [...configDefaults.coverage.exclude, 'src/vendor/**/*', 'src/services/api-ts-sdk/*']
+      exclude: [
+        ...(configDefaults.coverage.exclude ?? []),
+        'src/vendor/**/*',
+        'src/services/api-ts-sdk/*',
+      ],
     },
     css: {
       modules: {
@@ -179,7 +183,7 @@ export default defineConfig(({ mode }) => ({
       registerNodeLoader: true,
     },
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, './src/e2e/*'],
+    exclude: [...configDefaults.exclude, './src/e2e/**/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
     testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/,
