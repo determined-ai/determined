@@ -4312,6 +4312,7 @@ workflows:
           name: test-e2e-gpu-parallel
           context:
             - aws
+            - determined-ee
             - aws-ci-cluster-default-user-credentials
           filters:
             branches:
@@ -4332,6 +4333,7 @@ workflows:
           name: test-e2e-gpu-single
           context:
             - aws
+            - determined-ee
             - aws-ci-cluster-default-user-credentials
           filters:
             branches:
@@ -4349,7 +4351,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters:
             branches:
               only: main
@@ -4386,7 +4390,9 @@ workflows:
       # Legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters:
             branches:
               only: main
@@ -4404,7 +4410,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters:
             branches:
               only: main
@@ -4426,7 +4434,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters:
             branches:
               only: main
@@ -4504,6 +4514,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-e2e-cpu-distributed
@@ -4528,6 +4539,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-deepspeed-tests
@@ -4549,7 +4561,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4564,7 +4578,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4584,7 +4600,9 @@ workflows:
       # Requestable legacy tf 2.4 tests.
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu-tfonly
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4606,7 +4624,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -4627,7 +4647,9 @@ workflows:
 
       - test-e2e-gke:
           name: test-e2e-gke-k8s-reattach
-          context: gcp-ci
+          context:
+            - gcp-ci
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -4658,6 +4680,7 @@ workflows:
             - aws
             - aws-ci-cluster-default-user-credentials
             - hugging-face
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
@@ -4676,6 +4699,7 @@ workflows:
           filters: *upstream-feature-branch
 
       - build-go:
+          context: github-read
           requires:
             - request-perf-tests
 
@@ -4701,6 +4725,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-nightly
@@ -4721,6 +4746,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -4740,6 +4766,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
@@ -4818,6 +4845,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -4833,6 +4861,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
@@ -4850,6 +4879,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4859,6 +4889,7 @@ workflows:
           name: test-e2e-gpu-distributed
           context:
             - aws
+            - determined-ee
             - hugging-face
             - aws-ci-cluster-default-user-credentials
           matrix:
@@ -4873,6 +4904,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["mmdet"]
@@ -4885,6 +4917,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["deepspeed"]
@@ -4897,6 +4930,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -4910,6 +4944,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-mentions: "${SLACK_USER_ID}"
@@ -4920,6 +4955,7 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-mentions: "${SLACK_USER_ID}"
