@@ -5464,6 +5464,12 @@ export interface V1KillRunsRequest {
      */
     runIds: Array<number>;
     /**
+     * Project id of the runs being killed.
+     * @type {number}
+     * @memberof V1KillRunsRequest
+     */
+    projectId?: number;
+    /**
      * Filter expression
      * @type {string}
      * @memberof V1KillRunsRequest

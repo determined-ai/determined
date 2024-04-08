@@ -49,7 +49,9 @@ def test_run_kill() -> None:
 
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
     run_id = searchResp.runs[0].id
-    killResp = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[run_id]))
+    killResp = bindings.post_KillRuns(
+        sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
+    )
 
     # validate response
     assert len(killResp.results) == 1
@@ -79,7 +81,7 @@ def test_run_kill_filter() -> None:
     )
 
     killResp = bindings.post_KillRuns(
-        sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter)
+        sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
     )
 
     searchResp = bindings.get_SearchRuns(sess, limit=5, filter=runFilter)

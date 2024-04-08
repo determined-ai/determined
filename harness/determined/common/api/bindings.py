@@ -7402,16 +7402,20 @@ class v1KillNotebookResponse(Printable):
 class v1KillRunsRequest(Printable):
     """Kill runs."""
     filter: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         runIds: "typing.Sequence[int]",
         filter: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.runIds = runIds
         if not isinstance(filter, Unset):
             self.filter = filter
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1KillRunsRequest":
@@ -7420,6 +7424,8 @@ class v1KillRunsRequest(Printable):
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7428,6 +7434,8 @@ class v1KillRunsRequest(Printable):
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
         return out
 
 class v1KillRunsResponse(Printable):
