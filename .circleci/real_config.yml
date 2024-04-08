@@ -1381,6 +1381,36 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
+# TODO (eliu): maybe make ee a parameter instead in everything
+  build-docs-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - helm/install-helm-client
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          model-hub: true
+          extra-requirements-file: "docs/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - run: make -C examples build
+      - run: make -C helm build
+      - attach_workspace:
+          at: .
+      - run: make -C docs attributions.rst rebrand build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - examples/build
+            - harness/dist
+            - model_hub/dist
+            - docs/build
+            - docs/site
+      - run: tar czf docs.tgz docs/site/html
+      - store_artifacts:
+          path: docs.tgz
+
   upload-docs-search-index:
     docker:
       - image: <<pipeline.parameters.docker-image>>
