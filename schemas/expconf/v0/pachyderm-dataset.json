@@ -10,17 +10,13 @@
     "properties": {
         "project": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "repo": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "commit": {
             "type": [

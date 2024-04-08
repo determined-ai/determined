@@ -11,24 +11,18 @@
     "properties": {
         "host": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "port": {
             "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
+                "integer"
+            ]
         },
         "token": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         }
     }
 }

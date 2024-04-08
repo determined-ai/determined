@@ -9,26 +9,20 @@
     "properties": {
         "pachd": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "dataset": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
         }
     }
