@@ -2558,6 +2558,44 @@ export interface V1DeleteProjectResponse {
     completed: boolean;
 }
 /**
+ * Delete runs.
+ * @export
+ * @interface V1DeleteRunsRequest
+ */
+export interface V1DeleteRunsRequest {
+    /**
+     * The ids of the runs being deleted.
+     * @type {Array<number>}
+     * @memberof V1DeleteRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being deleted.
+     * @type {number}
+     * @memberof V1DeleteRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1DeleteRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to DeleteRunsResponse.
+ * @export
+ * @interface V1DeleteRunsResponse
+ */
+export interface V1DeleteRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1DeleteRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to DeleteTemplateRequest.
  * @export
  * @interface V1DeleteTemplateResponse
@@ -5439,7 +5477,7 @@ export interface V1KillRunsRequest {
  */
 export interface V1KillRunsResponse {
     /**
-     * Details on success or error for each experiment.
+     * Details on success or error for each run.
      * @type {Array<V1RunActionResult>}
      * @memberof V1KillRunsResponse
      */
@@ -6572,7 +6610,7 @@ export interface V1MoveRunsRequest {
  */
 export interface V1MoveRunsResponse {
     /**
-     * Details on success or error for each experiment.
+     * Details on success or error for each run.
      * @type {Array<V1RunActionResult>}
      * @memberof V1MoveRunsResponse
      */
@@ -18696,6 +18734,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteRuns.');
+            }
+            const localVarPath = `/api/v1/runs/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -21543,6 +21619,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -22887,6 +22982,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+            return InternalApiFp(configuration).deleteRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -23749,6 +23854,18 @@ export class InternalApi extends BaseAPI {
      */
     public deleteGroup(groupId: number, options?: any) {
         return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete a list of runs.
+     * @param {V1DeleteRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

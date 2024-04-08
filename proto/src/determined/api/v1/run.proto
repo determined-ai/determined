@@ -119,8 +119,10 @@ message DeleteRunsRequest {
   };
   // The ids of the runs being deleted.
   repeated int32 run_ids = 1;
+  // Project id of the runs being deleted.
+  int32 project_id = 2;
   // Filter expression
-  optional string filter = 2;
+  optional string filter = 3;
 }
 // Response to DeleteRunsResponse.
 message DeleteRunsResponse {

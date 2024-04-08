@@ -505,5 +505,157 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 
 func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest,
 ) (*apiv1.DeleteRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Get active runs and kill
+	var activeRuns []int32
+	activeStates := []trialv1.State{trialv1.State_STATE_ACTIVE, trialv1.State_STATE_PAUSED,
+		trialv1.State_STATE_QUEUED, trialv1.State_STATE_RUNNING, trialv1.State_STATE_PULLING,
+		trialv1.State_STATE_STARTING}
+
+	killQuery := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&activeRuns).
+		Column("r.id").
+		Where("r.state IN (?)", bun.In(activeStates)).
+		Where("r.project_id = ?", req.ProjectId)
+
+	if req.Filter == nil {
+		killQuery = killQuery.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		killQuery, err = filterRunQuery(killQuery, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = killQuery.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	killReq := apiv1.KillRunsRequest{
+		RunIds: activeRuns,
+	}
+	killResp, err := a.KillRuns(ctx, &killReq)
+	if err != nil {
+		return nil, err
+	}
+	// log kill results
+	var results []*apiv1.RunActionResult
+	var failedKills []int32
+	for _, killRes := range killResp.Results {
+		if killRes.Error != "" {
+			results = append(results, killRes)
+			failedKills = append(failedKills, killRes.Id)
+		}
+	}
+
+	// get runs to delete
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", req.ProjectId).
+		Where("r.id NOT IN (?)", bun.In(failedKills))
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	var expDeleteIds []int32
+	for _, check := range runChecks {
+		visibleIDs.Insert(check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+			continue
+		}
+		if check.ExpID != nil && !check.IsMultitrial {
+			expDeleteIds = append(expDeleteIds, *check.ExpID)
+		}
+		validIDs = append(validIDs, check.ID)
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) && !slices.Contains(failedKills, originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.ProjectId),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	if len(validIDs) > 0 {
+		// Delete experiment for single trial
+		expRes, _, err := experiment.DeleteExperiments(ctx, expDeleteIds, nil)
+		failedExpDeleteIds := []int32{-1}
+		for _, deleteRes := range expRes {
+			if deleteRes.Error != nil {
+				failedExpDeleteIds = append(failedExpDeleteIds, deleteRes.ID)
+			}
+		}
+		var acceptedIDs []int32
+		if _, err = db.Bun().NewDelete().Table("runs").
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN", bun.In(failedExpDeleteIds)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("delete runs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+
+		var failedRunIDs []int32
+		if err = db.Bun().NewSelect().Table("runs").
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.id NOT IN (?)", bun.In(failedKills)).
+			Where("runs.experiment_id IN (?)", bun.In(failedExpDeleteIds)).
+			Scan(ctx, &failedRunIDs); err != nil {
+			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
+		}
+		for _, failedRunID := range failedRunIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Failed to delete associated experiment",
+				Id:    failedRunID,
+			})
+		}
+	}
 	return nil, nil
 }
