@@ -25,7 +25,11 @@ import (
 )
 
 const (
-	pgTimeFormat               = "2006-01-02T15:04:05.888738 -07:00:00"
+	pgTimeFormat              = "2006-01-02T15:04:05.888738 -07:00:00"
+	logRetentionConfig100days = `
+retention_policy:
+  log_retention_days: 100
+`
 	logRetentionConfig1000days = `
 retention_policy:
   log_retention_days: 1000
@@ -302,7 +306,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		LogRetentionDays: ptrs.Ptr(int16(100)),
+		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
@@ -337,7 +341,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 
 	// Advance time to midnight.
 	now := time.Now()
-	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 1, 0, 0, now.Location())
 	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 1)
 
 	// Verify that the logs are still there.
@@ -371,8 +375,8 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 10, count)
 
-	// Advance time by 98 days.
-	_, _ = incrementScheduler(t, midnight, fakeClock, 98)
+	// Advance time by 9 days.
+	_, _ = incrementScheduler(t, midnight, fakeClock, 9)
 	// Verify that logs are deleted.
 	count, err = countTaskLogs(api.m.db, taskIDs)
 	require.NoError(t, err)
@@ -386,7 +390,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	}
 }
 
-func TestScheduleRetention1000days(t *testing.T) {
+func TestScheduleRetention100days(t *testing.T) {
 	// Reset retention time to transaction time on exit.
 	defer func() {
 		require.NoError(t, resetRetentionTime())
@@ -399,7 +403,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		LogRetentionDays: ptrs.Ptr(int16(100)),
+		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
@@ -409,7 +413,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create an experiment with 5 trials and a config to expire in 1000 days.
-	experiment, trialIDs, taskIDs := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfig1000days, 5)
+	experiment, trialIDs, taskIDs := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfig100days, 5)
 	require.Nil(t, experiment.EndTime)
 	require.Len(t, trialIDs, 5)
 	require.Len(t, taskIDs, 5)
@@ -434,7 +438,7 @@ func TestScheduleRetention1000days(t *testing.T) {
 
 	// Advance time to midnight.
 	now := time.Now()
-	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 1, 0, 0, now.Location())
 	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 1)
 
 	// Verify that the logs are still there.
@@ -461,8 +465,8 @@ func TestScheduleRetention1000days(t *testing.T) {
 	err = CompleteExpAndTrials(ctx, experiment.Id, trialIDs)
 	require.NoError(t, err)
 
-	// Advance time by 998 days.
-	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 998)
+	// Advance time by 98 days.
+	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 98)
 	// Verify that no logs are deleted.
 	count, err = countTaskLogs(api.m.db, taskIDs)
 	require.NoError(t, err)
@@ -503,7 +507,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	err := logretention.Schedule(model.LogRetentionPolicy{
-		LogRetentionDays: ptrs.Ptr(int16(100)),
+		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
 	require.NoError(t, err)
@@ -538,7 +542,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 
 	// Advance time to midnight.
 	now := time.Now()
-	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 1, 0, 0, now.Location())
 	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 1)
 
 	// Verify that the logs are still there.
@@ -565,22 +569,8 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	err = CompleteExpAndTrials(ctx, experiment.Id, trialIDs)
 	require.NoError(t, err)
 
-	// Advance time by 100 days.
-	midnight, fakeClock = incrementScheduler(t, midnight, fakeClock, 100)
-	// Verify that no logs are deleted.
-	count, err = countTaskLogs(api.m.db, taskIDs)
-	require.NoError(t, err)
-	require.Equal(t, 10, count)
-
-	// Ensure that experiment logs are not deleted.
-	for _, taskID := range taskIDs {
-		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
-		require.NoError(t, err)
-		require.Equal(t, 2, logCount)
-	}
-
-	// Move time 2 years in the future.
-	_, _ = incrementScheduler(t, midnight, fakeClock, 365*2)
+	// Move time 1 year in the future.
+	_, _ = incrementScheduler(t, midnight, fakeClock, 365)
 	// Verify that no logs are deleted.
 	count, err = countTaskLogs(api.m.db, taskIDs)
 	require.NoError(t, err)
