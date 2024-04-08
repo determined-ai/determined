@@ -1381,7 +1381,7 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
-# TODO (eliu): maybe make ee a parameter instead in everything
+  # TODO (eliu): maybe make ee a parameter instead in everything
   build-docs-ee:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1480,7 +1480,7 @@ jobs:
           steps:
             - run: make -C docs preview
 
-# TODO (eliu): check and make sure we don't need a version for OSS
+  # TODO (eliu): check and make sure we don't need a version for OSS
   package-and-push-system-local:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2331,6 +2331,598 @@ jobs:
       - run: pip freeze --all
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
+
+  test-e2e-slurm-disabled:
+    parameters:
+      master_config:
+        type: string
+        default:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - run: echo "Test suite disabled."
+
+  # By default, this job only runs on the main branch unless otherwise
+  # specified. To invoke this job on a developer branch, add the 'ci-run-allgcp'
+  # label to your pull request on github.
+  test-e2e-hpc-gcp:
+    parameters:
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      always-run:
+        type: boolean
+        default: false
+      extra-pytest-flags:
+        type: string
+        default: ""
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+      container-run-type:
+        type: string
+        default: singularity
+      agent-use:
+        type: string
+        default: ""
+      workload-manager:
+        type: string
+        default: slurm
+      master-scheme:
+        type: string
+        default: "http"
+      master-host:
+        type: string
+        default: "localhost"
+      master-port:
+        type: string
+        default: "8080"
+      gcloud-service-key:
+        default: GCLOUD_SERVICE_KEY
+        description: The gcloud service key
+        type: env_var_name
+      google-compute-zone:
+        default: GOOGLE_COMPUTE_ZONE
+        description: The Google compute zone to connect with via the gcloud CLI
+        type: env_var_name
+      google-project-id:
+        default: GOOGLE_PROJECT_ID
+        description: The Google project ID to connect with via the gcloud CLI
+        type: env_var_name
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: xlarge
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      # This is a bit confusing... basically only enter logic for NOT running job
+      # when always-run=false
+      - unless:
+          condition:
+            or:
+              - equal: [ true, <<parameters.always-run>> ]
+              - equal: [ "main", <<pipeline.git.branch>> ]
+              - matches: { pattern: "^release-.*$", value: <<pipeline.git.branch>> }
+          steps:
+            - skip-on-dev-branch
+
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - set-slack-user-id
+
+      - run:
+          name: Create instance name hash and set OPT_DEVBOX_PREFIX env var
+          command: |
+            # This check is for the scenario when two pushes to main are running concurrently (we don't want this).
+            # In this case, we need more specificity to the hash information to make two separate VMs.
+            if [[ $CIRCLE_BRANCH == "main" ]]; then
+              echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}-${CIRCLE_WORKFLOW_JOB_ID}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
+            else
+              echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
+            fi
+
+      - attach_workspace:
+          at: .
+
+      - reinstall-go
+      - go-get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+
+      - setup-python-venv:
+          install-python: true
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.machine-image>>
+
+      - install-devcluster
+      - license-gen
+
+      - gcloud/install:
+          version: "412.0.0"
+      - gcloud/initialize:
+          gcloud-service-key: <<parameters.gcloud-service-key>>
+          google-compute-zone: <<parameters.google-compute-zone>>
+          google-project-id: <<parameters.google-project-id>>
+
+      - run:
+          name: Install terraform
+          command: |
+            wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+            sudo apt update && sudo apt install terraform
+      - run: terraform --version
+
+      - set-google-application-credentials
+
+      - run:
+          name: Delete existing resources (if they exist)
+          command: |
+            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this 
+            # is not set at this point since no terraform initiation has happened. See workaround section in README) 
+            GCLOUD_ZONE=$(grep -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
+            | awk -F' = ' '{ print $2 }' | tr -d '\"')
+            gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$GCLOUD_ZONE --quiet || true
+            gcloud compute firewall-rules delete ${OPT_DEVBOX_PREFIX}-dev-box --quiet || true
+            gcloud compute networks delete ${OPT_DEVBOX_PREFIX}-dev-box --quiet || true
+
+      - run:
+          name: Make slurmcluster
+          # Breaks without apt-get installs for some reason
+          # NOTE: TF_LOCK is set to 'false' to catch the case where a developer triggered a workflow and did not
+          # let it run completely. This should not be an issue since we delete the instance already in the previous
+          # step (this is precautionary). See a similar thing in the 'make unslurmcluster' step.
+          command: |
+            sudo apt-get update
+            sudo apt-get install gettext
+            sudo apt-get install iproute2
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+          background: true
+
+      - run:
+          name: Wait for VM creation
+          command: |
+            sleep 5
+            for i in {1..220}; do
+              ELAPSED_TIME=$((i * 5))
+              echo "Waiting for VM creation [${ELAPSED_TIME}s]..."
+              if grep -q "^Running cluster..." output.log; then
+                echo "VM creation has finished."
+                break
+              fi
+              if [[ $i -eq 220 ]]; then
+                echo "Timeout waiting for VM creation."
+                exit 1
+              fi
+              sleep 5
+            done            
+
+      # For when a user wants to use an agent instead of launcher.
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Build agent resources
+                command: |
+                  make -C agent build package
+            - wait-for-master:
+                scheme: <<parameters.master-scheme>>
+                host: <<parameters.master-host>>
+                port: <<parameters.master-port>>
+            - run:
+                name: Transfer and Allocate agent resources on VM
+                command: |
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
+                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
+                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
+                background: true
+            - run:
+                name: Query the job to ensure Determined Agent is running
+                command: |
+                  # 60 tries gives 30 minutes of tries until the query times out
+                  tries=60
+                  # squeue command gives name and state information. There must be an escape character for the gcloud command.
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
+                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
+                  until [[ -n $(gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T" | grep "determined-agent" | grep "RUNNING") ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        echo "The job determined-agent did not start. Please check if there are other jobs in the queue preventing this job from starting"
+                        exit 1
+                      fi
+                      echo "Waiting 30s to query for the job name again..."
+                      sleep 30
+                      echo "Retrying job query..."
+                      gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
+                  done
+            - run:
+                name: Query the slot count to ensure slots are allocated
+                command: |
+                  tries=20
+                  det slot list
+                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
+                        exit 1
+                      fi
+                      echo "Waiting 5s to query slots again..."
+                      sleep 5
+                      echo "Retrying slot query..."
+                      det slot list
+                  done
+
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          wait-for-master: true
+          master-scheme: <<parameters.master-scheme>>
+          master-host: <<parameters.master-host>>
+          master-port: <<parameters.master-port>>
+          extra-pytest-flags: <<parameters.extra-pytest-flags>>
+
+      # Must cancel the srun command to prevent a ssh error
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Deallocate the Resources on VM
+                command: |
+                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
+                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
+                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
+                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
+                  scancel -u $USER
+
+      - run:
+          name: Make unslurmcluster
+          when: always
+          command: |
+            pkill determined-mast
+            (yes yes || true) | make unslurmcluster TF_LOCK=false
+            # For some reason, even when `make unslurmcluster` is successful, CircleCI
+            # receives exit code 141, so ignore that.
+            EXIT_STATUS=$?
+            echo $EXIT_STATUS
+            if [[ $EXIT_STATUS -eq 141 ]]; then
+              echo "Ignoring exit code 141"
+              exit 0
+            else
+              exit $EXIT_STATUS
+            fi
+      - store_test_results:
+          path: /tmp/test-results/
+
+  test-e2e-slurm:
+    parameters:
+      mark:
+        type: string
+        default: e2e_slurm
+      runner_class:
+        type: string
+        default: determined-ai/znode-cluster
+      master_config:
+        type: string
+        default: |
+          task_container_defaults:
+            slurm:
+              sbatch_args:
+                - --time=04:00:00
+            environment_variables:
+              # Some ports are not working, disable them so distributed jobs work.
+              - NCCL_IB_HCA=mlx6_0:0
+          checkpoint_storage:
+            type: shared_fs
+            host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+            storage_path: determined-checkpoint
+            save_experiment_best: 0
+            save_trial_best: 1
+            save_trial_latest: 1
+          db:
+            user: postgres
+            host: localhost
+            port: 5432
+            name: determined
+            password: launcher
+          resource_manager:
+            type: slurm
+            master_host: $HOSTNAME
+            master_port: 8080
+            host: localhost
+            port: 8181
+            protocol: http
+            slot_type: cuda
+            user_name: launcher
+            group_name: hpcd
+            singularity_image_root: /lustre/hdd/foundation_engineering/images
+            job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+            auth_file: /home/launcher/.launcher.$HOSTNAME.token
+            path: /opt/singularity/bin:/usr/local/bin:${PATH}
+            ld_library_path:
+      reserved_ports_znode50:
+        type: string
+        default: |
+          reserved_ports:
+            - 12350
+            - 12351
+            - 12360
+            - 12361
+            - 12365
+            - 12366
+            - 29400
+      determined_master_host:
+        type: string
+        default: localhost:8080
+      slack-mentions:
+        type: string
+        default: ""
+      cluster_unix_user:
+        type: string
+        default: launcher
+      cluster_determined_user:
+        type: string
+        default: determined
+      determined_admin_username:
+        type: string
+        default: admin
+      determined_admin_password:
+        type: string
+        default: ""
+      database_username:
+        type: string
+        default: postgres
+      database_password:
+        type: string
+        default: launcher
+      extra-pytest-flags:
+        type: string
+        default: ""
+      agent-use:
+        type: string
+        default: ""
+    # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
+    machine: true
+    resource_class: <<parameters.runner_class>>
+    environment:
+      SHARED_CLUSTER: True
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+
+      - set-slack-user-id
+      - run: sudo yum install -y xmlsec1
+      - run:
+          name: Remove previous HPE MLDE Master RPM
+          # FE-35: the slow exit of a container, or NFS caching can cause incorrect response
+          # and failure executing command "rm -rf ${dir}". Wait for 5 seconds and retry the command.
+          # Ignore the failure on retry, cause the failure from "rm -rf" should not stop the test suite to run.
+          command: |
+            export DET_PKG_NAME=$(rpm -qp --queryformat "%{NAME}" master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm)
+            if rpm -q $DET_PKG_NAME; then
+              sudo rpm -e $DET_PKG_NAME
+            fi
+            echo "Cleanup state from prior runs on HOSTNAME=$HOSTNAME"
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/checkpoints/determined-checkpoint"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/archiveVolumes/"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
+
+            dir="/scratch/launcher/.launcher.$HOSTNAME/jobs"
+            if sudo rm -rf ${dir}; then
+              echo "Removed ${dir}"
+            else
+              sleep 5
+              echo "Retry cleanup ${dir}"
+              sudo rm -rf ${dir} || true
+            fi
+
+      - setup-python-venv:
+          determined: True
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          install-python: false
+          executor: <<parameters.runner_class>>
+
+      - run:
+          name: Recreate Fresh Database
+          command: |
+            if systemctl is-active --quiet determined-master; then
+              sudo systemctl stop determined-master
+            fi
+            PGPASSWORD=<<parameters.database_password>> dropdb --host=localhost --port=5432 --username=<<parameters.database_username>> --if-exists determined
+            PGPASSWORD=<<parameters.database_password>> createdb --host=localhost --port=5432 --username=<<parameters.database_username>> determined
+
+      - run:
+          name: Install/Configure HPE MLDE Master
+          command: |
+            sudo rpm -i master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm
+            cat \<< EOF > ./master.yaml
+            <<parameters.master_config>>
+            EOF
+            cat \<< EOF > ./reserved.yaml
+            <<parameters.reserved_ports_znode50>>
+            EOF
+            echo "hostname is $(hostname)"
+            # Disallow certain ports on znode50 for fewer conflicts with znode51
+            if [[ "$(hostname)" == "znode50" ]] ; then cat ./reserved.yaml >> ./master.yaml ; fi
+            cat ./master.yaml
+            sudo cp ./master.yaml /etc/determined/master.yaml
+            sudo systemctl daemon-reload
+            sudo systemctl start determined-master
+            # Show if there are any drained nodes
+            sinfo -R
+            # Resume any drained nodes due to problems killing podman processes.
+            # This will return an error if all nodes do not require a resume (ignore status)
+            sudo scontrol update nodename=znode5[0-1,3-4] state=resume || true
+            sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 mkdir -p /tmp/launcher_podman" || true
+            # Cleanup podman state from any issues in prior runs
+            #sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
+            sinfo -R
+
+      - run:
+          name: Download Apptainer/Enroot image
+          command: |
+            # rocm images are not required at present
+            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
+                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-image>> "
+            else
+                EXIT_STATUS=$?
+                echo "Failed downloading Singularity image. Received exit code $EXIT_STATUS"
+                #Ignore the other failures except for IMAGE_REF_NOT_FOUND_IN_DOC=18 or DOC_FILE_NOT_FOUND=11
+                if [[ $EXIT_STATUS -eq 18 || $EXIT_STATUS -eq 11 ]]; then
+                    exit $EXIT_STATUS
+                else
+                    exit 0
+                fi
+            fi
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-image>> "
+            else
+                EXIT_STATUS=$?
+                echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"
+                #Ignore the other failures except for IMAGE_REF_NOT_FOUND_IN_DOC=18 or DOC_FILE_NOT_FOUND=11
+                if [[ $EXIT_STATUS -eq 18 || $EXIT_STATUS -eq 11 ]]; then
+                    exit $EXIT_STATUS
+                else
+                    exit 0
+                fi
+            fi
+
+      - wait-for-master:
+          host: localhost
+
+      - run:
+          name: Populate determined user agent values
+          command: |
+            id <<parameters.cluster_unix_user>> || sudo useradd <<parameters.cluster_unix_user>>
+            TOKEN=$(
+              curl "<<parameters.determined_master_host>>/api/v1/auth/login" \
+                -f \
+                -X POST \
+                --data-binary @- \<< EOF | jq -r '.token'
+              {
+                  "username": "<<parameters.determined_admin_username>>",
+                  "password": "<<parameters.determined_admin_password>>"
+              }
+            EOF
+            )
+            curl "<<parameters.determined_master_host>>/api/v1/users/2" \
+              -f \
+              -X PATCH \
+              -H "Authorization: Bearer ${TOKEN}" \
+              --data-binary @- \<< EOF
+              {"agentUserGroup": {
+                "agentUid": $(id -u <<parameters.cluster_unix_user>>),
+                "agentUser": "<<parameters.cluster_unix_user>>",
+                "agentGid": $(id -g <<parameters.cluster_unix_user>>),
+                "agentGroup": "$(id -gn <<parameters.cluster_unix_user>>)"
+                }
+              }
+            EOF
+
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Allocate Resources on Cluster
+                # Sed command reduces the slots to 8 to match '-N2 --gpus-per-node=4' usage below.
+                # Affects test e2e_tests/tests/cluster/test_slurm.py:test_mnist_pytorch_distributed
+                command: |
+                  DET_MASTER_HOST=<<parameters.determined_master_host>>
+                  # determined_master_host is localhost, so use actual hostname to pass to the agent
+                  MASTER_HOST=$(hostname)
+                  MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
+                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/tutorials/mnist_pytorch/distributed.yaml
+                  sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
+                  # Include 40 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
+                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=40 -Jdetermined-agent-$HOSTNAME \
+                  --chdir=/scratch/launcher/.launcher.$HOSTNAME  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
+                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default --container-runtime=singularity  --slot-type=cuda \
+                  --image-root=/lustre/hdd/foundation_engineering/images
+                background: true
+            - run:
+                name: Query the job to ensure Determined Agent is running
+                command: |
+                  # 60 tries gives 30 minutes of tries until the query times out
+                  tries=60
+                  squeue -u launcher -o "%j %T"
+                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
+                  until [[ -n $(squeue -u launcher -o "%j %T" | grep "determined-agent-$HOSTNAME" | grep "RUNNING") ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        echo "The job determined-agent-$HOSTNAME did not start. Please check if there are jobs in the queue preventing this job from starting"
+                        exit 1
+                      fi
+                      echo "Waiting 30s to query for the job name again..."
+                      sleep 30
+                      echo "Retrying job query..."
+                      squeue -u launcher -o "%j %T"
+                  done
+            - run:
+                name: Query the slot count to ensure slots are allocated
+                command: |
+                  tries=20
+                  det slot list
+                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
+                      if [[ $((--tries)) -eq 0 ]]; then
+                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
+                        exit 1
+                      fi
+                      echo "Waiting 5s to query slots again..."
+                      sleep 5
+                      echo "Retrying slot query..."
+                      det slot list
+                  done
+
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          master-host: localhost
+          managed-devcluster: false
+          extra-pytest-flags: <<parameters.extra-pytest-flags>>
+
+      - store_test_results:
+          path: /tmp/test-results/
+
+      - when:
+          condition:
+            equal: ["-A", <<parameters.agent-use>>]
+          steps:
+            - run:
+                name: Deallocate Agent Resources on cluster
+                command: |
+                  scancel -u $USER --jobname=determined-agent-$HOSTNAME
+
+      - slack/status:
+          fail_only: True
+          only_for_branches: main
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E slurm job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<pipeline.parameters.default-slack-channel>>
 
   test-e2e:
     parameters:
@@ -3281,6 +3873,175 @@ workflows:
             branches:
               only:
                 - main
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-misconfigured
+          slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - package-and-push-system-local
+          mark: e2e_slurm_misconfigured
+          master_config: |
+            task_container_defaults:
+              slurm:
+                sbatch_args:
+                  - --time=04:00:00
+              environment_variables:
+                # Some ports are not working, disable them so distributed jobs work.
+                - NCCL_IB_HCA=mlx6_0:0
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: launcher
+            resource_manager:
+              type: slurm
+              master_host: junkmaster
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-gpu
+          slack-mentions: "${SLACK_USER_ID}"
+          mark: "e2e_slurm_gpu"
+          requires:
+            - package-and-push-system-local
+
+      # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-singularity-gcp]
+              always-run: [true]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+
+      # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-podman-gcp]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+
+      # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+
+      # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              workload-manager: ["pbs"]
+              always-run: [true]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+
+      # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+
+      # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+
+      # Podman over SLURM test using Agent on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-agent-podman-gcp]
+              agent-use: ["-A"]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+
+      - test-e2e:
+          name: test-e2e-rbac
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_rbac
+          devcluster-config: single-rbac.devcluster.yaml
 
       - test-e2e:
           name: test-e2e-cpu
