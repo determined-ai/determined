@@ -77,6 +77,8 @@ message PostProjectRequest {
   string description = 3;
   // Id of the associated workspace.
   int32 workspace_id = 4;
+  // Key for the project.
+  optional string key = 5;
 }
 
 // Response to PostProjectRequest.

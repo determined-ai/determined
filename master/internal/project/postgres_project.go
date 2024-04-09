@@ -50,3 +50,13 @@ func ProjectIDByName(ctx context.Context, workspaceID int, projectName string) (
 	}
 	return &pID, nil
 }
+
+// GenerateProjectKey generates a unique project key for a project based on its name.
+func GenerateProjectKey(ctx context.Context, projectName string) (string, error) {
+	generatedKey := ""
+	err := db.Bun().NewRaw("SELECT function_generate_project_key(?)", projectName).Scan(ctx, &generatedKey)
+	if err != nil {
+		return "", err
+	}
+	return generatedKey, nil
+}

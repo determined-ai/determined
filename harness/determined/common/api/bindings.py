@@ -10753,6 +10753,7 @@ class v1PostModelVersionResponse(Printable):
 class v1PostProjectRequest(Printable):
     """Request for creating a project."""
     description: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -10760,11 +10761,14 @@ class v1PostProjectRequest(Printable):
         name: str,
         workspaceId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         self.workspaceId = workspaceId
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(key, Unset):
+            self.key = key
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
@@ -10774,6 +10778,8 @@ class v1PostProjectRequest(Printable):
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10783,6 +10789,8 @@ class v1PostProjectRequest(Printable):
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
         return out
 
 class v1PostProjectResponse(Printable):
@@ -11224,6 +11232,7 @@ class v1Project(Printable):
         errorMessage: str,
         id: int,
         immutable: bool,
+        key: str,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
@@ -11240,6 +11249,7 @@ class v1Project(Printable):
         self.errorMessage = errorMessage
         self.id = id
         self.immutable = immutable
+        self.key = key
         self.name = name
         self.notes = notes
         self.numActiveExperiments = numActiveExperiments
@@ -11262,6 +11272,7 @@ class v1Project(Printable):
             "errorMessage": obj["errorMessage"],
             "id": obj["id"],
             "immutable": obj["immutable"],
+            "key": obj["key"],
             "name": obj["name"],
             "notes": [v1Note.from_json(x) for x in obj["notes"]],
             "numActiveExperiments": obj["numActiveExperiments"],
@@ -11285,6 +11296,7 @@ class v1Project(Printable):
             "errorMessage": self.errorMessage,
             "id": self.id,
             "immutable": self.immutable,
+            "key": self.key,
             "name": self.name,
             "notes": [x.to_json(omit_unset) for x in self.notes],
             "numActiveExperiments": self.numActiveExperiments,

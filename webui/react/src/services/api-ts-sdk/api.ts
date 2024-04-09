@@ -7872,6 +7872,12 @@ export interface V1PostProjectRequest {
      * @memberof V1PostProjectRequest
      */
     workspaceId: number;
+    /**
+     * Key for the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    key?: string;
 }
 /**
  * Response to PostProjectRequest.
@@ -8259,6 +8265,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     errorMessage: string;
+    /**
+     * The key of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    key: string;
 }
 /**
  * Project Column is a description of a column used on experiments in the project.
