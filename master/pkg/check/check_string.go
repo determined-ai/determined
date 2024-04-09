@@ -30,14 +30,3 @@ func Match(actual string, regex string, msgAndArgs ...interface{}) error {
 	return check(compiled.FindString(actual) == actual, msgAndArgs,
 		"%s doesn't match regex %s", actual, regex)
 }
-
-// OneOrNoneStr ensures that either one or none of the strings are set.
-func OneOrNoneStr(one, other string, msgAndArgs ...interface{}) error {
-	if one == "" && other == "" {
-		return nil
-	}
-	if one != "" && other != "" {
-		return check(false, msgAndArgs, "only one of %s and %s should be set", one, other)
-	}
-	return nil
-}
