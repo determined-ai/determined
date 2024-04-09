@@ -1,4 +1,4 @@
-DROP TRIGGER IF EXISTS stream_model_trigger_seq ON models
+DROP TRIGGER IF EXISTS stream_model_trigger_seq ON models;
 DROP TRIGGER IF EXISTS stream_model_trigger_iu ON models;
 DROP TRIGGER IF EXISTS stream_model_trigger_d ON models;
 
