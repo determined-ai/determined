@@ -8,13 +8,13 @@ BEGIN
     -- Take the first 3 characters of the input string
     prefix := LEFT(input_string, 3);
 	
-   	execute format('SELECT COUNT(*)+1 FROM projects WHERE key LIKE $1') 
+   	execute format('SELECT COUNT(*)+1 FROM projects WHERE key ILIKE $1') 
    		into count_value
    		using prefix || '%';
    	count_suffix := CAST(count_value as text);
 
     -- Concatenate prefix and count suffix
-    RETURN prefix || count_suffix;
+    RETURN lower(prefix || count_suffix);
 END;
 $$ LANGUAGE plpgsql;
 

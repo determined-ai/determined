@@ -1,7 +1,7 @@
 WITH p AS (
-    INSERT INTO projects (name, description, workspace_id, user_id)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id, name, description, archived, immutable, workspace_id, user_id
+    INSERT INTO projects (name, description, workspace_id, user_id, key)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id, name, description, archived, immutable, workspace_id, user_id, key
 )
 
 SELECT
@@ -12,6 +12,7 @@ SELECT
     p.immutable,
     p.workspace_id,
     p.user_id,
-    u.username
+    u.username,
+    p.key
 FROM p
 JOIN users u ON u.id = p.user_id;
