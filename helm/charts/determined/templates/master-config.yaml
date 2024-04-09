@@ -193,6 +193,10 @@ stringData:
 
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
+      {{- if .Values.taskContainerDefaults.startupHook }}
+      startup_hook:
+        {{- toYaml .Values.taskContainerDefaults.startupHook | nindent 8}}
+      {{- end }}
       {{- if .Values.taskContainerDefaults.networkMode }}
       network_mode: {{ .Values.taskContainerDefaults.networkMode }}
       {{- end }}

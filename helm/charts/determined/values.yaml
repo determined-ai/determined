@@ -285,6 +285,9 @@ taskContainerDefaults:
   #    action:
   #      type: exclude_node
 
+  # Configure an optional inline script that will be executed as part of the task setup process.
+  # startupHook: echo "hello from master startup hook
+
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true
