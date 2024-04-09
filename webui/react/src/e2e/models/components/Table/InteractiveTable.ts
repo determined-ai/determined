@@ -16,6 +16,8 @@ export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this InteractiveTable
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
+ * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class InteractiveTable<
   RowType extends Row,
@@ -37,6 +39,8 @@ export class InteractiveTable<
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this Table
  * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
+ * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
   readonly defaultSelector = '[data-testid="table"]';

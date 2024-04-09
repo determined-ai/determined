@@ -32,6 +32,9 @@ export class F_ExperiementList extends BaseReactFragment {
 
 class ExperimentHeadRow extends HeadRow {}
 class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
+  /**
+   * Clicks the row's id cell
+   */
   async clickID() {
     await this.clickX(50);
   }

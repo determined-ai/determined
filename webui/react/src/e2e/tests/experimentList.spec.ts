@@ -13,6 +13,7 @@ test.describe('Experiement List', () => {
     const projectDetailsPage = new ProjectDetails(page);
     await projectDetailsPage.gotoProject();
     await expect(page).toHaveTitle(projectDetailsPage.title);
+    await expect(projectDetailsPage.f_experiemntList.tableActionBar.pwLocator).toBeVisible();
   });
 
   test.skip('Click around the data grid', async ({ page }) => {
@@ -31,5 +32,7 @@ test.describe('Experiement List', () => {
     expect(await row.isSelected()).toBeTruthy();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.select5.pwLocator.click();
+    await row.clickID();
+    await page.waitForURL(/overview/);
   });
 });

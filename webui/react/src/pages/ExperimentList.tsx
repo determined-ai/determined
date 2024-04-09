@@ -962,7 +962,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           label: action,
           value: action,
         }))}
-        data-test-component="experiementList-tableBatch"
         selectedRowCount={(settings.row ?? []).length}
         onAction={handleBatchAction}
         onClear={clearSelected}

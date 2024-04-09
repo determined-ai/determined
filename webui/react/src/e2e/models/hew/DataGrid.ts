@@ -27,6 +27,8 @@ export type TableArgs<
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this DataGrid
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
+ * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class DataGrid<
   RowType extends Row<RowType, HeadRowType>,
@@ -72,6 +74,11 @@ export class DataGrid<
     }
     return this.#columnheight;
   }
+
+  /**
+   * Returns the height of the header column. Trying to click on a row will fail
+   * if this method hasn't yet been run.
+   */
   async setColumnHeight(): Promise<number> {
     const style = await this.#otherCanvas.pwLocator.getAttribute('style');
     if (style === null) {
@@ -128,6 +135,11 @@ export class DataGrid<
     ).filter((c): c is Awaited<RowType> => !!c);
   }
 
+  /**
+   * Returns the row which matches the condition. Expects only one match.
+   * @param {string} columnName - column to read from
+   * @param {string} value - value to match
+   */
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
     const rows = await this.filterRows(async (row) => {
       return (await row.getCellByColumnName(columnName).pwLocator.innerText()).indexOf(value) > -1;
@@ -146,10 +158,11 @@ export class DataGrid<
 
 /**
  * Returns the representation of a Table Row.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this Row
  * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
  */
 export class Row<
   RowType extends Row<RowType, HeadRowType>,
@@ -163,6 +176,9 @@ export class Row<
   }
   parentTable: DataGrid<RowType, HeadRowType>;
 
+  /**
+   * Returns an aria label value for "selected" status
+   */
   async isSelected(): Promise<string | null> {
     return await this.pwLocator.getAttribute('aria-selected');
   }
@@ -178,17 +194,27 @@ export class Row<
     return +value - 1;
   }
 
+  /**
+   * Returns ideal Y coordinates for a click
+   * @param {object} index - The row's index
+   */
   protected getY(index: number): number {
     return index * this.parentTable.columnHeight + 5;
   }
+
+  /**
+   * Clicks an x coordinate on the row
+   * @param {object} xPos - coordinate
+   */
   async clickX(xPos: number): Promise<void> {
-    // wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
-    // TODO this part isnt working right now
     await this.parentTable.pwLocator.click({
       position: { x: xPos, y: this.getY(await this.getIndex()) },
     });
   }
 
+  /**
+   * Clicks the row's select button
+   */
   async clickSelect(): Promise<void> {
     await this.clickX(5);
   }
@@ -218,7 +244,7 @@ export class Row<
 
 /**
  * Returns the representation of a Table HeadRow.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
+ * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
@@ -244,6 +270,10 @@ export class HeadRow extends NamedComponent {
     return this.#columnDefs;
   }
 
+  /**
+   * Sets Column Definitions
+   * Row.getCellByColumnName will fail without running this first.
+   */
   async setColumnDefs(): Promise<Map<string, number>> {
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
@@ -265,11 +295,21 @@ export class HeadRow extends NamedComponent {
     return this.#columnDefs;
   }
 
+  /**
+   * Clicks the head row's select button
+   */
   async clickSelectDropdown(): Promise<void> {
     await this.clickableParentLocator.click({ position: { x: 5, y: 5 } });
   }
 }
 
+/**
+ * Returns the representation of the grid's Header Dropdown.
+ * This constructor represents the HeaderDropdown in hew/src/kit/DataGrid.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class HeaderDropdown extends Dropdown {
   readonly select5: BaseComponent = new BaseComponent({
     parent: this._menu,
