@@ -103,6 +103,13 @@ specified here. You can customize environment variables for CUDA (NVIDIA GPU), C
 GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Determined 0.17.6),
 ``cpu``, and ``rocm`` keys.
 
+``startup_hook``
+================
+
+An optional inline script that will be executed as part of task set up. This is defined under
+`task_container_defaults` at master or resource pool level. This script will be executed using
+`/bin/bash`.
+
 ``log_policies``
 ================
 

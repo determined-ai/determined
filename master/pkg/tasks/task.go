@@ -145,7 +145,7 @@ func (t *TaskSpec) ResolveWorkDir() {
 func (t *TaskSpec) Archives() ([]cproto.RunArchive, []cproto.RunArchive) {
 	res := []cproto.RunArchive{
 		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
-		runDirHelpersArchive(t.AgentUserGroup),
+		runDirHelpersArchive(t.AgentUserGroup, t.TaskContainerDefaults.StartupHook),
 		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
@@ -197,6 +197,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 		"DET_USER_TOKEN":    t.UserSessionToken,
 		"DET_WORKDIR":       t.WorkDir,
+		"DET_RUN_DIR":       RunDir,
 	}
 	if t.Owner != nil {
 		e["DET_USER"] = t.Owner.Username
@@ -333,8 +334,8 @@ func workDirArchive(
 }
 
 // runDirHelpersArchive ensures helper scripts exist in the run dir.
-func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
-	return wrapArchive(archive.Archive{
+func runDirHelpersArchive(aug *model.AgentUserGroup, startupHook string) cproto.RunArchive {
+	archive := archive.Archive{
 		aug.OwnedArchiveItem(
 			taskSetupScript,
 			etc.MustStaticFile(etc.TaskSetupScriptResource),
@@ -359,7 +360,16 @@ func runDirHelpersArchive(aug *model.AgentUserGroup) cproto.RunArchive {
 			singularityEntrypointWrapperMode,
 			tar.TypeReg,
 		),
-	}, RunDir)
+	}
+	if startupHook != "" {
+		archive = append(archive, aug.OwnedArchiveItem(
+			StartupHookScript,
+			[]byte(startupHook),
+			startupHookMode,
+			tar.TypeReg,
+		))
+	}
+	return wrapArchive(archive, RunDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files

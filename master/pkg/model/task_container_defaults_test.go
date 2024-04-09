@@ -334,17 +334,54 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				},
 			},
 			wantErr: false,
-		}, {
+		},
+		{
 			name:    "merge other has same settings",
 			self:    filledTaskContainerDefaults,
 			other:   filledTaskContainerDefaults,
 			want:    remergedFilledTaskContainerDefaults,
 			wantErr: false,
-		}, {
+		},
+		{
 			name:    "merge other has no settings",
 			self:    filledTaskContainerDefaults,
 			other:   TaskContainerDefaultsConfig{},
 			want:    filledTaskContainerDefaults,
+			wantErr: false,
+		},
+		{
+			name: "merge startup scripts: self set",
+			self: TaskContainerDefaultsConfig{
+				StartupHook: "a",
+			},
+			other: TaskContainerDefaultsConfig{},
+			want: TaskContainerDefaultsConfig{
+				StartupHook: "a",
+			},
+			wantErr: false,
+		},
+		{
+			name: "merge startup scripts: other set",
+			self: TaskContainerDefaultsConfig{},
+			other: TaskContainerDefaultsConfig{
+				StartupHook: "a",
+			},
+			want: TaskContainerDefaultsConfig{
+				StartupHook: "a",
+			},
+			wantErr: false,
+		},
+		{
+			name: "merge startup scripts: both set",
+			self: TaskContainerDefaultsConfig{
+				StartupHook: "self",
+			},
+			other: TaskContainerDefaultsConfig{
+				StartupHook: "other",
+			},
+			want: TaskContainerDefaultsConfig{
+				StartupHook: "other",
+			},
 			wantErr: false,
 		},
 	}
