@@ -38,11 +38,6 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
 
-    deploy_errors.warn_version_mismatch(args.det_version)
-    if args.det_version is None:
-        # keep the existing default value behavior of the cli.
-        args.det_version = determined.__version__
-
     # Set default tf state gcs bucket as '$PROJECT_NAME-determined-deploy` if local tf
     # state doesn't exist and user has not provided a gcs bucket.
     if (
@@ -250,6 +245,10 @@ def handle_down(args: argparse.Namespace) -> None:
 
 
 def handle_up(args: argparse.Namespace) -> None:
+    deploy_errors.warn_version_mismatch(args.det_version)
+    if args.det_version is None:
+        # keep the existing default value behavior of the cli.
+        args.det_version = determined.__version__
     return deploy_gcp("up", args)
 
 
