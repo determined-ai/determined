@@ -165,7 +165,7 @@ def create_user(args: argparse.Namespace) -> None:
     password = args.password
 
     if not remote and not password:
-        password = getpass.getpass("New password for user '{}': ".format(username))
+        password = getpass.getpass("Password for user '{}': ".format(username))
         check_password = getpass.getpass("Confirm password: ")
         if password != check_password:
             raise errors.CliError("Passwords do not match")

@@ -54,8 +54,9 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 @pytest.mark.e2e_cpu
 def test_post_user_api() -> None:
-    new_username = api_utils.get_random_string()
-    new_password = api_utils.get_random_string() + "aA1"
+    new_username = "57884ad2-400e-4e6a-a279-e5b943c32c4f"
+    # password must contain both upper-case and lower-case letters
+    new_password = "262DE646-4549-4504-a3c6-80c04e413329"
 
     sess = api_utils.admin_session()
 
@@ -101,8 +102,9 @@ def test_post_user_api() -> None:
 
 @pytest.mark.e2e_cpu
 def test_create_user_sdk() -> None:
-    username = api_utils.get_random_string()
-    password = api_utils.get_random_string() + "aA1"
+    username = "d62cc542-bf37-44df-9343-407f727387f5"
+    # password must contain both upper-case and lower-case letters
+    password = "7C663CBB-46b4-4d09-9d01-d32b5cef7141"
     det_obj = client.Determined._from_session(api_utils.admin_session())
     user = det_obj.create_user(username=username, admin=False, password=password)
     assert user.user_id is not None and user.username == username
