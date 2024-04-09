@@ -406,7 +406,7 @@ func (a *apiServer) MoveRuns(
 
 func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 ) (*apiv1.PauseRunsResponse, error) {
-	results, err := PauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	results, err := pauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
 	if err != nil {
 		return nil, err
 	}
@@ -415,16 +415,17 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 
 func (a *apiServer) ResumeRuns(ctx context.Context, req *apiv1.ResumeRunsRequest,
 ) (*apiv1.ResumeRunsResponse, error) {
-	results, err := PauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	results, err := pauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
 	if err != nil {
 		return nil, err
 	}
 	return &apiv1.ResumeRunsResponse{Results: results}, nil
 }
 
-func PauseResumeAction(ctx context.Context, IsPause bool, projectId int32,
+func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	runIds []int32, filter *string, skipMultitrial bool) (
-	[]*apiv1.RunActionResult, error) {
+	[]*apiv1.RunActionResult, error,
+) {
 	// Get experiment ids
 	var err error
 	var runChecks []archiveRunOKResult
@@ -438,7 +439,7 @@ func PauseResumeAction(ctx context.Context, IsPause bool, projectId int32,
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_id = ?", projectId)
+		Where("r.project_id = ?", projectID)
 
 	if filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(runIds))
@@ -493,7 +494,7 @@ func PauseResumeAction(ctx context.Context, IsPause bool, projectId int32,
 		for _, originalID := range runIds {
 			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
-					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, projectId),
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, projectID),
 					Id:    originalID,
 				})
 			}
@@ -502,7 +503,7 @@ func PauseResumeAction(ctx context.Context, IsPause bool, projectId int32,
 	// Pause/Resume experiments
 	var expResults []experiment.ExperimentActionResult
 	var errMsg string
-	if IsPause {
+	if isPause {
 		expResults, err = experiment.PauseExperiments(ctx, expIDs.ToSlice(), nil)
 		errMsg = "Failed to pause associated experiment: %s"
 	} else {

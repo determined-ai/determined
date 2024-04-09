@@ -9355,6 +9355,50 @@ export interface V1ResourcesSummary {
     exited?: V1ResourcesStopped;
 }
 /**
+ * Request to unpause the experiment associated witha run.
+ * @export
+ * @interface V1ResumeRunsRequest
+ */
+export interface V1ResumeRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1ResumeRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the project of the runs being unpaused.
+     * @type {number}
+     * @memberof V1ResumeRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ResumeRunsRequest
+     */
+    filter?: string;
+    /**
+     * If true, skip multi-trial experiments for move.
+     * @type {boolean}
+     * @memberof V1ResumeRunsRequest
+     */
+    skipMultitrial: boolean;
+}
+/**
+ * Response to ResumeRunsRequest.
+ * @export
+ * @interface V1ResumeRunsResponse
+ */
+export interface V1ResumeRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1ResumeRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * 
  * @export
  * @interface V1Role
@@ -20707,6 +20751,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling resumeRuns.');
+            }
+            const localVarPath = `/api/v1/runs/resume`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -22497,6 +22579,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResumeRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).resumeRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Start syncing and prepare to be able to report to a run. This should be called once per task that will report to the run.
          * @param {V1RunPrepareForReportingRequest} body
          * @param {*} [options] Override http request option.
@@ -23415,6 +23516,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options?: any) {
+            return InternalApiFp(configuration).resumeRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24374,6 +24485,18 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unpause experiment associated with provided runs.
+     * @param {V1ResumeRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public resumeRuns(body: V1ResumeRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).resumeRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

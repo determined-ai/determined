@@ -32,7 +32,7 @@ def wait_for_run_state(
 
 
 @pytest.mark.e2e_cpu
-def test_run_pause() -> None:
+def test_run_pause_and_resume() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
@@ -54,8 +54,6 @@ def test_run_pause() -> None:
     )
 
     # validate response
-    for i in pauseResp.results:
-        print(i)
     assert len(pauseResp.results) == 1
     assert pauseResp.results[0].id == run_id
     assert pauseResp.results[0].error == ""
@@ -63,9 +61,20 @@ def test_run_pause() -> None:
     # ensure that run is paused
     wait_for_run_state(sess, run_id, bindings.trialv1State.PAUSED)
 
+    resumeResp = bindings.post_ResumeRuns(
+        sess, body=bindings.v1ResumeRunsRequest(runIds=[run_id], projectId=1, skipMultitrial=False)
+    )
+
+    assert len(resumeResp.results) == 1
+    assert resumeResp.results[0].id == run_id
+    assert resumeResp.results[0].error == ""
+
+    # ensure that run is unpaused
+    wait_for_run_state(sess, run_id, bindings.trialv1State.ACTIVE)
+
 
 @pytest.mark.e2e_cpu
-def test_run_pause_filter_no_skip() -> None:
+def test_run_pause_and_resume_filter_no_skip() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess,
@@ -73,16 +82,20 @@ def test_run_pause_filter_no_skip() -> None:
         conf.fixtures_path("mnist_pytorch"),
     )
 
+    runFilter = (
+        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
+        + str(exp_id)
+        + """}, {"columnName":"hp.n_filters2","kind":"field",
+            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
+            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}"""
+    )
+
     pauseResp = bindings.post_PauseRuns(
         sess,
         body=bindings.v1PauseRunsRequest(
             runIds=[],
-            filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-            + str(exp_id)
-            + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            filter=runFilter,
             projectId=1,
             skipMultitrial=False,
         ),
@@ -93,9 +106,20 @@ def test_run_pause_filter_no_skip() -> None:
         assert res.error == ""
         wait_for_run_state(sess, res.id, bindings.trialv1State.PAUSED)
 
+    resumeResp = bindings.post_ResumeRuns(
+        sess,
+        body=bindings.v1ResumeRunsRequest(
+            runIds=[], projectId=1, filter=runFilter, skipMultitrial=False
+        ),
+    )
+
+    for res in resumeResp.results:
+        assert res.error == ""
+        wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
+
 
 @pytest.mark.e2e_cpu
-def test_run_pause_filter_skip_empty() -> None:
+def test_run_pause_and_resume_filter_skip_empty() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess,
@@ -103,16 +127,19 @@ def test_run_pause_filter_skip_empty() -> None:
         conf.fixtures_path("mnist_pytorch"),
     )
 
+    runFilter = (
+        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
+        + str(exp_id)
+        + """}, {"columnName":"hp.n_filters2","kind":"field",
+            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
+            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}"""
+    )
     pauseResp = bindings.post_PauseRuns(
         sess,
         body=bindings.v1PauseRunsRequest(
             runIds=[],
-            filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-            + str(exp_id)
-            + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            filter=runFilter,
             projectId=1,
             skipMultitrial=True,
         ),
@@ -121,3 +148,14 @@ def test_run_pause_filter_skip_empty() -> None:
     # validate response
     for r in pauseResp.results:
         assert r.error == "Skipping run '" + str(r.id) + "' (part of multi-trial)."
+
+    resumeResp = bindings.post_ResumeRuns(
+        sess,
+        body=bindings.v1ResumeRunsRequest(
+            runIds=[], projectId=1, filter=runFilter, skipMultitrial=False
+        ),
+    )
+
+    for res in resumeResp.results:
+        assert res.error == ""
+        wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
