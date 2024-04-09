@@ -6,7 +6,8 @@
     "additionalProperties": false,
     "required": [
         "project",
-        "repo"],
+        "repo"
+    ],
     "properties": {
         "project": {
             "type": [

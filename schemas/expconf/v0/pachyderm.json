@@ -4,26 +4,30 @@
     "title": "PachydermConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": ["pachd", "proxy", "dataset"],
+    "required": [
+        "pachd",
+        "proxy",
+        "dataset"
+    ],
     "eventuallyRequired": [],
     "properties": {
         "pachd": {
             "type": [
                 "object"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
             "type": [
                 "object"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "dataset": {
             "type": [
                 "object"
             ],
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
         }
     }
 }

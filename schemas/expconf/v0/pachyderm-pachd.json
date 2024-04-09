@@ -7,7 +7,8 @@
     "required": [
         "host",
         "port",
-        "token"],
+        "token"
+    ],
     "properties": {
         "host": {
             "type": [

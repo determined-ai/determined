@@ -175,9 +175,7 @@
     checkpoint_policy: best
     checkpoint_storage: null
     data: {}
-    integration: {
-      pachyderm: null
-    }
+    integration: null
     debug: false
     description: null
     entrypoint: model_def:MyTrial
