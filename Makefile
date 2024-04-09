@@ -35,6 +35,11 @@ package:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
+.PHONY: package-ee
+package-ee:
+	$(MAKE) -C agent $@
+	$(MAKE) -C master $@
+
 set-config-dev: .git/hooks/pre-commit
 
 .git/hooks/pre-commit:
