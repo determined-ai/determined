@@ -725,9 +725,19 @@ func (a *apiServer) PostProject(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
+	var projectKey string
+	if req.Key == nil {
+		projectKey, err = project.GenerateProjectKey(ctx, req.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error generating project key: %w", err)
+		}
+	} else {
+		projectKey = *req.Key
+	}
+
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
-		req.WorkspaceId, curUser.ID)
+		req.WorkspaceId, curUser.ID, projectKey)
 
 	return &apiv1.PostProjectResponse{Project: p},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)

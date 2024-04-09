@@ -83,7 +83,8 @@ message Project {
         "state",
         "user_id",
         "username",
-        "workspace_id"
+        "workspace_id",
+        "key"
       ]
     }
   };
@@ -119,6 +120,8 @@ message Project {
   determined.workspace.v1.WorkspaceState state = 14;
   // Message stored from errors on async-deleting a project.
   string error_message = 15;
+  // The key of the project.
+  string key = 16;
 }
 
 // PatchProject is a partial update to a project with all optional fields.
