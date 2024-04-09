@@ -36,7 +36,7 @@ func TestProjectByName(t *testing.T) {
 	})
 
 	t.Run("archived project", func(t *testing.T) {
-		// add archvied project to workspace
+		// add archived project to workspace
 		_, archivedProjectName := internaldb.RequireMockProjectID(t, db, workspaceID, true)
 		_, err := ProjectByName(context.Background(), workspaceName, archivedProjectName)
 		require.Error(t, err)

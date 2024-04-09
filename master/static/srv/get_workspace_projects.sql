@@ -17,7 +17,8 @@ SELECT
     CASE WHEN pe.project_id = p.id THEN pe.start_time ELSE NULL END
   ) AS last_experiment_started_at,
   u.username,
-  p.user_id
+  p.user_id,
+  p.key
 FROM
   projects AS p
   LEFT JOIN workspaces AS w ON p.workspace_id = w.id
