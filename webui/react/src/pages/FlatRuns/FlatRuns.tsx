@@ -7,6 +7,7 @@ import {
   defaultNumberColumn,
   defaultSelectionColumn,
   defaultTextColumn,
+  MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
@@ -58,7 +59,7 @@ import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 
-import { getColumnDefs, RunColumn, runColumns } from './columns';
+import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
@@ -283,7 +284,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultNumberColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -291,7 +294,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -301,7 +306,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultTextColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
         }

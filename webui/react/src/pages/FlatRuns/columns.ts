@@ -1,6 +1,6 @@
 import { CellClickedEventArgs, GridCellKind } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { ColumnDefs } from 'hew/DataGrid/columns';
+import { ColumnDefs, MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import {
   LINK_CELL,
   State,
@@ -85,7 +85,7 @@ function getCellStateFromExperimentState(expState: RunState) {
 
 interface Params {
   appTheme: Theme;
-  columnWidths: Record<string, number>;
+  columnWidths: Record<string, number | undefined | null>;
   themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
 }
@@ -105,7 +105,7 @@ export const getColumnDefs = ({
     }),
     title: 'Archived',
     tooltip: () => undefined,
-    width: columnWidths.archived,
+    width: columnWidths.parentArchived ?? defaultColumnWidths.parentArchived ?? MIN_COLUMN_WIDTH,
   },
   checkpointCount: {
     id: 'checkpointCount',
@@ -118,7 +118,7 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoints',
     tooltip: () => undefined,
-    width: columnWidths.checkpointCount,
+    width: columnWidths.checkpointCount ?? defaultColumnWidths.checkpointCount ?? MIN_COLUMN_WIDTH,
   },
   checkpointSize: {
     id: 'checkpointSize',
@@ -131,7 +131,7 @@ export const getColumnDefs = ({
     }),
     title: 'Checkpoint Size',
     tooltip: () => undefined,
-    width: columnWidths.checkpointSize,
+    width: columnWidths.checkpointSize ?? defaultColumnWidths.checkpointSize ?? MIN_COLUMN_WIDTH,
   },
   duration: {
     id: 'duration',
@@ -156,7 +156,7 @@ export const getColumnDefs = ({
     }),
     title: 'Duration',
     tooltip: () => undefined,
-    width: columnWidths.duration,
+    width: columnWidths.duration ?? defaultColumnWidths.duration ?? MIN_COLUMN_WIDTH,
   },
   experimentDescription: {
     id: 'experimentDescription',
@@ -168,7 +168,10 @@ export const getColumnDefs = ({
     }),
     title: 'Searcher Description',
     tooltip: () => undefined,
-    width: columnWidths.experimentDescription,
+    width:
+      columnWidths.experimentDescription ??
+      defaultColumnWidths.experimentDescription ??
+      MIN_COLUMN_WIDTH,
   },
   experimentId: {
     id: 'experimentId',
@@ -200,7 +203,7 @@ export const getColumnDefs = ({
     }),
     title: 'Searcher ID',
     tooltip: () => undefined,
-    width: columnWidths.experimentId,
+    width: columnWidths.experimentId ?? defaultColumnWidths.experimentId ?? MIN_COLUMN_WIDTH,
   },
   experimentName: {
     id: 'experimentName',
@@ -232,7 +235,7 @@ export const getColumnDefs = ({
     }),
     title: 'Searcher Name',
     tooltip: () => undefined,
-    width: columnWidths.experimentName,
+    width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
   externalExperimentId: {
     id: 'externalExperimentId',
@@ -244,7 +247,10 @@ export const getColumnDefs = ({
     }),
     title: 'External Experiment ID',
     tooltip: () => undefined,
-    width: columnWidths.externalExperimentId,
+    width:
+      columnWidths.externalExperimentId ??
+      defaultColumnWidths.externalExperimentId ??
+      MIN_COLUMN_WIDTH,
   },
   externalRunId: {
     id: 'externalRunId',
@@ -256,7 +262,7 @@ export const getColumnDefs = ({
     }),
     title: 'External Run ID',
     tooltip: () => undefined,
-    width: columnWidths.externalRunId,
+    width: columnWidths.externalRunId ?? defaultColumnWidths.externalRunId ?? MIN_COLUMN_WIDTH,
   },
   forkedFrom: {
     id: 'forkedFrom',
@@ -290,7 +296,7 @@ export const getColumnDefs = ({
     }),
     title: 'Forked From',
     tooltip: () => undefined,
-    width: columnWidths.forkedFrom,
+    width: columnWidths.forkedFrom ?? defaultColumnWidths.forkedFrom ?? MIN_COLUMN_WIDTH,
   },
   id: {
     id: 'id',
@@ -323,7 +329,7 @@ export const getColumnDefs = ({
     }),
     title: 'ID',
     tooltip: () => undefined,
-    width: columnWidths.id,
+    width: columnWidths.id ?? defaultColumnWidths.id ?? MIN_COLUMN_WIDTH,
   },
   isExpMultitrial: {
     id: 'isExpMultitrial',
@@ -335,7 +341,7 @@ export const getColumnDefs = ({
     }),
     title: 'Searcher Multitrial',
     tooltip: () => undefined,
-    width: columnWidths.isExpMultitrial,
+    width: columnWidths.isExpMultitrial ?? defaultColumnWidths.isExpMultitrial ?? MIN_COLUMN_WIDTH,
   },
   progress: {
     id: 'experimentProgress',
@@ -351,7 +357,8 @@ export const getColumnDefs = ({
     },
     title: 'Searcher Progress',
     tooltip: () => undefined,
-    width: columnWidths.progress,
+    width:
+      columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
   },
   resourcePool: {
     id: 'resourcePool',
@@ -363,7 +370,7 @@ export const getColumnDefs = ({
     }),
     title: 'Resource Pool',
     tooltip: () => undefined,
-    width: columnWidths.resourcePool,
+    width: columnWidths.resourcePool ?? defaultColumnWidths.resourcePool ?? MIN_COLUMN_WIDTH,
   },
   searcherMetric: {
     id: 'searcherMetric',
@@ -379,7 +386,7 @@ export const getColumnDefs = ({
     },
     title: 'Searcher Metric',
     tooltip: () => undefined,
-    width: columnWidths.searcherMetric,
+    width: columnWidths.searcherMetric ?? defaultColumnWidths.searcherMetric ?? MIN_COLUMN_WIDTH,
   },
   searcherMetricsVal: {
     id: 'searcherMetricsVal',
@@ -400,7 +407,8 @@ export const getColumnDefs = ({
     },
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
-    width: columnWidths.searcherMetricsVal,
+    width:
+      columnWidths.searcherMetricsVal ?? defaultColumnWidths.searcherMetricsVal ?? MIN_COLUMN_WIDTH,
   },
   searcherType: {
     id: 'searcherType',
@@ -412,7 +420,7 @@ export const getColumnDefs = ({
     }),
     title: 'Searcher Type',
     tooltip: () => undefined,
-    width: columnWidths.searcherType,
+    width: columnWidths.searcherType ?? defaultColumnWidths.searcherType ?? MIN_COLUMN_WIDTH,
   },
   startTime: {
     id: 'startTime',
@@ -425,7 +433,7 @@ export const getColumnDefs = ({
     }),
     title: 'Start Time',
     tooltip: () => undefined,
-    width: columnWidths.startTime,
+    width: columnWidths.startTime ?? defaultColumnWidths.startTime ?? MIN_COLUMN_WIDTH,
   },
   state: {
     id: 'state',
@@ -443,7 +451,7 @@ export const getColumnDefs = ({
     themeOverride: { cellHorizontalPadding: 13 },
     title: 'State',
     tooltip: (record: FlatRun) => capitalize(record.state),
-    width: columnWidths.state,
+    width: columnWidths.state ?? defaultColumnWidths.state ?? MIN_COLUMN_WIDTH,
   },
   tags: {
     id: 'tags',
@@ -460,7 +468,7 @@ export const getColumnDefs = ({
     }),
     title: 'Tags',
     tooltip: () => undefined,
-    width: columnWidths.tags,
+    width: columnWidths.tags ?? defaultColumnWidths.tags ?? MIN_COLUMN_WIDTH,
   },
   user: {
     id: 'user',
@@ -488,7 +496,7 @@ export const getColumnDefs = ({
         Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.userId)),
       });
     },
-    width: columnWidths.user,
+    width: columnWidths.user ?? defaultColumnWidths.user ?? MIN_COLUMN_WIDTH,
   },
 });
 

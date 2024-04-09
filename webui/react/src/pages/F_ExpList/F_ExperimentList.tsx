@@ -80,6 +80,7 @@ import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
 import {
+  defaultColumnWidths,
   ExperimentColumn,
   experimentColumns,
   getColumnDefs,
@@ -684,7 +685,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const widthDifference = newTableWidth - comparisonViewTableWidth;
       // Positive widthDifference: Table pane growing/compare pane shrinking
       // Negative widthDifference: Table pane shrinking/compare pane growing
-      const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
+      const newColumnWidths: Record<string, number | null | undefined> = {
+        ...settings.columnWidths,
+      };
       pinnedColumns
         .filter(
           (col) =>
@@ -694,7 +697,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
-            newColumnWidths[col] + widthDifference / arr.length,
+            newColumnWidths[col] ?? MIN_COLUMN_WIDTH + widthDifference / arr.length,
           );
         });
       updateSettings({
@@ -832,7 +835,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -843,7 +848,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -853,7 +860,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -863,7 +872,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultTextColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -875,7 +886,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             !settings.heatmapSkipped.includes(currentColumn.column)
           ) {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               {
                 max: heatmap.max,
                 min: heatmap.min,
@@ -883,7 +896,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             );
           } else {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
             );
           }
         }
