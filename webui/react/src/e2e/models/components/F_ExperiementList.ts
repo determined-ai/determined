@@ -9,8 +9,7 @@ import { Pagination } from 'e2e/models/hew/Pagination';
  * Returns a representation of the F_ExperiementList component.
  * This constructor represents the contents in src/components/F_ExperiementList.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this F_ExperiementList
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {CanBeParent} obj.parent - The parent used to locate this F_ExperiementList
  */
 export class F_ExperiementList extends BaseReactFragment {
   readonly tableActionBar: TableActionBar = new TableActionBar({ parent: this });
@@ -34,6 +33,6 @@ export class F_ExperiementList extends BaseReactFragment {
 class ExperimentHeadRow extends HeadRow {}
 class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
   async clickID() {
-    await this.pwLocator.click({ position: { x: 50, y: this.getY(await this.getIndex()) } });
+    await this.clickX(50)
   }
 }

@@ -4,7 +4,7 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * Returns a representation of the TableActionBar component.
  * This constructor represents the contents in src/components/TableActionBar.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this TableActionBar
+ * @param {CanBeParent} obj.parent - The parent used to locate this TableActionBar
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class TableActionBar extends NamedComponent {

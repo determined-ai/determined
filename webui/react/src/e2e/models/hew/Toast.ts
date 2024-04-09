@@ -4,7 +4,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  * Returns a representation of the Mondal component from Hew.
  * This constructor represents the contents in hew/src/kit/Toast.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Toast
+ * @param {CanBeParent} obj.parent - The parent used to locate this Toast
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 

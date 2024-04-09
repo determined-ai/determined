@@ -5,8 +5,7 @@ import { Dropdown } from 'e2e/models/hew/Dropdown';
  * Returns a representation of the NavigationSideBar component.
  * This constructor represents the contents in src/components/NavigationSideBar.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this NavigationSideBar
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {CanBeParent} obj.parent - The parent used to locate this NavigationSideBar
  */
 export class NavigationSideBar extends BaseReactFragment {
   readonly #nav: BaseComponent = new BaseComponent({

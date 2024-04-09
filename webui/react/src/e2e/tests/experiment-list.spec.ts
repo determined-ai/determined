@@ -9,9 +9,15 @@ test.describe('Experiement List', () => {
     await auth.login();
   });
 
-  test('Navigate to User Management', async ({ page }) => {
-    const experiementListPage = new ProjectDetails(page);
-    await experiementListPage.gotoProject();
-    await expect(page).toHaveTitle(experiementListPage.title);
+  test('Navigate to Experiment List', async ({ page }) => {
+    const projectDetailsPage = new ProjectDetails(page);
+    await projectDetailsPage.gotoProject();
+    await expect(page).toHaveTitle(projectDetailsPage.title);
+    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).toHaveCount(1)
+    await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight()
+    await projectDetailsPage.f_experiemntList.dataGrid.headRow.setColumnDefs()
+    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('Trials', '1')
+    await row.clickSelect()
+    expect(await row.isSelected()).toBeTruthy()
   });
 });

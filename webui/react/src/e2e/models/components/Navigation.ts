@@ -5,7 +5,7 @@ import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
  * Returns a representation of the Navigation component.
  * This constructor represents the contents in src/components/Navigation.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Navigation
+ * @param {CanBeParent} obj.parent - The parent used to locate this Navigation
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class Navigation extends NamedComponent {

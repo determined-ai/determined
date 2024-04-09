@@ -14,7 +14,7 @@ export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
  * Returns a representation of the InteractiveTable component.
  * This constructor represents the contents in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this InteractiveTable
+ * @param {CanBeParent} obj.parent - The parent used to locate this InteractiveTable
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class InteractiveTable<
@@ -91,7 +91,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
       rows.map(async (row) => {
         return (
           (await row.getAttribute(keyAttribute)) ||
-          Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`))
+          Promise.reject(new Error(`All rows should have the attribute ${keyAttribute}`))
         );
       }),
     );
