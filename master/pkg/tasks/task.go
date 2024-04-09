@@ -197,6 +197,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 		"DET_USER_TOKEN":    t.UserSessionToken,
 		"DET_WORKDIR":       t.WorkDir,
+		"DET_RUN_DIR":       RunDir,
 	}
 	if t.Owner != nil {
 		e["DET_USER"] = t.Owner.Username

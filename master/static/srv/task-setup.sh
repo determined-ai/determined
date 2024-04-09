@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-export DET_RUN_DIR=/run/determined
-
 STDOUT_FILE=/run/determined/train/logs/stdout.log
 STDERR_FILE=/run/determined/train/logs/stderr.log
 
@@ -56,7 +54,4 @@ if [ "$HOME" = "/" ]; then
     export HOME
 fi
 
-tcd_startup_hook_path="$DET_RUN_DIR/dynamic-tcd-startup-hook.sh"
-if [ -f "$tcd_startup_hook_path" ]; then
-    source "$tcd_startup_hook_path"
-fi
+TCD_STARTUP_HOOK="$DET_RUN_DIR/dynamic-tcd-startup-hook.sh"

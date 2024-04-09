@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source /run/determined/task-setup.sh "$@"
+source /run/determined/task-setup.sh
 
 set -e
 
@@ -9,6 +9,10 @@ set -e
 # which contains the "determined/exec/prep_container.py" script that's needed
 # to register the proxy with the Determined master.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
+
+set -x
+test -f "${TCD_STARTUP_HOOK}" && source "${TCD_STARTUP_HOOK}"
+set +x
 
 if [ "$#" -eq 1 ]; then
     exec /bin/sh -c "$@"
