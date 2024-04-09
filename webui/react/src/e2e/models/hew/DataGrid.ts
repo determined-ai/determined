@@ -1,5 +1,7 @@
 import { Locator } from '@playwright/test';
+
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { Dropdown } from 'e2e/models/hew/Dropdown';
 
 type RowClass<RowType extends Row<RowType, HeadRowType>, HeadRowType extends HeadRow> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -10,7 +12,7 @@ export type RowArgs<
   RowType extends Row<RowType, HeadRowType>,
   HeadRowType extends HeadRow,
 > = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
-export type HeadRowArgs = NamedComponentArgs & { parentTableLocator: Locator };
+export type HeadRowArgs = NamedComponentArgs & { clickableParentLocator: Locator };
 export type TableArgs<
   RowType extends Row<RowType, HeadRowType>,
   HeadRowType extends HeadRow,
@@ -38,7 +40,10 @@ export class DataGrid<
       parent: this.#body,
       parentTable: this,
     });
-    this.headRow = new args.headRowType({ parent: this.#head, parentTableLocator: this.pwLocator });
+    this.headRow = new args.headRowType({
+      clickableParentLocator: this.pwLocator,
+      parent: this.#head,
+    });
   }
   readonly canvasTable: BaseComponent = new BaseComponent({
     parent: this,
@@ -62,7 +67,7 @@ export class DataGrid<
   });
 
   get columnHeight(): number {
-    if (this.#columnheight === undefined) {
+    if (this.#columnheight === undefined || Number.isNaN(this.#columnheight)) {
       throw new Error('Please use setColumnHeight to set the column height');
     }
     return this.#columnheight;
@@ -76,7 +81,7 @@ export class DataGrid<
     if (matches === null) {
       throw new Error("Couldn't find height in style attribute.");
     }
-    this.#columnheight = +matches[0];
+    this.#columnheight = +matches[1];
     return this.columnHeight;
   }
 
@@ -124,12 +129,18 @@ export class DataGrid<
   }
 
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
-    const rows = await this.filterRows(async (row) => {return (await row.getCellByColumnName(columnName).pwLocator.innerText()).indexOf(value) > -1})
+    const rows = await this.filterRows(async (row) => {
+      return (await row.getCellByColumnName(columnName).pwLocator.innerText()).indexOf(value) > -1;
+    });
     if (rows.length !== 1) {
-      const names = await Promise.all(rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerText()))
-      throw new Error(`Expected one row to have ${columnName} ${value}. Found ${rows.length}: ${names}.`)
+      const names = await Promise.all(
+        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerText()),
+      );
+      throw new Error(
+        `Expected one row to have ${columnName} ${value}. Found ${rows.length}: ${names}.`,
+      );
     }
-    return rows[0]
+    return rows[0];
   }
 }
 
@@ -153,7 +164,7 @@ export class Row<
   parentTable: DataGrid<RowType, HeadRowType>;
 
   async isSelected(): Promise<string | null> {
-    return await this.pwLocator.getAttribute('aria-selected')
+    return await this.pwLocator.getAttribute('aria-selected');
   }
 
   /**
@@ -173,11 +184,13 @@ export class Row<
   async clickX(xPos: number): Promise<void> {
     // wait for it to receive pointer events at the action point, for example, waits until element becomes non-obscured by other elements
     // TODO this part isnt working right now
-    await this.parentTable._parent.pwLocator.click({ position: { x: xPos, y: this.getY(await this.getIndex()) } });
+    await this.parentTable.pwLocator.click({
+      position: { x: xPos, y: this.getY(await this.getIndex()) },
+    });
   }
 
   async clickSelect(): Promise<void> {
-    await this.clickX(5)
+    await this.clickX(5);
   }
 
   /**
@@ -194,12 +207,12 @@ export class Row<
    * Returns a cell from a column name.
    */
   getCellByColumnName(s: string): BaseComponent {
-    const map = this.parentTable.headRow.columnDefs
+    const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${map}`)
+      throw new Error(`Column with title expected but not found ${map}`);
     }
-    return this.getCellByIndex(index)
+    return this.getCellByIndex(index);
   }
 }
 
@@ -212,13 +225,13 @@ export class Row<
  */
 export class HeadRow extends NamedComponent {
   readonly defaultSelector = 'tr';
-  readonly parentTableLocator: Locator;
+  readonly clickableParentLocator: Locator;
   constructor(args: HeadRowArgs) {
     super(args);
-    this.parentTableLocator = args.parentTableLocator;
+    this.clickableParentLocator = args.clickableParentLocator;
   }
 
-  readonly selection: BaseComponent = new BaseComponent({
+  readonly selectDropdown: HeaderDropdown = new HeaderDropdown({
     parent: this,
     selector: '[aria-colindex="1"]',
   });
@@ -230,10 +243,11 @@ export class HeadRow extends NamedComponent {
     }
     return this.#columnDefs;
   }
+
   async setColumnDefs(): Promise<Map<string, number>> {
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
-      throw new Error (`Expected to see more than 0 columns.`)
+      throw new Error('Expected to see more than 0 columns.');
     }
     await Promise.all(
       cells.map(async (cell) => {
@@ -251,9 +265,26 @@ export class HeadRow extends NamedComponent {
     return this.#columnDefs;
   }
 
-  async clickSelectAll(): Promise<void> {
-    await this.parentTableLocator.click({ position: { x: 5, y: 5 } });
+  async clickSelectDropdown(): Promise<void> {
+    await this.clickableParentLocator.click({ position: { x: 5, y: 5 } });
   }
+}
 
-  // TODO add a modal for select all actions
+class HeaderDropdown extends Dropdown {
+  readonly select5: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('select-5'),
+  });
+  readonly select10: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('select-10'),
+  });
+  readonly select25: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('select-25'),
+  });
+  readonly selectAll: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('select-all'),
+  });
 }
