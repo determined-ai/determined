@@ -107,8 +107,8 @@ GPU) tasks differently by specifying a dict with ``cuda`` (``gpu`` prior to Dete
 ================
 
 An optional inline script that will be executed as part of task set up. This is defined under
-`task_container_defaults` at master or resource pool level.
-This script will be executed using `/bin/bash`.
+`task_container_defaults` at master or resource pool level. This script will be executed using
+`/bin/bash`.
 
 ``log_policies``
 ================
