@@ -70,6 +70,27 @@ class MetricsContext:
     def close(self) -> None:
         self._maybe_raise_exception()
         self._shipper.stop()
+        self._join_with_timeout()
+
+    def _join_with_timeout(self) -> None:
+        while not self._shipper._queue.empty():
+            # If the queue isn't empty, wait for metric reporting and print logs intermittently.
+            self._shipper.join(timeout=10)
+            self._maybe_raise_exception()
+            if self._shipper.is_alive():
+                logger.info("Waiting for _Shipper thread to finish reporting metrics...")
+            else:
+                return
+
+        # Metrics queue is empty, join with timeout to avoid hangs and add logs to help debug.
+        self._shipper.join(timeout=1)
+        if self._shipper.is_alive():
+            logger.info(f"Waiting for _Shipper thread to finish...")
+            self._shipper.join(timeout=5)
+            if self._shipper.is_alive():
+                logger.warning(f"Failed to complete _Shipper cleanup.")
+            else:
+                logger.info(f"_Shipper cleanup complete.")
 
 
 class _TrialMetrics:
@@ -144,18 +165,6 @@ class _Shipper(threading.Thread):
 
     def stop(self) -> None:
         self._queue.put(None)
-        if self._queue.empty():
-            # Join with timeout to avoid hangs and add logs to help debug.
-            self.join(timeout=1)
-            if self.is_alive():
-                logger.info(f"Waiting for _Shipper thread to finish...")
-                self.join(timeout=5)
-                if self.is_alive():
-                    logger.warning(f"Failed to complete _Shipper cleanup.")
-                else:
-                    logger.info(f"_Shipper cleanup complete.")
-        else:
-            self.join()
 
     def _post_metrics(
         self,
