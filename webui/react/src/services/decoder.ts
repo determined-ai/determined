@@ -482,69 +482,23 @@ export function mapV1Experiment(
   config?: Sdk.V1GetExperimentResponse['config'],
 ): types.FullExperimentItem | types.BulkExperimentItem {
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-
-  if (config === undefined) {
-    const hyperparameters = flattenObject<types.HyperparameterBase>(data?.hyperparameters ?? {}, {
+  const getHyperparameters = (hp: types.HyperparameterBase) => {
+    return flattenObject<types.HyperparameterBase>(hp, {
       continueFn,
     }) as types.HyperparametersFlattened;
+  };
 
-    const bulkExpItem: types.BulkExperimentItem = {
-      archived: data.archived,
-      checkpoints: data.checkpointCount,
-      checkpointSize: parseInt(data?.checkpointSize || '0'),
-      description: data.description,
-      duration: data.duration,
-      endTime: data.endTime as unknown as string,
-      externalExperimentId: data.externalExperimentId,
-      externalTrialId: data.externalTrialId,
-      forkedFrom: data.forkedFrom,
-      hyperparameters,
-      id: data.id,
-      jobId: data.jobId,
-      jobSummary: jobSummary,
-      labels: data.labels || [],
-      modelDefinitionSize: data.modelDefinitionSize,
-      name: data.name,
-      notes: data.notes,
-      numTrials: data.numTrials || 0,
-      progress: data.progress != null ? data.progress : undefined,
-      projectId: data.projectId,
-      projectName: data.projectName,
-      resourcePool: data.resourcePool || '',
-      searcherMetricValue: data.bestTrialSearcherMetric,
-      searcherType: data.searcherType,
-      startTime: data.startTime as unknown as string,
-      state: decodeExperimentState(data.state),
-      trialIds: data.trialIds || [],
-      unmanaged: data.unmanaged,
-      userId: data.userId ?? 0,
-      workspaceId: data.workspaceId,
-      workspaceName: data.workspaceName,
-    };
-    return bulkExpItem;
-  }
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
-    ioTypes.ioExperimentConfig,
-    config,
-  );
-  const hyperparameters = flattenObject<types.HyperparameterBase>(
-    data?.hyperparameters ?? ioConfig?.hyperparameters ?? {},
-    { continueFn },
-  ) as types.HyperparametersFlattened;
-
-  const fullExpItem: types.FullExperimentItem = {
+  const bulkExpItem: types.BulkExperimentItem = {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
-    config: ioToExperimentConfig(ioConfig),
-    configRaw: config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters,
+    hyperparameters: getHyperparameters(data?.hyperparameters ?? {}),
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,
@@ -566,6 +520,22 @@ export function mapV1Experiment(
     userId: data.userId ?? 0,
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,
+  };
+
+  if (config === undefined) {
+    return bulkExpItem;
+  }
+
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
+    config,
+  );
+
+  const fullExpItem: types.FullExperimentItem = {
+    ...bulkExpItem,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: config,
+    hyperparameters: getHyperparameters(data?.hyperparameters ?? ioConfig?.hyperparameters ?? {}),
   };
   return fullExpItem;
 }
