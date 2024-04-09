@@ -26,14 +26,17 @@ set the following option in the master config:
      authz:
        type: rbac
 
-Brand new Determined installations include two user accounts:
+A new cluster deployed with the :ref:`Helm Chart <helm-config-reference>` includes two default
+users, ``admin`` and ``determined``. You must either configure an initial password for the these
+default users or deactivate them.
 
 -  The ``admin`` user has full cluster access by default through the pre-canned ``ClusterAdmin``
    role.
 -  The ``determined`` user has no permissions.
 
-Both accounts have empty passwords. You are encouraged to set strong passwords or deactivate these
-accounts for security reasons.
+.. include:: ../../_shared/password-note.txt
+
+.. _rbac-strong-password:
 
 Example Setup (CLI)
 ===================
@@ -41,8 +44,8 @@ Example Setup (CLI)
 In this section, we will configure a Determined instance to support a cluster administrator account,
 and a few engineers with varying level of access.
 
-First, create a new user ``alice``, set a password, make it an admin, and deactivate the default
-accounts:
+First, create a new user ``alice``, set a strong password, make it an admin, and deactivate the
+default accounts:
 
 .. code:: bash
 

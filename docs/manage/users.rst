@@ -9,7 +9,8 @@
 *******
 
 Only the ``admin`` user can create users, change users' passwords, and activate or deactivate users.
-Upon initial installation, the admin should set an admin password.
+Upon initial installation, the admin should set an admin password. Upon initial installation, the
+admin must set a strong admin password.
 
 Default Accounts
 ================
@@ -19,7 +20,8 @@ Initially, there are two accounts:
 -  ``admin`` (full privileges)
 -  ``determined`` (for single-user installations)
 
-Both have blank passwords by default.
+Setting an ``initialUserPassword`` for the ``admin`` and ``determined`` user accounts is a required
+step and is configured in the :ref:`Helm Chart <helm-config-reference>`.
 
 Setting the Admin Password
 ==========================
@@ -30,8 +32,10 @@ Use the following CLI command to set the admin password:
 
    det -u admin user change-password
 
-Creating Individual User Accounts
-=================================
+.. include:: ../_shared/password-note.txt
+
+Creating Individual User (Member) Accounts
+==========================================
 
 You can add, edit, and manage users manually via the CLI or the WebUI.
 
@@ -109,14 +113,13 @@ be discarded using the ``user logout`` subcommand:
 
    det -u <username> user logout
 
+.. _strong-password:
+
 ******************
  Change Passwords
 ******************
 
-Users have blank passwords by default. This might be sufficient for low-security or experimental
-clusters, and it still provides the organizational benefits of associating each Determined object
-with the user that created it. If desired, a user can change their own password using the ``user
-change-password`` subcommand:
+A user can change their own password using the ``user change-password`` subcommand:
 
 .. code::
 

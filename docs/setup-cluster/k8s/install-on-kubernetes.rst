@@ -175,13 +175,13 @@ CPU and GPU tasks. The defaults can be defined in ``values.yaml`` under
 to do this and a description of permissible fields, see the :ref:`specifying custom pod specs
 <custom-pod-specs>` guide.
 
-Default Password (Optional)
-===========================
+Default Password
+================
 
-Unless otherwise specified, the pre-existing users, ``admin`` and ``determined``, do not have
-passwords associated with their accounts. You can set a default password for the ``determined`` and
-``admin`` accounts if preferred or needed. This password will not affect any other user account. For
-additional information on managing users in determined, see the :ref:`topic guide on users <users>`.
+Setting an ``initialUserPassword`` for the ``admin`` and ``determined`` user accounts is a required
+step and is configured in the :ref:`Helm Chart <helm-config-reference>`. The password for these
+users will not affect any other user account. For additional information on managing users in
+determined, visit the :ref:`topic guide on users <users>`.
 
 Database (Optional)
 ===================
