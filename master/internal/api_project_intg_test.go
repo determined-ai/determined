@@ -371,3 +371,67 @@ func TestGetProjectByActivity(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(resp.Projects))
 }
+
+func TestCreateProjectWithoutProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKeyPrefix := projectName[:3]
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	// Check that the project key is generated correctly.
+	countPostFix := 0
+	err = db.Bun().NewSelect().
+		ColumnExpr("COUNT(*)").
+		Table("projects").
+		Where("key ILIKE ?", (projectKeyPrefix+"%")).
+		Scan(ctx, &countPostFix)
+	require.NoError(t, err)
+	require.Equal(t, (projectKeyPrefix + fmt.Sprintf("%d", countPostFix)), resp.Project.Key)
+}
+
+func TestCreateProjectWithProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKey := uuid.New().String()[:5]
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.NoError(t, err)
+
+	// Check that the project key is generated correctly.
+	err = db.Bun().NewSelect().
+		Column("key").
+		Table("projects").
+		Where("id = ?", resp.Project.Id).
+		Scan(ctx, &resp.Project.Key)
+	require.NoError(t, err)
+	require.Equal(t, projectKey, resp.Project.Key)
+}
+
+func TestCreateProjectWithDuplicateProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKey := uuid.New().String()[:5]
+	_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.NoError(t, err)
+
+	_, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName + "2", WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.Error(t, err)
+	require.Equal(t, status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey), err)
+}

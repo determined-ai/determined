@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/uptrace/bun"
 
@@ -548,6 +549,16 @@ func (a *apiServer) PostProject(
 	p := &projectv1.Project{}
 	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
 		req.WorkspaceId, curUser.ID, projectKey)
+
+	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
+		if strings.Contains(err.Error(), "projects_key_key") {
+			return nil,
+				status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey)
+		} else if strings.Contains(err.Error(), "projects_name_key") {
+			return nil,
+				status.Errorf(codes.AlreadyExists, "project with name %s already exists", req.Name)
+		}
+	}
 
 	return &apiv1.PostProjectResponse{Project: p},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)
