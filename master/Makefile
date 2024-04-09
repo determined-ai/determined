@@ -14,10 +14,12 @@ export DOCKER_REPO ?= determinedai
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
-PROJECT_NAME = hpe-mlde-master
+PROJECT_NAME = determined-master
+EE_PROJECT_NAME = hpe-mlde-master
 ARCHS = amd64 arm64 ppc64
 ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 SHARED_CLUSTER_IMAGE=$(shell echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$(ARCH_SMALL))
 
 PUB_MANIFESTS = \
@@ -25,12 +27,26 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
 
-DEV_MANIFESTS_SMALL = \
-	$(DOCKER_REPO)/determined-master:$(FULL_COMMIT)-shared-cluster \
-	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)-shared-cluster
+EE_PUB_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(VERSION)
 
 DEV_MANIFESTS = \
-	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+
+EE_DEV_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)
+
+DEV_MANIFESTS_SMALL = \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-shared-cluster \
+	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)-shared-cluster
+
+NVCR_TAGS = \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(VERSION)
 
 .PHONY: clean
 clean: ungen
@@ -226,11 +242,18 @@ packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
-package: export DET_EE_LICENSE = $(shell cat ../license.txt)
-package: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-package: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package: gen buildx
-	$(GORELEASER) --snapshot --rm-dist
+	$(GORELEASER) --snapshot --rm-dist 
+
+.PHONY: package-ee
+package-ee: export DET_SEGMENT_MASTER_KEY ?=
+package-ee: export DET_SEGMENT_WEBUI_KEY ?=
+package-ee: export DET_EE_LICENSE = $(shell cat ../license.txt)
+package-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+package-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-ee: gen buildx
+	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_ee.yml
 
 .PHONY: package-small
 package-small: export DET_SEGMENT_MASTER_KEY ?=
@@ -244,12 +267,20 @@ package-small: gen buildx-small
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
-release: export DET_EE_LICENSE = $(shell cat ../license.txt)
-release: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-release: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release: export GORELEASER_CURRENT_TAG := $(VERSION)
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: gen buildx
 	$(GORELEASER) --rm-dist
+
+.PHONY: release-ee
+release-ee: export DET_SEGMENT_MASTER_KEY ?=
+release-ee: export DET_SEGMENT_WEBUI_KEY ?=
+release-ee: export DET_EE_LICENSE = $(shell cat ../license.txt)
+release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release-ee: gen buildx
+	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
 
 define manifest_publish
 	for image in $(2); do \
@@ -266,6 +297,10 @@ endef
 publish-dev:
 	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
 
+.PHONY: publish-dev-ee
+publish-dev-ee:
+	@$(call manifest_publish, $(EE_DEV_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
+
 .PHONY: publish-dev-small
 publish-dev-small:
 	@$(call manifest_publish, $(DEV_MANIFESTS_SMALL), $(SHARED_CLUSTER_IMAGE))
@@ -273,3 +308,14 @@ publish-dev-small:
 .PHONY: publish
 publish:
 	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-ee
+publish-ee:
+	@$(call manifest_publish, $(EE_PUB_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
+
+.PHONY: publish-nvcr
+publish-nvcr:
+	for image in $(NVCR_TAGS); do \
+		docker tag $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-amd64 $$image; \
+		docker push $$image; \
+	done
