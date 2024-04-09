@@ -100,7 +100,8 @@ class Determined:
         hashedPassword = None
         if not remote:
             api.check_password_complexity(password)
-            hashedPassword = api.salt_and_hash(password)
+            if password is not None:  # always true provided check_password didn't raise
+                hashedPassword = api.salt_and_hash(password)
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         assert resp.user is not None
