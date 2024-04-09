@@ -82,6 +82,14 @@ class User:
         self.reload()
 
     def change_password(self, new_password: str) -> None:
+        """Changes this user's password.
+
+        Arg:
+            new_password: password to set.
+
+        Raises:
+            ValueError: an error describing why the password does not meet complexity requirements.
+        """
         api.check_password_complexity(new_password)
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)

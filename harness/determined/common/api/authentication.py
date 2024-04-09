@@ -23,10 +23,24 @@ def salt_and_hash(password: str) -> str:
         return password
 
 
-def check_password_complexity(password: str) -> None:
+def check_password_complexity(password: Optional[str]) -> None:
+    """Raises a ValueError if the password does not meet complexity requirements.
+
+    The complexity requirements are:
+        - Must be at least 8 characters long.
+        - Must contain at least one upper-case letter.
+        - Must contain at least one lower-case letter.
+        - Must contain at least one number.
+
+    Args:
+        password: a password to check.
+
+    Raises:
+        ValueError: an error describing why the password does not meet complexity requirements.
     """
-    raises a ValueError if the password does not meet complexity requirements
-    """
+    if password is None:
+        raise ValueError("password cannot be blank")
+
     if len(password) < 8:
         raise ValueError("password must have at least 8 characters")
 

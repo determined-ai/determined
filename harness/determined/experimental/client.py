@@ -248,15 +248,19 @@ def list_experiments(
 def create_user(
     username: str, admin: bool, password: Optional[str] = None, remote: bool = False
 ) -> User:
-    """Create an user with username and password, admin.
+    """Creates a user.
 
     Arg:
         username: username of the user.
         password: password of the user.
         admin: indicates whether the user is an admin.
+        remote: indicates whether the user is managed by a remote service.
 
     Returns:
         A :class:`~determined.experimental.client.User` of the created user.
+
+    Raises:
+        ValueError: an error describing why the password does not meet complexity requirements.
     """
     assert _determined is not None
     return _determined.create_user(username, admin, password, remote)
