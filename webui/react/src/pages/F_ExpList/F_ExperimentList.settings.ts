@@ -3,6 +3,7 @@ import * as t from 'io-ts';
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import { SettingsConfig } from 'hooks/useSettings';
+import { optional } from 'ioTypes';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
 
@@ -28,7 +29,7 @@ export const ProjectSettings = t.intersection([
   t.type({}),
   t.partial({
     columns: t.array(t.string),
-    columnWidths: t.record(t.string, t.number),
+    columnWidths: t.record(t.string, optional(t.number)),
     compare: t.boolean,
     filterset: t.string, // save FilterFormSet as string
     heatmapOn: t.boolean,
