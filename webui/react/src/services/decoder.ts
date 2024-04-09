@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
+import { BrandingType, DeterminedInfo, MaintenanceMessage } from 'stores/determinedInfo';
 import { Pagination, RawJson } from 'types';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
@@ -90,6 +90,15 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     return acc;
   }, BrandingType.Determined);
 
+  // modifiedAt: new Date(data.modifiedAt || 1).getTime(),
+  // TODO: time types?
+  const maintMsg = data.maintenanceMessage ? ({
+    message: data.maintenanceMessage.message,
+    startTime: data.maintenanceMessage.startTime,
+    endTime: data.maintenanceMessage.endTime ? new Date(data.maintenanceMessage.endTime) : undefined,
+    createdTime: data.maintenanceMessage.createdTime,
+  } as MaintenanceMessage) : undefined;
+
   return {
     branding,
     checked: true,
@@ -98,6 +107,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
     featureSwitches: data.featureSwitches || [],
+    maintenanceMessage: maintMsg,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     rbacEnabled: !!data.rbacEnabled,

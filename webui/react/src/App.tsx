@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
+import MaintenanceMessage from 'components/MaintenanceMessage';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
@@ -159,15 +160,21 @@ const AppView: React.FC = () => {
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Number(workspaceId ?? '')));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
+  useEffect(() => {
+    console.log(loadableInfo);
+  }, [loadableInfo]);
+
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
-    Loaded: () => (
+    Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
                 <ConfirmationProvider>
+                  {info.maintenanceMessage ? <MaintenanceMessage message={info.maintenanceMessage} /> : null}
+                  {/* <div>This is for maintenance message. {info.maintenanceMessage?.message}</div> */}
                   <Navigation>
                     <JupyterLabGlobal
                       enabled={
