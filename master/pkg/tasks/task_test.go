@@ -60,12 +60,6 @@ func TestTCDStartupHook(t *testing.T) {
 	hook := findFirstStartupHook(userArchives)
 	require.Nil(t, hook, "Empty TCD should not generate a startup hook file")
 
-	entryPoints := taskSpec.tCDStartupEntrypoint()
-	require.Empty(t, entryPoints, "Empty TCD should not have startup hook")
-	allEntrypoints := taskSpec.CombinedEntrypoint()
-	require.NotContains(t, allEntrypoints, "--tcd_startup_hook_filename", "Empty TCD should not have startup hook")
-	require.NotContains(t, allEntrypoints, taskSpec.tcdStartHookPath(), "Empty TCD should not have startup hook")
-
 	// with a startup hook.
 
 	tcd.StartupHook = "echo hi"
@@ -74,10 +68,4 @@ func TestTCDStartupHook(t *testing.T) {
 	hook = findFirstStartupHook(userArchives)
 	require.NotNil(t, hook, "TCD with startup hook should generate a startup hook file")
 	require.Contains(t, string(hook.Content), "echo hi")
-	entryPoints = taskSpec.tCDStartupEntrypoint()
-	require.NotEmpty(t, entryPoints, "TCD with startup hook should have startup hook")
-	require.Len(t, entryPoints, 2, "TCD with startup hook should have two parts")
-	allEntrypoints = taskSpec.CombinedEntrypoint()
-	require.Contains(t, allEntrypoints, "--tcd_startup_hook_filename", "TCD with startup hook should have startup hook")
-	require.Contains(t, allEntrypoints, taskSpec.tcdStartHookPath(), "TCD with startup hook should have startup hook")
 }
