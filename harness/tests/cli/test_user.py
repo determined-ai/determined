@@ -10,9 +10,7 @@ from determined.common.api import bindings
 from tests.cli import util
 
 
-@mock.patch("getpass.getpass")
-def test_user_create(mock_getpass: mock.MagicMock) -> None:
-    # Create with --password flag
+def test_user_create_with_password_flag() -> None:
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10017)
         rsps.post(
@@ -36,7 +34,8 @@ def test_user_create(mock_getpass: mock.MagicMock) -> None:
             ["user", "create", "test-user-1", "--password", "5DCAB140-f49b-4260-a451-fad6a10017ca"]
         )
 
-    # Create remote user
+
+def test_user_create_remote_account() -> None:
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10018)
         rsps.post(
@@ -58,7 +57,9 @@ def test_user_create(mock_getpass: mock.MagicMock) -> None:
         )
         cli.main(["user", "create", "test-user-2", "--remote"])
 
-    # Create interactively
+
+@mock.patch("getpass.getpass")
+def test_user_create_interactive_password(mock_getpass: mock.MagicMock) -> None:
     mock_getpass.side_effect = lambda *_: "8CBAAB59-21c5-45cb-b058-6e2f3ceaf03e"
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10019)
@@ -81,12 +82,12 @@ def test_user_create(mock_getpass: mock.MagicMock) -> None:
         )
         cli.main(["user", "create", "test-user-3"])
 
-    # Attempt to create without password
+
+@mock.patch("getpass.getpass")
+def test_user_create_no_password_fails(mock_getpass: mock.MagicMock) -> None:
     mock_getpass.side_effect = lambda *_: ""
-    with util.standard_cli_rsps() as rsps:
-        userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10020)
-        with pytest.raises(SystemExit):
-            cli.main(["user", "create", "test-user-4"])
+    with pytest.raises(SystemExit):
+        cli.main(["user", "create", "test-user-4"])
 
 
 @mock.patch("getpass.getpass")
@@ -114,9 +115,12 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
 
         cli.main(["user", "change-password", "tgt-user"])
 
-    # cannot set password to blank
+
+@mock.patch("getpass.getpass")
+def test_user_change_password_blank_fails(mock_getpass: mock.MagicMock) -> None:
     mock_getpass.side_effect = lambda *_: ""
     with util.standard_cli_rsps() as rsps:
+        userobj = bindings.v1User(active=True, admin=False, username="det-user", id=102)
         rsps.get(
             "http://localhost:8080/api/v1/users/tgt-user/by-username",
             status=200,
@@ -125,9 +129,12 @@ def test_user_change_password(mock_getpass: mock.MagicMock) -> None:
         with pytest.raises(SystemExit):
             cli.main(["user", "change-password", "tgt-user"])
 
-    # cannot set password to something weak
+
+@mock.patch("getpass.getpass")
+def test_user_change_password_weak_fails(mock_getpass: mock.MagicMock) -> None:
     mock_getpass.side_effect = lambda *_: "password"
     with util.standard_cli_rsps() as rsps:
+        userobj = bindings.v1User(active=True, admin=False, username="det-user", id=103)
         rsps.get(
             "http://localhost:8080/api/v1/users/tgt-user/by-username",
             status=200,
