@@ -599,9 +599,21 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleColumnsOrderChange = useCallback(
     (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.columnWidths],
   );
 
   const handleRowHeightChange = useCallback(
@@ -674,7 +686,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       // Negative widthDifference: Table pane shrinking/compare pane growing
       const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
       pinnedColumns
-        .filter((col) => widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH)
+        .filter(
+          (col) =>
+            !STATIC_COLUMNS.includes(col) &&
+            (widthDifference > 0 || newColumnWidths[col] > MIN_COLUMN_WIDTH),
+        )
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
