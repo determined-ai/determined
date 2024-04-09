@@ -10012,7 +10012,7 @@ class v1PauseRunsRequest(Printable):
         return out
 
 class v1PauseRunsResponse(Printable):
-    """Response to {aiseRunsRequest."""
+    """Response to PauseRunsRequest."""
 
     def __init__(
         self,

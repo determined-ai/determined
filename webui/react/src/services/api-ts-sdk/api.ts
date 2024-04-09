@@ -7354,7 +7354,7 @@ export interface V1PauseRunsRequest {
     skipMultitrial: boolean;
 }
 /**
- * Response to {aiseRunsRequest.
+ * Response to PauseRunsRequest.
  * @export
  * @interface V1PauseRunsResponse
  */

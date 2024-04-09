@@ -406,6 +406,25 @@ func (a *apiServer) MoveRuns(
 
 func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 ) (*apiv1.PauseRunsResponse, error) {
+	results, err := PauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PauseRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) ResumeRuns(ctx context.Context, req *apiv1.ResumeRunsRequest,
+) (*apiv1.ResumeRunsResponse, error) {
+	results, err := PauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ResumeRunsResponse{Results: results}, nil
+}
+
+func PauseResumeAction(ctx context.Context, IsPause bool, projectId int32,
+	runIds []int32, filter *string, skipMultitrial bool) (
+	[]*apiv1.RunActionResult, error) {
 	// Get experiment ids
 	var err error
 	var runChecks []archiveRunOKResult
@@ -419,12 +438,12 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_id = ?", req.ProjectId)
+		Where("r.project_id = ?", projectId)
 
-	if req.Filter == nil {
-		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	if filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(runIds))
 	} else {
-		getQ, err = filterRunQuery(getQ, req.Filter)
+		getQ, err = filterRunQuery(getQ, filter)
 		if err != nil {
 			return nil, err
 		}
@@ -448,7 +467,7 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 			})
 			continue
 		}
-		if check.IsMultitrial && req.SkipMultitrial {
+		if check.IsMultitrial && skipMultitrial {
 			results = append(results, &apiv1.RunActionResult{
 				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", check.ID),
 				Id:    check.ID,
@@ -470,18 +489,26 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 		}
 		expIDs.Insert(*check.ExpID)
 	}
-	if req.Filter == nil {
-		for _, originalID := range req.RunIds {
+	if filter == nil {
+		for _, originalID := range runIds {
 			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
-					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.ProjectId),
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, projectId),
 					Id:    originalID,
 				})
 			}
 		}
 	}
-	// Pause experiments
-	expResults, err := experiment.PauseExperiments(ctx, expIDs.ToSlice(), nil)
+	// Pause/Resume experiments
+	var expResults []experiment.ExperimentActionResult
+	var errMsg string
+	if IsPause {
+		expResults, err = experiment.PauseExperiments(ctx, expIDs.ToSlice(), nil)
+		errMsg = "Failed to pause associated experiment: %s"
+	} else {
+		expResults, err = experiment.ActivateExperiments(ctx, expIDs.ToSlice(), nil)
+		errMsg = "Failed to resume associated experiment: %s"
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +520,7 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 		for _, runID := range val {
 			if expRes.Error != nil {
 				results = append(results, &apiv1.RunActionResult{
-					Error: fmt.Sprintf("Failed to pause associated experiment: %s", expRes.Error),
+					Error: fmt.Sprintf(errMsg, expRes.Error),
 					Id:    runID,
 				})
 			} else {
@@ -504,5 +531,5 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 			}
 		}
 	}
-	return &apiv1.PauseRunsResponse{Results: results}, nil
+	return results, nil
 }
