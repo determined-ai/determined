@@ -1340,8 +1340,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl python3 py3-pip
-      - run: pip3 install awscli
+      - run: apk add make curl
       - run: make -C docs publish
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
