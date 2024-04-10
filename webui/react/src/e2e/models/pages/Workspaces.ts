@@ -1,6 +1,8 @@
 import { BasePage } from 'e2e/models/BasePage';
 import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
 import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
+import { ModalRootPage } from './ModalRootPage';
+import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 
 
 /**
@@ -15,5 +17,9 @@ export class Workspaces extends BasePage {
   })
   readonly projects: WorkspaceDetails = new WorkspaceDetails({ 
     parent:this
+  })
+  readonly modalRoot: ModalRootPage = new ModalRootPage(this._page);
+  readonly createModal: WorkspaceCreateModal = new WorkspaceCreateModal({
+    parent: this.modalRoot
   })
 }

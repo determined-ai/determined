@@ -8,9 +8,15 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspacesList extends NamedComponent {
-    override defaultSelector: string = '[id=workspaces]';
-    readonly newWorkspaceButton: BaseComponent = new BaseComponent({
-        parent: this,
-        selector: '[data-testid="newWorkspace"]',
-      });
+  override defaultSelector: string = '[id=workspaces]';
+  readonly newWorkspaceButton: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="newWorkspace"]',
+  });
+  readonly cardWithName = (name: string): BaseComponent => { // DNJ TODO - create a card component type?
+    return new BaseComponent({
+      parent: this,
+      selector: `[data-testid="card-${name}"]`,
+    });
+  }
 }
