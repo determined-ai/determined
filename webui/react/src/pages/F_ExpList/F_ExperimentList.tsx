@@ -709,7 +709,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       updateSettings({
         columnWidths: {
           ...settings.columnWidths,
-          [columnId]: width,
+          [columnId]: Math.max(MIN_COLUMN_WIDTH, width),
         },
       });
     },
