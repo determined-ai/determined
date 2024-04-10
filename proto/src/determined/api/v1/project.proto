@@ -34,6 +34,8 @@ message GetProjectColumnsRequest {
 
   // The id of the project.
   int32 id = 1;
+  // True => Project Run Columns, False => Project Experiment Columns.
+  bool is_run_columns = 2;
 }
 
 // Response for experiment list columns

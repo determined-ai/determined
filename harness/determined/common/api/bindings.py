@@ -18533,12 +18533,16 @@ def get_GetProjectColumns(
     session: "api.BaseSession",
     *,
     id: int,
+    runProject: "typing.Optional[bool]" = None,
 ) -> "v1GetProjectColumnsResponse":
     """Get a list of columns for experiment list table.
 
     - id: The id of the project.
+    - runProject: True => Project Run Columns, False => Project Experiment Columns.
     """
-    _params = None
+    _params = {
+        "runProject": str(runProject).lower() if runProject is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/projects/{id}/columns",

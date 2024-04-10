@@ -318,6 +318,267 @@ func (a *apiServer) getProjectColumnsByID(
 	}, nil
 }
 
+func (a *apiServer) getProjectRunColumnsByID(
+	ctx context.Context, id int32, curUser model.User,
+) (*apiv1.GetProjectColumnsResponse, error) {
+	p, err := a.GetProjectByID(ctx, id, curUser)
+	if err != nil {
+		return nil, err
+	}
+
+	columns := []*projectv1.ProjectColumn{
+		{
+			Column:      "id",
+			DisplayName: "ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "name",
+			DisplayName: "Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "experimentDescription",
+			DisplayName: "Description",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "tags",
+			DisplayName: "Tags",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "forkedFrom",
+			DisplayName: "Forked",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "startTime",
+			DisplayName: "Start time",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+		},
+		{
+			Column:      "duration",
+			DisplayName: "Duration",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "state",
+			DisplayName: "State",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherType",
+			DisplayName: "Searcher",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "resourcePool",
+			DisplayName: "Resource pool",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "checkpointSize",
+			DisplayName: "Checkpoint size",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "checkpointCount",
+			DisplayName: "Checkpoints",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "user",
+			DisplayName: "User",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherMetric",
+			DisplayName: "Searcher Metric",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "searcherMetricsVal",
+			DisplayName: "Searcher Metric Value",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+		},
+		{
+			Column:      "externalExperimentId",
+			DisplayName: "External Experiment ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "externalRunId",
+			DisplayName: "External Run ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+	}
+
+	hyperparameters := []struct {
+		WorkspaceID     int
+		Hyperparameters expconf.HyperparametersV0
+		RunID           *int
+	}{}
+
+	// get all runs in project
+	runsQuery := db.Bun().NewSelect().
+		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
+		ColumnExpr("hyperparameters").
+		Column("id").
+		Table("runs").
+		Where("hyperparameters IS NOT NULL").
+		Where("project_id = ?", id).
+		Order("id")
+
+	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
+		ctx,
+		curUser,
+		p,
+		db.Bun().NewSelect().TableExpr("(?) AS subq", runsQuery),
+		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = runsQuery.Scan(ctx, &hyperparameters)
+	if err != nil {
+		return nil, err
+	}
+
+	runIDs := make([]int, 0, len(hyperparameters))
+	for _, hparam := range hyperparameters {
+		if hparam.RunID != nil {
+			runIDs = append(runIDs, *hparam.RunID)
+		}
+	}
+	summaryMetrics := []struct {
+		MetricName string
+		JSONPath   string
+		MetricType string
+		Count      int32
+	}{}
+
+	if len(runIDs) > 0 {
+		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
+			`summary_metrics->jsonb_object_keys(summary_metrics)->
+		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+		AS metric_type`).
+			Where("id IN (?)", bun.In(runIDs)).Distinct()
+		runsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
+			ColumnExpr("*").ColumnExpr(
+			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
+			Order("json_path").Order("metric_name")
+		err = runsQuery.Scan(ctx, &summaryMetrics)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for idx, stats := range summaryMetrics {
+		// If there are multiple metrics with the same group and name, report one unspecified column.
+		if stats.Count > 1 {
+			continue
+		}
+
+		columnType := parseMetricsType(stats.MetricType)
+		if len(summaryMetrics) > idx+1 && summaryMetrics[idx+1].Count > 1 {
+			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+		}
+
+		columnPrefix := stats.JSONPath
+		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
+		if stats.JSONPath == metricGroupTraining {
+			columnPrefix = metricIDTraining
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
+		}
+		if stats.JSONPath == metricGroupValidation {
+			columnPrefix = metricIDValidation
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_VALIDATIONS
+		}
+		// don't surface aggregates that don't make sense for non-numbers
+		if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+			aggregates := []string{"last", "max", "mean", "min"}
+			for _, aggregate := range aggregates {
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
+					Location: columnLocation,
+					Type:     columnType,
+				})
+			}
+		} else {
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+				Location: columnLocation,
+				Type:     columnType,
+			})
+		}
+	}
+	hparamSet := make(map[string]struct{})
+	for _, hparam := range hyperparameters {
+		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
+
+		// ensure we're iterating in order
+		paramKeys := make([]string, 0, len(flatHparam))
+		for key := range flatHparam {
+			paramKeys = append(paramKeys, key)
+		}
+		sort.Strings(paramKeys)
+
+		for _, key := range paramKeys {
+			value := flatHparam[key]
+			_, seen := hparamSet[key]
+			if !seen {
+				hparamSet[key] = struct{}{}
+				var columnType projectv1.ColumnType
+				switch {
+				case value.RawIntHyperparameter != nil ||
+					value.RawDoubleHyperparameter != nil ||
+					value.RawLogHyperparameter != nil:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+				case value.RawConstHyperparameter != nil:
+					switch value.RawConstHyperparameter.RawVal.(type) {
+					case float64:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+					case string:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+					default:
+						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+					}
+				default:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
+				}
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("hp.%s", key),
+					Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+					Type:     columnType,
+				})
+			}
+		}
+	}
+
+	return &apiv1.GetProjectColumnsResponse{
+		Columns: columns,
+	}, nil
+}
+
 func parseMetricsType(metricType string) projectv1.ColumnType {
 	switch metricType {
 	case db.MetricTypeString:
@@ -390,7 +651,11 @@ func (a *apiServer) GetProjectColumns(
 		return nil, err
 	}
 
-	return a.getProjectColumnsByID(ctx, req.Id, *curUser)
+	if req.IsRunColumns {
+		return a.getProjectRunColumnsByID(ctx, req.Id, *curUser)
+	} else {
+		return a.getProjectColumnsByID(ctx, req.Id, *curUser)
+	}
 }
 
 func (a *apiServer) GetProjectNumericMetricsRange(
