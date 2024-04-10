@@ -241,30 +241,6 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
 
 The resource manager used to acquire resources. Defaults to ``agent``.
 
-For Kubernetes installations, if you define additional resource managers, the resource manager
-specified under the primary resource_manager key here is considered the default.
-
-``name``
-========
-
-Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
-Kubernetes installations with additional resource managers, ensure unique names for all resource
-managers in the cluster.
-
-``metadata``
-============
-
-Optional. Stores additional information about the resource manager in a yaml map, such as the zone,
-region, or location.
-
-For example:
-
-.. code:: yaml
-
-   metadata:
-      region: us-west1
-      zone: us-west1-a
-
 ``type: agent``
 ===============
 
