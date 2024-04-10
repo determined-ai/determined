@@ -1305,7 +1305,7 @@ commands:
           no_output_timeout: 30m
           command: make package
 
-    make-package-ee:
+  make-package-ee:
     steps:
       - attach_workspace:
           at: .
@@ -4614,11 +4614,11 @@ workflows:
           requires:
             - build-helm
             - build-proto
-      - package-and-push-system-dev:
-          requires:
-            - build-react
-            - build-docs
-          filters: *any-upstream
+      # - package-and-push-system-dev:
+      #     requires:
+      #       - build-react
+      #       - build-docs
+      #     filters: *any-upstream
       - package-and-push-system-dev-ee:
           requires:
             - build-react
@@ -4667,7 +4667,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-deepspeed-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.12xlarge"]
@@ -4691,7 +4691,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu"]
@@ -4708,7 +4708,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["parallel"]
@@ -4730,7 +4730,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
@@ -4754,7 +4754,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-cpu"]
@@ -4777,7 +4777,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-k8s"]
@@ -4808,7 +4808,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -4853,7 +4853,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-nightly
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4874,7 +4874,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4894,7 +4894,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4915,10 +4915,11 @@ workflows:
           context:
             - aws
             - aws-ci-cluster-default-user-credentials
+            - determined-ee
           filters: *upstream-feature-branch
           requires:
             - request-mmdetection-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
@@ -4973,7 +4974,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-channel: <<pipeline.parameters.default-slack-channel>>
@@ -4989,7 +4990,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-channel: <<pipeline.parameters.default-slack-channel>>
