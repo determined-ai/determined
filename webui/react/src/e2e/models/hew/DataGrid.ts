@@ -93,11 +93,11 @@ export class DataGrid<
   }
 
   /**
-   * Returns a row from an index. Start counting at 1.
+   * Returns a row from an index. Start counting at 0.
    */
   getRowByIndex(n: number): RowType {
     return new this.#rowType({
-      attachment: `[${this.rows.indexAttribute}="${n + 1}"]`,
+      attachment: `[${this.rows.indexAttribute}="${n + 2}"]`,
       parent: this.#body,
       parentTable: this,
     });
@@ -127,8 +127,7 @@ export class DataGrid<
     return (
       await Promise.all(
         Array.from(Array(await this.rows.pwLocator.count()).keys()).map(async (key) => {
-          // .keys() counts from 0 and we want to count from 1
-          const row = this.getRowByIndex(key + 1);
+          const row = this.getRowByIndex(key);
           return (await condition(row)) && row;
         }),
       )
@@ -184,14 +183,14 @@ export class Row<
   }
 
   /**
-   * Returns the index of the row. Start counting at 1.
+   * Returns the index of the row. Start counting at 0.
    */
   async getIndex(): Promise<number> {
     const value = await this.pwLocator.getAttribute(this.indexAttribute);
     if (value === null) {
       throw new Error(`All rows should have the attribute ${this.indexAttribute}`);
     }
-    return +value - 1;
+    return +value - 2;
   }
 
   /**
@@ -199,7 +198,8 @@ export class Row<
    * @param {object} index - The row's index
    */
   protected getY(index: number): number {
-    return index * this.parentTable.columnHeight + 5;
+    // (index + 1) here to account for header row
+    return (index + 1) * this.parentTable.columnHeight + 5;
   }
 
   /**
@@ -220,12 +220,12 @@ export class Row<
   }
 
   /**
-   * Returns a cell from an index. Start counting at 1.
+   * Returns a cell from an index. Start counting at 0.
    */
   getCellByIndex(n: number): BaseComponent {
     return new BaseComponent({
       parent: this,
-      selector: `[aria-colindex="${n}"]`,
+      selector: `[aria-colindex="${n+1}"]`,
     });
   }
 
@@ -238,7 +238,7 @@ export class Row<
     if (index === undefined) {
       throw new Error(`Column with title expected but not found ${map}`);
     }
-    return this.getCellByIndex(index);
+    return this.getCellByIndex(index - 1);
   }
 }
 
