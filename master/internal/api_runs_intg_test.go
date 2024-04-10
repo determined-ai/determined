@@ -507,10 +507,9 @@ func TestArchiveUnarchiveIds(t *testing.T) {
 	require.Equal(t, "", archRes.Results[0].Error)
 	require.Equal(t, "", archRes.Results[1].Error)
 
-	filter := `{"showArchived":false}`
 	searchReq := &apiv1.SearchRunsRequest{
 		ProjectId: &projectID,
-		Filter:    &filter,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
 		Sort:      ptrs.Ptr("id=asc"),
 	}
 
@@ -576,10 +575,9 @@ func TestArchiveUnarchiveFilter(t *testing.T) {
 	require.Len(t, archRes.Results, 1)
 	require.Equal(t, "", archRes.Results[0].Error)
 
-	noArchFilter := `{"showArchived":false}`
 	searchReq := &apiv1.SearchRunsRequest{
 		ProjectId: &projectID,
-		Filter:    &noArchFilter,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
 		Sort:      ptrs.Ptr("id=asc"),
 	}
 
@@ -619,10 +617,9 @@ func TestArchiveAlreadyArchived(t *testing.T) {
 	require.Equal(t, "", archRes.Results[0].Error)
 	require.Equal(t, "", archRes.Results[1].Error)
 
-	filter := `{"showArchived":false}`
 	searchReq := &apiv1.SearchRunsRequest{
 		ProjectId: &projectID,
-		Filter:    &filter,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
 		Sort:      ptrs.Ptr("id=asc"),
 	}
 

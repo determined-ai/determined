@@ -474,22 +474,23 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 	var validIDs []int32
 	for _, check := range runChecks {
 		visibleIDs.Insert(check.ID)
-		if check.Archived && archive {
+		switch {
+		case check.Archived && archive:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is already archived.",
 				Id:    check.ID,
 			})
-		} else if !check.Archived && !archive {
+		case !check.Archived && !archive:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not archived.",
 				Id:    check.ID,
 			})
-		} else if check.State == nil || !*check.State {
+		case check.State == nil || !*check.State:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in terminal state.",
 				Id:    check.ID,
 			})
-		} else {
+		default:
 			validIDs = append(validIDs, check.ID)
 		}
 	}
