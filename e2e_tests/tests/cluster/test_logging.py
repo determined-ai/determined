@@ -175,7 +175,7 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
 
 
 def check_logs(
-    log_regex: Any,
+    log_regex: re.Pattern,
     log_fn: Callable[..., Iterable[Log]],
     log_fields_fn: Callable[..., Iterable[LogFields]],
 ) -> None:
