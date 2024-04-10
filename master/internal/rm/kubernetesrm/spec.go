@@ -35,8 +35,13 @@ import (
 const (
 	coscheduler = "coscheduler"
 
-	gcTask  = "gc"
-	cmdTask = "cmd"
+	gcTask            = "gc"
+	cmdTask           = "cmd"
+	userLabel         = "determined_user"
+	workspaceLabel    = "determined_workspace"
+	resourcePoolLabel = "determined_resource_pool"
+	taskTypeLabel     = "determined_task_type"
+	taskIDLabel       = "determined_task_id"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -360,6 +365,22 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Namespace = p.namespace
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
+	}
+	// add determined metadata as pod labels
+	if val, ok := p.labels[userLabel]; ok {
+		podSpec.ObjectMeta.Labels[userLabel] = val
+	}
+	if val, ok := p.labels[workspaceLabel]; ok {
+		podSpec.ObjectMeta.Labels[workspaceLabel] = val
+	}
+	if val, ok := p.labels[resourcePoolLabel]; ok {
+		podSpec.ObjectMeta.Labels[resourcePoolLabel] = val
+	}
+	if val, ok := p.labels[taskTypeLabel]; ok {
+		podSpec.ObjectMeta.Labels[taskTypeLabel] = val
+	}
+	if val, ok := p.labels[taskIDLabel]; ok {
+		podSpec.ObjectMeta.Labels[taskIDLabel] = val
 	}
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
 

@@ -88,6 +88,7 @@ type pod struct {
 	ports            []int
 	resourcesDeleted atomic.Bool
 	containerNames   set.Set[string]
+	labels           map[string]string
 
 	restore bool
 
@@ -151,6 +152,7 @@ func newPod(
 		configMapName:        uniqueName,
 		container:            podContainer,
 		containerNames:       containerNames,
+		labels:               msg.Labels,
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,

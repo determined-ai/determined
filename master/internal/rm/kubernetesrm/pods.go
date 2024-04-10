@@ -556,6 +556,7 @@ func (p *pods) reattachPod(
 		Slots:        slots,
 		ResourcePool: resourcePool,
 		LogContext:   logContext,
+		Labels:       pod.GetObjectMeta().GetLabels(), // includes *all* labels
 	}
 
 	newPodHandler := newPod(
