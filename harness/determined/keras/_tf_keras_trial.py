@@ -27,11 +27,17 @@ if version.parse(tf.__version__) >= version.parse("2.6.0"):
     from keras import callbacks
 
     # TODO MLG-444 Migrate from legacy Keras hdf5 saving methods
-    if version.parse(tf.__version__) >= version.parse("2.11.0"):
+    if version.parse(tf.__version__) >= version.parse("2.13.0"):
+        from keras.src.saving.legacy import hdf5_format
+    elif version.parse(tf.__version__) >= version.parse("2.11.0"):
         from keras.saving.legacy import hdf5_format
     else:
         from keras.saving import hdf5_format  # noqa: I2041
-    from keras.utils import mode_keys
+
+    if version.parse(tf.__version__) >= version.parse("2.13.0"):
+        from keras.src.utils import mode_keys
+    else:
+        from keras.utils import mode_keys
 else:
     from tensorflow.python.keras import callbacks
     from tensorflow.python.keras.saving import hdf5_format
