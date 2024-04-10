@@ -26,6 +26,16 @@ message GetProjectResponse {
   determined.project.v1.Project project = 1;
 }
 
+// Project Table type.
+enum TableType {
+  // Unspecified table type.
+  TABLE_TYPE_UNSPECIFIED = 0;
+  // experiment table.
+  TABLE_TYPE_EXPERIMENT = 1;
+  // run table.
+  TABLE_TYPE_RUN = 2;
+}
+
 // Request for experiment list columns
 message GetProjectColumnsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -34,8 +44,8 @@ message GetProjectColumnsRequest {
 
   // The id of the project.
   int32 id = 1;
-  // True => Project Run Columns, False => Project Experiment Columns.
-  bool is_run_columns = 2;
+  // type of table for project columns
+  optional TableType table_type = 2;
 }
 
 // Response for experiment list columns

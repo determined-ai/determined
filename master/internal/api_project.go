@@ -651,7 +651,7 @@ func (a *apiServer) GetProjectColumns(
 		return nil, err
 	}
 
-	if req.IsRunColumns {
+	if req.TableType != nil && *req.TableType == apiv1.TableType_TABLE_TYPE_RUN {
 		return a.getProjectRunColumnsByID(ctx, req.Id, *curUser)
 	} else {
 		return a.getProjectColumnsByID(ctx, req.Id, *curUser)

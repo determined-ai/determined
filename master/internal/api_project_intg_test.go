@@ -393,8 +393,8 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 	}, task1.TaskID))
 
 	getColumnsReq := &apiv1.GetProjectColumnsRequest{
-		Id:           int32(projectIDInt),
-		IsRunColumns: true,
+		Id:        int32(projectIDInt),
+		TableType: apiv1.TableType_TABLE_TYPE_RUN.Enum(),
 	}
 
 	getColumnsResp, err := api.GetProjectColumns(ctx, getColumnsReq)
