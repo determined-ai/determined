@@ -1305,6 +1305,14 @@ commands:
           no_output_timeout: 30m
           command: make package
 
+    make-package-ee:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          no_output_timeout: 30m
+          command: make package
+
   make-package-small:
     steps:
       - attach_workspace:
@@ -1584,7 +1592,7 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system:
           check: false
-      - make-package
+      - make-package-ee
       - run: tools/scripts/retry.sh make -C master publish-dev
       - run: tools/scripts/retry.sh make -C agent publish-dev
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
