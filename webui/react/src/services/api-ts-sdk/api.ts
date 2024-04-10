@@ -1519,6 +1519,44 @@ export interface V1ArchiveModelResponse {
 export interface V1ArchiveProjectResponse {
 }
 /**
+ * 
+ * @export
+ * @interface V1ArchiveRunsRequest
+ */
+export interface V1ArchiveRunsRequest {
+    /**
+     * The ids of the runs being archived.
+     * @type {Array<number>}
+     * @memberof V1ArchiveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1ArchiveRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ArchiveRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ArchiveRunsRequest.
+ * @export
+ * @interface V1ArchiveRunsResponse
+ */
+export interface V1ArchiveRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1ArchiveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to ArchiveWorkspaceRequest.
  * @export
  * @interface V1ArchiveWorkspaceResponse
@@ -11193,6 +11231,44 @@ export interface V1UnarchiveModelResponse {
 export interface V1UnarchiveProjectResponse {
 }
 /**
+ * 
+ * @export
+ * @interface V1UnarchiveRunsRequest
+ */
+export interface V1UnarchiveRunsRequest {
+    /**
+     * The ids of the runs being unarchived.
+     * @type {Array<number>}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to UnarchiveRunsRequest.
+ * @export
+ * @interface V1UnarchiveRunsResponse
+ */
+export interface V1UnarchiveRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1UnarchiveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to UnarchiveWorkspaceRequest.
  * @export
  * @interface V1UnarchiveWorkspaceResponse
@@ -18282,6 +18358,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling archiveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/archive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -20971,6 +21085,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/unarchive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -21270,6 +21422,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(allocationId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).archiveRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22533,6 +22704,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -22694,6 +22884,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
             return InternalApiFp(configuration).allocationWaiting(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).archiveRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23390,6 +23590,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).unarchiveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -23529,6 +23739,18 @@ export class InternalApi extends BaseAPI {
      */
     public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
         return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Archive runs.
+     * @param {V1ArchiveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public archiveRuns(body: V1ArchiveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).archiveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -24346,6 +24568,18 @@ export class InternalApi extends BaseAPI {
      */
     public trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, group?: string, batchesMargin?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, batchesProcessed, metricType, group, batchesMargin, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unarchive runs.
+     * @param {V1UnarchiveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).unarchiveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -1,0 +1,2 @@
+ALTER TABLE runs
+DROP COLUMN archived
