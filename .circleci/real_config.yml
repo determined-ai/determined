@@ -1311,7 +1311,7 @@ commands:
           at: .
       - run:
           no_output_timeout: 30m
-          command: make package
+          command: make package-ee
 
   make-package-small:
     steps:
@@ -1593,8 +1593,8 @@ jobs:
       - pre-package-and-push-system:
           check: false
       - make-package-ee
-      - run: tools/scripts/retry.sh make -C master publish-dev
-      - run: tools/scripts/retry.sh make -C agent publish-dev
+      - run: tools/scripts/retry.sh make -C master publish-dev-ee
+      - run: tools/scripts/retry.sh make -C agent publish-dev-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -4936,6 +4936,7 @@ workflows:
           filters: *upstream-feature-branch
 
       - package-and-push-system-local:
+          context: github-read
           filters: *upstream-feature-branch
           requires:
             - build-react
