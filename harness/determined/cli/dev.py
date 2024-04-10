@@ -243,7 +243,7 @@ def list_bindings(args: argparse.Namespace) -> None:
         print(bindings_sig_str(name, params))
 
 
-def auto_complete_binding(available_calls: List[str], fn_name: str, skip_auto_picking: bool) -> str:
+def auto_complete_binding(available_calls: List[str], fn_name: str, skip_auto_confirm: bool) -> str:
     """
     utility to allow partial matching of binding names.
     """
@@ -257,8 +257,7 @@ def auto_complete_binding(available_calls: List[str], fn_name: str, skip_auto_pi
     ]
     if not matches:
         raise errors.CliError(f"no such binding found: {fn_name}")
-    if not skip_auto_picking and len(matches) == 1:
-        # print in stderr
+    if not skip_auto_confirm and len(matches) == 1:
         print(
             termcolor.colored(
                 f"Auto picked '{matches[0]}' for '{fn_name}'",
@@ -292,7 +291,7 @@ def call_bindings(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     fn_name: str = args.name
     fns = get_available_bindings(show_unusable=False)
-    fn_name = auto_complete_binding(list(fns.keys()), fn_name, args.skip_auto_picking)
+    fn_name = auto_complete_binding(list(fns.keys()), fn_name, args.skip_auto_confirm)
     fn = getattr(api.bindings, fn_name)
     params = fns[fn_name]
     try:
@@ -359,8 +358,8 @@ args_description = [
                         [
                             cli.Arg("name", help="name of the function to call"),
                             cli.Arg(
-                                "--skip-auto-picking",
-                                help="skip auto-picking of only matching name on partial hits",
+                                "--skip-auto-confirm",
+                                help="skip auto-confirm of only matching name on partial hits",
                                 action="store_true",
                             ),
                             cli.Arg(
