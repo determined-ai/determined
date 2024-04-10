@@ -3,17 +3,24 @@ import logging
 import pathlib
 from typing import List, Optional, cast
 
-from tensorflow.python.training.tracking import tracking
+import tensorflow as tf
+from packaging import version
 
 import determined as det
 from determined import keras
 
+# In TF 2.14, tracking module was removed.
+if version.parse(tf.__version__) >= version.parse("2.14.0"):
+    from tensorflow.python.trackable.autotrackable import AutoTrackable  # noqa: I2041
+
+else:
+    from tensorflow.python.training.tracking.tracking import AutoTrackable  # noqa: I2041
+
+
 logger = logging.getLogger("determined.keras")
 
 
-def load_model_from_checkpoint_path(
-    path: str, tags: Optional[List[str]] = None
-) -> tracking.AutoTrackable:
+def load_model_from_checkpoint_path(path: str, tags: Optional[List[str]] = None) -> AutoTrackable:
     """
     Loads a checkpoint written by a TFKerasTrial.
 
