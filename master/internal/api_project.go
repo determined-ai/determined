@@ -440,10 +440,10 @@ func (a *apiServer) getProjectRunColumnsByID(
 	// get all runs in project
 	runsQuery := db.Bun().NewSelect().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
-		ColumnExpr("hyperparameters").
-		Column("id").
+		ColumnExpr("hparams as hyperparameters").
+		ColumnExpr("id as run_id").
 		Table("runs").
-		Where("hyperparameters IS NOT NULL").
+		Where("hparams IS NOT NULL").
 		Where("project_id = ?", id).
 		Order("id")
 

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -370,4 +371,47 @@ func TestGetProjectByActivity(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 1, len(resp.Projects))
+}
+
+func TestGetProjectColumnsRuns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1}
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	getColumnsReq := &apiv1.GetProjectColumnsRequest{
+		Id:           int32(projectIDInt),
+		IsRunColumns: true,
+	}
+
+	getColumnsResp, err := api.GetProjectColumns(ctx, getColumnsReq)
+	require.NoError(t, err)
+	require.Len(t, getColumnsResp.Columns, 18)
+
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	getColumnsResp, err = api.GetProjectColumns(ctx, getColumnsReq)
+	require.NoError(t, err)
+	require.Len(t, getColumnsResp.Columns, 19)
 }

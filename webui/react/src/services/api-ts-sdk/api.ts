@@ -19079,11 +19079,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options: any = {}): FetchArgs {
+        getProjectColumns(id: number, isRunColumns?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -19103,8 +19103,8 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (runProject !== undefined) {
-                localVarQueryParameter['runProject'] = runProject
+            if (isRunColumns !== undefined) {
+                localVarQueryParameter['isRunColumns'] = isRunColumns
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -21685,12 +21685,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, runProject, options);
+        getProjectColumns(id: number, isRunColumns?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, isRunColumns, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22921,12 +22921,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options?: any) {
-            return InternalApiFp(configuration).getProjectColumns(id, runProject, options)(fetch, basePath);
+        getProjectColumns(id: number, isRunColumns?: boolean, options?: any) {
+            return InternalApiFp(configuration).getProjectColumns(id, isRunColumns, options)(fetch, basePath);
         },
         /**
          * 
@@ -23798,13 +23798,13 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
-     * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+     * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getProjectColumns(id: number, runProject?: boolean, options?: any) {
-        return InternalApiFp(this.configuration).getProjectColumns(id, runProject, options)(this.fetch, this.basePath)
+    public getProjectColumns(id: number, isRunColumns?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).getProjectColumns(id, isRunColumns, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26910,11 +26910,11 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options: any = {}): FetchArgs {
+        getProjectColumns(id: number, isRunColumns?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -26934,8 +26934,8 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (runProject !== undefined) {
-                localVarQueryParameter['runProject'] = runProject
+            if (isRunColumns !== undefined) {
+                localVarQueryParameter['isRunColumns'] = isRunColumns
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27320,12 +27320,12 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, runProject, options);
+        getProjectColumns(id: number, isRunColumns?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, isRunColumns, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27527,12 +27527,12 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+         * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, runProject?: boolean, options?: any) {
-            return ProjectsApiFp(configuration).getProjectColumns(id, runProject, options)(fetch, basePath);
+        getProjectColumns(id: number, isRunColumns?: boolean, options?: any) {
+            return ProjectsApiFp(configuration).getProjectColumns(id, isRunColumns, options)(fetch, basePath);
         },
         /**
          * 
@@ -27671,13 +27671,13 @@ export class ProjectsApi extends BaseAPI {
      * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
-     * @param {boolean} [runProject] True => Project Run Columns, False => Project Experiment Columns.
+     * @param {boolean} [isRunColumns] True => Project Run Columns, False => Project Experiment Columns.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProjectColumns(id: number, runProject?: boolean, options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectColumns(id, runProject, options)(this.fetch, this.basePath)
+    public getProjectColumns(id: number, isRunColumns?: boolean, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectColumns(id, isRunColumns, options)(this.fetch, this.basePath)
     }
     
     /**
