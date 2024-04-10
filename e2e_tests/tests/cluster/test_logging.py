@@ -51,6 +51,7 @@ def test_tcd_startup_hook_trial_combined() -> None:
 
 
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
 @pytest.mark.timeout(10 * 60)
 def test_tcd_startup_hook_trial_master() -> None:
     _test_trial_logs(re.compile("^.*hello from master tcd startup hook.*$"))
@@ -144,15 +145,22 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
 
 
 @pytest.mark.e2e_cpu
-def test_tcd_startup_hook_task_combined() -> None:
-    for ntsc in ["command", "notebook", "shell"]:
-        _test_task_logs(ntsc, {}, re.compile("^.*hello from rp tcd startup hook.*$"))
+@pytest.mark.parametrize(
+    "task_type",
+    ["command", "notebook", "shell", "tensorboard"],
+)
+def test_tcd_startup_hook_task_combined(task_type: str) -> None:
+    _test_task_logs(task_type, {}, re.compile("^.*hello from rp tcd startup hook.*$"))
 
 
 @pytest.mark.e2e_cpu_elastic
-def test_tcd_startup_hook_task_master() -> None:
-    for ntsc in ["command", "notebook", "shell"]:
-        _test_task_logs(ntsc, {}, re.compile("^.*hello from master tcd startup hook.*$"))
+@pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
+@pytest.mark.parametrize(
+    "task_type",
+    ["command", "notebook", "shell", "tensorboard"],
+)
+def test_tcd_startup_hook_task_master(task_type: str) -> None:
+    _test_task_logs(task_type, {}, re.compile("^.*hello from master tcd startup hook.*$"))
 
 
 @pytest.mark.e2e_cpu
