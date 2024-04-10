@@ -18,7 +18,7 @@ Log = Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]
 LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsResponse]
 
 
-def _test_trial_logs(log_regex: re.Pattern[str]) -> None:
+def _test_trial_logs(log_regex: re.Pattern) -> None:
     sess = api_utils.user_session()
 
     experiment_id = exp.run_basic_test(
@@ -69,9 +69,7 @@ def test_trial_logs() -> None:
     _test_trial_logs(log_regex)
 
 
-def _test_task_logs(
-    task_type: str, task_config: Dict[str, Any], log_regex: re.Pattern[str]
-) -> None:
+def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.Pattern) -> None:
     sess = api_utils.user_session()
 
     rps = bindings.get_GetResourcePools(sess)
