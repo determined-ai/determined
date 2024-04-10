@@ -25,6 +25,7 @@ from determined.tensorboard.metric_writers import tensorflow
 # In TF 2.13, some util imports got moved out of inits. Must be imported
 # directly from src.
 if version.parse(tf.__version__) >= version.parse("2.13.0"):
+    from keras import callbacks
     from keras.src.saving.legacy import hdf5_format  # noqa: I2041
     from keras.src.utils import mode_keys  # noqa: I2041
 # In TF 2.6, we have to import some keras internals directly from `keras`.
