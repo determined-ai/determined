@@ -146,13 +146,13 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
 @pytest.mark.e2e_cpu
 def test_tcd_startup_hook_task_combined() -> None:
     for ntsc in ["command", "notebook", "shell"]:
-        _test_task_logs(ntsc, {}, re.compile("^.*hello from rp tcd startup hook.*$"))
+        _test_task_logs(ntsc, {}, re.compile("^.*hello noooooop from rp tcd startup hook.*$"))
 
 
 @pytest.mark.e2e_cpu_elastic
 def test_tcd_startup_hook_task_master() -> None:
     for ntsc in ["command", "notebook", "shell"]:
-        _test_task_logs(ntsc, {}, re.compile("^.*hello from master tcd startup hook.*$"))
+        _test_task_logs(ntsc, {}, re.compile("^.*hello noooooop from master tcd startup hook.*$"))
 
 
 @pytest.mark.e2e_cpu
