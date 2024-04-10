@@ -40,7 +40,6 @@ import {
   unarchiveExperiments,
 } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
-import { BulkActionParams } from 'services/types';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -51,7 +50,6 @@ import {
 } from 'types';
 import handleError, { ErrorLevel } from 'utils/error';
 import {
-  canActionExperiment,
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
@@ -158,11 +156,11 @@ const TableActionBar: React.FC<Props> = ({
 
   const selectedProjectExperimentMap = useMemo(() => {
     return [...selectedExperimentsMap].reduce(
-      (acc, [id, { experiment }]) => {
+      (acc: Record<number, ProjectExperiment>, [id, { experiment }]) => {
         acc[id] = getProjectExperimentForExperimentItem(experiment, project);
         return acc;
       },
-      {} as Record<number, ProjectExperiment>,
+      {},
     );
   }, [selectedExperimentsMap, project]);
 
@@ -171,12 +169,23 @@ const TableActionBar: React.FC<Props> = ({
     [selectedProjectExperimentMap],
   );
 
-  const availableBatchActions = useMemo(() => {
-    if (selection.type === 'ALL_EXCEPT')
-      return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
-    return getActionsForExperimentsUnion(selectedExperiments, [...batchActions], permissions);
-    // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [permissions, selectedExperiments, selection.type]);
+  // selections that span over pages can include experiments that haven't loaded
+  // in, meaning the checks we do for permissions and managed experiments don't
+  // make sense. in that case, we treat the selection the same as a select all
+  const selectionIsIndeterminate = useMemo(() => {
+    return (
+      selection.type === 'ALL_EXCEPT' ||
+      selection.selections.some((id) => !selectedExperimentsMap.has(id))
+    );
+  }, [selection, selectedExperimentsMap]);
+
+  const availableBatchActions = useMemo(
+    () =>
+      selection.type === 'ALL_EXCEPT'
+        ? batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard)
+        : getActionsForExperimentsUnion(selectedExperiments, [...batchActions], permissions),
+    [permissions, selectedExperiments, selection.type],
+  );
 
   const completeFilterSet: Loadable<FilterFormSetWithoutId | undefined> = useMemo(() => {
     if (selection.type === 'ONLY_IN') {
@@ -219,32 +228,23 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      let params: BulkActionParams;
-      const managedExperimentIds = selectedExperiments
-        .filter((exp) => !exp.unmanaged)
-        .map((exp) => exp.id);
-      if (selection.type === 'ONLY_IN') {
-        // TODO: when the selection spans pages, this check will not work --
-        // should probably warn the user and/handle on the backend
-        params = {
-          experimentIds: selectedExperiments.filter((exp) => !exp.unmanaged).map((exp) => exp.id),
-        };
-      } else {
-        params = completeFilterSet.match({
-          _: () => ({
-            experimentIds: [],
-          }),
-          Loaded: (filterSet) => {
-            return {
-              experimentIds: [],
-              searchFilter: JSON.stringify(filterSet),
-            };
-          },
-        });
-      }
+      const params =
+        selection.type === 'ONLY_IN'
+          ? {
+              experimentIds: selection.selections,
+            }
+          : completeFilterSet.match({
+              _: () => ({
+                experimentIds: [],
+              }),
+              Loaded: (filterSet) => ({
+                experimentIds: [],
+                searchFilter: JSON.stringify(filterSet),
+              }),
+            });
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          if (managedExperimentIds.length !== selectedExperiments.length) {
+          if (selectionIsIndeterminate || selectedExperiments.some((e) => e.unmanaged)) {
             // if unmanaged experiments are selected, open experimentTensorBoardModal
             openExperimentTensorBoardModal();
           } else {
@@ -284,7 +284,8 @@ const TableActionBar: React.FC<Props> = ({
       openExperimentTensorBoardModal,
       project?.workspaceId,
       selectedExperiments,
-      selection.type,
+      selection,
+      selectionIsIndeterminate,
     ],
   );
 
@@ -389,7 +390,7 @@ const TableActionBar: React.FC<Props> = ({
       batchActions.slice(5), // Resume, Pause, Cancel, Kill
     ];
     const groupSize = groupedBatchActions.length;
-    return groupedBatchActions.reduce((acc, group, index) => {
+    return groupedBatchActions.reduce((acc: MenuItem[], group, index) => {
       const isLastGroup = index === groupSize - 1;
       group.forEach((action) =>
         acc.push({
@@ -402,7 +403,7 @@ const TableActionBar: React.FC<Props> = ({
       );
       if (!isLastGroup) acc.push({ type: 'divider' });
       return acc;
-    }, [] as MenuItem[]);
+    }, []);
   }, [availableBatchActions]);
 
   const selectionLabel = useMemo(() => {
@@ -463,7 +464,8 @@ const TableActionBar: React.FC<Props> = ({
               onRowHeightChange={onRowHeightChange}
               onTableViewModeChange={onTableViewModeChange}
             />
-            {(selection.type === 'ALL_EXCEPT' || selection.selections.length > 0) && (
+            {((selection.type === 'ONLY_IN' && selection.selections.length > 0) ||
+              selectedExperimentsMap.size > 0) && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>
               </Dropdown>
@@ -501,38 +503,20 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        experimentIds={selectedExperiments.reduce((acc, experiment) => {
-          if (
-            canActionExperiment(ExperimentAction.Move, experiment) &&
-            permissions.canMoveExperiment({ experiment })
-          ) {
-            acc.push(experiment.id);
-          }
-          return acc;
-        }, [] as number[])}
+        experimentIds={selection.type === 'ONLY_IN' ? selection.selections : []}
         filters={completeFilterSet.getOrElse(undefined)}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
-        experimentIds={selectedExperiments.reduce((acc, experiment) => {
-          if (
-            canActionExperiment(ExperimentAction.RetainLogs, experiment) &&
-            permissions.canModifyExperiment({
-              workspace: { id: experiment.workspaceId },
-            })
-          ) {
-            acc.push(experiment.id);
-          }
-          return acc;
-        }, [] as number[])}
+        experimentIds={selection.type === 'ONLY_IN' ? selection.selections : []}
         filters={completeFilterSet.getOrElse(undefined)}
         onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent
+        experimentIds={selection.type === 'ONLY_IN' ? selection.selections : []}
         filters={completeFilterSet.getOrElse(undefined)}
-        selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />
     </div>

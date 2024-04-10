@@ -487,7 +487,8 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 		query := db.Bun().NewSelect().
 			Model(&originalExpIDs).
 			ModelTableExpr("experiments as e").
-			Column("e.id")
+			Column("e.id").
+			Where("NOT e.unmanaged")
 
 		if req.SearchFilter == nil {
 			query = exputil.QueryBulkExperiments(query, req.Filters)

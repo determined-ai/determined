@@ -152,7 +152,8 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		Column("e.id").
 		Join("JOIN projects p on e.project_id = p.id").
 		Join("LEFT JOIN runs r on r.experiment_id = e.id").
-		Where("Not e.archived")
+		Where("Not e.archived").
+		Where("Not e.unmanaged")
 
 	switch {
 	case filters == nil && searchFilter == nil:
