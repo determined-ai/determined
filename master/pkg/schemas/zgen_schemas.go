@@ -1667,21 +1667,18 @@ var (
     "additionalProperties": false,
     "required": [
         "project",
-        "repo"],
+        "repo"
+    ],
     "properties": {
         "project": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "repo": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "commit": {
             "type": [
@@ -1709,28 +1706,23 @@ var (
     "required": [
         "host",
         "port",
-        "token"],
+        "token"
+    ],
     "properties": {
         "host": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "port": {
             "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
+                "integer"
+            ]
         },
         "token": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         }
     }
 }
@@ -1744,28 +1736,23 @@ var (
     "required": [
         "scheme",
         "host",
-        "port"],
+        "port"
+    ],
     "properties": {
         "scheme": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "host": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "port": {
             "type": [
-                "integer",
-                "null"
-            ],
-            "default": null
+                "integer"
+            ]
         }
     }
 }
@@ -1776,32 +1763,30 @@ var (
     "title": "PachydermConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": ["pachd", "proxy", "dataset"],
+    "required": [
+        "pachd",
+        "proxy",
+        "dataset"
+    ],
     "eventuallyRequired": [],
     "properties": {
         "pachd": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-pachd.json"
         },
         "proxy": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-proxy.json"
         },
         "dataset": {
             "type": [
-                "object",
-                "null"
+                "object"
             ],
-            "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/pachyderm-dataset.json"
         }
     }
 }
