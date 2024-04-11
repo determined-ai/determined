@@ -148,6 +148,13 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	taskSpec.UserSessionToken = token
 
+	// ensure that workspace name is propagated to task spec when specified via CLI
+	if req.WorkspaceID != 0 {
+		if w, _ := a.GetWorkspaceByID(ctx, req.WorkspaceID, *userModel, true); w != nil {
+			taskSpec.Workspace = w.Name
+		}
+	}
+
 	cmdSpec.Base = taskSpec
 	cmdSpec.Config = config
 
