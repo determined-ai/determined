@@ -259,6 +259,7 @@ func TestDeterminedLabels(t *testing.T) {
 		require.Equal(t, spec.ObjectMeta.Labels[expectedKey], expectedValue)
 	}
 }
+
 func TestTrialLabels(t *testing.T) {
 	// fill out task spec
 	experimentID := "5"
@@ -293,7 +294,6 @@ func TestTrialLabels(t *testing.T) {
 	}
 
 	t.Run("correctly formatted", func(t *testing.T) {
-
 		spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
 			k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
 
@@ -305,7 +305,6 @@ func TestTrialLabels(t *testing.T) {
 	})
 
 	t.Run("badly formatted: too many", func(t *testing.T) {
-
 		p.submissionInfo.taskSpec.TaskID = "a.b.c"
 
 		// define expectations
