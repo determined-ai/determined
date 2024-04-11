@@ -62,17 +62,24 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var err error
 	cmdSpec := tasks.GenericCommandSpec{}
 
-	cmdSpec.Metadata.WorkspaceID = model.DefaultWorkspaceID
-	if req.WorkspaceID != 0 {
-		cmdSpec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceID)
-	}
-
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil,
 			nil,
 			status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+	}
+
+	cmdSpec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceID != 0 {
+		cmdSpec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceID)
+		// ensure that workspace name is propagated to task spec when specified via CLI
+		if w, _ := a.GetWorkspaceByID(ctx, req.WorkspaceID, *userModel, true); w != nil {
+			cmdSpec.Base.Workspace = w.Name
+		}
+	}
+	if w, _ := a.GetWorkspaceByID(ctx, req.WorkspaceID, *userModel, true); w != nil {
+		cmdSpec.Base.Workspace = w.Name
 	}
 
 	// TODO(ilia): When commands are workspaced, also use workspace AgentUserGroup here.

@@ -230,6 +230,7 @@ func getCreateExperimentsProject(
 	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
 	if req.ProjectId > 1 {
 		projectID = int(req.ProjectId)
+		config.Project()
 		errProjectNotFound = api.NotFoundErrs("project", fmt.Sprint(projectID), true)
 	} else {
 		if (config.Workspace() == "") != (config.Project() == "") {
@@ -290,6 +291,15 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	workspaceModel, err := workspace.WorkspaceByProjectID(ctx, int(p.Id))
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, nil, config, nil, nil, err
+	}
+
+	// ensure project and workspace name is set, even if specified via req
+	if p.Id > 1 {
+		workspaceConfig := expconf.ExperimentConfigV0{
+			RawProject:   &p.Name,
+			RawWorkspace: &workspaceModel.Name,
+		}
+		config = schemas.Merge(config, workspaceConfig)
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
