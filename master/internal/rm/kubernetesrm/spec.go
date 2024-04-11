@@ -511,11 +511,14 @@ func configureUniqueName(t tasks.TaskSpec, rank int) string {
 
 func experimentIDTrialIDFromTaskID(taskID string) (experimentID string, trialID string) {
 	res := strings.Split(taskID, ".")
+	experimentID = ""
+	trialID = ""
 	if len(res) == 2 {
 		// expect taskID to be formatted as ExperimentID.TrialRequestID for trials
-		return res[0], res[1]
+		experimentID = res[0]
+		trialID = res[1]
 	}
-	return "", ""
+	return experimentID, trialID
 }
 
 func trialNameFromPod(podName string) string {
