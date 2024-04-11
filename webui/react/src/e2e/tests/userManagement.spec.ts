@@ -19,6 +19,35 @@ test.describe('User Management', () => {
     await expect(page).toHaveURL(userManagementPage.url);
   });
 
+  test('Users table count matches admin page users tab', async ({ page }) => {
+    const userManagementPage = new UserManagement(page);
+    await userManagementPage.goto();
+    const pagination = userManagementPage.table.table.pagination;
+    const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
+    if (match === null) {
+      throw new Error('Number not present in tab.');
+    }
+    const expetedRowCount = +match[0];
+    for (const paginationOption of [
+      pagination.perPage.perPage10,
+      pagination.perPage.perPage20,
+      pagination.perPage.perPage50,
+      pagination.perPage.perPage100,
+    ]) {
+      await pagination.perPage.pwLocator.click();
+      await paginationOption.pwLocator.click();
+      await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
+      const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
+      if (matches === null) {
+        throw new Error("Couldn't find pagination selection.");
+      }
+      const paginationSelection = +matches[1];
+      await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
+        Math.min(paginationSelection, expetedRowCount),
+      );
+    }
+  });
+
   test.describe('With a new User', () => {
     let page: Page;
     let authFixture: AuthFixture;
