@@ -225,10 +225,11 @@ func TestDeterminedLabels(t *testing.T) {
 
 	// fill out task spec
 	taskSpec := tasks.TaskSpec{
-		Owner:     createUser(),
-		Workspace: "test-workspace",
-		TaskType:  model.TaskTypeCommand,
-		TaskID:    model.NewTaskID().String(),
+		Owner:       createUser(),
+		Workspace:   "test-workspace",
+		TaskType:    model.TaskTypeCommand,
+		TaskID:      model.NewTaskID().String(),
+		ContainerID: "container-id",
 	}
 
 	p := pod{
@@ -247,6 +248,7 @@ func TestDeterminedLabels(t *testing.T) {
 		resourcePoolLabel: p.req.ResourcePool,
 		taskTypeLabel:     string(taskSpec.TaskType),
 		taskIDLabel:       taskSpec.TaskID,
+		containerIDLabel:  taskSpec.ContainerID,
 	}
 
 	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},

@@ -42,6 +42,7 @@ const (
 	resourcePoolLabel = "determined.ai/resource_pool"
 	taskTypeLabel     = "determined.ai/task_type"
 	taskIDLabel       = "determined.ai/task_id"
+	containerIDLabel  = "determined.ai/container_id"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -372,7 +373,17 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
 	podSpec.ObjectMeta.Labels[taskIDLabel] = string(p.submissionInfo.taskSpec.TaskID)
+	podSpec.ObjectMeta.Labels[containerIDLabel] = string(p.submissionInfo.taskSpec.ContainerID)
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+
+	/*
+			determined container id? (task spec)
+		experiment id
+		job id
+		runtime container id?
+		task id (task spec)
+		allocation id? (task spec)
+	*/
 
 	p.modifyPodSpec(podSpec, scheduler)
 
