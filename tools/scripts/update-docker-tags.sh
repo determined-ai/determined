@@ -32,7 +32,7 @@ for NAME in $IMAGES; do
 done
 
 # update environments-target.txt
-echo $NEW_TAG > tools/scripts/environments-target.txt
+echo $NEW_TAG >tools/scripts/environments-target.txt
 
 # bumpenvs
 echo "Updating bumpenvs.yaml"
