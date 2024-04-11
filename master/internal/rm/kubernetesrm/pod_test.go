@@ -50,7 +50,6 @@ func createPod(
 	slotType := device.CUDA
 	slotResourceRequests := config.PodSlotResourceRequests{}
 
-	// kristine in the code, newPod is fed a msg with formatted labels
 	newPodHandler := newPod(
 		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{}, model.TLSClientConfig{},
