@@ -35,6 +35,7 @@ type archiveRunOKResult struct {
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
+	State        *bool
 }
 
 type archiveKillRunOKResult struct {
@@ -515,53 +516,6 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	if err != nil {
 		return nil, err
 	}
-	// Get active runs and kill
-	var activeRuns []int32
-	activeStates := []model.State{model.ActiveState, model.PausedState, model.RunningState}
-
-	killQuery := db.Bun().NewSelect().
-		ModelTableExpr("runs AS r").
-		Model(&activeRuns).
-		Column("r.id").
-		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
-		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
-		Join("JOIN projects p ON r.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.state IN (?)", bun.In(activeStates)).
-		Where("r.project_id = ?", req.ProjectId)
-
-	if req.Filter == nil {
-		killQuery = killQuery.Where("r.id IN (?)", bun.In(req.RunIds))
-	} else {
-		killQuery, err = filterRunQuery(killQuery, req.Filter)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	err = killQuery.Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	killReq := apiv1.KillRunsRequest{
-		RunIds:    activeRuns,
-		ProjectId: req.ProjectId,
-	}
-	killResp, err := a.KillRuns(ctx, &killReq)
-	if err != nil {
-		return nil, err
-	}
-	// log kill results
-	var results []*apiv1.RunActionResult
-	failedKills := []int32{-1}
-	for _, killRes := range killResp.Results {
-		if killRes.Error != "" {
-			results = append(results, killRes)
-			failedKills = append(failedKills, killRes.Id)
-		}
-	}
-
 	// get runs to delete
 	var runChecks []archiveRunOKResult
 	getQ := db.Bun().NewSelect().
@@ -571,11 +525,11 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("r.project_id = ?", req.ProjectId).
-		Where("r.id NOT IN (?)", bun.In(failedKills))
+		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
@@ -598,22 +552,29 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		return nil, err
 	}
 
+	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
 	for _, check := range runChecks {
 		visibleIDs.Insert(check.ID)
-		if check.Archived {
+		switch {
+		case check.State == nil || !*check.State:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is not in a terminal state.",
+				Id:    check.ID,
+			})
+		case check.Archived:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is archived.",
 				Id:    check.ID,
 			})
-			continue
+		default:
+			validIDs = append(validIDs, check.ID)
 		}
-		validIDs = append(validIDs, check.ID)
 	}
 	if req.Filter == nil {
 		for _, originalID := range req.RunIds {
-			if !visibleIDs.Contains(originalID) && !slices.Contains(failedKills, originalID) {
+			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
 					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.ProjectId),
 					Id:    originalID,

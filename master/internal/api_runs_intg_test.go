@@ -312,7 +312,7 @@ func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServe
 	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task1))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
-		State:        model.PausedState,
+		State:        model.CompletedState,
 		ExperimentID: exp.ID,
 		StartTime:    time.Now(),
 	}, task1.TaskID))
@@ -320,7 +320,7 @@ func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServe
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
-		State:        model.PausedState,
+		State:        model.CompletedState,
 		ExperimentID: exp.ID,
 		StartTime:    time.Now(),
 	}, task2.TaskID))
@@ -489,4 +489,154 @@ func TestMoveRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
+}
+
+func TestDeleteRunsNonTerminal(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+
+	// delete runs
+	runIDs := []int32{searchResp.Runs[0].Id, searchResp.Runs[1].Id}
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 2)
+	require.Equal(t, "Run is not in a terminal state.", res.Results[0].Error)
+	require.Equal(t, "Run is not in a terminal state.", res.Results[1].Error)
+
+	searchReq = &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+}
+
+func TestDeleteRunsIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// delete runs
+	runIDs := []int32{runID1, runID2}
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 2)
+	require.Equal(t, "", res.Results[0].Error)
+	require.Equal(t, "", res.Results[1].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 0)
+}
+
+func TestDeleteRunsIdsNonExistant(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	// delete runs
+	runIDs := []int32{-1}
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, fmt.Sprintf("Run with id '%d' not found in project with id '%d'", -1, projectID),
+		res.Results[0].Error)
+}
+
+func TestDeleteRunsFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	filter := `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+		`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+		`"conjunction":"and","kind":"group"},"showArchived":true}`
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    []int32{},
+		Filter:    &filter,
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 1)
 }
