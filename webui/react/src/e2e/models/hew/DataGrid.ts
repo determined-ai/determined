@@ -125,6 +125,7 @@ export class DataGrid<
    */
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
     return (
+      // TODO make sure we're okay if page autorefreshes
       await Promise.all(
         Array.from(Array(await this.rows.pwLocator.count()).keys()).map(async (key) => {
           const row = this.getRowByIndex(key);
@@ -175,6 +176,8 @@ export class Row<
   }
   parentTable: DataGrid<RowType, HeadRowType>;
 
+  protected columnPositions: Map<string, number> = new Map<string, number>([['Select', 5]]);
+
   /**
    * Returns an aria label value for "selected" status
    */
@@ -187,7 +190,7 @@ export class Row<
    */
   async getIndex(): Promise<number> {
     const value = await this.pwLocator.getAttribute(this.indexAttribute);
-    if (value === null) {
+    if (value === null || Number.isNaN(+value)) {
       throw new Error(`All rows should have the attribute ${this.indexAttribute}`);
     }
     return +value - 2;
@@ -204,19 +207,18 @@ export class Row<
 
   /**
    * Clicks an x coordinate on the row
-   * @param {object} xPos - coordinate
+   * @param {string} columnID - column name
    */
-  async clickX(xPos: number): Promise<void> {
+  async clickColumn(columnID: string): Promise<void> {
+    const position = this.columnPositions.get(columnID);
+    if (position === undefined) {
+      throw new Error(
+        `Column with title expected but not found ${JSON.stringify(this.columnPositions)}`,
+      );
+    }
     await this.parentTable.pwLocator.click({
-      position: { x: xPos, y: this.getY(await this.getIndex()) },
+      position: { x: position, y: this.getY(await this.getIndex()) },
     });
-  }
-
-  /**
-   * Clicks the row's select button
-   */
-  async clickSelect(): Promise<void> {
-    await this.clickX(5);
   }
 
   /**
@@ -236,7 +238,7 @@ export class Row<
     const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${map}`);
+      throw new Error(`Column with title expected but not found ${JSON.stringify(map)}`);
     }
     return this.getCellByIndex(index - 1);
   }
@@ -299,6 +301,7 @@ export class HeadRow extends NamedComponent {
    * Clicks the head row's select button
    */
   async clickSelectDropdown(): Promise<void> {
+    // magic numbers for the select button
     await this.clickableParentLocator.click({ position: { x: 5, y: 5 } });
   }
 }

@@ -28,11 +28,11 @@ test.describe('Experiement List', () => {
       'Trials',
       '1',
     );
-    await row.clickSelect();
+    await row.clickColumn('Select');
     expect(await row.isSelected()).toBeTruthy();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.select5.pwLocator.click();
-    await row.clickID();
+    await row.clickColumn('ID');
     await page.waitForURL(/overview/);
   });
 });

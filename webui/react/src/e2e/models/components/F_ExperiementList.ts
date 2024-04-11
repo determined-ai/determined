@@ -2,7 +2,7 @@ import { BaseReactFragment } from 'e2e/models/BaseComponent';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
-import { DataGrid, HeadRow, Row } from 'e2e/models/hew/DataGrid';
+import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
 import { Pagination } from 'e2e/models/hew/Pagination';
 
 /**
@@ -32,10 +32,8 @@ export class F_ExperiementList extends BaseReactFragment {
 
 class ExperimentHeadRow extends HeadRow {}
 class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
-  /**
-   * Clicks the row's id cell
-   */
-  async clickID() {
-    await this.clickX(50);
+  constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {
+    super(args);
+    this.columnPositions.set('ID', 50);
   }
 }
