@@ -461,6 +461,21 @@ func TestMoveExperiments(t *testing.T) {
 		require.Equal(t, len(result.Results), len(expIds))
 		require.NoError(t, err)
 	})
+
+	// nolint: lll
+	t.Run("Move experiment described by searchfilter", func(t *testing.T) {
+		exp := createTestExp(t, api, curUser)
+
+		filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"id","kind":"field","operator":"=","value":%v,"location":"LOCATION_TYPE_EXPERIMENT"}],"conjunction":"and","kind":"group"},"showArchived":false}`, exp.ID)
+		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ExperimentIds:        []int32{},
+			DestinationProjectId: int32(projectID),
+			SearchFilter:         &filter,
+		})
+		require.Equal(t, nil, err)
+		require.Equal(t, len(result.Results), 1)
+		require.Equal(t, result.Results[0].Error, "")
+	})
 }
 
 func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
