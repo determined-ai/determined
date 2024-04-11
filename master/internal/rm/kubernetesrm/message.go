@@ -20,7 +20,6 @@ type (
 		Rank         int
 		ResourcePool string
 		Namespace    string
-		Labels       map[string]string // additional pod labels
 
 		LogContext logger.Context
 	}

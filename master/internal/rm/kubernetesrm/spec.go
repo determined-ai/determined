@@ -37,11 +37,11 @@ const (
 
 	gcTask            = "gc"
 	cmdTask           = "cmd"
-	userLabel         = "determined_user"
-	workspaceLabel    = "determined_workspace"
-	resourcePoolLabel = "determined_resource_pool"
-	taskTypeLabel     = "determined_task_type"
-	taskIDLabel       = "determined_task_id"
+	userLabel         = "determined.ai/user"
+	workspaceLabel    = "determined.ai/workspace"
+	resourcePoolLabel = "determined.ai/resource_pool"
+	taskTypeLabel     = "determined.ai/task_type"
+	taskIDLabel       = "determined.ai/task_id"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -367,21 +367,11 @@ func (p *pod) configurePodSpec(
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
 	// add determined metadata as pod labels
-	if val, ok := p.labels[userLabel]; ok {
-		podSpec.ObjectMeta.Labels[userLabel] = val
-	}
-	if val, ok := p.labels[workspaceLabel]; ok {
-		podSpec.ObjectMeta.Labels[workspaceLabel] = val
-	}
-	if val, ok := p.labels[resourcePoolLabel]; ok {
-		podSpec.ObjectMeta.Labels[resourcePoolLabel] = val
-	}
-	if val, ok := p.labels[taskTypeLabel]; ok {
-		podSpec.ObjectMeta.Labels[taskTypeLabel] = val
-	}
-	if val, ok := p.labels[taskIDLabel]; ok {
-		podSpec.ObjectMeta.Labels[taskIDLabel] = val
-	}
+	podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
+	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
+	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
+	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
+	podSpec.ObjectMeta.Labels[taskIDLabel] = string(p.submissionInfo.taskSpec.TaskID)
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
 
 	p.modifyPodSpec(podSpec, scheduler)

@@ -704,14 +704,6 @@ func (p k8sPodResources) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 
-	// add custom labels to pods for observability
-	labels := make(map[string]string)
-	labels[userLabel] = spec.Owner.Username
-	labels[workspaceLabel] = spec.Workspace
-	labels[resourcePoolLabel] = p.req.ResourcePool
-	labels[taskTypeLabel] = string(spec.TaskType)
-	labels[taskIDLabel] = spec.TaskID
-
 	return p.podsService.StartTaskPod(StartTaskPod{
 		Req:          p.req,
 		AllocationID: p.req.AllocationID,
@@ -720,7 +712,6 @@ func (p k8sPodResources) Start(
 		Rank:         rri.AgentRank,
 		Namespace:    p.namespace,
 		LogContext:   logCtx,
-		Labels:       labels,
 	})
 }
 
