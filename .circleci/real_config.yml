@@ -989,7 +989,7 @@ commands:
           google-project-id: <<parameters.google-project-id>>
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=${GENERATED_NAMESPACE}-bucket,createNonNamespacedObjects=false,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=${GENERATED_NAMESPACE}-bucket,createNonNamespacedObjects=false"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition:
