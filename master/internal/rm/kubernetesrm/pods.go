@@ -1441,7 +1441,6 @@ func (p *pods) computeSummary() (map[string]model.AgentSummary, error) {
 }
 
 func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
-	// TODO RM-148
 	var allPods []podNodeInfo
 
 	for _, p := range p.podNameToPodHandler {
@@ -1574,7 +1573,6 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 		_, ok3 := p.Labels[determinedPreemptionLabel]
 
 		if !(ok1 || ok2 || ok3) {
-			logrus.Infof("getting NonDet Pods: %s,%s", p.Name, p.Labels)
 			if p.Spec.NodeName != "" {
 				nonDetPods = append(nonDetPods, p)
 			}
