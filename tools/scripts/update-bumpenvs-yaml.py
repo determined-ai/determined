@@ -59,6 +59,10 @@ JOB_SUFFIXES_NO_MPI = [
     "tensorflow-ngc-hpc",
 ]
 
+JOB_SUFFIXES_OFI = [
+    "tf2-gpu",
+]
+
 PACKER_JOBS = {"publish-cloud-images"}
 
 DOCKER_JOBS = (
@@ -71,6 +75,10 @@ DOCKER_JOBS = (
         f"build-and-publish-docker-{suffix}-0"
         for suffix in JOB_SUFFIXES_NO_MPI
         if "hpc" not in suffix
+    }
+    | {
+        f"build-and-publish-docker-{suffix}-1-{ofi}"
+        for (suffix, ofi) in itertools.product(JOB_SUFFIXES_OFI, [1])
     }
 )
 
