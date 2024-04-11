@@ -161,7 +161,7 @@ func (m *Master) promHealth(ctx context.Context) {
 	promclient.MustRegister(determinedHealthy)
 
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
+		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
 
 		for {
