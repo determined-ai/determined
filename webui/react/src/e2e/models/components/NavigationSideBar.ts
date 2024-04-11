@@ -23,17 +23,25 @@ export class NavigationSideBar extends BaseReactFragment {
   readonly webhooks: BaseComponent = this.sidebarItem('Webhooks');
   readonly cluster: BaseComponent = this.sidebarItem('Cluster');
   readonly workspaces: BaseComponent = this.sidebarItem('Workspaces');
+  readonly createWorkspace: BaseComponent = new BaseComponent({
+    parent: this.#nav,
+    selector: `span[aria-label="Create workspace"]`,
+  });
   /**
  * Returns a representation of a sidebar NavigationItem with the specified label.
  * For example, a rokspace pinned to the sidebar is accessible through it's label here.
  * @param {string} [label] - the label of the tab, generally the name
  */
-  private sidebarItem(label: string): BaseComponent {
+  public sidebarItem(label: string): BaseComponent {
     return new BaseComponent({
       parent: this.#nav,
       selector: `a[aria-label="${label}"]`,
     });
   }
+  readonly deleteAction: BaseComponent = new BaseComponent({ // DNJ TODO figure out this and Dropdown component and workspace to be DRY
+    parent: this.root,
+    selector: 'li[data-menu-id$="-delete"]',
+  });
   // TODO the rest of the sidebar items
   // TODO nameplate with parent = this.headerDropdown
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings

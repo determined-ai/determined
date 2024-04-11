@@ -1,4 +1,6 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { Card } from 'e2e/models/hew/Card';
+
 
 /**
  * Returns a representation of the Workspaces Page component.
@@ -13,8 +15,8 @@ export class WorkspacesList extends NamedComponent {
     parent: this,
     selector: '[data-testid="newWorkspace"]',
   });
-  readonly cardWithName = (name: string): BaseComponent => { // DNJ TODO - create a card component type?
-    return new BaseComponent({
+  readonly cardWithName = (name: string): Card => { 
+    return new Card({
       parent: this,
       selector: `[data-testid="card-${name}"]`,
     });
