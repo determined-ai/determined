@@ -45,6 +45,7 @@ def _test_trial_logs(log_regex: re.Pattern) -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_missing_startup_hook()
 @pytest.mark.timeout(10 * 60)
 def test_tcd_startup_hook_trial_combined() -> None:
     _test_trial_logs(re.compile("^.*hello from rp tcd startup hook.*$"))
@@ -52,6 +53,7 @@ def test_tcd_startup_hook_trial_combined() -> None:
 
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
+@api_utils.skipif_missing_startup_hook()
 @pytest.mark.timeout(10 * 60)
 def test_tcd_startup_hook_trial_master() -> None:
     _test_trial_logs(re.compile("^.*hello from master tcd startup hook.*$"))
@@ -145,6 +147,7 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_missing_startup_hook()
 @pytest.mark.parametrize(
     "task_type",
     ["command", "notebook", "shell", "tensorboard"],
@@ -155,6 +158,7 @@ def test_tcd_startup_hook_task_combined(task_type: str) -> None:
 
 @pytest.mark.e2e_cpu_elastic
 @pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
+@api_utils.skipif_missing_startup_hook()
 @pytest.mark.parametrize(
     "task_type",
     ["command", "notebook", "shell", "tensorboard"],
