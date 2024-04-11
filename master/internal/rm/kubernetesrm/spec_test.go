@@ -222,7 +222,6 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 }
 
 func TestDeterminedLabels(t *testing.T) {
-
 	// fill out task spec
 	taskSpec := tasks.TaskSpec{
 		Owner:       createUser(),
@@ -259,5 +258,4 @@ func TestDeterminedLabels(t *testing.T) {
 	for expectedKey, expectedValue := range expectedLabels {
 		require.Equal(t, spec.ObjectMeta.Labels[expectedKey], expectedValue)
 	}
-
 }
