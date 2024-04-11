@@ -935,6 +935,9 @@ commands:
             - run:
                 command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create CPU node pool
+      - store_artifacts:
+          path: $BASH_ENV
+          destination: bash_env
 
   setup-shared-cluster:
     parameters:
