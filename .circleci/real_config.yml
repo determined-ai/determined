@@ -77,6 +77,17 @@ release-and-rc-filters-ee: &release-and-rc-filters-ee
       - /(\d)+(\.(\d)+)+-ee/
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
 
+release-and-rc-filters-all: &release-and-rc-filters-all
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /(\d)+(\.(\d)+)+/
+      - /(\d)+(\.(\d)+)+-ee/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
+
 rc-filters: &rc-filters
   branches:
     ignore:
@@ -1681,8 +1692,8 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
       - make-package
-      - run: make -C master publish
-      - run: make -C agent publish
+      - run: make -C master publish-ee
+      - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -5007,7 +5018,6 @@ workflows:
           deployment-type: fsx
           slack-channel: <<pipeline.parameters.default-slack-channel>>
           slack-mentions: "${SLACK_USER_ID}"
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -5238,12 +5248,12 @@ workflows:
   release:
     jobs:
       - build-helm:
-          filters: *release-and-rc-filters
+          filters: *release-and-rc-filters-all
       - build-proto:
-          filters: *release-and-rc-filters
+          filters: *release-and-rc-filters-all
       - build-react:
           context: determined-production
-          filters: *release-and-rc-filters
+          filters: *release-and-rc-filters-all
       - build-docs:
           context: determined-production
           filters: *release-and-rc-filters
@@ -5262,7 +5272,7 @@ workflows:
           requires:
             - build-docs
           context: determined-production
-          filters: *release-and-rc-filters
+          filters: *release-and-rc-filters-all
 
       - package-and-push-system-rc:
           requires:
@@ -5340,7 +5350,7 @@ workflows:
           context: determined-production
           filters: *release-filters
 
-      - publish-docs-ee:
+      - publish-docs:
           requires:
             - build-docs-ee
           context: determined-production
