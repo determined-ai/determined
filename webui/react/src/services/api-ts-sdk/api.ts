@@ -3330,10 +3330,10 @@ export interface V1FlatRun {
     externalRunId?: number;
     /**
      * Trial hyperparameters.
-     * @type {string}
+     * @type {any}
      * @memberof V1FlatRun
      */
-    hyperparameters?: string;
+    hyperparameters?: any;
     /**
      * summary metrics.
      * @type {any}
@@ -3418,7 +3418,7 @@ export interface V1FlatRunExperiment {
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    forkedFrom: number;
+    forkedFrom?: number;
     /**
      * The id of external experiment
      * @type {string}

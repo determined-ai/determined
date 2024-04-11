@@ -8,6 +8,7 @@ import {
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
+  Primitive,
   RunState,
 } from 'types';
 import { DetError, ErrorLevel, ErrorType } from 'utils/error';
@@ -26,7 +27,7 @@ export const decode = <T>(type: io.Mixed, data: unknown): T => {
   }
 };
 
-export const optional = (x: io.Mixed): io.Mixed | io.NullC | io.UndefinedC => {
+export const optional = <T extends io.Mixed>(x: T): io.UnionC<[T, io.NullC, io.UndefinedC]> => {
   return io.union([x, io.null, io.undefined]);
 };
 
@@ -183,7 +184,7 @@ const hParamTypes: Record<string, null> = Object.values(HyperparameterType).redu
   {},
 );
 const ioHParamTypes = io.keyof(hParamTypes);
-const ioExpHParamVal = optional(io.unknown);
+const ioExpHParamVal = optional(Primitive);
 const ioExpHParam = io.type({
   base: optional(io.number),
   count: optional(io.number),
@@ -191,7 +192,7 @@ const ioExpHParam = io.type({
   minval: optional(io.number),
   type: ioHParamTypes,
   val: ioExpHParamVal,
-  vals: optional(io.array(io.unknown)),
+  vals: optional(io.array(Primitive)),
 });
 
 export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
