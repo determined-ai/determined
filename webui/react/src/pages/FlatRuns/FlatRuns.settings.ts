@@ -1,7 +1,6 @@
 import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { optional } from 'ioTypes';
 import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
@@ -9,7 +8,7 @@ import { defaultColumnWidths, defaultRunColumns } from './columns';
 // have to intersect with an empty object bc of settings store type issue
 export const FlatRunsSettings = t.type({
   columns: t.array(t.string),
-  columnWidths: t.record(t.string, optional(t.number)),
+  columnWidths: t.record(t.string, t.number),
   compare: t.boolean,
   filterset: t.string, // save FilterFormSet as string
   pageLimit: t.number,

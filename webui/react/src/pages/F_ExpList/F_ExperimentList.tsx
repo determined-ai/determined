@@ -685,7 +685,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const widthDifference = newTableWidth - comparisonViewTableWidth;
       // Positive widthDifference: Table pane growing/compare pane shrinking
       // Negative widthDifference: Table pane shrinking/compare pane growing
-      const newColumnWidths: Record<string, number | null | undefined> = {
+      const newColumnWidths: Record<string, number> = {
         ...settings.columnWidths,
       };
       pinnedColumns
@@ -697,7 +697,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
-            newColumnWidths[col] ?? MIN_COLUMN_WIDTH + widthDifference / arr.length,
+            newColumnWidths[col] + widthDifference / arr.length,
           );
         });
       updateSettings({

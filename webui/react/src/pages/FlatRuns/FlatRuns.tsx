@@ -440,7 +440,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({ columnWidths: { ...settings.columnWidths, [columnId]: width } });
+      updateSettings({
+        columnWidths: { ...settings.columnWidths, [columnId]: Math.max(MIN_COLUMN_WIDTH, width) },
+      });
     },
     [settings.columnWidths, updateSettings],
   );

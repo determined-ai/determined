@@ -85,7 +85,7 @@ function getCellStateFromExperimentState(expState: RunState) {
 
 interface Params {
   appTheme: Theme;
-  columnWidths: Record<string, number | undefined | null>;
+  columnWidths: Record<string, number>;
   themeIsDark: boolean;
   users: Loadable<DetailedUser[]>;
 }
