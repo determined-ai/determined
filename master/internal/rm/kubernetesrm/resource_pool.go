@@ -703,7 +703,6 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
-
 	return p.podsService.StartTaskPod(StartTaskPod{
 		Req:          p.req,
 		AllocationID: p.req.AllocationID,

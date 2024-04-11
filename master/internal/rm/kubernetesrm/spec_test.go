@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
 )
@@ -218,4 +219,43 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "test", Value: expectedValue})
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "test2", Value: ""})
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "func", Value: "f(x)=x"})
+}
+
+func TestDeterminedLabels(t *testing.T) {
+
+	// fill out task spec
+	taskSpec := tasks.TaskSpec{
+		Owner:     createUser(),
+		Workspace: "test-workspace",
+		TaskType:  model.TaskTypeCommand,
+		TaskID:    model.NewTaskID().String(),
+	}
+
+	p := pod{
+		req: &sproto.AllocateRequest{
+			ResourcePool: "test-rp",
+		},
+		submissionInfo: &podSubmissionInfo{
+			taskSpec: taskSpec,
+		},
+	}
+
+	// define expectations
+	expectedLabels := map[string]string{
+		userLabel:         taskSpec.Owner.Username,
+		workspaceLabel:    taskSpec.Workspace,
+		resourcePoolLabel: p.req.ResourcePool,
+		taskTypeLabel:     string(taskSpec.TaskType),
+		taskIDLabel:       taskSpec.TaskID,
+	}
+
+	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
+		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
+
+	// confirm pod spec has required labels
+	require.NotNil(t, spec)
+	for expectedKey, expectedValue := range expectedLabels {
+		require.Equal(t, spec.ObjectMeta.Labels[expectedKey], expectedValue)
+	}
+
 }
