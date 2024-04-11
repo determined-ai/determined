@@ -61,6 +61,16 @@ def test_run_kill() -> None:
     # ensure that run is canceled
     wait_for_run_state(sess, run_id, bindings.trialv1State.CANCELED)
 
+    # cancelling an already terminated run should be fine
+    killResp = bindings.post_KillRuns(
+        sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
+    )
+
+    # validate response
+    assert len(killResp.results) == 1
+    assert killResp.results[0].id == run_id
+    assert killResp.results[0].error == ""
+
 
 @pytest.mark.e2e_cpu
 def test_run_kill_filter() -> None:
@@ -84,7 +94,7 @@ def test_run_kill_filter() -> None:
         sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
     )
 
-    searchResp = bindings.get_SearchRuns(sess, limit=5, filter=runFilter)
+    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
 
     # validate response
     assert len(killResp.results) == len(searchResp.runs)

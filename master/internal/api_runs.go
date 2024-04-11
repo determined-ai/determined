@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -40,6 +41,7 @@ type archiveKillRunOKResult struct {
 	Archived  bool
 	ID        int32
 	RequestID *string
+	State     bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -413,6 +415,11 @@ func (a *apiServer) MoveRuns(
 
 func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 ) (*apiv1.KillRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var runChecks []archiveKillRunOKResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
@@ -420,6 +427,7 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("t.request_id").
+		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
@@ -429,26 +437,19 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	if req.Filter == nil {
 		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
 	} else {
-		var efr experimentFilterRoot
-		err := json.Unmarshal([]byte(*req.Filter), &efr)
-		if err != nil {
-			return nil, err
-		}
-		getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if !efr.ShowArchived {
-				return q.Where(`e.archived = false`)
-			}
-			return q
-		})
+		getQ, err = filterRunQuery(getQ, req.Filter)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err := getQ.Scan(ctx)
+	if getQ, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -458,20 +459,24 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	var validIDs []int32
 	for _, check := range runChecks {
 		visibleIDs = append(visibleIDs, check.ID)
-		if check.RequestID == nil {
+		switch {
+		case check.State:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    check.ID,
+			})
+		case check.Archived:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+		case check.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
 				Id:    check.ID,
 			})
-		} else {
-			if check.Archived {
-				results = append(results, &apiv1.RunActionResult{
-					Error: "Run is archived.",
-					Id:    check.ID,
-				})
-			} else {
-				validIDs = append(validIDs, check.ID)
-			}
+		default:
+			validIDs = append(validIDs, check.ID)
 		}
 	}
 	if req.Filter == nil {
