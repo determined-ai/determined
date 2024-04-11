@@ -286,6 +286,6 @@ if __name__ == "__main__":
     filedir = pathlib.Path(path).parent
     verfile = filedir.joinpath("environments-target.txt")
     with open(verfile, "w") as f:
-        f.write(commit[:7]+"\n")
+        f.write(commit[:7] + "\n")
 
     print(f"done, {path} has been updated", file=sys.stderr)
