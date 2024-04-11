@@ -38,9 +38,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     <Card
       actionMenu={!workspace.immutable ? menu : undefined}
       size="small"
+      testId={testId}
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.workspaceDetails(workspace.id) })}
       onDropdown={onClick}>
-      <div className={workspace.archived ? css.archived : ''} data-testid={testId}>
+      <div className={workspace.archived ? css.archived : ''} >
         <Row>
           <Column width="hug">
             <Avatar palette="muted" size={Size.ExtraLarge} square text={workspace.name} />
