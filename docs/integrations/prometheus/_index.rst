@@ -174,3 +174,29 @@ see populated panels in the imported Grafana dashboard: **Grafana** -> **Dashboa
 Each panel in the dashboard is powered by one or more Prometheus queries and tracks a specific
 metric on the cluster as a percentage of total capacity. Results can be further filtered using
 ``tags`` and ``resource pool`` and time range in Grafana.
+
+********
+ Alerts
+********
+
+The ``det-master-api-server`` provides a metric, ``determined_healthy``, that can be used to set up
+alerts. This metric will return ``1`` when Determined can access its major dependencies and ``0``
+when it cannot. On Kubernetes, inability to access the Kubernetes API server will cause this metric
+to return ``0``. On Slurm, failure to access the launcher will also cause this metric to return
+``0``. If the database is down, it is possible Prometheus will be unable to scrape this metric.
+
+To create an alert in Grafana, navigate to the **Alert Rules** page and use the Prometheus data
+source configured earlier. You can use the following query to set up the alert.
+
+``1 - determined_healthy{job="det-master-api-server"}``
+
+.. image:: /assets/images/grafana-alert-config.png
+   :width: 704px
+   :align: center
+   :alt: Grafana Alert Configuration
+
+Since Prometheus may be unable to scrape Determined under certain circumstances, it is recommended
+to set ``Alert state if no data or all values are null`` to ``Alerting``.
+
+For more information on using Grafana alerts, visit the `Grafana documentation
+<https://grafana.com/docs/grafana/latest/alerting/>`__.
