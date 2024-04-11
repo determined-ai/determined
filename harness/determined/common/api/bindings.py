@@ -3654,6 +3654,7 @@ class v1Experiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     externalTrialId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
@@ -3695,6 +3696,7 @@ class v1Experiment(Printable):
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         externalTrialId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
@@ -3744,6 +3746,8 @@ class v1Experiment(Printable):
             self.externalTrialId = externalTrialId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(modelDefinitionSize, Unset):
@@ -3810,6 +3814,8 @@ class v1Experiment(Printable):
             kwargs["externalTrialId"] = obj["externalTrialId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "modelDefinitionSize" in obj:
@@ -3876,6 +3882,8 @@ class v1Experiment(Printable):
             out["externalTrialId"] = self.externalTrialId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "modelDefinitionSize" in vars(self):

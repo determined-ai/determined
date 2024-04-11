@@ -2950,6 +2950,12 @@ export interface V1Experiment {
      */
     searcherMetric?: string;
     /**
+     * The hyperparameters for the experiment
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    hyperparameters?: any;
+    /**
      * The experiment name.
      * @type {string}
      * @memberof V1Experiment

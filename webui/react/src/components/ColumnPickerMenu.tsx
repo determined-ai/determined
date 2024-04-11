@@ -43,6 +43,7 @@ interface ColumnMenuProps {
   onVisibleColumnChange?: (newColumns: string[]) => void;
   projectColumns: Loadable<ProjectColumn[]>;
   projectId: number;
+  tabs: (V1LocationType | V1LocationType[])[];
 }
 
 interface ColumnTabProps {
@@ -233,6 +234,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectId,
   isMobile = false,
   onVisibleColumnChange,
+  tabs,
 }) => {
   const [searchString, setSearchString] = useState('');
   const [open, setOpen] = useState(false);
@@ -259,32 +261,46 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
     <Dropdown
       content={
         <div className={css.base}>
-          <Pivot
-            items={[
-              V1LocationType.EXPERIMENT,
-              [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
-              V1LocationType.HYPERPARAMETERS,
-            ].map((tab) => {
-              const canonicalTab = Array.isArray(tab) ? tab[0] : tab;
-              return {
-                children: (
-                  <ColumnPickerTab
-                    columnState={initialVisibleColumns}
-                    handleShowSuggested={handleShowSuggested}
-                    projectId={projectId}
-                    searchString={searchString}
-                    setSearchString={setSearchString}
-                    tab={tab}
-                    totalColumns={totalColumns}
-                    onVisibleColumnChange={onVisibleColumnChange}
-                  />
-                ),
-                forceRender: true,
-                key: canonicalTab,
-                label: locationLabelMap[canonicalTab],
-              };
-            })}
-          />
+          {tabs.length > 1 && (
+            <Pivot
+              items={[
+                V1LocationType.EXPERIMENT,
+                [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+                V1LocationType.HYPERPARAMETERS,
+              ].map((tab) => {
+                const canonicalTab = Array.isArray(tab) ? tab[0] : tab;
+                return {
+                  children: (
+                    <ColumnPickerTab
+                      columnState={initialVisibleColumns}
+                      handleShowSuggested={handleShowSuggested}
+                      projectId={projectId}
+                      searchString={searchString}
+                      setSearchString={setSearchString}
+                      tab={tab}
+                      totalColumns={totalColumns}
+                      onVisibleColumnChange={onVisibleColumnChange}
+                    />
+                  ),
+                  forceRender: true,
+                  key: canonicalTab,
+                  label: locationLabelMap[canonicalTab],
+                };
+              })}
+            />
+          )}
+          {tabs.length === 1 && (
+            <ColumnPickerTab
+              columnState={initialVisibleColumns}
+              handleShowSuggested={handleShowSuggested}
+              projectId={projectId}
+              searchString={searchString}
+              setSearchString={setSearchString}
+              tab={tabs[0]}
+              totalColumns={totalColumns}
+              onVisibleColumnChange={onVisibleColumnChange}
+            />
+          )}
         </div>
       }
       open={open}

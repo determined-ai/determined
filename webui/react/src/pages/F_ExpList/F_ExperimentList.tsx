@@ -61,8 +61,8 @@ import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentItem,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -96,7 +96,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
@@ -533,9 +533,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [handleSelectionChange, fetchExperiments]);
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
+    (
+      action: ExperimentAction,
+      successfulIds: number[],
+      data?: Partial<BulkExperimentItem>,
+    ): void => {
       const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+      const updateExperiment = (updated: Partial<BulkExperimentItem>) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
@@ -592,7 +596,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+    (action: ExperimentAction, id: number, data?: Partial<BulkExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
@@ -784,10 +788,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
+            dataPath = `experiment.hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
             break;
           case V1LocationType.VALIDATIONS:
             dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
@@ -1055,6 +1056,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        columnGroups={[
+          V1LocationType.EXPERIMENT,
+          [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+          V1LocationType.HYPERPARAMETERS,
+        ]}
         compareViewOn={settings.compare}
         excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
@@ -1064,6 +1070,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         heatmapOn={settings.heatmapOn}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
+        labelPlural="experiments"
+        labelSingular="experiment"
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
@@ -1101,7 +1109,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+              <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}

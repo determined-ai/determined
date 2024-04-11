@@ -65,9 +65,9 @@ import { GetExperimentsParams } from 'services/types';
 import userStore from 'stores/users';
 import {
   ExperimentAction as Action,
+  BulkExperimentItem,
   CommandResponse,
   CommandTask,
-  ExperimentItem,
   ExperimentPagination,
   Project,
   ProjectExperiment,
@@ -123,7 +123,7 @@ const MenuKey = {
 } as const;
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
+  const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [batchRetainLogsExperimentIds, setBatchRetainLogsExperimentIds] = useState<number[]>([]);
@@ -392,7 +392,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }: {
       children?: React.ReactNode;
       onVisibleChange?: ((visible: boolean) => void) | undefined;
-      record: ExperimentItem;
+      record: BulkExperimentItem;
     }) => {
       return (
         <ExperimentActionDropdown
@@ -408,7 +408,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (_value: string, record: ExperimentItem) => (
+    const tagsRenderer = (_value: string, record: BulkExperimentItem) => (
       <div className={css.tagsRenderer}>
         <Body
           truncate={{
@@ -426,11 +426,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       </div>
     );
 
-    const actionRenderer: ExperimentRenderer = (_, record: ExperimentItem) => {
+    const actionRenderer: ExperimentRenderer = (_, record: BulkExperimentItem) => {
       return <ContextMenu record={record} />;
     };
 
-    const descriptionRenderer = (value: string, record: ExperimentItem) => (
+    const descriptionRenderer = (value: string, record: BulkExperimentItem) => (
       <Input
         className={css.descriptionRenderer}
         defaultValue={value}
@@ -525,7 +525,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
         key: V1GetExperimentsRequestSortBy.STARTTIME,
         onCell: onRightClickableCell,
-        render: (_: number, record: ExperimentItem): React.ReactNode =>
+        render: (_: number, record: BulkExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
         title: 'Started',
@@ -646,14 +646,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         dataIndex: 'searcherMetricValue',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
         key: V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL,
-        render: (_: string, record: ExperimentItem) => (
+        render: (_: string, record: BulkExperimentItem) => (
           <HumanReadableNumber num={record.searcherMetricValue} />
         ),
         sorter: true,
         title: 'Searcher Metric Value',
         width: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
       },
-    ] as ColumnDef<ExperimentItem>[];
+    ] as ColumnDef<BulkExperimentItem>[];
   }, [
     ContextMenu,
     experimentTags,
@@ -966,7 +966,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
-      <InteractiveTable<ExperimentItem, ExperimentListSettings>
+      <InteractiveTable<BulkExperimentItem, ExperimentListSettings>
         areRowsSelected={!!settings.row}
         columns={columns}
         containerRef={pageRef}

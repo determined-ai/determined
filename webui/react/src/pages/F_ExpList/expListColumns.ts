@@ -20,12 +20,11 @@ import { Loadable } from 'hew/utils/loadable';
 
 import { handlePath, paths } from 'routes/utils';
 import { CompoundRunState, DetailedUser, ExperimentWithTrial, JobState, RunState } from 'types';
+import { getDurationInEnglish, getTimeInEnglish } from 'utils/datetime';
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
 import { getDisplayName } from 'utils/user';
-
-import { getDurationInEnglish, getTimeInEnglish } from './utils';
 
 // order used in ColumnPickerMenu
 export const experimentColumns = [

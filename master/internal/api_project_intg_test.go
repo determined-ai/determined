@@ -30,10 +30,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
+const mockType = "mock"
+
 var pAuthZ *mocks.ProjectAuthZ
 
 func isMockAuthZ() bool {
-	return config.GetMasterConfig().Security.AuthZ.Type == "mock"
+	return config.GetMasterConfig().Security.AuthZ.Type == mockType
 }
 
 // pgdb can be nil to use the singleton database for testing.
@@ -45,7 +47,7 @@ func setupProjectAuthZTest(
 
 	if pAuthZ == nil {
 		pAuthZ = &mocks.ProjectAuthZ{}
-		project.AuthZProvider.Register("mock", pAuthZ)
+		project.AuthZProvider.Register(mockType, pAuthZ)
 	}
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }

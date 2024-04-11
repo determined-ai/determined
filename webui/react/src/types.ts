@@ -494,7 +494,7 @@ export interface BulkActionResult {
 }
 
 export interface ExperimentPagination extends WithPagination {
-  experiments: ExperimentItem[];
+  experiments: BulkExperimentItem[];
 }
 
 export interface SearchExperimentPagination extends WithPagination {
@@ -729,11 +729,12 @@ export const JobSummary: t.Type<Api.V1JobSummary> = t.type({
 });
 export type JobSummary = t.TypeOf<typeof JobSummary>;
 
-export const ExperimentItem = t.intersection([
+// Bulk endpoints like experimentSearch dont return config due to perf issue
+// since https://github.com/determined-ai/determined/pull/8732
+export const BulkExperimentItem = t.intersection([
   t.partial({
     checkpoints: t.number,
     checkpointSize: t.number,
-    config: ExperimentConfig,
     description: t.string,
     duration: t.number,
     endTime: t.string,
@@ -754,7 +755,6 @@ export const ExperimentItem = t.intersection([
   }),
   t.type({
     archived: t.boolean,
-    configRaw: JsonObject,
     hyperparameters: t.record(t.string, Hyperparameter),
     id: t.number,
     jobId: t.string,
@@ -769,14 +769,25 @@ export const ExperimentItem = t.intersection([
     userId: t.number,
   }),
 ]);
-export type ExperimentItem = t.TypeOf<typeof ExperimentItem>;
+export type BulkExperimentItem = t.TypeOf<typeof BulkExperimentItem>;
+
+export const FullExperimentItem = t.intersection([
+  BulkExperimentItem,
+  t.partial({
+    config: ExperimentConfig,
+  }),
+  t.type({
+    configRaw: JsonObject,
+  }),
+]);
+export type FullExperimentItem = t.TypeOf<typeof FullExperimentItem>;
 
 export interface ExperimentWithTrial {
-  experiment: ExperimentItem;
+  experiment: BulkExperimentItem;
   bestTrial?: TrialItem;
 }
 
-export interface ProjectExperiment extends ExperimentItem {
+export interface ProjectExperiment extends BulkExperimentItem {
   parentArchived: boolean;
   projectName: string;
   projectOwnerId: number;

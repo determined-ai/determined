@@ -22,7 +22,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.30.1-dev0
+    default: 0.31.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -1340,8 +1340,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl python3 py3-pip
-      - run: pip3 install awscli
+      - run: apk add make curl
       - run: make -C docs publish
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
@@ -2773,7 +2772,6 @@ jobs:
       - run:
           name: Create Namespace & Cert Name
           command: |
-            # Extract the commit hash from Git metadata
             TIMESTAMP=$(date +"%Y%m%d%H%M%S")
             uuid=$(cat /proc/sys/kernel/random/uuid)
             uuid=${uuid:0:8}
@@ -3460,6 +3458,7 @@ workflows:
               det-version: [$CIRCLE_SHA1]
     
   test-e2e-gke-shared-cluster:
+    unless: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - package-and-push-system-dev-small
       

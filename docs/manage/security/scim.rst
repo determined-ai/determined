@@ -60,7 +60,7 @@ and specify the following configurations for the integration:
    -  -  Username
       -  ``determined``
    -  -  Password
-      -  ``password``
+      -  ``strongpassword``
 
 .. note::
 
@@ -80,7 +80,7 @@ To configure Determined for this integration, update the :ref:`master configurat
      auth:
        type: basic
        username: "determined"
-       password: "password"
+       password: "strongpassword"
 
 ******************************************
  Automatically Update Users' Display Name

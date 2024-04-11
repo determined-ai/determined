@@ -4,7 +4,7 @@ import { Modal } from 'hew/Modal';
 import React, { useId, useState } from 'react';
 
 import { patchExperiment } from 'services/api';
-import { ExperimentItem } from 'types';
+import { BulkExperimentItem } from 'types';
 import handleError from 'utils/error';
 
 export const NAME_LABEL = 'Name';
@@ -20,7 +20,7 @@ interface Props {
   description: string;
   experimentId: number;
   experimentName: string;
-  onEditComplete: (data: Partial<ExperimentItem>) => void;
+  onEditComplete: (data: Partial<BulkExperimentItem>) => void;
 }
 
 const FORM_ID = 'edit-experiment-form';

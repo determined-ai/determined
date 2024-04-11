@@ -46,6 +46,8 @@ type TaskContainerDefaultsConfig struct {
 	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
 	Pbs        expconf.PbsConfigV0   `json:"pbs"`
 
+	StartupHook string `json:"startup_hook"`
+
 	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
 
 	// TODO(DET-9856) we should probably eventually move this to expconf and allow setting
@@ -253,6 +255,10 @@ func (c TaskContainerDefaultsConfig) Merge(
 			}
 			res.Devices = append(res.Devices, d)
 		}
+	}
+
+	if other.StartupHook != "" {
+		res.StartupHook = other.StartupHook
 	}
 
 	if other.BindMounts != nil {
