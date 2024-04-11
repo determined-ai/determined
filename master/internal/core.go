@@ -32,6 +32,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
+	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/soheilhy/cmux"
@@ -150,6 +151,33 @@ func (m *Master) Info() aproto.MasterInfo {
 
 func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
+}
+
+func (m *Master) promHealth(ctx context.Context) {
+	determinedHealthy := promclient.NewGauge(promclient.GaugeOpts{
+		Name: "determined_healthy",
+		Help: "Health status of Determined (1 for healthy, 0 for unhealthy)",
+	})
+	promclient.MustRegister(determinedHealthy)
+
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				hc := m.healthCheck(ctx)
+				if hc.Status == model.Healthy {
+					determinedHealthy.Set(1)
+				} else {
+					determinedHealthy.Set(0)
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 //	@Summary Get health of Determined and the dependencies.
@@ -1409,6 +1437,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 			}
 			return c.Path()
 		}
+
+		m.promHealth(ctx)
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
 		m.echo.Any("/prom/det-state-metrics",
