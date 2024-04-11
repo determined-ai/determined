@@ -372,18 +372,9 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
 	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
-	podSpec.ObjectMeta.Labels[taskIDLabel] = string(p.submissionInfo.taskSpec.TaskID)
-	podSpec.ObjectMeta.Labels[containerIDLabel] = string(p.submissionInfo.taskSpec.ContainerID)
+	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
-
-	/*
-			determined container id? (task spec)
-		experiment id
-		job id
-		runtime container id?
-		task id (task spec)
-		allocation id? (task spec)
-	*/
 
 	p.modifyPodSpec(podSpec, scheduler)
 
