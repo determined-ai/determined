@@ -82,7 +82,7 @@ func (e *internalExperiment) SetResourcePool(resourcePool string) error {
 // ResourcePool gets the experiment's resource pool.
 func (e *internalExperiment) ResourcePool() string {
 	e.mu.Lock()
-	defer e.mu.Lock()
+	defer e.mu.Unlock()
 
 	return e.activeConfig.Resources().ResourcePool()
 }

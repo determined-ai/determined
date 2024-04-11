@@ -1,3 +1,5 @@
 -  Go to ``http://localhost:8080/``.
--  Accept the default username of ``determined`` and leave the password empty.
+-  Accept the default username of ``determined``.
 -  Click **Sign In**.
+
+After signing in, you'll need to create a :ref:`strong password <strong-password>`.

@@ -415,6 +415,7 @@
     "setup-cluster/k8s/setup-eks-cluster",
     "setup-cluster/k8s/setup-gke-cluster",
     "setup-cluster/k8s/troubleshooting",
+    "setup-cluster/mldes/_index",
     "setup-cluster/on-prem/_index",
     "setup-cluster/on-prem/options/deploy",
     "setup-cluster/on-prem/options/docker",

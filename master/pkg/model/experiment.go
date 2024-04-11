@@ -479,6 +479,7 @@ func (t *Trial) ToRunAndTrialV2(experimentsProjectID int) (*Run, *TrialV2) {
 		Restarts:              t.Restarts,
 		RunnerState:           t.RunnerState,
 		LastActivity:          t.LastActivity,
+		LogRetentionDays:      t.LogRetentionDays,
 	}
 	v2 := &TrialV2{
 		RunID:     t.ID,
@@ -516,6 +517,7 @@ type Run struct {
 	Restarts              int            `db:"restarts"`
 	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
+	LogRetentionDays      *int16         `db:"log_retention_days"`
 }
 
 // RunTaskID represents a row from the `run_id_task_id` table.

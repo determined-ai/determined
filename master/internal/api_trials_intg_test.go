@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -1400,4 +1401,39 @@ func TestGetTrialByExternalID(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, int(resp.Trial.Id), trial.ID)
+}
+
+func getLogRetentionDays(ctx context.Context, trialIDs []int) ([]int32, error) {
+	var trialLogRetentionDays []int32
+	err := db.Bun().NewSelect().Table("runs").
+		Column("log_retention_days").
+		Where("id IN (?)", bun.In(trialIDs)).
+		Scan(ctx, &trialLogRetentionDays)
+
+	return trialLogRetentionDays, err
+}
+
+func TestPutTrialRetainLogs(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	exp, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
+
+	err := CompleteExpAndTrials(ctx, exp.Id, trialIDs)
+	require.NoError(t, err)
+
+	orgLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
+	require.NoError(t, err)
+	require.Equal(t, orgLogRetentionDays, []int32{-1, -1, -1, -1, -1})
+
+	newLogRetentionDays := []int32{10, 10, 10, 10, 10}
+	for i, v := range trialIDs {
+		res, err := api.PutTrialRetainLogs(ctx, &apiv1.PutTrialRetainLogsRequest{
+			TrialId: int32(v), NumDays: newLogRetentionDays[i],
+		})
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	}
+
+	updatedLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
+	require.NoError(t, err)
+	require.Equal(t, updatedLogRetentionDays, newLogRetentionDays)
 }

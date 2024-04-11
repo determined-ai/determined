@@ -147,12 +147,11 @@ func runCheckpointGCTask(
 	syslog := logrus.WithField("component", "checkpointgc").WithFields(logCtx.Fields())
 
 	if err := db.AddTask(context.TODO(), &model.Task{
-		TaskID:           taskID,
-		TaskType:         model.TaskTypeCheckpointGC,
-		StartTime:        time.Now().UTC(),
-		JobID:            &jobID,
-		LogVersion:       model.CurrentTaskLogVersion,
-		LogRetentionDays: taskSpec.LogRetentionDays,
+		TaskID:     taskID,
+		TaskType:   model.TaskTypeCheckpointGC,
+		StartTime:  time.Now().UTC(),
+		JobID:      &jobID,
+		LogVersion: model.CurrentTaskLogVersion,
 	}); err != nil {
 		return errors.Wrapf(err, "persisting GC task %s", taskID)
 	}

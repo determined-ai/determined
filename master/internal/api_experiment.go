@@ -560,6 +560,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("e.config->'resources'->>'resource_pool' AS resource_pool").
 		ColumnExpr("e.config->'searcher'->>'name' AS searcher_type").
 		ColumnExpr("e.config->'searcher'->>'metric' AS searcher_metric").
+		ColumnExpr("e.config->'hyperparameters' AS hyperparameters").
 		ColumnExpr("e.config->>'name' as NAME").
 		ColumnExpr(
 			"CASE WHEN NULLIF(e.notes, '') IS NULL THEN NULL ELSE 'omitted' END AS notes").
@@ -2752,12 +2753,11 @@ func (a *apiServer) createTrialTx(
 		a.m.taskSpec.LogRetentionDays)
 
 	if err := db.AddTask(ctx, &model.Task{
-		TaskID:           taskID,
-		TaskType:         model.TaskTypeTrial,
-		StartTime:        time.Now(),
-		JobID:            nil,
-		LogVersion:       model.CurrentTaskLogVersion,
-		LogRetentionDays: a.m.taskSpec.LogRetentionDays,
+		TaskID:     taskID,
+		TaskType:   model.TaskTypeTrial,
+		StartTime:  time.Now(),
+		JobID:      nil,
+		LogVersion: model.CurrentTaskLogVersion,
 	}); err != nil {
 		return nil, err
 	}

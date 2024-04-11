@@ -10,6 +10,7 @@ import DynamicTabs from 'components/DynamicTabs';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';
+import Searches from 'components/Searches/Searches';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -34,6 +35,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const f_explist = useFeature().isOn('explist_v2');
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -105,6 +107,20 @@ const ProjectDetails: React.FC = () => {
       },
     ];
 
+    if (f_flat_runs) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <Searches project={project} />
+            </div>
+          </div>
+        ),
+        key: 'searches',
+        label: id === 1 ? '' : 'Searches',
+      });
+    }
+
     if (!project.immutable && projectId) {
       items.push({
         children: (
@@ -120,7 +136,7 @@ const ProjectDetails: React.FC = () => {
     }
 
     return items;
-  }, [fetchProject, id, project, projectId, f_explist]);
+  }, [fetchProject, id, project, projectId, f_explist, f_flat_runs]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
 
