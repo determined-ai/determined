@@ -54,7 +54,7 @@ def test_user_edit_no_fields(mock_die: mock.MagicMock) -> None:
 @mock.patch("determined.common.api.authentication.TokenStore", util.MockTokenStore(strict=False))
 @mock.patch("getpass.getpass", lambda *_: "newpass")
 @mock.patch("determined.cli.cli.die")
-def test_login_returns_invalid_credentials_error_message(mock_die: mock.MagicMock) -> None:
+def test_login_dies_with_invalid_credentials_error_message(mock_die: mock.MagicMock) -> None:
     util.expect_get_info()
     responses.post(
         "http://localhost:8080/api/v1/auth/login",
