@@ -179,14 +179,14 @@ metric on the cluster as a percentage of total capacity. Results can be further 
  Alerts
 ********
 
-The ``det-master-api-server`` provides a metric ``deterimed_healthy`` that can be used to set up
-alerts. This metric will return 1 when Determined can access its major dependencies and 0 when it is
-unable to. On Kubernetes, being unable to access the Kubernetes API server will cause this metric to
-be 0. On Slurm, being to unable access the launcher will cause this metric to 0. If the database is
-down it is possible Prometheus will be unable to scrape this metric.
+The ``det-master-api-server`` provides a metric, ``determined_healthy``, that can be used to set up
+alerts. This metric will return ``1`` when Determined can access its major dependencies and ``0``
+when it cannot. On Kubernetes, inability to access the Kubernetes API server will cause this metric
+to return ``0``. On Slurm, failure to access the launcher will also cause this metric to return
+``0``. If the database is down, it is possible Prometheus will be unable to scrape this metric.
 
-To create an alert in Grafana you can go to the page **Alert Rules** page in Grafana and use the
-Prometheus data source configured earlier. You can use the following query for the alert.
+To create an alert in Grafana, navigate to the **Alert Rules** page and use the Prometheus data
+source configured earlier. You can use the following query to set up the alert.
 
 ``1 - determined_healthy{job="det-master-api-server"}``
 
@@ -195,8 +195,8 @@ Prometheus data source configured earlier. You can use the following query for t
    :align: center
    :alt: Grafana Alert Configuration
 
-Since Prometheus may be unable to scrape Determined in certain cases it is recommended to set
-``Alert state if no data or all values are null`` to ``Alerting``.
+Since Prometheus may be unable to scrape Determined under certain circumstances, it is recommended
+to set ``Alert state if no data or all values are null`` to ``Alerting``.
 
-Further information can be found about using Grafana alerts on the `Grafana docs
+For more information on using Grafana alerts, visit the `Grafana documentation
 <https://grafana.com/docs/grafana/latest/alerting/>`__.
