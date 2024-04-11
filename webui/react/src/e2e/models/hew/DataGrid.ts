@@ -225,7 +225,7 @@ export class Row<
   getCellByIndex(n: number): BaseComponent {
     return new BaseComponent({
       parent: this,
-      selector: `[aria-colindex="${n+1}"]`,
+      selector: `[aria-colindex="${n + 1}"]`,
     });
   }
 
