@@ -4629,15 +4629,15 @@ workflows:
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
-          # filters: *any-upstream
+          filters: *any-upstream
           # TODO (eliu): I suspect we want to keep these
       - build-proto:
-          # filters: *any-upstream
+          filters: *any-upstream
       - build-react:
           dev-mode: true
-          # filters: *any-upstream
+          filters: *any-upstream
       - build-docs:
-          # filters: *any-upstream
+          filters: *any-upstream
           requires:
             - build-helm
             - build-proto
