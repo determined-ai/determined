@@ -341,7 +341,7 @@ def skipif_unexpected_master_config(
         if mc is None:
             return f
         if not expected(mc):
-            return pytest.mark.skipif(True, reason=reason)(f)
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
         return f
 
     return decorator
