@@ -377,11 +377,9 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	if p.submissionInfo.taskSpec.TaskType == model.TaskTypeTrial {
 		// split task ID into experiment ID and trial request ID
-		success, experimentID, trialRequestID := experimentIDTrialIDFromTaskID(p.submissionInfo.taskSpec.TaskID)
-		if success {
-			podSpec.ObjectMeta.Labels[experimentIDLabel] = experimentID
-			podSpec.ObjectMeta.Labels[trialRequestIDLabel] = trialRequestID
-		}
+		experimentID, trialRequestID := experimentIDTrialIDFromTaskID(p.submissionInfo.taskSpec.TaskID)
+		podSpec.ObjectMeta.Labels[experimentIDLabel] = experimentID
+		podSpec.ObjectMeta.Labels[trialRequestIDLabel] = trialRequestID
 	}
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
@@ -511,13 +509,13 @@ func configureUniqueName(t tasks.TaskSpec, rank int) string {
 		t.Description, rank, t.AllocationID, petName.Generate(2, "-"))
 }
 
-func experimentIDTrialIDFromTaskID(taskID string) (successfulSplit bool, experimentID string, trialID string) {
+func experimentIDTrialIDFromTaskID(taskID string) (experimentID string, trialID string) {
 	res := strings.Split(taskID, ".")
 	if len(res) == 2 {
 		// expect taskID to be formatted as ExperimentID.TrialRequestID for trials
-		return true, res[0], res[1]
+		return res[0], res[1]
 	}
-	return false, "-1", "-1"
+	return "", ""
 }
 
 func trialNameFromPod(podName string) string {
