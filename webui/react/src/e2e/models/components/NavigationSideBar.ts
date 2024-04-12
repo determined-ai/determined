@@ -1,5 +1,6 @@
 import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
 /**
  * Returns a representation of the NavigationSideBar component.
@@ -28,19 +29,19 @@ export class NavigationSideBar extends BaseReactFragment {
     selector: `span[aria-label="Create workspace"]`,
   });
   /**
- * Returns a representation of a sidebar NavigationItem with the specified label.
- * For example, a rokspace pinned to the sidebar is accessible through it's label here.
- * @param {string} [label] - the label of the tab, generally the name
- */
+   * Returns a representation of a sidebar NavigationItem with the specified label.
+   * For example, a rokspace pinned to the sidebar is accessible through it's label here.
+   * @param {string} [label] - the label of the tab, generally the name
+   */
   public sidebarItem(label: string): BaseComponent {
     return new BaseComponent({
       parent: this.#nav,
       selector: `a[aria-label="${label}"]`,
     });
   }
-  readonly deleteAction: BaseComponent = new BaseComponent({ // DNJ TODO figure out this and Dropdown component and workspace to be DRY
-    parent: this.root,
-    selector: 'li[data-menu-id$="-delete"]',
+  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
+    parent: this.#nav,
+    selector: '', // no open-menu button, only right click on sidebar item to open
   });
   // TODO the rest of the sidebar items
   // TODO nameplate with parent = this.headerDropdown
@@ -66,4 +67,3 @@ class HeaderDropdown extends Dropdown {
     selector: Dropdown.selectorTemplate('sign-out'),
   });
 }
-

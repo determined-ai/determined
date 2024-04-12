@@ -1,7 +1,6 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
 
-
 /**
  * Returns a representation of the Workspaces Page component.
  * This constructor represents the contents in src/components/Page.tsx.
@@ -15,10 +14,10 @@ export class WorkspacesList extends NamedComponent {
     parent: this,
     selector: '[data-testid="newWorkspace"]',
   });
-  readonly cardWithName = (name: string): Card => { 
+  readonly cardWithName = (name: string): Card => {
     return new Card({
       parent: this,
       selector: `[data-testid="card-${name}"]`,
     });
-  }
+  };
 }

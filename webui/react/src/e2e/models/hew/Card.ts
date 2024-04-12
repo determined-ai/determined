@@ -1,4 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/BaseComponent';
+import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDropdown';
 
 /**
  * Returns a representation of the card component from Hew.
@@ -10,12 +11,8 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 export class Card extends NamedComponent {
   override defaultSelector: string = ''; // must be provided
 
-  readonly actionMenu: BaseComponent = new BaseComponent({
+  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
     parent: this,
     selector: '[aria-label="Action menu"]',
-  });
-  readonly deleteAction: BaseComponent = new BaseComponent({ // DNJ TODO encapsulate in menu component for sidebar
-    parent: this.root,
-    selector: 'li[data-menu-id$="-delete"]',
   });
 }

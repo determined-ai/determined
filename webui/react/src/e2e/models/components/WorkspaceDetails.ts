@@ -1,4 +1,4 @@
-import {  NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Projects Page component.
@@ -8,7 +8,5 @@ import {  NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspaceDetails extends NamedComponent {
-    override defaultSelector: string = '[id=workspaceDetails]';
-  
+  override defaultSelector: string = '[id=workspaceDetails]';
 }
-

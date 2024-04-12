@@ -8,6 +8,5 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class ModelRegistryComponent extends NamedComponent {
-    override defaultSelector: string = '[data-testid=modelRegistry]';
-    
+  override defaultSelector: string = '[data-testid=modelRegistry]';
 }
