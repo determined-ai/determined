@@ -46,8 +46,8 @@ Version 0.31.0
    retains logs forever. Add a new column, ''Log Retention Days'', to the Trial List page. ''Log
    Retention Days'' displays the duration logs will be retained for each trial from creation.
 
--  Master Config: Added a new field to task container defaults named ``startup_hook`` which allows for
-   the specification of an inline script to be executed after task setup.
+-  Master Config: Added a new field to task container defaults named ``startup_hook`` which allows
+   for the specification of an inline script to be executed after task setup.
 
 **Improvements**
 
