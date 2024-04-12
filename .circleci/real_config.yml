@@ -219,6 +219,12 @@ commands:
       - run: mv ../license-key-gen/license.txt ./license.txt
       - run: mv ../license-key-gen/public.txt ./public.txt
 
+  get-slurmcluster:
+    steps:
+      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
+      - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
+      - run: ls -a 
+
   pull-task-images:
     parameters:
       tf2:
@@ -1373,37 +1379,6 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
-#   # TODO (eliu): maybe make ee a parameter instead in everything
-#   build-docs-ee:
-#     docker:
-#       - image: <<pipeline.parameters.docker-image>>
-#     steps:
-#       - checkout
-#       - helm/install-helm-client
-#       - setup-python-venv:
-#           install-python: false
-#           determined: true
-#           model-hub: true
-#           extra-requirements-file: "docs/requirements.txt"
-#           executor: <<pipeline.parameters.docker-image>>
-#       - run: make -C examples build
-#       - run: make -C helm build
-#       - attach_workspace:
-#           at: .
-#       - run: make -C docs attributions.rst rebrand build
-#       - persist_to_workspace:
-#           root: .
-#           paths:
-#             - examples/build
-#             - harness/dist
-#             - model_hub/dist
-#             - docs/build
-#             - docs/site
-#       - run: tar czf docs.tgz docs/site/html
-#       - store_artifacts:
-#           path: docs.tgz
-
-
   upload-docs-search-index:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -1580,6 +1555,20 @@ jobs:
       - make-package-ee
       - run: tools/scripts/retry.sh make -C master publish-dev-ee
       - run: tools/scripts/retry.sh make -C agent publish-dev-ee
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
+                # For main and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
+            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1665,7 +1654,7 @@ jobs:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
-      - make-package
+      - make-package-ee
       - run: make -C master publish-ee
       - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
@@ -1762,22 +1751,10 @@ jobs:
       - run: make -C helm release-gh
       - run: |
           if <<parameters.ee>>; then
-            make -C <<parameters.path>> release-gh-ee
+            make -C helm release-gh-ee
           else
-            make -C <<parameters.path>> release-gh
+            make -C helm release-gh
           fi
-
-  # publish-helm-gh-ee:
-  #   docker:
-  #     - image: <<pipeline.parameters.docker-image>>
-  #       environment:
-  #         GO111MODULE: "on"
-  #   steps:
-  #     - checkout
-  #     - attach_workspace:
-  #         at: .
-  #     - reinstall-go
-  #     - run: make -C helm release-gh-ee
 
   publish-python-package:
     parameters:
@@ -1802,21 +1779,6 @@ jobs:
           else
             make -C <<parameters.path>> publish
           fi
-
-  # publish-python-package-ee:
-  #   parameters:
-  #     path:
-  #       type: string
-  #   docker:
-  #     - image: <<pipeline.parameters.docker-image>>
-  #   steps:
-  #     - checkout
-  #     - setup-python-venv:
-  #         install-python: false
-  #         extras-requires: "build twine"
-  #         executor: <<pipeline.parameters.docker-image>>
-  #     - run: make -C <<parameters.path>> build
-  #     - run: make -C <<parameters.path>> publish-ee
 
   check-ts-bindings:
     docker:
@@ -2566,6 +2528,7 @@ jobs:
 
       - install-devcluster
       - license-gen
+      - get-slurmcluster
 
       - gcloud/install:
           version: "412.0.0"
@@ -4959,7 +4922,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-mmdetection-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
@@ -5259,7 +5222,7 @@ workflows:
       - build-docs:
           matrix:
             parameters:
-              ee: true
+              ee: [true]
           context: determined-production
           requires:
             - build-helm
@@ -5355,7 +5318,7 @@ workflows:
       - build-docs:
           matrix:
             parameters:
-              ee: true
+              ee: [true]
           context: determined-production
           filters: *release-and-rc-filters
           requires:
@@ -5363,7 +5326,7 @@ workflows:
             - build-proto
       - upload-docs-search-index:
           requires:
-            - build-docs-ee
+            - build-docs
           context: determined-production
           filters: *release-and-rc-filters
 
@@ -5381,16 +5344,16 @@ workflows:
           matrix:
             parameters:
               path: ["harness"]
-              ee: true
+              ee: [true]
           context: determined-production
           filters: *rc-filters
           requires:
-            - package-and-push-system-rc
+            - package-and-push-system-rc-ee
 
       - package-and-push-system-release-ee:
           requires:
             - build-react
-            - build-docs-ee
+            - build-docs
           context: determined-production
           filters: *release-filters
 
@@ -5399,22 +5362,22 @@ workflows:
           matrix:
             parameters:
               path: ["harness"]
-              ee: true
+              ee: [true]
           context: determined-production
           filters: *release-filters
           requires:
-            - package-and-push-system-release
+            - package-and-push-system-release-ee
 
       - publish-docs:
           requires:
-            - build-docs-ee
+            - build-docs
           context: determined-production
           filters: *release-filters
 
       - publish-helm-gh:
           matrix:
             parameters:
-              ee: true
+              ee: [true]
           requires:
             - build-helm
           context: determined-production
