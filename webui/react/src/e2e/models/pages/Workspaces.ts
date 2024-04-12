@@ -1,8 +1,8 @@
 import { BasePage } from 'e2e/models/BasePage';
-import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
-import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
+import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
+import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
 
 /**
  * Returns a representation of an Workspaces page.
