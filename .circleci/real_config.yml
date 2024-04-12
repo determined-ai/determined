@@ -68,26 +68,6 @@ release-and-rc-filters: &release-and-rc-filters
       - /(\d)+(\.(\d)+)+/
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
-release-and-rc-filters-ee: &release-and-rc-filters-ee
-  branches:
-    ignore:
-      - /.*/
-  tags:
-    only:
-      - /(\d)+(\.(\d)+)+-ee/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
-
-release-and-rc-filters-all: &release-and-rc-filters-all
-  branches:
-    ignore:
-      - /.*/
-  tags:
-    only:
-      - /(\d)+(\.(\d)+)+/
-      - /(\d)+(\.(\d)+)+-ee/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
-
 rc-filters: &rc-filters
   branches:
     ignore:
@@ -96,14 +76,6 @@ rc-filters: &rc-filters
     only:
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
-rc-filters-ee: &rc-filters-ee
-  branches:
-    ignore:
-      - /.*/
-  tags:
-    only:
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
-
 release-filters: &release-filters
   branches:
     ignore:
@@ -111,14 +83,6 @@ release-filters: &release-filters
   tags:
     only:
       - /(\d)+(\.(\d)+)+/
-
-release-filters-ee: &release-filters-ee
-  branches:
-    ignore:
-      - /.*/
-  tags:
-    only:
-      - /(\d)+(\.(\d)+)+-ee/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
@@ -1372,6 +1336,10 @@ jobs:
           path: helm/build
 
   build-docs:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1387,7 +1355,12 @@ jobs:
       - run: make -C helm build
       - attach_workspace:
           at: .
-      - run: make -C docs build
+      - run: |
+          if <<parameters.ee>>; then
+            make -C docs attributions.rst rebrand build
+          else
+            make -C docs build
+          fi
       - persist_to_workspace:
           root: .
           paths:
@@ -1400,35 +1373,36 @@ jobs:
       - store_artifacts:
           path: docs.tgz
 
-  # TODO (eliu): maybe make ee a parameter instead in everything
-  build-docs-ee:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - checkout
-      - helm/install-helm-client
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          model-hub: true
-          extra-requirements-file: "docs/requirements.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: make -C examples build
-      - run: make -C helm build
-      - attach_workspace:
-          at: .
-      - run: make -C docs attributions.rst rebrand build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - examples/build
-            - harness/dist
-            - model_hub/dist
-            - docs/build
-            - docs/site
-      - run: tar czf docs.tgz docs/site/html
-      - store_artifacts:
-          path: docs.tgz
+#   # TODO (eliu): maybe make ee a parameter instead in everything
+#   build-docs-ee:
+#     docker:
+#       - image: <<pipeline.parameters.docker-image>>
+#     steps:
+#       - checkout
+#       - helm/install-helm-client
+#       - setup-python-venv:
+#           install-python: false
+#           determined: true
+#           model-hub: true
+#           extra-requirements-file: "docs/requirements.txt"
+#           executor: <<pipeline.parameters.docker-image>>
+#       - run: make -C examples build
+#       - run: make -C helm build
+#       - attach_workspace:
+#           at: .
+#       - run: make -C docs attributions.rst rebrand build
+#       - persist_to_workspace:
+#           root: .
+#           paths:
+#             - examples/build
+#             - harness/dist
+#             - model_hub/dist
+#             - docs/build
+#             - docs/site
+#       - run: tar czf docs.tgz docs/site/html
+#       - store_artifacts:
+#           path: docs.tgz
+
 
   upload-docs-search-index:
     docker:
@@ -1772,6 +1746,10 @@ jobs:
       - run: make -C helm release
 
   publish-helm-gh:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1782,23 +1760,32 @@ jobs:
           at: .
       - reinstall-go
       - run: make -C helm release-gh
+      - run: |
+          if <<parameters.ee>>; then
+            make -C <<parameters.path>> release-gh-ee
+          else
+            make -C <<parameters.path>> release-gh
+          fi
 
-  publish-helm-gh-ee:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - reinstall-go
-      - run: make -C helm release-gh-ee
+  # publish-helm-gh-ee:
+  #   docker:
+  #     - image: <<pipeline.parameters.docker-image>>
+  #       environment:
+  #         GO111MODULE: "on"
+  #   steps:
+  #     - checkout
+  #     - attach_workspace:
+  #         at: .
+  #     - reinstall-go
+  #     - run: make -C helm release-gh-ee
 
   publish-python-package:
     parameters:
       path:
         type: string
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1808,22 +1795,28 @@ jobs:
           extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
-      - run: make -C <<parameters.path>> publish
+      # - run: make -C <<parameters.path>> publish
+      - run: |
+          if <<parameters.ee>>; then
+            make -C <<parameters.path>> publish-ee
+          else
+            make -C <<parameters.path>> publish
+          fi
 
-  publish-python-package-ee:
-    parameters:
-      path:
-        type: string
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - checkout
-      - setup-python-venv:
-          install-python: false
-          extras-requires: "build twine"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: make -C <<parameters.path>> build
-      - run: make -C <<parameters.path>> publish-ee
+  # publish-python-package-ee:
+  #   parameters:
+  #     path:
+  #       type: string
+  #   docker:
+  #     - image: <<pipeline.parameters.docker-image>>
+  #   steps:
+  #     - checkout
+  #     - setup-python-venv:
+  #         install-python: false
+  #         extras-requires: "build twine"
+  #         executor: <<pipeline.parameters.docker-image>>
+  #     - run: make -C <<parameters.path>> build
+  #     - run: make -C <<parameters.path>> publish-ee
 
   check-ts-bindings:
     docker:
@@ -5245,25 +5238,36 @@ workflows:
       - terminate-vpc-circleci:
             context: ["gcp"]
 
-  release:
+  test-docs:
     jobs:
-      - build-helm:
-          filters: *release-and-rc-filters-all
-      - build-proto:
-          filters: *release-and-rc-filters-all
-      - build-react:
-          context: determined-production
-          filters: *release-and-rc-filters-all
+      - build-helm
+      - build-proto
       - build-docs:
           context: determined-production
-          filters: *release-and-rc-filters
+          requires:
+            - build-helm
+            - build-proto
+      - build-docs:
+          matrix:
+            parameters:
+              ee: true
+          context: determined-production
           requires:
             - build-helm
             - build-proto
 
-      - build-docs-ee:
+  release:
+    jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
+      - build-react:
           context: determined-production
-          filters: *release-and-rc-filters-ee
+          filters: *release-and-rc-filters
+      - build-docs:
+          context: determined-production
+          filters: *release-and-rc-filters
           requires:
             - build-helm
             - build-proto
@@ -5272,7 +5276,7 @@ workflows:
           requires:
             - build-docs
           context: determined-production
-          filters: *release-and-rc-filters-all
+          filters: *release-and-rc-filters
 
       - package-and-push-system-rc:
           requires:
@@ -5281,30 +5285,11 @@ workflows:
           context: determined-production
           filters: *rc-filters
 
-      - package-and-push-system-rc-ee:
-          requires:
-            - build-react
-            - build-docs
-          context:
-            - determined-ee
-            - github-read
-          filters: *rc-filters-ee
-
       - publish-python-package:
           name: publish-python-package-rc
           matrix:
             parameters:
               path: ["harness", "model_hub"]
-          context: determined-production
-          filters: *rc-filters
-          requires:
-            - package-and-push-system-rc
-
-      - publish-python-package-ee:
-          name: publish-python-package-rc-ee
-          matrix:
-            parameters:
-              path: ["harness"]
           context: determined-production
           filters: *rc-filters
           requires:
@@ -5317,13 +5302,6 @@ workflows:
           context: determined-production
           filters: *release-filters
 
-      - package-and-push-system-release-ee:
-          requires:
-            - build-react
-            - build-docs-ee
-          context: determined-production
-          filters: *release-filters-ee
-
       - publish-python-package:
           name: publish-python-package-release
           matrix:
@@ -5334,27 +5312,11 @@ workflows:
           requires:
             - package-and-push-system-release
 
-      - publish-python-package-ee:
-          name: publish-python-package-release-ee
-          matrix:
-            parameters:
-              path: ["harness"]
-          context: determined-production
-          filters: *rc-filters
-          requires:
-            - package-and-push-system-rc
-
       - publish-docs:
           requires:
             - build-docs
           context: determined-production
           filters: *release-filters
-
-      - publish-docs:
-          requires:
-            - build-docs-ee
-          context: determined-production
-          filters: *release-filters-ee
 
       - publish-helm:
           requires:
@@ -5368,12 +5330,83 @@ workflows:
           context: determined-production
           filters: *release-filters
 
-      - publish-helm-gh-ee:
+      - upload-try-now-template:
+          context: determined-production
+          filters: *release-filters
+
+  release-ee:
+    jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
+      - build-react:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-docs:
+          matrix:
+            parameters:
+              ee: true
+          context: determined-production
+          filters: *release-and-rc-filters
           requires:
             - build-helm
+            - build-proto
+      - upload-docs-search-index:
+          requires:
+            - build-docs-ee
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - package-and-push-system-rc-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters: *rc-filters
+
+      - publish-python-package:
+          name: publish-python-package-rc-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: true
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc
+
+      - package-and-push-system-release-ee:
+          requires:
+            - build-react
+            - build-docs-ee
           context: determined-production
           filters: *release-filters-ee
 
-      - upload-try-now-template:
+      - publish-python-package:
+          name: publish-python-package-release-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: true
+          context: determined-production
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release
+
+      - publish-docs:
+          requires:
+            - build-docs-ee
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh:
+          matrix:
+            parameters:
+              ee: true
+          requires:
+            - build-helm
           context: determined-production
           filters: *release-filters
