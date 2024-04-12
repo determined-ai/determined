@@ -113,7 +113,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         {canModifyAUG && (
           <>
             <Divider />
-            <Form.Item label="Configure Agent User" name="useAgentUser" valuePropName="checked" data-testid="useAgentUser">
+            <Form.Item
+              label="Configure Agent User"
+              name="useAgentUser"
+              valuePropName="checked"
+              data-testid="useAgentUser">
               <Toggle />
             </Form.Item>
             {useAgentUser && (
@@ -132,7 +136,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                 </Form.Item>
               </>
             )}
-            <Form.Item label="Configure Agent Group" name="useAgentGroup" valuePropName="checked" data-testid="useAgentGroup">
+            <Form.Item
+              label="Configure Agent Group"
+              name="useAgentGroup"
+              valuePropName="checked"
+              data-testid="useAgentGroup">
               <Toggle />
             </Form.Item>
             {useAgentGroup && (

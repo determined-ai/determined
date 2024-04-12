@@ -61,10 +61,9 @@ test.describe('Navigation', () => {
 
     await test.step('Navigate to Workspaces', async () => {
       const workspacesPage = new Workspaces(page);
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.click()
-      await page.waitForURL(workspacesPage.url);
+      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
+      await page.waitForURL(`**/${workspacesPage.url}?**`);
       await expect.soft(page).toHaveTitle(workspacesPage.title);
-      await expect.soft(page).toHaveURL(workspacesPage.url);
     });
 
     await test.step('Navigate to Admin', async () => {
