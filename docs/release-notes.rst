@@ -22,15 +22,10 @@ Version 0.31.0
 
    See the REST API documentation for more information about the endpoint.
 
--  Logging: Add a configuration option, ``logging_retention``, to the server configuration file with
-   options for scheduling (``schedule``) log cleanup, and for selecting the number of ``days`` to
-   retain logs. Experiments can override the default log retention settings provided by the server
-   by specifying ``log_retention_days`` in the experiment configuration. Valid values for retention
-   days range from ``-1`` to ``32767``, and schedules must adhere to a valid cron expression or
-   duration format. If retention days is set to ``-1``, logs will be retained indefinitely.
-   Conversely, setting retention days to 0 will result in logs being deleted during the next
-   scheduled log cleanup. Additionally, administrators can manually initiate log retention cleanup
-   using the ``det task cleanup-logs command``.
+-  Logging: Add a ``retention_policy`` section to the master config file for specifying the default
+   log retention policy. Experiments can override the default log retention settings with the
+   ``retention_policy.log_retention_days`` config option. See :ref:`master-config-reference` and
+   :ref:`experiment-config-reference` for more details.
 
 -  CLI: Add commands, ``det e set log-retention <exp-id>`` and ``det t set log-retention
    <trial-id>``, to allow the user to set the length of log retention for experiments and trials.
