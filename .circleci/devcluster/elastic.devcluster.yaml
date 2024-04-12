@@ -29,6 +29,8 @@ stages:
             type: elastic
             host: localhost
             port: 9200
+        task_container_defaults:
+          startup_hook: "echo 'hello from master tcd startup hook'"
 
   - agent:
       name: agent

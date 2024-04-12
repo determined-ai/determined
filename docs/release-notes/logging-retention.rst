@@ -10,4 +10,4 @@
    duration format. If retention days is set to ``-1``, logs will be retained indefinitely.
    Conversely, setting retention days to 0 will result in logs being deleted during the next
    scheduled log cleanup. Additionally, administrators can manually initiate log retention cleanup
-   using the ``det master cleanup-logs command``.
+   using the ``det task cleanup-logs command``.

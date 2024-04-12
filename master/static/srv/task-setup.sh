@@ -53,3 +53,5 @@ if [ "$HOME" = "/" ]; then
     )" || HOME="$PWD"
     export HOME
 fi
+
+TCD_STARTUP_HOOK="$DET_RUN_DIR/dynamic-tcd-startup-hook.sh"

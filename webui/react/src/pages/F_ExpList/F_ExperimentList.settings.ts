@@ -1,9 +1,6 @@
 import * as t from 'io-ts';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from 'components/OptionsMenu';
-import { SettingsConfig } from 'hooks/useSettings';
-import { optional } from 'ioTypes';
 
 import { defaultColumnWidths, defaultExperimentColumns } from './expListColumns';
 
@@ -29,7 +26,7 @@ export const ProjectSettings = t.intersection([
   t.type({}),
   t.partial({
     columns: t.array(t.string),
-    columnWidths: t.record(t.string, optional(t.number)),
+    columnWidths: t.record(t.string, t.number),
     compare: t.boolean,
     filterset: t.string, // save FilterFormSet as string
     heatmapOn: t.boolean,
@@ -59,39 +56,4 @@ export const defaultProjectSettings: Required<ProjectSettings> = {
   pinnedColumnsCount: 3,
   selection: DEFAULT_SELECTION,
   sortString: 'id=desc',
-};
-
-export interface F_ExperimentListGlobalSettings {
-  rowHeight: RowHeight;
-  tableViewMode: TableViewMode;
-}
-
-export const experimentListGlobalSettingsConfig = t.partial({
-  rowHeight: ioRowHeight,
-  tableViewMode: ioTableViewMode,
-});
-
-export const experimentListGlobalSettingsDefaults = {
-  rowHeight: RowHeight.MEDIUM,
-  tableViewMode: 'scroll',
-} as const;
-
-export const experimentListGlobalSettingsPath = 'globalTableSettings';
-
-export const settingsConfigGlobal: SettingsConfig<F_ExperimentListGlobalSettings> = {
-  settings: {
-    rowHeight: {
-      defaultValue: RowHeight.MEDIUM,
-      skipUrlEncoding: true,
-      storageKey: 'rowHeight',
-      type: ioRowHeight,
-    },
-    tableViewMode: {
-      defaultValue: 'scroll',
-      skipUrlEncoding: true,
-      storageKey: 'tableViewMode',
-      type: ioTableViewMode,
-    },
-  },
-  storagePath: experimentListGlobalSettingsPath,
 };

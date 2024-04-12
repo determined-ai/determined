@@ -7,13 +7,17 @@ import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
-import React, { MouseEvent, useCallback, useMemo } from 'react';
+import { Failed, Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import React, { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
 import ExperimentMoveModalComponent from 'components/ExperimentMoveModal';
 import ExperimentRetainLogsModalComponent from 'components/ExperimentRetainLogsModal';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
+import InterstitialModalComponent, {
+  type onInterstitialCloseActionType,
+} from 'components/InterstitialModalComponent';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 import {
@@ -21,12 +25,19 @@ import {
   archiveExperiment,
   cancelExperiment,
   deleteExperiment,
+  getExperiment,
   killExperiment,
   openOrCreateTensorBoard,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { ExperimentAction, ExperimentItem, ProjectExperiment, ValueOf } from 'types';
+import {
+  BulkExperimentItem,
+  ExperimentAction,
+  FullExperimentItem,
+  ProjectExperiment,
+  ValueOf,
+} from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { capitalize } from 'utils/string';
@@ -39,7 +50,7 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, ExperimentItem>;
+  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, BulkExperimentItem>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
@@ -85,12 +96,57 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
-  const HyperparameterSearchModal = useModal(HyperparameterSearchModalComponent);
+  const {
+    Component: HyperparameterSearchModal,
+    open: hyperparameterSearchModalOpen,
+    close: hyperparameterSearchModalClose,
+  } = useModal(HyperparameterSearchModalComponent);
+  const {
+    Component: InterstitialModal,
+    open: interstitialModalOpen,
+    close: interstitialModalClose,
+  } = useModal(InterstitialModalComponent);
+  const [experimentItem, setExperimentItem] = useState<Loadable<FullExperimentItem>>(NotLoaded);
+  const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
   const { openToast } = useToast();
 
+  // this is required when experiment does not contain `config`.
+  // since we removed config. See #8765 on GitHub
+  const fetchedExperimentItem = useCallback(async () => {
+    try {
+      setExperimentItem(NotLoaded);
+      const response: FullExperimentItem = await getExperiment(
+        { id: experiment.id },
+        { signal: canceler.current.signal },
+      );
+      setExperimentItem(Loaded(response));
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiment data.' });
+      setExperimentItem(Failed(new Error('experiment data failure')));
+    }
+  }, [experiment.id]);
+
+  const onInterstitalClose: onInterstitialCloseActionType = useCallback(
+    (reason) => {
+      switch (reason) {
+        case 'ok':
+          hyperparameterSearchModalOpen();
+          break;
+        case 'failed':
+          break;
+        case 'close':
+          canceler.current.abort();
+          canceler.current = new AbortController();
+          break;
+      }
+      interstitialModalClose(reason);
+    },
+    [hyperparameterSearchModalOpen, interstitialModalClose],
+  );
+
   const handleEditComplete = useCallback(
-    (data: Partial<ExperimentItem>) => {
+    (data: Partial<BulkExperimentItem>) => {
       onComplete?.(ExperimentAction.Edit, id, data);
     },
     [id, onComplete],
@@ -223,7 +279,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             ExperimentRetainLogsModal.open();
             break;
           case Action.HyperparameterSearch:
-            HyperparameterSearchModal.open();
+            interstitialModalOpen();
+            fetchedExperimentItem();
             break;
           case Action.Copy:
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -255,7 +312,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       ExperimentEditModal,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
-      HyperparameterSearchModal,
+      interstitialModalOpen,
+      fetchedExperimentItem,
       cell,
       openToast,
       experiment.workspaceId,
@@ -293,10 +351,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         experimentIds={[id]}
         onSubmit={handleRetainLogsComplete}
       />
-      <HyperparameterSearchModal.Component
-        closeModal={HyperparameterSearchModal.close}
-        experiment={experiment}
-      />
+      {experimentItem.isLoaded && (
+        <HyperparameterSearchModal
+          closeModal={hyperparameterSearchModalClose}
+          experiment={experimentItem.data}
+        />
+      )}
+      <InterstitialModal loadableData={experimentItem} onCloseAction={onInterstitalClose} />
     </>
   );
 

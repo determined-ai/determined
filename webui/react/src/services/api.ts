@@ -292,7 +292,7 @@ export const searchExperiments = generateDetApi<
 export const getExperiment = generateDetApi<
   Service.GetExperimentParams,
   Api.V1GetExperimentResponse,
-  Type.ExperimentItem
+  Type.FullExperimentItem
 >(Config.getExperiment);
 
 export const getExperimentDetails = generateDetApi<
@@ -742,6 +742,14 @@ export const getProjectNumericMetricsRange = generateDetApi<
   Api.V1GetProjectNumericMetricsRangeResponse,
   Type.ProjectMetricsRange[]
 >(Config.getProjectNumericMetricsRange);
+
+/* Runs */
+
+export const searchRuns = generateDetApi<
+  Service.SearchRunsParams,
+  Api.V1SearchRunsResponse,
+  Type.SearchFlatRunPagination
+>(Config.searchRuns);
 
 /* Tasks */
 

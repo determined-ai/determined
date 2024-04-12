@@ -384,7 +384,7 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 func (m *MultiRMRouter) getRM(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
-		m.syslog.Debugf("RM undefined, routing to default resource manager")
+		m.syslog.Tracef("RM undefined, routing to default resource manager")
 		return m.defaultRMName, nil
 	}
 
@@ -395,7 +395,7 @@ func (m *MultiRMRouter) getRM(rpName rm.ResourcePoolName) (string, error) {
 		}
 		for _, p := range rps.ResourcePools {
 			if p.Name == rpName.String() {
-				m.syslog.Debugf("RM defined as %s, %s", name, p.Name)
+				m.syslog.Tracef("RM defined as %s, %s", name, p.Name)
 				return name, nil
 			}
 		}

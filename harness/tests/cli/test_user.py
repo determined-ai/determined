@@ -1,5 +1,6 @@
 from unittest import mock
 
+import responses
 from responses import matchers
 
 from determined.cli import cli
@@ -47,3 +48,23 @@ def test_user_edit_no_fields(mock_die: mock.MagicMock) -> None:
         mock_die.assert_has_calls(
             [mock.call("No field provided. Use 'det user edit -h' for usage.", exit_code=1)]
         )
+
+
+@responses.activate()
+@mock.patch("determined.common.api.authentication.TokenStore", util.MockTokenStore(strict=False))
+@mock.patch("getpass.getpass", lambda *_: "newpass")
+@mock.patch("determined.cli.cli.die")
+def test_login_dies_with_invalid_credentials_error_message(mock_die: mock.MagicMock) -> None:
+    util.expect_get_info()
+    responses.post(
+        "http://localhost:8080/api/v1/auth/login",
+        status=401,
+    )
+    cli.main(["user", "login", "test-user"])
+    mock_die.assert_has_calls(
+        [
+            mock.call(
+                "Failed to log in user: Invalid username/password combination. Please try again."
+            )
+        ]
+    )
