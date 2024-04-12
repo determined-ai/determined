@@ -210,7 +210,10 @@ const TableActionBar: React.FC<Props> = ({
             openExperimentTensorBoardModal();
           } else {
             openCommandResponse(
-              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+              await openOrCreateTensorBoard({
+                experimentIds: params.experimentIds,
+                workspaceId: project?.workspaceId,
+              }),
             );
           }
           return;
