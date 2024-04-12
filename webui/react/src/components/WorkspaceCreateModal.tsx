@@ -114,10 +114,10 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           <>
             <Divider />
             <Form.Item
+              data-testid="useAgentUser"
               label="Configure Agent User"
               name="useAgentUser"
-              valuePropName="checked"
-              data-testid="useAgentUser">
+              valuePropName="checked">
               <Toggle />
             </Form.Item>
             {useAgentUser && (
@@ -137,10 +137,10 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               </>
             )}
             <Form.Item
+              data-testid="useAgentGroup"
               label="Configure Agent Group"
               name="useAgentGroup"
-              valuePropName="checked"
-              data-testid="useAgentGroup">
+              valuePropName="checked">
               <Toggle />
             </Form.Item>
             {useAgentGroup && (
@@ -165,10 +165,10 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           <>
             <Divider />
             <Form.Item
+              data-testid="useCheckpointStorage"
               label="Configure Checkpoint Storage"
               name="useCheckpointStorage"
-              valuePropName="checked"
-              data-testid="useCheckpointStorage">
+              valuePropName="checked">
               <Toggle />
             </Form.Item>
             {useCheckpointStorage && (

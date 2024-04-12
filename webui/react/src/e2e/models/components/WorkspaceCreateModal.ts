@@ -1,6 +1,6 @@
-import { Modal } from 'e2e/models/hew/Modal';
-import { BaseComponent } from 'e2e/models/BaseComponent';
 import { Switch } from 'e2e/models/ant/Switch';
+import { BaseComponent } from 'e2e/models/BaseComponent';
+import { Modal } from 'e2e/models/hew/Modal';
 
 /**
  * Returns a representation of the Workspace create/edit modal component.

@@ -1,9 +1,9 @@
 import { expect } from '@playwright/test';
+import { v4 } from 'uuid';
 
 import { test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
-import { v4 } from 'uuid';
 
 test.describe('Projects', () => {
   let wsCreatedWithButton: string = '';
@@ -45,7 +45,7 @@ test.describe('Projects', () => {
   test.afterEach(async ({ page }) => {
     const workspacesPage = new Workspaces(page);
     await test.step('Delete a workspace', async () => {
-      if (wsCreatedWithButton != '') {
+      if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
         const workspaceCard = workspacesPage.list.cardWithName(wsCreatedWithButton);
         await workspaceCard.actionMenu.pwLocator.click();
@@ -55,7 +55,7 @@ test.describe('Projects', () => {
       }
     });
     await test.step('Delete a workspace through sidebar', async () => {
-      if (wsCreatedWithSidebar != '') {
+      if (wsCreatedWithSidebar !== '') {
         await workspacesPage.nav.sidebar
           .sidebarItem(wsCreatedWithSidebar)
           .pwLocator.click({ button: 'right' });

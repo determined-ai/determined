@@ -1,5 +1,6 @@
 import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
 /**
@@ -26,7 +27,7 @@ export class NavigationSideBar extends BaseReactFragment {
   readonly workspaces: BaseComponent = this.sidebarItem('Workspaces');
   readonly createWorkspace: BaseComponent = new BaseComponent({
     parent: this.#nav,
-    selector: `span[aria-label="Create workspace"]`,
+    selector: 'span[aria-label="Create workspace"]',
   });
   /**
    * Returns a representation of a sidebar NavigationItem with the specified label.
