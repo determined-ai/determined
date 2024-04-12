@@ -41,9 +41,10 @@ Version 0.31.0
 -  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
    experiment list page and choosing **Retain Logs** from **Actions**. Users can then input the
    desired number of days for log retention or select the "Forever" checkbox for indefinite log
-   retention. The allowed range for the number of days is between ``-1`` and ``32767``, where -1
-   retains logs forever. Add a new column, ''Log Retention Days'', to the Trial List page. ''Log
-   Retention Days'' displays the duration logs will be retained for each trial from creation.
+   retention. The number of days must be between -1 and 32767, where -1 retains logs forever.
+
+   There is a new column on the trial list page, "Log Retention Days", that displays the number of
+   days for which logs will be retained for each trial after creation.
 
 -  Master Config: Added a new field to task container defaults named ``startup_hook`` which allows
    for the specification of an inline script to be executed after task setup.
