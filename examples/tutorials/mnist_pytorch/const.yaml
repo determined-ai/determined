@@ -9,6 +9,6 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-      epochs: 1
+      epochs: 4
   smaller_is_better: true
 entrypoint: python3 train.py
