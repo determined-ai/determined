@@ -283,4 +283,9 @@ if __name__ == "__main__":
     with open(path, "w") as f:
         yaml.YAML(typ="safe", pure=True).dump(conf, f)
 
+    filedir = pathlib.Path(path).parent
+    verfile = filedir.joinpath("environments-target.txt")
+    with open(verfile, "w") as f:
+        f.write(commit[:7] + "\n")
+
     print(f"done, {path} has been updated", file=sys.stderr)
