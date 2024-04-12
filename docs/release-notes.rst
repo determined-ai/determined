@@ -39,7 +39,7 @@ Version 0.31.0
    equivalent to ``--days -1``.
 
 -  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
-   Experiment List page and choosing **Retain Logs** from **Actions**. Users can then input the
+   experiment list page and choosing **Retain Logs** from **Actions**. Users can then input the
    desired number of days for log retention or select the "Forever" checkbox for indefinite log
    retention. The allowed range for the number of days is between ``-1`` and ``32767``, where -1
    retains logs forever. Add a new column, ''Log Retention Days'', to the Trial List page. ''Log
