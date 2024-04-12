@@ -13,7 +13,7 @@
 Version 0.31.0
 ==============
 
-**Release Date:** April 12, 2024
+**Release Date:** April 15, 2024
 
 **New Features**
 
@@ -46,12 +46,12 @@ Version 0.31.0
    retains logs forever. Add a new column, ''Log Retention Days'', to the Trial List page. ''Log
    Retention Days'' displays the duration logs will be retained for each trial from creation.
 
--  Master Config: Added a new field to task container defaults named `startup_hook` which allows for
+-  Master Config: Added a new field to task container defaults named ``startup_hook`` which allows for
    the specification of an inline script to be executed after task setup.
 
 **Improvements**
 
--  CLI: The ``--add-tag`` flag to ```det deploy aws up`` will now apply tags to dynamic agents
+-  CLI: The ``--add-tag`` flag to ``det deploy aws up`` will now apply tags to dynamic agents
    launched.
 
 **Bug Fixes**
@@ -59,17 +59,13 @@ Version 0.31.0
 -  API: Fix a bug where calling ``det job update`` could prevent jobs from being scheduled and ``det
    job ls`` to hang.
 
-**ZZZ put these into an appropriate section!**
-
-ignore
-
 **Security Fixes**
 
 -  Helm: When deploying a new cluster with Helm, configuring an initial password for the "admin" and
    "determined" users is required and is no longer a separate step. To specify an initial password
    for these users, visit the helm/charts/determined/values.yaml file and use either
    initialUserPassword (preferred) or defaultPassword (deprecated). For reference, visit
-   :ref:helm-config-reference.
+   :ref:`helm-config-reference`.
 
 **************
  Version 0.30
