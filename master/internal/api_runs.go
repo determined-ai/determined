@@ -477,12 +477,12 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 		switch {
 		case check.Archived && archive:
 			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is already archived.",
+				Error: "",
 				Id:    check.ID,
 			})
 		case !check.Archived && !archive:
 			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is not archived.",
+				Error: "",
 				Id:    check.ID,
 			})
 		case !check.State:

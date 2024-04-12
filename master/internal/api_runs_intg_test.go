@@ -631,8 +631,8 @@ func TestArchiveAlreadyArchived(t *testing.T) {
 	archRes, err = api.ArchiveRuns(ctx, archReq)
 	require.NoError(t, err)
 	require.Len(t, archRes.Results, 2)
-	require.Equal(t, "Run is already archived.", archRes.Results[0].Error)
-	require.Equal(t, "Run is already archived.", archRes.Results[1].Error)
+	require.Equal(t, "", archRes.Results[0].Error)
+	require.Equal(t, "", archRes.Results[1].Error)
 }
 
 func TestArchiveNonTerminalState(t *testing.T) {
@@ -682,6 +682,6 @@ func TestUnarchivedAlreadyUnarchived(t *testing.T) {
 	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
 	require.NoError(t, err)
 	require.Len(t, unarchRes.Results, 2)
-	require.Equal(t, "Run is not archived.", unarchRes.Results[0].Error)
-	require.Equal(t, "Run is not archived.", unarchRes.Results[1].Error)
+	require.Equal(t, "", unarchRes.Results[0].Error)
+	require.Equal(t, "", unarchRes.Results[1].Error)
 }
