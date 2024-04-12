@@ -20,7 +20,7 @@ Version 0.31.0
 -  API: Add a new API endpoint, ``/health``, that provides information about the status of
    Determined's connections to the database, Kubernetes API server, and Slurm launcher integration.
 
-   The REST API documentation can be viewed for more information about the endpoint.
+   See the REST API documentation for more information about the endpoint.
 
 -  Logging: Add a configuration option, ``logging_retention``, to the server configuration file with
    options for scheduling (``schedule``) log cleanup, and for selecting the number of ``days`` to
