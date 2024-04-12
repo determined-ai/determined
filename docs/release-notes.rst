@@ -7,6 +7,71 @@
 ###############
 
 **************
+ Version 0.31
+**************
+
+Version 0.31.0
+==============
+
+**Release Date:** April 12, 2024
+
+**New Features**
+
+-  API: Add a new API ``/health`` that has information about the status of Determined's database
+   connection, connection to Kubernetes API server, and connection to Slurm launcher integration.
+
+   The REST API documentation can be viewed for more information about the endpoint.
+
+-  Logging: Add a configuration option, ``logging_retention``, to the server configuration file with
+   options for scheduling (``schedule``) log cleanup, and for selecting the number of ``days`` to
+   retain logs. Experiments can override the default log retention settings provided by the server
+   by specifying ``log_retention_days`` in the experiment configuration. Valid values for retention
+   days range from ``-1`` to ``32767``, and schedules must adhere to a valid cron expression or
+   duration format. If retention days is set to ``-1``, logs will be retained indefinitely.
+   Conversely, setting retention days to 0 will result in logs being deleted during the next
+   scheduled log cleanup. Additionally, administrators can manually initiate log retention cleanup
+   using the ``det task cleanup-logs command``.
+
+-  CLI: Add commands, ``det e set log-retention <exp-id>`` and ``det t set log-retention
+   <trial-id>`` to allow the user to set the log retention days for experiments and trials. These
+   commands take the required argument ``--days`` and the optional argument ``forever``. ``--days``
+   sets the number of days to retain the logs for, from the time of creation and ``--forever``
+   retains logs forever. The allowed range for ``--days`` is between ``-1`` and ``32767``, where -1
+   retains logs forever.
+
+-  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
+   Experiment List page and choosing **Retain Logs** from **Actions**. Users can then input the
+   desired number of days for log retention or select the "Forever" checkbox for indefinite log
+   retention. The allowed range for the number of days is between ``-1`` and ``32767``, where -1
+   retains logs forever. Add a new column, ''Log Retention Days'', to the Trial List page. ''Log
+   Retention Days'' displays the duration logs will be retained for each trial from creation.
+
+-  Master Config: Added a new field to task container defaults named `startup_hook` which allows for
+   the specification of an inline script to be executed after task setup.
+
+**Improvements**
+
+-  CLI: The ``--add-tag`` flag to ```det deploy aws up`` will now apply tags to dynamic agents
+   launched.
+
+**Bug Fixes**
+
+-  API: Fix a bug where calling ``det job update`` could prevent jobs from being scheduled and ``det
+   job ls`` to hang.
+
+**ZZZ put these into an appropriate section!**
+
+ignore
+
+**Security Fixes**
+
+-  Helm: When deploying a new cluster with Helm, configuring an initial password for the "admin" and
+   "determined" users is required and is no longer a separate step. To specify an initial password
+   for these users, visit the helm/charts/determined/values.yaml file and use either
+   initialUserPassword (preferred) or defaultPassword (deprecated). For reference, visit
+   :ref:helm-config-reference.
+
+**************
  Version 0.30
 **************
 
