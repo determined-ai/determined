@@ -34,7 +34,7 @@ type archiveRunOKResult struct {
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-	State        *bool
+	State        bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -485,7 +485,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 				Error: "Run is not archived.",
 				Id:    check.ID,
 			})
-		case check.State == nil || !*check.State:
+		case !check.State:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in terminal state.",
 				Id:    check.ID,
