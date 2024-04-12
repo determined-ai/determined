@@ -201,8 +201,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const resetPagination = useCallback(() => {
     setIsLoading(true);
     setPage(0);
+    updateSettings({ selection: DEFAULT_SELECTION });
     setExperiments(INITIAL_LOADING_EXPERIMENTS);
-  }, [setPage]);
+  }, [setPage, updateSettings]);
 
   useEffect(() => {
     let cleanup: () => void;
