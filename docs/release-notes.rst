@@ -33,11 +33,10 @@ Version 0.31.0
    using the ``det task cleanup-logs command``.
 
 -  CLI: Add commands, ``det e set log-retention <exp-id>`` and ``det t set log-retention
-   <trial-id>`` to allow the user to set the log retention days for experiments and trials. These
-   commands take the required argument ``--days`` and the optional argument ``forever``. ``--days``
-   sets the number of days to retain the logs for, from the time of creation and ``--forever``
-   retains logs forever. The allowed range for ``--days`` is between ``-1`` and ``32767``, where -1
-   retains logs forever.
+   <trial-id>``, to allow the user to set the length of log retention for experiments and trials.
+   Both commands can specify a length in days with the arguments ``--days <number of days>``. The
+   number of days must be between -1 and 32767, where -1 retains logs forever. ``--forever`` is
+   equivalent to ``--days -1``.
 
 -  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
    Experiment List page and choosing **Retain Logs** from **Actions**. Users can then input the
