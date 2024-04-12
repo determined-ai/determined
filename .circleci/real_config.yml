@@ -4393,6 +4393,15 @@ workflows:
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
 
+      - test-e2e:
+          context: okta
+          name: test-e2e-saml
+          requires:
+            - build-go
+          parallelism: 1
+          devcluster-config: saml.devcluster.yaml
+          mark: e2e_saml
+
       - test-perf:
           name: test-perf
           snapshot-after-migrations: true
@@ -4950,7 +4959,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-mmdetection-tests
-            - package-and-push-system-dev-ee
+            - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
@@ -5383,7 +5392,7 @@ workflows:
             - build-react
             - build-docs-ee
           context: determined-production
-          filters: *release-filters-ee
+          filters: *release-filters
 
       - publish-python-package:
           name: publish-python-package-release-ee
