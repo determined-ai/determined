@@ -18,6 +18,7 @@ import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
+import useFeature from 'hooks/useFeature';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import usePermissions from 'hooks/usePermissions';
@@ -61,6 +62,7 @@ const AppView: React.FC = () => {
   const settings = useObservable(themeSetting);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { ui, actions: uiActions, theme, isDarkMode } = useUI();
+  const streamingUpdatesOn = useFeature().isOn('streaming_updates');
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -71,8 +73,10 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   useEffect(() => {
-    return streamStore.on(projectStore);
-  }, []);
+    if (streamingUpdatesOn) return streamStore.on(projectStore);
+    else streamStore.off('projects');
+    return;
+  }, [streamingUpdatesOn]);
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
   useEffect(() => (isAuthenticated ? clusterStore.startPolling() : undefined), [isAuthenticated]);

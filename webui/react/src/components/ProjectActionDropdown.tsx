@@ -20,7 +20,7 @@ interface Props {
   direction?: 'vertical' | 'horizontal';
   isContextMenu?: boolean;
   onDelete?: () => void;
-  onEdit?: (name: string, archived: boolean) => void;
+  onEdit?: (name: string, archived: boolean, description?: string) => void;
   onMove?: () => void;
   project: Project;
   showChildrenIfEmpty?: boolean;
@@ -29,7 +29,7 @@ interface Props {
 
 interface ProjectMenuPropsIn {
   onDelete?: () => void;
-  onEdit?: (name: string, archived: boolean) => void;
+  onEdit?: (name: string, archived: boolean, description?: string) => void;
   onMove?: () => void;
   project?: Project;
   workspaceArchived?: boolean;

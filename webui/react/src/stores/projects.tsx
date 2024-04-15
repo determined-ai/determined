@@ -89,6 +89,10 @@ export class ProjectStore implements StreamSubscriber {
     }
   }
 
+  public upsert(content: StreamContent): void {
+    this.upsertProject(mapStreamProject(content));
+  }
+
   #upsert(p: Project, np: Project): Project {
     p.name = np.name;
     p.description = np.description;
@@ -98,8 +102,7 @@ export class ProjectStore implements StreamSubscriber {
     return { ...p };
   }
 
-  public upsert(content: StreamContent): void {
-    const p = mapStreamProject(content);
+  public upsertProject(p: Project): void {
     let prevProjectWorkspaceId: number | undefined;
 
     this.#projects.update((prev) =>
