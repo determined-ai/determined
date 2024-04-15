@@ -25,11 +25,13 @@ test.describe('User Management', () => {
     const pagination = userManagementPage.table.table.pagination;
     let expetedRowCount: number;
     await test.step('Get number of users from the tab at the top', async () => {
-      const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
+      const match = (await userManagementPage.userTab.pwLocator.innerText()).match(
+        /Users \((\d+)\)/,
+      );
       if (match === null) {
         throw new Error('Number not present in tab.');
       }
-      expetedRowCount = +match[0];
+      expetedRowCount = Number(match[1]);
     });
     for await (const [index, paginationOption] of [
       pagination.perPage.perPage10,
@@ -38,11 +40,6 @@ test.describe('User Management', () => {
       pagination.perPage.perPage100,
     ].entries()) {
       await test.step(`Compare table rows with pagination:${index}`, async () => {
-        const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
-        if (match === null) {
-          throw new Error('Number not present in tab.');
-        }
-        expetedRowCount = +match[0];
         await pagination.perPage.pwLocator.click();
         await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();

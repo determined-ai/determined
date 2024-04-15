@@ -110,7 +110,7 @@ export class UserFixture {
         const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username))
           .actions;
         await actions.pwLocator.click();
-        if (await actions.state.pwLocator.textContent() != 'Activate') {
+        if ((await actions.state.pwLocator.textContent()) !== 'Activate') {
           continue;
         }
         await actions.state.pwLocator.click();
