@@ -386,13 +386,8 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		dbExp.Username = owner.Username
 	}
 
-	taskSpec.Project = config.Project()
-	taskSpec.Workspace = config.Workspace()
-	if p.Id >= 1 {
-		// use project and workspace name from command
-		taskSpec.Project = p.Name
-		taskSpec.Workspace = workspaceModel.Name
-	}
+	taskSpec.Project = p.Name
+	taskSpec.Workspace = workspaceModel.Name
 	for label := range config.Labels() {
 		taskSpec.Labels = append(taskSpec.Labels, label)
 	}
