@@ -87,14 +87,7 @@ useNodePortForMaster: false
 # Determined master and the task containers it launches, but does not include communication between
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
-tlsSecret:
-
-
-# TLS security configs for determined master.
-security:
-  tls:
-    cert:
-    key:
+# tlsSecret:
 
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
@@ -330,9 +323,9 @@ telemetry:
   # security:
     # username: <username>
     # password: <password>
-      # tls:
-        # enabled: true
-        # skipVerify: false
+    # tls:
+      # enabled: true
+      # skipVerify: false
 
       ## The name to use when verifying the certificate, if different from the name used to connect.
       # certificateName: <name>
