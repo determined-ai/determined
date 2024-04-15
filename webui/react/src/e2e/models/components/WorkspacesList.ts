@@ -1,5 +1,6 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
+import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
 /**
  * Returns a representation of the Workspaces Page component.
@@ -14,10 +15,14 @@ export class WorkspacesList extends NamedComponent {
     parent: this,
     selector: '[data-testid="newWorkspace"]',
   });
-  readonly cardWithName = (name: string): Card => {
-    return new Card({
-      parent: this,
-      selector: `[data-testid="card-${name}"]`,
-    });
+  readonly cardWithName = (name: string): WorkspaceCard => {
+    return Card.withName({parent: this, name: name}, WorkspaceCard)
   };
+}
+
+class WorkspaceCard extends Card {
+  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
+    parent: this,
+    selector: Card.ActionMenuSelector,
+  });
 }
