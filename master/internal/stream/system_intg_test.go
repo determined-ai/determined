@@ -265,6 +265,7 @@ func basicUpdateTest(
 	t.Run(testCase.startupCase.description, func(t *testing.T) {
 		basicStartupTest(t, testCase.startupCase, socket)
 	})
+	fmt.Println("before queries")
 	// execute provided queries on the db
 	for i := range testCase.queries {
 		_, err := testCase.queries[i].Exec(ctx)
@@ -275,10 +276,13 @@ func basicUpdateTest(
 
 	// read until we received the expected message
 	data := []string{}
+	fmt.Printf("before readuntilfound\n")
 	socket.ReadUntilFound(t, &data, append(testCase.expectedUpserts, testCase.expectedDeletions...))
 	deletions, upserts, _ := splitMsgs(t, data)
 
 	// validate messages collected at startup
+	fmt.Printf("expectedUpserts: %+v, expectedDeletions: %+v\n",
+		testCase.expectedUpserts, testCase.expectedDeletions)
 	validateMsgs(
 		t,
 		[]string{}, []string{}, // no sync message expected

@@ -32,6 +32,7 @@ func (w *WrappedWebsocket) Write(msg interface{}) error {
 
 // WriteAll attempts to write all provided messages.
 func WriteAll(socketLike WebsocketLike, msgs []interface{}) error {
+	fmt.Println("in writeall")
 	for _, msg := range msgs {
 		err := socketLike.Write(msg)
 		if err != nil {

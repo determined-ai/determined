@@ -2,6 +2,7 @@ package stream
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -31,6 +32,7 @@ type KnownKeySet struct {
 
 // prepareWebsocketMessage converts the MarshallableMsg into a websocket.PreparedMessage.
 func prepareWebsocketMessage(obj stream.MarshallableMsg) interface{} {
+	fmt.Printf("preparewebsockmessage: %+v\n", obj)
 	jbytes, err := json.Marshal(obj)
 	if err != nil {
 		log.Errorf("error marshaling message for streaming: %s", err.Error())
