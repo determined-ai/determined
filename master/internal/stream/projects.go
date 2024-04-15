@@ -159,26 +159,7 @@ func ProjectCollectStartupMsgs(
 			spec,
 		)
 	}
-<<<<<<< HEAD
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "p")
-=======
-	// and events that happened since the last time this streamer checked
-	newEventsQuery.Where("p.seq > ?", spec.Since)
-	var newEntities []int64
-	err = newEventsQuery.Scan(ctx, &newEntities)
-	if err != nil && errors.Cause(err) != sql.ErrNoRows {
-		log.Errorf("error when scanning for new offline events: %v\n", err)
-		return nil, err
-	}
-	// fmt.Printf("newEntities: %+v\n", newEntities)
-
-	exist = append(exist, newEntities...)
-	slices.Sort(exist)
-
-	// step 2: figure out what was missing and what has appeared
-	// fmt.Printf("known: %+v, exist: %+v\n", known, exist)
-	missing, appeared, err := stream.ProcessKnown(known, exist)
->>>>>>> fd9a44bca7 (WIP)
 	if err != nil {
 		return nil, fmt.Errorf("processing known: %s", err.Error())
 	}
