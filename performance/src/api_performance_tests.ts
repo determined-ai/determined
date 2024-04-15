@@ -173,6 +173,20 @@ const getloadTests = (
       ),
       !!sD?.workspace.projectId,
     ),
+    test(
+      "Get Project Columns for Runs Table",
+      getRequest(
+        `/api/v1/projects/${sD?.workspace.projectId}/columns?table_type=TABLE_TYPE_RUN`,
+      ),
+      !!sD?.workspace.projectId,
+    ),
+    test(
+      "Get Project Columns for Experiments Table",
+      getRequest(
+        `/api/v1/projects/${sD?.workspace.projectId}/columns?table_type=TABLE_TYPE_EXPERIMENT`,
+      ),
+      !!sD?.workspace.projectId,
+    ),
     // This is a bad endpoint and we know it is bad.
     // No sense in making other endpoints be slowed before we get the fix in
     // https://hpe-aiatscale.atlassian.net/browse/DET-10114
