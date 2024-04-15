@@ -15,6 +15,12 @@ Version 0.31.0
 
 **Release Date:** April 15, 2024
 
+**Breaking Changes**
+
+-  SAML: The underlying SAML implementation has been updated to use a newer, more maintained
+   library. As a result, the master config no longer accepts the `idp_cert_path` field and now
+   requires the `idp_metadata_url` field when using SAML.
+
 **New Features**
 
 -  API: Add a new API endpoint, ``/health``, that provides information about the status of
