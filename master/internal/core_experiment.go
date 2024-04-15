@@ -291,7 +291,6 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return nil, nil, config, nil, nil, err
 	}
-
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
 	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
@@ -389,7 +388,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	taskSpec.Project = config.Project()
 	taskSpec.Workspace = config.Workspace()
-	if p.Id > 1 {
+	if p.Id >= 1 {
 		// use project and workspace name from command
 		taskSpec.Project = p.Name
 		taskSpec.Workspace = workspaceModel.Name
