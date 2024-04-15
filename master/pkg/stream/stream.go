@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // Msg is an object with a message and a sequence number and json marshal caching.
@@ -22,9 +23,12 @@ type Msg interface {
 type Event[T Msg] struct {
 	Before *T `json:"before"`
 	After  *T `json:"after"`
+}
 
-	upsertCache interface{}
-	deleteCache interface{}
+type EntityCache struct {
+	Seq         int64
+	UpsertCache interface{}
+	DeleteCache interface{}
 }
 
 // MarshallableMsg is an intermediary message that is ready to be marshaled and broadcast.
@@ -181,31 +185,44 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Subscriptions = nil
 }
 
-func (p *Publisher[T]) hydrateMsg(rawMsg T, idToSeq map[int]int64, sub *Subscription[T], ev Event[T]) interface{} {
+func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EntityCache, sub *Subscription[T], ev Event[T]) interface{} {
+	fmt.Println("hydrate message")
 	var msg interface{}
-	// seq < rawMsg.SeqNum() and id doesn't exist in idToSeq
+	entityCache := EntityCache{}
+
 	entityMsg, err := sub.hydrator(rawMsg.GetID())
-	if errors.Cause(err) == sql.ErrNoRows {
+	if err != nil && errors.Cause(err) == sql.ErrNoRows {
 		// This id has a delete event later
-		idToSeq[rawMsg.GetID()] = -1
+		entityCache.Seq = -1
+		entityCache.DeleteCache = sub.Streamer.PrepareFn(entityMsg.DeleteMsg())
+		idToEventCache[rawMsg.GetID()] = entityCache
+		return nil
+	} else if err != nil {
+		log.Debugf("failed to hydrate message: %s", err.Error())
 		return nil
 	}
 
 	upsertMsg := entityMsg.UpsertMsg()
 	fmt.Println("reach before filters")
+	entityCache.Seq = upsertMsg.Msg.SeqNum()
+	entityCache.UpsertCache = sub.Streamer.PrepareFn(upsertMsg)
 	// check filter again in case project move workspace that would be a fall out
 	if sub.filter(upsertMsg.Msg.(T)) && sub.permissionFilter(upsertMsg.Msg.(T)) {
-		fmt.Println("helper: check filter again")
-		ev.upsertCache = sub.Streamer.PrepareFn(upsertMsg)
-		// fmt.Println("helper: afterpreparemessage")
-		msg = ev.upsertCache
-		idToSeq[upsertMsg.Msg.GetID()] = upsertMsg.Msg.SeqNum()
+		// fmt.Println("helper: check filters again")
+		if entityCache.Seq == rawMsg.SeqNum() {
+			msg = entityCache.UpsertCache
+		}
 	} else {
-		// This id fall out later
-		fmt.Println("helper: fallout")
-		idToSeq[rawMsg.GetID()] = -1
-		return nil
+		// This id fall out
+		fmt.Println("detected fallout in hydration")
+		entityCache.DeleteCache = sub.Streamer.PrepareFn(entityMsg.DeleteMsg())
+		if entityCache.Seq == rawMsg.SeqNum() {
+			fmt.Println("send fallout in hydration")
+			msg = entityCache.DeleteCache
+		}
 	}
+	idToEventCache[rawMsg.GetID()] = entityCache
+
 	return msg
 }
 
@@ -219,51 +236,100 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	// start with a fresh wakeupid
 	p.WakeupID++
 	wakeupID := p.WakeupID
-	idToSeq := map[int]int64{}
+	idToEventCache := map[int]EntityCache{}
 
 	// check each event against each subscription
 	for sub := range p.Subscriptions {
 		// fmt.Println("NEW SUB")
 		func() {
-			for _, ev := range events {
-				// fmt.Printf("events idx: %v\n", i)
+			for i, ev := range events {
+				fmt.Printf("events idx: %v\n", i)
 				var msg interface{}
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					rawMsg := *ev.After
-					// seq, ok := idToSeq[rawMsg.GetID()]
-					// fmt.Printf("events idx: %v, seq: %v, ok: %v\n", i, seq, ok)
-					if seq, ok := idToSeq[rawMsg.GetID()]; ok {
+					entityCache, ok := idToEventCache[rawMsg.GetID()]
+					fmt.Printf("events idx: %v, entityCache: %+v, ok: %v\n", i, entityCache, ok)
+					if entityCache, ok := idToEventCache[rawMsg.GetID()]; ok {
 						// update, insert, or fallin: send the record to the client.
-						if seq >= rawMsg.SeqNum() || seq == -1 {
+						cachedSeq := entityCache.Seq
+						if cachedSeq > rawMsg.SeqNum() || cachedSeq == -1 {
 							// ignore this message
 							// fmt.Println("ignore this event. has cache.")
 							continue
+						} else if cachedSeq == rawMsg.SeqNum() && entityCache.UpsertCache != nil {
+							// entityCache.UpsertCache can be nil if the previous event is a fallout.
+							// It doesn't have UpsertCache.
+							msg = entityCache.UpsertCache
+							fmt.Printf("cached msg sent: %#v\n", msg)
 						} else {
-							// fmt.Println("upsert event seq > cacahed seq")
-							msg = p.hydrateMsg(rawMsg, idToSeq, sub, ev)
+							msg = p.hydrateMsg(rawMsg, idToEventCache, sub, ev)
+							fmt.Printf("updated cached msg sent: %#v\n", msg)
 							if msg == nil {
 								continue
 							}
-
 						}
 					} else {
-						fmt.Println("upsert no cached seq")
-						msg = p.hydrateMsg(rawMsg, idToSeq, sub, ev)
+						// fmt.Println("upsert no cached seq")
+						msg = p.hydrateMsg(rawMsg, idToEventCache, sub, ev)
+						fmt.Printf("no cached msg sent: %#v\n", msg)
 						if msg == nil {
 							continue
 						}
-						fmt.Printf("idToSeq: %+v\n", idToSeq)
+						// fmt.Printf("idToCachedSeq: %+v\n", idToEventCache)
+					}
+
+				case ev.Before != nil && ev.After != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before) &&
+					(!sub.filter(*ev.After) || !sub.permissionFilter(*ev.After)):
+					// fallout: tell the client the record is deleted.
+					fmt.Println("fallout")
+					beforeMsg := *ev.Before
+					afterMsg := *ev.After
+
+					if entityCache, ok := idToEventCache[afterMsg.GetID()]; ok {
+						cachedSeq := entityCache.Seq
+						fmt.Printf("cached Seq: %+v\n", cachedSeq)
+						if cachedSeq == afterMsg.SeqNum() {
+							if entityCache.DeleteCache == nil {
+								entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+							}
+							msg = entityCache.DeleteCache
+						} else if cachedSeq > afterMsg.SeqNum() || cachedSeq == -1 {
+							continue
+						} else {
+							entityCache.Seq = afterMsg.SeqNum()
+							if entityCache.DeleteCache == nil {
+								entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+							}
+							msg = entityCache.DeleteCache
+						}
+					} else {
+						entityCache := EntityCache{}
+						entityCache.Seq = afterMsg.SeqNum()
+						entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						msg = entityCache.DeleteCache
+						idToEventCache[afterMsg.GetID()] = entityCache
 					}
 
 				case ev.Before != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before):
-					// deletion or fallout: tell the client the record is deleted.
-					rawMsg := *ev.Before
-					if ev.deleteCache == nil {
-						ev.deleteCache = sub.Streamer.PrepareFn(rawMsg.DeleteMsg())
+					// deletion: tell the client the record is deleted.
+					beforeMsg := *ev.Before
+					fmt.Println("delete msg")
+					if entityCache, ok := idToEventCache[beforeMsg.GetID()]; ok {
+						if entityCache.DeleteCache == nil {
+							entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						}
+						entityCache.Seq = -1
+						msg = entityCache.DeleteCache
+						idToEventCache[beforeMsg.GetID()] = entityCache
+					} else {
+						entityCache := EntityCache{}
+						entityCache.Seq = -1
+						entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						msg = entityCache.DeleteCache
+						idToEventCache[beforeMsg.GetID()] = entityCache
 					}
-					msg = ev.deleteCache
-					// fmt.Println("delete msg")
+
 				default:
 					// ignore this message
 					continue

@@ -249,14 +249,15 @@ func ProjectMakePermissionFilter(ctx context.Context, user model.User) (func(*Pr
 	}
 }
 
-// ProjectMakeFilter creates a ProjectMsg filter based on the given ProjectSubscriptionSpec.
-func ProjectHydrateUpsertMsg() func(int) (*ProjectMsg, error) {
+// ProjectMakeHydrator returns a function that gets all the properties of a project by
+// its id.
+func ProjectMakeHydrator() func(int) (*ProjectMsg, error) {
 	return func(ID int) (*ProjectMsg, error) {
 		var projMsg ProjectMsg
 		query := db.Bun().NewSelect().Model(&projMsg).Where("project_msg.id = ?", ID)
 		err := query.Scan(context.Background(), &projMsg)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
-			log.Errorf("error: %v\n", err)
+			log.Errorf("error in project hydrator: %v\n", err)
 			return nil, err
 		}
 		return &projMsg, nil

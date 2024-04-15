@@ -55,6 +55,11 @@ func (pm *ModelMsg) SeqNum() int64 {
 	return pm.Seq
 }
 
+// GetID gets the ID from a ModelMsg.
+func (pm *ModelMsg) GetID() int {
+	return pm.ID
+}
+
 // UpsertMsg creates a model stream upsert message.
 func (pm *ModelMsg) UpsertMsg() stream.UpsertMsg {
 	return stream.UpsertMsg{
@@ -244,5 +249,20 @@ func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*Mode
 		return func(msg *ModelMsg) bool {
 			return accessScopeSet[model.AccessScopeID(msg.WorkspaceID)]
 		}, nil
+	}
+}
+
+// ModelMakeHydrator returns a function that gets all the properties of a project by
+// its id.
+func ModelMakeHydrator() func(int) (*ModelMsg, error) {
+	return func(ID int) (*ModelMsg, error) {
+		var modelMsg ModelMsg
+		query := db.Bun().NewSelect().Model(&modelMsg).Where("id = ?", ID)
+		err := query.Scan(context.Background(), &modelMsg)
+		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+			log.Errorf("error in model hydrator: %v\n", err)
+			return nil, err
+		}
+		return &modelMsg, nil
 	}
 }
