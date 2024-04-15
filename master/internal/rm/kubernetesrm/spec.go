@@ -35,16 +35,15 @@ import (
 const (
 	coscheduler = "coscheduler"
 
-	gcTask              = "gc"
-	cmdTask             = "cmd"
-	userLabel           = "determined.ai/user"
-	workspaceLabel      = "determined.ai/workspace"
-	resourcePoolLabel   = "determined.ai/resource_pool"
-	taskTypeLabel       = "determined.ai/task_type"
-	taskIDLabel         = "determined.ai/task_id"
-	experimentIDLabel   = "determined.ai/experiment_id"
-	trialRequestIDLabel = "determined.ai/trial_request_id"
-	containerIDLabel    = "determined.ai/container_id"
+	gcTask            = "gc"
+	cmdTask           = "cmd"
+	labelPrefix       = "determined.ai/"
+	userLabel         = labelPrefix + "user"
+	workspaceLabel    = labelPrefix + "workspace"
+	resourcePoolLabel = labelPrefix + "resource_pool"
+	taskTypeLabel     = labelPrefix + "task_type"
+	taskIDLabel       = labelPrefix + "task_id"
+	containerIDLabel  = labelPrefix + "container_id"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -370,19 +369,22 @@ func (p *pod) configurePodSpec(
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
 	// add determined metadata as pod labels
-	podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
+	if p.submissionInfo.taskSpec.Owner != nil {
+		// note: owner label will disappear if Owner is somehow nil
+		podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
+	}
 	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
 	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
-	if p.submissionInfo.taskSpec.TaskType == model.TaskTypeTrial {
-		// split task ID into experiment ID and trial request ID
-		experimentID, trialRequestID := experimentIDTrialIDFromTaskID(p.submissionInfo.taskSpec.TaskID)
-		podSpec.ObjectMeta.Labels[experimentIDLabel] = experimentID
-		podSpec.ObjectMeta.Labels[trialRequestIDLabel] = trialRequestID
-	}
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+
+	// add any extra pod labels from task spec
+	// note: if map is not populated, labels will be missing and observability will be impacted
+	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
+		podSpec.ObjectMeta.Labels[labelPrefix+k] = v
+	}
 
 	p.modifyPodSpec(podSpec, scheduler)
 
@@ -507,18 +509,6 @@ func (p *pod) createPodSpec(scheduler string) error {
 func configureUniqueName(t tasks.TaskSpec, rank int) string {
 	return fmt.Sprintf("%s-%d-%s-%s",
 		t.Description, rank, t.AllocationID, petName.Generate(2, "-"))
-}
-
-func experimentIDTrialIDFromTaskID(taskID string) (experimentID string, trialID string) {
-	res := strings.Split(taskID, ".")
-	experimentID = ""
-	trialID = ""
-	if len(res) == 2 {
-		// expect taskID to be formatted as ExperimentID.TrialRequestID for trials
-		experimentID = res[0]
-		trialID = res[1]
-	}
-	return experimentID, trialID
 }
 
 func trialNameFromPod(podName string) string {

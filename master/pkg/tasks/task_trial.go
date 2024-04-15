@@ -132,6 +132,13 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 		res.ExtraEnvVars = envVars
 	}
 
+	// populate extra pod labels for observability
+	podLabels := map[string]string{
+		"experiment_id": strconv.Itoa(s.ExperimentID),
+		"trial_id":      strconv.Itoa(s.TrialID),
+	}
+	res.ExtraPodLabels = podLabels
+
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
 	}
