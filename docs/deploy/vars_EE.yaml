@@ -1,0 +1,8 @@
+---
+domain: "hpe-mlde.determined.ai"
+cdn:
+  acm_certificate_arn: "arn:aws:acm:us-east-1:573932760021:certificate/f117a2ed-a377-4a71-b42e-d00c9339adff"
+s3:
+  bucket: "hpe-mlde-docs"
+  robots:
+    content: "User-agent: *\nSitemap: https://hpe-mlde.determined.ai/latest/sitemap.xml"
