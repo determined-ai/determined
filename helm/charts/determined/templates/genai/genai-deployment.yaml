@@ -25,11 +25,13 @@ spec:
       - name: genai-{{ .Release.Name }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
         {{- /* genai.version is used for CI to override the appVersion. */ -}}
-        image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
-        imagePullPolicy: "Always"
+        # image: {{ .Values.imageRegistry }}/genai:{{ $tag }}
+        # imagePullPolicy: "Always"
+        image: lore_backend:latest
+        imagePullPolicy: "Never"
         env:
           - name: DET_MASTER
-            value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
+            value: {{ include "genai.detMasterScheme" . }}://determined-master-service-{{ .Release.Name }}.{{ .Release.Namespace }}:{{ .Values.masterPort }}
           - name: DB_NAME
             value: lore
           - name: DB_USER
@@ -70,6 +72,11 @@ spec:
           {{- end }}
           - name: genai-resource-pool-metadata
             mountPath: /run/determined/workdir/rp_config
+          {{- if .Values.tlsSecret }}
+          - name: tls-secret
+            mountPath: {{ include "determined.secretPath" . }}
+            readOnly: true
+          {{ end }}
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}
@@ -105,5 +112,10 @@ spec:
         - name: genai-resource-pool-metadata
           configMap:
             name: genai-resource-pool-metadata-{{ .Release.Name }}
+        {{- if .Values.tlsSecret }}
+        - name: tls-secret
+          secret:
+            secretName: {{ .Values.tlsSecret }}
+        {{- end }}
 {{ end }}
 {{ end }}

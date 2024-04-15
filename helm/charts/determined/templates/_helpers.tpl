@@ -30,3 +30,11 @@
     {{- end }}
     {{ toJson $resource_pools }}
 {{- end }}
+
+{{- define "genai.detMasterScheme" -}}
+    {{- if (and (not .Values.useNodePortForMaster) .Values.tlsSecret)}}
+        {{- "https" }}
+    {{- else }}
+        {{- "http" }}
+    {{- end }}
+{{- end }}
