@@ -2,10 +2,12 @@ import { test as base } from '@playwright/test';
 
 import { AuthFixture } from './auth.fixture';
 import { DevFixture } from './dev.fixture';
+import { UserFixture } from './user.fixture';
 
 type CustomFixtures = {
   dev: DevFixture;
   auth: AuthFixture;
+  user: UserFixture;
 };
 
 // https://playwright.dev/docs/test-fixtures

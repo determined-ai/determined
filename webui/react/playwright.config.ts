@@ -6,6 +6,18 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+const server_addess = process.env.PW_SERVER_ADDRESS
+let port: number;
+if (server_addess === undefined) {
+  port = 3001
+} else {
+  const match = server_addess.match(/\d+/)
+  if (match === null || isNaN(+match)) {
+    throw new Error(`Expected port number in PW_SERVER_ADDRESS ${server_addess}, ${match}`)
+  }
+  port = +match
+}
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -75,7 +87,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3001/',
+    baseURL: `http://localhost:${port}/`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',
@@ -85,7 +97,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run preview',
-    port: 3001,
+    port: port,
     reuseExistingServer: !process.env.CI,
   },
 

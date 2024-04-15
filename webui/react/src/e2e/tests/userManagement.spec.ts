@@ -1,8 +1,8 @@
 import { expect, type Page } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
+import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 
 test.describe('User Management', () => {
@@ -23,73 +23,91 @@ test.describe('User Management', () => {
     const userManagementPage = new UserManagement(page);
     await userManagementPage.goto();
     const pagination = userManagementPage.table.table.pagination;
-    const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
-    if (match === null) {
-      throw new Error('Number not present in tab.');
-    }
-    const expetedRowCount = +match[0];
-    for (const paginationOption of [
+    let expetedRowCount: number;
+    await test.step('Get number of users from the tab at the top', async () => {
+      const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
+      if (match === null) {
+        throw new Error('Number not present in tab.');
+      }
+      expetedRowCount = +match[0];
+    });
+    for await (const [index, paginationOption] of [
       pagination.perPage.perPage10,
       pagination.perPage.perPage20,
       pagination.perPage.perPage50,
       pagination.perPage.perPage100,
-    ]) {
-      await pagination.perPage.pwLocator.click();
-      await paginationOption.pwLocator.click();
-      await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
-      const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
-      if (matches === null) {
-        throw new Error("Couldn't find pagination selection.");
-      }
-      const paginationSelection = +matches[1];
-      await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
-        Math.min(paginationSelection, expetedRowCount),
-      );
+    ].entries()) {
+      await test.step(`Compare table rows with pagination:${index}`, async () => {
+        const match = (await userManagementPage.userTab.pwLocator.innerText()).match(/\d+/);
+        if (match === null) {
+          throw new Error('Number not present in tab.');
+        }
+        expetedRowCount = +match[0];
+        await pagination.perPage.pwLocator.click();
+        await paginationOption.pwLocator.click();
+        await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
+        const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
+        if (matches === null) {
+          throw new Error("Couldn't find pagination selection.");
+        }
+        const paginationSelection = +matches[1];
+        await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
+          Math.min(paginationSelection, expetedRowCount),
+        );
+      });
     }
   });
 
   test.describe('With a new User', () => {
     let page: Page;
     let authFixture: AuthFixture;
+    let userFixture: UserFixture;
     let userManagementPage: UserManagement;
-    let userid: string;
-    let username: string;
+    let testUser: User;
 
     test.beforeAll(async ({ browser }) => {
-      username = 'test-user-' + uuidv4();
-
       await test.step('Login', async () => {
-        page = await browser.newPage();
+        page = await browser.newPage({ recordVideo: { dir: './src/e2e/test-results' } });
         authFixture = new AuthFixture(page);
+        userFixture = new UserFixture(page);
         userManagementPage = new UserManagement(page);
         await authFixture.login();
       });
 
-      await test.step('Create a user', async () => {
+      await test.step('Create User', async () => {
         await userManagementPage.goto();
-        await userManagementPage.addUser.pwLocator.click();
-        await expect(userManagementPage.createUserModal.pwLocator).toBeVisible();
-        await userManagementPage.createUserModal.username.pwLocator.fill(username);
-        await userManagementPage.createUserModal.footer.submit.pwLocator.click();
-      });
-
-      await test.step('Set the user id', async () => {
-        await userManagementPage.search.pwLocator.fill(username);
-        await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1);
-        userid = await (await userManagementPage.getRowByUsername(username)).getID();
+        testUser = await userFixture.createUser();
       });
     });
 
     test.afterAll(async () => {
-      if (userid !== undefined) {
-        await userManagementPage.getRowByID(userid).actions.pwLocator.click();
-        await userManagementPage.getRowByID(userid).actions.state.pwLocator.click();
-      }
+      await userManagementPage.goto();
+      await test.step('Deactivate User', async () => {
+        await userFixture.deactivateTestUsers();
+      });
       await page.close();
     });
 
-    test('User table shows correct name', async () => {
-      await expect(userManagementPage.getRowByID(userid).user.pwLocator).toContainText(username);
+    test('User table shows correct data', async () => {
+      const { username, id } = testUser;
+      await userManagementPage.goto();
+      await userManagementPage.search.pwLocator.fill(username);
+      await expect(userManagementPage.getRowByID(id).user.pwLocator).toContainText(username);
+    });
+
+    test('Edit user', async () => {
+      let modifiedUser: User;
+      await userManagementPage.goto();
+      await test.step('Edit once', async () => {
+        modifiedUser = await userFixture.editUser(testUser, {
+          displayName: testUser.username + 'mama luigi',
+        });
+        await userManagementPage.toast.close.pwLocator.click();
+        await expect(userManagementPage.toast.pwLocator).toHaveCount(0);
+      });
+      await test.step('Edit again', async () => {
+        testUser = await userFixture.editUser(modifiedUser, { displayName: '', isAdmin: true });
+      });
     });
   });
 });

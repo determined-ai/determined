@@ -8,6 +8,7 @@ import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { Toast } from 'e2e/models/hew/Toast';
 import { AdminPage } from 'e2e/models/pages/Admin/index';
 
 /**
@@ -58,6 +59,10 @@ export class UserManagement extends AdminPage {
   readonly addUsersToGroupsModal: AddUsersToGroupsModal = new AddUsersToGroupsModal({
     parent: this,
   });
+  readonly toast = new Toast({
+    attachment: Toast.selectorTopRight,
+    parent: this,
+  });
 
   constructor(page: Page) {
     super(page);
@@ -69,6 +74,26 @@ export class UserManagement extends AdminPage {
    * @param {string} name - The username to filter UserTable rows by
    */
   async getRowByUsername(name: string): Promise<UserRow> {
+    const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
+      return (await row.user.pwLocator.innerText()).includes(name);
+    });
+    expect(
+      filteredRows,
+      `name:${name}, component:${await this.table.table.rows.pwLocator.allInnerTexts()}`,
+    ).toHaveLength(1);
+    return filteredRows[0];
+  }
+
+  /**
+   * Returns a row that matches a given username
+   * @param {string} name - The username to filter UserTable rows by
+   */
+  async getRowByUsernameSearch(name: string): Promise<UserRow> {
+    await this.search.pwLocator.clear();
+    await Promise.all([
+      this.search.pwLocator.fill(name),
+      expect(this.table.table.rows.pwLocator).toHaveCount(1),
+    ]);
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
