@@ -3,8 +3,6 @@ package stream
 import (
 	"context"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
@@ -62,6 +60,7 @@ func NewSubscriptionSet(
 				ps.Projects,
 				newPermFilter(ctx, user, ProjectMakePermissionFilter, &err),
 				newFilter(spec.Projects, ProjectMakeFilter, &err),
+				ProjectHydrateUpsertMsg(),
 			),
 			ProjectCollectStartupMsgs,
 		}
@@ -156,7 +155,7 @@ func startup[T stream.Msg, S any](
 	// Scan for historical msgs matching newly-added subscriptions.
 	newmsgs, err := state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
-		return echo.ErrCookieNotFound
+		return err
 	}
 	for _, msg := range newmsgs {
 		*msgs = append(*msgs, prepare(msg))
