@@ -12,7 +12,7 @@ if (serverAddess === undefined) {
 }
 const port = Number(new URL(serverAddess).port || 'not exist')
 if (isNaN(port)) {
-  throw new Error('Expected PW_SERVER_ADDRESS to have a valid port.')
+  throw new Error(`Expected PW_SERVER_ADDRESS to have a valid port ${serverAddess}.`)
 }
 
 /**
