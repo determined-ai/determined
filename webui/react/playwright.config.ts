@@ -18,7 +18,7 @@ export default defineConfig({
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: process.env.PWDEBUG ? 0 : 3 * 60 * 1000, // 3 min unless debugging
-
+  timeout: 60000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
 

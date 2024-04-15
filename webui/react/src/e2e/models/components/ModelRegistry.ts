@@ -7,6 +7,6 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * @param {implementsGetLocator} obj.parent - The parent used to locate this Page
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
-export class ModelRegistryComponent extends NamedComponent {
+export class ModelRegistryPage extends NamedComponent {
   defaultSelector: string = '[data-testid=modelRegistry]';
 }
