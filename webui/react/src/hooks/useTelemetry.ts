@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
-import { DeterminedInfo } from 'stores/determinedInfo';
+import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
 import { Auth, DetailedUser } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
@@ -81,7 +81,7 @@ class Telemetry {
         analytics.identify(user.id.toString(), {
           clusterId: info.clusterId,
           clusterName: info.clusterName,
-          edition: 'EE',
+          edition: info.branding === BrandingType.HPE ? 'EE' : 'OSS',
           masterId: info.masterId,
           username: user.username,
           version: info.version,
