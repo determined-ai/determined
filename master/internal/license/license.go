@@ -56,3 +56,11 @@ func RequireLicense(resource string) {
 		panic("Specified licenseKey version is incompatible")
 	}
 }
+
+// IsEE returns true if a license is detected.
+func IsEE() bool {
+	if publicKey != "" && licenseKey != "" {
+		return true
+	}
+	return false
+}
