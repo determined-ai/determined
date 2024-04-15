@@ -7,17 +7,27 @@
 .. meta::
    :description: Discover how to configure and manage multiple resource managers.
 
-Short introduction...
+Multi-RM for Kubernetes allows users to set up a Determined master service in one Kubernetes cluster
+and schedule workloads in the same or other Kubernetes clusters. - Resource pools are in a
+many-to-one relationship with resource managers. - No one resource pool will span multiple resource
+managers.
 
 .. attention::
 
-   For anything we want to call out to avoid crashing the cluster, etc.
+   Resource pool and resource manager names must be unique, among all pools and managers. Otherwise,
+   the cluster will crash. Additional resource managers are required to have at least one resource
+   pool defined.
 
 **********
  Overview
 **********
 
-We might want to describe the feature here.
+MultiRM for Kubernetes adds the ability to set up the Determined master service on one Kubernetes
+cluster and manage workloads across different Kubernetes clusters. Additional non-default resource
+managers and resource pools are configured under the master configuration options
+``additional_resource_managers`` and ``resource_pools``. On the WebUI, view the resource manager
+name for resource pools. Any requests to resource pools not defined in the master configuration to
+the default resource manager, not any additional resource manager, if defined.
 
 *********************************************
  How to Configure Multiple Resource Managers
@@ -46,12 +56,77 @@ How To Configure (For Admins)
    -  Ensure each additional resource manager has at least one resource pool defined.
    -  Resource pool names must be unique across the cluster to prevent crashes.
 
-*********
- Example
-*********
+**********
+ Examples
+**********
 
-Add examples for the following: - Setting kubeconfig - Setting masterip/port for the different
-resource managers - Multicloud - Multi gke cluster
+-  Setting the master configuration (devcluster): - Create as many resource managers (clusters) as
+   you’d like. - For each cluster, note each kubeconfig location for the cluster (this is where the
+   credentials are found). - Copy or modify the default devcluster template at
+   tools/devcluster.yaml. - In the copied devcluster.yaml file, under the master configuration, set
+   one of your resource managers as the default, and the rest under additional_resource_managers:
+
+   .. code:: yaml
+
+      resource_manager:
+      type: kubernetes
+      name: default-rm # optional, should match the name of your default RM/cluster
+      ... add whatever other specs you might need ...
+      additional_resource_managers:
+      - resource_manager:
+         type: kubernetes
+         name: additional-rm # should match the name of your other RM(s)
+         kubeconfig_path: <whatever-path-your-rm-config-is-like ~/.kubeconfig>
+         ... add whatever other specs you might need ...
+         resource_pools:
+            - pool_name: <your-rm-pool-name>
+
+   -  Run the new devcluster: ``devcluster -c <path-to-modified-devcluster>``.
+
+-  Setting the master configuration (Helm): To deploy MultiRM on Kubernetes through a Helm chart,
+   the cluster administrator will have to load the credentials for each additional cluster through a
+   Kubernetes secret. Follow these steps for each additional resource manager you want to add, and
+   then apply the Helm chart once at the end. Let rm-name be the same as the “cluster name” for a
+   given cluster.
+
+   -  Set up your additional clusters. These can be from the same or different clouds (i.e., GKE,
+      AKS, EKS).
+
+   -  Gather the credentials for each cluster: - For example: .. code:: bash
+
+         # for AKS az aks get-credentials --resource-group <resource-gp-name> --name <rm-name> # for
+         GKE gcloud container clusters get-credentials <rm-name>
+
+   -  Using the cluster as the current context, save its kubeconfig to some tmp file.
+
+   -  Repeat the above steps as many times as needed for the additional clusters you want to add.
+
+   Then, switch to the cluster/context that you want to use as the default cluster. Then, repeat the
+   following steps to create secrets for each additional cluster you want to add.
+
+   -  Create a Kubernetes secret, from the tmp files for each additional cluster.
+
+   -  Specify each additional resource manager, and its kubeconfig secret/location in
+      ``helm/charts/determined/values.yaml``: - For example: .. code:: yaml
+
+         additional_resource_managers: - resource_manager:
+
+            type: kubernetes name: <rm-name> namespace: default # or whatever other namespace you
+            want to use kubeconfig_secret_name: <The secret name, from ``kubectl describe secret
+            <rm-name>``> kubeconfig_secret_value: <The data value, from ``kubectl describe secret
+            <rm-name>``> ... and any other specs you may want to configure ... resource_pools:
+
+               -  pool_name: <rm-pool>
+
+   -  Once all of your resource managers are added to helm values file, install the Helm chart.
+
+-  Setting the master IP/Port for different resource managers:
+
+   For resource managers where the master IP/Port is not reachable by the additional resource
+   managers, you will need to update your Helm chart values/configuration to match the external IP
+   of the default determined deployment. Once the cluster administrator has the master IP of the
+   default Determined deployment, all that's necessary is to upgrade the Helm deployment with that
+   value as the master IP for the additional clusters.
 
 *******
  WebUI
