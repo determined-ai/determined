@@ -65,8 +65,8 @@ release-and-rc-filters: &release-and-rc-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+-ee/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
+      - /(\d)+(\.(\d)+)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
 rc-filters: &rc-filters
   branches:
@@ -74,7 +74,7 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
 release-filters: &release-filters
   branches:
@@ -82,7 +82,7 @@ release-filters: &release-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+-ee/
+      - /(\d)+(\.(\d)+)+/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
@@ -117,7 +117,7 @@ commands:
 
   add-and-fetch-upstream:
     steps:
-      - run: git remote add upstream https://github.com/determined-ai/determined-ee
+      - run: git remote add upstream https://github.com/determined-ai/determined
       - run: tools/scripts/retry.sh git fetch upstream
 
   skip-if-only-dir:
@@ -218,6 +218,12 @@ commands:
       - run: cd ../license-key-gen && go run ./licensegen.go
       - run: mv ../license-key-gen/license.txt ./license.txt
       - run: mv ../license-key-gen/public.txt ./public.txt
+
+  get-slurmcluster:
+    steps:
+      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
+      - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
+      - run: ls -a 
 
   pull-task-images:
     parameters:
@@ -630,7 +636,6 @@ commands:
     steps:
       - run:
           name: Run det-deploy tests
-          # TODO(Brad): backport workdir fixes to oss determined
           working_directory: ./e2e_tests
           command: |
             pytest -vv -s \
@@ -1095,13 +1100,13 @@ commands:
       - run:
           command: gcloud container clusters get-credentials <<parameters.cluster-id>> --project ${<<parameters.google-project-id>>} --region <<parameters.region>>
           name: Get Kubeconfig
-      - run: 
+      - run:
           command: kubectl create namespace ${GENERATED_NAMESPACE}
           name: Create namespace
       - run:
           command: kubectl config set-context --current --namespace=${GENERATED_NAMESPACE}
           name: Set context to the created namespace
-      - run: 
+      - run:
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
@@ -1152,7 +1157,7 @@ commands:
         type: string
       master-tls-cert:
         type: string
-        default: "" 
+        default: ""
       master-tls-key:
         type: string
         default: ""
@@ -1168,7 +1173,7 @@ commands:
               echo "export MASTER_PORT=8443" >> $BASH_ENV
               echo "export MASTER_SCHEME=https" >> $BASH_ENV
             fi
-  
+
   set-google-application-credentials:
     steps:
       - run:
@@ -1280,6 +1285,14 @@ commands:
           no_output_timeout: 30m
           command: make package
 
+  make-package-ee:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          no_output_timeout: 30m
+          command: make package-ee
+
   make-package-small:
     steps:
       - attach_workspace:
@@ -1328,6 +1341,10 @@ jobs:
           path: helm/build
 
   build-docs:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1343,7 +1360,12 @@ jobs:
       - run: make -C helm build
       - attach_workspace:
           at: .
-      - run: make -C docs attributions.rst rebrand build
+      - run: |
+          if <<parameters.ee>>; then
+            make -C docs attributions.rst rebrand build
+          else
+            make -C docs build
+          fi
       - persist_to_workspace:
           root: .
           paths:
@@ -1438,7 +1460,6 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - reinstall-go
-      - license-gen
       - attach_workspace:
           at: .
       - setup_remote_docker:
@@ -1446,6 +1467,41 @@ jobs:
       - pre-package-and-push-system:
           check: false
       - make-package
+      - run: mkdir -p build/
+      - run: docker tag determinedai/determined-master:${CIRCLE_SHA1}-amd64 determinedai/determined-master:${CIRCLE_SHA1}
+      - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+      - run: docker tag determinedai/determined-agent:${CIRCLE_SHA1}-amd64 determinedai/determined-agent:${CIRCLE_SHA1}
+      - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "master/dist/*linux_amd64.deb"
+            - "master/dist/*linux_amd64.rpm"
+            - "agent/dist/*linux_amd64.deb"
+            - "agent/dist/*linux_amd64.rpm"
+            - "build/*.image"
+
+  package-and-push-system-local-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: xlarge
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - reinstall-go
+      - license-gen
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: previous
+      - pre-package-and-push-system:
+          check: false
+      - make-package-ee
       - run: mkdir -p build/
       - run: docker tag determinedai/hpe-mlde-master:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
@@ -1487,6 +1543,64 @@ jobs:
       - make-package
       - run: tools/scripts/retry.sh make -C master publish-dev
       - run: tools/scripts/retry.sh make -C agent publish-dev
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
+                # For main and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
+            fi
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
+  package-and-push-system-dev-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: xlarge
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - skip-if-only-docs
+      - skip-if-only-github
+      - skip-if-only-webui
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - license-gen
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - pre-package-and-push-system:
+          check: false
+      - make-package-ee
+      - run: tools/scripts/retry.sh make -C master publish-dev-ee
+      - run: tools/scripts/retry.sh make -C agent publish-dev-ee
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
+                # For main and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
+            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1535,6 +1649,36 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - login-docker:
+          repository: nvcr.io
+          username: ${NGC_API_USERNAME}
+          password: ${NGC_API_KEY}
+      - pre-package-and-push-system
+      - make-package
+      - run: make -C master publish
+      - run: make -C agent publish
+      - run: make -C model_hub build-docker
+      - run: tools/scripts/retry.sh make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
+  package-and-push-system-rc-ee:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
       - license-gen
       - setup_remote_docker:
           version: previous
@@ -1542,15 +1686,47 @@ jobs:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
       - pre-package-and-push-system
-      - make-package
-      - run: make -C master publish
-      - run: make -C agent publish
-
+      - make-package-ee
+      - run: make -C master publish-ee
+      - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
 
   package-and-push-system-release:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+        environment:
+          GO111MODULE: "on"
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - reinstall-go
+      - setup_remote_docker:
+          version: previous
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
+      - login-docker:
+          repository: nvcr.io
+          username: ${NGC_API_USERNAME}
+          password: ${NGC_API_KEY}
+      - pre-package-and-push-system
+      - run:
+          no_output_timeout: 30m
+          command: make -C master release
+      - run:
+          no_output_timeout: 30m
+          command: make -C agent release
+      - run: make -C model_hub build-docker
+      - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
+      - store_artifacts:
+          path: /tmp/pkgs
+
+  package-and-push-system-release-ee:
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1570,10 +1746,10 @@ jobs:
       - pre-package-and-push-system
       - run:
           no_output_timeout: 30m
-          command: make -C master release
+          command: make -C master release-ee
       - run:
           no_output_timeout: 30m
-          command: make -C agent release
+          command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1591,6 +1767,10 @@ jobs:
       - run: make -C helm release
 
   publish-helm-gh:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -1601,11 +1781,20 @@ jobs:
           at: .
       - reinstall-go
       - run: make -C helm release-gh
+      - run: |
+          if <<parameters.ee>>; then
+            make -C helm release-gh-ee
+          else
+            make -C helm release-gh
+          fi
 
   publish-python-package:
     parameters:
       path:
         type: string
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1615,7 +1804,13 @@ jobs:
           extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
-      - run: make -C <<parameters.path>> publish
+      # - run: make -C <<parameters.path>> publish
+      - run: |
+          if <<parameters.ee>>; then
+            make -C <<parameters.path>> publish-ee
+          else
+            make -C <<parameters.path>> publish
+          fi
 
   check-ts-bindings:
     docker:
@@ -1688,6 +1883,7 @@ jobs:
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
       - run: sudo systemctl restart determined-agent
       - run: ./.circleci/scripts/sanity.sh
+      # we won't have an OSS version - just an EE version
 
   lint-react:
     docker:
@@ -2336,7 +2532,7 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - skip-if-only-webui
-      - set-slack-user-id    
+      - set-slack-user-id
 
       - run:
           name: Create instance name hash and set OPT_DEVBOX_PREFIX env var
@@ -2364,6 +2560,7 @@ jobs:
 
       - install-devcluster
       - license-gen
+      - get-slurmcluster
 
       - gcloud/install:
           version: "412.0.0"
@@ -2574,14 +2771,14 @@ jobs:
       reserved_ports_znode50:
         type: string
         default: |
-            reserved_ports:
-              - 12350
-              - 12351
-              - 12360
-              - 12361
-              - 12365
-              - 12366
-              - 29400
+          reserved_ports:
+            - 12350
+            - 12351
+            - 12360
+            - 12361
+            - 12365
+            - 12366
+            - 29400
       determined_master_host:
         type: string
         default: localhost:8080
@@ -3354,8 +3551,8 @@ jobs:
         type: string
         default: "1"
       environment-image:
+        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1
         type: string
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.27.1
       accel-node-taints:
         type: string
         default: ""
@@ -3825,42 +4022,48 @@ workflows:
           requires:
             - go-coverage
 
-  test-e2e:
+  package-and-deploy-oss:
     jobs:
+      # These jobs are important for docs and latest main and have been moved
+      # here from test-e2e. These jobs are OSS focused while test-e2e now only
+      # uses EE images.
       - build-proto
       - build-helm
       - build-react:
           dev-mode: true
-      - test-e2e-react:
-          context: playwright
-          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
             - build-proto
       - build-go:
           context: github-read
+
       - package-and-push-system-local:
           requires:
             - build-react
             - build-docs
-          context: github-read
-          filters:
-            branches:
-              only:
-                - main
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
 
       - package-and-push-system-dev:
           requires:
             - build-react
             - build-docs
-          context:
-            - determined-ee
-            - github-read
           filters:
             branches:
-              ignore:
-                - /pull\/.*/
+              only:
+                - main
+
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters:
+            branches:
+              only:
+                - main
 
       - check-docs-links:
           requires:
@@ -3870,9 +4073,94 @@ workflows:
               only:
                 - main
 
+      - deploy:
+          name: deploy-latest-main-cluster
+          enable-cors: true
+          reattach-enabled: true
+          extra-tags: "long_running=determined_preview_cluster"
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
+          max-dynamic-agents: 2
+
+      - deploy:
+          name: deploy-preview-cluster
+          enable-cors: true
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
+          max-dynamic-agents: 1
+          cluster-id: determined-preview
+          compute-agent-instance-type: t2.medium
+
+      - deploy-latest-gke:
+          name: deploy-latest-gke-master
+          context: gcp
+          det-version: $CIRCLE_SHA1
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev
+
+  test-e2e:
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          name: build-react-ee
+          dev-mode: true
+      - test-e2e-react:
+          context: playwright
+          filters: *any-upstream
+      - build-docs:
+          name: build-docs-ee
+          matrix:
+            parameters:
+              ee: [true]
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          context: github-read
+      - package-and-push-system-local-ee:
+          requires:
+            - build-react-ee
+            - build-docs-ee
+          context: github-read
+          filters:
+            branches:
+              only:
+                - main
+
+      - package-and-push-system-dev-ee:
+          requires:
+            - build-react-ee
+            - build-docs-ee
+          context:
+            - determined-ee
+            - github-read # TODO (eliu): check these contexts
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+
       - test-debian-packaging:
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           filters:
             branches:
               only:
@@ -3882,7 +4170,7 @@ workflows:
           name: test-e2e-slurm-misconfigured
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
@@ -3926,9 +4214,9 @@ workflows:
           slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
 
-    # Singularity over SLURM test on GCP
+      # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -3943,7 +4231,7 @@ workflows:
           requires:
             - build-go
 
-    # Podman over SLURM test on GCP
+      # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -3958,7 +4246,7 @@ workflows:
           requires:
             - build-go
 
-    # Enroot over SLURM test on GCP
+      # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -3973,7 +4261,7 @@ workflows:
           requires:
             - build-go
 
-    # Singularity over PBS test on GCP
+      # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -3989,7 +4277,7 @@ workflows:
           requires:
             - build-go
 
-    # Podman over PBS test on GCP
+      # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -4006,7 +4294,7 @@ workflows:
           requires:
             - build-go
 
-    # Enroot over PBS test on GCP
+      # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -4022,7 +4310,7 @@ workflows:
           requires:
             - build-go
 
-    # Podman over SLURM test using Agent on GCP
+      # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
@@ -4190,17 +4478,6 @@ workflows:
               only:
                 - main
 
-      - deploy-latest-gke:
-          name: deploy-latest-gke-master
-          context: gcp
-          det-version: $CIRCLE_SHA1
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
-
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
           context:
@@ -4211,7 +4488,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4232,7 +4509,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4251,7 +4528,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu"]
@@ -4269,7 +4546,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["parallel"]
@@ -4292,7 +4569,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
@@ -4312,7 +4589,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-cpu"]
@@ -4336,7 +4613,7 @@ workflows:
             branches:
               only: main
           requires:
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-k8s"]
@@ -4355,7 +4632,7 @@ workflows:
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4381,19 +4658,25 @@ workflows:
   test-e2e-longrunning:
     jobs:
       # Build and publish artifacts used in tests
-      - build-helm
-      - build-proto
+      - build-helm:
+          filters: *any-upstream
+      - build-proto:
+          filters: *any-upstream
       - build-react:
           dev-mode: true
+          filters: *any-upstream
       - build-docs:
+          filters: *any-upstream
           requires:
             - build-helm
             - build-proto
-      - package-and-push-system-dev:
+      - package-and-push-system-dev-ee:
           requires:
             - build-react
             - build-docs
-          context: determined-ee
+          context:
+            - determined-ee
+            - github-read # TODO (eliu): might want an ee specific version?
           filters: *any-upstream
 
       # Distributed tests
@@ -4410,7 +4693,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-e2e-cpu-distributed
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -4435,7 +4718,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-deepspeed-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.12xlarge"]
@@ -4459,7 +4742,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu"]
@@ -4476,7 +4759,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["parallel"]
@@ -4498,7 +4781,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
@@ -4522,7 +4805,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-cpu"]
@@ -4545,7 +4828,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-k8s"]
@@ -4576,7 +4859,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-distributed-nightly
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               cluster-id-prefix: ["distributed"]
@@ -4621,7 +4904,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-nightly
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4642,7 +4925,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4662,7 +4945,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           matrix:
             parameters:
               parallelism: [2]
@@ -4671,6 +4954,61 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
               slack-channel: [<<pipeline.parameters.default-slack-channel>>]
+
+      # mmdetection tests
+      - request-mmdetection-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-mmdetection
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          filters: *upstream-feature-branch
+          requires:
+            - request-mmdetection-tests
+            - package-and-push-system-dev-ee
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
+              max-dynamic-agents: [2]
+
+      # packaging tests
+      - request-packaging-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - package-and-push-system-local-ee:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - request-packaging-tests
+
+      - test-debian-packaging:
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-packaging-tests
+
+      # Local deployment
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local-ee
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
 
       # Request AWS FS tests
       - request-aws-fs-tests:
@@ -4686,7 +5024,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
           slack-channel: <<pipeline.parameters.default-slack-channel>>
@@ -4701,7 +5039,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-aws-fs-tests
-            - package-and-push-system-dev
+            - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
           slack-channel: <<pipeline.parameters.default-slack-channel>>
@@ -4732,6 +5070,19 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
+              compute-agent-instance-type: ["g4dn.metal"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+      - test-e2e-aws:
+          name: test-e2e-gpu-mmdetection
+          context:
+            - aws
+            - aws-ci-cluster-default-user-credentials
+            - determined-ee
+          matrix:
+            parameters:
+              cluster-id-prefix: ["mmdet"]
+              mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
@@ -4784,6 +5135,10 @@ workflows:
           slack-mentions: "${SLACK_USER_ID}"
           slack-channel: <<pipeline.parameters.default-slack-channel>>
 
+      - run-shared-cluster-cleanup:
+          name: gke-cleanup
+          context: gcp-shared-cluster
+
       - build-proto
       - build-helm
       - build-docs:
@@ -4791,7 +5146,7 @@ workflows:
             - build-proto
             - build-helm
       - build-react
-      - package-and-push-system-local:
+      - package-and-push-system-local-ee:
           requires:
             - build-docs
             - build-react
@@ -4801,20 +5156,20 @@ workflows:
           mark: "e2e_slurm_restart"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           mark: "e2e_slurm_preemption"
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
@@ -4823,7 +5178,7 @@ workflows:
               mark: ["e2e_slurm and not deepspeed"]
           slack-mentions: "${SLACK_USER_ID}"
           requires:
-            - package-and-push-system-local
+            - package-and-push-system-local-ee
           master_config: |
             task_container_defaults:
               slurm:
@@ -4872,7 +5227,7 @@ workflows:
             name: test-e2e-slurm-agent-singularity-znode
             slack-mentions: "${SLACK_USER_ID}"
             requires:
-              - package-and-push-system-local
+              - package-and-push-system-local-ee
             agent-use: "-A"
             extra-pytest-flags: "-k 'not node_not_available'"
             # For now we must skip node_not_available. There is a inconsistency with the agent where
@@ -4901,9 +5256,23 @@ workflows:
       - terminate-vpc-circleci:
             context: ["gcp"]
 
-      - run-shared-cluster-cleanup:
-          name: gke-cleanup
-          context: gcp-shared-cluster
+  test-docs:
+    jobs:
+      - build-helm
+      - build-proto
+      - build-docs:
+          context: determined-production
+          requires:
+            - build-helm
+            - build-proto
+      - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          context: determined-production
+          requires:
+            - build-helm
+            - build-proto
 
   release:
     jobs:
@@ -4931,17 +5300,15 @@ workflows:
           requires:
             - build-react
             - build-docs
-          context:
-            - determined-ee
-            - github-read
+          context: determined-production
           filters: *rc-filters
 
       - publish-python-package:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ["harness"]
-          context: determined-ee
+              path: ["harness", "model_hub"]
+          context: determined-production
           filters: *rc-filters
           requires:
             - package-and-push-system-rc
@@ -4950,16 +5317,15 @@ workflows:
           requires:
             - build-react
             - build-docs
-          context:
-            - determined-ee
+          context: determined-production
           filters: *release-filters
 
       - publish-python-package:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ["harness"]
-          context: determined-ee
+              path: ["harness", "model_hub"]
+          context: determined-production
           filters: *release-filters
           requires:
             - package-and-push-system-release
@@ -4977,6 +5343,87 @@ workflows:
           filters: *release-and-rc-filters
 
       - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
+
+      - upload-try-now-template:
+          context: determined-production
+          filters: *release-filters
+
+  release-ee:
+    jobs:
+      - build-helm:
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
+      - build-react:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
+          context: determined-production
+          filters: *release-and-rc-filters
+          requires:
+            - build-helm
+            - build-proto
+      - upload-docs-search-index:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - package-and-push-system-rc-ee:
+          requires:
+            - build-react
+            - build-docs
+          context:
+            - determined-ee
+            - github-read
+          filters: *rc-filters
+
+      - publish-python-package:
+          name: publish-python-package-rc-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: [true]
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc-ee
+
+      - package-and-push-system-release-ee:
+          requires:
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-python-package:
+          name: publish-python-package-release-ee
+          matrix:
+            parameters:
+              path: ["harness"]
+              ee: [true]
+          context: determined-production
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release-ee
+
+      - publish-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh:
+          matrix:
+            parameters:
+              ee: [true]
           requires:
             - build-helm
           context: determined-production
