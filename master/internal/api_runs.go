@@ -583,7 +583,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		}
 	}
 	if len(validIDs) > 0 {
-		var acceptedIDs []int32
+		var acceptedIDs []int
 		if _, err = db.Bun().NewDelete().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Returning("runs.id").
@@ -592,10 +592,28 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 			return nil, fmt.Errorf("delete runs: %w", err)
 		}
 
+		// delete run logs
+		if _, err = db.Bun().NewDelete().Table("trial_logs").
+			Where("trial_logs.trial_id IN (?)", bun.In(acceptedIDs)).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("delete run logs: %w", err)
+		}
+
+		// delete task logs
+		trialTaskQuery := db.Bun().NewSelect().TableExpr("tasks AS t").
+			ColumnExpr("t.task_id").
+			Join("JOIN run_id_task_id rt ON rt.task_id=t.task_id").
+			Where("rt.run_id IN (?)", bun.In(acceptedIDs))
+		if _, err = db.Bun().NewDelete().Table("task_logs").
+			Where("task_logs.task_id IN (?)", trialTaskQuery).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("delete runs: %w", err)
+		}
+
 		for _, acceptID := range acceptedIDs {
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    acceptID,
+				Id:    int32(acceptID),
 			})
 		}
 	}
