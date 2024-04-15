@@ -10,7 +10,7 @@ const serverAddess = process.env.PW_SERVER_ADDRESS
 if (serverAddess === undefined) {
   throw new Error('Expected PW_SERVER_ADDRESS to be set.')
 }
-const port = Number(new URL(serverAddess).port)
+const port = Number(new URL(serverAddess).port || 'not exist')
 if (isNaN(port)) {
   throw new Error('Expected PW_SERVER_ADDRESS to have a valid port.')
 }
