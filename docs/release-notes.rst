@@ -26,7 +26,7 @@ Version 0.31.0
 -  API: Add a new API endpoint, ``/health``, that provides information about the status of
    Determined's connections to the database, Kubernetes API server, and Slurm launcher integration.
 
-   See the REST API documentation for more information about the endpoint.
+   Visit the :ref:`rest-api` documentation for more information about this endpoint.
 
 -  Logging: Add a ``retention_policy`` section to the master config file for specifying the default
    log retention policy. Experiments can override the default log retention settings with the
@@ -47,7 +47,7 @@ Version 0.31.0
    There is a new column on the trial list page, "Log Retention Days", that displays the number of
    days for which logs will be retained for each trial after creation.
 
--  Master config: Ad a new field to task container defaults named ``startup_hook`` that allows for
+-  Master config: Add a new field to task container defaults named ``startup_hook`` that allows for
    the specification of an inline script to be executed after task setup.
 
 **Improvements**
