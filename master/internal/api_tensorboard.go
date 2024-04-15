@@ -220,6 +220,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	// FIXME we call canGetWorkspace or something here
 	launchReq, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		WorkspaceID:  req.WorkspaceId,
