@@ -126,13 +126,15 @@ export class DataGrid<
   async filterRows(condition: (row: RowType) => Promise<boolean>): Promise<RowType[]> {
     return (
       // TODO make sure we're okay if page autorefreshes
-      await Promise.all(
-        Array.from(Array(await this.rows.pwLocator.count()).keys()).map(async (key) => {
-          const row = this.getRowByIndex(key);
-          return (await condition(row)) && row;
-        }),
-      )
-    ).filter((c): c is Awaited<RowType> => !!c);
+      (
+        await Promise.all(
+          Array.from(Array(await this.rows.pwLocator.count()).keys()).map(async (key) => {
+            const row = this.getRowByIndex(key);
+            return (await condition(row)) && row;
+          }),
+        )
+      ).filter((c): c is Awaited<RowType> => !!c)
+    );
   }
 
   /**
