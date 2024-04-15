@@ -110,7 +110,13 @@ export class UserFixture {
         const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username))
           .actions;
         await actions.pwLocator.click();
+        if (await actions.state.pwLocator.textContent() != 'Activate') {
+          continue;
+        }
         await actions.state.pwLocator.click();
+        await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
+          'User has been deactivated',
+        );
         this.#users.set(String(user.id), { ...user, isActive: false });
       }
     }

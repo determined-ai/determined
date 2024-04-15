@@ -12,10 +12,10 @@ if (server_addess === undefined) {
   port = 3001
 } else {
   const match = server_addess.match(/\d+/)
-  if (match === null || isNaN(+match)) {
+  if (match === null || isNaN(Number(match[0]))) {
     throw new Error(`Expected port number in PW_SERVER_ADDRESS ${server_addess}, ${match}`)
   }
-  port = +match
+  port = Number(match[0])
 }
 
 /**
