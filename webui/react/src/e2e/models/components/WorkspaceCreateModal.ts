@@ -11,43 +11,43 @@ import { Modal } from 'e2e/models/hew/Modal';
  */
 export class WorkspaceCreateModal extends Modal {
   readonly workspaceName: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="workspaceName"]',
   });
 
   readonly useAgentUser: Switch = new Switch({
-    parent: this,
+    parent: this.body,
     selector: '[data-testid="useAgentUser"]',
   });
   readonly agentUid: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="agentUid"]',
   });
   readonly agentUser: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="agentUser"]',
   });
 
   readonly useAgentGroup: Switch = new Switch({
-    parent: this,
+    parent: this.body,
     selector: '[data-testid="useAgentGroup"]',
   });
   readonly agentGid: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="agentGid"]',
   });
   readonly agentGroup: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="agentGroup"]',
   });
 
   readonly useCheckpointStorage: Switch = new Switch({
-    parent: this,
+    parent: this.body,
     selector: '[data-testid="useCheckpointStorage"]',
   });
   // We need more work on this to handle input well most likely since the code editor is complex
   readonly checkpointCodeEditor: BaseComponent = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'div.cm-editor',
   });
 }
