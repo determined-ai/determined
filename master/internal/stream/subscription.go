@@ -60,7 +60,7 @@ func NewSubscriptionSet(
 				ps.Projects,
 				newPermFilter(ctx, user, ProjectMakePermissionFilter, &err),
 				newFilter(spec.Projects, ProjectMakeFilter, &err),
-				ProjectHydrateUpsertMsg(),
+				ProjectMakeHydrator(),
 			),
 			ProjectCollectStartupMsgs,
 		}
@@ -72,6 +72,7 @@ func NewSubscriptionSet(
 				ps.Models,
 				newPermFilter(ctx, user, ModelMakePermissionFilter, &err),
 				newFilter(spec.Models, ModelMakeFilter, &err),
+				ModelMakeHydrator(),
 			),
 			ModelCollectStartupMsgs,
 		}
@@ -83,6 +84,7 @@ func NewSubscriptionSet(
 				ps.ModelVersions,
 				newPermFilter(ctx, user, ModelVersionMakePermissionFilter, &err),
 				newFilter(spec.ModelVersion, ModelVersionMakeFilter, &err),
+				ModelVersionMakeHydrator(),
 			),
 			ModelVersionCollectStartupMsgs,
 		}

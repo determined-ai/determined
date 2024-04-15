@@ -52,21 +52,26 @@ type ModelVersionMsg struct {
 }
 
 // SeqNum gets the SeqNum from a ModelVersionMsg.
-func (pm *ModelVersionMsg) SeqNum() int64 {
-	return pm.Seq
+func (mm *ModelVersionMsg) SeqNum() int64 {
+	return mm.Seq
+}
+
+// GetID gets the ID from a ModelVersionMsg.
+func (mm *ModelVersionMsg) GetID() int {
+	return mm.ID
 }
 
 // UpsertMsg creates a ModelVersion stream upsert message.
-func (pm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
+func (mm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
 	return stream.UpsertMsg{
 		JSONKey: ModelVersionsUpsertKey,
-		Msg:     pm,
+		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a ModelVersion stream delete message.
-func (pm *ModelVersionMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(pm.ID), 10)
+func (mm *ModelVersionMsg) DeleteMsg() stream.DeleteMsg {
+	deleted := strconv.FormatInt(int64(mm.ID), 10)
 	return stream.DeleteMsg{
 		Key:     ModelVersionsDeleteKey,
 		Deleted: deleted,
@@ -256,5 +261,20 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 			workspaceID, _ := strconv.Atoi(msg.WorkspaceID)
 			return accessScopeSet[model.AccessScopeID(workspaceID)]
 		}, nil
+	}
+}
+
+// ModelMakeHydrator returns a function that gets all the properties of a project by
+// its id.
+func ModelVersionMakeHydrator() func(int) (*ModelVersionMsg, error) {
+	return func(ID int) (*ModelVersionMsg, error) {
+		var modelVersionMsg ModelVersionMsg
+		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", ID)
+		err := query.Scan(context.Background(), &modelVersionMsg)
+		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+			log.Errorf("error in model version hydrator: %v\n", err)
+			return nil, err
+		}
+		return &modelVersionMsg, nil
 	}
 }
