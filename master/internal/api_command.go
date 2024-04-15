@@ -120,6 +120,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 			return nil, launchWarnings, err
 		}
 	}
+	if w, _ := a.GetWorkspaceByID(ctx, int32(cmdSpec.Metadata.WorkspaceID), *userModel, false); w != nil {
+		taskSpec.Workspace = w.Name
+	}
 	workDirInDefaults := config.WorkDir
 	if len(configBytes) != 0 {
 		dec := json.NewDecoder(bytes.NewBuffer(configBytes))
@@ -147,13 +150,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		return nil, nil, err
 	}
 	taskSpec.UserSessionToken = token
-
-	// ensure that workspace name is propagated to task spec when specified via CLI
-	if req.WorkspaceID != 0 {
-		if w, _ := a.GetWorkspaceByID(ctx, req.WorkspaceID, *userModel, true); w != nil {
-			taskSpec.Workspace = w.Name
-		}
-	}
 
 	cmdSpec.Base = taskSpec
 	cmdSpec.Config = config
