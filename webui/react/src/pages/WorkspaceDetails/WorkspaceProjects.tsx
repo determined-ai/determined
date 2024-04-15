@@ -164,12 +164,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     (projectId: number, name: string, archived: boolean, description?: string) => {
       if (!streamingUpdatesOn) {
         const project = projects.find((p) => p.id === projectId);
-        project && projectStore.upsertProject({
-          ...project,
-          archived,
-          description: description || project?.description,
-          name,
-        } as Project);
+        project &&
+          projectStore.upsertProject({
+            ...project,
+            archived,
+            description: description || project?.description,
+            name,
+          } as Project);
       }
     },
     [streamingUpdatesOn, projects],
