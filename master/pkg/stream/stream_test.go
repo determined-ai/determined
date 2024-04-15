@@ -74,34 +74,6 @@ func (em TestMsgTypeB) DeleteMsg() DeleteMsg {
 	}
 }
 
-type TestMsgTypeC struct {
-	Seq int64
-	ID  int
-}
-
-func (tm TestMsgTypeC) GetID() int {
-	return tm.ID
-}
-
-func (tm TestMsgTypeC) SeqNum() int64 {
-	return tm.Seq
-}
-
-func (tm TestMsgTypeC) UpsertMsg() UpsertMsg {
-	return UpsertMsg{
-		JSONKey: TestMsgAUpsertKey,
-		Msg:     tm,
-	}
-}
-
-func (tm TestMsgTypeC) DeleteMsg() DeleteMsg {
-	deleted := strconv.FormatInt(int64(tm.ID), 10)
-	return DeleteMsg{
-		Key:     TestMsgADeleteKey,
-		Deleted: deleted,
-	}
-}
-
 func alwaysTrue[T Msg](msg T) bool {
 	return true
 }
@@ -673,7 +645,6 @@ func TestUpsertsAndDelete(t *testing.T) {
 	deleteMsg, ok := streamer.Msgs[2].(DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
-
 }
 
 func TestUpsertsAndDelete2(t *testing.T) {
@@ -715,7 +686,6 @@ func TestUpsertsAndDelete2(t *testing.T) {
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
-
 }
 
 func TestUpsertsAndFallout(t *testing.T) {
@@ -760,7 +730,6 @@ func TestUpsertsAndFallout(t *testing.T) {
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
-
 }
 
 func TestUpsertsAndFallout2(t *testing.T) {
