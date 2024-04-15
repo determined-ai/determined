@@ -13,6 +13,8 @@ ARCHS = amd64 arm64 ppc64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
+NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
+
 PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
@@ -112,9 +114,10 @@ package-ee: packaging/LICENSE buildx
 
 .PHONY: release
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: packaging/LICENSE buildx
 	goreleaser --rm-dist
+	make publish-nvcr
 
 .PHONY: release-ee
 release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee

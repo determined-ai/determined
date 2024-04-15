@@ -8,7 +8,7 @@ build:
 
 .PHONY: publish
 publish:
-	twine upload --verbose --non-interactive dist/* --repository-url https://push.fury.io/determined-ai
+	twine upload --verbose --non-interactive dist/*
 
 .PHONY: publish-ee
 publish-ee:
