@@ -6,16 +6,12 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const server_addess = process.env.PW_SERVER_ADDRESS
 let port: number;
-if (server_addess === undefined) {
-  port = 3001
+const serverAddess = process.env.PW_SERVER_ADDRESS
+if (serverAddess === undefined) {
+  throw new Error('Expected PW_SERVER_ADDRESS to be set.')
 } else {
-  const match = server_addess.match(/\d+/)
-  if (match === null || isNaN(Number(match[0]))) {
-    throw new Error(`Expected port number in PW_SERVER_ADDRESS ${server_addess}, ${match}`)
-  }
-  port = Number(match[0])
+  port = Number(new URL(serverAddess).port)
 }
 
 /**
