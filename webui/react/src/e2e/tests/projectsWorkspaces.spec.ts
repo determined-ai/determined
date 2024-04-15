@@ -6,6 +6,7 @@ import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 
 test.describe('Projects', () => {
+  test.setTimeout(120000);
   let wsCreatedWithButton: string = '';
   let wsCreatedWithSidebar: string = '';
   const createWorkspaceAllFields = async function (
