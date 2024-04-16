@@ -40,13 +40,13 @@ test.describe('User Management', () => {
       pagination.perPage.perPage100,
     ].entries()) {
       await test.step(`Compare table rows with pagination:${index}`, async () => {
-        await pagination.perPage.pwLocator.click();
-        // TODO [INFENG-628] Users page loads slow
+        // BUG [INFENG-628] Users page loads slow
         await expect(async () => {
+          await pagination.perPage.pwLocator.click();
           await paginationOption.pwLocator.click({ noWaitAfter: true });
-          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 3000 });
-        }).toPass({ timeout: 22000 });
-        // TODO [INFENG-628] Users page loads slow
+          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 3_000 });
+        }).toPass({ timeout: 22_000 });
+        // BUG [INFENG-628] Users page loads slow
         // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
         const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
@@ -86,7 +86,10 @@ test.describe('User Management', () => {
     test.afterAll(async () => {
       await userManagementPageSetupTeardown.goto();
       await test.step('Deactivate User', async () => {
-        await userFixtureSetupTeardown.deactivateTestUsers();
+        // BUG [INFENG-628] Users page loads slow
+        await expect(async () => {
+          await userFixtureSetupTeardown.deactivateTestUsers();
+        }).toPass({ timeout: 20_000 });
       });
       await pageSetupTeardown.close();
     });
@@ -104,14 +107,20 @@ test.describe('User Management', () => {
       let modifiedUser: User;
       await userManagementPage.goto();
       await test.step('Edit once', async () => {
-        modifiedUser = await user.editUser(testUser, {
-          displayName: testUser.username + 'mama luigi',
-        });
+        // BUG [INFENG-628] Users page loads slow
+        await expect(async () => {
+          modifiedUser = await user.editUser(testUser, {
+            displayName: testUser.username + 'mama luigi',
+          });
+        }).toPass({ timeout: 20_000 });
         await userManagementPage.toast.close.pwLocator.click();
         await expect(userManagementPage.toast.pwLocator).toHaveCount(0);
       });
       await test.step('Edit again', async () => {
-        testUser = await user.editUser(modifiedUser, { displayName: '', isAdmin: true });
+        // BUG [INFENG-628] Users page loads slow
+        await expect(async () => {
+          testUser = await user.editUser(modifiedUser, { displayName: '', isAdmin: true });
+        }).toPass({ timeout: 20_000 });
       });
     });
   });
