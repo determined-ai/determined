@@ -5071,7 +5071,7 @@ workflows:
           slack-mentions: "${SLACK_USER_ID}"
 
   nightly:
-    when: << pipeline.parameters.do_nightly_tests >>
+    # when: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
