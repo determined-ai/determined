@@ -125,10 +125,9 @@ def test_ee_cluster_up() -> None:
         containers = client.containers.list(filters={"name": container_name})
         assert len(containers) == 1, "only one master expected"
 
-        for container in containers:
-            # client.containers.list is similar to `docker ps`, so we expect Image to be present.
-            if "Config" in container.attrs and "Image" in container.attrs["Config"]:
-                assert "hpe-mlde-master" in container.attrs["Config"]["Image"]
+        # client.containers.list is similar to `docker ps`, so we expect Image to be present.
+        if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+            assert "hpe-mlde-master" in containers[0].attrs["Config"]["Image"]
 
 
 @pytest.mark.det_deploy_local
@@ -239,9 +238,8 @@ def test_ee_master_up() -> None:
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) == 1, "only one master expected"
 
-        for container in containers:
-            if "Config" in container.attrs and "Image" in container.attrs["Config"]:
-                assert "hpe-mlde-master" in container.attrs["Config"]["Image"]
+        if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+            assert "hpe-mlde-master" in containers[0].attrs["Config"]["Image"]
 
 
 @pytest.mark.det_deploy_local
@@ -274,6 +272,5 @@ def test_ee_agent_up() -> None:
             containers = client.containers.list(filters={"name": agent_name})
             assert len(containers) == 1, "only one agent expected"
 
-            for container in containers:
-                if "Config" in container.attrs and "Image" in container.attrs["Config"]:
-                    assert "hpe-mlde-agent" in container.attrs["Config"]["Image"]
+            if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+                assert "hpe-mlde-agent" in containers[0].attrs["Config"]["Image"]
