@@ -919,3 +919,16 @@ To load a checkpoint from a checkpoint saved using Trainer, you'll need to downl
 to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint_path`. If your
 ``Trial`` was instantiated with arguments, you can pass them via the ``trial_kwargs`` parameter of
 ``load_trial_from_checkpoint_path``.
+
+Profiling
+=========
+
+When training on cluster, the Determined system metrics profiler can be enabled by passing in an
+additional parameter to the ``fit()`` call:
+
+.. code:: diff
+
+    trainer.fit(
+       ...,
+   +   profiling_enabled=True
+    )
