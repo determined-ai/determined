@@ -23,9 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/rm/agentrm"
-	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
-
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
 	"github.com/labstack/echo-contrib/prometheus"
@@ -51,6 +48,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/logretention"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
@@ -58,6 +56,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/dispatcherrm"
+	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -1014,6 +1015,36 @@ func (m *Master) checkIfRMDefaultsAreUnbound(rmConfig *config.ResourceManagerCon
 		err = db.CheckIfRPUnbound(rmConfig.KubernetesRM.DefaultAuxResourcePool)
 		return err
 	}
+	if rmConfig.DispatcherRM != nil {
+		if rmConfig.DispatcherRM.DefaultComputeResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultComputeResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		if rmConfig.DispatcherRM.DefaultAuxResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.DispatcherRM.DefaultAuxResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if rmConfig.PbsRM != nil {
+		if rmConfig.PbsRM.DefaultComputeResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.PbsRM.DefaultComputeResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		if rmConfig.PbsRM.DefaultAuxResourcePool != nil {
+			err := db.CheckIfRPUnbound(*rmConfig.PbsRM.DefaultAuxResourcePool)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	return fmt.Errorf("no Resource Manager found")
 }
 
@@ -1043,6 +1074,10 @@ func buildRM(
 			return agentrm.New(db, echo, config, opts, cert)
 		case config.ResourceManager.KubernetesRM != nil:
 			return kubernetesrm.New(db, config, tcd, opts, cert)
+		case config.ResourceManager.DispatcherRM != nil,
+			config.ResourceManager.PbsRM != nil:
+			license.RequireLicense("dispatcher resource manager")
+			return dispatcherrm.New(db, echo, config, opts, cert)
 		default:
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}

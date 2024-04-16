@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS resourcemanagers_dispatcher_rm_state;

@@ -1,0 +1,21 @@
+---
+name: "Autorebase EE PRs"
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+jobs:
+  autorebase:
+    runs-on: ubuntu-latest
+    if: github.event.forced || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: peter-evans/rebase@v2
+        with:
+          base: main
+          exclude-labels: |
+            no-autorebase
+            dependencies
+          token: ${{ secrets.DETERMINED_TOKEN }}

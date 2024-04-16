@@ -75,11 +75,16 @@ func (r *ResourceConfig) ResolveResource() error {
 	// Add a default resource manager.
 	// I'm not sure if this code could ever be true, since we default in UnmarshalJSON.
 	// This feels risky to remove though.
-	if r.RootManagerInternal.AgentRM == nil && r.RootManagerInternal.KubernetesRM == nil {
+	if r.RootManagerInternal.AgentRM == nil &&
+		r.RootManagerInternal.KubernetesRM == nil &&
+		r.RootManagerInternal.DispatcherRM == nil &&
+		r.RootManagerInternal.PbsRM == nil {
 		r.RootManagerInternal.AgentRM = defaultAgentRM()
 	}
 	for _, c := range r.AdditionalResourceManagersInternal {
-		if c.ResourceManager.AgentRM == nil && c.ResourceManager.KubernetesRM == nil {
+		if c.ResourceManager.AgentRM == nil &&
+			c.ResourceManager.KubernetesRM == nil &&
+			c.ResourceManager.DispatcherRM == nil {
 			// This error should be impossible to go off.
 			return fmt.Errorf("please specify an resource manager type")
 		}

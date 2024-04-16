@@ -81,7 +81,7 @@ class Telemetry {
         analytics.identify(user.id.toString(), {
           clusterId: info.clusterId,
           clusterName: info.clusterName,
-          edition: 'OSS',
+          edition: 'EE',
           masterId: info.masterId,
           username: user.username,
           version: info.version,

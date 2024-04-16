@@ -1,0 +1,293 @@
+---
+- hosts: all
+  become: true
+
+  # The OpenPBS version number that will be downloaded from https://github.com/openpbs/openpbs/releases
+  # and built into the generated image for the PBS testing environment image.
+  # The release will downloaded using the Asset "Source code (tar.gz)"
+  # Select the release remove the leading `v` and specify it here.   It will be downloaded from github from the
+  # https://github.com/openpbs/openpbs/archive/refs/tags/v{{ openpbs_version_number }}.tar.gz
+  vars:
+    openpbs_version_number: "22.05.11"
+
+  tasks:
+    # Our base image comes preinstalled with slurm, but if you are following this to setup
+    # a cluster from scratch, you will need to install slurm. For instance, when the user
+    # specifies a PBS image, PBS is installed from scratch.
+    
+    # Disable unattended-upgrades that may hold the lock and prevent docker from installing later
+    # This appears to be needed for Ubuntu 20.04 installs.
+    - name: Disable unattended-upgrade service
+      shell: |
+        sudo systemctl mask unattended-upgrades.service
+        sudo systemctl stop unattended-upgrades.service
+
+        # Ensure process is in fact off:
+        echo "Ensuring unattended-upgrades are in fact disabled"
+        while systemctl is-active --quiet unattended-upgrades.service; do sleep 1; done
+
+    - name: apt-get update, apt-get upgrade.
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install utility packages.
+      apt:
+        name:
+        - apt-transport-https
+        - autoconf
+        - automake
+        - ca-certificates
+        - curl
+        - curl
+        - default-jre
+        - expat
+        - g++
+        - gcc
+        - git
+        - htop
+        - hwloc
+        - iftop
+        - iotop
+        - jq
+        - libedit-dev
+        - libedit2
+        - libexpat-dev
+        - libhwloc-dev
+        - libical-dev
+        - libical3
+        - libssl-dev
+        - libtool
+        - libx11-dev
+        - libxext-dev
+        - libxft-dev
+        - libxt-dev
+        - lsof
+        - make
+        - ncurses-dev
+        - net-tools
+        - nfs-common
+        - perl
+        - postgresql
+        - postgresql-contrib
+        - postgresql-server-dev-all
+        - postgresql-server-dev-all
+        - python3
+        - python3-dev
+        - python3-pip
+        - python3-setuptools
+        - screen
+        - sendmail-bin
+        - software-properties-common
+        - sudo
+        - swig
+        - tcl
+        - tcl-dev
+        - tk
+        - tk-dev
+        - tmux
+        - tree
+        - unzip
+        - virtualenv
+        - wget
+        - zip
+        state: latest
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+    - name: Wait for /var/lib/dpkg/lock-frontend to be released 
+      shell: while lsof /var/lib/dpkg/lock-frontend ; do sleep 10; done;
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    # Start PBS Installation
+    - name: Download PBS tarball
+      get_url:
+        url: https://github.com/openpbs/openpbs/archive/refs/tags/v{{ openpbs_version_number }}.tar.gz
+        dest: /tmp/openpbs-{{ openpbs_version_number }}.tar.gz
+      when: workload_manager == "pbs"
+
+    - name: Extract PBS tarball
+      unarchive:
+        src: /tmp/openpbs-{{ openpbs_version_number }}.tar.gz
+        dest: /tmp/
+        remote_src: yes
+      when: workload_manager == "pbs"
+
+    - name: Rename OpenPBS directory
+      command: 
+        cmd: mv /tmp/openpbs-{{ openpbs_version_number }} /tmp/openpbs
+      when: workload_manager == "pbs"
+
+    - name: Generate configure script and Makefiles
+      command: ./autogen.sh
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Configure build environment
+      command: ./configure --prefix=/opt/pbs
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Build PBS
+      command: make
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Install PBS
+      command: make install
+      args:
+        chdir: /tmp/openpbs/
+      when: workload_manager == "pbs"
+
+    - name: Execute post-install script
+      command: /opt/pbs/libexec/pbs_postinstall
+      when: workload_manager == "pbs"
+
+    - name: Change permissions to add SUID privilege
+      command: chmod 4755 /opt/pbs/sbin/pbs_iff /opt/pbs/sbin/pbs_rcp
+      when: workload_manager == "pbs"
+
+    - name: Install nvidia drivers on PBS base image
+      # The base image for PBS doesn't have nvidia drivers, like the Slurm base image
+      apt:
+        name: nvidia-driver-525
+        update_cache: true
+      when: workload_manager == "pbs"
+    # End PBS Installation
+
+    - name: Add Podman GPG apt Key (for Ubuntu 20.04)
+      apt_key:
+        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key
+        state: present
+    - name: Add Podman repo from opensuse (for Ubuntu 20.04)
+      shell: echo "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+    - name: Install Podman
+      apt:
+        name: podman
+        state: latest
+        update_cache: true
+
+    - name: Install Singularity
+      apt:
+        deb: https://github.com/apptainer/apptainer/releases/download/v1.1.6/apptainer_1.1.6_amd64.deb
+
+    - name: Install Singularity Setuid
+      apt:
+        deb: https://github.com/apptainer/apptainer/releases/download/v1.1.6/apptainer-suid_1.1.6_amd64.deb
+
+    - name: Install enroot
+      apt:
+        deb: "https://github.com/NVIDIA/enroot/releases/download/v3.4.1/enroot_3.4.1-1_amd64.deb"
+
+    - name: Add enroot dependency key and repo for nvidia-container-toolkit
+      # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+      shell: |
+        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+          && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+    - name: Install enroot nvidia dependency nvidia-container-toolkit
+      apt:
+        name: nvidia-container-toolkit
+        state: latest
+        update_cache: true
+
+    - name: Configure nvidia-container-runtime no-cgroups=true for podman
+      # https://forums.developer.nvidia.com/t/help-with-rootless-podman-or-rootless-docker-and-nvidia-gpu/205644
+      command: sed -i 's/^#no-cgroups = false/no-cgroups = true/;' /etc/nvidia-container-runtime/config.toml
+
+    - name: Update enroot runtime path in /etc/enroot/enroot.conf
+      command: sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf
+
+    - name: Install Launcher
+      apt:
+        deb: "{{ launcher_deb }}"
+
+    - name: Enable launcher.service
+      systemd:
+        name: launcher.service
+        enabled: yes
+
+    - name: Create /srv/singularity/determinedai directory
+      command: mkdir -p /srv/singularity/determinedai
+
+    - name: Set permissions for /srv/singularity/determinedai directories
+      command: chmod 777 /srv/singularity /srv/singularity/determinedai
+
+    - name: Pull cpu singularity image
+      command: /usr/bin/manage-singularity-cache {{ cpu_image_name }}
+      when: cpu_image_name != ""
+
+    - name: Pull cuda singularity image
+      command: /usr/bin/manage-singularity-cache  {{ cuda_image_name }}
+      when: cuda_image_name != ""
+
+    - name: Cleanup root's .apptainer cache to save space
+      command: rm -rf ~/.apptainer
+
+    - name: Create /srv/enroot directory
+      command: mkdir -p /srv/enroot
+    
+    - name: Set permissions for /srv/enroot directory
+      command: chmod 777 /srv/enroot
+
+    - name: Install cpu enroot image .sqsh
+      command: /usr/bin/manage-enroot-cache -s /srv/enroot --nocreate {{ cpu_image_name }}
+      when: cpu_image_name != ""
+      environment:
+        ENROOT_RUNTIME_PATH: /srv/enroot
+        ENROOT_TEMP_PATH: /srv/enroot
+
+    - name: Install cuda enroot image .sqsh
+      command: /usr/bin/manage-enroot-cache -s /srv/enroot --nocreate {{ cuda_image_name }}
+      when: cuda_image_name != ""
+      environment:
+        ENROOT_RUNTIME_PATH: /srv/enroot
+        ENROOT_TEMP_PATH: /srv/enroot
+
+    - name: Cleanup root's .cache & .local used by enroot to save space
+      command: rm -rf ~/.cache ~/.local
+
+    - name: Reinstall Munge (uninstall)
+      apt:
+        name: munge
+        state: absent
+      when: workload_manager == "slurm"
+
+    - name: Reinstall Munge (install)
+      apt:
+        name: munge
+        state: latest
+      when: workload_manager == "slurm"
+
+    - name: Enable slurmctld.service
+      systemd:
+        name: slurmctld.service
+        enabled: yes
+      when: workload_manager == "slurm"
+
+    - name: Enable slurmd.service
+      systemd:
+        name: slurmd.service
+        enabled: yes
+      when: workload_manager == "slurm"
+
+    - name: Restore motd (Slurm image adds a 'slurm not setup' warning if their scripts haven't run)
+      ansible.builtin.copy:
+        src: /etc/motd.bak
+        dest: /etc/motd
+      when: workload_manager == "slurm"
