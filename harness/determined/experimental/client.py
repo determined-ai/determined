@@ -250,10 +250,20 @@ def create_user(
 ) -> User:
     """Creates a user.
 
+    The user's credentials may be managed by a remote service, in which case the `remote`
+    argument should be set to `true`, and then SSO should be configured for the user.
+    Otherwise, a password must be set that meets complexity requirements.
+
+    The complexity requirements are:
+        - Must be at least 8 characters long.
+        - Must contain at least one upper-case letter.
+        - Must contain at least one lower-case letter.
+        - Must contain at least one number.
+
     Arg:
         username: username of the user.
-        password: password of the user.
         admin: indicates whether the user is an admin.
+        password: password of the user.
         remote: indicates whether the user is managed by a remote service.
 
     Returns:
