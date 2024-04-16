@@ -90,10 +90,8 @@ export class UserManagement extends AdminPage {
    */
   async getRowByUsernameSearch(name: string): Promise<UserRow> {
     await this.search.pwLocator.clear();
-    await Promise.all([
-      this.search.pwLocator.fill(name),
-      expect(this.table.table.rows.pwLocator).toHaveCount(1),
-    ]);
+    await this.search.pwLocator.fill(name);
+    await expect(this.table.table.rows.pwLocator).toHaveCount(1);
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
