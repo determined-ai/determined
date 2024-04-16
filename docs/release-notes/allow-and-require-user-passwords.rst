@@ -2,16 +2,8 @@
 
 **Breaking Changes**
 
--  Python SDK and CLI: Enforce password requirements for all non-remote users, aligning with WebUI
-   password standards and having the following requirements:
-
-      -  Passwords must be at least 8 characters long (and not None).
-
-      -  Passwords must contain at least one upper-case letter.
-
-      -  Passwords must contain at least one lower-case letter.
-
-      -  Passwords must contain at least one number.
+-  Python SDK and CLI: Enforce password requirements for all non-remote users: see
+   :ref:`password-requirements`
 
       -  This applies to ``create_user``, ``User.change_password``, ``det user create``, and ``det
          user change-password``.
