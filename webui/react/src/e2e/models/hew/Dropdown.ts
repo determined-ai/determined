@@ -17,6 +17,6 @@ export class Dropdown extends BaseComponent {
   }
   protected readonly _menu: BaseComponent = new BaseComponent({
     parent: this.root,
-    selector: '.ant-dropdown ul.ant-dropdown-menu',
+    selector: '.ant-dropdown ul.ant-dropdown-menu:visible',
   });
 }
