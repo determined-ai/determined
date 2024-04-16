@@ -585,55 +585,55 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		}
 	}
 	if len(validIDs) == 0 {
-	        return &apiv1.DeleteRunsResponse{Results: results}, nil
+		return &apiv1.DeleteRunsResponse{Results: results}, nil
 	}
-	
 	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	...
-			if txErr != nil && txErr != sql.ErrTxDone {
-				log.WithError(txErr).Error("error rolling back transaction in DeleteRuns")
-			}
-		}()
-		var acceptedIDs []int
-		if _, err = tx.NewDelete().Table("runs").
-			Where("runs.id IN (?)", bun.In(validIDs)).
-			Returning("runs.id").
-			Model(&acceptedIDs).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("delete runs: %w", err)
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in DeleteRuns")
 		}
-
-		// delete run logs
-		if _, err = tx.NewDelete().Table("trial_logs").
-			Where("trial_logs.trial_id IN (?)", bun.In(acceptedIDs)).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("delete run logs: %w", err)
-		}
-
-		// delete task logs
-		trialTaskQuery := tx.NewSelect().TableExpr("tasks AS t").
-			ColumnExpr("t.task_id").
-			Join("JOIN run_id_task_id rt ON rt.task_id=t.task_id").
-			Where("rt.run_id IN (?)", bun.In(acceptedIDs))
-		if _, err = tx.NewDelete().Table("task_logs").
-			Where("task_logs.task_id IN (?)", trialTaskQuery).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("delete runs: %w", err)
-		}
-
-		for _, acceptID := range acceptedIDs {
-			results = append(results, &apiv1.RunActionResult{
-				Error: "",
-				Id:    int32(acceptID),
-			})
-		}
-
-		if err = tx.Commit(); err != nil {
-			return nil, err
-		}
+	}()
+	var acceptedIDs []int
+	if _, err = tx.NewDelete().Table("runs").
+		Where("runs.id IN (?)", bun.In(validIDs)).
+		Returning("runs.id").
+		Model(&acceptedIDs).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete runs: %w", err)
 	}
+
+	// delete run logs
+	if _, err = tx.NewDelete().Table("trial_logs").
+		Where("trial_logs.trial_id IN (?)", bun.In(acceptedIDs)).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete run logs: %w", err)
+	}
+
+	// delete task logs
+	trialTaskQuery := tx.NewSelect().TableExpr("tasks AS t").
+		ColumnExpr("t.task_id").
+		Join("JOIN run_id_task_id rt ON rt.task_id=t.task_id").
+		Where("rt.run_id IN (?)", bun.In(acceptedIDs))
+	if _, err = tx.NewDelete().Table("task_logs").
+		Where("task_logs.task_id IN (?)", trialTaskQuery).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete runs: %w", err)
+	}
+
+	for _, acceptID := range acceptedIDs {
+		results = append(results, &apiv1.RunActionResult{
+			Error: "",
+			Id:    int32(acceptID),
+		})
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
 	return &apiv1.DeleteRunsResponse{Results: results}, nil
 }
