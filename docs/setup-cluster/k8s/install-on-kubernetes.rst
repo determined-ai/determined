@@ -39,8 +39,7 @@ should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in 
 Before installing Determined on a Kubernetes cluster, please ensure that the following prerequisites
 are satisfied:
 
--  The Kubernetes cluster should be running Kubernetes version >= 1.21 and <= 1.25, though later
-   versions may work.
+-  The Kubernetes cluster should be running Kubernetes version >= 1.21.
 
 -  You should have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/>`_.
 
