@@ -79,7 +79,13 @@ export class UserManagement extends AdminPage {
     });
     expect(
       filteredRows,
-      `name:${name}, component:${await this.table.table.rows.pwLocator.allInnerTexts()}`,
+      `name: ${name},
+      users: ${(await this.table.table.rows.user.pwLocator.allInnerTexts()).map((item) =>
+        item.replace(/(\r\n|\n|\r)/gm, ''),
+      )}
+      table: ${(await this.table.table.rows.pwLocator.allInnerTexts()).map((item) =>
+        item.replace(/(\r\n|\n|\r)/gm, ''),
+      )}`,
     ).toHaveLength(1);
     return filteredRows[0];
   }
@@ -97,14 +103,7 @@ export class UserManagement extends AdminPage {
     // await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
     // await this.search.pwLocator.fill(name);
     // await expect(this.table.table.rows.pwLocator).toHaveCount(1);
-    const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
-      return (await row.user.pwLocator.innerText()).includes(name);
-    });
-    expect(
-      filteredRows,
-      `name:${name}, component:${await this.table.table.rows.pwLocator.allInnerTexts()}`,
-    ).toHaveLength(1);
-    return filteredRows[0];
+    return await this.getRowByUsername(name);
   }
 }
 

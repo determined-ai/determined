@@ -43,7 +43,8 @@ test.describe('User Management', () => {
         // BUG [INFENG-628] Users page loads slow
         await expect(async () => {
           await pagination.perPage.pwLocator.click();
-          await paginationOption.pwLocator.click({ noWaitAfter: true });
+          // click pagination menu twice if it's visible to close and reopen
+          await paginationOption.pwLocator.click({clickCount: await paginationOption.pwLocator.isVisible() ? 2 : 1});
           await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 3_000 });
         }).toPass({ timeout: 22_000 });
         // BUG [INFENG-628] Users page loads slow
