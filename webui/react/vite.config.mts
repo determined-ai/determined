@@ -10,7 +10,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { cspHtml } from './vite-plugin-csp';
-import {brandHtml} from "./vite-plugin-branding";
+import { brandHtml } from "./vite-plugin-branding";
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
