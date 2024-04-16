@@ -218,6 +218,43 @@ func TestGetExperimentConfig(t *testing.T) {
 	}
 }
 
+func TestGetExperimentHyperparameters(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+	expectedBytes, err := db.SingleDB().ExperimentConfigRaw(exp.ID)
+	require.NoError(t, err)
+	expected := make(map[string]any)
+	require.NoError(t, json.Unmarshal(expectedBytes, &expected))
+	expectedHyperparameter := expected["hyperparameters"].(map[string]any)
+	resp, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
+		ExperimentIdFilter: &commonv1.Int32FieldFilter{
+			Incl: []int32{int32(exp.ID)},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Id)
+
+	if _, ok := resp.Experiments[0].Config.Fields["hyperparameters"]; !ok { //nolint:staticcheck
+		t.Errorf("`hyperparameters` is not in config")
+	}
+
+	cases := []struct {
+		name            string
+		hyperparameters map[string]any
+	}{
+		{"GetExperimentResponse.Experiments.Config.Hyperparameters", resp.Experiments[0].Config. //nolint:staticcheck
+														Fields["hyperparameters"].
+														AsInterface().(map[string]any)},
+		{"GetExperimentResponse.Experiments.Hyperparameters", resp.Experiments[0].Hyperparameters.AsMap()},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.Equal(t, expectedHyperparameter, c.hyperparameters)
+		})
+	}
+}
+
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -1026,6 +1063,9 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 		// Don't compare config.
 		res.Experiments[i].Config = nil //nolint:staticcheck
 
+		// Don't compare hyperparameters.
+		res.Experiments[i].Hyperparameters = nil
+
 		// Compare time seperatly due to millisecond precision in postgres.
 		require.WithinDuration(t,
 			expected[i].StartTime.AsTime(), res.Experiments[i].StartTime.AsTime(), time.Millisecond)
@@ -1563,6 +1603,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()
+	workspaceAuthZ := setupWorkspaceAuthZ()
 	exp := createTestExp(t, api, curUser)
 
 	// put/patch
@@ -1699,6 +1740,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			authZNSC.On("CanGetTensorboard", mock.Anything, mockUserArg, mock.Anything, mock.Anything,
 				mock.Anything).Return(nil).Once()
+			workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				ExperimentIds: []int32{int32(id)},
 			})

@@ -13,9 +13,9 @@
 
    attributions
 
-#############################
- Determined AI Documentation
-#############################
+##########################
+ Determined Documentation
+##########################
 
 .. meta::
    :http-equiv=x-ua-compatible: IE=edge

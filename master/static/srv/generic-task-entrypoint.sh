@@ -32,6 +32,7 @@ fi
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
 
 set -x
+test -f "${TCD_STARTUP_HOOK}" && source "${TCD_STARTUP_HOOK}"
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 set +x
 

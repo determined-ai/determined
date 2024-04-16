@@ -1,0 +1,79 @@
+# To use this devcluster file, you need two kubeconfigs, ~/.kube/config and ~/.kube/extraconfig that point
+# at two separate clusters. You can do this many different ways; if you have no preference, try this:
+#  1. Run an extra cluster with `minikube start -p extra`. This overwrites your current kubeconfig context to point at
+#     it. Copy it with `cp ~/.kube/config ~/.kube/extraconfig` to get a config for your additional resource manager.
+#  2. Run minikube again with `minikube start`. This will start a default cluster "minikube" and set it as the current
+#     context in your ~/.kube/config.
+#  3. Run this devcluster file with `devcluster --oneshot --config tools/k8s/multi-devcluster.yaml` (or how you usually
+#     run devcluster) and Determined will connect to both clusters.
+
+commands:
+  p: make -C harness clean build  # rebuild Python
+  w: make -C webui build          # rebuild Webui
+  c: make -C docs build           # rebuild doCs
+
+stages:
+  - db:
+      port: 5432
+      db_name: determined
+      password: postgres
+      container_name: determined_db
+      image_name: "postgres:10.14"
+      data_dir: det-postgres
+
+  - master:
+      pre:
+        - sh: make -C proto build
+        - sh: make -C master build
+        - sh: make -C tools prep-root
+        - sh: mkdir -p /tmp/determined-cp
+      post:
+        - logcheck:
+            regex: accepting incoming connections on port
+      cmdline:
+        - master/build/determined-master
+        - --config-file
+        - :config
+
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp/determined-cp
+        cache:
+          cache_dir: /tmp/determined-cache
+        log:
+          level: debug
+        enable_cors: true
+        root: tools/build
+
+        resource_manager:
+          type: kubernetes
+          namespace: default
+          max_slots_per_pod: 1
+          slot_type: "cpu"
+          slot_resource_requests:
+            cpu: 1
+          kubeconfig_path: ~/.kube/config
+          determined_master_ip: $DOCKER_LOCALHOST
+          determined_master_port: 8080
+        
+        additional_resource_managers:
+          - resource_manager:
+              name: extra
+              type: kubernetes
+              max_slots_per_pod: 1
+              slot_type: "cpu"
+              slot_resource_requests:
+                cpu: 1
+              kubeconfig_path: ~/.kube/extraconfig
+              determined_master_ip: $DOCKER_LOCALHOST
+              determined_master_port: 8080
+            resource_pools:
+              - pool_name: extra
+                kubernetes_namespace: default

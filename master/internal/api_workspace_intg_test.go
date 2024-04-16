@@ -333,6 +333,14 @@ func setupWorkspaceAuthZTest(
 	return api, wAuthZ, curUser, ctx
 }
 
+func setupWorkspaceAuthZ() *mocks.WorkspaceAuthZ {
+	if wAuthZ == nil {
+		wAuthZ = &mocks.WorkspaceAuthZ{}
+		workspace.AuthZProvider.Register("mock", wAuthZ)
+	}
+	return wAuthZ
+}
+
 func TestAuthzGetWorkspace(t *testing.T) {
 	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	// Deny returns same as 404.

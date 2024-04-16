@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "docs" {
-  bucket = "determined-ai-docs"
+  bucket = local.config.s3.bucket
 }
 
 # Set bucket object ownership if possible
@@ -86,10 +86,12 @@ resource "aws_s3_object" "index" {
 resource "aws_s3_object" "robots" {
   bucket       = aws_s3_bucket.docs.id
   key          = "robots.txt"
-  content      = "User-agent: *\nSitemap: https://docs.determined.ai/latest/sitemap.xml"
+  content      = local.config.s3.robots.content
   content_type = "text"
 }
 
+# TODO: replace deprecated null_resource with terraform_data
+# https://developer.hashicorp.com/terraform/language/resources/terraform-data
 resource "null_resource" "upload" {
   triggers = {
     version = "${var.det_version}"

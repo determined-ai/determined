@@ -650,15 +650,15 @@ export const searchExperiments: DetApi<
 export const getExperiment: DetApi<
   Service.GetExperimentParams,
   Api.V1GetExperimentResponse,
-  Type.ExperimentItem
+  Type.FullExperimentItem
 > = {
   name: 'getExperiment',
   postProcess: (response: Api.V1GetExperimentResponse) => {
-    const exp = decoder.mapV1Experiment(response.experiment, undefined);
+    const exp = decoder.mapV1Experiment(response.experiment, undefined, response.config);
     return exp;
   },
-  request: (params: Service.GetExperimentParams) => {
-    return detApi.Experiments.getExperiment(params.id);
+  request: (params: Service.GetExperimentParams, options) => {
+    return detApi.Experiments.getExperiment(params.id, options);
   },
 };
 
@@ -1105,6 +1105,29 @@ export const getTrialWorkloads: DetApi<
       undefined, // Specifically set to `undefined` to return custom group metrics.
       undefined,
       true, // remove deleted checkpoints
+    ),
+};
+
+/* Runs */
+
+export const searchRuns: DetApi<
+  Service.SearchRunsParams,
+  Api.V1SearchRunsResponse,
+  Type.SearchFlatRunPagination
+> = {
+  name: 'searchRuns',
+  postProcess: (response) => ({
+    pagination: response.pagination,
+    runs: response.runs.map((e) => decoder.decodeV1FlatRun(e)),
+  }),
+  request: (params, options) =>
+    detApi.Internal.searchRuns(
+      params.projectId,
+      params.offset,
+      params.limit,
+      params.sort,
+      params.filter,
+      options,
     ),
 };
 

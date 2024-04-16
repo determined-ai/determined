@@ -20,8 +20,8 @@ import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
 import clusterStore, { maxPoolSlotCapacity } from 'stores/cluster';
 import {
-  ExperimentItem,
   ExperimentSearcherName,
+  FullExperimentItem,
   Hyperparameter,
   HyperparameterType,
   Primitive,
@@ -43,7 +43,7 @@ const FORM_ID = 'create-hp-search-form';
 
 interface Props {
   closeModal: (reason: ModalCloseReason) => void;
-  experiment: ExperimentItem;
+  experiment: FullExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
 }

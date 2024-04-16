@@ -270,7 +270,8 @@ Visit the Determined dashboard to view the progress of your experiment. One way 
 enter the following URL: ``http://localhost:8080/`` in your browser. This is the cluster address for
 your local training environment.
 
-Accept the default username of ``determined``, and click **Sign In**. A password is not required.
+Accept the default username of ``determined``, and click **Sign In**. After signing in, you'll need
+to create a :ref:`strong password <strong-password>`.
 
 Wait until Determined displays Best Checkpoint before continuing on to the next step. Then, obtain
 the ID of the completed trial, you'll need this to download the checkpoint.
