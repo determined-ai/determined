@@ -37,7 +37,8 @@ Version 0.31.0
    <trial-id>``, to allow the user to set the length of log retention for experiments and trials.
    Both commands can specify a length in days with the arguments ``--days <number of days>``. The
    number of days must be between -1 and 32767, where -1 retains logs forever. ``--forever`` is
-   equivalent to ``--days -1``.
+   equivalent to ``--days -1``. Add ``det task cleanup-logs`` command to allow the administrators to
+   manually initiate log retention cleanup.
 
 -  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
    experiment list page and choosing **Retain Logs** from **Actions**. Users can then input the
