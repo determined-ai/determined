@@ -65,7 +65,7 @@ class ZMQBroadcastServer:
 
         import zmq
 
-        context = zmq.Context()
+        context = zmq.Context() # type: zmq.Context[zmq.Socket[bytes]]
 
         self._pub_socket = context.socket(zmq.PUB)
         self._pull_socket = context.socket(zmq.PULL)
@@ -176,7 +176,7 @@ class ZMQBroadcastClient:
     def __init__(self, srv_pub_url: str, srv_pull_url: str) -> None:
         import zmq
 
-        context = zmq.Context()
+        context = zmq.Context() # type: zmq.Context[zmq.Socket[bytes]]
 
         self._sub_socket = context.socket(zmq.SUB)
         # Subscriber always listens to ALL messages.
