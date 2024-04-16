@@ -73,7 +73,7 @@ enable user auto-provisioning and the remote management of any information attac
              provider: "Okta"
              idp_recipient_url: "https://determined.example.com/saml/sso"
              idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
-             idp_cert_path: "okta.cert"
+             idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
              auto_provision_users: true
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
