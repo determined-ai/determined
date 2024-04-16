@@ -4059,10 +4059,10 @@ workflows:
           requires:
             - build-react
             - build-docs
-          # filters:
-          #   branches:
-          #     only:
-          #       - main
+          filters:
+            branches:
+              only:
+                - main
 
       - package-and-push-system-dev:
           requires:
@@ -5010,7 +5010,7 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-      - - package-and-push-system-local:
+      - package-and-push-system-local:
           context: github-read
           filters: *upstream-feature-branch
           requires:
@@ -5036,6 +5036,7 @@ workflows:
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
+            - package-and-push-system-local
             - package-and-push-system-local-ee
           matrix:
             parameters:
