@@ -584,13 +584,15 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 			}
 		}
 	}
-	if len(validIDs) > 0 {
-		tx, err := db.Bun().BeginTx(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			txErr := tx.Rollback()
+	if len(validIDs) == 0 {
+	        return &apiv1.DeleteRunsResponse{Results: results}, nil
+	}
+	
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	...
 			if txErr != nil && txErr != sql.ErrTxDone {
 				log.WithError(txErr).Error("error rolling back transaction in DeleteRuns")
 			}
