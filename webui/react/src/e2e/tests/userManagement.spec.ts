@@ -41,10 +41,11 @@ test.describe('User Management', () => {
     ].entries()) {
       await test.step(`Compare table rows with pagination:${index}`, async () => {
         await pagination.perPage.pwLocator.click();
-        // TODO users loads slow because we have a lot
+        // TODO [INFENG-628] Users page loads slow
         await paginationOption.pwLocator.click({ noWaitAfter: true });
         await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 20000 });
-        // TODO users loads slow because we have a lot
+        // TODO [INFENG-628] Users page loads slow
+        // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
         const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
         if (matches === null) {
