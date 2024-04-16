@@ -122,7 +122,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 	w, err := a.GetWorkspaceByID(ctx, int32(cmdSpec.Metadata.WorkspaceID), *userModel, false)
 	if err != nil {
-		return nil, launchWarnings, fmt.Errorf("retrieving workspace: %w", err)
+		return nil, launchWarnings, err
 	}
 	taskSpec.Workspace = w.Name
 
