@@ -640,3 +640,28 @@ func TestDeleteRunsFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, searchResp.Runs, 1)
 }
+
+func TestDeleteRunsMultitrial(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// delete runs
+	runIDs := []int32{runID1}
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	// Check best trial to be the remaining trial
+	resp, err := api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("externalTrialId=asc"),
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Equal(t, runID2, resp.Experiments[0].BestTrial.Id)
+}
