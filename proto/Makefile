@@ -33,10 +33,13 @@ clean:
 get-deps:
 	./get-deps.sh
 
-build/proto.stamp: $(source_files)
+.PHONE: dep_check
+dep_check:
 	protoc --version | tee /dev/stderr | \
-		perl -ne '(/libprotoc (?:24\.)?(\d+)\.(\d+)/ && $$1>=24 && ($$1>24 || $$2>=3)) || \
-			(print("Please install protoc where version >= 24.3\n") && exit 1)'
+		perl -ne '(/libprotoc (?:3?\.)?(\d+)/ && $$1>=24) || \
+			(print("Please install protoc version >= 24\n") && exit 1)'
+
+build/proto.stamp: dep_check $(source_files)
 	rm -rf build/proto pkg
 	mkdir -p build/proto
 	# Protobuf generation.
