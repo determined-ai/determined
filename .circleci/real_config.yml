@@ -2015,7 +2015,12 @@ jobs:
           install-python: true
 
           executor: <<pipeline.parameters.machine-image>>
-      - setup-go-intg-deps
+      - install-protoc 
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
+      - install-devcluster
       - start-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
