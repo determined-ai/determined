@@ -115,8 +115,8 @@ def test_cluster_down() -> None:
 
 
 @pytest.mark.det_deploy_local
-def test_ee_cluster_down() -> None:
-    name = "test_ee_cluster_down"
+def test_ee_cluster_up() -> None:
+    name = "test_ee_cluster_up"
 
     with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
         container_name = name + "_determined-master_1"
@@ -125,6 +125,9 @@ def test_ee_cluster_down() -> None:
         containers = client.containers.list(filters={"name": container_name})
         assert len(containers) > 0
 
+        for container in containers:
+            if "Config" in container.attrs and "Image" in container.attrs["Config"]:
+                assert "hpe-mlde-master" in container.attrs["Config"]["Image"]
     containers = client.containers.list(filters={"name": container_name})
     assert len(containers) == 0
 
@@ -227,8 +230,8 @@ def test_master_up_down() -> None:
 
 
 @pytest.mark.det_deploy_local
-def test_ee_master_up_down() -> None:
-    cluster_name = "test_master_up_down"
+def test_ee_master_up() -> None:
+    cluster_name = "test_master_up"
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(Resource.MASTER, master_name, {}, ["enterprise-edition"]):
@@ -237,8 +240,9 @@ def test_ee_master_up_down() -> None:
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
 
-    containers = client.containers.list(filters={"name": master_name})
-    assert len(containers) == 0
+        for container in containers:
+            if "Config" in container.attrs and "Image" in container.attrs["Config"]:
+                assert "hpe-mlde-master" in container.attrs["Config"]["Image"]
 
 
 @pytest.mark.det_deploy_local
@@ -258,9 +262,9 @@ def test_agent_up_down() -> None:
 
 
 @pytest.mark.det_deploy_local
-def test_ee_agent_up_down() -> None:
+def test_ee_agent_up() -> None:
     agent_name = "test_agent-determined-agent"
-    cluster_name = "test_agent_up_down"
+    cluster_name = "test_agent_up"
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(Resource.MASTER, master_name):
@@ -271,5 +275,6 @@ def test_ee_agent_up_down() -> None:
             containers = client.containers.list(filters={"name": agent_name})
             assert len(containers) > 0
 
-        containers = client.containers.list(filters={"name": agent_name})
-        assert len(containers) == 0
+            for container in containers:
+                if "Config" in container.attrs and "Image" in container.attrs["Config"]:
+                    assert "hpe-mlde-agent" in container.attrs["Config"]["Image"]
