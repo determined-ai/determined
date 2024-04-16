@@ -141,7 +141,7 @@ def test_salt_and_hash() -> None:
 @pytest.mark.parametrize(
     "password, should_raise, error",
     [
-        ("F7A90041-9f0d-4dfe-8cba-21555072ccdf", False, None),
+        ("0penSesame", False, None),
         (None, True, "password cannot be blank"),
         ("pass", True, "password must have at least 8 characters"),
         ("testpassword1234", True, "password must include an uppercase letter"),
