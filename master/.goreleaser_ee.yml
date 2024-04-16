@@ -15,7 +15,7 @@ builds:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
-      - -X github.com/determined-ai/determined/master/internal/license.licenseKey={{ .Env.DET_EE_LICENSE }}
+      - -X github.com/determined-ai/determined/master/internal/license.licenseKey={{ .Env.DET_EE_LICENSE_KEY }}
       - -X github.com/determined-ai/determined/master/internal/license.publicKey={{.Env.DET_EE_PUBLIC_KEY}}
     goos:
       - linux
