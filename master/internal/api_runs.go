@@ -565,11 +565,6 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 				Error: "Run is not in a terminal state.",
 				Id:    check.ID,
 			})
-		case check.Archived:
-			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is archived.",
-				Id:    check.ID,
-			})
 		default:
 			validIDs = append(validIDs, check.ID)
 		}
