@@ -1410,6 +1410,10 @@ jobs:
           command: make -C docs check-links
 
   publish-docs:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: hashicorp/terraform:latest
     steps:
@@ -1418,7 +1422,12 @@ jobs:
           at: .
       - run: apk add make curl
       - run: pip install --user awscli  # used in the terraform apply
-      - run: make -C docs publish
+      - run: |
+          if <<parameters.ee>>; then
+            make -C docs publish-ee
+          else
+            make -C docs publish-oss
+          fi
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
   # all dependent scripts are updated.
@@ -5415,6 +5424,9 @@ workflows:
             - package-and-push-system-release-ee
 
       - publish-docs:
+          matrix:
+            parameters:
+              ee: [true]
           requires:
             - build-docs
           context: determined-production
