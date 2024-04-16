@@ -103,7 +103,7 @@ def resource_manager(
 def test_cluster_down() -> None:
     name = "test_cluster_down"
 
-    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
+    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu"]):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
 
@@ -118,14 +118,7 @@ def test_cluster_down() -> None:
 def test_ee_cluster_down() -> None:
     name = "test_ee_cluster_down"
 
-    with resource_manager(
-        Resource.CLUSTER,
-        name,
-        {},
-        [
-            "no-gpu",
-        ],
-    ):
+    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
 
