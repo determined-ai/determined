@@ -368,9 +368,8 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	// add determined metadata as pod labels
 	if p.submissionInfo.taskSpec.Owner != nil {
-		// note: owner label will disappear if Owner is somehow nil
+		// Owner label will disappear if Owner is somehow nil.
 		podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
 	}
 	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
@@ -380,8 +379,7 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
 
-	// add any extra pod labels from task spec
-	// note: if map is not populated, labels will be missing and observability will be impacted
+	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
 		podSpec.ObjectMeta.Labels[labelPrefix+k] = v
 	}
