@@ -255,7 +255,5 @@ func TestDeterminedLabels(t *testing.T) {
 
 	// confirm pod spec has required labels
 	require.NotNil(t, spec)
-	for expectedKey, expectedValue := range expectedLabels {
-		require.Equal(t, spec.ObjectMeta.Labels[expectedKey], expectedValue)
-	}
+	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels[expectedKey])
 }
