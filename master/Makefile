@@ -273,6 +273,7 @@ release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: gen buildx
 	$(GORELEASER) --rm-dist
+	make publish-nvcr
 
 .PHONY: release-ee
 release-ee: export DET_SEGMENT_MASTER_KEY ?=

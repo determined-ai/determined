@@ -92,7 +92,6 @@ CREATE TABLE IF NOT EXISTS permission_assignments (
 );
 
 -- migrations/20220915145217_add-rbac-precanned-roles-and-permissions.tx.up.sql
--- TODO: consider adding an IF EXISTS to the insert
 INSERT INTO permissions(id, name, global_only) VALUES
     (2001, 'create experiment', false),
     (2004, 'update experiment', false),
