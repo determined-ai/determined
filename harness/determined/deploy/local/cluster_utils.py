@@ -24,8 +24,8 @@ DB_NAME = "determined-db_1"
 NETWORK_NAME = "determined_default"
 VOLUME_NAME = "determined-db-volume"
 MASTER_NAME = "determined-master_1"
-OSS_VERSION = "determined-master"
-EE_VERSION = "hpe-mlde-master"
+OSS_EDITION = "determined"
+ENTERPRISE_EDITION = "hpe-mlde"
 
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
@@ -259,9 +259,9 @@ def master_up(
             f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml",
             f"{final_storage_host_path}:{container_storage_path}",
         ]
-        det_edition = EE_VERSION if enterprise_edition else OSS_VERSION
+        det_edition = ENTERPRISE_EDITION if enterprise_edition else OSS_EDITION
         client.containers.run(
-            image=f"{image_repo_prefix}/{det_edition}:{version}",
+            image=f"{image_repo_prefix}/{det_edition}-master:{version}",
             environment=env,
             init=True,
             mounts=[],
@@ -462,7 +462,8 @@ def agent_up(
         master_host = get_proxy_addr()
     environment["DET_MASTER_HOST"] = master_host
 
-    image = f"{image_repo_prefix}/hpe-mlde-agent:{version}"
+    det_edition = ENTERPRISE_EDITION if enterprise_edition else OSS_EDITION
+    image = f"{image_repo_prefix}/{det_edition}-agent:{version}"
     init = True
     mounts = []  # type: List[str]
     if labels is None:
