@@ -349,7 +349,7 @@ def init(
         searcher=searcher,
         experimental=experimental,
         profiler=profiler,
-        metrics=metrics,
+        _metrics=metrics,
         _tensorboard_manager=tensorboard_manager,
     )
 

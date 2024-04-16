@@ -27,7 +27,7 @@ class _MetricsContext:
         self._trial_id = trial_id
         self._run_id = run_id
 
-        self._error_queue = queue.Queue()
+        self._error_queue: queue.Queue = queue.Queue()
         self._shipper = _Shipper(
             session=self._session,
             trial_id=self._trial_id,
@@ -85,20 +85,20 @@ class _MetricsContext:
         # Metrics queue is empty, join with timeout to avoid hangs and add logs to help debug.
         self._shipper.join(timeout=1)
         if self._shipper.is_alive():
-            logger.info(f"Waiting for _Shipper thread to finish...")
+            logger.info("Waiting for _Shipper thread to finish...")
             self._shipper.join(timeout=5)
             if self._shipper.is_alive():
-                logger.warning(f"Failed to complete _Shipper cleanup.")
+                logger.warning("Failed to complete _Shipper cleanup.")
             else:
-                logger.info(f"_Shipper cleanup complete.")
+                logger.info("_Shipper cleanup complete.")
 
 
 class _TrialMetrics:
     def __init__(
         self,
         group: str,
-        steps_completed: int,
         metrics: Dict[str, Any],
+        steps_completed: Optional[int] = None,
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
         report_time: Optional[datetime.datetime] = None,
     ):
@@ -118,8 +118,8 @@ class _Shipper(threading.Thread):
         trial_id: int,
         run_id: int,
         error_queue: queue.Queue,
-    ):
-        self._queue = queue.Queue(maxsize=self.METRICS_QUEUE_MAXSIZE)
+    ) -> None:
+        self._queue: queue.Queue = queue.Queue(maxsize=self.METRICS_QUEUE_MAXSIZE)
         self._error_queue = error_queue
         self._session = session
         self._trial_id = trial_id
@@ -130,11 +130,11 @@ class _Shipper(threading.Thread):
     def publish_metrics(
         self,
         group: str,
-        steps_completed: int,
         metrics: Dict[str, Any],
+        steps_completed: Optional[int] = None,
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
         report_time: Optional[datetime.datetime] = None,
-    ):
+    ) -> None:
         self._queue.put(
             _TrialMetrics(
                 group=group,
@@ -173,7 +173,7 @@ class _Shipper(threading.Thread):
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
         report_time: Optional[datetime.datetime] = None,
-    ):
+    ) -> None:
         v1metrics = bindings.v1Metrics(avgMetrics=metrics, batchMetrics=batch_metrics)
         v1TrialMetrics = bindings.v1TrialMetrics(
             metrics=v1metrics,
@@ -187,7 +187,7 @@ class _Shipper(threading.Thread):
 
 
 class _DummyMetricsContext(_MetricsContext):
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def report(
