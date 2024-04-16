@@ -21,4 +21,9 @@ export const test = base.extend<CustomFixtures>({
     const dev = new DevFixture(page);
     await use(dev);
   },
+
+  user: async ({ page }, use) => {
+    const user = new UserFixture(page);
+    await use(user);
+  },
 });
