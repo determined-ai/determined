@@ -123,7 +123,7 @@ def test_ee_cluster_up() -> None:
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": container_name})
-        assert len(containers) > 0
+        assert len(containers) == 1, "only one master expected"
 
         for container in containers:
             # client.containers.list is similar to `docker ps`, so we expect Image to be present.
@@ -237,7 +237,7 @@ def test_ee_master_up() -> None:
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
-        assert len(containers) > 0
+        assert len(containers) == 1, "only one master expected"
 
         for container in containers:
             if "Config" in container.attrs and "Image" in container.attrs["Config"]:
@@ -272,7 +272,7 @@ def test_ee_agent_up() -> None:
         ):
             client = docker.from_env()
             containers = client.containers.list(filters={"name": agent_name})
-            assert len(containers) > 0
+            assert len(containers) == 1, "only one agent expected"
 
             for container in containers:
                 if "Config" in container.attrs and "Image" in container.attrs["Config"]:
