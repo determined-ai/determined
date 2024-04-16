@@ -1991,13 +1991,13 @@ jobs:
       - run: echo 'export PW_SERVER_ADDRESS="http://localhost:8080"' >> $BASH_ENV # DNJ TODO -remove when tested
       - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
       - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
-      - attach_workspace:
-          at: .
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
       - react-get-deps
+      - attach_workspace:
+          at: .
       - run: |
           apt-get update && sudo apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
           # Docker repo setup DNJ TODO - move to own step and vet all deps
