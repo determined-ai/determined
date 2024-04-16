@@ -24,11 +24,9 @@ import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { getExperimentCheckpoints } from 'services/api';
+import { deleteCheckpoints, getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { encodeCheckpointState } from 'services/decoder';
-import { readStream } from 'services/utils';
 import {
   checkpointAction,
   CheckpointAction,
@@ -128,12 +126,13 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [registerModal],
   );
 
-  const handleDelete = useCallback((checkpoints: string[]) => {
-    readStream(
-      detApi.Checkpoint.deleteCheckpoints({
-        checkpointUuids: checkpoints,
-      }),
-    );
+  const handleDelete = useCallback(async (checkpointUuids: string[]) => {
+    try {
+      await deleteCheckpoints({ checkpointUuids });
+    } catch (e) {
+      // confirm modal overwrites error message
+      handleError(e);
+    }
   }, []);
 
   const handleDeleteCheckpoint = useCallback(

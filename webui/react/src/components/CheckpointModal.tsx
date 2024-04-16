@@ -6,8 +6,7 @@ import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
-import { detApi } from 'services/apiConfig';
-import { readStream } from 'services/utils';
+import { deleteCheckpoints } from 'services/api';
 import {
   CheckpointState,
   CheckpointStorageType,
@@ -86,12 +85,17 @@ const CheckpointModalComponent: React.FC<Props> = ({
 
   const handleDelete = useCallback(async () => {
     if (!checkpoint?.uuid) return;
-    await readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
+    try {
+      await deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] });
+    } catch (e) {
+      // modal error handling overwrites error message
+      handleError(e);
+    }
   }, [checkpoint]);
 
   const onClickDelete = useCallback(() => {
     const content = `Are you sure you want to request checkpoint deletion for batch
-${checkpoint?.totalBatches}. This action may complete or fail without further notification.`;
+${checkpoint?.totalBatches}? This action may complete or fail without further notification.`;
 
     confirm({
       content,

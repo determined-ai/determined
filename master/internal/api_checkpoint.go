@@ -327,9 +327,47 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		return nil, err
 	}
 	if len(registeredCheckpointUUIDs) > 0 {
+		modelIDs := make([]int, len(registeredCheckpointUUIDs))
+		i := 0
+		for _, v := range registeredCheckpointUUIDs {
+			modelIDs[i] = v.ID
+			i++
+		}
+		var models []struct {
+			ID int
+		}
+		modelQuery := internaldb.Bun().
+			NewSelect().
+			Model(&models).
+			Table("models").
+			ColumnExpr("id").
+			Where("id IN (?)", bun.In(modelIDs))
+		if modelQuery, err = modelauth.AuthZProvider.Get().
+			FilterReadableModelsQuery(ctx, *curUser, modelQuery); err != nil {
+			return nil, err
+		}
+		err = modelQuery.Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+		accessibleModels := make(map[int]bool, len(models))
+		for _, v := range models {
+			accessibleModels[v.ID] = true
+		}
+		checkpointMsgs := make([]string, len(registeredCheckpointUUIDs))
+		i = 0
+		for k, v := range registeredCheckpointUUIDs {
+			if _, ok := accessibleModels[v.ID]; ok {
+				checkpointMsgs[i] = fmt.Sprintf("%v, registered to %v (model #%d), version %d", k, v.Name, v.ID, v.Version)
+			} else {
+				checkpointMsgs[i] = fmt.Sprintf("%v, registered to an unknown model", k)
+			}
+			i++
+		}
+		checkpointList := strings.Join(checkpointMsgs, ", ")
 		return nil, status.Errorf(codes.InvalidArgument,
 			"this subset of checkpoints provided are in the model registry and cannot be deleted: %v.",
-			registeredCheckpointUUIDs)
+			checkpointList)
 	}
 
 	taskSpec := *a.m.taskSpec
