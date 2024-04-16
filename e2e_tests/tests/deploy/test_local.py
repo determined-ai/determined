@@ -103,7 +103,29 @@ def resource_manager(
 def test_cluster_down() -> None:
     name = "test_cluster_down"
 
-    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu"]):
+    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
+        container_name = name + "_determined-master_1"
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": container_name})
+        assert len(containers) > 0
+
+    containers = client.containers.list(filters={"name": container_name})
+    assert len(containers) == 0
+
+
+@pytest.mark.det_deploy_local
+def test_ee_cluster_down() -> None:
+    name = "test_ee_cluster_down"
+
+    with resource_manager(
+        Resource.CLUSTER,
+        name,
+        {},
+        [
+            "no-gpu",
+        ],
+    ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
 
@@ -212,6 +234,21 @@ def test_master_up_down() -> None:
 
 
 @pytest.mark.det_deploy_local
+def test_ee_master_up_down() -> None:
+    cluster_name = "test_master_up_down"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(Resource.MASTER, master_name, {}, ["enterprise-edition"]):
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": master_name})
+        assert len(containers) > 0
+
+    containers = client.containers.list(filters={"name": master_name})
+    assert len(containers) == 0
+
+
+@pytest.mark.det_deploy_local
 def test_agent_up_down() -> None:
     agent_name = "test_agent-determined-agent"
     cluster_name = "test_agent_up_down"
@@ -219,6 +256,24 @@ def test_agent_up_down() -> None:
 
     with resource_manager(Resource.MASTER, master_name):
         with resource_manager(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP]):
+            client = docker.from_env()
+            containers = client.containers.list(filters={"name": agent_name})
+            assert len(containers) > 0
+
+        containers = client.containers.list(filters={"name": agent_name})
+        assert len(containers) == 0
+
+
+@pytest.mark.det_deploy_local
+def test_ee_agent_up_down() -> None:
+    agent_name = "test_agent-determined-agent"
+    cluster_name = "test_agent_up_down"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(Resource.MASTER, master_name):
+        with resource_manager(
+            Resource.AGENT, agent_name, {}, ["no-gpu", "enterprise-edition"], [conf.MASTER_IP]
+        ):
             client = docker.from_env()
             containers = client.containers.list(filters={"name": agent_name})
             assert len(containers) > 0
