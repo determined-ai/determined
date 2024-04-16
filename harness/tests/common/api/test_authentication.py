@@ -138,13 +138,19 @@ def test_salt_and_hash() -> None:
     )
 
 
-def test_check_password_complexity() -> None:
-    authentication.check_password_complexity("F7A90041-9f0d-4dfe-8cba-21555072ccdf")
-    with pytest.raises(ValueError, match="password must have at least 8 characters"):
-        authentication.check_password_complexity("pass")
-    with pytest.raises(ValueError, match="password must include an uppercase letter"):
-        authentication.check_password_complexity("testpassword1234")
-    with pytest.raises(ValueError, match="password must include a lowercase letter"):
-        authentication.check_password_complexity("TESTPASSWORD1234")
-    with pytest.raises(ValueError, match="password must include a number"):
-        authentication.check_password_complexity("testPASSWORD")
+@pytest.mark.parametrize(
+    "password, should_raise, error",
+    [
+        ("F7A90041-9f0d-4dfe-8cba-21555072ccdf", False, None),
+        ("pass", True, "password must have at least 8 characters"),
+        ("testpassword1234", True, "password must include an uppercase letter"),
+        ("TESTPASSWORD1234", True, "password must include a lowercase letter"),
+        ("testPASSWORD", True, "password must include a number"),
+    ],
+)
+def test_check_password_complexity(password, should_raise, error) -> None:
+    if should_raise:
+        with pytest.raises(ValueError, match="\u2717 " + error):
+            authentication.check_password_complexity(password)
+    else:
+        authentication.check_password_complexity(password)
