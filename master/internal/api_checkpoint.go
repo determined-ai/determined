@@ -327,11 +327,9 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		return nil, err
 	}
 	if len(registeredCheckpointUUIDs) > 0 {
-		modelIDs := make([]int, len(registeredCheckpointUUIDs))
-		i := 0
+		var modelIDs []int
 		for _, v := range registeredCheckpointUUIDs {
-			modelIDs[i] = v.ID
-			i++
+			modelIDs = append(modelIDs, v.ID)
 		}
 		var models []struct {
 			ID int
@@ -354,15 +352,15 @@ func (a *apiServer) CheckpointsRemoveFiles(
 		for _, v := range models {
 			accessibleModels[v.ID] = true
 		}
-		checkpointMsgs := make([]string, len(registeredCheckpointUUIDs))
-		i = 0
+		var checkpointMsgs []string
 		for k, v := range registeredCheckpointUUIDs {
 			if _, ok := accessibleModels[v.ID]; ok {
-				checkpointMsgs[i] = fmt.Sprintf("%v, registered to %v (model #%d), version %d", k, v.Name, v.ID, v.Version)
+				msg := fmt.Sprintf("%v, registered to %v (model #%d), version %d", k, v.Name, v.ID, v.Version)
+				checkpointMsgs = append(checkpointMsgs, msg)
 			} else {
-				checkpointMsgs[i] = fmt.Sprintf("%v, registered to an unknown model", k)
+				msg := fmt.Sprintf("%v, registered to an unknown model", k)
+				checkpointMsgs = append(checkpointMsgs, msg)
 			}
-			i++
 		}
 		checkpointList := strings.Join(checkpointMsgs, ", ")
 		return nil, status.Errorf(codes.InvalidArgument,
