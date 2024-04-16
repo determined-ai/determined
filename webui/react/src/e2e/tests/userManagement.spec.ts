@@ -42,8 +42,10 @@ test.describe('User Management', () => {
       await test.step(`Compare table rows with pagination:${index}`, async () => {
         await pagination.perPage.pwLocator.click();
         // TODO [INFENG-628] Users page loads slow
-        await paginationOption.pwLocator.click({ noWaitAfter: true });
-        await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 20000 });
+        await expect(async () => {
+          await paginationOption.pwLocator.click({ noWaitAfter: true });
+          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 10000 });
+        }).toPass({ timeout: 20000 });
         // TODO [INFENG-628] Users page loads slow
         // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
@@ -60,43 +62,45 @@ test.describe('User Management', () => {
   });
 
   test.describe('With a new User', () => {
-    let page: Page;
+    let pageSetupTeardown: Page;
     let authFixture: AuthFixture;
     let userFixture: UserFixture;
-    let userManagementPage: UserManagement;
+    let userManagementPageSetupTeardown: UserManagement;
     let testUser: User;
 
     test.beforeAll(async ({ browser }) => {
       await test.step('Login', async () => {
-        page = await browser.newPage({ recordVideo: { dir: './src/e2e/test-results' } });
-        authFixture = new AuthFixture(page);
-        userFixture = new UserFixture(page);
-        userManagementPage = new UserManagement(page);
+        pageSetupTeardown = await browser.newPage();
+        authFixture = new AuthFixture(pageSetupTeardown);
+        userFixture = new UserFixture(pageSetupTeardown);
+        userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
         await authFixture.login();
       });
 
       await test.step('Create User', async () => {
-        await userManagementPage.goto();
+        await userManagementPageSetupTeardown.goto();
         testUser = await userFixture.createUser();
       });
     });
 
     test.afterAll(async () => {
-      await userManagementPage.goto();
+      await userManagementPageSetupTeardown.goto();
       await test.step('Deactivate User', async () => {
         await userFixture.deactivateTestUsers();
       });
-      await page.close();
+      await pageSetupTeardown.close();
     });
 
-    test('User table shows correct data', async () => {
+    test('User table shows correct data', async ({ page }) => {
+      const userManagementPage = new UserManagement(page);
       const { username, id } = testUser;
       await userManagementPage.goto();
       await userManagementPage.search.pwLocator.fill(username);
       await expect(userManagementPage.getRowByID(id).user.pwLocator).toContainText(username);
     });
 
-    test('Edit user', async () => {
+    test('Edit user', async ({ page }) => {
+      const userManagementPage = new UserManagement(page);
       let modifiedUser: User;
       await userManagementPage.goto();
       await test.step('Edit once', async () => {
