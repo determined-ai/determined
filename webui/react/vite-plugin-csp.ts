@@ -48,15 +48,24 @@ export const cspHtml = ({ cspRules, hashEnabled = {} }: CspHtmlPluginConfig): Pl
       const content = Object.entries(finalCspRules)
         .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
         .join('; ');
-      return [
-        {
-          attrs: {
-            content,
-            'http-equiv': 'Content-Security-Policy',
+      return {
+        html:
+          process.env.DET_BUILD_EE === 'true'
+            ? html.replace(
+                'Determined Deep Learning Training Platform',
+                'HPE Machine Learning Development Environment',
+              )
+            : '',
+        tags: [
+          {
+            attrs: {
+              content,
+              'http-equiv': 'Content-Security-Policy',
+            },
+            tag: 'meta',
           },
-          tag: 'meta',
-        },
-      ];
+        ],
+      };
     },
     order: 'post',
   },

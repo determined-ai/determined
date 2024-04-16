@@ -1912,6 +1912,9 @@ jobs:
       dev-mode:
         type: boolean
         default: false
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: cimg/node:20.9.0
     resource_class: large
@@ -1925,6 +1928,10 @@ jobs:
           if <<parameters.dev-mode>>; then
             echo 'Setting development mode...'
             export DET_NODE_ENV=development
+          fi
+          if <<parameters.ee>>; then
+            echo 'building Enterprise index.html'
+            export DET_BUILD_EE=true
           fi
           make -C webui/react build
       - persist_to_workspace:
@@ -4131,7 +4138,10 @@ workflows:
       - build-helm
       - build-react:
           name: build-react-ee
-          dev-mode: true
+          matrix:
+            parameters:
+              dev-mode: [true]
+              ee: [true]
       - test-e2e-react:
           context: playwright
           filters: *any-upstream
@@ -4672,7 +4682,10 @@ workflows:
       - build-proto:
           filters: *any-upstream
       - build-react:
-          dev-mode: true
+          matrix:
+            parameters:
+              dev-mode: [true]
+              ee: [true]
           filters: *any-upstream
       - build-docs:
           filters: *any-upstream
@@ -5154,7 +5167,8 @@ workflows:
           requires:
             - build-proto
             - build-helm
-      - build-react
+      - build-react:
+          ee: true
       - package-and-push-system-local-ee:
           requires:
             - build-docs
@@ -5369,6 +5383,9 @@ workflows:
           filters: *release-and-rc-filters
       - build-react:
           context: determined-production
+          matrix:
+            parameters:
+              ee: [true]
           filters: *release-and-rc-filters
       - build-docs:
           matrix:
