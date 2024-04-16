@@ -333,7 +333,7 @@ Parameters include:
    retention settings post-completion for a single trial or the entire experiment, you can use the
    CLI command ``det t set log-retention <trial-id>`` or ``det e set log-retention <exp-id>``. Both
    commands accept either the argument: ``--days``, which sets the number of days to retain logs
-   from the time of creation, or ``--forever`` which retains logs indefinitely.
+   from the end time of the task, or ``--forever`` which retains logs indefinitely.
 
 Example configuration:
 
