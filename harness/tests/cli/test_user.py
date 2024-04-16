@@ -10,7 +10,7 @@ from determined.common.api import bindings
 from tests.cli import util
 
 
-def test_user_create_with_password_flag() -> None:
+def test_user_create_password_flag_does_not_prompt() -> None:
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10017)
         rsps.post(
@@ -35,7 +35,7 @@ def test_user_create_with_password_flag() -> None:
         )
 
 
-def test_user_create_remote_account() -> None:
+def test_user_create_remote_account_does_not_require_password() -> None:
     with util.standard_cli_rsps() as rsps:
         userobj = bindings.v1User(active=True, admin=True, username="det-user", id=10018)
         rsps.post(
@@ -84,7 +84,7 @@ def test_user_create_interactive_password(mock_getpass: mock.MagicMock) -> None:
 
 
 @mock.patch("getpass.getpass")
-def test_user_create_no_password_fails(mock_getpass: mock.MagicMock) -> None:
+def test_user_create_fails_with_empty_password(mock_getpass: mock.MagicMock) -> None:
     mock_getpass.side_effect = lambda *_: ""
     with pytest.raises(SystemExit):
         cli.main(["user", "create", "test-user-4"])
