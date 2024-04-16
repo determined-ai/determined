@@ -427,6 +427,9 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	runIds []int32, filter *string, skipMultitrial bool) (
 	[]*apiv1.RunActionResult, error,
 ) {
+	if len(runIds) > 0 && filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
 	// Get experiment ids
 	var err error
 	var runChecks []archiveRunOKResult

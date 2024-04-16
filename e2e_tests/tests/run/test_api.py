@@ -3,7 +3,7 @@ import time
 import pytest
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -159,3 +159,21 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
     for res in resumeResp.results:
         assert res.error == ""
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
+
+
+@pytest.mark.e2e_cpu
+def test_run_pause_and_resume_filter_no_skip() -> None:
+    sess = api_utils.user_session()
+
+    with pytest.raises(
+        errors.APIException, match="if filter is provided run id list must be empty"
+    ):
+        bindings.post_PauseRuns(
+            sess,
+            body=bindings.v1PauseRunsRequest(
+                runIds=[123],
+                filter="filter",
+                projectId=1,
+                skipMultitrial=True,
+            ),
+        )
