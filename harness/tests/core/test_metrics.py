@@ -18,7 +18,7 @@ def test_metrics_report(mock_post_metrics: mock.MagicMock) -> None:
         {"loss": 0.40, "accuracy": 0.93},
         {"loss": 0.50, "accuracy": 0.94},
     ]
-    metrics_context = core.MetricsContext(session=session, trial_id=trial_id, run_id=1)
+    metrics_context = core._MetricsContext(session=session, trial_id=trial_id, run_id=1)
 
     metrics_context.start()
     for idx, metric in enumerate(metrics):
@@ -48,7 +48,7 @@ def test_metrics_report_raises_exception(mock_post_metrics: mock.MagicMock) -> N
 
     mock_post_metrics.side_effect = ValueError("Exception in metrics reporting")
 
-    metrics_context = core.MetricsContext(session=session, trial_id=trial_id, run_id=1)
+    metrics_context = core._MetricsContext(session=session, trial_id=trial_id, run_id=1)
 
     metrics_context.start()
     with pytest.raises(ValueError, match="Exception in metrics reporting"):

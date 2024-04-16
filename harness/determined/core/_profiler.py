@@ -41,7 +41,7 @@ class ProfilerContext:
     def __init__(
         self,
         agent_id: str,
-        metrics: core.MetricsContext,
+        metrics: core._MetricsContext,
         distributed: core.DistributedContext,
     ) -> None:
         self._metrics = metrics
@@ -398,7 +398,7 @@ class _Collector(threading.Thread):
 
     def __init__(
         self,
-        metrics: core.MetricsContext,
+        metrics: core._MetricsContext,
         agent_id: str,
         sampling_interval: int = 1,
         aggregation_period: int = 10,

@@ -28,7 +28,7 @@ class TrainContext:
         session: api.Session,
         trial_id: int,
         exp_id: int,
-        metrics: core.MetricsContext,
+        metrics: core._MetricsContext,
         distributed: core.DistributedContext,
         tensorboard_mode: core.TensorboardMode,
         tensorboard_manager: Optional[tensorboard.TensorboardManager],

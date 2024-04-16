@@ -47,7 +47,7 @@ class Context:
         info: Optional[det.ClusterInfo] = None,
         experimental: Optional[core.ExperimentalCoreContext] = None,
         profiler: Optional[core.ProfilerContext] = None,
-        metrics: Optional[core.MetricsContext] = None,
+        _metrics: Optional[core._MetricsContext] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
         _heartbeat: Optional[core._Heartbeat] = None,
         _log_shipper: Optional[core._LogShipper] = None,
@@ -56,7 +56,7 @@ class Context:
         self.distributed = distributed or core.DummyDistributedContext()
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
-        self.metrics = metrics or core.DummyMetricsContext()
+        self._metrics = _metrics or core._DummyMetricsContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self.info = info
         self.experimental = experimental or core.DummyExperimentalCoreContext()
@@ -67,7 +67,7 @@ class Context:
 
     def start(self) -> None:
         self.preempt.start()
-        self.metrics.start()
+        self._metrics.start()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.start()
         if self._heartbeat is not None:
@@ -87,7 +87,7 @@ class Context:
     ) -> None:
         self.preempt.close()
         self.distributed.close()
-        self.metrics.close()
+        self._metrics.close()
         self.profiler._close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
@@ -272,7 +272,7 @@ def init(
         if tensorboard_mode == core.TensorboardMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()
 
-        metrics = core.MetricsContext(
+        metrics = core._MetricsContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,

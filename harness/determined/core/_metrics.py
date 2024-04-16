@@ -10,10 +10,10 @@ from determined.common.api import bindings
 logger = logging.getLogger("determined.core")
 
 
-class MetricsContext:
+class _MetricsContext:
     """Gives access to metrics reporting during trial tasks.
 
-    Metrics reported to ``MetricsContext`` are published to a queue, which is consumed by a
+    Metrics reported to ``_MetricsContext`` are published to a queue, which is consumed by a
     background thread that reports them to the master.
     """
 
@@ -125,7 +125,7 @@ class _Shipper(threading.Thread):
         self._trial_id = trial_id
         self._run_id = run_id
 
-        super().__init__()
+        super().__init__(name="MetricsShipperThread")
 
     def publish_metrics(
         self,
@@ -186,7 +186,7 @@ class _Shipper(threading.Thread):
         bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
 
-class DummyMetricsContext(MetricsContext):
+class _DummyMetricsContext(_MetricsContext):
     def __init__(self):
         pass
 

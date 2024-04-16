@@ -11,8 +11,8 @@ from determined.core._checkpoint import (
 )
 
 from determined.core._metrics import (
-    MetricsContext,
-    DummyMetricsContext,
+    _MetricsContext,
+    _DummyMetricsContext,
 )
 
 from determined.core._train import (

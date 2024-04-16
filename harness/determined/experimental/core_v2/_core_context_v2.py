@@ -105,7 +105,7 @@ def _make_v2_context(
             info.trial.trial_id,
             checkpoint_storage,
         )
-        metrics = core.MetricsContext(
+        metrics = core._MetricsContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
