@@ -50,25 +50,25 @@ def check_password_complexity(password: Optional[str]) -> None:
     else:
         results.append(good + "password cannot be blank")
 
-    if len(password) < 8:
+    if not password or len(password) < 8:
         results.append(bad + "password must have at least 8 characters")
         ok = False
     else:
         results.append(good + "password must have at least 8 characters")
 
-    if re.search(r"[A-Z]", password) is None:
+    if not password or re.search(r"[A-Z]", password) is None:
         results.append(bad + "password must include an uppercase letter")
         ok = False
     else:
         results.append(good + "password must include an uppercase letter")
 
-    if re.search(r"[a-z]", password) is None:
+    if not password or re.search(r"[a-z]", password) is None:
         results.append(bad + "password must include a lowercase letter")
         ok = False
     else:
         results.append(good + "password must include a lowercase letter")
 
-    if re.search(r"\d", password) is None:
+    if not password or re.search(r"\d", password) is None:
         results.append(bad + "password must include a number")
         ok = False
     else:
