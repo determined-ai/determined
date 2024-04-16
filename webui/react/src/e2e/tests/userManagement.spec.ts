@@ -44,8 +44,8 @@ test.describe('User Management', () => {
         // TODO [INFENG-628] Users page loads slow
         await expect(async () => {
           await paginationOption.pwLocator.click({ noWaitAfter: true });
-          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 4000 });
-        }).toPass({ timeout: 21000 });
+          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 3000 });
+        }).toPass({ timeout: 22000 });
         // TODO [INFENG-628] Users page loads slow
         // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
