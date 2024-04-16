@@ -2347,7 +2347,7 @@ type PutTrialRetainLogsRequest struct {
 
 	// The ID of the trial.
 	TrialId int32 `protobuf:"varint,1,opt,name=trial_id,json=trialId,proto3" json:"trial_id,omitempty"`
-	// The number of days to retain logs, starting from the time of creation.
+	// The number of days to retain logs, starting from the end time of the task.
 	NumDays int32 `protobuf:"varint,2,opt,name=num_days,json=numDays,proto3" json:"num_days,omitempty"`
 }
 
