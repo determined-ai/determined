@@ -1,0 +1,52 @@
+prometheus:
+  prometheusSpec:
+    volumes:
+      - name: det-secret-volume
+        secret:
+          secretName: det-prom-token
+
+    volumeMounts:
+      - name: det-secret-volume
+        mountPath: /tmp/det-secret
+
+    additionalScrapeConfigs:
+      - job_name: det-master-api-server
+        honor_timestamps: true
+        scrape_interval: 1s # TODO 5s or 15s?
+        scrape_timeout: 1s
+        metrics_path: /debug/prom/metrics
+        scheme: http
+        follow_redirects: true
+        authorization:
+          type: Bearer
+          credentials_file: /tmp/det-secret/det-token
+
+          #credentials_file: $PATH_TO_TOKEN
+        kubernetes_sd_configs:
+        - role: service
+          selectors:
+            - label: determined.ai/master-service=true
+              role: service
+
+          #credentials: "v2.public.eyJpZCI6MiwidXNlcl9pZCI6MSwiZXhwaXJ5IjoiMjAyNC0wNC0yMlQxNDo0NDozOS44MDY1MTA4NFoiLCJJbmhlcml0ZWRDbGFpbXMiOm51bGx9jFJ-65NAuar2gwp-NkFRPx1w8f4AWxyneHOtzlxst6LHQCg9MJPt1yDqRKUD2IxlmloRxB4_FZ4uCX3WHDoyAw.bnVsbA"
+
+
+        #static_configs:
+        #- targets:
+        #  - 10.227.254.107:8080 # TODO
+
+#     podMonitorNamespaceSelector:
+#       any: true
+#     podMonitorSelector: {}
+#     podMonitorSelectorNilUsesHelmValues: false
+#     ruleNamespaceSelector:
+#       any: true
+#     ruleSelector: {}
+#     ruleSelectorNilUsesHelmValues: false
+#     serviceMonitorNamespaceSelector:
+#       any: true
+#     serviceMonitorSelector: {}
+#     serviceMonitorSelectorNilUsesHelmValues: false
+# grafana:
+#   enabled: true
+# #  adminPassword: prom-operator # Please change the default password in production !!!        
