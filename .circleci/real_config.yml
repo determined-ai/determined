@@ -1984,19 +1984,44 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
-    docker:
-      - image: mcr.microsoft.com/playwright:v1.40.0-focal
+    machine:
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
+      - attach_workspace:
+          at: .
+      - run: echo 'export PW_SERVER_ADDRESS="http://localhost:8080"' >> $BASH_ENV # DNJ TODO -remove when tested
+      - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
+      - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
       - run: apt-get update && apt-get -y install make
       - react-get-deps
+      - run: |
+          apt-get update && apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
+          # Docker repo setup DNJ TODO - move to own step and vet all deps
+          sudo install -m 0755 -d /etc/apt/keyrings
+          sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt-get update && apt-get -y install docker-ce docker-ce-cli containerd.io
+          sudo systemctl start docker
+      - setup-python-venv:
+          determined: True
+          executor: <<pipeline.parameters.machine-image>>
+      - install-devcluster
+      - start-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - wait-for-master:
+          host: "localhost"
+          port: "8080"
+      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
