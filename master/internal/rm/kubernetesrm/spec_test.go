@@ -229,6 +229,10 @@ func TestDeterminedLabels(t *testing.T) {
 		TaskType:    model.TaskTypeCommand,
 		TaskID:      model.NewTaskID().String(),
 		ContainerID: "container-id",
+		ExtraPodLabels: map[string]string{
+			"k1": "v1",
+			"k2": "v2",
+		},
 	}
 
 	p := pod{
@@ -242,6 +246,7 @@ func TestDeterminedLabels(t *testing.T) {
 
 	// define expectations
 	expectedLabels := map[string]string{
+		determinedLabel:   taskSpec.AllocationID,
 		userLabel:         taskSpec.Owner.Username,
 		workspaceLabel:    taskSpec.Workspace,
 		resourcePoolLabel: p.req.ResourcePool,
@@ -249,11 +254,14 @@ func TestDeterminedLabels(t *testing.T) {
 		taskIDLabel:       taskSpec.TaskID,
 		containerIDLabel:  taskSpec.ContainerID,
 	}
+	for k, v := range taskSpec.ExtraPodLabels {
+		expectedLabels[labelPrefix+k] = v
+	}
 
 	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
 		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
 
 	// confirm pod spec has required labels
 	require.NotNil(t, spec)
-	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels[expectedKey])
+	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels)
 }
