@@ -1995,9 +1995,9 @@ jobs:
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - react-get-deps
       - attach_workspace:
           at: .
+      - react-get-deps
       - run: |
           apt-get update && sudo apt-get install -y ca-certificates curl make sudo python3-pip iproute2 tar
           # Docker repo setup DNJ TODO - move to own step and vet all deps
@@ -2011,9 +2011,11 @@ jobs:
           apt-get update && sudo apt-get -y install docker-ce docker-ce-cli containerd.io
           sudo systemctl start docker
       - setup-python-venv:
-          determined: True
+          determined: true
+          install-python: true
+
           executor: <<pipeline.parameters.machine-image>>
-      - install-devcluster
+      - setup-go-intg-deps
       - start-devcluster
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
