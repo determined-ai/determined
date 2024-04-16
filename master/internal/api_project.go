@@ -463,21 +463,14 @@ func (a *apiServer) getProjectRunColumnsByID(
 		return nil, err
 	}
 
-	runIDs := make([]int, 0, len(hyperparameters))
-	for _, hparam := range hyperparameters {
-		if hparam.RunID != nil {
-			runIDs = append(runIDs, *hparam.RunID)
-		}
-	}
 	summaryMetrics := []struct {
 		MetricName string
 		JSONPath   string
 		MetricType string
-		Count      int32
 	}{}
 
-	if len(runIDs) > 0 {
-		subQuery := db.Bun().NewSelect().Table("runs").
+	if len(hyperparameters) > 0 {
+		runsQuery := db.Bun().NewSelect().Distinct().Table("runs").
 			ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
 			ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))"+
 				" as metric_name").
@@ -489,26 +482,16 @@ func (a *apiServer) getProjectRunColumnsByID(
 			Where("hparams IS NOT NULL").
 			Where("project_id = ?", id).
 			Order("json_path").Order("metric_name")
-		runsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
-			ColumnExpr("*").ColumnExpr(
-			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
-			Order("json_path").Order("metric_name")
 		err = runsQuery.Scan(ctx, &summaryMetrics)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	for idx, stats := range summaryMetrics {
+	for _, stats := range summaryMetrics {
 		// If there are multiple metrics with the same group and name, report one unspecified column.
-		if stats.Count > 1 {
-			continue
-		}
 
 		columnType := parseMetricsType(stats.MetricType)
-		if len(summaryMetrics) > idx+1 && summaryMetrics[idx+1].Count > 1 {
-			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-		}
 
 		columnPrefix := stats.JSONPath
 		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
