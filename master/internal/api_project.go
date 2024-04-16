@@ -477,11 +477,18 @@ func (a *apiServer) getProjectRunColumnsByID(
 	}{}
 
 	if len(runIDs) > 0 {
-		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
-			`summary_metrics->jsonb_object_keys(summary_metrics)->
-		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
-		AS metric_type`).
-			Where("id IN (?)", bun.In(runIDs)).Distinct()
+		subQuery := db.Bun().NewSelect().Table("runs").
+			ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
+			ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))"+
+				" as metric_name").
+			ColumnExpr(
+				`summary_metrics->jsonb_object_keys(summary_metrics)->
+			jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+			AS metric_type`).
+			Where("summary_metrics IS NOT NULL").
+			Where("hparams IS NOT NULL").
+			Where("project_id = ?", id).
+			Order("json_path").Order("metric_name")
 		runsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
 			ColumnExpr("*").ColumnExpr(
 			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
