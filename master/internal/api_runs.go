@@ -429,6 +429,9 @@ func (a *apiServer) UnarchiveRuns(
 func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 	projectID int32, filter *string,
 ) ([]*apiv1.RunActionResult, error) {
+	if len(runIDs) > 0 && filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err

@@ -685,3 +685,28 @@ func TestUnarchivedAlreadyUnarchived(t *testing.T) {
 	require.Equal(t, "", unarchRes.Results[0].Error)
 	require.Equal(t, "", unarchRes.Results[1].Error)
 }
+
+func TestArchiveUnarchiveOverfilledInput(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	expectedError := fmt.Errorf("if filter is provided run id list must be empty")
+	// Archive runs
+	runIDs := []int32{runID1, runID2}
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+		Filter:    ptrs.Ptr("nonempty"),
+	}
+	_, err := api.ArchiveRuns(ctx, archReq)
+	require.Equal(t, expectedError, err)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+		Filter:    ptrs.Ptr("nonempty"),
+	}
+	_, err = api.UnarchiveRuns(ctx, unarchReq)
+	require.Equal(t, expectedError, err)
+}
