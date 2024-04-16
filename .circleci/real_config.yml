@@ -5010,6 +5010,14 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
+      - - package-and-push-system-local:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - request-packaging-tests
+
       - package-and-push-system-local-ee:
           context: github-read
           filters: *upstream-feature-branch
