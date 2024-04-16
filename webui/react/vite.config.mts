@@ -88,7 +88,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.30.1-dev0"',
+    'process.env.VERSION': '"0.31.0-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
@@ -132,8 +132,8 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 3001,
     proxy: {
-      '/api': { target: webpackProxyUrl},
-      '/proxy': { target: webpackProxyUrl},
+      '/api': { target: webpackProxyUrl },
+      '/proxy': { target: webpackProxyUrl },
       '/stream': {
         target: websocketProxyUrl,
         ws: true,
@@ -164,7 +164,11 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       ...configDefaults.coverage,
       include: ['src'],
-      exclude: [...configDefaults.coverage.exclude, 'src/vendor/**/*', 'src/services/api-ts-sdk/*']
+      exclude: [
+        ...(configDefaults.coverage.exclude ?? []),
+        'src/vendor/**/*',
+        'src/services/api-ts-sdk/*',
+      ],
     },
     css: {
       modules: {
@@ -179,7 +183,7 @@ export default defineConfig(({ mode }) => ({
       registerNodeLoader: true,
     },
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, './src/e2e/*'],
+    exclude: [...configDefaults.exclude, './src/e2e/**/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
     testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/,

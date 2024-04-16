@@ -76,9 +76,20 @@ check-links: attributions.rst
 	sphinx-build -b linkcheck . build -a || true
 	! grep -n broken build/output.txt
 
+# publish defaults to the deploy/Makefile default
 .PHONY: publish
 publish: pre-publish publish-check
 	$(MAKE) -C deploy publish
+
+.PHONY: publish-oss
+publish-oss: export DET_VARIANT ?= OSS
+publish-oss:
+	$(MAKE) publish
+
+.PHONY: publish-ee
+publish-ee: export DET_VARIANT ?= EE
+publish-ee:
+	$(MAKE) publish
 
 .PHONY: preview
 preview: build

@@ -29,3 +29,7 @@ Read `tools/k8s/devcluster.yaml` so you know what it's doing, then run it:
 ```sh
 devcluster -c tools/k8s/devcluster.yaml
 ```
+
+## Extras
+
+Follow the instructions in the top of `multicluster.yaml` to get a Determined master connected to multiple Kubernetes clusters.

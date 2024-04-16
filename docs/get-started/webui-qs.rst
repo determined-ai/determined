@@ -40,6 +40,8 @@ You must have a running Determined cluster with the CLI installed.
          a single CPU or GPU. A cluster is made up of a master and one or more agents. A single
          machine can serve as both a master and an agent.
 
+      **Create the Experiment**
+
       #. Download and extract the tar file: :download:`mnist_pytorch.tgz
          <../examples/mnist_pytorch.tgz>`.
 
@@ -59,12 +61,14 @@ You must have a running Determined cluster with the CLI installed.
          *context directory* for your model. Determined copies the model context directory contents
          to the trial container working directory.
 
+      **View the Experiment**
+
       #. To view the experiment in your browser:
 
          -  Enter the following URL: **http://localhost:8080/**. This is the cluster address for
             your local training environment.
-         -  Accept the default username of ``determined``, and click **Sign In**. A password is not
-            required.
+         -  Accept the default username of ``determined``, and click **Sign In**. You'll create a
+            strong password in the next section.
 
       #. Navigate to the home page and then visit your **Uncategorized** experiments.
 
@@ -75,6 +79,15 @@ You must have a running Determined cluster with the CLI installed.
 
          .. image:: /assets/images/qswebui-metrics-local.png
             :alt: Determined AI WebUI Dashboard showing details for a local experiment
+
+      **Create a Strong Password**
+
+      #. Select your profile in the upper left corner and then choose **Settings**.
+      #. Edit the **Password** by typing a strong password.
+      #. Select the checkmark to save your changes.
+
+      If you are changing your password, the system asks you to confirm your change. The system lets
+      you know your changes have been saved.
 
    .. tab::
 

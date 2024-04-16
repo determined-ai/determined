@@ -17,8 +17,8 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 3 * 60 * 1000, // 3 min unless debugging
-
+  globalTimeout: process.env.PWDEBUG ? 0 : 5 * 60 * 1000, // 3 min unless debugging
+  timeout: 60000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
 

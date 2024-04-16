@@ -306,6 +306,7 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 
 func TestAuthZCanCreateNSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+	workspaceAuthZ := setupWorkspaceAuthZ()
 	var err error
 
 	mockUserArg := mock.MatchedBy(func(u model.User) bool {
@@ -316,6 +317,8 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 	authz.On("CanCreateNSC", mock.Anything, mockUserArg, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Times(3)
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Times(3)
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 	_, err = api.LaunchCommand(ctx, &apiv1.LaunchCommandRequest{})
@@ -327,6 +330,8 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 	authz.On("CanCreateNSC", mock.Anything, mockUserArg, mock.Anything).Return(
 		errors.New("other error"),
 	).Times(3)
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Times(3)
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))

@@ -2950,6 +2950,12 @@ export interface V1Experiment {
      */
     searcherMetric?: string;
     /**
+     * The hyperparameters for the experiment
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    hyperparameters?: any;
+    /**
      * The experiment name.
      * @type {string}
      * @memberof V1Experiment
@@ -3362,10 +3368,10 @@ export interface V1FlatRun {
     externalRunId?: number;
     /**
      * Trial hyperparameters.
-     * @type {string}
+     * @type {any}
      * @memberof V1FlatRun
      */
-    hyperparameters?: string;
+    hyperparameters?: any;
     /**
      * summary metrics.
      * @type {any}
@@ -3450,7 +3456,7 @@ export interface V1FlatRunExperiment {
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    forkedFrom: number;
+    forkedFrom?: number;
     /**
      * The id of external experiment
      * @type {string}

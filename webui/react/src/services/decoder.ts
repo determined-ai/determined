@@ -431,20 +431,22 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Experimentv1St
 export const mapV1GetExperimentDetailsResponse = ({
   experiment: exp,
   jobSummary,
+  config,
 }: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
-    exp.config,
+    config,
   );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    exp?.hyperparameters ?? ioConfig?.hyperparameters ?? {},
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   const v1Exp = mapV1Experiment(exp, jobSummary);
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
-    configRaw: exp.config,
+    configRaw: config ?? {},
     hyperparameters,
     originalConfig: exp.originalConfig,
     parentArchived: exp.parentArchived ?? false,
@@ -464,32 +466,39 @@ export const mapSearchExperiment = (
   };
 };
 
-export const mapV1Experiment = (
+export function mapV1Experiment(
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
-): types.ExperimentItem => {
-  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
-    ioTypes.ioExperimentConfig,
-    data.config,
-  );
+  config?: undefined,
+): types.BulkExperimentItem;
+export function mapV1Experiment(
+  data: Sdk.V1Experiment,
+  jobSummary?: types.JobSummary,
+  config?: Sdk.V1GetExperimentResponse['config'],
+): types.FullExperimentItem;
+export function mapV1Experiment(
+  data: Sdk.V1Experiment,
+  jobSummary?: types.JobSummary,
+  config?: Sdk.V1GetExperimentResponse['config'],
+): types.FullExperimentItem | types.BulkExperimentItem {
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
-    continueFn,
-  }) as types.HyperparametersFlattened;
+  const getHyperparameters = (hp: types.HyperparameterBase) => {
+    return flattenObject<types.HyperparameterBase>(hp, {
+      continueFn,
+    }) as types.HyperparametersFlattened;
+  };
 
-  return {
+  const bulkExpItem: types.BulkExperimentItem = {
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
-    config: ioToExperimentConfig(ioConfig),
-    configRaw: data.config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
     externalExperimentId: data.externalExperimentId,
     externalTrialId: data.externalTrialId,
     forkedFrom: data.forkedFrom,
-    hyperparameters,
+    hyperparameters: getHyperparameters(data?.hyperparameters ?? {}),
     id: data.id,
     jobId: data.jobId,
     jobSummary: jobSummary,
@@ -512,9 +521,26 @@ export const mapV1Experiment = (
     workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,
   };
-};
 
-export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
+  if (config === undefined) {
+    return bulkExpItem;
+  }
+
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
+    config,
+  );
+
+  const fullExpItem: types.FullExperimentItem = {
+    ...bulkExpItem,
+    config: ioToExperimentConfig(ioConfig),
+    configRaw: config,
+    hyperparameters: getHyperparameters(data?.hyperparameters ?? ioConfig?.hyperparameters ?? {}),
+  };
+  return fullExpItem;
+}
+
+export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.BulkExperimentItem[] => {
   // empty JobSummary
   return data.map((e) => mapV1Experiment(e));
 };
@@ -702,6 +728,16 @@ export const decodeTrialResponseToTrialDetails = (
     ...trialItem,
     runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
     totalCheckpointSize: Number(data.trial.totalCheckpointSize) || 0,
+  };
+};
+
+export const decodeV1FlatRun = (data: Sdk.V1FlatRun): types.FlatRun => {
+  return {
+    ...data,
+    checkpointSize: parseInt(data?.checkpointSize || '0'),
+    hyperparameters: flattenObject(data.hyperparameters || {}),
+    state: decodeExperimentState(data.state),
+    summaryMetrics: decodeSummaryMetrics(data.summaryMetrics),
   };
 };
 

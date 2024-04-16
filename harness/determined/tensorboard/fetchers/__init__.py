@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Type
 
-from .azure import AzureFetcher
-from .base import Fetcher
-from .gcs import GCSFetcher
-from .s3 import S3Fetcher
-from .shared import SharedFSFetcher
-from .directory import DirectoryFetcher
+from determined.tensorboard.fetchers.azure import AzureFetcher
+from determined.tensorboard.fetchers.base import Fetcher
+from determined.tensorboard.fetchers.gcs import GCSFetcher
+from determined.tensorboard.fetchers.s3 import S3Fetcher
+from determined.tensorboard.fetchers.shared import SharedFSFetcher
+from determined.tensorboard.fetchers.directory import DirectoryFetcher
 
 __all__ = [
     "S3Fetcher",

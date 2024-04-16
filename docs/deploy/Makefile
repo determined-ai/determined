@@ -1,4 +1,7 @@
 export TF_VAR_det_version := $(shell cat ../../VERSION)
+export DET_VARIANT ?= OSS
+export TF_VAR_det_variant := ${DET_VARIANT}
+export TF_CLI_ARGS_init :=  "-backend-config=backend_${DET_VARIANT}.conf"
 
 .PHONY: clean
 clean:
@@ -6,12 +9,12 @@ clean:
 	-rm state/terraform.tfstate.backup
 
 .PHONY: verify
-verify:
-	terraform --version
+verify: init
+	terraform validate
 
 .PHONY: init
 init:
-	terraform init -upgrade
+	terraform init -upgrade -reconfigure
 
 .PHONY: plan
 plan: init
@@ -24,4 +27,4 @@ publish: init
 .PHONY: check
 check: init
 	terraform fmt -check=true -diff=true
-	terraform validate
+	$(MAKE) terraform verify

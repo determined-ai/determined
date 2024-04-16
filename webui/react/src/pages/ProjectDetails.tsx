@@ -25,6 +25,7 @@ import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
+import FlatRuns from './FlatRuns/FlatRuns';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 
@@ -85,12 +86,23 @@ const ProjectDetails: React.FC = () => {
   });
 
   const tabItems: PivotProps['items'] = useMemo(() => {
-    if (!project) {
-      return [];
-    }
+    const items: PivotProps['items'] = [];
+    if (!project) return items;
 
-    const items: PivotProps['items'] = [
-      {
+    if (f_flat_runs) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <FlatRuns project={project} />
+            </div>
+          </div>
+        ),
+        key: 'runs',
+        label: id === 1 ? '' : 'Runs',
+      });
+    } else {
+      items.push({
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
@@ -104,8 +116,8 @@ const ProjectDetails: React.FC = () => {
         ),
         key: 'experiments',
         label: id === 1 ? '' : 'Experiments',
-      },
-    ];
+      });
+    }
 
     if (f_flat_runs) {
       items.push({
@@ -175,7 +187,7 @@ const ProjectDetails: React.FC = () => {
         ]
       : [
           {
-            breadcrumbName: 'Uncategorized Experiments',
+            breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
             path: paths.projectDetails(project.id),
           },
         ];
@@ -184,7 +196,9 @@ const ProjectDetails: React.FC = () => {
       breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
-      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
+      docTitle={
+        id === 1 ? `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}` : 'Project Details'
+      }
       id="projectDetails"
       menuItems={menu.length > 0 ? menu : undefined}
       noScroll
