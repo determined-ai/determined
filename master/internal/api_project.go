@@ -434,18 +434,15 @@ func (a *apiServer) getProjectRunColumnsByID(
 	hyperparameters := []struct {
 		WorkspaceID     int
 		Hyperparameters expconf.HyperparametersV0
-		RunID           *int
 	}{}
 
 	// get all runs in project
-	runsQuery := db.Bun().NewSelect().
+	runsQuery := db.Bun().NewSelect().Distinct().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
 		ColumnExpr("hparams as hyperparameters").
-		ColumnExpr("id as run_id").
 		Table("runs").
 		Where("hparams IS NOT NULL").
-		Where("project_id = ?", id).
-		Order("id")
+		Where("project_id = ?", id)
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
@@ -528,39 +525,39 @@ func (a *apiServer) getProjectRunColumnsByID(
 		// ensure we're iterating in order
 		paramKeys := make([]string, 0, len(flatHparam))
 		for key := range flatHparam {
-			paramKeys = append(paramKeys, key)
+			_, seen := hparamSet[key]
+			if !seen {
+				paramKeys = append(paramKeys, key)
+			}
 		}
 		sort.Strings(paramKeys)
 
 		for _, key := range paramKeys {
 			value := flatHparam[key]
-			_, seen := hparamSet[key]
-			if !seen {
-				hparamSet[key] = struct{}{}
-				var columnType projectv1.ColumnType
-				switch {
-				case value.RawIntHyperparameter != nil ||
-					value.RawDoubleHyperparameter != nil ||
-					value.RawLogHyperparameter != nil:
+			hparamSet[key] = struct{}{}
+			var columnType projectv1.ColumnType
+			switch {
+			case value.RawIntHyperparameter != nil ||
+				value.RawDoubleHyperparameter != nil ||
+				value.RawLogHyperparameter != nil:
+				columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+			case value.RawConstHyperparameter != nil:
+				switch value.RawConstHyperparameter.RawVal.(type) {
+				case float64:
 					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-				case value.RawConstHyperparameter != nil:
-					switch value.RawConstHyperparameter.RawVal.(type) {
-					case float64:
-						columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-					case string:
-						columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-					default:
-						columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-					}
+				case string:
+					columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
 				default:
 					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 				}
-				columns = append(columns, &projectv1.ProjectColumn{
-					Column:   fmt.Sprintf("hp.%s", key),
-					Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-					Type:     columnType,
-				})
+			default:
+				columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 			}
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("hp.%s", key),
+				Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+				Type:     columnType,
+			})
 		}
 	}
 
