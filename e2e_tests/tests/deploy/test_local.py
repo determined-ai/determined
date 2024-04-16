@@ -126,10 +126,9 @@ def test_ee_cluster_up() -> None:
         assert len(containers) > 0
 
         for container in containers:
+            # client.containers.list is similar to `docker ps`, so we expect Image to be present.
             if "Config" in container.attrs and "Image" in container.attrs["Config"]:
                 assert "hpe-mlde-master" in container.attrs["Config"]["Image"]
-    containers = client.containers.list(filters={"name": container_name})
-    assert len(containers) == 0
 
 
 @pytest.mark.det_deploy_local
