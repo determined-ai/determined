@@ -15,7 +15,7 @@ import {
   ExperimentConfig,
 } from 'types';
 import { formatDatetime } from 'utils/datetime';
-import handleError from 'utils/error';
+import handleError, { DetError, ErrorType } from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
@@ -88,6 +88,9 @@ const CheckpointModalComponent: React.FC<Props> = ({
     try {
       await deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] });
     } catch (e) {
+      if (e instanceof DetError && e.type === ErrorType.Server) {
+        e.silent = false;
+      }
       // modal error handling overwrites error message
       handleError(e);
     }
