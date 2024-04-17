@@ -73,9 +73,7 @@ const AppView: React.FC = () => {
   useRouteTracker();
 
   useEffect(() => {
-    if (streamingUpdatesOn) return streamStore.on(projectStore);
-    else streamStore.off('projects');
-    return;
+    return streamingUpdatesOn ? streamStore.on(projectStore) : streamStore.off('projects');
   }, [streamingUpdatesOn]);
 
   useEffect(() => (isAuthenticated ? userStore.fetchCurrentUser() : undefined), [isAuthenticated]);
