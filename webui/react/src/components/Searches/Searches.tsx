@@ -847,9 +847,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     <>
       <TableActionBar
         columnGroups={[V1LocationType.EXPERIMENT]}
-        excludedExperimentIds={excludedExperimentIds}
-        experiments={experiments}
-        filters={experimentFilters}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
@@ -858,8 +855,7 @@ const Searches: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectAll={selectAll}
-        selectedExperimentIds={selectedExperimentIds}
+        selectedExperimentsMap={selectedExperimentIds}
         selection={settings.selection}
         sorts={sorts}
         tableViewMode={globalSettings.tableViewMode}
