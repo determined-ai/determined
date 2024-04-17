@@ -1619,7 +1619,7 @@ For example:
           idp_recipient_url: "http://xx.xxx.xxx.xx:8080/saml/sso"
           idp_sso_url: "https://xxx/xxx/xxx0000/sso/saml/"
           idp_sso_descriptor_url: "http://www.okta.com/xxx000"
-          idp_cert_path: "okta.cert"
+          idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
 
 ``enabled``
 ===========
@@ -1664,7 +1664,7 @@ used for :ref:`remote user <remote-users>` management.
           provider: "Okta"
           client_id: "xx0xx0"
           client_secret: "xx0xx0"
-          idp_recipient_url: "https://determined.example.com"
+          idp_recipient_url: "https://determined.example.com/saml/sso"
           idp_sso_url: "https://dev-00000000.okta.com"
           authentication_claim: "string"
           scim_authentication_attribute: "string"
@@ -1756,8 +1756,8 @@ For example:
           enabled: true
           provider: "Okta"
           idp_recipient_url: "https://determined.example.com/saml/sso"
-          idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
-          idp_cert_path: "okta.cert"
+          idp_sso_url: "https://myorg.okta.com/app/.../sso/saml"
+          idp_metadata_url: "https://myorg.okta.com/app/.../sso/saml/metadata"
           auto_provision_users: true
           groups_attribute_name: "groups"
           display_name_attribute_name: "disp_name"
@@ -1788,10 +1788,10 @@ The Single Sign-On (SSO) URL provided by the SAML provider.
 An IdP-provided URL, also known as IdP issuer. It is an identifier for the IdP that issues the SAML
 requests and responses.
 
-``idp_cert_path``
-=================
+``idp_metadata_url``
+====================
 
-The path to the IdP's certificate, used to validate assertions.
+An IdP-provided URL for obtaining IdP metadata, such as certificates and keys.
 
 ``auto_provision_users``
 ========================

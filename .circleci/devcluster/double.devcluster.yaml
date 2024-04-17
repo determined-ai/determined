@@ -37,6 +37,12 @@ stages:
               startup_hook: "echo 'hello from rp tcd startup hook'"
         task_container_defaults:
           startup_hook: "echo 'hello from master tcd startup hook'"
+        scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
 
   - custom:
       name: proxy

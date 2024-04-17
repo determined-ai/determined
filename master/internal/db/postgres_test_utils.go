@@ -203,14 +203,18 @@ func RequireMockJob(t *testing.T, db *PgDB, userID *model.UserID) model.JobID {
 }
 
 // RequireMockWorkspaceID returns a mock workspace ID and name.
-func RequireMockWorkspaceID(t *testing.T, db *PgDB) (int, string) {
+func RequireMockWorkspaceID(t *testing.T, db *PgDB, wsName string) (int, string) {
+	if len(wsName) == 0 {
+		wsName = uuid.New().String()
+	}
+
 	mockWorkspace := struct {
 		bun.BaseModel `bun:"table:workspaces"`
 
 		ID   int `bun:"id,pk,autoincrement"`
 		Name string
 	}{
-		Name: uuid.New().String(),
+		Name: wsName,
 	}
 	_, err := Bun().NewInsert().Model(&mockWorkspace).Returning("id").Exec(context.TODO())
 	require.NoError(t, err)
