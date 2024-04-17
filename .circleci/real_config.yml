@@ -2015,7 +2015,6 @@ jobs:
       - setup-python-venv:
           determined: true
           install-python: true
-
           executor: <<pipeline.parameters.machine-image>>
       - install-protoc 
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
@@ -2024,7 +2023,7 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: priority.devcluster.yaml
+          devcluster-config: double.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
