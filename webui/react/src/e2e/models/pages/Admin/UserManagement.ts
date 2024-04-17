@@ -79,7 +79,7 @@ export class UserManagement extends AdminPage {
     });
     expect(
       filteredRows,
-      `name: ${name},
+      `name: ${name}
       users: ${(await this.table.table.rows.user.pwLocator.allInnerTexts()).map((item) =>
         item.replace(/(\r\n|\n|\r)/gm, ''),
       )}

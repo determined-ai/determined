@@ -4,6 +4,7 @@ import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
+import { repeatWithFallback } from 'e2e/utils/polling';
 
 test.describe('User Management', () => {
   test.beforeEach(async ({ auth, dev }) => {
@@ -20,6 +21,7 @@ test.describe('User Management', () => {
   });
 
   test('Users table count matches admin page users tab', async ({ page }) => {
+    test.setTimeout(120_000);
     const userManagementPage = new UserManagement(page);
     await userManagementPage.goto();
     const pagination = userManagementPage.table.table.pagination;
@@ -41,15 +43,13 @@ test.describe('User Management', () => {
     ].entries()) {
       await test.step(`Compare table rows with pagination:${index}`, async () => {
         // BUG [INFENG-628] Users page loads slow
-        await expect(async () => {
+        await expect(repeatWithFallback(async () => {
           await pagination.perPage.pwLocator.click();
-          // click pagination menu twice if it's visible to close and reopen
-          await paginationOption.pwLocator.click({
-            clickCount: (await paginationOption.pwLocator.isVisible()) ? 2 : 1,
-            timeout: 4_000,
-          });
-          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 3_000 });
-        }).toPass({ timeout: 22_000 });
+          await paginationOption.pwLocator.click({ timeout: 2_000 });
+          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 2_000 });
+        }, async () => {
+          await userManagementPage.goto();
+        })).toPass({ timeout: 20_000 });
         // BUG [INFENG-628] Users page loads slow
         // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
