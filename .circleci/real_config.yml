@@ -1414,6 +1414,9 @@ jobs:
       ee:
         type: boolean
         default: false
+      dry-run:
+        type: boolean
+        default: false
     docker:
       - image: hashicorp/terraform:latest
     steps:
@@ -1423,10 +1426,21 @@ jobs:
       - run: apk add make curl
       - run: pip install --user awscli  # used in the terraform apply
       - run: |
-          if <<parameters.ee>>; then
-            make -C docs publish-ee
+          if <<parameters.dry-run>>; then
+            echo 'Doing a dry run!'
+            if <<parameters.ee>>; then
+              export DET_VARIANT=EE
+            else
+              export DET_VARIANT=OSS
+            fi
+            make -C docs pre-publish publish-check
+            make -C docs/deploy plan
           else
-            make -C docs publish-oss
+            if <<parameters.ee>>; then
+              make -C docs publish-ee
+            else
+              make -C docs publish-oss
+            fi
           fi
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
@@ -5351,6 +5365,16 @@ workflows:
           filters: *release-filters
           requires:
             - package-and-push-system-release
+
+      - publish-docs:
+          name: publish-docs-rc
+          matrix:
+            parameters:
+              dry-run: [true]
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *rc-filters
 
       - publish-docs:
           requires:
