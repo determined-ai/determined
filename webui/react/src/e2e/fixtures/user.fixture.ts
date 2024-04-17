@@ -1,7 +1,7 @@
 import { expect, Page } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
+import { safeName } from 'e2e/utils/naming';
 
 export interface User {
   username: string;
@@ -48,7 +48,7 @@ export class UserFixture {
   }
 
   async createUser({
-    username = 'test-user-' + uuidv4(),
+    username = safeName('test-user'),
     displayName,
     isAdmin,
   }: UserArgs = {}): Promise<User> {

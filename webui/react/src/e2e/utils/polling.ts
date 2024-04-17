@@ -6,7 +6,10 @@
  * @param {() => Promise<void>} fallback The function to reset state if we repeat again.
  * @returns A function that runs a fallback in between calls of repeat.
  */
-export function repeatWithFallback(repeat: () => Promise<void>, fallback: () => Promise<void>): () => Promise<void> {
+export function repeatWithFallback(
+  repeat: () => Promise<void>,
+  fallback: () => Promise<void>,
+): () => Promise<void> {
   let isFirstFunction = true;
 
   return async () => {

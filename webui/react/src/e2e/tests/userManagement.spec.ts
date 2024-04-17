@@ -41,15 +41,20 @@ test.describe('User Management', () => {
       pagination.perPage.perPage50,
       pagination.perPage.perPage100,
     ].entries()) {
-      await test.step(`Compare table rows with pagination:${index}`, async () => {
+      await test.step(`Compare table rows with pagination: ${index + 1}/4`, async () => {
         // BUG [INFENG-628] Users page loads slow
-        await expect(repeatWithFallback(async () => {
-          await pagination.perPage.pwLocator.click();
-          await paginationOption.pwLocator.click({ timeout: 2_000 });
-          await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 2_000 });
-        }, async () => {
-          await userManagementPage.goto();
-        })).toPass({ timeout: 20_000 });
+        await expect(
+          repeatWithFallback(
+            async () => {
+              await pagination.perPage.pwLocator.click();
+              await paginationOption.pwLocator.click({ timeout: 2_000 });
+              await paginationOption.pwLocator.waitFor({ state: 'hidden', timeout: 5_000 });
+            },
+            async () => {
+              await userManagementPage.goto();
+            },
+          ),
+        ).toPass({ timeout: 20_000 });
         // BUG [INFENG-628] Users page loads slow
         // await paginationOption.pwLocator.click();
         await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
