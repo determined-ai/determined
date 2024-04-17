@@ -270,6 +270,14 @@ func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, er
 	return getQ, nil
 }
 
+func getSelectRunsQueryTables() *bun.SelectQuery {
+	return db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
+}
+
 func (a *apiServer) MoveRuns(
 	ctx context.Context, req *apiv1.MoveRunsRequest,
 ) (*apiv1.MoveRunsResponse, error) {
@@ -424,17 +432,13 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 
 	var runChecks []archiveKillRunOKResult
-	getQ := db.Bun().NewSelect().
-		ModelTableExpr("runs AS r").
+	getQ := getSelectRunsQueryTables().
 		Model(&runChecks).
+		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("t.request_id").
 		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
-		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
-		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
-		Join("JOIN projects p ON r.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
@@ -466,11 +470,6 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		case check.State:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    check.ID,
-			})
-		case check.Archived:
-			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is archived.",
 				Id:    check.ID,
 			})
 		case check.RequestID == nil:
