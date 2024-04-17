@@ -7,9 +7,10 @@ export const brandHtml = (): Plugin => {
       if (process.env.DET_BUILD_EE === 'true') {
         const cheerio = await import('cheerio');
         const $ = cheerio.load(html);
-        $('meta[name="description"]').each(function () {
-          $(this).attr('content', 'HPE Machine Learning Development Environment');
-        });
+        $('meta[name="description"]').attr(
+          'content',
+          'HPE Machine Learning Development Environment',
+        );
         return $.html();
       }
       return html;
