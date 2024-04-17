@@ -465,11 +465,6 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 				Error: "",
 				Id:    check.ID,
 			})
-		case check.Archived:
-			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is archived.",
-				Id:    check.ID,
-			})
 		case check.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
