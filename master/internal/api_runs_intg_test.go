@@ -727,3 +727,19 @@ func TestDeleteRunsLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, total)
 }
+
+func TestDeleteRunsOverfillInput(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// delete runs
+	runIDs := []int32{runID1, runID2}
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+		Filter:    ptrs.Ptr("filter"),
+	}
+	expectedError := fmt.Errorf("if filter is provided run id list must be empty")
+	_, err := api.DeleteRuns(ctx, req)
+	require.Equal(t, expectedError, err)
+}

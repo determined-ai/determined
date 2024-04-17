@@ -514,6 +514,9 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 
 func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest,
 ) (*apiv1.DeleteRunsResponse, error) {
+	if len(req.RunIds) > 0 && req.Filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
