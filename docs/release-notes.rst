@@ -7,6 +7,69 @@
 ###############
 
 **************
+ Version 0.31
+**************
+
+Version 0.31.0
+==============
+
+**Release Date:** April 17, 2024
+
+**Breaking Changes**
+
+-  SAML: The underlying SAML implementation has been updated to use a newer, more maintained
+   library. As a result, the master config no longer accepts the ``idp_cert_path`` field and now
+   requires the ``idp_metadata_url`` field when using SAML.
+
+**New Features**
+
+-  API: Add a new API endpoint, ``/health``, that provides information about the status of
+   Determined's connections to the database, Kubernetes API server, and Slurm launcher integration.
+
+   Visit the :ref:`rest-api` documentation for more information about this endpoint.
+
+-  Logging: Add a ``retention_policy`` section to the master config file for specifying the default
+   log retention policy. Experiments can override the default log retention settings with the
+   ``retention_policy.log_retention_days`` config option. See :ref:`master-config-reference` and
+   :ref:`experiment-config-reference` for more details.
+
+-  CLI: Add commands, ``det e set log-retention <exp-id>`` and ``det t set log-retention
+   <trial-id>``, to allow the user to set the length of log retention for experiments and trials.
+   Both commands can specify a length in days with the arguments ``--days <number of days>``. The
+   number of days must be between -1 and 32767, where -1 retains logs forever. ``--forever`` is
+   equivalent to ``--days -1``. Add ``det task cleanup-logs`` command to allow the administrators to
+   manually initiate log retention cleanup.
+
+-  WebUI: Add support for retaining logs for multiple experiments by selecting experiments from the
+   experiment list page and choosing **Retain Logs** from **Actions**. Users can then input the
+   desired number of days for log retention or select the "Forever" checkbox for indefinite log
+   retention. The number of days must be between -1 and 32767, where -1 retains logs forever.
+
+   There is a new column on the trial list page, "Log Retention Days", that displays the number of
+   days for which logs will be retained for each trial after creation.
+
+-  Master config: Add a new field to task container defaults named ``startup_hook`` that allows for
+   the specification of an inline script to be executed after task setup.
+
+**Improvements**
+
+-  CLI: The ``--add-tag`` flag to ``det deploy aws up`` will now apply tags to dynamic agents
+   launched.
+
+**Bug Fixes**
+
+-  API: Fix a bug where calling ``det job update`` could prevent jobs from being scheduled and cause
+   ``det job ls`` to hang.
+
+**Security Fixes**
+
+-  Helm: When deploying a new cluster with Helm, configuring an initial password for the "admin" and
+   "determined" users is required and is no longer a separate step. To specify an initial password
+   for these users, set either ``initialUserPassword`` (preferred) or ``defaultPassword``
+   (deprecated) in the ``helm/charts/determined/values.yaml`` file. For reference, see
+   :ref:`helm-config-reference`.
+
+**************
  Version 0.30
 **************
 
