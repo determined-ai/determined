@@ -31,8 +31,10 @@
     {{ toJson $resource_pools }}
 {{- end }}
 
+{{- /* Necessary because of the way that useNodePortForMaster makes a LoadBalancer that only allows */ -}}
+{{- /* https connections through */ -}}
 {{- define "genai.detMasterScheme" -}}
-    {{- if (and (not .Values.useNodePortForMaster) .Values.tlsSecret)}}
+    {{- if (and (not .Values.useNodePortForMaster) .Values.tlsSecret) }}
         {{- "https" }}
     {{- else }}
         {{- "http" }}
