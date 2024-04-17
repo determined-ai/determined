@@ -1,4 +1,3 @@
-import atexit
 import collections
 import datetime
 import logging
@@ -186,12 +185,7 @@ class _UnmanagedTrialLogShipper(_LogShipper):
 
         self._log_sender.start()
 
-        atexit.register(self._exit_handler)
-
         return self
-
-    def _exit_handler(self) -> None:
-        self.close()
 
     def close(
         self,
@@ -199,8 +193,6 @@ class _UnmanagedTrialLogShipper(_LogShipper):
         exc_val: Optional[BaseException] = None,
         exc_tb: Optional[types.TracebackType] = None,
     ) -> "_LogShipper":
-        atexit.unregister(self._exit_handler)
-
         sys.stdout, sys.stderr = self._original_stdout, self._original_stderr
         self._log_sender.close()
         self._log_sender.join()
