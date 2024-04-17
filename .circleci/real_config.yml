@@ -1541,7 +1541,6 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - license-gen
       - setup_remote_docker:
           version: previous
       - login-docker:
@@ -1814,7 +1813,6 @@ jobs:
           extras-requires: "build twine"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C <<parameters.path>> build
-      # - run: make -C <<parameters.path>> publish
       - run: |
           if <<parameters.ee>>; then
             make -C <<parameters.path>> publish-ee
@@ -1893,7 +1891,6 @@ jobs:
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
       - run: sudo systemctl restart determined-agent
       - run: ./.circleci/scripts/sanity.sh
-      # we won't have an OSS version - just an EE version
 
   lint-react:
     docker:
@@ -4043,7 +4040,8 @@ workflows:
     jobs:
       # These jobs are important for docs and latest main and have been moved
       # here from test-e2e. These jobs are OSS focused while test-e2e now only
-      # uses EE images.
+      # uses EE images (with the exception of test-det-deploy, which requires
+      # both).
       - build-proto
       - build-helm
       - build-react:
@@ -4138,28 +4136,30 @@ workflows:
       - build-proto
       - build-helm
       - build-react:
-          name: build-react-ee
-          matrix:
-            parameters:
-              dev-mode: [true]
-              ee: [true]
+          dev-mode: true
       - test-e2e-react:
           context: playwright
           filters: *any-upstream
       - build-docs:
-          name: build-docs-ee
-          matrix:
-            parameters:
-              ee: [true]
           requires:
             - build-helm
             - build-proto
       - build-go:
           context: github-read
+
+      - package-and-push-system-local:
+          requires:
+            - build-react
+            - build-docs
+          filters:
+            branches:
+              only:
+                - main
+
       - package-and-push-system-local-ee:
           requires:
-            - build-react-ee
-            - build-docs-ee
+            - build-react
+            - build-docs
           context: github-read
           filters:
             branches:
@@ -4168,11 +4168,11 @@ workflows:
 
       - package-and-push-system-dev-ee:
           requires:
-            - build-react-ee
-            - build-docs-ee
+            - build-react
+            - build-docs
           context:
             - determined-ee
-            - github-read # TODO (eliu): check these contexts
+            - github-read
           filters:
             branches:
               ignore:
@@ -4685,10 +4685,7 @@ workflows:
       - build-proto:
           filters: *any-upstream
       - build-react:
-          matrix:
-            parameters:
-              dev-mode: [true]
-              ee: [true]
+          dev-mode: true
           filters: *any-upstream
       - build-docs:
           filters: *any-upstream
@@ -4701,7 +4698,7 @@ workflows:
             - build-docs
           context:
             - determined-ee
-            - github-read # TODO (eliu): might want an ee specific version?
+            - github-read
           filters: *any-upstream
 
       # Distributed tests
@@ -5081,7 +5078,7 @@ workflows:
           slack-mentions: "${SLACK_USER_ID}"
 
   nightly:
-    # when: << pipeline.parameters.do_nightly_tests >>
+    when: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
