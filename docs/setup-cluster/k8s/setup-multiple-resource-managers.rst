@@ -59,7 +59,8 @@ Example: Master Configuration (devcluster)
 
 Follow this example to create as many resource managers (clusters) as needed.
 
--  For each cluster, note each ``kubeconfig`` location for the cluster (this is where the credentials are found).
+-  For each cluster, note each ``kubeconfig`` location for the cluster (this is where the
+   credentials are found).
 
 -  Copy or modify the default devcluster template at ``tools/devcluster.yaml``.
 
