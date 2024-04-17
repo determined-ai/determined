@@ -100,3 +100,4 @@ local: build-bindings get-deps-webui
 .PHONY: devcluster
 devcluster:
 	devcluster -c tools/devcluster.yaml
+
