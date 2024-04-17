@@ -522,17 +522,13 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	}
 	// get runs to delete
 	var runChecks []archiveRunOKResult
-	getQ := db.Bun().NewSelect().
-		ModelTableExpr("runs AS r").
+	getQ := getSelectRunsQueryTables().
 		Model(&runChecks).
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
-		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
-		Join("JOIN projects p ON r.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
