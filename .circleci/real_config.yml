@@ -2023,7 +2023,7 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: double.devcluster.yaml
+          devcluster-config: ''
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
