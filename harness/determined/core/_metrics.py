@@ -125,7 +125,7 @@ class _Shipper(threading.Thread):
         self._trial_id = trial_id
         self._run_id = run_id
 
-        super().__init__(name="MetricsShipperThread")
+        super().__init__(daemon=True, name="MetricsShipperThread")
 
     def publish_metrics(
         self,
