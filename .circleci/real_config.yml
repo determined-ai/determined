@@ -1991,8 +1991,8 @@ jobs:
       - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV # DNJ TODO -remove when tested
       - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
       - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
-      - run: echo 'export DET_WEBPACK_PROXY_URL=http://localhost:8080' >> $BASH_ENV
-      - run: echo 'export DET_WEBSOCKET_PROXY_URL=ws://localhost:8080' >> $BASH_ENV
+      - run: echo 'export DET_WEBPACK_PROXY_URL=http://localhost:8082' >> $BASH_ENV
+      - run: echo 'export DET_WEBSOCKET_PROXY_URL=ws://localhost:8082' >> $BASH_ENV
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
@@ -2023,12 +2023,12 @@ jobs:
       - run: make -C agent get-deps
       - install-devcluster
       - start-devcluster:
-          devcluster-config: ''
+          devcluster-config: priority.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
           host: "localhost"
-          port: "8080"
+          port: "8082"
       - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
