@@ -714,8 +714,6 @@ func MoveExperiments(ctx context.Context,
 		return nil, err
 	}
 
-	println(getQ.String())
-
 	var results []ExperimentActionResult
 	var visibleIDs []int32
 	var validIDs []int32
