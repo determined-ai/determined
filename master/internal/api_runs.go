@@ -592,29 +592,29 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 			log.WithError(txErr).Error("error rolling back transaction in DeleteRuns")
 		}
 	}()
-	var acceptedIDs []int
-	if _, err = tx.NewDelete().Table("runs").
-		Where("runs.id IN (?)", bun.In(validIDs)).
-		Returning("runs.id").
-		Model(&acceptedIDs).
-		Exec(ctx); err != nil {
-		return nil, fmt.Errorf("delete runs: %w", err)
-	}
 
 	// delete run logs
 	if _, err = tx.NewDelete().Table("trial_logs").
-		Where("trial_logs.trial_id IN (?)", bun.In(acceptedIDs)).
+		Where("trial_logs.trial_id IN (?)", bun.In(validIDs)).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("delete run logs: %w", err)
 	}
 
 	// delete task logs
-	trialTaskQuery := tx.NewSelect().TableExpr("tasks AS t").
-		ColumnExpr("t.task_id").
-		Join("JOIN run_id_task_id rt ON rt.task_id=t.task_id").
-		Where("rt.run_id IN (?)", bun.In(acceptedIDs))
+	trialTaskQuery := tx.NewSelect().Table("run_id_task_id").
+		ColumnExpr("task_id").
+		Where("run_id IN (?)", bun.In(validIDs))
 	if _, err = tx.NewDelete().Table("task_logs").
 		Where("task_logs.task_id IN (?)", trialTaskQuery).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete runs: %w", err)
+	}
+
+	var acceptedIDs []int
+	if _, err = tx.NewDelete().Table("runs").
+		Where("runs.id IN (?)", bun.In(validIDs)).
+		Returning("runs.id").
+		Model(&acceptedIDs).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("delete runs: %w", err)
 	}

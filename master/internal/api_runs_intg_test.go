@@ -11,10 +11,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	a "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
 func TestSearchRunsSort(t *testing.T) {
@@ -664,4 +666,64 @@ func TestDeleteRunsMultitrial(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Experiments, 1)
 	require.Equal(t, runID2, resp.Experiments[0].BestTrial.Id)
+}
+
+func TestDeleteRunsLogs(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	// Add logs
+	_, err := api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId: string(task1.TaskID),
+				Log:    "test",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 1)
+
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    []int32{searchResp.Runs[0].Id},
+		ProjectId: projectID,
+	}
+	res, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "", res.Results[0].Error)
+
+	searchReq = &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":true}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 0)
+	// ensure all logs are deleted
+	total, err := api.m.taskLogBackend.TaskLogsCount(task1.TaskID, []a.Filter{})
+	require.NoError(t, err)
+	require.Equal(t, 0, total)
 }
