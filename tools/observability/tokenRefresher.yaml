@@ -39,7 +39,8 @@ data:
     username="$(echo $secret | base64 --decode | tr : ' ' | awk '{print $1}')"
     password="$(echo $secret | base64 --decode | tr : ' ' | awk '{print $2}')"
 
-    ip=$(kubectl get svc -l determined.ai/master-service=true -o jsonpath='{.items[0].spec.clusterIP}')
+    # TODO does this work?
+    ip=$(kubectl get svc --all-namespaces -l determined.ai/master-service=true -o jsonpath='{.items[0].spec.clusterIP}')
 
     echo "using username" $username
     echo "using ip" $ip
