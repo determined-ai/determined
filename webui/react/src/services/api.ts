@@ -837,6 +837,12 @@ export const launchTensorBoard = generateDetApi<
   Type.CommandResponse
 >(Config.launchTensorBoard);
 
+export const deleteCheckpoints = generateDetApi<
+  Api.V1DeleteCheckpointsRequest,
+  Api.V1DeleteCheckpointsResponse,
+  Api.V1DeleteCheckpointsResponse
+>(Config.deleteCheckpoints);
+
 export const openOrCreateTensorBoard = async (
   params: Service.LaunchTensorBoardParams,
 ): Promise<Type.CommandResponse> => {
