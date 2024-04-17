@@ -358,6 +358,7 @@ args_description = [
                         [
                             cli.Arg("name", help="name of the function to call"),
                             cli.Arg(
+                                "-y",
                                 "--auto-confirm",
                                 help="auto-confirm if only a single match is found",
                                 action="store_true",
