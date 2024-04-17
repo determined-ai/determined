@@ -5024,6 +5024,7 @@ workflows:
           requires:
             - build-react
             - build-docs
+            - package-and-push-system-local
             - request-packaging-tests
 
       - test-debian-packaging:
