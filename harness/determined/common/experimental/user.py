@@ -1,8 +1,7 @@
 from typing import Optional
 
 from determined.common import api
-from determined.common.api import bindings
-from harness.determined.common.api import authentication
+from determined.common.api import authentication, bindings
 
 
 class User:
