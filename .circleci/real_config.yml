@@ -872,7 +872,7 @@ commands:
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
@@ -1341,6 +1341,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: apk add make curl
+      - run: pip install --user awscli  # used in the terraform apply
       - run: make -C docs publish
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after

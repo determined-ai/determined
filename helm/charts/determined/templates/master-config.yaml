@@ -193,6 +193,9 @@ stringData:
 
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
+      {{- if .Values.taskContainerDefaults.startupHook }}
+      startup_hook: {{ .Values.taskContainerDefaults.startupHook | quote}}
+      {{- end }}
       {{- if .Values.taskContainerDefaults.networkMode }}
       network_mode: {{ .Values.taskContainerDefaults.networkMode }}
       {{- end }}

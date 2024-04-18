@@ -26,9 +26,9 @@ export const NoMatches: React.FC<{ clearFilters?: () => void }> = ({ clearFilter
     title="No Matching Results"
   />
 );
-export const Error: React.FC<{ fetchExperiments?: () => void }> = ({ fetchExperiments }) => (
+export const Error: React.FC<{ fetchData?: () => void }> = ({ fetchData }) => (
   <Message
-    action={<Button onClick={fetchExperiments}>Retry</Button>}
+    action={<Button onClick={fetchData}>Retry</Button>}
     icon="error"
     title="Failed to Load Data"
   />

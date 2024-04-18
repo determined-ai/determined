@@ -2,9 +2,7 @@ terraform {
   required_version = "~> 1.0"
 
   backend "s3" {
-    bucket = "determined-ai-docs-terraform"
-    key    = "terraform.tfstate"
-    region = "us-west-2"
+    # defined in backend_*.conf
   }
 
   required_providers {

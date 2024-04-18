@@ -120,6 +120,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 			return nil, launchWarnings, err
 		}
 	}
+	w, err := a.GetWorkspaceByID(ctx, int32(cmdSpec.Metadata.WorkspaceID), *userModel, false)
+	if err != nil {
+		return nil, launchWarnings, err
+	}
+	taskSpec.Workspace = w.Name
+
 	workDirInDefaults := config.WorkDir
 	if len(configBytes) != 0 {
 		dec := json.NewDecoder(bytes.NewBuffer(configBytes))

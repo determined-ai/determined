@@ -344,6 +344,15 @@ Example configuration:
 
 This setting can be defined as a default setting for the entire cluster.
 
+**********************************************
+ ``debug`` option in agent configuration file
+**********************************************
+
+The :ref:`debug <agent-config-ref-debug>` option in the agent configuration file enables more
+verbose logging for diagnostic purposes when set to ``true``.
+
+While debugging, the logger will display lines highlighted in blue for easy identification.
+
 *******************
  Validation Policy
 *******************

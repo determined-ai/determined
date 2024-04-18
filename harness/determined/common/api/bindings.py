@@ -4123,7 +4123,7 @@ class v1FlatRun(Printable):
     endTime: "typing.Optional[str]" = None
     experiment: "typing.Optional[v1FlatRunExperiment]" = None
     externalRunId: "typing.Optional[int]" = None
-    hyperparameters: "typing.Optional[str]" = None
+    hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4146,7 +4146,7 @@ class v1FlatRun(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experiment: "typing.Union[v1FlatRunExperiment, None, Unset]" = _unset,
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
-        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4250,12 +4250,12 @@ class v1FlatRun(Printable):
 
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
+    forkedFrom: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         description: str,
-        forkedFrom: int,
         id: int,
         isMultitrial: bool,
         name: str,
@@ -4265,9 +4265,9 @@ class v1FlatRunExperiment(Printable):
         searcherType: str,
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.description = description
-        self.forkedFrom = forkedFrom
         self.id = id
         self.isMultitrial = isMultitrial
         self.name = name
@@ -4278,12 +4278,13 @@ class v1FlatRunExperiment(Printable):
         self.unmanaged = unmanaged
         if not isinstance(externalExperimentId, Unset):
             self.externalExperimentId = externalExperimentId
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "description": obj["description"],
-            "forkedFrom": obj["forkedFrom"],
             "id": obj["id"],
             "isMultitrial": obj["isMultitrial"],
             "name": obj["name"],
@@ -4295,12 +4296,13 @@ class v1FlatRunExperiment(Printable):
         }
         if "externalExperimentId" in obj:
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "description": self.description,
-            "forkedFrom": self.forkedFrom,
             "id": self.id,
             "isMultitrial": self.isMultitrial,
             "name": self.name,
@@ -4312,6 +4314,8 @@ class v1FlatRunExperiment(Printable):
         }
         if not omit_unset or "externalExperimentId" in vars(self):
             out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
         return out
 
 class v1GenericTaskState(DetEnum):

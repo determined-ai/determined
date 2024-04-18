@@ -1,0 +1,8 @@
+---
+domain: "docs.determined.ai"
+cdn:
+  acm_certificate_arn: "arn:aws:acm:us-east-1:573932760021:certificate/3f5a03d6-d95b-4d08-ade3-994799c658cf"
+s3:
+  bucket: "determined-ai-docs"
+  robots:
+    content: "User-agent: *\nSitemap: https://docs.determined.ai/latest/sitemap.xml"

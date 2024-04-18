@@ -75,7 +75,11 @@ def log_in_user(args: argparse.Namespace) -> None:
     password = getpass.getpass(message)
 
     token_store = authentication.TokenStore(args.master)
-    sess = authentication.login(args.master, username, password, cli.cert)
+    try:
+        sess = authentication.login(args.master, username, password, cli.cert)
+    except api.errors.UnauthenticatedException:
+        raise api.errors.InvalidCredentialsException()
+
     token_store.set_token(sess.username, sess.token)
     token_store.set_active(sess.username)
 

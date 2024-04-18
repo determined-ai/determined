@@ -21,7 +21,7 @@ export class UserManagement extends AdminPage {
   readonly getRowByID: (value: string) => UserRow;
 
   readonly #actionRow: BaseComponent = new BaseComponent({
-    parent: this.content,
+    parent: this.pivot.tabContent,
     selector: '[data-testid="actionRow"]',
   });
   readonly search: BaseComponent = new BaseComponent({
@@ -45,10 +45,10 @@ export class UserManagement extends AdminPage {
 
   readonly table: InteractiveTable<UserRow, UserHeadRow> = new InteractiveTable({
     headRowType: UserHeadRow,
-    parent: this.content,
+    parent: this.pivot.tabContent,
     rowType: UserRow,
   });
-  readonly skeletonTable: SkeletonTable = new SkeletonTable({ parent: this.content });
+  readonly skeletonTable: SkeletonTable = new SkeletonTable({ parent: this.pivot.tabContent });
 
   readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });
   readonly changeUserStatusModal: ChangeUserStatusModal = new ChangeUserStatusModal({
@@ -84,7 +84,7 @@ export class UserManagement extends AdminPage {
  * Returns the representation of the InteractiveTable header row defined by the User Admin page.
  * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this UserHeadRow
+ * @param {CanBeParent} obj.parent - The parent used to locate this UserHeadRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserHeadRow extends HeadRow {
@@ -118,7 +118,7 @@ class UserHeadRow extends HeadRow {
  * Returns the representation of the InteractiveTable row defined by the User Admin page.
  * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this UserRow
+ * @param {CanBeParent} obj.parent - The parent used to locate this UserRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserRow extends Row {
@@ -158,7 +158,7 @@ class UserRow extends Row {
  * Returns the representation of the ActionDropdown menu defined by the User Admin page.
  * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this UserActionDropdown
+ * @param {CanBeParent} obj.parent - The parent used to locate this UserActionDropdown
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserActionDropdown extends Dropdown {

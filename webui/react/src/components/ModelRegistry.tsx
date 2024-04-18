@@ -222,7 +222,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleUserFilterApply = useCallback(
     (users: string[]) => {
-      updateSettings({ users: users.length !== 0 ? users : undefined });
+      updateSettings({ tableOffset: 0, users: users.length !== 0 ? users : undefined });
     },
     [updateSettings],
   );
@@ -249,7 +249,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
-      updateSettings({ name: newSearch || undefined });
+      updateSettings({ name: newSearch || undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
@@ -272,7 +272,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleDescriptionSearchApply = useCallback(
     (newSearch: string) => {
-      updateSettings({ description: newSearch || undefined });
+      updateSettings({ description: newSearch || undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
@@ -295,7 +295,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleLabelFilterApply = useCallback(
     (tags: string[]) => {
-      updateSettings({ tags: tags.length !== 0 ? tags : undefined });
+      updateSettings({ tableOffset: 0, tags: tags.length !== 0 ? tags : undefined });
     },
     [updateSettings],
   );
@@ -308,6 +308,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     (workspaces: string[]) => {
       updateSettings({
         row: undefined,
+        tableOffset: 0,
         workspace:
           workspaces.length !== 0 ? workspaces.map((workspace) => Number(workspace)) : undefined,
       });
@@ -664,6 +665,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         columns: newColumns,
         columnWidths: newColumnWidths,
         row: undefined,
+        tableOffset: 0,
       });
     },
     [settings, updateSettings],

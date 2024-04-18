@@ -41,9 +41,14 @@ spec:
           - name: DB_HOST
             value: {{ include "determined.dbHost" . }}
           - name: LORE_DOCKER_TAG_SUFFIX
-            value: {{ $tag }}
+            value: {{ $tag | quote }}
+          {{- if .Values.genai.sharedFSHostPath }}
+          - name: K8S_SHARED_HOST_PATH
+            value: {{ .Values.genai.sharedFSHostPath }}
+          {{- else }}
           - name: K8S_SHARED_PVC_NAME
             value: {{ include "genai.PVCName" . }}
+          {{- end }}
           - name: RESOURCE_POOL_EXTRA_METADATA_PATH
             value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
           - name: MESSAGE_QUEUE_HOST
@@ -55,9 +60,14 @@ spec:
           - name: GENAI_HOST_PORT
             value: {{ .Values.genai.port | quote }}
         volumeMounts:
+          {{- if .Values.genai.sharedFSHostPath }}
+          - name: genai-shared-host-path
+            mountPath: /run/determined/workdir/shared_fs
+          {{- else }}
           - name: genai-pvc-storage
             mountPath: /run/determined/workdir/shared_fs
             readOnly: false
+          {{- end }}
           - name: genai-resource-pool-metadata
             mountPath: /run/determined/workdir/rp_config
         resources:
@@ -82,9 +92,16 @@ spec:
         - name: {{ .Values.imagePullSecretName }}
       {{- end}}
       volumes:
+        {{- if .Values.genai.sharedFSHostPath }}
+        - name: genai-shared-host-path
+          hostPath:
+            path: {{ .Values.genai.sharedFSHostPath }}
+            type: Directory
+        {{- else }}
         - name: genai-pvc-storage
           persistentVolumeClaim:
             claimName: {{ include "genai.PVCName" . }}
+        {{- end }}
         - name: genai-resource-pool-metadata
           configMap:
             name: genai-resource-pool-metadata-{{ .Release.Name }}
