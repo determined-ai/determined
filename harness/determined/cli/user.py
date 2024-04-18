@@ -80,10 +80,10 @@ def log_in_user(args: Namespace) -> None:
     token_store.set_token(sess.username, sess.token)
     token_store.set_active(sess.username)
 
-    # check for maintenance messages
+    # check for cluster messages
     resp = bindings.get_GetMaster(setup_session(parsed_args))
-    if resp.maintenanceMessage is not None and len(resp.maintenanceMessage.message) > 0:
-        print("Maintenance message:\n{}".format(resp.maintenanceMessage.message))
+    if resp.clusterMessage is not None and len(resp.clusterMessage.message) > 0:
+        print("Message from Admin:\n{}".format(resp.clusterMessage.message))
 
 
 def log_out_user(args: Namespace) -> None:

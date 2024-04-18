@@ -25,9 +25,9 @@ message SSOProvider {
 }
 
 // Active notice from the server admin.
-message MaintenanceMessage {
+message ClusterMessage {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "message", "start_time" ] }
+    json_schema: { required: [ "message", "start_time" ] }
   };
 
   // Text content of message.
@@ -49,7 +49,7 @@ message GetMasterResponse {
       required: [
         "version",
         "master_id",
-        "maintenance_messages",
+        "cluster_message",
         "cluster_id",
         "cluster_name",
         "strict_job_queue_control"
@@ -91,8 +91,8 @@ message GetMasterResponse {
   bool user_management_enabled = 13;
   // Feature flag for strict job queue control.
   bool strict_job_queue_control = 14;
-  // Active server maintenance message.
-  optional MaintenanceMessage maintenance_message = 15;
+  // Active server cluster-wide message if any.
+  optional ClusterMessage cluster_message = 15;
 }
 
 // Get telemetry information.
@@ -129,8 +129,13 @@ message PatchMasterConfigRequest {
 // Response to PatchMasterConfigRequest.
 message PatchMasterConfigResponse {}
 
-// Set new maintenance message.
-message SetMaintenanceMessageRequest {
+message GetClusterMessageRequest {}
+message GetClusterMessageResponse {
+  optional ClusterMessage cluster_message = 1;
+}
+
+// Set the cluster-wide message.
+message SetClusterMessageRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "message", "start_time" ] }
   };
@@ -140,18 +145,17 @@ message SetMaintenanceMessageRequest {
   google.protobuf.Timestamp start_time = 2;
   // Time to stop showing message.
   optional google.protobuf.Timestamp end_time = 3;
+  // Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h,
+  // 2w, 5d)
+  optional string duration = 4;
 }
-// Response to SetMaintenanceMessageRequest.
-message SetMaintenanceMessageResponse {
-  // Unique ID of maintenance message.
-  int32 id = 1;
-}
+// Response to SetClusterMessageRequest.
+message SetClusterMessageResponse {}
 
-// Delete maintenance messages.
-message DeleteMaintenanceMessageRequest {}
-
-// Response to DeleteMaintenanceMessageRequest.
-message DeleteMaintenanceMessageResponse {}
+// Clear the configured cluster-wide message.
+message DeleteClusterMessageRequest {}
+// Response to DeleteClusterMessageRequest.
+message DeleteClusterMessageResponse {}
 
 // Stream master logs.
 message MasterLogsRequest {

@@ -28,8 +28,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
-// MaintenanceMessageMaxLength caps the length of a server maintenance message.
-const MaintenanceMessageMaxLength = 250
+// ClusterMessageMaxLength caps the length of a cluster-wide message.
+const ClusterMessageMaxLength = 250
 
 var masterLogsBatchMissWaitTime = time.Second
 
@@ -54,15 +54,14 @@ func (a *apiServer) GetMaster(
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
-		MaintenanceMessage:    nil,
+		ClusterMessage:        nil,
 	}
 
-	var msg model.MaintenanceMessage
-	// var msg apiv1.MaintenanceMessage
+	var msg model.ClusterMessage
 	err := db.Bun().NewRaw(`
 		WITH newest_message AS (
 			SELECT message, start_time, end_time, created_time
-			FROM maintenance_messages
+			FROM cluster_messages
 			ORDER BY created_time DESC
 			LIMIT 1
 		)
@@ -72,14 +71,13 @@ func (a *apiServer) GetMaster(
 			end_time, created_time
 		FROM newest_message
 		WHERE
-			1=1
-			AND start_time < NOW()
+			start_time < NOW()
 			AND (end_time IS NULL OR end_time > NOW())
 	`).Scan(ctx, &msg)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrap(err, "error fetching server maintenance messages")
+		return nil, errors.Wrap(err, "error fetching cluster-wide messages")
 	} else if err != sql.ErrNoRows {
-		masterResp.MaintenanceMessage = msg.ToProto()
+		masterResp.ClusterMessage = msg.ToProto()
 	}
 
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
@@ -268,10 +266,10 @@ func (a *apiServer) ResourceAllocationAggregated(
 	return a.m.fetchAggregatedResourceAllocation(req)
 }
 
-func (a *apiServer) SetMaintenanceMessage(
+func (a *apiServer) GetClusterMessage(
 	ctx context.Context,
-	req *apiv1.SetMaintenanceMessageRequest,
-) (*apiv1.SetMaintenanceMessageResponse, error) {
+	req *apiv1.GetClusterMessageRequest,
+) (*apiv1.GetClusterMessageResponse, error) {
 	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -284,20 +282,64 @@ func (a *apiServer) SetMaintenanceMessage(
 		return nil, permErr
 	}
 
-	if msgLen := utf8.RuneCountInString(req.Message); msgLen > MaintenanceMessageMaxLength {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"message must be at most %d characters; got %d", MaintenanceMessageMaxLength, msgLen)
+	var msgResponse apiv1.GetClusterMessageResponse
+
+	var msg model.ClusterMessage
+	err = db.Bun().NewRaw(`
+		WITH newest_message AS (
+			SELECT message, start_time, end_time, created_time
+			FROM cluster_messages
+			ORDER BY created_time DESC
+			LIMIT 1
+		)
+
+		SELECT
+			message, start_time,
+			end_time, created_time
+		FROM newest_message
+		WHERE (end_time IS NULL OR end_time > NOW())
+	`).Scan(ctx, &msg)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, errors.Wrap(err, "error fetching cluster-wide messages")
+	} else if err != sql.ErrNoRows {
+		msgResponse.ClusterMessage = msg.ToProto()
 	}
 
-	mm := model.MaintenanceMessage{
+	return &msgResponse, nil
+}
+
+func (a *apiServer) SetClusterMessage(
+	ctx context.Context,
+	req *apiv1.SetClusterMessageRequest,
+) (*apiv1.SetClusterMessageResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	if msgLen := utf8.RuneCountInString(req.Message); msgLen > ClusterMessageMaxLength {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"message must be at most %d characters; got %d", ClusterMessageMaxLength, msgLen)
+	}
+	if req.EndTime != nil && req.Duration != nil {
+		return nil,
+			status.Errorf(codes.InvalidArgument, "EndTime and Duration are mutually exclusive")
+	}
+
+	mm := model.ClusterMessage{
 		CreatedBy: int(u.ID),
 		Message:   req.Message,
 		StartTime: req.StartTime.AsTime(),
 	}
 
-	// var endTime time.Time
 	if req.EndTime != nil {
-		// mm.CreatedTime.
 		mm.EndTime = sql.NullTime{
 			Time:  req.EndTime.AsTime(),
 			Valid: true,
@@ -310,14 +352,27 @@ func (a *apiServer) SetMaintenanceMessage(
 		}
 	}
 
+	if req.Duration != nil {
+		d, err := time.ParseDuration(*req.Duration)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Duration must be a Go-formatted duration string with a positive value")
+		}
+
+		mm.EndTime = sql.NullTime{
+			Time:  req.StartTime.AsTime().Add(d),
+			Valid: true,
+		}
+	}
+
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err = tx.NewUpdate().
-			Table("maintenance_messages").
+			Table("cluster_messages").
 			Set("end_time = NOW()").
 			Where("end_time >= NOW() OR end_time IS NULL").
 			Exec(ctx)
 		if err != nil {
-			return errors.Wrap(err, "error clearing previous server maintenance messages")
+			return errors.Wrap(err, "error clearing previous cluster-wide messages")
 		}
 
 		_, err = tx.NewInsert().
@@ -325,7 +380,7 @@ func (a *apiServer) SetMaintenanceMessage(
 			ExcludeColumn("created_time").
 			Exec(ctx)
 		if err != nil {
-			return errors.Wrap(err, "error setting the server maintenance message")
+			return errors.Wrap(err, "error setting the cluster-wide message")
 		}
 		return nil
 	})
@@ -333,13 +388,13 @@ func (a *apiServer) SetMaintenanceMessage(
 		return nil, err
 	}
 
-	return &apiv1.SetMaintenanceMessageResponse{}, nil
+	return &apiv1.SetClusterMessageResponse{}, nil
 }
 
-func (a *apiServer) DeleteMaintenanceMessage(
+func (a *apiServer) DeleteClusterMessage(
 	ctx context.Context,
-	req *apiv1.DeleteMaintenanceMessageRequest,
-) (*apiv1.DeleteMaintenanceMessageResponse, error) {
+	req *apiv1.DeleteClusterMessageRequest,
+) (*apiv1.DeleteClusterMessageResponse, error) {
 	u, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -353,13 +408,13 @@ func (a *apiServer) DeleteMaintenanceMessage(
 	}
 
 	_, err = db.Bun().NewUpdate().
-		Table("maintenance_messages").
+		Table("cluster_messages").
 		Set("end_time = NOW()").
 		Where("end_time >= NOW() OR end_time IS NULL").
 		Exec(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error clearing the server maintenance message")
+		return nil, errors.Wrap(err, "error clearing the cluster message")
 	}
 
-	return &apiv1.DeleteMaintenanceMessageResponse{}, nil
+	return &apiv1.DeleteClusterMessageResponse{}, nil
 }

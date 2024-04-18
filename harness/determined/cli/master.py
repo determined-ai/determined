@@ -73,20 +73,32 @@ def logs(args: Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
-# @authentication.required
-def set_maintenance_message(args: Namespace) -> None:
+def set_cluster_message(args: Namespace) -> None:
     sess = cli.setup_session(args)
 
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")
-    body = bindings.v1SetMaintenanceMessageRequest(
+    body = bindings.v1SetClusterMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message
     )
-    bindings.put_SetMaintenanceMessage(sess, body=body)
+    bindings.put_SetClusterMessage(sess, body=body)
 
-def clear_maintenance_message(args: Namespace) -> None:
+
+def clear_cluster_message(args: Namespace) -> None:
     sess = cli.setup_session(args)
-    bindings.delete_DeleteMaintenanceMessage(sess)
+    bindings.delete_DeleteClusterMessage(sess)
+
+# TODO: use the GetClusterMessage endpoint so future-scheduled messages are visible to admins
+def get_cluster_message(args: Namespace) -> None:
+    sess = cli.setup_session(args)
+
+    resp = bindings.get_GetMaster(sess)
+    message = resp.to_json()['clusterMessage']
+
+    if args.json:
+        render.print_json(message)
+    else:
+        print(util.yaml_safe_dump(message, default_flow_style=False))
 
 
 # fmt: off
@@ -136,20 +148,29 @@ args_description = [
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
         ]),
-        Cmd("maintain", None, "set or clear maintenance message", [
-            Cmd("set", set_maintenance_message, "set maintenance message", [
+        # TODO: display the message each time someone uses the CLI, same as version mismatch
+        Cmd("display-message", None, "set or clear cluster-wide message", [
+            Cmd("set", set_cluster_message, "create or edit the displayed cluster-wide message", [
                 Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                     help="Timestamp to start displaying message (RFC 3339 format), "
                     + "e.g. '2021-10-26T23:17:12Z'; default is now."),
-                Arg("-e", "--end", default=None,
-                    help="Timestamp to end displaying message (RFC 3339 format), "
-                    + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
+                Group(
+                    Arg("-e", "--end", default=None,
+                        help="Timestamp to end displaying message (RFC 3339 format), "
+                        + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
+                    Arg("-d", "--duration", default=None,
+                        help="How long the message should last; mutually exclusive with --end and should"
+                        + "be formatted as a Go duration string e.g. 24h, 2w, 5d"),
+                ),
                 Arg("-m", "--message", default=None,
-                    help="Text to display to users during maintenance time"),
+                    help="Text of the message to display to users"),
             ]),
-            Cmd("clear", clear_maintenance_message, "clear maintenance message", [
+            Cmd("clear", clear_cluster_message, "clear cluster-wide message", [
                 Arg("-c", "--clear", action="store_true", default=False,
-                    help="Clear all maintenance messages"),
+                    help="Clear all cluster-wide message"),
+            ]),
+            Cmd("get", get_cluster_message, "get cluster-wide message", [
+                Group(cli.output_format_args["json"], cli.output_format_args["yaml"])
             ]),
         ])
     ])

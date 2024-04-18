@@ -9,8 +9,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-// MaintenanceMessage represents a server status from the `maintenance_messages` table.
-type MaintenanceMessage struct {
+// ClusterMessage represents a server status from the `cluster_messages` table.
+type ClusterMessage struct {
 	CreatedBy   int
 	Message     string
 	StartTime   time.Time
@@ -19,12 +19,12 @@ type MaintenanceMessage struct {
 }
 
 // ToProto converts m to a type suitable for gRPC protobuf response.
-func (m *MaintenanceMessage) ToProto() *apiv1.MaintenanceMessage {
+func (m *ClusterMessage) ToProto() *apiv1.ClusterMessage {
 	if m == nil {
 		return nil
 	}
 
-	ret := &apiv1.MaintenanceMessage{
+	ret := &apiv1.ClusterMessage{
 		Message:   m.Message,
 		StartTime: timestamppb.New(m.StartTime),
 	}

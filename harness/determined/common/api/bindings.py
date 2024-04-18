@@ -2137,6 +2137,49 @@ class v1CloseTrialOperation(Printable):
             out["requestId"] = self.requestId
         return out
 
+class v1ClusterMessage(Printable):
+    """Active notice from the server admin."""
+    createdTime: "typing.Optional[str]" = None
+    endTime: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        message: str,
+        startTime: str,
+        createdTime: "typing.Union[str, None, Unset]" = _unset,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.message = message
+        self.startTime = startTime
+        if not isinstance(createdTime, Unset):
+            self.createdTime = createdTime
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ClusterMessage":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "message": obj["message"],
+            "startTime": obj["startTime"],
+        }
+        if "createdTime" in obj:
+            kwargs["createdTime"] = obj["createdTime"]
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "message": self.message,
+            "startTime": self.startTime,
+        }
+        if not omit_unset or "createdTime" in vars(self):
+            out["createdTime"] = self.createdTime
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        return out
+
 class v1ColumnType(DetEnum):
     """ColumnType indicates the type of data under the column
     - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed
@@ -4347,6 +4390,32 @@ class v1GetCheckpointResponse(Printable):
         }
         return out
 
+class v1GetClusterMessageResponse(Printable):
+    clusterMessage: "typing.Optional[v1ClusterMessage]" = None
+
+    def __init__(
+        self,
+        *,
+        clusterMessage: "typing.Union[v1ClusterMessage, None, Unset]" = _unset,
+    ):
+        if not isinstance(clusterMessage, Unset):
+            self.clusterMessage = clusterMessage
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetClusterMessageResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "clusterMessage" in obj:
+            kwargs["clusterMessage"] = v1ClusterMessage.from_json(obj["clusterMessage"]) if obj["clusterMessage"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "clusterMessage" in vars(self):
+            out["clusterMessage"] = None if self.clusterMessage is None else self.clusterMessage.to_json(omit_unset)
+        return out
+
 class v1GetCommandResponse(Printable):
     """Response to GetCommandRequest."""
 
@@ -4963,7 +5032,6 @@ class v1GetMasterResponse(Printable):
     externalLoginUri: "typing.Optional[str]" = None
     externalLogoutUri: "typing.Optional[str]" = None
     featureSwitches: "typing.Optional[typing.Sequence[str]]" = None
-    maintenanceMessage: "typing.Optional[v1MaintenanceMessage]" = None
     product: "typing.Optional[GetMasterResponseProduct]" = None
     rbacEnabled: "typing.Optional[bool]" = None
     ssoProviders: "typing.Optional[typing.Sequence[v1SSOProvider]]" = None
@@ -4974,6 +5042,7 @@ class v1GetMasterResponse(Printable):
         self,
         *,
         clusterId: str,
+        clusterMessage: "v1ClusterMessage",
         clusterName: str,
         masterId: str,
         strictJobQueueControl: bool,
@@ -4982,7 +5051,6 @@ class v1GetMasterResponse(Printable):
         externalLoginUri: "typing.Union[str, None, Unset]" = _unset,
         externalLogoutUri: "typing.Union[str, None, Unset]" = _unset,
         featureSwitches: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        maintenanceMessage: "typing.Union[v1MaintenanceMessage, None, Unset]" = _unset,
         product: "typing.Union[GetMasterResponseProduct, None, Unset]" = _unset,
         rbacEnabled: "typing.Union[bool, None, Unset]" = _unset,
         ssoProviders: "typing.Union[typing.Sequence[v1SSOProvider], None, Unset]" = _unset,
@@ -4990,6 +5058,7 @@ class v1GetMasterResponse(Printable):
         userManagementEnabled: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.clusterId = clusterId
+        self.clusterMessage = clusterMessage
         self.clusterName = clusterName
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
@@ -5002,8 +5071,6 @@ class v1GetMasterResponse(Printable):
             self.externalLogoutUri = externalLogoutUri
         if not isinstance(featureSwitches, Unset):
             self.featureSwitches = featureSwitches
-        if not isinstance(maintenanceMessage, Unset):
-            self.maintenanceMessage = maintenanceMessage
         if not isinstance(product, Unset):
             self.product = product
         if not isinstance(rbacEnabled, Unset):
@@ -5019,6 +5086,7 @@ class v1GetMasterResponse(Printable):
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
+            "clusterMessage": v1ClusterMessage.from_json(obj["clusterMessage"]),
             "clusterName": obj["clusterName"],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
@@ -5032,8 +5100,6 @@ class v1GetMasterResponse(Printable):
             kwargs["externalLogoutUri"] = obj["externalLogoutUri"]
         if "featureSwitches" in obj:
             kwargs["featureSwitches"] = obj["featureSwitches"]
-        if "maintenanceMessage" in obj:
-            kwargs["maintenanceMessage"] = v1MaintenanceMessage.from_json(obj["maintenanceMessage"]) if obj["maintenanceMessage"] is not None else None
         if "product" in obj:
             kwargs["product"] = GetMasterResponseProduct(obj["product"]) if obj["product"] is not None else None
         if "rbacEnabled" in obj:
@@ -5049,6 +5115,7 @@ class v1GetMasterResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
+            "clusterMessage": self.clusterMessage.to_json(omit_unset),
             "clusterName": self.clusterName,
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
@@ -5062,8 +5129,6 @@ class v1GetMasterResponse(Printable):
             out["externalLogoutUri"] = self.externalLogoutUri
         if not omit_unset or "featureSwitches" in vars(self):
             out["featureSwitches"] = self.featureSwitches
-        if not omit_unset or "maintenanceMessage" in vars(self):
-            out["maintenanceMessage"] = None if self.maintenanceMessage is None else self.maintenanceMessage.to_json(omit_unset)
         if not omit_unset or "product" in vars(self):
             out["product"] = None if self.product is None else self.product.value
         if not omit_unset or "rbacEnabled" in vars(self):
@@ -8021,49 +8086,6 @@ class v1LoginResponse(Printable):
             "token": self.token,
             "user": self.user.to_json(omit_unset),
         }
-        return out
-
-class v1MaintenanceMessage(Printable):
-    """Active notice from the server admin."""
-    createdTime: "typing.Optional[str]" = None
-    endTime: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        message: str,
-        startTime: str,
-        createdTime: "typing.Union[str, None, Unset]" = _unset,
-        endTime: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        self.message = message
-        self.startTime = startTime
-        if not isinstance(createdTime, Unset):
-            self.createdTime = createdTime
-        if not isinstance(endTime, Unset):
-            self.endTime = endTime
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1MaintenanceMessage":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "message": obj["message"],
-            "startTime": obj["startTime"],
-        }
-        if "createdTime" in obj:
-            kwargs["createdTime"] = obj["createdTime"]
-        if "endTime" in obj:
-            kwargs["endTime"] = obj["endTime"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "message": self.message,
-            "startTime": self.startTime,
-        }
-        if not omit_unset or "createdTime" in vars(self):
-            out["createdTime"] = self.createdTime
-        if not omit_unset or "endTime" in vars(self):
-            out["endTime"] = self.endTime
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
@@ -12942,6 +12964,41 @@ class v1SearcherOperation(Printable):
             out["trialOperation"] = None if self.trialOperation is None else self.trialOperation.to_json(omit_unset)
         return out
 
+class v1SetClusterMessageRequest(Printable):
+    """Set the cluster-wide message."""
+    endTime: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        message: str,
+        startTime: str,
+        endTime: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.message = message
+        self.startTime = startTime
+        if not isinstance(endTime, Unset):
+            self.endTime = endTime
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetClusterMessageRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "message": obj["message"],
+            "startTime": obj["startTime"],
+        }
+        if "endTime" in obj:
+            kwargs["endTime"] = obj["endTime"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "message": self.message,
+            "startTime": self.startTime,
+        }
+        if not omit_unset or "endTime" in vars(self):
+            out["endTime"] = self.endTime
+        return out
+
 class v1SetCommandPriorityRequest(Printable):
     """Set the priority of the requested command."""
     commandId: "typing.Optional[str]" = None
@@ -13002,68 +13059,6 @@ class v1SetCommandPriorityResponse(Printable):
         }
         if not omit_unset or "command" in vars(self):
             out["command"] = None if self.command is None else self.command.to_json(omit_unset)
-        return out
-
-class v1SetMaintenanceMessageRequest(Printable):
-    """Set new maintenance message."""
-    endTime: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        message: str,
-        startTime: str,
-        endTime: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        self.message = message
-        self.startTime = startTime
-        if not isinstance(endTime, Unset):
-            self.endTime = endTime
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SetMaintenanceMessageRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "message": obj["message"],
-            "startTime": obj["startTime"],
-        }
-        if "endTime" in obj:
-            kwargs["endTime"] = obj["endTime"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "message": self.message,
-            "startTime": self.startTime,
-        }
-        if not omit_unset or "endTime" in vars(self):
-            out["endTime"] = self.endTime
-        return out
-
-class v1SetMaintenanceMessageResponse(Printable):
-    """Response to SetMaintenanceMessageRequest."""
-    id: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        id: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(id, Unset):
-            self.id = id
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1SetMaintenanceMessageResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "id" in obj:
-            kwargs["id"] = obj["id"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "id" in vars(self):
-            out["id"] = self.id
         return out
 
 class v1SetNotebookPriorityRequest(Printable):
@@ -16420,6 +16415,25 @@ def delete_DeleteCheckpoints(
         return
     raise APIHttpError("delete_DeleteCheckpoints", _resp)
 
+def delete_DeleteClusterMessage(
+    session: "api.BaseSession",
+) -> None:
+    """Clear the cluster-wide message shown to all users."""
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/master/cluster_message",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteClusterMessage", _resp)
+
 def delete_DeleteExperiment(
     session: "api.BaseSession",
     *,
@@ -16516,25 +16530,6 @@ def delete_DeleteGroup(
     if _resp.status_code == 200:
         return
     raise APIHttpError("delete_DeleteGroup", _resp)
-
-def delete_DeleteMaintenanceMessage(
-    session: "api.BaseSession",
-) -> None:
-    """Clear all maintenance messages."""
-    _params = None
-    _resp = session._do_request(
-        method="DELETE",
-        path="/api/v1/master/maintenance_message",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("delete_DeleteMaintenanceMessage", _resp)
 
 def delete_DeleteModel(
     session: "api.BaseSession",
@@ -17033,6 +17028,25 @@ def get_GetCheckpoint(
     if _resp.status_code == 200:
         return v1GetCheckpointResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCheckpoint", _resp)
+
+def get_GetClusterMessage(
+    session: "api.BaseSession",
+) -> "v1GetClusterMessageResponse":
+    """Get the currently configured cluster-wide message."""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/master/cluster_message",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetClusterMessageResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetClusterMessage", _resp)
 
 def get_GetCommand(
     session: "api.BaseSession",
@@ -21602,6 +21616,29 @@ def get_SearchRuns(
         return v1SearchRunsResponse.from_json(_resp.json())
     raise APIHttpError("get_SearchRuns", _resp)
 
+def put_SetClusterMessage(
+    session: "api.BaseSession",
+    *,
+    body: "v1SetClusterMessageRequest",
+) -> None:
+    """Set the cluster-wide message shown to users. Only one can be set at at time, so
+    any existing message will be disabled.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PUT",
+        path="/api/v1/master/cluster_message",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("put_SetClusterMessage", _resp)
+
 def post_SetCommandPriority(
     session: "api.BaseSession",
     *,
@@ -21628,27 +21665,6 @@ def post_SetCommandPriority(
     if _resp.status_code == 200:
         return v1SetCommandPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetCommandPriority", _resp)
-
-def put_SetMaintenanceMessage(
-    session: "api.BaseSession",
-    *,
-    body: "v1SetMaintenanceMessageRequest",
-) -> "v1SetMaintenanceMessageResponse":
-    """Post new maintenance messages."""
-    _params = None
-    _resp = session._do_request(
-        method="PUT",
-        path="/api/v1/master/maintenance_message",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1SetMaintenanceMessageResponse.from_json(_resp.json())
-    raise APIHttpError("put_SetMaintenanceMessage", _resp)
 
 def post_SetNotebookPriority(
     session: "api.BaseSession",
