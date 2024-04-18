@@ -42,8 +42,8 @@ import {
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import {
   BulkActionResult,
-  ExperimentAction,
   BulkExperimentItem,
+  ExperimentAction,
   Project,
   ProjectColumn,
   ProjectExperiment,
