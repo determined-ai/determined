@@ -554,9 +554,6 @@ func (a *apiServer) PostProject(
 		if strings.Contains(err.Error(), "projects_key_key") {
 			return nil,
 				status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey)
-		} else if strings.Contains(err.Error(), "projects_name_key") {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "project with name %s already exists", req.Name)
 		}
 	}
 
