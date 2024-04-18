@@ -11,8 +11,8 @@ installation on Kubernetes.
 
 -  Determied must be running in a Kubernetes cluster.
 
--  Determined must have the Helm value ``observability.enable_prometheus`` set to true. (TODO add
-   default true)
+-  Determined must have the Helm value ``observability.enable_prometheus`` set to true. This is
+   defaulted to true.
 
 -  Determined CLI must be installed and configured to talk to the Determined instance.
 
@@ -60,11 +60,11 @@ week. So we are going to configure a token refresh cronjob to run on the Kuberne
 
 #. Create the job and cronjob.
 
-   TODO make this a header
+.. attention::
 
-   Warning ``tokenRefresher.yaml`` won't work in every Kuberenetes set up. If you have a unique use
-   case it can be modified to work without much effort. Hard coding the Determined master ip can
-   reduce a lot of assumptions the script makes.
+   ``tokenRefresher.yaml`` won't work in every possible Kuberenetes set up. If you have a unique use
+   case it might need to be modified to work. Hardcoding the Determined master ip can reduce a lot
+   of assumptions the script makes.
 
 .. code:: bash
 
@@ -91,15 +91,17 @@ week. So we are going to configure a token refresh cronjob to run on the Kuberne
  Install DCGM Exporter
 ***********************
 
-DCGM is used to allow Prometheus to get GPU metrics. This can be installed in a variety of different
-ways. If you are deploying in a cloud based environment you should follow their documentation.
-
-Nvidia docs on installing the DCGM exporter. TODO link
-https://docs.nvidia.com/datacenter/cloud-native/gpu-telemetry/latest/kube-prometheus.html#setting-up-dcgm
+The DCGM exporter is used to allow Prometheus to get GPU metrics. This can be installed in a variety
+of different ways. If you are deploying in a cloud based environment you should follow their
+documentation.
 
 A setup method for GKE is included here for convenience. For other clouds or on prem deployments you
-may have to install DCGM differently and change the ``additionalScrapeConfigs`` accordingly in the
-``grafana-prom-values.yaml`` in later steps.
+may have to install the DCGM exportor slightly differently and change the
+``additionalScrapeConfigs`` accordingly in the ``grafana-prom-values.yaml`` in later steps.
+
+If you are deploying on prem it is recommended to reference the `Nvidia docs on installing the DCGM
+exporter
+<https://docs.nvidia.com/datacenter/cloud-native/gpu-telemetry/latest/kube-prometheus.html#setting-up-dcgm>`__.
 
 #. Create a namespace for the exporter
 
@@ -107,10 +109,9 @@ may have to install DCGM differently and change the ``additionalScrapeConfigs`` 
 
    kubectl create ns gmp-public
 
-#. Copy and apply the file at this documentation in the ``gmp-public`` namespace
-
-   TODO link
-   https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm#install-exporter
+#. Copy and apply the file from the `GKE documentation
+   <https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm#install-exporter>`__
+   in the ``gmp-public`` namespace
 
 .. code:: bash
 
@@ -122,9 +123,9 @@ may have to install DCGM differently and change the ``additionalScrapeConfigs`` 
 
    kubectl apply -n gmp-public -f gkeDCGMExporterService.yaml
 
-Note this differs from the GKE docs linked above because we are going to deploy a Prometheus
-instalation instead of using the managed service Google Cloud Offers. It is possible to use the
-managed offering from Google Cloud but some features like GPU statistics by user will not work.
+This differs from the GKE docs linked above because we are going to deploy a Prometheus instalation
+instead of using the managed service Google Cloud Offers. It is possible to use the managed offering
+from Google Cloud but some features like GPU statistics by user will not work.
 
 #. Verify DCGM works by port forwarding the service.
 
@@ -134,7 +135,9 @@ managed offering from Google Cloud but some features like GPU statistics by user
 
 #. In a new console tab check the service works.
 
-   ``curl 127.0.0.1:9400/metrics`` TODO link
+.. code:: bash
+
+   curl 127.0.0.1:9400/metrics
 
 *******************************
  Install Kube Prometheus Stack
@@ -163,14 +166,15 @@ managed offering from Google Cloud but some features like GPU statistics by user
    kubectl create configmap detapidash --from-file api-dash.json && \
      kubectl label configmap detapidash grafana_dashboard=1
 
-#. TODO add any other dashboard
+#. TODO add other dashboards for monitoring
 #. Check Prometheus is running properly. Port forward with this command
 
 .. code:: bash
 
    kubectl port-forward service/monitor-kube-prometheus-st-prometheus 9090:9090
 
-Go to 127.0.0.1:9090 and check the query ``up{twojobs}`` returns 1 for both results.
+Verify that Prometheus is scraping DCGM and the Determined API server metrics. Go to 127.0.0.1:9090
+and check the query ``up{twojobsTODO query}`` returns 1 for both results.
 
 #. Access Grafana to view dashboards.
 
@@ -178,5 +182,5 @@ Go to 127.0.0.1:9090 and check the query ``up{twojobs}`` returns 1 for both resu
 
    kubectl port-forward svc/monitor-grafana 9000:80
 
-Go to ``127.0.0.1:9000`` and use the username ``admin`` and password the password we set in the
-second step.
+Go to ``127.0.0.1:9090 <127.0.0.1:9000>``__ and use the username ``admin`` and password the password
+we set in the second step. The ``Determined API Server Monitoring`` dashboard should be included.
