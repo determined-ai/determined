@@ -250,9 +250,10 @@ def create_user(
 ) -> User:
     """Creates a user.
 
-        The user's credentials may be managed by a remote service (Enterprise edition only),
-        in which case the `remote` argument should be set to `true`, and then SSO should be
-        configured for the user. A remote user has no password and cannot log in except via SSO.
+    The user's credentials may be managed by a remote service (Enterprise edition only),
+    in which case the `remote` argument should be set to `true`, and then SSO should be
+    configured for the user. A remote user has no password and cannot log in except via SSO.
+    Otherwise, a password must be set that meets complexity requirements.
 
     The complexity requirements are:
         - Must be at least 8 characters long.
