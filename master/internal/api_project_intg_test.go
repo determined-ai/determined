@@ -435,3 +435,24 @@ func TestCreateProjectWithDuplicateProjectKey(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey), err)
 }
+
+func TestCreateProjectWithDefaultKeyAndDuplicatePrefix(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := uuid.New().String()
+	projectKeyPrefix := projectName[:3]
+	resp1, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+	require.Equal(t, (projectKeyPrefix + "1"), resp1.Project.Key)
+
+	resp2, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName + "2", WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+	require.NoError(t, err)
+	require.Equal(t, (projectKeyPrefix + "2"), resp2.Project.Key)
+}
