@@ -2016,6 +2016,8 @@ jobs:
           determined: true
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
+      - run: rm ./license.txt
+      - run: rm ./public.txt
       - install-protoc 
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
@@ -4226,6 +4228,8 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          requires:
+            - build-go
           context: playwright
           filters: *any-upstream
       - build-docs:
