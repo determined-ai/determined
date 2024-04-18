@@ -46,13 +46,6 @@ prometheus:
           action: replace
           target_label: kubernetes_node
 
-          #credentials: "v2.public.eyJpZCI6MiwidXNlcl9pZCI6MSwiZXhwaXJ5IjoiMjAyNC0wNC0yMlQxNDo0NDozOS44MDY1MTA4NFoiLCJJbmhlcml0ZWRDbGFpbXMiOm51bGx9jFJ-65NAuar2gwp-NkFRPx1w8f4AWxyneHOtzlxst6LHQCg9MJPt1yDqRKUD2IxlmloRxB4_FZ4uCX3WHDoyAw.bnVsbA"
-
-
-        #static_configs:
-        #- targets:
-        #  - 10.227.254.107:8080 # TODO
-
 #     podMonitorNamespaceSelector:
 #       any: true
 #     podMonitorSelector: {}
