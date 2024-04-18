@@ -1479,8 +1479,10 @@ jobs:
       - run: mkdir -p build/
       - run: docker tag determinedai/determined-master:${CIRCLE_SHA1}-amd64 determinedai/determined-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+      - run: docker save -o build/master-oss.image determinedai/determined-master:${CIRCLE_SHA1}
       - run: docker tag determinedai/determined-agent:${CIRCLE_SHA1}-amd64 determinedai/determined-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+      - run: docker save -o build/agent-oss.image determinedai/determined-agent:${CIRCLE_SHA1}
       - persist_to_workspace:
           root: .
           paths:
@@ -1514,8 +1516,10 @@ jobs:
       - run: mkdir -p build/
       - run: docker tag determinedai/hpe-mlde-master:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
+      - run: docker save -o build/master-ee.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
       - run: docker tag determinedai/hpe-mlde-agent:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
+      - run: docker save -o build/agent-ee.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - persist_to_workspace:
           root: .
           paths:
@@ -3725,8 +3729,11 @@ jobs:
       - skip-if-only-webui
       - attach_workspace:
           at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
+      # because of name collisions, we have to split and specify ee and oss images.
+      - run: docker load --input build/master-oss.image
+      - run: docker load --input build/agent-oss.image
+      - run: docker load --input build/master-ee.image
+      - run: docker load --input build/agent-ee.image
 
       - setup-python-venv:
           determined: true
@@ -5288,24 +5295,6 @@ workflows:
                   password: launcher
       - terminate-vpc-circleci:
             context: ["gcp"]
-
-  test-docs:
-    jobs:
-      - build-helm
-      - build-proto
-      - build-docs:
-          context: determined-production
-          requires:
-            - build-helm
-            - build-proto
-      - build-docs:
-          matrix:
-            parameters:
-              ee: [true]
-          context: determined-production
-          requires:
-            - build-helm
-            - build-proto
 
   release:
     jobs:
