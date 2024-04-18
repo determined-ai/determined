@@ -2,6 +2,7 @@ from typing import Optional
 
 from determined.common import api
 from determined.common.api import bindings
+from harness.determined.common.api import authentication
 
 
 class User:
@@ -90,7 +91,7 @@ class User:
         Raises:
             ValueError: an error describing why the password does not meet complexity requirements.
         """
-        api.check_password_complexity(new_password)
+        authentication.check_password_complexity(new_password)
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
         bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)

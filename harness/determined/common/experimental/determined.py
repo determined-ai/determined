@@ -100,7 +100,7 @@ class Determined:
         create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
         if not remote:
-            api.check_password_complexity(password)
+            authentication.check_password_complexity(password)
             if password is not None:
                 hashedPassword = api.salt_and_hash(password)
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
