@@ -46,14 +46,12 @@ def test_run_kill() -> None:
         + str(exp_id)
         + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
     )
-
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
+    
     run_id = searchResp.runs[0].id
     killResp = bindings.post_KillRuns(
         sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
     )
-
-    # validate response
     assert len(killResp.results) == 1
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
