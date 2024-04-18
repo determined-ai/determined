@@ -186,14 +186,9 @@ def test_ntsc_iface_access() -> None:
             assert "access denied" in fe.value.message
             # user 1 should be able to launch tensorboards but not NSCs in workspace 0.
             only_tensorboard_can_launch(creds[1], workspaces[0].id, typ, experiment_id)
-            # tensorboard requires workspace access so returns workspace not found if
-            # the user does not have access to the workspace.
-            if typ == api.NTSC_Kind.tensorboard:
-                with pytest.raises(errors.NotFoundException):
-                    api_utils.launch_ntsc(creds[1], workspaces[1].id, typ, experiment_id)
-            else:
-                with pytest.raises(errors.ForbiddenException):
-                    api_utils.launch_ntsc(creds[1], workspaces[1].id, typ, experiment_id)
+            # Don't leak workspace information to a user without access.
+            with pytest.raises(errors.NotFoundException):
+                api_utils.launch_ntsc(creds[1], workspaces[1].id, typ, experiment_id)
 
             # user 2
             assert not can_access_logs(
