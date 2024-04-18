@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import pytest
 
@@ -139,18 +140,18 @@ def test_salt_and_hash() -> None:
 
 
 @pytest.mark.parametrize(
-    "password, should_raise, error",
+    "password, error",
     [
-        ("0penSesame", False, None),
-        (None, True, "password cannot be blank"),
-        ("pass", True, "password must have at least 8 characters"),
-        ("testpassword1234", True, "password must include an uppercase letter"),
-        ("TESTPASSWORD1234", True, "password must include a lowercase letter"),
-        ("testPASSWORD", True, "password must include a number"),
+        ("0penSesame", None),
+        (None, "password cannot be blank"),
+        ("pass", "password must have at least 8 characters"),
+        ("testpassword1234", "password must include an uppercase letter"),
+        ("TESTPASSWORD1234", "password must include a lowercase letter"),
+        ("testPASSWORD", "password must include a number"),
     ],
 )
-def test_check_password_complexity(password, should_raise, error) -> None:
-    if should_raise:
+def test_check_password_complexity(password: Optional[str], error: Optional[str]) -> None:
+    if error:
         with pytest.raises(ValueError, match="\u2717 " + error):
             authentication.check_password_complexity(password)
     else:

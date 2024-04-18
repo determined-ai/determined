@@ -38,8 +38,9 @@ def check_password_complexity(password: Optional[str]) -> None:
     Raises:
         ValueError: an error describing why the password does not meet complexity requirements.
     """
-    good = "\u2713 "
-    bad = "\u2717 "
+    # TODO: DET-10209 - this should either invoke a shared lib or call a server endpoint
+    good = "\u2713 "  # ✓
+    bad = "\u2717 "  # ✗
 
     results = []
     ok = True
