@@ -1340,8 +1340,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl
-      - run: pip install --user awscli  # used in the terraform apply
+      - run: apk add make curl py3-pip
+      - run: pip install --break-system-packages awscli  # used in the terraform apply
       - run: make -C docs publish
 
   # TODO(danh): eventually replace 'publish-docs' with this new workflow after
