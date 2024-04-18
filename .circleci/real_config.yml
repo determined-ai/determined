@@ -4266,11 +4266,16 @@ workflows:
               only:
                 - main
 
+      - request-e2e-hpc-tests:
+          type: approval
+          filters: *any-upstream
+
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
+            - request-e2e-hpc-tests
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
@@ -4315,6 +4320,7 @@ workflows:
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
+            - request-e2e-hpc-tests
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
