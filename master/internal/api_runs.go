@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -35,13 +34,6 @@ type archiveRunOKResult struct {
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-}
-
-type archiveKillRunOKResult struct {
-	Archived  bool
-	ID        int32
-	RequestID *string
-	State     bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -428,14 +420,19 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		return nil, err
 	}
 
-	var runChecks []archiveKillRunOKResult
+	type killRunOKResult struct {
+		ID         int32
+		RequestID  *string
+		IsTerminal bool
+	}
+
+	var killCandidatees []killRunOKResult
 	getQ := getSelectRunsQueryTables().
-		Model(&runChecks).
+		Model(&killCandidatees).
 		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("t.request_id").
-		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
@@ -459,16 +456,18 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 
 	var results []*apiv1.RunActionResult
-	var visibleIDs []int32
+	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range runChecks {
-		visibleIDs = append(visibleIDs, check.ID)
+	for _, check := range killCandidatees {
+		visibleIDs.Insert(check.ID)
 		switch {
-		case check.State:
+		case check.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
 				Id:    check.ID,
 			})
+		// This should be impossible in the current system but we will leave this check here
+		// to cover a possible error in integration tests
 		case check.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
@@ -480,7 +479,7 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 	if req.Filter == nil {
 		for _, originalID := range req.RunIds {
-			if !slices.Contains(visibleIDs, originalID) {
+			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
 					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
 					Id:    originalID,
