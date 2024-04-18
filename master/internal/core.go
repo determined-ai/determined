@@ -1109,6 +1109,7 @@ func buildRM(
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
 	}
+
 	return multirm.New(defaultRMName, rms), nil
 }
 
