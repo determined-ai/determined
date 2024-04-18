@@ -4181,6 +4181,7 @@ workflows:
           requires:
             - build-react
             - build-docs
+            - package-and-push-system-local
           context: github-read
           filters:
             branches:
@@ -4673,6 +4674,7 @@ workflows:
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
+            - package-and-push-system-local
             - package-and-push-system-local-ee
           matrix:
             parameters:
