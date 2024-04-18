@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,9 @@ func JSONErrorHandler(err error, c echo.Context) {
 	if he, ok := err.(*echo.HTTPError); ok {
 		code = he.Code
 		msg = he.Message
+	}
+	if authz.IsPermissionDenied(err) {
+		code = echo.ErrForbidden.Code
 	}
 	if code >= 500 {
 		c.Logger().Error(err)

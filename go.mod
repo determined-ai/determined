@@ -20,7 +20,7 @@ require (
 	github.com/go-pg/pg/v10 v10.10.6
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.4
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -63,11 +63,15 @@ require (
 )
 
 require (
+	github.com/coreos/go-oidc/v3 v3.9.0
+	github.com/crewjam/saml v0.4.14
+	github.hpe.com/hpe/hpc-ard-launcher-go/launcher v0.0.0-00010101000000-000000000000
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
 	go.opentelemetry.io/otel v1.6.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.6.1
 	go.opentelemetry.io/otel/sdk v1.6.1
+	gopkg.in/oauth2.v3 v3.12.0
 )
 
 require (
@@ -78,7 +82,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb // indirect
 	github.com/aead/poly1305 v0.0.0-20180717145839-3fee0db0b635 // indirect
@@ -142,12 +146,12 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.6.1 // indirect
 	go.opentelemetry.io/otel/trace v1.6.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/oauth2 v0.13.0
 	golang.org/x/sys v0.18.0
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20211223182754-3ac035c7e7cb
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.63.2 // indirect
@@ -166,6 +170,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4
+	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-co-op/gocron/v2 v2.1.1
 	github.com/go-test/deep v1.1.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
@@ -185,21 +190,28 @@ require (
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/beevik/etree v1.3.0 // indirect
+	github.com/crewjam/httperr v0.2.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/russellhaering/goxmldsig v1.4.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 )
 
-require (
-	github.com/fatih/color v1.16.0 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
-	golang.org/x/sync v0.5.0
-)
+require golang.org/x/sync v0.5.0
+
+// Determined AI's CircleCI doesn't have access to "github.hpe.com/hpe/hpc-ard-launcher-go",
+// so the build will fail in CircleCI.  Therefore, we had to do a "git clone" of the
+// launcher repo to store a local copy.  We make use of the "replace" directive to use the
+// local copy and not try to pull it from GitHub.
+replace github.hpe.com/hpe/hpc-ard-launcher-go/launcher => ./hpc-ard-launcher-go/launcher
