@@ -200,13 +200,8 @@ command:
  Enable GPU support
 ********************
 
-To use GPU instances, the NVIDIA Kubernetes device plugin needs to be installed. Use the following
-command to install the plugin:
-
-.. code:: bash
-
-   # Deploy a DaemonSet that enables the GPUs.
-   kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml
+To use GPU instances, the `NVIDIA device plugin for Kubernetes
+<https://github.com/NVIDIA/k8s-device-plugin/>`_ needs to be installed.
 
 *******************
  Enable Autoscaler
@@ -403,8 +398,7 @@ g4dn.metal node group:
        k8s.io/cluster-autoscaler/node-template/taint/g4dn.metal-us-west-2b: "true:NoSchedule"
 
 Furthermore, tainting requires changes to be made to the GPU enabling DaemonSet and more additions
-to the experiment config. First, to change the DaemonSet, save a copy of the `official version
-<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_ and
+to the experiment config. First, to change the DaemonSet, save a copy of the official version and
 make the following additions to its tolerations:
 
 .. code:: yaml
