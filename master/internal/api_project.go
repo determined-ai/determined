@@ -477,6 +477,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 			AS metric_type`).
 			Where("summary_metrics IS NOT NULL").
 			Where("hparams IS NOT NULL").
+			Where("hparams != 'null'").
 			Where("project_id = ?", id).
 			Order("json_path").Order("metric_name")
 		err = runsQuery.Scan(ctx, &summaryMetrics)
