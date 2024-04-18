@@ -1517,9 +1517,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return err
 	}
 
+	webhooks.Init()
+	defer webhooks.Deinit()
+
 	if slices.Contains(m.config.FeatureSwitches, "streaming_updates") {
-		webhooks.Init()
-		defer webhooks.Deinit()
 		ssup := stream.NewSupervisor(m.db.URL)
 		go func() {
 			_ = ssup.Run(ctx)
