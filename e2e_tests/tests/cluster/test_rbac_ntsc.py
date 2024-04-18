@@ -206,12 +206,8 @@ def test_ntsc_iface_access() -> None:
                 # user 2 should not be able to set priority or know it exists.
                 api_utils.set_prio_ntsc(creds[2], typ, created_id, 1)
             assert e.value.status_code == 404, f"user 2 should not be able to set priority {typ}"
-            if typ == api.NTSC_Kind.tensorboard:
-                with pytest.raises(errors.NotFoundException):
-                    api_utils.launch_ntsc(creds[2], workspaces[0].id, typ, experiment_id)
-            else:
-                with pytest.raises(errors.ForbiddenException):
-                    api_utils.launch_ntsc(creds[2], workspaces[0].id, typ, experiment_id)
+            with pytest.raises(errors.NotFoundException):
+                api_utils.launch_ntsc(creds[2], workspaces[0].id, typ, experiment_id)
             # user 2 has view access to workspace 1 so gets forbidden instead of not found.
             with pytest.raises(errors.ForbiddenException):
                 api_utils.launch_ntsc(creds[2], workspaces[1].id, typ, experiment_id)
