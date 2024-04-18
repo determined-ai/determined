@@ -923,8 +923,8 @@ to a file directory and use :func:`determined.pytorch.load_trial_from_checkpoint
 Profiling
 =========
 
-When training on cluster, the Determined system metrics profiler can be enabled by passing in an
-additional parameter to the ``fit()`` call:
+When training on cluster, you can enable the system metrics profiler by adding a parameter to your
+``fit()`` call:
 
 .. code:: diff
 
