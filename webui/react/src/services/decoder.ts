@@ -96,9 +96,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     ? ({
         message: data.clusterMessage.message,
         startTime: data.clusterMessage.startTime,
-        endTime: data.clusterMessage.endTime
-          ? new Date(data.clusterMessage.endTime)
-          : undefined,
+        endTime: data.clusterMessage.endTime ? new Date(data.clusterMessage.endTime) : undefined,
         createdTime: data.clusterMessage.createdTime,
       } as ClusterMessage)
     : undefined;

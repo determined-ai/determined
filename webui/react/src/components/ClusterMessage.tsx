@@ -20,13 +20,12 @@ const ClusterMessage: React.FC<Props> = ({ message }) => {
   const trimmedMsg = msg.substring(0, 100);
 
   return message ? (
-	<>
-		{/* <div className={css.placeHolder}>&nbsp;</div> */}
-		<div className={css.base}>
-      <span className={css.clusterMessageLabel}>Message from Admin</span>:
-      {trimmedMsg}
-		</div>
-	</>
+    <>
+      {/* <div className={css.placeHolder}>&nbsp;</div> */}
+      <div className={css.base}>
+        <span className={css.clusterMessageLabel}>Message from Admin</span>:{trimmedMsg}
+      </div>
+    </>
   ) : null;
 };
 

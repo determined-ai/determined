@@ -169,44 +169,42 @@ const AppView: React.FC = () => {
     Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
         {/* <div className={css.topLevelContainer}> */}
-          {/* {info.clusterMessage ? (
+        {/* {info.clusterMessage ? (
             <ClusterMessage message={info.clusterMessage} />
             ) : null} */}
-          <div className={css.base}>
-            {isAuthChecked ? (
-              <>
-                {isServerReachable ? (
-                  <ConfirmationProvider>
-                      
-                      <Navigation>
-                        <JupyterLabGlobal
-                          enabled={
-                            Loadable.isLoaded(loadableUser) &&
-                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                          }
-                          workspace={workspace ?? undefined}
-                          />
-                        <Omnibar />
-                        <main>
-                          <Router routes={appRoutes} />
-                        </main>
-                      </Navigation>
-                    
-                  </ConfirmationProvider>
-                ) : (
-                  <PageMessage title="Server is Unreachable">
-                    <p>
-                      Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
-                      check the firewall and cluster settings.
-                    </p>
-                    <Button onClick={refreshPage}>Try Again</Button>
-                  </PageMessage>
-                )}
-              </>
-            ) : (
-              <Spinner center spinning />
-            )}
-          </div>
+        <div className={css.base}>
+          {isAuthChecked ? (
+            <>
+              {isServerReachable ? (
+                <ConfirmationProvider>
+                  <Navigation>
+                    <JupyterLabGlobal
+                      enabled={
+                        Loadable.isLoaded(loadableUser) &&
+                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                      }
+                      workspace={workspace ?? undefined}
+                    />
+                    <Omnibar />
+                    <main>
+                      <Router routes={appRoutes} />
+                    </main>
+                  </Navigation>
+                </ConfirmationProvider>
+              ) : (
+                <PageMessage title="Server is Unreachable">
+                  <p>
+                    Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
+                    check the firewall and cluster settings.
+                  </p>
+                  <Button onClick={refreshPage}>Try Again</Button>
+                </PageMessage>
+              )}
+            </>
+          ) : (
+            <Spinner center spinning />
+          )}
+        </div>
         {/* </div> */}
       </UIProvider>
     ),
