@@ -11,7 +11,7 @@ stages:
         port: 8082
         db:
           host: localhost
-          port: 5434
+          port: 5432
           password: postgres
           user: postgres
           name: db
