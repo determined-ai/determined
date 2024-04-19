@@ -60,3 +60,8 @@
 /master/pkg/device @determined-ai/resource-mgmt
 /master/pkg/etc @determined-ai/resource-mgmt
 /master/pkg/tasks @determined-ai/resource-mgmt
+# EE only files in their own section to ease rebases
+/master/internal/rm/dispatcherrm @determined-ai/backend
+/master/internal/config/dispatcher* @determined-ai/backend
+/master/pkg/tasks/dispatcher* @determined-ai/backend
+/master/static/srv/dispatcher* @determined-ai/backend

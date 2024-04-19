@@ -35,6 +35,11 @@ package:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
+.PHONY: package-ee
+package-ee:
+	$(MAKE) -C agent $@
+	$(MAKE) -C master $@
+
 set-config-dev: .git/hooks/pre-commit
 
 .git/hooks/pre-commit:
@@ -100,3 +105,16 @@ local: build-bindings get-deps-webui
 .PHONY: devcluster
 devcluster:
 	devcluster -c tools/devcluster.yaml
+
+TF_LOCK ?= true
+
+.PHONY: slurmcluster
+slurmcluster:
+	$(MAKE) -C tools/slurm slurmcluster FLAGS="$(FLAGS)" TF_LOCK=$(TF_LOCK)
+
+slurmcluster/usage:
+	$(MAKE) -C tools/slurm usage
+
+.PHONY: unslurmcluster
+unslurmcluster:
+	$(MAKE) -C tools/slurm unslurmcluster TF_LOCK=$(TF_LOCK)

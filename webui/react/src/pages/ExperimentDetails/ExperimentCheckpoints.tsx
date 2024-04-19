@@ -37,7 +37,7 @@ import {
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import { ensureArray } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 import { pluralizer } from 'utils/string';
 
@@ -130,6 +130,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     try {
       await deleteCheckpoints({ checkpointUuids });
     } catch (e) {
+      if (e instanceof DetError && e.type === ErrorType.Server) {
+        e.silent = false;
+      }
       // confirm modal overwrites error message
       handleError(e);
     }

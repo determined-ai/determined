@@ -24,6 +24,8 @@ DB_NAME = "determined-db_1"
 NETWORK_NAME = "determined_default"
 VOLUME_NAME = "determined-db-volume"
 MASTER_NAME = "determined-master_1"
+OSS_EDITION = "determined"
+ENTERPRISE_EDITION = "hpe-mlde"
 
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
@@ -148,6 +150,7 @@ def master_up(
     autorestart: bool,
     cluster_name: str,
     auto_work_dir: Optional[pathlib.Path],
+    enterprise_edition: bool = False,
 ) -> None:
     # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
     make_temp_conf = False
@@ -256,8 +259,9 @@ def master_up(
             f"{os.path.abspath(master_config_path)}:/etc/determined/master.yaml",
             f"{final_storage_host_path}:{container_storage_path}",
         ]
+        det_edition = ENTERPRISE_EDITION if enterprise_edition else OSS_EDITION
         client.containers.run(
-            image=f"{image_repo_prefix}/determined-master:{version}",
+            image=f"{image_repo_prefix}/{det_edition}-master:{version}",
             environment=env,
             init=True,
             mounts=[],
@@ -349,6 +353,7 @@ def cluster_up(
     gpu: bool,
     autorestart: bool,
     auto_work_dir: Optional[pathlib.Path],
+    enterprise_edition: bool = False,
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
@@ -363,6 +368,7 @@ def cluster_up(
         autorestart=autorestart,
         cluster_name=cluster_name,
         auto_work_dir=auto_work_dir,
+        enterprise_edition=enterprise_edition,
     )
     for agent_number in range(num_agents):
         agent_name = cluster_name + f"-agent-{agent_number}"
@@ -379,6 +385,7 @@ def cluster_up(
             gpu=gpu,
             autorestart=autorestart,
             cluster_name=cluster_name,
+            enterprise_edition=enterprise_edition,
         )
 
 
@@ -425,6 +432,7 @@ def agent_up(
     autorestart: bool,
     cluster_name: str,
     labels: Optional[Dict] = None,
+    enterprise_edition: bool = False,
 ) -> None:
     agent_conf = {}
     volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
@@ -454,7 +462,8 @@ def agent_up(
         master_host = get_proxy_addr()
     environment["DET_MASTER_HOST"] = master_host
 
-    image = f"{image_repo_prefix}/determined-agent:{version}"
+    det_edition = ENTERPRISE_EDITION if enterprise_edition else OSS_EDITION
+    image = f"{image_repo_prefix}/{det_edition}-agent:{version}"
     init = True
     mounts = []  # type: List[str]
     if labels is None:

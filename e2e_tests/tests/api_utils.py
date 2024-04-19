@@ -361,9 +361,8 @@ def skipif_missing_startup_hook(
 
         if has_hook(mc):
             return True
-        pools = mc.get("resource_pools", [])
-        for p in pools:
-            print(p)
+        pools = mc.get("resource_pools") or []
+        assert isinstance(pools, list)
         return len(pools) > 0 and all(has_hook(pool) for pool in pools)
 
     return skipif_unexpected_master_config(check_startup_hook, reason=reason)

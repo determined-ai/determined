@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
@@ -55,6 +56,10 @@ func (c *AuthZConfig) Validate() []error {
 	errorTmpl := "\"%s\" is not a known authz type, must be one of: %s"
 	if _, ok := knownAuthZTypes[c.Type]; !ok {
 		errs = append(errs, fmt.Errorf(errorTmpl, c.Type, okTypes))
+	}
+
+	if c.Type != BasicAuthZType {
+		license.RequireLicense("RBAC")
 	}
 
 	if c.FallbackType != nil {

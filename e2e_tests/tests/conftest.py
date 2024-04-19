@@ -30,6 +30,7 @@ _INTEG_MARKERS = {
     "e2e_multi_k8s",
     "e2e_k8s",
     "e2e_pbs",
+    "e2e_saml",
     "e2e_slurm",
     "e2e_slurm_restart",
     "e2e_slurm_preemption",

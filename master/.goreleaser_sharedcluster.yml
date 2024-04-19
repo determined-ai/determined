@@ -1,4 +1,4 @@
-project_name: determined-master
+project_name: hpe-mlde-master
 
 before:
   hooks:
@@ -9,10 +9,14 @@ snapshot:
 
 builds:
   - main: ./cmd/determined-master
+    id: determined-ee-master
+    binary: determined-master
     ldflags:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
+      - -X github.com/determined-ai/determined/master/internal/license.licenseKey={{.Env.DET_EE_LICENSE}}
+      - -X github.com/determined-ai/determined/master/internal/license.publicKey={{.Env.DET_EE_PUBLIC_KEY}}
     goos:
       - linux
     goarch:
@@ -42,7 +46,7 @@ dockers:
       - "build"
       - "static"
     ids:
-      - determined-master
+      - determined-ee-master
       - determined-gotmpl
 
 docker_manifests:

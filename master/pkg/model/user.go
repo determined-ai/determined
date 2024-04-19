@@ -1,14 +1,22 @@
 package model
 
 import (
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/hashicorp/go-cleanhttp"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
-
-	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
@@ -157,14 +165,118 @@ func (users Users) Proto() []*userv1.User {
 // ExternalSessions provides an integration point for an external service to issue JWTs to control
 // access to the cluster.
 type ExternalSessions struct {
-	LoginURI  string `json:"login_uri"`
-	LogoutURI string `json:"logout_uri"`
-	JwtKey    string `json:"jwt_key"`
+	LoginURI        string    `json:"login_uri"`
+	LogoutURI       string    `json:"logout_uri"`
+	InvalidationURI string    `json:"invalidation_uri"`
+	JwtKey          string    `json:"jwt_key"`
+	OrgID           OrgID     `json:"org_id"`
+	ClusterID       ClusterID `json:"cluster_id"`
+	Invalidations   *InvalidationMap
 }
 
+// invalsLock synchronizes reading and updating ExternalSessions.Invalidations.
+// OK to use a single lock since StartInvalidationPoll() is guarded by sync.Once.
+var invalsLock sync.RWMutex
+
 // Enabled returns whether or not external sessions are enabled.
-func (e ExternalSessions) Enabled() bool {
+func (e *ExternalSessions) Enabled() bool {
 	return len(e.LoginURI) > 1
+}
+
+// Validate throws an error if the provided JWT is invalidated.
+func (e *ExternalSessions) Validate(claims *JWT) error {
+	invalsLock.RLock()
+	defer invalsLock.RUnlock()
+	if e.Invalidations == nil {
+		return nil
+	}
+	d := time.Unix(claims.IssuedAt, 0)
+	v := e.Invalidations.GetInvalidatonTime(claims.UserID)
+	if d.Before(v) {
+		return fmt.Errorf("%w since it has been invalidated", jwt.ErrTokenExpired)
+	}
+	return nil
+}
+
+func (e *ExternalSessions) fetchInvalidations(cert *tls.Certificate) {
+	transport := cleanhttp.DefaultTransport()
+	transport.TLSClientConfig = &tls.Config{
+		Certificates: []tls.Certificate{*cert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	client := cleanhttp.DefaultClient()
+	client.Transport = transport
+
+	req, err := http.NewRequest(http.MethodGet, e.InvalidationURI, nil)
+	if err != nil {
+		log.WithError(err).Errorf("error fetching token invalidations")
+		return
+	}
+	if e.Invalidations != nil {
+		func() {
+			invalsLock.RLock()
+			defer invalsLock.RUnlock()
+			req.Header.Set("If-Modified-Since", e.Invalidations.LastUpdated.Format(time.RFC1123))
+		}()
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.WithError(err).Errorf("error fetching token invalidations")
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode >= 300 { //nolint: usestdlibvars
+		return
+	}
+
+	var im InvalidationMap
+	err = json.NewDecoder(resp.Body).Decode(&im)
+	if err != nil {
+		log.WithError(err).Errorf("error parsing received token invalidations")
+		return
+	}
+
+	func() {
+		invalsLock.Lock()
+		defer invalsLock.Unlock()
+		e.Invalidations = &im
+	}()
+}
+
+// StartInvalidationPoll polls for new invalidations every minute.
+func (e *ExternalSessions) StartInvalidationPoll(cert *tls.Certificate) {
+	t := time.NewTicker(1 * time.Minute)
+	go func() {
+		for range t.C {
+			e.fetchInvalidations(cert)
+		}
+	}()
+}
+
+// InvalidationMap tracks times before which users should be considered invalid.
+type InvalidationMap struct {
+	DefaultTime       time.Time                       `json:"defaultTime"`
+	LastUpdated       time.Time                       `json:"lastUpdated"`
+	InvalidationTimes map[string]map[string]time.Time `json:"invalidationTimes"`
+}
+
+// GetInvalidatonTime returns which the token invalidation time for the specified user.
+func (im *InvalidationMap) GetInvalidatonTime(id string) time.Time {
+	times, ok := im.InvalidationTimes[id]
+	if !ok {
+		return im.DefaultTime
+	}
+
+	var latest time.Time
+	for _, t := range times {
+		if latest.IsZero() || latest.Before(t) {
+			latest = t
+		}
+	}
+
+	return latest
 }
 
 // UserWebSetting is a record of user web setting.
