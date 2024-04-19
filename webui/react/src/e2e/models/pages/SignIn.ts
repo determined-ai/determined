@@ -8,7 +8,7 @@ import { PageComponent } from 'e2e/models/components/Page';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class SignIn extends BasePage {
-  readonly title: string = 'Sign In - (Determined|HPE Machine Learning Development Environment)';
+  readonly title: string = 'Sign In - HPE Machine Learning Development Environment';
   readonly url: string = 'login';
   readonly pageComponent: PageComponent = new PageComponent({ parent: this });
   readonly detAuth: DeterminedAuth = new DeterminedAuth({ parent: this.pageComponent });

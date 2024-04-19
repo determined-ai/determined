@@ -40,7 +40,7 @@ test.describe('Projects', () => {
     await dev.setServerAddress();
     await auth.login(/dashboard/);
     await expect(page).toHaveTitle(
-      'Home - (Determined|HPE Machine Learning Development Environment)',
+      /Home - (Determined|HPE Machine Learning Development Environment)/,
     );
     await expect(page).toHaveURL(/dashboard/);
   });
