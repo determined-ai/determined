@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { BrandingType, DeterminedInfo, MaintenanceMessage } from 'stores/determinedInfo';
+import { BrandingType, DeterminedInfo, ClusterMessage } from 'stores/determinedInfo';
 import { Pagination, RawJson } from 'types';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
@@ -92,12 +92,16 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
 
   // modifiedAt: new Date(data.modifiedAt || 1).getTime(),
   // TODO: time types?
-  const maintMsg = data.maintenanceMessage ? ({
-    message: data.maintenanceMessage.message,
-    startTime: data.maintenanceMessage.startTime,
-    endTime: data.maintenanceMessage.endTime ? new Date(data.maintenanceMessage.endTime) : undefined,
-    createdTime: data.maintenanceMessage.createdTime,
-  } as MaintenanceMessage) : undefined;
+  const clustMsg = data.clusterMessage
+    ? ({
+        message: data.clusterMessage.message,
+        startTime: data.clusterMessage.startTime,
+        endTime: data.clusterMessage.endTime
+          ? new Date(data.clusterMessage.endTime)
+          : undefined,
+        createdTime: data.clusterMessage.createdTime,
+      } as ClusterMessage)
+    : undefined;
 
   return {
     branding,
@@ -107,7 +111,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
     featureSwitches: data.featureSwitches || [],
-    maintenanceMessage: maintMsg,
+    clusterMessage: clustMsg,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     rbacEnabled: !!data.rbacEnabled,

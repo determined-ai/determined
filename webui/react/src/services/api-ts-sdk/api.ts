@@ -1855,6 +1855,37 @@ export interface V1CloseTrialOperation {
     requestId?: string;
 }
 /**
+ * Active notice from the server admin.
+ * @export
+ * @interface V1ClusterMessage
+ */
+export interface V1ClusterMessage {
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1ClusterMessage
+     */
+    message: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    startTime: Date | DateString;
+    /**
+     * Time to stop showing message.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    endTime?: Date | DateString;
+    /**
+     * Time message was created.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    createdTime?: Date | DateString;
+}
+/**
  * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
  * @export
  * @enum {string}
@@ -2393,6 +2424,13 @@ export interface V1DeleteCheckpointsRequest {
 export interface V1DeleteCheckpointsResponse {
 }
 /**
+ * Response to DeleteClusterMessageRequest.
+ * @export
+ * @interface V1DeleteClusterMessageResponse
+ */
+export interface V1DeleteClusterMessageResponse {
+}
+/**
  * Response to DeleteExperimentLabelRequest.
  * @export
  * @interface V1DeleteExperimentLabelResponse
@@ -2450,13 +2488,6 @@ export interface V1DeleteExperimentsResponse {
  * @interface V1DeleteGroupResponse
  */
 export interface V1DeleteGroupResponse {
-}
-/**
- * Response to DeleteMaintenanceMessageRequest.
- * @export
- * @interface V1DeleteMaintenanceMessageResponse
- */
-export interface V1DeleteMaintenanceMessageResponse {
 }
 /**
  * 
@@ -3485,6 +3516,19 @@ export interface V1GetCheckpointResponse {
     checkpoint: V1Checkpoint;
 }
 /**
+ * 
+ * @export
+ * @interface V1GetClusterMessageResponse
+ */
+export interface V1GetClusterMessageResponse {
+    /**
+     * 
+     * @type {V1ClusterMessage}
+     * @memberof V1GetClusterMessageResponse
+     */
+    clusterMessage?: V1ClusterMessage;
+}
+/**
  * Response to GetCommandRequest.
  * @export
  * @interface V1GetCommandResponse
@@ -3961,11 +4005,11 @@ export interface V1GetMasterResponse {
      */
     strictJobQueueControl: boolean;
     /**
-     * Active server maintenance message.
-     * @type {V1MaintenanceMessage}
+     * Active server cluster-wide message if any.
+     * @type {V1ClusterMessage}
      * @memberof V1GetMasterResponse
      */
-    maintenanceMessage?: V1MaintenanceMessage;
+    clusterMessage?: V1ClusterMessage;
 }
 /**
  * Response to GetMeRequest.
@@ -5898,37 +5942,6 @@ export type V1LogLevel = ValueOf<typeof V1LogLevel>
  * @interface V1LogoutResponse
  */
 export interface V1LogoutResponse {
-}
-/**
- * Active notice from the server admin.
- * @export
- * @interface V1MaintenanceMessage
- */
-export interface V1MaintenanceMessage {
-    /**
-     * Text content of message.
-     * @type {string}
-     * @memberof V1MaintenanceMessage
-     */
-    message: string;
-    /**
-     * Time to begin showing message.
-     * @type {Date | DateString}
-     * @memberof V1MaintenanceMessage
-     */
-    startTime: Date | DateString;
-    /**
-     * Time to stop showing message.
-     * @type {Date | DateString}
-     * @memberof V1MaintenanceMessage
-     */
-    endTime?: Date | DateString;
-    /**
-     * Time message was created.
-     * @type {Date | DateString}
-     * @memberof V1MaintenanceMessage
-     */
-    createdTime?: Date | DateString;
 }
 /**
  * Mark some reservation as a daemon.
@@ -9523,6 +9536,44 @@ export interface V1SearchRunsResponse {
     pagination: V1Pagination;
 }
 /**
+ * Set the cluster-wide message.
+ * @export
+ * @interface V1SetClusterMessageRequest
+ */
+export interface V1SetClusterMessageRequest {
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1SetClusterMessageRequest
+     */
+    message: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date | DateString}
+     * @memberof V1SetClusterMessageRequest
+     */
+    startTime: Date | DateString;
+    /**
+     * Time to stop showing message.
+     * @type {Date | DateString}
+     * @memberof V1SetClusterMessageRequest
+     */
+    endTime?: Date | DateString;
+    /**
+     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h, 2w, 5d)
+     * @type {string}
+     * @memberof V1SetClusterMessageRequest
+     */
+    duration?: string;
+}
+/**
+ * Response to SetClusterMessageRequest.
+ * @export
+ * @interface V1SetClusterMessageResponse
+ */
+export interface V1SetClusterMessageResponse {
+}
+/**
  * Set the priority of the requested command.
  * @export
  * @interface V1SetCommandPriorityRequest
@@ -9553,44 +9604,6 @@ export interface V1SetCommandPriorityResponse {
      * @memberof V1SetCommandPriorityResponse
      */
     command?: V1Command;
-}
-/**
- * Set new maintenance message.
- * @export
- * @interface V1SetMaintenanceMessageRequest
- */
-export interface V1SetMaintenanceMessageRequest {
-    /**
-     * Text content of message.
-     * @type {string}
-     * @memberof V1SetMaintenanceMessageRequest
-     */
-    message: string;
-    /**
-     * Time to begin showing message.
-     * @type {Date | DateString}
-     * @memberof V1SetMaintenanceMessageRequest
-     */
-    startTime: Date | DateString;
-    /**
-     * Time to stop showing message.
-     * @type {Date | DateString}
-     * @memberof V1SetMaintenanceMessageRequest
-     */
-    endTime?: Date | DateString;
-}
-/**
- * Response to SetMaintenanceMessageRequest.
- * @export
- * @interface V1SetMaintenanceMessageResponse
- */
-export interface V1SetMaintenanceMessageResponse {
-    /**
-     * Unique ID of maintenance message.
-     * @type {number}
-     * @memberof V1SetMaintenanceMessageResponse
-     */
-    id?: number;
 }
 /**
  * Set the priority of the requested notebook.
@@ -12099,12 +12112,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
     return {
         /**
          * 
-         * @summary Clear all maintenance messages.
+         * @summary Clear the cluster-wide message shown to all users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/master/maintenance_message`;
+        deleteClusterMessage(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/master/cluster_message`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12379,6 +12392,36 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (label !== undefined) {
                 localVarQueryParameter['label'] = label
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/master/cluster_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -12710,17 +12753,17 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
-         * @summary Post new maintenance messages.
-         * @param {V1SetMaintenanceMessageRequest} body
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setMaintenanceMessage(body: V1SetMaintenanceMessageRequest, options: any = {}): FetchArgs {
+        setClusterMessage(body: V1SetClusterMessageRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling setMaintenanceMessage.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setClusterMessage.');
             }
-            const localVarPath = `/api/v1/master/maintenance_message`;
+            const localVarPath = `/api/v1/master/cluster_message`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
@@ -12757,12 +12800,12 @@ export const ClusterApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Clear all maintenance messages.
+         * @summary Clear the cluster-wide message shown to all users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteMaintenanceMessageResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteMaintenanceMessage(options);
+        deleteClusterMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteClusterMessage(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12885,6 +12928,24 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getClusterMessage(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13053,13 +13114,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Post new maintenance messages.
-         * @param {V1SetMaintenanceMessageRequest} body
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setMaintenanceMessage(body: V1SetMaintenanceMessageRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetMaintenanceMessageResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).setMaintenanceMessage(body, options);
+        setClusterMessage(body: V1SetClusterMessageRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).setClusterMessage(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13081,12 +13142,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
     return {
         /**
          * 
-         * @summary Clear all maintenance messages.
+         * @summary Clear the cluster-wide message shown to all users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteMaintenanceMessage(options?: any) {
-            return ClusterApiFp(configuration).deleteMaintenanceMessage(options)(fetch, basePath);
+        deleteClusterMessage(options?: any) {
+            return ClusterApiFp(configuration).deleteClusterMessage(options)(fetch, basePath);
         },
         /**
          * 
@@ -13155,6 +13216,15 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
             return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options?: any) {
+            return ClusterApiFp(configuration).getClusterMessage(options)(fetch, basePath);
         },
         /**
          * 
@@ -13242,13 +13312,13 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         },
         /**
          * 
-         * @summary Post new maintenance messages.
-         * @param {V1SetMaintenanceMessageRequest} body
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setMaintenanceMessage(body: V1SetMaintenanceMessageRequest, options?: any) {
-            return ClusterApiFp(configuration).setMaintenanceMessage(body, options)(fetch, basePath);
+        setClusterMessage(body: V1SetClusterMessageRequest, options?: any) {
+            return ClusterApiFp(configuration).setClusterMessage(body, options)(fetch, basePath);
         },
     }
 };
@@ -13262,13 +13332,13 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
 export class ClusterApi extends BaseAPI {
     /**
      * 
-     * @summary Clear all maintenance messages.
+     * @summary Clear the cluster-wide message shown to all users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public deleteMaintenanceMessage(options?: any) {
-        return ClusterApiFp(this.configuration).deleteMaintenanceMessage(options)(this.fetch, this.basePath)
+    public deleteClusterMessage(options?: any) {
+        return ClusterApiFp(this.configuration).deleteClusterMessage(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -13349,6 +13419,17 @@ export class ClusterApi extends BaseAPI {
      */
     public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, options?: any) {
         return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the currently configured cluster-wide message.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getClusterMessage(options?: any) {
+        return ClusterApiFp(this.configuration).getClusterMessage(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -13453,14 +13534,14 @@ export class ClusterApi extends BaseAPI {
     
     /**
      * 
-     * @summary Post new maintenance messages.
-     * @param {V1SetMaintenanceMessageRequest} body
+     * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+     * @param {V1SetClusterMessageRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public setMaintenanceMessage(body: V1SetMaintenanceMessageRequest, options?: any) {
-        return ClusterApiFp(this.configuration).setMaintenanceMessage(body, options)(this.fetch, this.basePath)
+    public setClusterMessage(body: V1SetClusterMessageRequest, options?: any) {
+        return ClusterApiFp(this.configuration).setClusterMessage(body, options)(this.fetch, this.basePath)
     }
     
 }

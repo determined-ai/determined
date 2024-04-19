@@ -14,7 +14,7 @@ import { useParams } from 'react-router-dom';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
-import MaintenanceMessage from 'components/MaintenanceMessage';
+import ClusterMessage from 'components/ClusterMessage';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
@@ -168,41 +168,46 @@ const AppView: React.FC = () => {
     Failed: () => null, // TODO display any errors we receive
     Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
-        <div className={css.base}>
-          {isAuthChecked ? (
-            <>
-              {isServerReachable ? (
-                <ConfirmationProvider>
-                  {info.maintenanceMessage ? <MaintenanceMessage message={info.maintenanceMessage} /> : null}
-                  {/* <div>This is for maintenance message. {info.maintenanceMessage?.message}</div> */}
-                  <Navigation>
-                    <JupyterLabGlobal
-                      enabled={
-                        Loadable.isLoaded(loadableUser) &&
-                        (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
-                      }
-                      workspace={workspace ?? undefined}
-                    />
-                    <Omnibar />
-                    <main>
-                      <Router routes={appRoutes} />
-                    </main>
-                  </Navigation>
-                </ConfirmationProvider>
-              ) : (
-                <PageMessage title="Server is Unreachable">
-                  <p>
-                    Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
-                    check the firewall and cluster settings.
-                  </p>
-                  <Button onClick={refreshPage}>Try Again</Button>
-                </PageMessage>
-              )}
-            </>
-          ) : (
-            <Spinner center spinning />
-          )}
-        </div>
+        {/* <div className={css.topLevelContainer}> */}
+          {/* {info.clusterMessage ? (
+            <ClusterMessage message={info.clusterMessage} />
+            ) : null} */}
+          <div className={css.base}>
+            {isAuthChecked ? (
+              <>
+                {isServerReachable ? (
+                  <ConfirmationProvider>
+                      
+                      <Navigation>
+                        <JupyterLabGlobal
+                          enabled={
+                            Loadable.isLoaded(loadableUser) &&
+                            (workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC)
+                          }
+                          workspace={workspace ?? undefined}
+                          />
+                        <Omnibar />
+                        <main>
+                          <Router routes={appRoutes} />
+                        </main>
+                      </Navigation>
+                    
+                  </ConfirmationProvider>
+                ) : (
+                  <PageMessage title="Server is Unreachable">
+                    <p>
+                      Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please
+                      check the firewall and cluster settings.
+                    </p>
+                    <Button onClick={refreshPage}>Try Again</Button>
+                  </PageMessage>
+                )}
+              </>
+            ) : (
+              <Spinner center spinning />
+            )}
+          </div>
+        {/* </div> */}
       </UIProvider>
     ),
     NotLoaded: () => (

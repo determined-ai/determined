@@ -2,6 +2,11 @@
   background-color: var(--theme-background);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  max-height: 90vh;
   width: 100%;
 }
+
+// .topLevelContainer {
+//   display: flex;
+//   flex-direction: column;
+// }

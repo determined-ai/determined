@@ -1,0 +1,27 @@
+.base {
+	background-color: #b44;
+	box-sizing: border-box;
+	color: #ddd;
+	// display: flex;
+	// height:4em;
+	padding: 0.5em 10% 0.5em 10%;
+	// position: sticky;
+	text-align: center;
+	// top: 0;
+	width: 100%;
+	z-index: 500;
+	// max-height: 10vh;
+	// TODO: vertically center
+}
+
+.clusterMessageLabel {
+	font-weight: bold;
+}
+
+.placeHolder, .base {
+	height: 4em;
+}
+
+.placeHolder {
+	display: none;
+}

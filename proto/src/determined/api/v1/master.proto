@@ -49,7 +49,6 @@ message GetMasterResponse {
       required: [
         "version",
         "master_id",
-        "cluster_message",
         "cluster_id",
         "cluster_name",
         "strict_job_queue_control"
