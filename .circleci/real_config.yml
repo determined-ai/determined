@@ -2017,6 +2017,7 @@ jobs:
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
       - install-protoc 
+      - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
@@ -4143,7 +4144,9 @@ workflows:
       - test-e2e-react:
           requires:
             - build-go
-          context: playwright
+          context: 
+            - playwright
+            - github-read
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4228,7 +4231,9 @@ workflows:
       - test-e2e-react:
           requires:
             - build-go
-          context: playwright
+          context: 
+            - playwright
+            - github-read
           filters: *any-upstream
       - build-docs:
           requires:
