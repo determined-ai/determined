@@ -4138,10 +4138,10 @@ workflows:
       - check-docs-links:
           requires:
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
 
       - deploy:
           name: deploy-latest-main-cluster
