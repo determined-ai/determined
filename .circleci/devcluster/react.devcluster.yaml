@@ -2,14 +2,7 @@ temp_dir: /tmp/priority_scheduler
 
 stages:
   - db:
-      name: db-priority-scheduler
-      db_name: db-priority-scheduler
-      container_name: determined_db-priority-scheduler
-      port: 5434
-
-  - elastic:
-      name: elastic-priority-scheduler
-      container_name: determined_elastic-priority-scheduler
+      name: db
 
   - master:
       pre:
@@ -21,7 +14,7 @@ stages:
           port: 5434
           password: postgres
           user: postgres
-          name: db-priority-scheduler
+          name: db
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp
@@ -46,5 +39,4 @@ stages:
         container_master_host: $DOCKER_LOCALHOST
         agent_reconnect_attempts: 24
         agent_reconnect_backoff: 5
-        container_auto_remove_disabled: true
         
