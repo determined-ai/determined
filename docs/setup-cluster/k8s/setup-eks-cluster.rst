@@ -206,7 +206,7 @@ command to install the plugin:
 .. code:: bash
 
    # Deploy a DaemonSet that enables the GPUs.
-   kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.15.0/deployments/static/nvidia-device-plugin.yml
+   kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/deployments/static/nvidia-device-plugin.yml
 
 *******************
  Enable Autoscaler
