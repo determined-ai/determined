@@ -118,17 +118,20 @@ def read_paginated_with_session(
     pages: PageOpts = PageOpts.all,
 ) -> Iterator[T]:
     """Fetch responses from a paginated API using the given session."""
-    while True:
-        resp = get_with_offset(offset, session)
-        pagination = resp.pagination
-        assert pagination is not None
-        assert pagination.endIndex is not None
-        assert pagination.total is not None
-        yield resp
-        if pagination.endIndex >= pagination.total or pages == PageOpts.single:
-            break
-        assert pagination.endIndex is not None
-        offset = pagination.endIndex
+    with contextlib.ExitStack() as es:
+        es.enter_context(session)
+
+        while True:
+            resp = get_with_offset(offset, session)
+            pagination = resp.pagination
+            assert pagination is not None
+            assert pagination.endIndex is not None
+            assert pagination.total is not None
+            yield resp
+            if pagination.endIndex >= pagination.total or pages == PageOpts.single:
+                break
+            assert pagination.endIndex is not None
+            offset = pagination.endIndex
 
 
 # Literal["notebook", "tensorboard", "shell", "command"]

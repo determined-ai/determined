@@ -516,12 +516,11 @@ class Experiment:
                 states=[bindings.checkpointv1State.COMPLETED],
             )
 
-        with self._session as sess:
-            resps = api.read_paginated(
-                get_with_offset=get_with_offset,
-                pages=api.PageOpts.single if max_results else api.PageOpts.all,
-                session=sess,
-            )
+        resps = api.read_paginated_with_session(
+            get_with_offset=get_with_offset,
+            pages=api.PageOpts.single if max_results else api.PageOpts.all,
+            session=self._session,
+        )
 
         return [
             checkpoint.Checkpoint._from_bindings(c, self._session)
