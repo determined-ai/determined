@@ -688,6 +688,9 @@ commands:
       deployment-type:
         type: string
         default: simple-rds
+      ee:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Initialize extra arguments
@@ -735,23 +738,44 @@ commands:
             echo "-----BEGIN ARGS-----"
             cat /tmp/det-deploy-extra-args
             echo "-----END ARGS-----"
-            MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
-              $(< /tmp/det-deploy-extra-args) \
-              --add-tag owner=determined_ci \
-              --add-tag gh_team=machine-users \
-              --cluster-id <<parameters.cluster-id>> \
-              --det-version <<parameters.det-version>> \
-              --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
-              --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
-              --max-dynamic-agents <<parameters.max-dynamic-agents>> \
-              --keypair <<parameters.keypair>> \
-              --deployment-type <<parameters.deployment-type>> \
-              --enterprise-edition \
-              --docker-user $DOCKER_USER \
-              --docker-pass $DOCKER_PASS \
-              --retain-log-group \
-              --initial-user-password ${INITIAL_USER_PASSWORD} \
-              --yes
+            if <<parameters.ee>>; then
+              echo "running enterprise edition"
+              MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
+                $(< /tmp/det-deploy-extra-args) \
+                --add-tag owner=determined_ci \
+                --add-tag gh_team=machine-users \
+                --cluster-id <<parameters.cluster-id>> \
+                --det-version <<parameters.det-version>> \
+                --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
+                --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
+                --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                --keypair <<parameters.keypair>> \
+                --deployment-type <<parameters.deployment-type>> \
+                --enterprise-edition \
+                --docker-user $DOCKER_USER \
+                --docker-pass $DOCKER_PASS \
+                --retain-log-group \
+                --initial-user-password ${INITIAL_USER_PASSWORD} \
+                --yes
+            else
+              echo "running OSS edition"
+              MAX_RETRIES=6 DET_DEBUG=1 tools/scripts/retry.sh det deploy aws up \
+                $(< /tmp/det-deploy-extra-args) \
+                --add-tag owner=determined_ci \
+                --add-tag gh_team=machine-users \
+                --cluster-id <<parameters.cluster-id>> \
+                --det-version <<parameters.det-version>> \
+                --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
+                --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
+                --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+                --keypair <<parameters.keypair>> \
+                --deployment-type <<parameters.deployment-type>> \
+                --docker-user $DOCKER_USER \
+                --docker-pass $DOCKER_PASS \
+                --retain-log-group \
+                --initial-user-password ${INITIAL_USER_PASSWORD} \
+                --yes
+            fi
 
   terminate-aws-cluster:
     parameters:
@@ -793,6 +817,9 @@ commands:
       deployment-type:
         type: string
         default: simple-rds
+      ee:
+        type: boolean
+        default: false
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -809,6 +836,7 @@ commands:
           log-group-prefix: determined-ci
           retain-log-group: true
           deployment-type: <<parameters.deployment-type>>
+          ee: <<parameters.ee>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
@@ -3367,6 +3395,9 @@ jobs:
       extra-tags:
         type: string
         default: ""
+      ee:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -3391,6 +3422,7 @@ jobs:
           reattach-enabled: <<parameters.reattach-enabled>>
           deployment-type: simple
           extra-tags: <<parameters.extra-tags>>
+          ee: <<parameters.ee>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
@@ -3513,6 +3545,7 @@ jobs:
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
+          ee: true
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3837,6 +3870,7 @@ jobs:
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
           deployment-type: <<parameters.deployment-type>>
+          ee: true
       - run:
           name: Set DET_MASTER for further action.
           command: |
@@ -4140,17 +4174,6 @@ workflows:
           max-dynamic-agents: 1
           cluster-id: determined-preview
           compute-agent-instance-type: t2.medium
-
-      - deploy-latest-gke:
-          name: deploy-latest-gke-master
-          context: gcp
-          det-version: $CIRCLE_SHA1
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - package-and-push-system-dev
 
   test-e2e:
     jobs:
@@ -4681,6 +4704,17 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+
+      - deploy-latest-gke:
+          name: deploy-latest-gke-master
+          context: gcp
+          det-version: $CIRCLE_SHA1
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - package-and-push-system-dev-ee
     
   test-e2e-gke-shared-cluster:
     unless: << pipeline.parameters.do_nightly_tests >>
