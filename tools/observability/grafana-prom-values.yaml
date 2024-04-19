@@ -12,7 +12,7 @@ prometheus:
     additionalScrapeConfigs:
       - job_name: det-master-api-server
         honor_timestamps: true
-        scrape_interval: 1s # TODO 5s or 15s?
+        scrape_interval: 1s
         scrape_timeout: 1s
         metrics_path: /debug/prom/metrics
         scheme: http
@@ -21,8 +21,7 @@ prometheus:
           type: Bearer
           credentials_file: /tmp/det-secret/det-token
 
-          #credentials_file: $PATH_TO_TOKEN
-        kubernetes_sd_configs:
+         kubernetes_sd_configs:
         - role: service
           selectors:
             - label: determined.ai/master-service=true
@@ -45,19 +44,3 @@ prometheus:
         - source_labels: [__meta_kubernetes_pod_node_name]
           action: replace
           target_label: kubernetes_node
-
-#     podMonitorNamespaceSelector:
-#       any: true
-#     podMonitorSelector: {}
-#     podMonitorSelectorNilUsesHelmValues: false
-#     ruleNamespaceSelector:
-#       any: true
-#     ruleSelector: {}
-#     ruleSelectorNilUsesHelmValues: false
-#     serviceMonitorNamespaceSelector:
-#       any: true
-#     serviceMonitorSelector: {}
-#     serviceMonitorSelectorNilUsesHelmValues: false
-# grafana:
-#   enabled: true
-# #  adminPassword: prom-operator # Please change the default password in production !!!        
