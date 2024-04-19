@@ -71,7 +71,7 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Admin' }).click();
       const expectedURL = /admin\/user-management/;
       await page.waitForURL(expectedURL);
-      await expect.soft(page).toHaveTitle('Determined');
+      await expect.soft(page).toHaveTitle('(Determined|HPE Machine Learning Development Environment)');
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
