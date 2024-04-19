@@ -2025,8 +2025,6 @@ jobs:
       - start-devcluster:
           devcluster-config: react.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
-      - run: rm -f ./license.txt
-      - run: rm -f ./public.txt
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
           host: "localhost"
