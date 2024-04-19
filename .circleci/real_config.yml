@@ -4266,16 +4266,15 @@ workflows:
               only:
                 - main
 
-      - request-e2e-hpc-tests:
-          type: approval
-          filters: *any-upstream
-
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
-            - request-e2e-hpc-tests
+          filters:
+            branches:
+              only:
+                - main
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
@@ -4320,7 +4319,10 @@ workflows:
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
-            - request-e2e-hpc-tests
+          filters:
+            branches:
+              only:
+                - main
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4336,6 +4338,10 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4351,6 +4357,10 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4366,6 +4376,10 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4382,6 +4396,10 @@ workflows:
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4399,6 +4417,10 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4415,6 +4437,10 @@ workflows:
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
@@ -4432,6 +4458,10 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       - test-e2e:
           name: test-e2e-rbac
@@ -5176,6 +5206,181 @@ workflows:
           deployment-type: efs
           slack-channel: <<pipeline.parameters.default-slack-channel>>
           slack-mentions: "${SLACK_USER_ID}"
+
+      # Request HPC tests
+      - request-hpc-tests:
+          type: approval
+          filters: *any-upstream
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-misconfigured
+          slack-mentions: "${SLACK_USER_ID}"
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          mark: e2e_slurm_misconfigured
+          master_config: |
+            task_container_defaults:
+              slurm:
+                sbatch_args:
+                  - --time=04:00:00
+              environment_variables:
+                # Some ports are not working, disable them so distributed jobs work.
+                - NCCL_IB_HCA=mlx6_0:0
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: launcher
+            resource_manager:
+              type: slurm
+              master_host: junkmaster
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-gpu
+          slack-mentions: "${SLACK_USER_ID}"
+          mark: "e2e_slurm_gpu"
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+
+      # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-singularity-gcp]
+              always-run: [true]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-podman-gcp]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              workload-manager: ["pbs"]
+              always-run: [true]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over SLURM test using Agent on GCP
+      - test-e2e-hpc-gcp:
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-agent-podman-gcp]
+              agent-use: ["-A"]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+            - request-hpc-tests
 
   nightly:
     when: << pipeline.parameters.do_nightly_tests >>
