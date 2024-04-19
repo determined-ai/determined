@@ -4,13 +4,35 @@ metadata:
   name: token-refresh-service-account
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: list-services
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: token-refresh-service-account-list-services
+subjects:
+- kind: ServiceAccount
+  name: token-refresh-service-account
+  namespace: det-monitoring
+roleRef:
+  kind: ClusterRole
+  name: list-services
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: token-refresh-role
 rules:
   - apiGroups: [""]
-    resources: ["secrets", "services"]
-    verbs: ["list", "get", "update", "create", "patch"]
+    resources: ["secrets"]
+    verbs: ["get", "update", "create", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -39,7 +61,6 @@ data:
     username="$(echo $secret | base64 --decode | tr : ' ' | awk '{print $1}')"
     password="$(echo $secret | base64 --decode | tr : ' ' | awk '{print $2}')"
 
-    # TODO does this work?
     ip=$(kubectl get svc --all-namespaces -l determined.ai/master-service=true -o jsonpath='{.items[0].spec.clusterIP}')
 
     echo "using username" $username
