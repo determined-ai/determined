@@ -4181,6 +4181,7 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+          ee: true
       - test-e2e-react:
           context: playwright
           filters: *any-upstream
