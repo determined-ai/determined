@@ -1423,8 +1423,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl
-      - run: pip install --user awscli  # used in the terraform apply
+      - run: apk add make curl py3-pip
+      - run: pip install --break-system-packages awscli  # used in the terraform apply
       - run: |
           if <<parameters.dry-run>>; then
             echo 'Doing a dry run!'
