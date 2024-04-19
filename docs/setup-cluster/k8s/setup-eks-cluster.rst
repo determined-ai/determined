@@ -404,8 +404,8 @@ g4dn.metal node group:
 
 Furthermore, tainting requires changes to be made to the GPU enabling DaemonSet and more additions
 to the experiment config. First, to change the DaemonSet, save a copy of the `official version
-<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_ and
-make the following additions to its tolerations:
+<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/deployments/static/nvidia-device-plugin.yml>`_
+and make the following additions to its tolerations:
 
 .. code:: yaml
 
