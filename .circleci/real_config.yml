@@ -2021,7 +2021,6 @@ jobs:
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - license-gen
       - install-devcluster
       - start-devcluster:
           devcluster-config: double.devcluster.yaml
