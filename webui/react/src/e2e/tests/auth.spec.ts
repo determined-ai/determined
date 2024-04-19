@@ -17,7 +17,7 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveTitle('Home - HPE Machine Learning Development Environment');
+      await expect(page).toHaveTitle('Home - (Determined|HPE Machine Learning Development Environment)');
       await expect(page).toHaveURL(/dashboard/);
     });
 
@@ -37,7 +37,7 @@ test.describe('Authentication', () => {
 
     await test.step('Login and expect redirect to previous page', async () => {
       await auth.login(/models/);
-      await expect(page).toHaveTitle('Model Registry - HPE Machine Learning Development Environment');
+      await expect(page).toHaveTitle('Model Registry - (Determined|HPE Machine Learning Development Environment)');
     });
   });
 

@@ -9,7 +9,7 @@ import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class Workspaces extends BasePage {
-  readonly title: string = 'Workspaces - HPE Machine Learning Development Environment';
+  readonly title: string = 'Workspaces - (Determined|HPE Machine Learning Development Environment)';
   readonly url: string = 'workspaces';
   readonly list: WorkspacesList = new WorkspacesList({
     parent: this,
