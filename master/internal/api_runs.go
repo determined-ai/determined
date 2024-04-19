@@ -134,6 +134,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
 		Column("r.project_id").
+		ColumnExpr("CONCAT(p.key, '-' ,CAST(r.local_id as text)) as local_id").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("r.hparams AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
@@ -191,6 +192,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
 		"isExpMultitrial":       "is_exp_multitrial",
+		"localId":               "local_id",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
@@ -370,9 +372,16 @@ func (a *apiServer) MoveRuns(
 				failedExpMoveIds = append(failedExpMoveIds, res.ID)
 			}
 		}
+		var local_id int
+		if err := db.Bun().NewUpdate().Table("projects").
+			Set("max_local_id = max_local_id + 1").Where("id = ?", req.DestinationProjectId).
+			Returning("max_local_id").Scan(ctx, &local_id); err != nil {
+			return nil, fmt.Errorf("updating and returning project max_local_id: %w", err)
+		}
 		var acceptedIDs []int32
 		if _, err = db.Bun().NewUpdate().Table("runs").
 			Set("project_id = ?", req.DestinationProjectId).
+			Set("local_id = ?", local_id).
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
 			Returning("runs.id").

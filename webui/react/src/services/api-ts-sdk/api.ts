@@ -3382,6 +3382,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     experiment?: V1FlatRunExperiment;
+    /**
+     * Project level local id of run.
+     * @type {number}
+     * @memberof V1FlatRun
+     */
+    localId?: number;
 }
 /**
  * 

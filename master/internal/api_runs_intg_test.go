@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -293,6 +294,9 @@ func TestMoveRunsIds(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 	require.Equal(t, moveIds[0], resp.Runs[0].Id)
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localId := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localId)
 
 	// Experiment in new project
 	exp, err := api.getExperiment(ctx, curUser, run1.ExperimentID)
@@ -417,6 +421,13 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 	// Check if runs in same experiment
 	require.Equal(t, expID, resp.Runs[0].Experiment.Id)
 	require.Equal(t, expID, resp.Runs[1].Experiment.Id)
+
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localId1 := resp.Runs[0].LocalId[i+1:]
+	i = strings.Index(resp.Runs[1].LocalId, "-")
+	localId2 := resp.Runs[1].LocalId[i+1:]
+	require.Equal(t, "1", localId1)
+	require.Equal(t, "2", localId2)
 }
 
 func TestMoveRunsFilter(t *testing.T) {
@@ -489,4 +500,7 @@ func TestMoveRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localId := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localId)
 }
