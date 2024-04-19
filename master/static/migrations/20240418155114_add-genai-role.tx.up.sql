@@ -21,6 +21,8 @@ SELECT id AS permission_id, 8 FROM permissions WHERE name IN (
     'view model registry',
     'edit model registry',
     'create model registry',
+    'delete model registry',
+    'delete model version',
     'view templates',
     'update templates',
     'create templates',
