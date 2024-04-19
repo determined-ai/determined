@@ -14,11 +14,11 @@ stages:
           port: 5432
           password: postgres
           user: postgres
-          name: db
+          name: determined
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp
-          storage_path: determined-cp-priority
+          storage_path: determined-cp
         log:
           level: debug
         root: tools/build
