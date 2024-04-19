@@ -1083,6 +1083,9 @@ func buildRM(
 		}
 	}
 
+	// If multiple resource managers are defined, require license.
+	license.RequireLicense("multiple resource managers")
+
 	// Set the default RM name for the multi-rm, from the default RM index.
 	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
 	rms := map[string]rm.ResourceManager{}
