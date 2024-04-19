@@ -20,8 +20,7 @@ prometheus:
         authorization:
           type: Bearer
           credentials_file: /tmp/det-secret/det-token
-
-         kubernetes_sd_configs:
+        kubernetes_sd_configs:
         - role: service
           selectors:
             - label: determined.ai/master-service=true
