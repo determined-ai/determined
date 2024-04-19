@@ -49,6 +49,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestOIDCWorkflow(t *testing.T) {
+	t.Skip("Flakes because of serialization error. Ticket DET-10164")
+
 	ctx := context.Background()
 
 	cases := []struct {

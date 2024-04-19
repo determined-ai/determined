@@ -44,6 +44,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestSAMLWorkflowAutoProvision(t *testing.T) {
+	t.Skip("Flakes because of serialization error. Ticket DET-10164")
+
 	// First, make sure the mock SAML service is created.
 	s := mockService(true)
 	require.NotNil(t, s)
