@@ -40,6 +40,18 @@ def _make_requests_session(
     return requests_session
 
 
+def _get_error_str(r: requests.models.Response) -> str:
+    try:
+        json_resp = _json.loads(r.text)
+        mes = json_resp.get("message")
+        if mes is not None:
+            return str(mes)
+        # Try getting GRPC error description if message does not exist.
+        return str(json_resp.get("error").get("error"))
+    except Exception:
+        return ""
+
+
 class BaseSession(metaclass=abc.ABCMeta):
     """
     BaseSession is a requests-like interface that hides master url, master cert, and authz info.
@@ -79,13 +91,13 @@ class BaseSession(metaclass=abc.ABCMeta):
     _http_session: Optional[requests.Session]
 
     def __enter__(self):
-        self.persist_http_session()
+        self._persist_http_session()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def persist_http_session(self) -> None:
+    def _persist_http_session(self) -> None:
         # starts a new persistent HTTP session that will be used
         # for all requests until self.close() or the context exits.
         if self._http_session:
@@ -143,17 +155,6 @@ class BaseSession(metaclass=abc.ABCMeta):
             if not self._http_session:
                 # Close the session if not persistent.
                 session.close()
-
-        def _get_error_str(r: requests.models.Response) -> str:
-            try:
-                json_resp = _json.loads(r.text)
-                mes = json_resp.get("message")
-                if mes is not None:
-                    return str(mes)
-                # Try getting GRPC error description if message does not exist.
-                return str(json_resp.get("error").get("error"))
-            except Exception:
-                return ""
 
         if r.status_code == 403:
             raise errors.ForbiddenException(message=_get_error_str(r))

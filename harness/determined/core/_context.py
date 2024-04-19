@@ -68,7 +68,7 @@ class Context:
         self._session = _session
 
     def start(self) -> None:
-        self._session.persist_http_session()
+        self._session._persist_http_session()
         self.preempt.start()
         self._metrics.start()
         if self._tensorboard_manager is not None:
