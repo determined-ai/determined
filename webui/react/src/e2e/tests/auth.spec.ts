@@ -58,7 +58,7 @@ test.describe('Authentication', () => {
       'invalid credentials',
     );
     await signInPage.detAuth.submit.pwLocator.click();
-    await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible(); // This can show 2 but one sometimes closes during polling which adds flake
-    await expect(signInPage.detAuth.errors.message.pwLocator).toBeVisible();
+    await expect(signInPage.detAuth.errors.alert.pwLocator.first()).toBeVisible(); // This can show 2 but one sometimes closes during polling which adds flake
+    await expect(signInPage.detAuth.errors.message.pwLocator.first()).toBeVisible();
   });
 });
