@@ -2,16 +2,10 @@ import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
-import Section from 'components/Section';
 import { useGlasbey } from 'hooks/useGlasbey';
-import { useSettings } from 'hooks/useSettings';
-import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
-import ExperimentVisualizationFilters, {
-  VisualizationFilters,
-} from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
@@ -29,10 +23,7 @@ import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 
-import {
-  ExperimentHyperparametersSettings,
-  settingsConfigForExperimentHyperparameters,
-} from './CompareParallelCoordinates.settings';
+import { ExperimentHyperparametersSettings } from './CompareParallelCoordinates.settings';
 import css from './HpParallelCoordinates.module.scss';
 
 interface Props {
@@ -40,30 +31,19 @@ interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
   metricData: TrialMetricData;
+  settings: ExperimentHyperparametersSettings;
+  fullHParams: string[];
 }
 
 const CompareParallelCoordinates: React.FC<Props> = ({
   selectedExperiments,
   trials,
-  projectId,
+  settings,
   metricData,
+  fullHParams,
 }: Props) => {
   const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
-
-  const fullHParams: string[] = useMemo(() => {
-    const hpParams = new Set<string>();
-    trials.forEach((trial) => Object.keys(trial.hyperparameters).forEach((hp) => hpParams.add(hp)));
-    return Array.from(hpParams);
-  }, [trials]);
-
-  const settingsConfig = useMemo(
-    () => settingsConfigForExperimentHyperparameters(fullHParams, projectId),
-    [fullHParams, projectId],
-  );
-
-  const { settings, updateSettings, resetSettings } =
-    useSettings<ExperimentHyperparametersSettings>(settingsConfig);
 
   const { metrics, data, isLoaded, setScale } = metricData;
 
@@ -73,60 +53,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   useEffect(() => {
     setScale(selectedScale);
   }, [selectedScale, setScale]);
-
-  const filters: VisualizationFilters = useMemo(
-    () => ({
-      hParams: settings.hParams,
-      metric: settings.metric,
-      scale: settings.scale,
-    }),
-    [settings.hParams, settings.metric, settings.scale],
-  );
-
-  const handleFiltersChange = useCallback(
-    (filters: Partial<VisualizationFilters>) => {
-      updateSettings(filters);
-    },
-    [updateSettings],
-  );
-
-  const handleFiltersReset = useCallback(() => {
-    resetSettings();
-  }, [resetSettings]);
-
-  useEffect(() => {
-    const activeMetricFound = metrics.find(
-      (metric) =>
-        metric.name === settings?.metric?.name && metric.group === settings?.metric?.group,
-    );
-    updateSettings({ metric: activeMetricFound ?? metrics.first() });
-  }, [selectedExperiments, metrics, settings.metric, updateSettings]);
-
-  useEffect(() => {
-    if (settings.hParams !== undefined) {
-      if (settings.hParams.length === 0 && fullHParams.length > 0) {
-        updateSettings({ hParams: fullHParams.slice(0, 10) });
-      } else {
-        const activeHParams = settings.hParams.filter((hp) => fullHParams.includes(hp));
-        updateSettings({ hParams: activeHParams });
-      }
-    } else {
-      updateSettings({ hParams: fullHParams });
-    }
-  }, [selectedExperiments, fullHParams, settings.hParams, updateSettings]);
-
-  const visualizationFilters = useMemo(() => {
-    return (
-      <ExperimentVisualizationFilters
-        filters={filters}
-        fullHParams={fullHParams}
-        metrics={metrics}
-        type={ExperimentVisualizationType.HpParallelCoordinates}
-        onChange={handleFiltersChange}
-        onReset={handleFiltersReset}
-      />
-    );
-  }, [fullHParams, handleFiltersChange, handleFiltersReset, metrics, filters]);
 
   const selectedMetric = settings.metric;
   const selectedHParams = settings.hParams;
@@ -285,19 +211,17 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   }
 
   return (
-    <Section bodyBorder bodyScroll filters={visualizationFilters}>
-      <div className={css.container}>
-        <div className={css.chart}>
-          {selectedExperiments.length > 0 && (
-            <ParallelCoordinates
-              config={config}
-              data={chartData?.data ?? {}}
-              dimensions={dimensions}
-            />
-          )}
-        </div>
+    <div className={css.container}>
+      <div className={css.chart}>
+        {selectedExperiments.length > 0 && (
+          <ParallelCoordinates
+            config={config}
+            data={chartData?.data ?? {}}
+            dimensions={dimensions}
+          />
+        )}
       </div>
-    </Section>
+    </div>
   );
 };
 
