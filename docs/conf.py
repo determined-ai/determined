@@ -56,6 +56,7 @@ exclude_patterns = [
     "site",
     "README.md",
     "release-notes/README.md",
+    "deploy/README.md",
 ]
 html_baseurl = "https://docs.determined.ai"  # Base URL for sitemap.
 highlight_language = "none"
