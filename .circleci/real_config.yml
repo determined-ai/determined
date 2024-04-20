@@ -1674,7 +1674,6 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
-      - license-gen
       - setup-python-venv:
           install-python: false
           determined: true
@@ -4719,10 +4718,8 @@ workflows:
   test-e2e-gke-shared-cluster:
     unless: << pipeline.parameters.do_nightly_tests >>
     jobs:
-      - package-and-push-system-dev-small:
-          context: 
-            - determined-ee
-      
+      - package-and-push-system-dev-small
+          
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
           context: 
