@@ -2024,14 +2024,10 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: |
-          PW_USER_NAME=${PW_USER_NAME} \
-          PW_PASSWORD=${PW_PASSWORD} \
-          PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBPACK_PROXY_URL} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBSOCKET_PROXY_URL} \
-          PW_EE=<< parameters.ee >> \
-          npm run e2e --prefix webui/react
+      - run: 
+          environment:
+            PW_EE: << parameters.ee >> 
+          command: npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
