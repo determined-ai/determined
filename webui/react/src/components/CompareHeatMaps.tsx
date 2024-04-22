@@ -89,10 +89,7 @@ const CompareHeatMaps: React.FC<Props> = ({
   }, [activeHParam, galleryModal]);
 
   const smallerIsBetter = useMemo(() => {
-    if (
-      selectedMetric &&
-      selectedMetric.group === MetricType.Validation
-    ) {
+    if (selectedMetric && selectedMetric.group === MetricType.Validation) {
       const key = metricToKey(selectedMetric);
 
       const searcher = selectedExperiments.find((exp) => {
@@ -263,10 +260,8 @@ const CompareHeatMaps: React.FC<Props> = ({
         });
       });
 
-      if (trialMetric !== undefined && trialMetric < metricRange[0])
-        metricRange[0] = trialMetric;
-      if (trialMetric !== undefined && trialMetric > metricRange[1])
-        metricRange[1] = trialMetric;
+      if (trialMetric !== undefined && trialMetric < metricRange[0]) metricRange[0] = trialMetric;
+      if (trialMetric !== undefined && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
     });
 
     fullHParams.forEach((hParam1) => {
@@ -312,14 +307,7 @@ const CompareHeatMaps: React.FC<Props> = ({
       metricRange,
       trialIds,
     });
-  }, [
-    fullHParams,
-    selectedMetric,
-    ui.isPageHidden,
-    trials,
-    data,
-    experimentHyperparameters,
-  ]);
+  }, [fullHParams, selectedMetric, ui.isPageHidden, trials, data, experimentHyperparameters]);
 
   return (
     <div ref={baseRef}>
