@@ -5420,6 +5420,44 @@ export interface V1KillNotebookResponse {
     notebook?: V1Notebook;
 }
 /**
+ * Kill runs.
+ * @export
+ * @interface V1KillRunsRequest
+ */
+export interface V1KillRunsRequest {
+    /**
+     * The ids of the runs being killed.
+     * @type {Array<number>}
+     * @memberof V1KillRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being killed.
+     * @type {number}
+     * @memberof V1KillRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to KillRunsResponse.
+ * @export
+ * @interface V1KillRunsResponse
+ */
+export interface V1KillRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1KillRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to KillShellRequest.
  * @export
  * @interface V1KillShellResponse
@@ -6546,7 +6584,7 @@ export interface V1MoveRunsRequest {
  */
 export interface V1MoveRunsResponse {
     /**
-     * Details on success or error for each experiment.
+     * Details on success or error for each run.
      * @type {Array<V1RunActionResult>}
      * @memberof V1MoveRunsResponse
      */
@@ -19561,6 +19599,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
+            }
+            const localVarPath = `/api/v1/runs/kill`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -21905,6 +21981,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -23041,6 +23136,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any) {
+            return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -23935,6 +24040,18 @@ export class InternalApi extends BaseAPI {
      */
     public killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
         return InternalApiFp(this.configuration).killGenericTask(taskId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of runs.
+     * @param {V1KillRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killRuns(body: V1KillRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
