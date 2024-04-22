@@ -456,6 +456,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		ColumnExpr("hparams as hyperparameters").
 		Table("runs").
 		Where("hparams IS NOT NULL").
+		Where("hparams != 'null'").
 		Where("project_id = ?", id)
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
