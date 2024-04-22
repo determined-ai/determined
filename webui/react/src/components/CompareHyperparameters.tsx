@@ -14,6 +14,7 @@ import ExperimentVisualizationFilters, {
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
+import CompareHeatMaps from './CompareHeatMaps';
 import CompareParallelCoordinates from './CompareParallelCoordinates';
 import {
   ExperimentHyperparametersSettings,
@@ -149,6 +150,15 @@ const CompareHyperparameters: React.FC<Props> = ({
               <Divider />
               <Title>Scatter Plots</Title>
               <CompareScatterPlots
+                fullHParams={fullHParams}
+                metricData={metricData}
+                selectedExperiments={selectedExperiments}
+                settings={settings}
+                trials={trials}
+              />
+              <Divider />
+              <Title>Scatter Plots</Title>
+              <CompareHeatMaps
                 fullHParams={fullHParams}
                 metricData={metricData}
                 selectedExperiments={selectedExperiments}
