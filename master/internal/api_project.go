@@ -359,7 +359,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		},
 		{
 			Column:      "startTime",
-			DisplayName: "Start time",
+			DisplayName: "Start Time",
 			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
 		},
@@ -383,13 +383,13 @@ func (a *apiServer) getProjectRunColumnsByID(
 		},
 		{
 			Column:      "resourcePool",
-			DisplayName: "Resource pool",
+			DisplayName: "Resource Pool",
 			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 		{
 			Column:      "checkpointSize",
-			DisplayName: "Checkpoint size",
+			DisplayName: "Checkpoint Size",
 			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 		},
