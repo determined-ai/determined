@@ -51,6 +51,17 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("inserting trial task id relationship: %w", err)
 		}
 
+		hparams, err := AddRunHParams(ctx, run.ID, run.HParams, "")
+		if err != nil {
+			return fmt.Errorf("getting run hyperparameters: %w", err)
+		}
+
+		if len(hparams) > 0 {
+			if err := tx.NewInsert().Model(&hparams).Scan(ctx); err != nil {
+				return fmt.Errorf("inserting run hyperparameters: %w", err)
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -58,6 +69,42 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	return nil
+}
+
+// AddRunHParams adds hyperparameters for a run into the `run_hparams` table.
+func AddRunHParams(ctx context.Context, runID int, hparams map[string]any,
+	parentName string,
+) ([]model.RunHparam, error) {
+	hparamsModel := []model.RunHparam{}
+	for hpName, v := range hparams {
+		hp := model.RunHparam{
+			RunID:  runID,
+			HParam: parentName + hpName,
+		}
+		switch val := v.(type) {
+		case float64:
+			hp.NumberVal = &val
+		case int:
+			conv := float64(val)
+			hp.NumberVal = &conv
+		case string:
+			hp.TextVal = &val
+		case bool:
+			hp.BoolVal = &val
+		case map[string]any:
+			nestedHParams, err := AddRunHParams(ctx, runID, v.(map[string]any), hpName+".")
+			if err != nil {
+				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
+			}
+			hparamsModel = append(hparamsModel, nestedHParams...)
+			continue
+		default:
+			return hparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
+		}
+		hparamsModel = append(hparamsModel, hp)
+	}
+
+	return hparamsModel, nil
 }
 
 // UpsertTrialByExternalIDTx UPSERTs the trial with respect to the external_trial_id.

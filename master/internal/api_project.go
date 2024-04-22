@@ -446,17 +446,22 @@ func (a *apiServer) getProjectRunColumnsByID(
 	columns := defaultRunsTableColumns
 
 	hyperparameters := []struct {
-		WorkspaceID     int
-		Hyperparameters expconf.HyperparametersV0
+		WorkspaceID int
+		Hparam      string
+		Type        string
 	}{}
 
 	// get all runs in project
 	runsQuery := db.Bun().NewSelect().Distinct().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
-		ColumnExpr("hparams as hyperparameters").
-		Table("runs").
-		Where("hparams IS NOT NULL").
-		Where("hparams != 'null'").
+		ColumnExpr("rhp.hparam as hparam").
+		ColumnExpr(`CASE
+			WHEN number_val iS NOT NULL THEN 'number'
+			WHEN text_val iS NOT NULL THEN 'string'
+			WHEN bool_val iS NOT NULL THEN 'boolean'
+		END as type`).
+		TableExpr("run_hparams as rhp").
+		Join("JOIN runs as r ON rhp.run_id=r.id").
 		Where("project_id = ?", id)
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
@@ -534,47 +539,23 @@ func (a *apiServer) getProjectRunColumnsByID(
 			})
 		}
 	}
-	hparamSet := make(map[string]struct{})
 	for _, hparam := range hyperparameters {
-		flatHparam := expconf.FlattenHPs(hparam.Hyperparameters)
-
-		// ensure we're iterating in order
-		paramKeys := make([]string, 0, len(flatHparam))
-		for key := range flatHparam {
-			_, seen := hparamSet[key]
-			if !seen {
-				paramKeys = append(paramKeys, key)
-			}
+		var columnType projectv1.ColumnType
+		switch {
+		case hparam.Type == "number":
+			columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
+		case hparam.Type == "string":
+			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+		case hparam.Type == "boolean":
+			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
+		default:
+			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
 		}
-		sort.Strings(paramKeys)
-
-		for _, key := range paramKeys {
-			value := flatHparam[key]
-			hparamSet[key] = struct{}{}
-			var columnType projectv1.ColumnType
-			switch {
-			case value.RawIntHyperparameter != nil ||
-				value.RawDoubleHyperparameter != nil ||
-				value.RawLogHyperparameter != nil:
-				columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-			case value.RawConstHyperparameter != nil:
-				switch value.RawConstHyperparameter.RawVal.(type) {
-				case float64:
-					columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-				case string:
-					columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-				default:
-					columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-				}
-			default:
-				columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-			}
-			columns = append(columns, &projectv1.ProjectColumn{
-				Column:   fmt.Sprintf("hp.%s", key),
-				Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-				Type:     columnType,
-			})
-		}
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   fmt.Sprintf("hp.%s", hparam.Hparam),
+			Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+			Type:     columnType,
+		})
 	}
 
 	return &apiv1.GetProjectColumnsResponse{
