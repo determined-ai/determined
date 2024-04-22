@@ -25,7 +25,7 @@ import { useObservable } from 'utils/observable';
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
 export const API_SUCCESS_MESSAGE_CREATE =
-  'New user with empty password has been created, advise user to reset password as soon as possible.';
+  'New user has been created; advise user to change password as soon as possible.';
 export const API_SUCCESS_MESSAGE_CREATE_REMOTE =
   'New remote user has been created; please configure access in IdP.';
 const DISPLAY_NAME_NAME = 'displayName';
@@ -35,6 +35,8 @@ const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
+const USER_PASSWORD_NAME = 'password';
+// const USER_PASSWORD_LABEL = 'User Password';
 const REMOTE_LABEL =
   'Remote (prevents password sign-on and requires user to sign-on using external IdP)';
 const REMOTE_NAME = 'remote';
@@ -53,6 +55,7 @@ interface Props {
 
 interface FormInputs {
   [USER_NAME_NAME]: string;
+  [USER_PASSWORD_NAME]: string;
   [DISPLAY_NAME_NAME]: string;
   [ADMIN_NAME]: boolean;
   [REMOTE_NAME]: boolean;
@@ -103,7 +106,16 @@ const CreateUserModalComponent: React.FC<Props> = ({
         openToast({ severity: 'Confirm', title: 'User has been updated' });
       } else {
         formData[ACTIVE_NAME] = true;
-        const u = await postUser({ user: formData });
+        const u = await postUser({
+          password: formData[USER_PASSWORD_NAME],
+          user: {
+            active: formData[ACTIVE_NAME],
+            admin: formData[ADMIN_NAME],
+            displayName: formData[DISPLAY_NAME_NAME],
+            remote: formData[REMOTE_NAME],
+            username: formData[USER_NAME_NAME],
+          },
+        });
         const uid = u.user?.id;
         if (uid && rolesToAdd.size > 0) {
           await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: uid }]);
