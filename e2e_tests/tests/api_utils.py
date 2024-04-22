@@ -395,8 +395,10 @@ def skipif_strict_q_control_not_enabled(
 @functools.lru_cache(maxsize=1)
 def _get_streaming_updates_enabled() -> Optional[bool]:
     config = _get_master_config()
-    streaming_updates_enabled = "streaming_updates" in config["feature_switches"]
-    return streaming_updates_enabled
+    if config is not None:
+        streaming_updates_enabled = "streaming_updates" in config["feature_switches"]
+        return streaming_updates_enabled
+    return None
 
 
 def skipif_streaming_updates_not_enabled(
