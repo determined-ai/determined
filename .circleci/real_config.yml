@@ -2596,17 +2596,6 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      # This is a bit confusing... basically only enter logic for NOT running job
-      # when always-run=false
-      - unless:
-          condition:
-            or:
-              - equal: [ true, <<parameters.always-run>> ]
-              - equal: [ "main", <<pipeline.git.branch>> ]
-              - matches: { pattern: "^release-.*$", value: <<pipeline.git.branch>> }
-          steps:
-            - skip-on-dev-branch
-
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
