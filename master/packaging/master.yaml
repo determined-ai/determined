@@ -42,7 +42,7 @@
 
 ## The docker image to use for the agent when using dynamic agents. This value
 ## must be configured.
-#      agent_docker_image: determinedai/determined-agent:<version>
+#      agent_docker_image: determinedai/hpe-mlde-agent:<version>
 
 ## The maximum idle period of agents. The master waits for this period of time
 ## before shutting down idle agents. Defaults to 5 min.
@@ -127,3 +127,22 @@ observability:
 ## Determined.
 # telemetry:
 #   enabled: true
+
+## Configure the credentials for using the SCIM server to provision users.
+# scim:
+#   enabled: false
+#   auth:
+#     # "oauth" can be used instead of "basic"; then there should be no
+#     # username or password fields.
+#     type: basic
+#     username: scim_username
+#     password: scim_password
+
+## Configure the settings for using the SAML server to sign in.
+# saml:
+#   enabled: false
+#   provider: okta
+#   idp_sso_url: sso_url
+#   idp_sso_descriptor_url: descriptor_url
+#   idp_recipient_url: recipient_url
+#   idp_cert_path: cert_path

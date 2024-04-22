@@ -8205,7 +8205,7 @@ export interface V1PutExperimentRetainLogsRequest {
      */
     experimentId: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentRetainLogsRequest
      */
@@ -8231,7 +8231,7 @@ export interface V1PutExperimentsRetainLogsRequest {
      */
     experimentIds: Array<number>;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentsRetainLogsRequest
      */
@@ -8346,7 +8346,7 @@ export interface V1PutTrialRetainLogsRequest {
      */
     trialId?: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutTrialRetainLogsRequest
      */

@@ -12,10 +12,10 @@ export interface StreamSubscriber {
 }
 
 class StreamStore {
-  #stream: Stream;
+  #stream?: Stream = undefined;
   #subscribers: Partial<Record<Streamable, StreamSubscriber>> = {};
 
-  constructor() {
+  #opensocket() {
     const socketUrl = new URL(serverAddress());
     socketUrl.pathname = 'stream';
     socketUrl.protocol = socketUrl.protocol.replace('http', 'ws');
@@ -41,22 +41,25 @@ class StreamStore {
   }
 
   public on(sub: StreamSubscriber): () => void {
+    if (!this.#stream) this.#opensocket();
+
     this.#subscribers[sub.id()] = sub;
 
     return () => this.#closeSocket.bind(this);
   }
 
   public off(key: Streamable) {
+    this.#closeSocket();
     delete this.#subscribers[key];
   }
 
   public emit(spec: StreamSpec, id?: string) {
-    this.#stream.subscribe(spec, id);
+    this.#stream?.subscribe(spec, id);
   }
 
   #closeSocket() {
     this.#subscribers = {};
-    this.#stream.close();
+    this.#stream?.close();
   }
 }
 

@@ -4,6 +4,12 @@
  Set up and Manage an Azure Kubernetes Service (AKS) Cluster
 #############################################################
 
+.. warning::
+
+   **Deprecated Documentation**: This page is outdated and no longer maintained. It may contain
+   information that is obsolete. This documentation is preserved because it may contain useful
+   insights relevant to legacy systems.
+
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `AKS
 <https://azure.microsoft.com/en-us/products/kubernetes-service/>`_. This document describes how to
 set up an AKS cluster with GPU-enabled nodes. The recommended setup includes deploying a cluster

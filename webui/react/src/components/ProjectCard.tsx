@@ -20,7 +20,7 @@ import css from './ProjectCard.module.scss';
 
 interface Props {
   hideActionMenu?: boolean;
-  onEdit?: (name: string, archived: boolean) => void;
+  onEdit?: (name: string, archived: boolean, description?: string) => void;
   onRemove?: () => void;
   project: Project;
   showWorkspace?: boolean;
