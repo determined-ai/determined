@@ -390,3 +390,22 @@ def skipif_strict_q_control_not_enabled(
         return f
 
     return decorator
+
+
+@functools.lru_cache(maxsize=1)
+def _get_streaming_updates_enabled() -> Optional[bool]:
+    config = _get_master_config()
+    streaming_updates_enabled = "streaming_updates" in config["feature_switches"]
+    return streaming_updates_enabled
+
+
+def skipif_streaming_updates_not_enabled(reason: str = "streaming updates is required for this test") -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        enabled = _get_streaming_updates_enabled()
+        if enabled is None:
+            return f
+        if not enabled:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
