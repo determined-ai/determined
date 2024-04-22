@@ -399,7 +399,9 @@ def _get_streaming_updates_enabled() -> Optional[bool]:
     return streaming_updates_enabled
 
 
-def skipif_streaming_updates_not_enabled(reason: str = "streaming updates is required for this test") -> Callable[[F], F]:
+def skipif_streaming_updates_not_enabled(
+    reason: str = "streaming updates is required for this test",
+) -> Callable[[F], F]:
     def decorator(f: F) -> F:
         enabled = _get_streaming_updates_enabled()
         if enabled is None:
