@@ -2094,6 +2094,9 @@ jobs:
       - run: make -C agent check
 
   build-go:
+    ee:
+        type: boolean
+        default: true
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -4146,6 +4149,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          ee: false
           context: github-read
 
       - package-and-push-system-local:
