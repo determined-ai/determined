@@ -383,6 +383,20 @@ func (k *ResourceManager) ValidateResources(
 	return nil, nil
 }
 
+// CreateNamespace implements rm.ResourceManager.
+func (k *ResourceManager) CreateNamespace(autoCreateNamespace bool, namespaceName string,
+	clusterName string) error {
+	configClusterName := rm.ClusterName(k.config.ClusterName)
+	if configClusterName != rm.ClusterName(clusterName) {
+		return nil
+	}
+	err := k.podsService.CreateNamespace(autoCreateNamespace, namespaceName)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
+	}
+	return nil
+}
+
 // getResourcePoolRef gets an actor ref to a resource pool by name.
 func (k ResourceManager) resourcePoolExists(name string) error {
 	resp, err := k.GetResourcePools()

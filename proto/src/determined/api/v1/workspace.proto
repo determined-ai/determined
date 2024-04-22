@@ -156,6 +156,10 @@ message PostWorkspaceRequest {
   string default_compute_pool = 14;
   // The name of the default aux pool.
   string default_aux_pool = 15;
+  // Optional name of the cluster to which we want to apply the resource quota.
+  optional string cluster_name = 16;
+  // Optional name of the namespace to which we bind the workspace.
+  optional string namespace_name = 17;
 }
 
 // Response to PostWorkspaceRequest.
@@ -165,7 +169,7 @@ message PostWorkspaceResponse {
   };
 
   // The workspace created.
-  determined.workspace.v1.Workspace workspace = 1;
+  determined.workspace.v1.Workspace workspace = 1;  
 }
 
 // Request for updating a workspace.
@@ -208,6 +212,30 @@ message DeleteWorkspaceResponse {
 
   // Status of deletion.
   bool completed = 1;
+}
+
+// Request for modifying a namespace binding to a workspace.
+message ModifyWorkspaceNamespaceBindingRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The unique name of the workspace.
+  int32 id = 1;
+  // Optional name of the cluster containing the namespace.
+  string cluster_name = 2;
+  // Optional name of the namespace to which we bind the workspace.
+  optional string namespace_name = 3;
+}
+
+// Response for modify a namespace binding to a workspace.
+message ModifyWorkspaceNamespaceBindingResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
+
+  // The updated workspace.
+  string name = 1;
 }
 
 // Request for archiving a workspace.

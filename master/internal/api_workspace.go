@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -29,6 +30,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
+
+const kubernetesDefaultNamespace = "default"
 
 func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	if w.CheckpointStorageConfig == nil {
@@ -56,17 +59,38 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	return nil
 }
 
+func validatePostWorkspaceRequest(req *apiv1.PostWorkspaceRequest) error {
+	if req.ClusterName != nil && req.NamespaceName == nil {
+		return status.Errorf(codes.InvalidArgument,
+			"Must specify either an existing Kubernetes namespace")
+	}
+	if req.NamespaceName != nil && req.ClusterName == nil {
+		return status.Errorf(codes.InvalidArgument,
+			"You must specify a cluster for the specified namespace that you would like to bind.")
+	}
+	return nil
+}
+
 func validateWorkspaceName(name string) error {
 	switch {
 	case len(name) < 1:
 		return status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
-	case len(name) > 80:
-		return status.Errorf(codes.InvalidArgument, "name '%s' must be at most 80 character long", name)
+	case len(name) > 53:
+		return status.Errorf(codes.InvalidArgument, "name '%s' must be at most 53 character long", name)
 	case len(strings.TrimFunc(name, unicode.IsSpace)) == 0:
 		return status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
 	default:
 		return nil
 	}
+}
+
+func generateNamespaceName(workspace string) (*string, error) {
+	namespace := "det-" + workspace
+	// Ensure the namespace name is <= 63 characters.
+	if len(namespace) > 63 {
+		return nil, status.Error(codes.InvalidArgument, "The namespace name must be at most 63 characters")
+	}
+	return &namespace, nil
 }
 
 func (a *apiServer) GetWorkspaceByID(
@@ -296,9 +320,11 @@ func (a *apiServer) PostWorkspace(
 	ctx context.Context, req *apiv1.PostWorkspaceRequest,
 ) (*apiv1.PostWorkspaceResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if err = workspace.AuthZProvider.Get().CanCreateWorkspace(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
@@ -313,6 +339,7 @@ func (a *apiServer) PostWorkspace(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
+
 	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
 		if err = workspace.AuthZProvider.Get().
 			CanCreateWorkspaceWithCheckpointStorageConfig(ctx, *curUser); err != nil {
@@ -358,8 +385,16 @@ func (a *apiServer) PostWorkspace(
 		}
 	}
 
-	_, err = tx.NewInsert().Model(w).Exec(ctx)
+	if err = workspace.AuthZProvider.Get().
+		CanModifyWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
 
+	if err := validatePostWorkspaceRequest(req); err != nil {
+		return nil, err
+	}
+
+	err = tx.NewInsert().Model(w).Scan(ctx, w)
 	if err != nil {
 		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
 			return nil,
@@ -368,10 +403,24 @@ func (a *apiServer) PostWorkspace(
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 	}
 
+	// Verify that the specified cluster name is also provided in the master config.
+	if req.ClusterName != nil {
+		newReq := &apiv1.ModifyWorkspaceNamespaceBindingRequest{
+			Id:            int32(w.ID),
+			ClusterName:   *req.ClusterName,
+			NamespaceName: req.NamespaceName,
+		}
+
+		_, err := a.modifyWorkspaceNamespaceBinding(ctx, newReq, &tx, w)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to create namespace binding: %w", err)
+		}
+	}
+
 	pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
 	_, err = tx.NewInsert().Model(pin).Exec(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
+		return nil, errors.Wrapf(err, "error creating workspace pin %s in database", req.Name)
 	}
 
 	if err = a.AssignWorkspaceAdminToUserTx(ctx, tx, w.ID, w.UserID); err != nil {
@@ -521,6 +570,82 @@ func (a *apiServer) PatchWorkspace(
 		errors.Wrapf(err, "error refetching updated workspace (%d) from db", currWorkspace.Id)
 }
 
+func (a *apiServer) modifyWorkspaceNamespaceBinding(ctx context.Context,
+	req *apiv1.ModifyWorkspaceNamespaceBindingRequest, tx *bun.Tx, w *model.Workspace) (*apiv1.ModifyWorkspaceNamespaceBindingResponse, error) {
+	// Create the namespace in Kubernetes.
+	err := a.m.rm.CreateNamespace(false, *req.NamespaceName, req.ClusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error creating k8s namespace: %w", err)
+	}
+
+	var wsns model.WorkspaceNamespace
+
+	// If there is more than one namespace bound to a workspace within a given cluster, this query
+	// should fail (because the result would have type []int and []string rather than int and string
+	// string, respectively).
+	err = tx.NewSelect().Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", w.ID).
+		Where("cluster_name = ?", req.ClusterName).
+		Scan(ctx, &wsns)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, fmt.Errorf("error getting the current workspace-namespace binding: %w", err)
+		} else { // The workspace didn't have a namespace binding.
+			workspaceNamespace := &model.WorkspaceNamespace{
+				NamespaceName: *req.NamespaceName,
+				ClusterName:   req.ClusterName,
+				WorkspaceID:   w.ID,
+			}
+			err = tx.NewInsert().Model(workspaceNamespace).Scan(ctx)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error adding workspace-namespace %s to database",
+					*req.NamespaceName)
+			}
+		}
+	} else {
+		_, err = tx.NewUpdate().Model(&model.WorkspaceNamespace{}).
+			Set("namespace_name = ?", *req.NamespaceName).
+			Where("id = ?", &wsns.ID).
+			Exec(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not update workspace-namespace binding")
+		}
+	}
+
+	res := apiv1.ModifyWorkspaceNamespaceBindingResponse{Name: *req.NamespaceName}
+
+	return &res, nil
+}
+
+func (a *apiServer) ModifyWorkspaceNamespaceBinding(ctx context.Context,
+	req *apiv1.ModifyWorkspaceNamespaceBindingRequest) (*apiv1.ModifyWorkspaceNamespaceBindingResponse, error) {
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in bind workspace to namespace")
+		}
+	}()
+
+	var w model.Workspace
+	err = tx.NewSelect().Model(&model.Workspace{}).Where("id = ?", req.Id).Scan(ctx, &w)
+	if err != nil {
+		return nil, errors.Wrapf(err, "workspace with name %s not found", w.Name)
+	}
+
+	res, err := a.modifyWorkspaceNamespaceBinding(ctx, req, &tx, &w)
+	if err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "could not commit modify workspace-namespace bindings transcation")
+	}
+	return res, nil
+}
+
 func (a *apiServer) deleteWorkspace(
 	ctx context.Context, workspaceID int32, projects []*projectv1.Project,
 ) {
@@ -542,6 +667,7 @@ func (a *apiServer) deleteWorkspace(
 			return
 		}
 	}
+
 	err := a.m.db.QueryProto("delete_workspace", holder, workspaceID)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete workspace %d", workspaceID)
@@ -608,9 +734,11 @@ func (a *apiServer) DeleteWorkspace(
 		}
 		return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
 	}
+
 	go func() {
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
+
 	return &apiv1.DeleteWorkspaceResponse{Completed: false}, nil
 }
 

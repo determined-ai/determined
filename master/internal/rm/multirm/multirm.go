@@ -381,6 +381,20 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 	return m.rms[resolvedRMName].DisableSlot(req)
 }
 
+func (m *MultiRMRouter) CreateNamespace(autoCreateNamespace bool, namespaceName string,
+	clusterName string) error {
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("Error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	err = rm.CreateNamespace(autoCreateNamespace, namespaceName, clusterName)
+	if err != nil {
+		return fmt.Errorf("Error creating namespace %s: %w", namespaceName, err)
+	}
+
+	return nil
+}
+
 func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
@@ -401,6 +415,21 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 		}
 	}
 	return "", ErrRPNotDefined(rpName)
+}
+
+func (m *MultiRMRouter) getRM(name string) (rm.ResourceManager, error) {
+	// If not given RM name, route to default RM.
+	for rmName, r := range m.rms {
+		if rmName == name {
+			return r, nil
+
+		} else if rmName == m.defaultRMName && name == "" {
+			m.syslog.Tracef("no name, routing to default resource manager")
+			return r, nil
+
+		}
+	}
+	return nil, fmt.Errorf("No resource manager of the specified name")
 }
 
 func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TReturn, error)) ([]TReturn, error) {

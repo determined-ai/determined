@@ -105,3 +105,12 @@ type WorkspacePin struct {
 	WorkspaceID   int    `bun:"workspace_id"`
 	UserID        UserID `bun:"user_id"`
 }
+
+// WorkspaceNamesapce is the bun model of a namespace.
+type WorkspaceNamespace struct {
+	bun.BaseModel `bun:"table:workspace_namespace"`
+	ID            int    `bun:"id,pk,autoincrement"`
+	NamespaceName string `bun:"namespace_name"`
+	ClusterName   string `bun:"cluster_name"`
+	WorkspaceID   int    `bun:"workspace_id"`
+}

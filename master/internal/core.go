@@ -1091,18 +1091,31 @@ func buildRM(
 	// Set the default RM name for the multi-rm, from the default RM index.
 	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
 	rms := map[string]rm.ResourceManager{}
+	clusterNames := map[string]int{}
 
 	for _, cfg := range rmConfigs {
 		c := cfg.ResourceManager
 		switch {
 		case c.AgentRM != nil:
+			rmClusterName := c.AgentRM.ClusterName
+			if len(rmClusterName) == 0 {
+				return nil, fmt.Errorf("resource manager %s must have a cluster name: %w", c.Name())
+			}
+			clusterNames[rmClusterName] = 0
 			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
+			rms[rmClusterName] = agentRM
 			if err != nil {
 				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
 			}
 			rms[c.Name()] = agentRM
 		case c.KubernetesRM != nil:
+			rmClusterName := c.KubernetesRM.ClusterName
+			if len(rmClusterName) == 0 {
+				return nil, fmt.Errorf("resource manager %s must have a cluster name: %w", c.Name())
+			}
+			clusterNames[rmClusterName] = 0
 			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
+			rms[rmClusterName] = k8sRM
 			if err != nil {
 				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
 			}
@@ -1110,6 +1123,10 @@ func buildRM(
 		default:
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
+	}
+
+	if len(clusterNames) != len(rmConfigs) {
+		return nil, fmt.Errorf("resource managers must all have distinct cluster names")
 	}
 
 	return multirm.New(defaultRMName, rms), nil

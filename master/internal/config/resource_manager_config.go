@@ -97,8 +97,9 @@ type AgentResourceManagerConfig struct {
 	RequireAuthentication bool   `json:"require_authentication"`
 	ClientCA              string `json:"client_ca"`
 
-	Name     string            `json:"name"`
-	Metadata map[string]string `json:"metadata"`
+	Name        string            `json:"name"`
+	ClusterName string            `json:"cluster_name"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -175,8 +176,9 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
-	Name     string            `json:"name"`
-	Metadata map[string]string `json:"metadata"`
+	Name        string            `json:"name"`
+	ClusterName string            `json:"cluster_name"`
+	Metadata    map[string]string `json:"metadata"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{

@@ -155,6 +155,14 @@ func (p *WorkspaceAuthZPermissive) CanSetWorkspacesDefaultPools(
 	return (&WorkspaceAuthZBasic{}).CanSetWorkspacesDefaultPools(ctx, curUser, workspace)
 }
 
+// CanModifyWorkspaceNamespaceBinding retruns a nil error.
+func (a *WorkspaceAuthZPermissive) CanModifyWorkspaceNamespaceBindings(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanModifyWorkspaceNamespaceBindings(ctx, curUser)
+	return (&WorkspaceAuthZBasic{}).CanModifyWorkspaceNamespaceBindings(ctx, curUser)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &WorkspaceAuthZPermissive{})
 }
