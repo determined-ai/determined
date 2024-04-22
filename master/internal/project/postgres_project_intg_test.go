@@ -20,7 +20,7 @@ func TestProjectByName(t *testing.T) {
 	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
-	workspaceID, workspaceName := internaldb.RequireMockWorkspaceID(t, db)
+	workspaceID, workspaceName := internaldb.RequireMockWorkspaceID(t, db, "")
 	projectID, projectName := internaldb.RequireMockProjectID(t, db, workspaceID, false)
 
 	t.Run("valid project name", func(t *testing.T) {

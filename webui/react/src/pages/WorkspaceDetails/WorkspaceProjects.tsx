@@ -31,6 +31,7 @@ import {
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePrevious from 'hooks/usePrevious';
 import { useSettings } from 'hooks/useSettings';
@@ -67,6 +68,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const ProjectCreateModal = useModal(ProjectCreateModalComponent);
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
+  const streamingUpdatesOn = useFeature().isOn('streaming_updates');
 
   const loadableProjects: Loadable<List<Project>> = useObservable(
     projectStore.getProjectsByWorkspace(id),
@@ -158,19 +160,49 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     }
   }, [currentUser, loadableUsers, prevWhose, settings.whose, updateSettings, users]);
 
-  const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
-    try {
-      await patchProject({ description: newDescription, id: projectId });
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to edit project.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
+  const onEdit = useCallback(
+    (projectId: number, name: string, archived: boolean, description?: string) => {
+      if (!streamingUpdatesOn) {
+        const project = projects.find((p) => p.id === projectId);
+        project &&
+          projectStore.upsertProject({
+            ...project,
+            archived,
+            description: description || project?.description,
+            name,
+          } as Project);
+      }
+    },
+    [streamingUpdatesOn, projects],
+  );
+
+  const onRemove = useCallback(
+    (projectId: number) => {
+      if (!streamingUpdatesOn) {
+        projectStore.delete(projectId);
+      }
+    },
+    [streamingUpdatesOn],
+  );
+
+  const saveProjectDescription = useCallback(
+    async (newDescription: string, projectId: number) => {
+      try {
+        await patchProject({ description: newDescription, id: projectId });
+        const project = projects.find((p) => p.id === projectId);
+        project && projectStore.upsertProject({ ...project, description: newDescription });
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to edit project.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    },
+    [projects],
+  );
 
   const columns = useMemo(() => {
     const projectNameRenderer = (value: string, record: Project) => (
@@ -178,7 +210,15 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     );
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
-      <ProjectActionDropdown project={record} workspaceArchived={workspace?.archived} />
+      <ProjectActionDropdown
+        project={record}
+        workspaceArchived={workspace?.archived}
+        onDelete={() => onRemove(record.id)}
+        onEdit={(name: string, archived: boolean, description?: string) =>
+          onEdit(record.id, name, archived, description)
+        }
+        onMove={() => onRemove(record.id)}
+      />
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
@@ -262,7 +302,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [saveProjectDescription, workspace?.archived, users]);
+  }, [saveProjectDescription, workspace?.archived, users, onEdit, onRemove]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -303,12 +343,20 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const actionDropdown = useCallback(
     ({ record, children }: { children: React.ReactNode; record: Project }) => (
-      <ProjectActionDropdown isContextMenu project={record} workspaceArchived={workspace?.archived}>
+      <ProjectActionDropdown
+        isContextMenu
+        project={record}
+        workspaceArchived={workspace?.archived}
+        onDelete={() => onRemove(record.id)}
+        onEdit={(name: string, archived: boolean, description?: string) =>
+          onEdit(record.id, name, archived, description)
+        }
+        onMove={() => onRemove(record.id)}>
         {children}
       </ProjectActionDropdown>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [workspace?.archived],
+    [workspace?.archived, onEdit, onRemove],
   );
 
   const projectsList = useMemo(() => {
@@ -323,6 +371,10 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 key={project.id}
                 project={project}
                 workspaceArchived={workspace?.archived}
+                onEdit={(name: string, archived: boolean, description?: string) =>
+                  onEdit(project.id, name, archived, description)
+                }
+                onRemove={() => onRemove(project.id)}
               />
             ))}
           </Card.Group>
@@ -359,11 +411,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     settings,
     updateSettings,
     workspace?.archived,
+    onEdit,
+    onRemove,
   ]);
 
   useEffect(() => {
-    projectStore.fetch(id);
-  }, [id]);
+    projectStore.fetch(id, canceler.signal, true);
+  }, [id, canceler]);
 
   useEffect(() => {
     return () => canceler.abort();

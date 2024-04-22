@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, util
-from determined.common.api import bindings, errors
+from determined.common.api import errors
 
 logger = logging.getLogger("determined.core")
 
@@ -27,8 +27,8 @@ class TrainContext:
         self,
         session: api.Session,
         trial_id: int,
-        run_id: int,
         exp_id: int,
+        metrics: core._MetricsContext,
         distributed: core.DistributedContext,
         tensorboard_mode: core.TensorboardMode,
         tensorboard_manager: Optional[tensorboard.TensorboardManager],
@@ -36,8 +36,8 @@ class TrainContext:
     ) -> None:
         self._session = session
         self._trial_id = trial_id
-        self._run_id = run_id
         self._exp_id = exp_id
+        self._metrics = metrics
         self._distributed = distributed
         if tensorboard_mode != core.TensorboardMode.MANUAL and tensorboard_manager is None:
             raise ValueError("either set TensorboardMode.MANUAL, or pass a tensorboard manager.")
@@ -88,15 +88,12 @@ class TrainContext:
             serializable_metrics = self._get_serializable_metrics(metrics)
             reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
-        v1metrics = bindings.v1Metrics(avgMetrics=reportable_metrics, batchMetrics=batch_metrics)
-        v1TrialMetrics = bindings.v1TrialMetrics(
-            metrics=v1metrics,
-            stepsCompleted=steps_completed,
-            trialId=self._trial_id,
-            trialRunId=self._run_id,
+        self._metrics.report(
+            group=group,
+            steps_completed=steps_completed,
+            metrics=reportable_metrics,
+            batch_metrics=batch_metrics,
         )
-        body = bindings.v1ReportTrialMetricsRequest(metrics=v1TrialMetrics, group=group)
-        bindings.post_ReportTrialMetrics(self._session, body=body, metrics_trialId=self._trial_id)
 
         # Also sync tensorboard (all metrics, not just json-serializable ones).
         if self._tensorboard_mode == core.TensorboardMode.AUTO:

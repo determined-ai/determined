@@ -35,8 +35,15 @@ import (
 const (
 	coscheduler = "coscheduler"
 
-	gcTask  = "gc"
-	cmdTask = "cmd"
+	gcTask            = "gc"
+	cmdTask           = "cmd"
+	labelPrefix       = "determined.ai/"
+	userLabel         = labelPrefix + "user"
+	workspaceLabel    = labelPrefix + "workspace"
+	resourcePoolLabel = labelPrefix + "resource_pool"
+	taskTypeLabel     = labelPrefix + "task_type"
+	taskIDLabel       = labelPrefix + "task_id"
+	containerIDLabel  = labelPrefix + "container_id"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -361,7 +368,21 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
+	if p.submissionInfo.taskSpec.Owner != nil {
+		// Owner label will disappear if Owner is somehow nil.
+		podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
+	}
+	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
+	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
+	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
+	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+
+	// If map is not populated, labels will be missing and observability will be impacted.
+	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
+		podSpec.ObjectMeta.Labels[labelPrefix+k] = v
+	}
 
 	p.modifyPodSpec(podSpec, scheduler)
 

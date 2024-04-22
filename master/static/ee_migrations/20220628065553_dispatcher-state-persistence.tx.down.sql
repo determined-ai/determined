@@ -1,0 +1,1 @@
+DROP TABLE resourcemanagers_dispatcher_dispatches;

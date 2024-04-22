@@ -129,6 +129,11 @@ func DefaultConfig() *Config {
 		},
 		FeatureSwitches: []string{},
 		ResourceConfig:  *DefaultResourceConfig(),
+		OIDC: OIDCConfig{
+			AuthenticationClaim:         "email",
+			SCIMAuthenticationAttribute: "userName",
+			AutoProvisionUsers:          false,
+		},
 	}
 }
 
@@ -163,6 +168,10 @@ type Config struct {
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
 
+	Scim         ScimConfig         `json:"scim"`
+	SAML         SAMLConfig         `json:"saml"`
+	OIDC         OIDCConfig         `json:"oidc"`
+	DetCloud     DetCloudConfig     `json:"det_cloud"`
 	Integrations IntegrationsConfig `json:"integrations"`
 }
 
@@ -216,6 +225,15 @@ func (c Config) Printable() ([]byte, error) {
 			printable.Password = hiddenValue
 			configCopy.TaskContainerDefaults.RegistryAuth = &printable
 		}
+	}
+
+	// When there are pointers inside the type, we need to copy things to avoid modifying the original
+	// object.
+	if origAuth := c.Scim.Auth.BasicAuthConfig; origAuth != nil {
+		auth := *origAuth
+		auth.Username = hiddenValue
+		auth.Password = hiddenValue
+		c.Scim.Auth.BasicAuthConfig = &auth
 	}
 
 	configCopy.CheckpointStorage = configCopy.CheckpointStorage.Printable()
@@ -330,6 +348,28 @@ func (c *Config) Resolve() error {
 
 	if c.Security.AuthZ.StrictNTSCEnabled {
 		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
+	}
+
+	if c.OIDC.AutoProvisionUsers && c.Scim.Enabled {
+		log.Warn("scim enabled; overriding OIDC user & group provisions")
+		c.OIDC.AutoProvisionUsers = false
+		c.OIDC.GroupsAttributeName = ""
+	}
+
+	if c.OIDC.GroupsAttributeName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
+		log.Warn("groups_attribute_name requires rbac to be enabled")
+		c.OIDC.GroupsAttributeName = ""
+	}
+
+	if c.SAML.AutoProvisionUsers && c.Scim.Enabled {
+		log.Warn("scim enabled; overriding SAML user & group provisions")
+		c.SAML.AutoProvisionUsers = false
+		c.SAML.GroupsAttributeName = ""
+	}
+
+	if c.SAML.GroupsAttributeName != "" && !c.Security.AuthZ.IsRBACUIEnabled() {
+		log.Warn("groups_attribute_name requires rbac to be enabled")
+		c.SAML.GroupsAttributeName = ""
 	}
 
 	return nil
@@ -516,6 +556,9 @@ func readRMPreemptionStatus(config *ResourceManagerWithPoolsConfig, rpName strin
 		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
 	case config.ResourceManager.KubernetesRM != nil:
 		return config.ResourceManager.KubernetesRM.GetPreemption()
+	case config.ResourceManager.DispatcherRM != nil,
+		config.ResourceManager.PbsRM != nil:
+		return false
 	default:
 		panic("unexpected resource configuration")
 	}

@@ -1,23 +1,27 @@
 import { type Locator } from '@playwright/test';
 
-import { BasePage } from './BasePage';
+import { BasePage, ModelBasics } from './BasePage';
 
-// BasePage is the root of any tree, use `instanceof BasePage` when climbing.
-export type parentTypes = BasePage | BaseComponent | BaseReactFragment;
+export type CanBeParent = ComponentBasics | BasePage;
 
-interface ComponentBasics {
-  parent: parentTypes;
+export interface ComponentBasics extends ModelBasics {
+  _parent: CanBeParent;
+  get root(): BasePage;
 }
 
-interface NamedComponentWithDefaultSelector extends ComponentBasics {
+interface ComponentArgBasics {
+  parent: CanBeParent;
+}
+
+interface NamedComponentWithDefaultSelector extends ComponentArgBasics {
   attachment?: never;
   sleector?: never;
 }
-interface NamedComponentWithAttachment extends ComponentBasics {
+interface NamedComponentWithAttachment extends ComponentArgBasics {
   attachment: string;
   sleector?: never;
 }
-export interface BaseComponentArgs extends ComponentBasics {
+export interface BaseComponentArgs extends ComponentArgBasics {
   attachment?: never;
   selector: string;
 }
@@ -31,12 +35,12 @@ export type NamedComponentArgs =
  * Returns the representation of a Component.
  * This constructor is a base class for any component in src/components/.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-export class BaseComponent {
+export class BaseComponent implements ModelBasics {
   protected _selector: string;
-  readonly _parent: parentTypes;
+  readonly _parent: CanBeParent;
   protected _locator: Locator | undefined;
 
   constructor({ parent, selector }: BaseComponentArgs) {
@@ -63,7 +67,7 @@ export class BaseComponent {
    * Returns the root of the component tree
    */
   get root(): BasePage {
-    let root: parentTypes = this._parent;
+    let root: CanBeParent = this._parent;
     while (!(root instanceof BasePage)) {
       root = root._parent;
     }
@@ -76,12 +80,12 @@ export class BaseComponent {
  * React Fragment Components are special in that they group elements, but not under a dir.
  * Fragments cannot have selectors
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this BaseComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  */
-export class BaseReactFragment {
-  readonly _parent: parentTypes;
+export class BaseReactFragment implements ModelBasics {
+  readonly _parent: CanBeParent;
 
-  constructor({ parent }: ComponentBasics) {
+  constructor({ parent }: ComponentArgBasics) {
     this._parent = parent;
   }
 
@@ -97,7 +101,7 @@ export class BaseReactFragment {
    * Returns the root of the component tree
    */
   get root(): BasePage {
-    let root: parentTypes = this._parent;
+    let root: CanBeParent = this._parent;
     while (!(root instanceof BasePage)) {
       root = root._parent;
     }
@@ -108,7 +112,7 @@ export class BaseReactFragment {
 /**
  * Returns a representation of a named component. These components need a defaultSelector.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this NamedComponent
+ * @param {CanBeParent} obj.parent - The parent used to locate this NamedComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export abstract class NamedComponent extends BaseComponent {

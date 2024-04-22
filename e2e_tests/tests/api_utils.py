@@ -1,6 +1,6 @@
 import functools
 import uuid
-from typing import Callable, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
 
 import pytest
 
@@ -165,6 +165,15 @@ F = TypeVar("F", bound=Callable)
 
 
 @functools.lru_cache(maxsize=1)
+def _get_master_config() -> Optional[Dict[str, Any]]:
+    try:
+        sess = admin_session()
+        return bindings.get_GetMasterConfig(sess).config
+    except (errors.APIException, errors.MasterNotFoundException):
+        return None
+
+
+@functools.lru_cache(maxsize=1)
 def _get_is_k8s() -> Optional[bool]:
     try:
         admin_sess = admin_session()
@@ -322,6 +331,41 @@ def skipif_rbac_not_enabled(reason: str = "ee is required for this test") -> Cal
         return f
 
     return decorator
+
+
+def skipif_unexpected_master_config(
+    expected: Callable[[dict], bool], reason: str = "unexpected master config"
+) -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        mc = _get_master_config()
+        if mc is None:
+            return f
+        if not expected(mc):
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+def skipif_missing_startup_hook(
+    reason: str = "tcd startup hook is required for this test",
+) -> Callable[[F], F]:
+    """skip if the backing cluster can be missing TCD startup hooks for some of the workloads"""
+
+    def check_startup_hook(mc: dict) -> bool:
+        assert isinstance(mc, dict)
+
+        def has_hook(conf_with_tcd: dict) -> bool:
+            hook = (conf_with_tcd.get("task_container_defaults") or {}).get("startup_hook")
+            return isinstance(hook, str) and hook != ""
+
+        if has_hook(mc):
+            return True
+        pools = mc.get("resource_pools") or []
+        assert isinstance(pools, list)
+        return len(pools) > 0 and all(has_hook(pool) for pool in pools)
+
+    return skipif_unexpected_master_config(check_startup_hook, reason=reason)
 
 
 @functools.lru_cache(maxsize=1)

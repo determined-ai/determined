@@ -93,7 +93,9 @@ const JupyterLabModalComponent: React.FC<Props> = ({ workspace }: Props) => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces)).filter(
     (workspace) => canCreateWorkspaceNSC({ workspace }),
   );
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | undefined>(workspace);
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | undefined>(
+    workspace ?? workspaces.at(0),
+  );
 
   const validateFullConfigForm = useCallback(() => {
     const fields = fullConfigForm.getFieldsError();

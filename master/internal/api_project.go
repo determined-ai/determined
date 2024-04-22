@@ -169,6 +169,18 @@ func (a *apiServer) getProjectColumnsByID(
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
+		{
+			Column:      "externalRunId",
+			DisplayName: "External Run ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "experimentName",
+			DisplayName: "Experiment Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
 	}
 
 	hyperparameters := []struct {
@@ -542,9 +554,6 @@ func (a *apiServer) PostProject(
 		if strings.Contains(err.Error(), "projects_key_key") {
 			return nil,
 				status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey)
-		} else if strings.Contains(err.Error(), "projects_name_key") {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "project with name %s already exists", req.Name)
 		}
 	}
 

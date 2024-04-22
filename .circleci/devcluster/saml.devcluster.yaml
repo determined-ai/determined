@@ -1,0 +1,55 @@
+stages:
+  - db:
+      name: db
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        cache:
+          cache_dir: /tmp/determined-cache
+        launch_error: false
+        security:
+          authz:
+            rbac_ui_enabled: true
+        resource_manager:
+          type: agent
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+        resource_pools:
+          - pool_name: default
+            task_container_defaults:  # for test_default_pool_task_container_defaults.
+              environment_variables:
+                - SOMEVAR=SOMEVAL
+        saml:
+          enabled: true
+          provider: "Okta"
+          idp_recipient_url: "http://127.0.0.1:8080/saml/sso"
+          idp_sso_url: "https://dev-2564556.okta.com/app/exkganmj6yr61bML65d7/sso/saml"
+          idp_sso_descriptor_url: "https://dev-2564556.okta.com/app/exkganmj6yr61bML65d7/sso/saml/metadata"
+          idp_metadata_url: "https://dev-2564556.okta.com/app/exkganmj6yr61bML65d7/sso/saml/metadata"
+          auto_provision_users: true
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        container_auto_remove_disabled: true
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]

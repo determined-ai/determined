@@ -32,11 +32,13 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   });
   const loadableUser = useObservable(userStore.getUser(workspace.userId));
   const user = Loadable.getOrElse(undefined, loadableUser);
+  const testId = `card-${workspace.name}`;
 
   return (
     <Card
       actionMenu={!workspace.immutable ? menu : undefined}
       size="small"
+      testId={testId}
       onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.workspaceDetails(workspace.id) })}
       onDropdown={onClick}>
       <div className={workspace.archived ? css.archived : ''}>

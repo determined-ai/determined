@@ -6,7 +6,7 @@ import * as utils from './experiment';
 describe('Experiment Utilities', () => {
   describe('isExperiment', () => {
     it('should validate experiment tasks', () => {
-      const experimentTask: Type.ExperimentItem = {
+      const experimentTask: Type.FullExperimentItem = {
         archived: false,
         config: {} as Type.ExperimentConfig,
         configRaw: {},

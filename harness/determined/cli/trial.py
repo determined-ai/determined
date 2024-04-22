@@ -243,7 +243,7 @@ def set_log_retention(args: argparse.Namespace) -> None:
     if not args.forever and not isinstance(args.days, int):
         raise cli.CliError(
             "Please provide an argument to set log retention. --days sets the number of days to"
-            " retain logs from the time of creation, eg. `det t set log-retention 1 --days 50`."
+            " retain logs from the end time of the task, eg. `det t set log-retention 1 --days 50`."
             " --forever retains logs indefinitely, eg.`det t set log-retention 1 --forever`."
         )
     elif isinstance(args.days, int) and (args.days < -1 or args.days > 32767):
@@ -538,8 +538,8 @@ args_description: cli.ArgsDescription = [
                                 cli.Arg(
                                     "--days",
                                     type=none_or_int,
-                                    help="from the time of creation, number of days to "
-                                    "retain the logs for. allowed range: -1 to 32767.",
+                                    help="number of days to retain the logs for, from the "
+                                    "end time of the task, . allowed range: -1 to 32767.",
                                 ),
                                 cli.Arg(
                                     "--forever",

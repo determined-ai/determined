@@ -47,6 +47,11 @@ import {
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import {
+  DataGridGlobalSettings,
+  rowHeightMap,
+  settingsConfigGlobal,
+} from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -61,8 +66,8 @@ import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentItem,
   ExperimentWithTrial,
   Project,
   ProjectColumn,
@@ -75,6 +80,7 @@ import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
 import {
+  defaultColumnWidths,
   ExperimentColumn,
   experimentColumns,
   getColumnDefs,
@@ -84,11 +90,9 @@ import css from './F_ExperimentList.module.scss';
 import {
   DEFAULT_SELECTION,
   defaultProjectSettings,
-  F_ExperimentListGlobalSettings,
   ProjectSettings,
   ProjectUrlSettings,
   SelectionType as SelectionState,
-  settingsConfigGlobal,
   settingsPathForProject,
 } from './F_ExperimentList.settings';
 
@@ -96,7 +100,7 @@ interface Props {
   project: Project;
 }
 
-type ExperimentWithIndex = { index: number; experiment: ExperimentItem };
+type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
@@ -123,13 +127,6 @@ const INITIAL_LOADING_EXPERIMENTS: Loadable<ExperimentWithTrial>[] = new Array(P
 );
 
 const STATIC_COLUMNS = [MULTISELECT];
-
-const rowHeightMap: Record<RowHeight, number> = {
-  [RowHeight.EXTRA_TALL]: 44,
-  [RowHeight.TALL]: 40,
-  [RowHeight.MEDIUM]: 36,
-  [RowHeight.SHORT]: 32,
-};
 
 const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
@@ -162,7 +159,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
-    useSettings<F_ExperimentListGlobalSettings>(settingsConfigGlobal);
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
   const isPagedView = globalSettings.tableViewMode === 'paged';
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -533,9 +530,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [handleSelectionChange, fetchExperiments]);
 
   const handleActionSuccess = useCallback(
-    (action: ExperimentAction, successfulIds: number[], data?: Partial<ExperimentItem>): void => {
+    (
+      action: ExperimentAction,
+      successfulIds: number[],
+      data?: Partial<BulkExperimentItem>,
+    ): void => {
       const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<ExperimentItem>) => {
+      const updateExperiment = (updated: Partial<BulkExperimentItem>) => {
         setExperiments((prev) =>
           prev.map((expLoadable) =>
             Loadable.map(expLoadable, (experiment) =>
@@ -592,16 +593,28 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number, data?: Partial<ExperimentItem>) =>
+    (action: ExperimentAction, id: number, data?: Partial<BulkExperimentItem>) =>
       handleActionSuccess(action, [id], data),
     [handleActionSuccess],
   );
 
   const handleColumnsOrderChange = useCallback(
     (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.columnWidths],
   );
 
   const handleRowHeightChange = useCallback(
@@ -672,9 +685,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const widthDifference = newTableWidth - comparisonViewTableWidth;
       // Positive widthDifference: Table pane growing/compare pane shrinking
       // Negative widthDifference: Table pane shrinking/compare pane growing
-      const newColumnWidths: Record<string, number> = { ...settings.columnWidths };
+      const newColumnWidths: Record<string, number> = {
+        ...settings.columnWidths,
+      };
       pinnedColumns
-        .filter((col) => widthDifference > 0 || newColumnWidths[col] !== MIN_COLUMN_WIDTH)
+        .filter(
+          (col) =>
+            !STATIC_COLUMNS.includes(col) &&
+            (widthDifference > 0 || newColumnWidths[col] > MIN_COLUMN_WIDTH),
+        )
         .forEach((col, _, arr) => {
           newColumnWidths[col] = Math.max(
             MIN_COLUMN_WIDTH,
@@ -693,7 +712,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       updateSettings({
         columnWidths: {
           ...settings.columnWidths,
-          [columnId]: width,
+          [columnId]: Math.max(MIN_COLUMN_WIDTH, width),
         },
       });
     },
@@ -784,10 +803,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.HYPERPARAMETERS:
-            dataPath = `experiment.config.hyperparameters.${currentColumn.column.replace(
-              'hp.',
-              '',
-            )}.val`;
+            dataPath = `experiment.hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
             break;
           case V1LocationType.VALIDATIONS:
             dataPath = `bestTrial.summaryMetrics.validationMetrics.${currentColumn.column.replace(
@@ -819,7 +835,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -830,7 +848,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               columnDefs[currentColumn.column] = defaultNumberColumn(
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
-                settings.columnWidths[currentColumn.column],
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -840,7 +860,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -850,7 +872,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             columnDefs[currentColumn.column] = defaultTextColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -862,7 +886,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             !settings.heatmapSkipped.includes(currentColumn.column)
           ) {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
               {
                 max: heatmap.max,
                 min: heatmap.min,
@@ -870,7 +896,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             );
           } else {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
-              settings.columnWidths[currentColumn.column],
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
             );
           }
         }
@@ -1108,7 +1136,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               projectId={project.id}
               selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
-              <DataGrid<ExperimentWithTrial, ExperimentAction, ExperimentItem>
+              <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}
                 data={experiments}
                 getHeaderMenuItems={getHeaderMenuItems}

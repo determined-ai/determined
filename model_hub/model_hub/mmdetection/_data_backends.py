@@ -14,7 +14,7 @@ import mmcv
 from google.cloud import storage
 
 import determined
-import model_hub.utils as utils
+from model_hub import utils
 
 
 class S3Backend(mmcv.fileio.BaseStorageBackend):  # type: ignore
