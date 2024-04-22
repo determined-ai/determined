@@ -77,15 +77,13 @@ export class UserManagement extends AdminPage {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
+
+    const removeNewLines = (item: string) => item.replace(/(\r\n|\n|\r)/gm, '');
     expect(
       filteredRows,
       `name: ${name}
-      users: ${(await this.table.table.rows.user.pwLocator.allInnerTexts()).map((item) =>
-        item.replace(/(\r\n|\n|\r)/gm, ''),
-      )}
-      table: ${(await this.table.table.rows.pwLocator.allInnerTexts()).map((item) =>
-        item.replace(/(\r\n|\n|\r)/gm, ''),
-      )}`,
+      users: ${(await this.table.table.rows.user.pwLocator.allInnerTexts()).map(removeNewLines)}
+      table: ${(await this.table.table.rows.pwLocator.allInnerTexts()).map(removeNewLines)}`,
     ).toHaveLength(1);
     return filteredRows[0];
   }
