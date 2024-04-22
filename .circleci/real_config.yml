@@ -4223,6 +4223,7 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          ee: true
           requires:
             - build-go
           context:
