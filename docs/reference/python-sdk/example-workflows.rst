@@ -6,56 +6,78 @@
 
 Walk through how to use the Python SDK in these basic and advanced workflow examples.
 
-.. tabs::
+************************************
+ Find the Top Performing Checkpoint
+************************************
 
-   .. tab::
+In this example, we'll walk through the most basic workflow for creating an experiment, waiting for
+it to complete, and finding the top-performing checkpoint.
 
-      Basic Workflow
+The first step is to import the client module and possibly to call login():
 
-      **Find the Top Performing Checkpoint**
+.. code:: python
 
-      In this example, we'll walk through the most basic workflow for creating an experiment,
-      waiting for it to complete, and finding the top-performing checkpoint.
+   from determined.experimental import client
 
-      The first step is to import the client module and possibly to call login():
+   # We will assume that you have called `det user login`, so this is unnecessary:
+   # client.login(master=..., user=..., password=...)
 
-      .. code:: python
+The next step is to call create_experiment():
 
-         from determined.experimental import client
+.. code:: python
 
-         # We will assume that you have called `det user login`, so this is unnecessary:
-         # client.login(master=..., user=..., password=...)
+   # Config can be a path to a config file or a Python dict of the config.
+   exp = client.create_experiment(config="my_config.yaml", model_dir=".")
+   print(f"started experiment {exp.id}")
 
-      The next step is to call create_experiment():
+The returned object is an ``Experiment`` object, which offers methods to manage the experiment's
+lifecycle. In the following example, we simply await the experiment's completion.
 
-      .. code:: python
+.. code:: python
 
-         # Config can be a path to a config file or a Python dict of the config.
-         exp = client.create_experiment(config="my_config.yaml", model_dir=".")
-         print(f"started experiment {exp.id}")
+   exit_status = exp.wait()
+   print(f"experiment completed with status {exit_status}")
 
-      The returned object is an ``Experiment`` object, which offers methods to manage the
-      experiment's lifecycle. In the following example, we simply await the experiment's completion.
+Now that the experiment has completed, you can grab the top-performing checkpoint from training:
 
-      .. code:: python
+.. code:: python
 
-         exit_status = exp.wait()
-         print(f"experiment completed with status {exit_status}")
+   best_checkpoint = exp.list_checkpoints()[0]
+   print(f"best checkpoint was {best_checkpoint.uuid}")
 
-      Now that the experiment has completed, you can grab the top-performing checkpoint from
-      training:
+******************************************
+ Create an Experiment and Follow its Logs
+******************************************
 
-      .. code:: python
+Using ``det`` CLI, you can create an experiment and print its logs until completion using:
 
-         best_checkpoint = exp.list_checkpoints()[0]
-         print(f"best checkpoint was {best_checkpoint.uuid}")
+.. code:: bash
 
-   .. tab::
+   det e create --follow ...
 
-      Advanced Workflow
+The same behavior can be replicated with the Python SDK:
 
-      **Run and Administer Experiments**
+.. code:: python
 
-      Visit the `det-python-sdk-demo
-      <https://github.com/determined-ai/determined-examples/tree/e499000d92a0a973d1f40a419934f393957a3296/blog/python_sdk_demo>`__
-      to learn how to run and administer experiments using the Python SDK.
+   exp = client.create_experiment(...)
+   for logline in exp.await_first_trial().iter_logs():
+      print(logline)
+
+***********************
+ Download a checkpoint
+***********************
+
+You can download a checkpoint with a given UUID using the Python SDK:
+
+.. code:: python
+
+   ckpt = client.get_checkpoint(uuid)
+   ckpt.download("/path/to/download/dir")
+
+********************************
+ Run and Administer Experiments
+********************************
+
+Visit the `det-python-sdk-demo
+<https://github.com/determined-ai/determined-examples/tree/e499000d92a0a973d1f40a419934f393957a3296/blog/python_sdk_demo>`__
+to learn how to run and administer experiments using the Python SDK.

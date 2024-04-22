@@ -7,7 +7,12 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
 
 // add new feature switches here
-export type ValidFeature = 'explist_v2' | 'rp_binding' | 'genai';
+export type ValidFeature =
+  | 'explist_v2'
+  | 'rp_binding'
+  | 'genai'
+  | 'flat_runs'
+  | 'streaming_updates';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -21,6 +26,12 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     description: 'Enable improved experiment listing, filtering, and comparison',
     friendlyName: 'New Experiment List',
   },
+  flat_runs: {
+    defaultValue: false,
+    description:
+      'Presents all runs in a project in a single view, rather than grouped into experiments',
+    friendlyName: 'Flat Runs View',
+  },
   genai: {
     defaultValue: false,
     description: 'Enable links to Generative AI Studio',
@@ -30,6 +41,11 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: true,
     description: 'Allow resource pools to be assigned to workspaces',
     friendlyName: 'Resource Pool Binding',
+  },
+  streaming_updates: {
+    defaultValue: false,
+    description: 'Allow streaming updates through websockets for better performance',
+    friendlyName: 'Streaming Updates',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

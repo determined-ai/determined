@@ -8,11 +8,12 @@ import {
 } from 'constants/states';
 import {
   AnyTask,
+  BulkExperimentItem,
   ExperimentAction,
   ExperimentBase,
-  ExperimentItem,
   ExperimentPermissionsArgs,
   ExperimentSearcherName,
+  FullExperimentItem,
   Hyperparameters,
   HyperparameterType,
   Project,
@@ -44,8 +45,10 @@ export const FULL_CONFIG_BUTTON_TEXT = 'Show Full Config';
 export const SIMPLE_CONFIG_BUTTON_TEXT = 'Show Simple Config';
 
 // Differentiate Experiment from Task.
-export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
-  return 'config' in obj && 'archived' in obj;
+export const isExperiment = <T extends BulkExperimentItem | FullExperimentItem>(
+  obj: AnyTask | T,
+): obj is T => {
+  return 'hyperparameters' in obj && 'archived' in obj;
 };
 
 export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => {
@@ -269,7 +272,7 @@ export const getActionsForExperimentsUnion = (
 };
 
 export const getProjectExperimentForExperimentItem = (
-  experiment: ExperimentItem,
+  experiment: BulkExperimentItem,
   project?: Project,
 ): ProjectExperiment =>
   ({

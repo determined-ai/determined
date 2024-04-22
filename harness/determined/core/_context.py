@@ -47,6 +47,7 @@ class Context:
         info: Optional[det.ClusterInfo] = None,
         experimental: Optional[core.ExperimentalCoreContext] = None,
         profiler: Optional[core.ProfilerContext] = None,
+        _metrics: Optional[core._MetricsContext] = None,
         _tensorboard_manager: Optional[tensorboard.TensorboardManager] = None,
         _heartbeat: Optional[core._Heartbeat] = None,
         _log_shipper: Optional[core._LogShipper] = None,
@@ -55,6 +56,7 @@ class Context:
         self.distributed = distributed or core.DummyDistributedContext()
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
+        self._metrics = _metrics or core._DummyMetricsContext()
         self.searcher = searcher or core.DummySearcherContext(self.distributed)
         self.info = info
         self.experimental = experimental or core.DummyExperimentalCoreContext()
@@ -65,6 +67,7 @@ class Context:
 
     def start(self) -> None:
         self.preempt.start()
+        self._metrics.start()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.start()
         if self._heartbeat is not None:
@@ -84,6 +87,7 @@ class Context:
     ) -> None:
         self.preempt.close()
         self.distributed.close()
+        self._metrics.close()
         self.profiler._close()
         if self._tensorboard_manager is not None:
             self._tensorboard_manager.close()
@@ -250,6 +254,7 @@ def init(
     tensorboard_manager = None
     experimental = None
     profiler = None
+    metrics = None
 
     storage_manager = _get_storage_manager(checkpoint_storage)
 
@@ -267,16 +272,23 @@ def init(
         if tensorboard_mode == core.TensorboardMode.AUTO:
             tbd_writer = tensorboard.get_metric_writer()
 
-        train = core.TrainContext(
+        metrics = core._MetricsContext(
             session,
             info.trial.trial_id,
             info.trial._trial_run_id,
+        )
+
+        train = core.TrainContext(
+            session,
+            info.trial.trial_id,
             info.trial.experiment_id,
+            metrics,
             distributed,
             tensorboard_mode,
             tensorboard_manager,
             tbd_writer,
         )
+
         units = core._parse_searcher_units(info.trial._config)
         searcher = core.SearcherContext(
             session,
@@ -313,10 +325,8 @@ def init(
         preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
         experimental = core.ExperimentalCoreContext(session, info.trial.trial_id)
         profiler = core.ProfilerContext(
-            session=session,
             agent_id=info.agent_id,
-            trial_id=info.trial.trial_id,
-            run_id=info.trial._trial_run_id,
+            metrics=metrics,
             distributed=distributed,
         )
 
@@ -339,6 +349,7 @@ def init(
         searcher=searcher,
         experimental=experimental,
         profiler=profiler,
+        _metrics=metrics,
         _tensorboard_manager=tensorboard_manager,
     )
 

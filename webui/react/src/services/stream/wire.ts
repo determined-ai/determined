@@ -54,6 +54,56 @@ export class ModelSpec extends StreamSpec {
   };
 }
 
+export class ModelversionSpec extends StreamSpec {
+  readonly #id: Streamable = 'modelversions';
+  #model_ids: Array<number>;
+  #model_version_ids: Array<number>;
+  #user_ids: Array<number>;
+  #since: number;
+
+  constructor(
+    model_ids?: Array<number>,
+    model_version_ids?: Array<number>,
+    user_ids?: Array<number>,
+    since?: number,
+  ) {
+    super();
+    this.#model_ids = model_ids || [];
+    this.#model_version_ids = model_version_ids || [];
+    this.#user_ids = user_ids || [];
+    this.#since = since || 0;
+  }
+
+  public equals = (sp?: StreamSpec): boolean => {
+    if (!sp) return false;
+    if (sp instanceof ModelversionSpec) {
+      return (
+        isEqual(sp.#model_ids, this.#model_ids)
+        &&
+        isEqual(sp.#model_version_ids, this.#model_version_ids)
+        &&
+        isEqual(sp.#user_ids, this.#user_ids)
+        &&
+        isEqual(sp.#since, this.#since)
+      );
+    }
+    return false;
+  };
+
+  public id = (): Streamable => {
+    return this.#id;
+  };
+
+  public toWire = (): Record<string, unknown> => {
+    return {
+      model_ids: this.#model_ids,
+      model_version_ids: this.#model_version_ids,
+      user_ids: this.#user_ids,
+      since: this.#since,
+    };
+  };
+}
+
 export class ProjectSpec extends StreamSpec {
   readonly #id: Streamable = 'projects';
   #workspace_ids: Array<number>;

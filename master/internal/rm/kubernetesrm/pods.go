@@ -1568,7 +1568,10 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 		return nonDetPods
 	}
 	for _, p := range pList.Items {
-		if _, ok := p.Labels["determined"]; !ok {
+		_, isDet := p.Labels[determinedLabel]
+		_, isDetSystem := p.Labels[determinedSystemLabel]
+
+		if !(isDet || isDetSystem) {
 			if p.Spec.NodeName != "" {
 				nonDetPods = append(nonDetPods, p)
 			}

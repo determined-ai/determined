@@ -52,6 +52,8 @@ const (
 	TaskTypeGeneric TaskType = "GENERIC"
 	// GlobalAccessScopeID represents global permission access.
 	GlobalAccessScopeID AccessScopeID = 0
+	// AggregationTypeQueued is the type of aggregation for queued tasks.
+	AggregationTypeQueued = "queued"
 )
 
 // TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
@@ -79,8 +81,6 @@ type Task struct {
 	EndTime   *time.Time `db:"end_time"`
 	// LogVersion indicates how the logs were stored.
 	LogVersion TaskLogVersion `db:"log_version"`
-	// LogRetentionDays is the number of days to retain logs for.
-	LogRetentionDays *int16 `db:"log_retention_days"`
 
 	// Relations.
 	Job        *Job    `bun:"rel:belongs-to,join:job_id=job_id"`
@@ -200,7 +200,8 @@ type TaskStats struct {
 
 // ResourceAggregates is the model for resource_aggregates in the database.
 type ResourceAggregates struct {
-	Date            *time.Time
+	Date *time.Time
+	// AggregationType is the type of aggregation. E.g. "total", "queued", "resource_pool", "username"
 	AggregationType string
 	AggregationKey  string
 	Seconds         float32

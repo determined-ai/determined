@@ -1,0 +1,62 @@
+project_name: determined-master
+
+before:
+  hooks:
+    - make pre-package-small
+
+snapshot:
+  name_template: "{{ .Tag }}"
+
+builds:
+  - main: ./cmd/determined-master
+    id: determined-master
+    binary: determined-master
+    ldflags:
+      - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+  - main: ./cmd/determined-gotmpl
+    id: determined-gotmpl
+    binary: determined-gotmpl
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+
+dockers:
+  # amd64
+  - goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --builder=buildx-build-sharedcluster
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64-shared-cluster"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    ids:
+      - determined-master
+      - determined-gotmpl
+
+docker_manifests:
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-shared-cluster"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64-shared-cluster"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.ShortCommit}}-shared-cluster"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64-shared-cluster"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}-shared-cluster"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64-shared-cluster"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:latest-shared-cluster"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64-shared-cluster"

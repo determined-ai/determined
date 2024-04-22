@@ -58,14 +58,23 @@ All pages and components support subcomponents using instance properties. Inital
 Here's a simplified example using part of the `DeterminedAuth` component. Intrinsic elements are be represent with `BaseComponent`, and they can be as `parent`s for other elements. The amount of specificity is left to the author's discretion. If you're not sure, more is better to avoid conflicts with future additions. Deeper specificity will also optimize for searching through the DOM on larger pages.
 
 ```js
-export class DeterminedAuth extends NamedComponent({ defaultSelector: "div[data-test-component='detAuth']"}) {
+export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-test-component="detAuth"]`}) {
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }
-  readonly form: BaseComponent = new BaseComponent({ parent: this, selector: "form" });
-  readonly username: BaseComponent = new BaseComponent({ parent: this.form, selector: "input[data-testid='username']" });
-  readonly password: BaseComponent = new BaseComponent({ parent: this.form, selector: "input[data-testid='password']" });
-  readonly submit: BaseComponent = new BaseComponent({ parent: this.form, selector: "button[data-testid='submit']" });
+  readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: `form` });
+  readonly username: BaseComponent = new BaseComponent({
+    parent: this.#form,
+    selector: `input[data-testid="username"]`,
+  });
+  readonly password: BaseComponent = new BaseComponent({
+    parent: this.#form,
+    selector: `input[data-testid="password"]`,
+  });
+  readonly submit: BaseComponent = new BaseComponent({
+    parent: this.#form,
+    selector: `button[data-testid="submit"]`,
+  });
   ...
 }
 ```
@@ -91,11 +100,11 @@ When creating page models, you'll most likely want to author test hooks into the
 Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
 
 ```js
-  // DeterminedTable.defaultSelector = "[data-test-component='DetTable']"
-  readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
-  readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
+  // DeterminedTable.defaultSelector = '[data-test-component="DetTable"]'
+  readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="userTable"]' });
+  readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="roleTable"]' });
 ```
 
-The component `DeterminedTable` would have `data-test-component='DetTable'` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
+The component `DeterminedTable` would have `data-test-component="DetTable"` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
 
 Not every component needs a data-testid, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman".

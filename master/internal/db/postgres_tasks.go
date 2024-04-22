@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/o1egl/paseto"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
@@ -33,7 +35,7 @@ func AddTask(ctx context.Context, t *model.Task) error {
 func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 	_, err := idb.NewInsert().Model(t).
 		Column("task_id", "task_type", "start_time", "job_id", "log_version",
-			"config", "forked_from", "parent_id", "task_state", "no_pause", "log_retention_days").
+			"config", "forked_from", "parent_id", "task_state", "no_pause").
 		On("CONFLICT (task_id) DO UPDATE").
 		Set("task_type=EXCLUDED.task_type").
 		Set("start_time=EXCLUDED.start_time").
@@ -44,7 +46,6 @@ func AddTaskTx(ctx context.Context, idb bun.IDB, t *model.Task) error {
 		Set("parent_id=EXCLUDED.parent_id").
 		Set("task_state=EXCLUDED.task_state").
 		Set("no_pause=EXCLUDED.no_pause").
-		Set("log_retention_days=EXCLUDED.log_retention_days").
 		Exec(ctx)
 	return MatchSentinelError(err)
 }
@@ -336,22 +337,16 @@ func CloseOpenAllocations(ctx context.Context, exclude []model.AllocationID) err
 
 // RecordTaskStats record stats for tasks.
 func RecordTaskStats(ctx context.Context, stats *model.TaskStats) error {
-	return RecordTaskStatsBun(ctx, stats)
-}
+	if stats.StartTime == nil || stats.StartTime.IsZero() {
+		log.Warnf("task stats %+v has no start time", stats)
+	}
 
-// RecordTaskStatsBun record stats for tasks with bun.
-func RecordTaskStatsBun(ctx context.Context, stats *model.TaskStats) error {
 	_, err := Bun().NewInsert().Model(stats).Exec(context.TODO())
-	return err
+	return errors.Wrap(err, "recording task stats")
 }
 
 // RecordTaskEndStats record end stats for tasks.
 func RecordTaskEndStats(ctx context.Context, stats *model.TaskStats) error {
-	return RecordTaskEndStatsBun(ctx, stats)
-}
-
-// RecordTaskEndStatsBun record end stats for tasks with bun.
-func RecordTaskEndStatsBun(ctx context.Context, stats *model.TaskStats) error {
 	query := Bun().NewUpdate().Model(stats).Column("end_time").
 		Where("allocation_id = ?", stats.AllocationID).
 		Where("event_type = ?", stats.EventType).

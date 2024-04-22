@@ -10,6 +10,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { cspHtml } from './vite-plugin-csp';
+import { brandHtml } from "./vite-plugin-branding";
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
@@ -88,7 +89,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.30.0-dev0"',
+    'process.env.VERSION': '"0.31.1-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
@@ -112,6 +113,7 @@ export default defineConfig(({ mode }) => ({
     }),
     react(),
     publicUrlBaseHref(),
+    brandHtml(),
     mode !== 'test' &&
       checker({
         typescript: true,
@@ -132,8 +134,8 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 3001,
     proxy: {
-      '/api': { target: webpackProxyUrl},
-      '/proxy': { target: webpackProxyUrl},
+      '/api': { target: webpackProxyUrl },
+      '/proxy': { target: webpackProxyUrl },
       '/stream': {
         target: websocketProxyUrl,
         ws: true,
@@ -164,7 +166,11 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       ...configDefaults.coverage,
       include: ['src'],
-      exclude: [...configDefaults.coverage.exclude, 'src/vendor/**/*', 'src/services/api-ts-sdk/*']
+      exclude: [
+        ...(configDefaults.coverage.exclude ?? []),
+        'src/vendor/**/*',
+        'src/services/api-ts-sdk/*',
+      ],
     },
     css: {
       modules: {
@@ -179,7 +185,7 @@ export default defineConfig(({ mode }) => ({
       registerNodeLoader: true,
     },
     environment: 'jsdom',
-    exclude: [...configDefaults.exclude, './src/e2e/*'],
+    exclude: [...configDefaults.exclude, './src/e2e/**/*'],
     globals: true,
     setupFiles: ['./src/setupTests.ts'],
     testNamePattern: process.env.INCLUDE_FLAKY === 'true' ? /@flaky/ : /^(?!.*@flaky)/,

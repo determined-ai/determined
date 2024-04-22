@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -239,13 +240,17 @@ func (k *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*
 
 // GetJobQueueStatsRequest implements rm.ResourceManager.
 func (k *ResourceManager) GetJobQueueStatsRequest(
-	*apiv1.GetJobQueueStatsRequest,
+	msg *apiv1.GetJobQueueStatsRequest,
 ) (*apiv1.GetJobQueueStatsResponse, error) {
 	resp := &apiv1.GetJobQueueStatsResponse{
 		Results: make([]*apiv1.RPQueueStat, 0),
 	}
 
 	for poolName, rp := range k.pools {
+		if len(msg.ResourcePools) != 0 && !slices.Contains(msg.ResourcePools, poolName) {
+			continue
+		}
+
 		qStats := apiv1.RPQueueStat{
 			ResourcePool: poolName,
 			Stats:        rp.GetJobQStats(),
@@ -582,39 +587,7 @@ func (k *ResourceManager) createResourcePoolSummary(
 func (k *ResourceManager) fetchAvgQueuedTime(pool string) (
 	[]*jobv1.AggregateQueueStats, error,
 ) {
-	aggregates := []model.ResourceAggregates{}
-	err := db.Bun().NewSelect().Model(&aggregates).
-		Where("aggregation_type = ?", "queued").
-		Where("aggregation_key = ?", pool).
-		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
-		Order("date ASC").Scan(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*jobv1.AggregateQueueStats, 0)
-	for _, record := range aggregates {
-		res = append(res, &jobv1.AggregateQueueStats{
-			PeriodStart: record.Date.Format("2006-01-02"),
-			Seconds:     record.Seconds,
-		})
-	}
-	today := float32(0)
-	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
-		Where("resource_pool = ?", pool).
-		Where("start_time >= CURRENT_DATE")
-	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
-		"avg(extract(epoch FROM end_time - start_time))",
-	).Where("event_type = ?", "QUEUED").
-		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
-		Scan(context.TODO(), &today)
-	if err != nil {
-		return nil, err
-	}
-	res = append(res, &jobv1.AggregateQueueStats{
-		PeriodStart: time.Now().Format("2006-01-02"),
-		Seconds:     today,
-	})
-	return res, nil
+	return rm.FetchAvgQueuedTime(pool)
 }
 
 func (k *ResourceManager) getPoolJobStats(

@@ -10,20 +10,31 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
+
+type archiveRunOKResult struct {
+	Archived     bool
+	ID           int32
+	ExpID        *int32
+	IsMultitrial bool
+}
 
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
@@ -89,20 +100,7 @@ func (a *apiServer) SearchRuns(
 	}
 
 	if req.Filter != nil {
-		var efr experimentFilterRoot
-		err := json.Unmarshal([]byte(*req.Filter), &efr)
-		if err != nil {
-			return nil, err
-		}
-		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			_, err = efr.toSQL(q)
-			return q
-		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			if !efr.ShowArchived {
-				return q.Where(`e.archived = false`)
-			}
-			return q
-		})
+		query, err = filterRunQuery(query, req.Filter)
 		if err != nil {
 			return nil, err
 		}
@@ -137,8 +135,9 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
 		Column("r.project_id").
+		Column("r.searcher_metric_value").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
-		ColumnExpr("r.hparams AS hyperparameters").
+		ColumnExpr("CASE WHEN r.hparams='null' THEN NULL ELSE r.hparams END AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
 		ColumnExpr("e.owner_id AS user_id").
 		ColumnExpr("e.config->>'labels' AS labels").
@@ -148,7 +147,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("p.name AS project_name").
 		ColumnExpr(`jsonb_build_object(
 			'searcher_type', e.config->'searcher'->>'name',
-			'searcher_metric', e.config->'metric'->>'name',
+			'searcher_metric', e.config->'searcher'->>'metric',
 			'resource_pool', e.config->'resources'->>'resource_pool',
 			'name', e.config->>'name',
 			'description', e.config->>'description',
@@ -174,17 +173,17 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	}
 	orderColMap := map[string]string{
 		"id":                    "id",
-		"experimentDescription": "experiment_description",
-		"experimentName":        "experiment_name",
-		"searcherType":          "searcher_type",
-		"searcherMetric":        "searcher_metric",
+		"experimentDescription": "e.config->>'description'",
+		"experimentName":        "e.config->>'name'",
+		"searcherType":          "e.config->'searcher'->>'name'",
+		"searcherMetric":        "e.config->'searcher'->>'metric'",
 		"startTime":             "r.start_time",
 		"endTime":               "r.end_time",
 		"state":                 "r.state",
-		"experimentProgress":    "COALESCE(progress, 0)",
-		"user":                  "display_name",
+		"experimentProgress":    "COALESCE(e.progress, 0)",
+		"user":                  "COALESCE(u.username, u.display_name)",
 		"forkedFrom":            "e.parent_id",
-		"resourcePool":          "resource_pool",
+		"resourcePool":          "e.config->'resources'->>'resource_pool'",
 		"projectId":             "r.project_id",
 		"checkpointSize":        "checkpoint_size",
 		"checkpointCount":       "checkpoint_count",
@@ -193,7 +192,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
-		"isExpMultitrial":       "is_exp_multitrial",
+		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
@@ -238,4 +237,273 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		runQuery.OrderExpr("id ASC")
 	}
 	return nil
+}
+
+func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, error) {
+	var efr experimentFilterRoot
+	err := json.Unmarshal([]byte(*filter), &efr)
+	if err != nil {
+		return nil, err
+	}
+	getQ = getQ.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		_, err = efr.toSQL(q)
+		return q
+	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		if !efr.ShowArchived {
+			return q.Where(`e.archived = false`)
+		}
+		return q
+	})
+	if err != nil {
+		return nil, err
+	}
+	return getQ, nil
+}
+
+func getSelectRunsQueryTables() *bun.SelectQuery {
+	return db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
+}
+
+func (a *apiServer) MoveRuns(
+	ctx context.Context, req *apiv1.MoveRunsRequest,
+) (*apiv1.MoveRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// check that user can view source project
+	srcProject, err := a.GetProjectByID(ctx, req.SourceProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if srcProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot have runs moved from it",
+			srcProject.Id)
+	}
+
+	// check suitable destination project
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, *curUser)
+	if err != nil {
+		return nil, err
+	}
+	if destProject.Archived {
+		return nil, errors.Errorf("project (%v) is archived and cannot add new runs",
+			req.DestinationProjectId)
+	}
+	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *curUser, destProject); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	var runChecks []archiveRunOKResult
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runChecks).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", req.SourceProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	// associated experiments to move
+	var expMoveIds []int32
+	for _, check := range runChecks {
+		visibleIDs.Insert(check.ID)
+		if check.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    check.ID,
+			})
+			continue
+		}
+		if check.IsMultitrial && req.SkipMultitrial {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", check.ID),
+				Id:    check.ID,
+			})
+			continue
+		}
+		if check.ExpID != nil {
+			expMoveIds = append(expMoveIds, *check.ExpID)
+		}
+		validIDs = append(validIDs, check.ID)
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.SourceProjectId),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	if len(validIDs) > 0 {
+		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+		if err != nil {
+			return nil, err
+		}
+		failedExpMoveIds := []int32{-1}
+		for _, res := range expMoveResults {
+			if res.Error != nil {
+				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			}
+		}
+		var acceptedIDs []int32
+		if _, err = db.Bun().NewUpdate().Table("runs").
+			Set("project_id = ?", req.DestinationProjectId).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+		var failedRunIDs []int32
+		if err = db.Bun().NewSelect().Table("runs").
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
+			Scan(ctx, &failedRunIDs); err != nil {
+			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
+		}
+		for _, failedRunID := range failedRunIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Failed to move associated experiment",
+				Id:    failedRunID,
+			})
+		}
+	}
+	return &apiv1.MoveRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
+) (*apiv1.KillRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	type killRunOKResult struct {
+		ID         int32
+		RequestID  *string
+		IsTerminal bool
+	}
+
+	var killCandidatees []killRunOKResult
+	getQ := getSelectRunsQueryTables().
+		Model(&killCandidatees).
+		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
+		Column("r.id").
+		ColumnExpr("t.request_id").
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Where("r.project_id = ?", req.ProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	for _, check := range killCandidatees {
+		visibleIDs.Insert(check.ID)
+		switch {
+		case check.IsTerminal:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    check.ID,
+			})
+		// This should be impossible in the current system but we will leave this check here
+		// to cover a possible error in integration tests
+		case check.RequestID == nil:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run has no associated request id.",
+				Id:    check.ID,
+			})
+		default:
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+
+	for _, runID := range validIDs {
+		_, err = a.KillTrial(ctx, &apiv1.KillTrialRequest{
+			Id: runID,
+		})
+		if err != nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Failed to kill run: %s", err),
+				Id:    runID,
+			})
+		} else {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    runID,
+			})
+		}
+	}
+	return &apiv1.KillRunsResponse{Results: results}, nil
 }

@@ -18,15 +18,7 @@ Log = Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]
 LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsResponse]
 
 
-@pytest.mark.e2e_cpu
-@pytest.mark.e2e_cpu_elastic
-@pytest.mark.e2e_cpu_postgres
-@pytest.mark.e2e_cpu_cross_version
-@pytest.mark.e2e_gpu
-@pytest.mark.e2e_slurm
-@pytest.mark.e2e_pbs
-@pytest.mark.timeout(10 * 60)
-def test_trial_logs() -> None:
+def _test_trial_logs(log_regex: re.Pattern) -> None:
     sess = api_utils.user_session()
 
     experiment_id = exp.run_basic_test(
@@ -36,8 +28,6 @@ def test_trial_logs() -> None:
     trial_id = trial.id
     task_id = trial.taskId
     assert task_id != ""
-
-    log_regex = re.compile("^.*New trial runner.*$")
 
     # Trial-specific APIs should work just fine.
     check_logs(
@@ -55,21 +45,34 @@ def test_trial_logs() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_missing_startup_hook()
+@pytest.mark.timeout(10 * 60)
+def test_tcd_startup_hook_trial_combined() -> None:
+    _test_trial_logs(re.compile("^.*hello from rp tcd startup hook.*$"))
+
+
 @pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
+@api_utils.skipif_missing_startup_hook()
+@pytest.mark.timeout(10 * 60)
+def test_tcd_startup_hook_trial_master() -> None:
+    _test_trial_logs(re.compile("^.*hello from master tcd startup hook.*$"))
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_postgres
 @pytest.mark.e2e_cpu_cross_version
-@pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
+@pytest.mark.e2e_gpu
 @pytest.mark.e2e_slurm
 @pytest.mark.e2e_pbs
-@pytest.mark.parametrize(
-    "task_type,task_config,log_regex",
-    [
-        ("command", {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
-        ("notebook", {}, re.compile("^.*Jupyter Server .* is running.*$")),
-        ("shell", {}, re.compile("^.*Server listening on.*$")),
-        ("tensorboard", {}, re.compile("^.*TensorBoard .* at .*$")),
-    ],
-)
-def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
+@pytest.mark.timeout(10 * 60)
+def test_trial_logs() -> None:
+    log_regex = re.compile("^.*New trial runner.*$")
+    _test_trial_logs(log_regex)
+
+
+def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.Pattern) -> None:
     sess = api_utils.user_session()
 
     rps = bindings.get_GetResourcePools(sess)
@@ -143,8 +146,48 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
             bindings.post_KillShell(sess, shellId=task_id)
 
 
+@pytest.mark.e2e_cpu
+@api_utils.skipif_missing_startup_hook()
+@pytest.mark.parametrize(
+    "task_type",
+    ["command", "notebook", "shell", "tensorboard"],
+)
+def test_tcd_startup_hook_task_combined(task_type: str) -> None:
+    _test_task_logs(task_type, {}, re.compile("^.*hello from rp tcd startup hook.*$"))
+
+
+@pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_gpu  # Note, `e2e_gpu and not gpu_required` hits k8s cpu tests.
+@api_utils.skipif_missing_startup_hook()
+@pytest.mark.parametrize(
+    "task_type",
+    ["command", "notebook", "shell", "tensorboard"],
+)
+def test_tcd_startup_hook_task_master(task_type: str) -> None:
+    _test_task_logs(task_type, {}, re.compile("^.*hello from master tcd startup hook.*$"))
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.e2e_cpu_elastic
+@pytest.mark.e2e_cpu_cross_version
+@pytest.mark.e2e_gpu  # Note, e2e_gpu and not gpu_required hits k8s cpu tests.
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
+@pytest.mark.parametrize(
+    "task_type,task_config,log_regex",
+    [
+        ("command", {"entrypoint": ["echo", "hello"]}, re.compile("^.*hello.*$")),
+        ("notebook", {}, re.compile("^.*Jupyter Server .* is running.*$")),
+        ("shell", {}, re.compile("^.*Server listening on.*$")),
+        ("tensorboard", {}, re.compile("^.*TensorBoard .* at .*$")),
+    ],
+)
+def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
+    _test_task_logs(task_type, task_config, log_regex)
+
+
 def check_logs(
-    log_regex: Any,
+    log_regex: re.Pattern,
     log_fn: Callable[..., Iterable[Log]],
     log_fields_fn: Callable[..., Iterable[LogFields]],
 ) -> None:

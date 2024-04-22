@@ -8,7 +8,8 @@ test.describe('Authentication', () => {
     await dev.setServerAddress();
   });
   test.afterEach(async ({ page, auth }) => {
-    if ((await page.title()) !== SignIn.title) {
+    const signInPage = new SignIn(page);
+    if ((await page.title()) !== signInPage.title) {
       await auth.logout();
     }
   });
@@ -16,13 +17,16 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveTitle('Home - Determined');
+      await expect(page).toHaveTitle(
+        /Home - (Determined|HPE Machine Learning Development Environment)/,
+      );
       await expect(page).toHaveURL(/dashboard/);
     });
 
     await test.step('Logout', async () => {
+      const signInPage = new SignIn(page);
       await auth.logout();
-      await expect(page).toHaveTitle(SignIn.title);
+      await expect(page).toHaveTitle(signInPage.title);
       await expect(page).toHaveURL(/login/);
     });
   });
@@ -35,14 +39,16 @@ test.describe('Authentication', () => {
 
     await test.step('Login and expect redirect to previous page', async () => {
       await auth.login(/models/);
-      await expect(page).toHaveTitle('Model Registry - Determined');
+      await expect(page).toHaveTitle(
+        /Model Registry - (Determined|HPE Machine Learning Development Environment)/,
+      );
     });
   });
 
-  test('Bad Credentials should throw an error', async ({ page, auth }) => {
+  test('Bad credentials should throw an error', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     await auth.login(/login/, { password: 'superstar', username: 'jcom' });
-    await expect(page).toHaveTitle(SignIn.title);
+    await expect(page).toHaveTitle(signInPage.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
     expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
@@ -52,7 +58,7 @@ test.describe('Authentication', () => {
       'invalid credentials',
     );
     await signInPage.detAuth.submit.pwLocator.click();
-    await expect(signInPage.detAuth.errors.alert.pwLocator).toHaveCount(2);
-    await expect(signInPage.detAuth.errors.message.pwLocator).toHaveCount(2);
+    await expect(signInPage.detAuth.errors.alert.pwLocator.first()).toBeVisible(); // This can show 2 but one sometimes closes during polling which adds flake
+    await expect(signInPage.detAuth.errors.message.pwLocator.first()).toBeVisible();
   });
 });

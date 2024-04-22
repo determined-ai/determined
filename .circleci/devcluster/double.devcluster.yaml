@@ -34,6 +34,15 @@ stages:
             task_container_defaults:  # for test_default_pool_task_container_defaults.
               environment_variables:
                 - SOMEVAR=SOMEVAL
+              startup_hook: "echo 'hello from rp tcd startup hook'"
+        task_container_defaults:
+          startup_hook: "echo 'hello from master tcd startup hook'"
+        scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
 
   - custom:
       name: proxy

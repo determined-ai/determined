@@ -8,6 +8,10 @@ const (
 	SingularityEntrypointWrapperScript = "singularity-entrypoint-wrapper.sh"
 	singularityEntrypointWrapperMode   = 0o744
 
+	// StartupHookScript contains the script to run on task startup filled in dynamically.
+	StartupHookScript = "dynamic-tcd-startup-hook.sh"
+	startupHookMode   = 0o744
+
 	taskSetupScript = "task-setup.sh"
 	taskSetupMode   = 0o744
 

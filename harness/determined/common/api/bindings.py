@@ -3592,6 +3592,7 @@ class v1Experiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     externalTrialId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
@@ -3633,6 +3634,7 @@ class v1Experiment(Printable):
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         externalTrialId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
@@ -3682,6 +3684,8 @@ class v1Experiment(Printable):
             self.externalTrialId = externalTrialId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(hyperparameters, Unset):
+            self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(modelDefinitionSize, Unset):
@@ -3748,6 +3752,8 @@ class v1Experiment(Printable):
             kwargs["externalTrialId"] = obj["externalTrialId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "hyperparameters" in obj:
+            kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "modelDefinitionSize" in obj:
@@ -3814,6 +3820,8 @@ class v1Experiment(Printable):
             out["externalTrialId"] = self.externalTrialId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "hyperparameters" in vars(self):
+            out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "modelDefinitionSize" in vars(self):
@@ -4115,7 +4123,7 @@ class v1FlatRun(Printable):
     endTime: "typing.Optional[str]" = None
     experiment: "typing.Optional[v1FlatRunExperiment]" = None
     externalRunId: "typing.Optional[int]" = None
-    hyperparameters: "typing.Optional[str]" = None
+    hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4138,7 +4146,7 @@ class v1FlatRun(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experiment: "typing.Union[v1FlatRunExperiment, None, Unset]" = _unset,
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
-        hyperparameters: "typing.Union[str, None, Unset]" = _unset,
+        hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4242,12 +4250,12 @@ class v1FlatRun(Printable):
 
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
+    forkedFrom: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         description: str,
-        forkedFrom: int,
         id: int,
         isMultitrial: bool,
         name: str,
@@ -4257,9 +4265,9 @@ class v1FlatRunExperiment(Printable):
         searcherType: str,
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
+        forkedFrom: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.description = description
-        self.forkedFrom = forkedFrom
         self.id = id
         self.isMultitrial = isMultitrial
         self.name = name
@@ -4270,12 +4278,13 @@ class v1FlatRunExperiment(Printable):
         self.unmanaged = unmanaged
         if not isinstance(externalExperimentId, Unset):
             self.externalExperimentId = externalExperimentId
+        if not isinstance(forkedFrom, Unset):
+            self.forkedFrom = forkedFrom
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "description": obj["description"],
-            "forkedFrom": obj["forkedFrom"],
             "id": obj["id"],
             "isMultitrial": obj["isMultitrial"],
             "name": obj["name"],
@@ -4287,12 +4296,13 @@ class v1FlatRunExperiment(Printable):
         }
         if "externalExperimentId" in obj:
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
+        if "forkedFrom" in obj:
+            kwargs["forkedFrom"] = obj["forkedFrom"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "description": self.description,
-            "forkedFrom": self.forkedFrom,
             "id": self.id,
             "isMultitrial": self.isMultitrial,
             "name": self.name,
@@ -4304,6 +4314,8 @@ class v1FlatRunExperiment(Printable):
         }
         if not omit_unset or "externalExperimentId" in vars(self):
             out["externalExperimentId"] = self.externalExperimentId
+        if not omit_unset or "forkedFrom" in vars(self):
+            out["forkedFrom"] = self.forkedFrom
         return out
 
 class v1GenericTaskState(DetEnum):
@@ -7337,6 +7349,68 @@ class v1KillNotebookResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
+class v1KillRunsRequest(Printable):
+    """Kill runs."""
+    filter: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        return out
+
+class v1KillRunsResponse(Printable):
+    """Response to KillRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1KillShellResponse(Printable):
     """Response to KillShellRequest."""
     shell: "typing.Optional[v1Shell]" = None
@@ -8765,6 +8839,76 @@ class v1MoveProjectRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "destinationWorkspaceId": self.destinationWorkspaceId,
             "projectId": self.projectId,
+        }
+        return out
+
+class v1MoveRunsRequest(Printable):
+    """Request to move the run to a different project."""
+    filter: "typing.Optional[str]" = None
+    skipMultitrial: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        destinationProjectId: int,
+        runIds: "typing.Sequence[int]",
+        sourceProjectId: int,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        skipMultitrial: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.destinationProjectId = destinationProjectId
+        self.runIds = runIds
+        self.sourceProjectId = sourceProjectId
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(skipMultitrial, Unset):
+            self.skipMultitrial = skipMultitrial
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": obj["destinationProjectId"],
+            "runIds": obj["runIds"],
+            "sourceProjectId": obj["sourceProjectId"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "skipMultitrial" in obj:
+            kwargs["skipMultitrial"] = obj["skipMultitrial"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "destinationProjectId": self.destinationProjectId,
+            "runIds": self.runIds,
+            "sourceProjectId": self.sourceProjectId,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "skipMultitrial" in vars(self):
+            out["skipMultitrial"] = self.skipMultitrial
+        return out
+
+class v1MoveRunsResponse(Printable):
+    """Response to MoveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1MoveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
         }
         return out
 
@@ -12676,6 +12820,33 @@ class v1RoleWithAssignments(Printable):
             out["role"] = None if self.role is None else self.role.to_json(omit_unset)
         if not omit_unset or "userRoleAssignments" in vars(self):
             out["userRoleAssignments"] = None if self.userRoleAssignments is None else [x.to_json(omit_unset) for x in self.userRoleAssignments]
+        return out
+
+class v1RunActionResult(Printable):
+    """Message for results of individual runs in a multi-run action."""
+
+    def __init__(
+        self,
+        *,
+        error: str,
+        id: int,
+    ):
+        self.error = error
+        self.id = id
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1RunActionResult":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "error": obj["error"],
+            "id": obj["id"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "error": self.error,
+            "id": self.id,
+        }
         return out
 
 class v1RunPrepareForReportingRequest(Printable):
@@ -19920,6 +20091,27 @@ def post_KillNotebook(
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
 
+def post_KillRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1KillRunsRequest",
+) -> "v1KillRunsResponse":
+    """Get a list of runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/kill",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1KillRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillRuns", _resp)
+
 def post_KillShell(
     session: "api.BaseSession",
     *,
@@ -20436,6 +20628,27 @@ def post_MoveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveProject", _resp)
+
+def post_MoveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1MoveRunsRequest",
+) -> "v1MoveRunsResponse":
+    """Move runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/move",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1MoveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_MoveRuns", _resp)
 
 def post_NotifyContainerRunning(
     session: "api.BaseSession",

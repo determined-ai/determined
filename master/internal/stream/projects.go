@@ -42,7 +42,7 @@ type ProjectMsg struct {
 	Description string               `bun:"description" json:"description"`
 	Archived    bool                 `bun:"archived" json:"archived"`
 	CreatedAt   time.Time            `bun:"created_at" json:"created_at"`
-	Notes       JSONB                `bun:"notes" json:"notes"`
+	Notes       JSONB                `bun:"notes,type:jsonb" json:"notes"`
 	WorkspaceID int                  `bun:"workspace_id" json:"workspace_id"`
 	UserID      int                  `bun:"user_id" json:"user_id"`
 	Immutable   bool                 `bun:"immutable" json:"immutable"`
@@ -148,7 +148,7 @@ func ProjectCollectStartupMsgs(
 			spec,
 		)
 	}
-	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known)
+	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "p")
 	if err != nil {
 		return nil, err
 	}

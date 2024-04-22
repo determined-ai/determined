@@ -391,7 +391,7 @@ func TestProjectHyperparameters(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
-	workspaceID, _ := RequireMockWorkspaceID(t, db)
+	workspaceID, _ := RequireMockWorkspaceID(t, db, "")
 	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
 	exp0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		HParamNames: &[]string{"a", "b", "c"},
@@ -908,7 +908,7 @@ func TestProjectExperiments(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	// add a workspace, and project
-	workspaceID, _ := RequireMockWorkspaceID(t, db)
+	workspaceID, _ := RequireMockWorkspaceID(t, db, "")
 	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
 	RequireMockUser(t, db)
 

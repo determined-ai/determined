@@ -5,10 +5,10 @@ Mappings:
   RegionMap:
     us-gov-east-1:
       Master: ami-04ef693ebcf519dc3
-      Agent: ami-047875a86e970378f
+      Agent: ami-0db37b18a422d2157
     us-gov-west-1:
       Master: ami-08bd15d820a3c087e
-      Agent: ami-0aa306aba45ce531c
+      Agent: ami-05736ebda877e4663
 Parameters:
   Keypair:
     Type: AWS::EC2::KeyPair::KeyName
@@ -67,7 +67,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.30.0-dev0
+    Default: 0.31.1-dev0
 
   DBPassword:
     Type: String
@@ -140,6 +140,11 @@ Parameters:
     Type: String
     Description: Whether preemption is enabled (only supported for priority scheduler).
     Default: false
+
+  ExtraTags:
+    Type: String
+    Description: Extra tags to be applied
+    Default: '[]'
 
   CpuEnvImage:
     Type: String
@@ -672,6 +677,7 @@ Resources:
                 compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
               aws:
+                custom_tags: ${ExtraTags}
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}

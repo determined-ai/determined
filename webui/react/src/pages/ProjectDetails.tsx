@@ -10,6 +10,7 @@ import DynamicTabs from 'components/DynamicTabs';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import { useProjectActionMenu } from 'components/ProjectActionDropdown';
+import Searches from 'components/Searches/Searches';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -24,6 +25,7 @@ import { isNotFound } from 'utils/service';
 
 import ExperimentList from './ExperimentList';
 import F_ExperimentList from './F_ExpList/F_ExperimentList';
+import FlatRuns from './FlatRuns/FlatRuns';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 
@@ -34,6 +36,7 @@ type Params = {
 const ProjectDetails: React.FC = () => {
   const { projectId } = useParams<Params>();
   const f_explist = useFeature().isOn('explist_v2');
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const [project, setProject] = useState<Project | undefined>();
 
@@ -83,12 +86,23 @@ const ProjectDetails: React.FC = () => {
   });
 
   const tabItems: PivotProps['items'] = useMemo(() => {
-    if (!project) {
-      return [];
-    }
+    const items: PivotProps['items'] = [];
+    if (!project) return items;
 
-    const items: PivotProps['items'] = [
-      {
+    if (f_flat_runs) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <FlatRuns project={project} />
+            </div>
+          </div>
+        ),
+        key: 'runs',
+        label: id === 1 ? '' : 'Runs',
+      });
+    } else {
+      items.push({
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
@@ -102,8 +116,22 @@ const ProjectDetails: React.FC = () => {
         ),
         key: 'experiments',
         label: id === 1 ? '' : 'Experiments',
-      },
-    ];
+      });
+    }
+
+    if (f_flat_runs) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <Searches project={project} />
+            </div>
+          </div>
+        ),
+        key: 'searches',
+        label: id === 1 ? '' : 'Searches',
+      });
+    }
 
     if (!project.immutable && projectId) {
       items.push({
@@ -120,7 +148,7 @@ const ProjectDetails: React.FC = () => {
     }
 
     return items;
-  }, [fetchProject, id, project, projectId, f_explist]);
+  }, [fetchProject, id, project, projectId, f_explist, f_flat_runs]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
 
@@ -159,7 +187,7 @@ const ProjectDetails: React.FC = () => {
         ]
       : [
           {
-            breadcrumbName: 'Uncategorized Experiments',
+            breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
             path: paths.projectDetails(project.id),
           },
         ];
@@ -168,7 +196,9 @@ const ProjectDetails: React.FC = () => {
       breadcrumb={pageBreadcrumb}
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
-      docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
+      docTitle={
+        id === 1 ? `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}` : 'Project Details'
+      }
       id="projectDetails"
       menuItems={menu.length > 0 ? menu : undefined}
       noScroll

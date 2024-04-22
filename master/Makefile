@@ -15,8 +15,12 @@ export DOCKER_REPO ?= determinedai
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-master
+EE_PROJECT_NAME = hpe-mlde-master
 ARCHS = amd64 arm64 ppc64
+ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+SHARED_CLUSTER_IMAGE=$(shell echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$(ARCH_SMALL))
 
 NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
 
@@ -25,9 +29,21 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
 
+EE_PUB_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(VERSION)
+
 DEV_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+
+EE_DEV_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)
+
+DEV_MANIFESTS_SMALL = \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-shared-cluster \
+	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)-shared-cluster
 
 NVCR_TAGS = \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
@@ -96,7 +112,7 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 check-gen: force-gen gen build/mock_gen.stamp
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
-	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT))"
+	test -z "$(shell git status --porcelain '**/zgen*' $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT))" || (git diff; false)
 
 .PHONY: get-deps
 get-deps:
@@ -108,22 +124,30 @@ build/stream-gen: cmd/stream-gen/main.go
 .PHONY: build
 build: export DET_SEGMENT_MASTER_KEY ?=
 build: export DET_SEGMENT_WEBUI_KEY ?=
+build: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+build: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
 build: gen
 	CGO_ENABLED=0 go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
-		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/license.licenseKey=$(DET_EE_LICENSE_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/license.publicKey=$(DET_EE_PUBLIC_KEY)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
 .PHONY: build-race
 build-race: export DET_SEGMENT_MASTER_KEY ?=
 build-race: export DET_SEGMENT_WEBUI_KEY ?=
+build-race: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+build-race: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
 build-race: gen
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION) \
 		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey=$(DET_SEGMENT_MASTER_KEY) \
-		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY)" \
+		          -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey=$(DET_SEGMENT_WEBUI_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/license.licenseKey=$(DET_EE_LICENSE_KEY) \
+		          -X github.com/determined-ai/determined/master/internal/license.publicKey=$(DET_EE_PUBLIC_KEY)" \
 		-o build/determined-master \
 		-race \
 		./cmd/determined-master
@@ -180,6 +204,13 @@ pre-package:
 	cp -r ../webui/react/build/* build/webui/react
 	cp ../harness/dist/*.whl build/wheels/
 
+.PHONY: pre-package-small
+pre-package-small:
+	rm -rf build
+	mkdir -p build/wheels/
+	cp -r ../proto/build/swagger build/swagger
+	cp ../harness/dist/*.whl build/wheels/
+
 .PHONY: buildx
 buildx:
 	docker context rm -f buildx-context || true
@@ -197,6 +228,17 @@ buildx:
 	docker buildx ls
 
 $(LICENSE): $(shell find ../tools/scripts/licenses -type f)
+
+.PHONY: buildx-small
+buildx-small:
+	docker context rm -f buildx-context-sharedcluster || true
+	docker context create buildx-context-sharedcluster
+	docker buildx rm -f buildx-build-sharedcluster || true
+
+	docker --context=buildx-context-sharedcluster buildx create --platform "linux/amd64" --bootstrap --use --name buildx-build-sharedcluster;
+	docker buildx ls
+
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py master $@
 
 .PHONY: package
@@ -204,7 +246,23 @@ package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package: gen buildx
-	$(GORELEASER) --snapshot --rm-dist
+	$(GORELEASER) --snapshot --rm-dist 
+
+.PHONY: package-ee
+package-ee: export DET_SEGMENT_MASTER_KEY ?=
+package-ee: export DET_SEGMENT_WEBUI_KEY ?=
+package-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+package-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+package-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-ee: gen buildx
+	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_ee.yml
+
+.PHONY: package-small
+package-small: export DET_SEGMENT_MASTER_KEY ?=
+package-small: export DET_SEGMENT_WEBUI_KEY ?=
+package-small: export GORELEASER_CURRENT_TAG := $(VERSION)
+package-small: gen buildx-small
+	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_sharedcluster.yml
 
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
@@ -214,6 +272,16 @@ release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate |
 release: gen buildx
 	$(GORELEASER) --rm-dist
 	make publish-nvcr
+
+.PHONY: release-ee
+release-ee: export DET_SEGMENT_MASTER_KEY ?=
+release-ee: export DET_SEGMENT_WEBUI_KEY ?=
+release-ee: export DET_EE_LICENSE_KEY = $(shell cat ../license.txt)
+release-ee: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release-ee: gen buildx
+	$(GORELEASER) --rm-dist -f ./.goreleaser_ee.yml
 
 define manifest_publish
 	for image in $(2); do \
@@ -230,9 +298,21 @@ endef
 publish-dev:
 	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
 
+.PHONY: publish-dev-ee
+publish-dev-ee:
+	@$(call manifest_publish, $(EE_DEV_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
+
+.PHONY: publish-dev-small
+publish-dev-small:
+	@$(call manifest_publish, $(DEV_MANIFESTS_SMALL), $(SHARED_CLUSTER_IMAGE))
+
 .PHONY: publish
 publish:
 	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-ee
+publish-ee:
+	@$(call manifest_publish, $(EE_PUB_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
 
 .PHONY: publish-nvcr
 publish-nvcr:

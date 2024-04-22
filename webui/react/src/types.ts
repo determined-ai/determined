@@ -1,6 +1,7 @@
 import * as t from 'io-ts';
 import { RouteProps } from 'react-router-dom';
 
+import { DateString } from 'ioTypes';
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Slot, V1Trigger } from 'services/api-ts-sdk';
 import { valueof, ValueOf } from 'utils/valueof';
@@ -494,7 +495,7 @@ export interface BulkActionResult {
 }
 
 export interface ExperimentPagination extends WithPagination {
-  experiments: ExperimentItem[];
+  experiments: BulkExperimentItem[];
 }
 
 export interface SearchExperimentPagination extends WithPagination {
@@ -729,11 +730,12 @@ export const JobSummary: t.Type<Api.V1JobSummary> = t.type({
 });
 export type JobSummary = t.TypeOf<typeof JobSummary>;
 
-export const ExperimentItem = t.intersection([
+// Bulk endpoints like experimentSearch dont return config due to perf issue
+// since https://github.com/determined-ai/determined/pull/8732
+export const BulkExperimentItem = t.intersection([
   t.partial({
     checkpoints: t.number,
     checkpointSize: t.number,
-    config: ExperimentConfig,
     description: t.string,
     duration: t.number,
     endTime: t.string,
@@ -754,7 +756,6 @@ export const ExperimentItem = t.intersection([
   }),
   t.type({
     archived: t.boolean,
-    configRaw: JsonObject,
     hyperparameters: t.record(t.string, Hyperparameter),
     id: t.number,
     jobId: t.string,
@@ -769,14 +770,25 @@ export const ExperimentItem = t.intersection([
     userId: t.number,
   }),
 ]);
-export type ExperimentItem = t.TypeOf<typeof ExperimentItem>;
+export type BulkExperimentItem = t.TypeOf<typeof BulkExperimentItem>;
+
+export const FullExperimentItem = t.intersection([
+  BulkExperimentItem,
+  t.partial({
+    config: ExperimentConfig,
+  }),
+  t.type({
+    configRaw: JsonObject,
+  }),
+]);
+export type FullExperimentItem = t.TypeOf<typeof FullExperimentItem>;
 
 export interface ExperimentWithTrial {
-  experiment: ExperimentItem;
+  experiment: BulkExperimentItem;
   bestTrial?: TrialItem;
 }
 
-export interface ProjectExperiment extends ExperimentItem {
+export interface ProjectExperiment extends BulkExperimentItem {
   parentArchived: boolean;
   projectName: string;
   projectOwnerId: number;
@@ -1196,3 +1208,42 @@ export const XAxisDomain = {
 } as const;
 
 export type XAxisDomain = ValueOf<typeof XAxisDomain>;
+
+export interface FlatRun {
+  id: number;
+  startTime: Date | DateString;
+  endTime?: Date | DateString;
+  state: RunState;
+  labels?: Array<string>;
+  checkpointSize: number;
+  checkpointCount: number;
+  searcherMetricValue?: number;
+  externalRunId?: number;
+  hyperparameters?: TrialHyperparameters;
+  summaryMetrics?: SummaryMetrics;
+  userId?: number;
+  duration?: number;
+  projectId: number;
+  projectName: string;
+  workspaceId: number;
+  workspaceName: string;
+  parentArchived: boolean;
+  experiment?: FlatRunExperiment;
+}
+
+export interface FlatRunExperiment {
+  id: number;
+  searcherType: string;
+  searcherMetric: string;
+  forkedFrom?: number;
+  externalExperimentId?: string;
+  resourcePool: string;
+  progress: number;
+  description: string;
+  name: string;
+  unmanaged: boolean;
+  isMultitrial: boolean;
+}
+export interface SearchFlatRunPagination extends WithPagination {
+  runs: FlatRun[];
+}

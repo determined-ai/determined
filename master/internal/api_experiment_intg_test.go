@@ -218,6 +218,43 @@ func TestGetExperimentConfig(t *testing.T) {
 	}
 }
 
+func TestGetExperimentHyperparameters(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+	expectedBytes, err := db.SingleDB().ExperimentConfigRaw(exp.ID)
+	require.NoError(t, err)
+	expected := make(map[string]any)
+	require.NoError(t, json.Unmarshal(expectedBytes, &expected))
+	expectedHyperparameter := expected["hyperparameters"].(map[string]any)
+	resp, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
+		ExperimentIdFilter: &commonv1.Int32FieldFilter{
+			Incl: []int32{int32(exp.ID)},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Experiments, 1)
+	require.Equal(t, int32(exp.ID), resp.Experiments[0].Id)
+
+	if _, ok := resp.Experiments[0].Config.Fields["hyperparameters"]; !ok { //nolint:staticcheck
+		t.Errorf("`hyperparameters` is not in config")
+	}
+
+	cases := []struct {
+		name            string
+		hyperparameters map[string]any
+	}{
+		{"GetExperimentResponse.Experiments.Config.Hyperparameters", resp.Experiments[0].Config. //nolint:staticcheck
+														Fields["hyperparameters"].
+														AsInterface().(map[string]any)},
+		{"GetExperimentResponse.Experiments.Hyperparameters", resp.Experiments[0].Hyperparameters.AsMap()},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			require.Equal(t, expectedHyperparameter, c.hyperparameters)
+		})
+	}
+}
+
 func TestGetTaskContextDirectoryExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -492,40 +529,23 @@ func TestHPSearchContinueCompletedError(t *testing.T) {
 }
 
 func TestPutExperimentRetainLogs(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t, nil)
-	exp := createTestExp(t, api, curUser)
+	api, _, ctx := setupAPITest(t, nil)
+	exp, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, logRetentionConfigForever, 5)
 
-	trialIDs, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), []int{(exp.ID)})
-	require.NoError(t, err)
-
-	_, err = db.Bun().NewUpdate().Table("experiments").
-		Set("state = ?", model.CompletedState).
-		Where("id = ?", exp.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-	_, err = db.Bun().NewUpdate().Table("runs").
-		Set("state = ?", model.CompletedState).
-		Where("id IN (?)", bun.In(trialIDs)).
-		Exec(ctx)
+	err := CompleteExpAndTrials(ctx, exp.Id, trialIDs)
 	require.NoError(t, err)
 
 	numDays := -1
 	res, err := api.PutExperimentRetainLogs(ctx, &apiv1.PutExperimentRetainLogsRequest{
-		ExperimentId: int32(exp.ID), NumDays: int32(numDays),
+		ExperimentId: exp.Id, NumDays: int32(numDays),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	var logRetentionDays []int
-	err = db.Bun().NewSelect().Table("tasks").
-		Column("log_retention_days").
-		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &logRetentionDays)
+	newLogRetentionDays := []int32{-1, -1, -1, -1, -1}
+	updatedLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
 	require.NoError(t, err)
-
-	for _, v := range logRetentionDays {
-		require.Equal(t, v, numDays)
-	}
+	require.Equal(t, updatedLogRetentionDays, newLogRetentionDays)
 }
 
 func TestPutExperimentsRetainLogs(t *testing.T) {
@@ -558,17 +578,17 @@ func TestPutExperimentsRetainLogs(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	_, taskIDs, err := db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
+	_, _, err = db.ExperimentsTrialAndTaskIDs(ctx, db.Bun(), intExpIDS)
 	require.NoError(t, err)
 
-	var logRetentionDays []int
-	err = db.Bun().NewSelect().Table("tasks").
+	var trialLogRetentionDays []int
+	err = db.Bun().NewSelect().Table("runs").
 		Column("log_retention_days").
-		Where("task_id IN (?)", bun.In(taskIDs)).
-		Scan(ctx, &logRetentionDays)
+		Where("id IN (?)", bun.In(trialIDs)).
+		Scan(ctx, &trialLogRetentionDays)
 	require.NoError(t, err)
 
-	for _, v := range logRetentionDays {
+	for _, v := range trialLogRetentionDays {
 		require.Equal(t, v, numDays)
 	}
 }
@@ -1042,6 +1062,9 @@ func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid i
 
 		// Don't compare config.
 		res.Experiments[i].Config = nil //nolint:staticcheck
+
+		// Don't compare hyperparameters.
+		res.Experiments[i].Hyperparameters = nil
 
 		// Compare time seperatly due to millisecond precision in postgres.
 		require.WithinDuration(t,
@@ -1580,6 +1603,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	authZNSC := setupNSCAuthZ()
+	workspaceAuthZ := setupWorkspaceAuthZ()
 	exp := createTestExp(t, api, curUser)
 
 	// put/patch
@@ -1716,6 +1740,8 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			authZNSC.On("CanGetTensorboard", mock.Anything, mockUserArg, mock.Anything, mock.Anything,
 				mock.Anything).Return(nil).Once()
+			workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil).Once()
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				ExperimentIds: []int32{int32(id)},
 			})

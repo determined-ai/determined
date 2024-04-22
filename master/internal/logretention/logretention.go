@@ -95,9 +95,11 @@ func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 	log.WithField("default-retention-days", defaultLogRetentionDays).Trace("deleting expired task logs")
 	r, err := db.Bun().NewRaw(fmt.Sprintf(`
 		WITH log_retention_tasks AS (
-			SELECT task_id, end_time, COALESCE(log_retention_days, %d) AS log_retention_days FROM tasks
-			WHERE task_id IN (SELECT DISTINCT task_id FROM task_logs)
-				AND end_time IS NOT NULL
+			SELECT COALESCE(r.log_retention_days, %d) as log_retention_days, t.task_id, t.end_time
+			FROM runs as r
+			JOIN run_id_task_id as r_t ON r.id = r_t.run_id
+			JOIN tasks as t ON r_t.task_id = t.task_id
+			WHERE t.end_time IS NOT NULL
 		)
 		DELETE FROM task_logs
 		WHERE task_id IN (

@@ -42,7 +42,8 @@
 /e2e_tests/tests/template @determined-ai/backend
 
 # Owned by @determined-ai/web except for generated files
-/webui    @determined-ai/web
+/webui                @determined-ai/web
+/webui/react/src/e2e  @determined-ai/test
 /webui/react/src/services/api-ts-sdk/
 
 # Owned by resource management, so far this is only the stuff that is obvious and in its own dir.
@@ -59,3 +60,8 @@
 /master/pkg/device @determined-ai/resource-mgmt
 /master/pkg/etc @determined-ai/resource-mgmt
 /master/pkg/tasks @determined-ai/resource-mgmt
+# EE only files in their own section to ease rebases
+/master/internal/rm/dispatcherrm @determined-ai/backend
+/master/internal/config/dispatcher* @determined-ai/backend
+/master/pkg/tasks/dispatcher* @determined-ai/backend
+/master/static/srv/dispatcher* @determined-ai/backend

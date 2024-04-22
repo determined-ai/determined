@@ -138,6 +138,11 @@ Spinning up or updating the Cluster
       -  AWS profile to use for deploying cluster resources.
       -  default
 
+   -  -  ``--add-tag``
+      -  Add an AWS tag to resources created including dynamic agents. Provide as ``key=value``.
+         This can be specified multiple times to apply more than one tag.
+      -  Not set
+
    -  -  ``--master-instance-type``
       -  AWS instance type to use for the master.
       -  m5.large

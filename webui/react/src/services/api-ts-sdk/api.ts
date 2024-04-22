@@ -2912,6 +2912,12 @@ export interface V1Experiment {
      */
     searcherMetric?: string;
     /**
+     * The hyperparameters for the experiment
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    hyperparameters?: any;
+    /**
      * The experiment name.
      * @type {string}
      * @memberof V1Experiment
@@ -3324,10 +3330,10 @@ export interface V1FlatRun {
     externalRunId?: number;
     /**
      * Trial hyperparameters.
-     * @type {string}
+     * @type {any}
      * @memberof V1FlatRun
      */
-    hyperparameters?: string;
+    hyperparameters?: any;
     /**
      * summary metrics.
      * @type {any}
@@ -3412,7 +3418,7 @@ export interface V1FlatRunExperiment {
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    forkedFrom: number;
+    forkedFrom?: number;
     /**
      * The id of external experiment
      * @type {string}
@@ -5414,6 +5420,44 @@ export interface V1KillNotebookResponse {
     notebook?: V1Notebook;
 }
 /**
+ * Kill runs.
+ * @export
+ * @interface V1KillRunsRequest
+ */
+export interface V1KillRunsRequest {
+    /**
+     * The ids of the runs being killed.
+     * @type {Array<number>}
+     * @memberof V1KillRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being killed.
+     * @type {number}
+     * @memberof V1KillRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to KillRunsResponse.
+ * @export
+ * @interface V1KillRunsResponse
+ */
+export interface V1KillRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1KillRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to KillShellRequest.
  * @export
  * @interface V1KillShellResponse
@@ -6495,6 +6539,56 @@ export interface V1MoveProjectRequest {
  * @interface V1MoveProjectResponse
  */
 export interface V1MoveProjectResponse {
+}
+/**
+ * Request to move the run to a different project.
+ * @export
+ * @interface V1MoveRunsRequest
+ */
+export interface V1MoveRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1MoveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    sourceProjectId: number;
+    /**
+     * The id of the new parent project.
+     * @type {number}
+     * @memberof V1MoveRunsRequest
+     */
+    destinationProjectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1MoveRunsRequest
+     */
+    filter?: string;
+    /**
+     * If true, skip multi-trial experiments for move.
+     * @type {boolean}
+     * @memberof V1MoveRunsRequest
+     */
+    skipMultitrial?: boolean;
+}
+/**
+ * Response to MoveRunsRequest.
+ * @export
+ * @interface V1MoveRunsResponse
+ */
+export interface V1MoveRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1MoveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * Note is a user comment connected to a project.
@@ -8111,7 +8205,7 @@ export interface V1PutExperimentRetainLogsRequest {
      */
     experimentId: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentRetainLogsRequest
      */
@@ -8137,7 +8231,7 @@ export interface V1PutExperimentsRetainLogsRequest {
      */
     experimentIds: Array<number>;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentsRetainLogsRequest
      */
@@ -8252,7 +8346,7 @@ export interface V1PutTrialRetainLogsRequest {
      */
     trialId?: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutTrialRetainLogsRequest
      */
@@ -9390,6 +9484,25 @@ export interface V1RPQueueStat {
      * @memberof V1RPQueueStat
      */
     aggregates?: Array<V1AggregateQueueStats>;
+}
+/**
+ * Message for results of individual runs in a multi-run action.
+ * @export
+ * @interface V1RunActionResult
+ */
+export interface V1RunActionResult {
+    /**
+     * Optional error message.
+     * @type {string}
+     * @memberof V1RunActionResult
+     */
+    error: string;
+    /**
+     * run ID.
+     * @type {number}
+     * @memberof V1RunActionResult
+     */
+    id: number;
 }
 /**
  * RunnableOperation represents a single runnable operation emitted by a searcher.
@@ -19486,6 +19599,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
+            }
+            const localVarPath = `/api/v1/runs/kill`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -19680,6 +19831,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/move`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -21792,6 +21981,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -21866,6 +22074,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, group?: string, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, group, periodSeconds, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).moveRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22909,6 +23136,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any) {
+            return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary List all resource pools, bound and unbound, available to a specific workspace
          * @param {number} workspaceId Workspace ID.
          * @param {number} [offset] The offset to use with pagination.
@@ -22956,6 +23193,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, group?: string, periodSeconds?: number, options?: any) {
             return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, group, periodSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Move runs.
+         * @param {V1MoveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        moveRuns(body: V1MoveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).moveRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23797,6 +24044,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get a list of runs.
+     * @param {V1KillRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killRuns(body: V1KillRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary List all resource pools, bound and unbound, available to a specific workspace
      * @param {number} workspaceId Workspace ID.
      * @param {number} [offset] The offset to use with pagination.
@@ -23851,6 +24110,18 @@ export class InternalApi extends BaseAPI {
      */
     public metricBatches(experimentId: number, metricName: string, metricType?: V1MetricType, group?: string, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, group, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Move runs.
+     * @param {V1MoveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public moveRuns(body: V1MoveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).moveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

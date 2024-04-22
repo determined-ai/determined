@@ -70,12 +70,19 @@ def test_unmanaged_checkpoints() -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(20)
 def test_unmanaged_termination() -> None:
-    # Ensure an erroring-out code does not hang due to a background thread.
+    # Ensure an erroring-out code does not hang due to a background thread and reports the exp
+    # state as errored.
+    external_id = str(uuid.uuid4())
     exp_path = conf.fixtures_path("unmanaged/error_termination.py")
     with pytest.raises(subprocess.CalledProcessError):
-        _run_unmanaged_script(["python", exp_path])
+        _run_unmanaged_script(["python", exp_path], {"DET_TEST_EXTERNAL_EXP_ID": external_id})
+    sess = api_utils.user_session()
+    exps = bindings.get_GetExperiments(sess, limit=-1).experiments
+    exps = [exp for exp in exps if exp.externalExperimentId == external_id]
+    assert len(exps) == 1
+    assert exps[0].state == bindings.experimentv1State.ERROR
 
 
 @pytest.mark.e2e_cpu
