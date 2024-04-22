@@ -1348,7 +1348,7 @@ commands:
         default: agent1
     steps:
       - run:
-          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
 
 jobs:
