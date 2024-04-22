@@ -8,7 +8,7 @@ Determined master accessible from outside the cluster you will likely need to co
 an Ingress for: determined-master-service-{{ .Release.Name }}.
 
 To have Determined configure an externally accessible load balancer for the
-maser, please set "Values.useNodePortForMaster" to false.
+master, please set "Values.useNodePortForMaster" to false.
 {{ else }}
 
 The IP address of the Determined master is the external IP of determined-master-service-{{ .Release.Name }},

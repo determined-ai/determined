@@ -163,4 +163,5 @@ These ``kubectl`` commands list and delete pods which are running Determined tas
    k8s-dev-guide
    custom-pod-specs
    helm-commands
+   setup-multiple-resource-managers
    troubleshooting

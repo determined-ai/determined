@@ -9,13 +9,13 @@ resource "aws_cloudfront_distribution" "distribution" {
 
     domain_name = aws_s3_bucket_website_configuration.docs.website_endpoint
 
-    origin_id = local.domain
+    origin_id = local.config.domain
   }
 
   enabled             = true
   default_root_object = "index.html"
   aliases = [
-    local.domain,
+    local.config.domain,
   ]
 
   default_cache_behavior {
@@ -24,7 +24,7 @@ resource "aws_cloudfront_distribution" "distribution" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
 
-    target_origin_id = local.domain
+    target_origin_id = local.config.domain
     min_ttl          = 0
     default_ttl      = 3600
     max_ttl          = 31536000
@@ -45,7 +45,7 @@ resource "aws_cloudfront_distribution" "distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = "arn:aws:acm:us-east-1:573932760021:certificate/3f5a03d6-d95b-4d08-ade3-994799c658cf"
+    acm_certificate_arn = local.config.cdn.acm_certificate_arn
     ssl_support_method  = "sni-only"
   }
 }

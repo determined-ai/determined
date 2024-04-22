@@ -30,6 +30,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
         auto_work_dir=args.auto_work_dir,
+        enterprise_edition=args.enterprise_edition,
     )
 
 
@@ -58,6 +59,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
         autorestart=(not args.no_autorestart),
         cluster_name=args.cluster_name,
         auto_work_dir=args.auto_work_dir,
+        enterprise_edition=args.enterprise_edition,
     )
 
 
@@ -83,6 +85,7 @@ def handle_agent_up(args: argparse.Namespace) -> None:
         labels=None,
         autorestart=(not args.no_autorestart),
         cluster_name=args.cluster_name,
+        enterprise_edition=args.enterprise_edition,
     )
 
 
@@ -183,6 +186,11 @@ args_description = cli.Cmd(
                     default=None,
                     help="the default work dir, used for interactive jobs",
                 ),
+                cli.Arg(
+                    "--enterprise-edition",
+                    action="store_true",
+                    help="Deploy the enterprise edition of Determined",
+                ),
             ],
         ),
         cli.Cmd(
@@ -272,6 +280,11 @@ args_description = cli.Cmd(
                     type=pathlib.Path,
                     default=None,
                     help="the default work dir, used for interactive jobs",
+                ),
+                cli.Arg(
+                    "--enterprise-edition",
+                    action="store_true",
+                    help="Deploy the enterprise edition of Determined",
                 ),
             ],
         ),
@@ -369,6 +382,11 @@ args_description = cli.Cmd(
                     type=str,
                     default="determinedai",
                     help="prefix for the master image",
+                ),
+                cli.Arg(
+                    "--enterprise-edition",
+                    action="store_true",
+                    help="Deploy the enterprise edition of Determined",
                 ),
             ],
         ),

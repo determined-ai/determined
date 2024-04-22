@@ -243,7 +243,7 @@ def list_bindings(args: argparse.Namespace) -> None:
         print(bindings_sig_str(name, params))
 
 
-def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
+def auto_complete_binding(available_calls: List[str], fn_name: str, auto_confirm: bool) -> str:
     """
     utility to allow partial matching of binding names.
     """
@@ -257,6 +257,15 @@ def auto_complete_binding(available_calls: List[str], fn_name: str) -> str:
     ]
     if not matches:
         raise errors.CliError(f"no such binding found: {fn_name}")
+    if auto_confirm and len(matches) == 1:
+        print(
+            termcolor.colored(
+                f"Auto picked '{matches[0]}' for '{fn_name}'",
+                "yellow",
+            ),
+            file=sys.stderr,
+        )
+        return matches[0]
     if not sys.stdout.isatty():
         raise errors.CliError(
             f"no exact matches for '{fn_name}'. Did you mean:" + "\n{}".format("\n".join(matches))
@@ -282,7 +291,7 @@ def call_bindings(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     fn_name: str = args.name
     fns = get_available_bindings(show_unusable=False)
-    fn_name = auto_complete_binding(list(fns.keys()), fn_name)
+    fn_name = auto_complete_binding(list(fns.keys()), fn_name, args.auto_confirm)
     fn = getattr(api.bindings, fn_name)
     params = fns[fn_name]
     try:
@@ -348,6 +357,12 @@ args_description = [
                         "call a function from bindings",
                         [
                             cli.Arg("name", help="name of the function to call"),
+                            cli.Arg(
+                                "-y",
+                                "--auto-confirm",
+                                help="auto-confirm if only a single match is found",
+                                action="store_true",
+                            ),
                             cli.Arg(
                                 "args",
                                 nargs=argparse.REMAINDER,

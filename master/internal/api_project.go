@@ -168,6 +168,18 @@ func (a *apiServer) getProjectColumnsByID(
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
+		{
+			Column:      "externalRunId",
+			DisplayName: "External Run ID",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
+		{
+			Column:      "experimentName",
+			DisplayName: "Experiment Name",
+			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		},
 	}
 
 	hyperparameters := []struct {

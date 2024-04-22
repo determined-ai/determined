@@ -35,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
@@ -211,7 +212,16 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		if err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
 		); err != nil {
-			return authz.SubIfUnauthorized(err, apiutils.MapAndFilterErrors(err, nil, nil))
+			var pdErr authz.PermissionDeniedError
+			if errors.As(err, &pdErr) {
+				for _, perm := range pdErr.RequiredPermissions {
+					if perm == rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE {
+						return apiutils.ErrNotFound
+					}
+				}
+			}
+
+			return apiutils.MapAndFilterErrors(err, nil, nil)
 		}
 	} else {
 		if err := command.AuthZProvider.Get().CanCreateNSC(

@@ -743,6 +743,14 @@ export const getProjectNumericMetricsRange = generateDetApi<
   Type.ProjectMetricsRange[]
 >(Config.getProjectNumericMetricsRange);
 
+/* Runs */
+
+export const searchRuns = generateDetApi<
+  Service.SearchRunsParams,
+  Api.V1SearchRunsResponse,
+  Type.SearchFlatRunPagination
+>(Config.searchRuns);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
@@ -836,6 +844,12 @@ export const launchTensorBoard = generateDetApi<
   Api.V1LaunchTensorboardResponse,
   Type.CommandResponse
 >(Config.launchTensorBoard);
+
+export const deleteCheckpoints = generateDetApi<
+  Api.V1DeleteCheckpointsRequest,
+  Api.V1DeleteCheckpointsResponse,
+  Api.V1DeleteCheckpointsResponse
+>(Config.deleteCheckpoints);
 
 export const openOrCreateTensorBoard = async (
   params: Service.LaunchTensorBoardParams,

@@ -115,6 +115,22 @@ def test_cluster_down() -> None:
 
 
 @pytest.mark.det_deploy_local
+def test_ee_cluster_up() -> None:
+    name = "test_ee_cluster_up"
+
+    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
+        container_name = name + "_determined-master_1"
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": container_name})
+        assert len(containers) == 1, "only one master expected"
+
+        # client.containers.list is similar to `docker ps`, so we expect Image to be present.
+        if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+            assert "hpe-mlde-master" in containers[0].attrs["Config"]["Image"]
+
+
+@pytest.mark.det_deploy_local
 @pytest.mark.skip("Skipping until logic to get scheduler type is fixed")
 def test_custom_etc() -> None:
     name = "test_custom_etc"
@@ -212,6 +228,21 @@ def test_master_up_down() -> None:
 
 
 @pytest.mark.det_deploy_local
+def test_ee_master_up() -> None:
+    cluster_name = "test_master_up"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(Resource.MASTER, master_name, {}, ["enterprise-edition"]):
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": master_name})
+        assert len(containers) == 1, "only one master expected"
+
+        if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+            assert "hpe-mlde-master" in containers[0].attrs["Config"]["Image"]
+
+
+@pytest.mark.det_deploy_local
 def test_agent_up_down() -> None:
     agent_name = "test_agent-determined-agent"
     cluster_name = "test_agent_up_down"
@@ -225,3 +256,21 @@ def test_agent_up_down() -> None:
 
         containers = client.containers.list(filters={"name": agent_name})
         assert len(containers) == 0
+
+
+@pytest.mark.det_deploy_local
+def test_ee_agent_up() -> None:
+    agent_name = "test_agent-determined-agent"
+    cluster_name = "test_agent_up"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(Resource.MASTER, master_name):
+        with resource_manager(
+            Resource.AGENT, agent_name, {}, ["no-gpu", "enterprise-edition"], [conf.MASTER_IP]
+        ):
+            client = docker.from_env()
+            containers = client.containers.list(filters={"name": agent_name})
+            assert len(containers) == 1, "only one agent expected"
+
+            if "Config" in containers[0].attrs and "Image" in containers[0].attrs["Config"]:
+                assert "hpe-mlde-agent" in containers[0].attrs["Config"]["Image"]

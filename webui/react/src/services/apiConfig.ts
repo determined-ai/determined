@@ -28,7 +28,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
     Auth: new Api.AuthenticationApi(config),
-    Checkpoint: Api.CheckpointsApiFetchParamCreator(config),
+    Checkpoint: new Api.CheckpointsApi(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
@@ -1108,6 +1108,29 @@ export const getTrialWorkloads: DetApi<
     ),
 };
 
+/* Runs */
+
+export const searchRuns: DetApi<
+  Service.SearchRunsParams,
+  Api.V1SearchRunsResponse,
+  Type.SearchFlatRunPagination
+> = {
+  name: 'searchRuns',
+  postProcess: (response) => ({
+    pagination: response.pagination,
+    runs: response.runs.map((e) => decoder.decodeV1FlatRun(e)),
+  }),
+  request: (params, options) =>
+    detApi.Internal.searchRuns(
+      params.projectId,
+      params.offset,
+      params.limit,
+      params.sort,
+      params.filter,
+      options,
+    ),
+};
+
 /* Tasks */
 
 export const getTask: DetApi<
@@ -1928,4 +1951,14 @@ export const updateJobQueue: DetApi<
   name: 'updateJobQueue',
   postProcess: identity,
   request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
+};
+
+export const deleteCheckpoints: DetApi<
+  Api.V1DeleteCheckpointsRequest,
+  Api.V1DeleteCheckpointsResponse,
+  Api.V1DeleteCheckpointsResponse
+> = {
+  name: 'deleteCheckpoints',
+  postProcess: identity,
+  request: (params, options) => detApi.Checkpoint.deleteCheckpoints(params, options),
 };

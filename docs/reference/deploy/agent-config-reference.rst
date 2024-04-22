@@ -171,6 +171,8 @@ Docker container or without the need to enter a password.
 
 Deprecated. This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
 
+.. _agent-config-ref-debug:
+
 ***********
  ``debug``
 ***********

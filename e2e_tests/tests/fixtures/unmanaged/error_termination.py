@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Demonstrate an experiment which errors out.
-
+import os
 import random
 import tempfile
 
@@ -9,12 +9,19 @@ from determined.experimental import core_v2
 
 
 def main():
+    assert "DET_TEST_EXTERNAL_EXP_ID" in os.environ
+    name = os.environ["DET_TEST_EXTERNAL_EXP_ID"]
+
     checkpoint_storage = tempfile.mkdtemp()
     core_v2.init(
         defaults=core_v2.DefaultConfig(
-            name="unmanaged-1-error",
+            name=name,
         ),
         checkpoint_storage=checkpoint_storage,
+        unmanaged=core_v2.UnmanagedConfig(
+            external_experiment_id=name,
+            external_trial_id=name,
+        ),
     )
 
     for i in range(100):

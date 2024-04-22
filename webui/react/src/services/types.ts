@@ -152,6 +152,12 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   >;
 }
 
+export interface SearchRunsParams extends PaginationParams {
+  filter?: string;
+  projectId?: number;
+  sort?: string;
+}
+
 export interface GetTaskParams {
   taskId: string;
 }

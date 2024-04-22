@@ -59,6 +59,10 @@ JOB_SUFFIXES_NO_MPI = [
     "tensorflow-ngc-hpc",
 ]
 
+JOB_SUFFIXES_OFI = [
+    "tf2-gpu",
+]
+
 PACKER_JOBS = {"publish-cloud-images"}
 
 DOCKER_JOBS = (
@@ -71,6 +75,10 @@ DOCKER_JOBS = (
         f"build-and-publish-docker-{suffix}-0"
         for suffix in JOB_SUFFIXES_NO_MPI
         if "hpc" not in suffix
+    }
+    | {
+        f"build-and-publish-docker-{suffix}-1-{ofi}"
+        for (suffix, ofi) in itertools.product(JOB_SUFFIXES_OFI, [1])
     }
 )
 
@@ -282,5 +290,10 @@ if __name__ == "__main__":
 
     with open(path, "w") as f:
         yaml.YAML(typ="safe", pure=True).dump(conf, f)
+
+    filedir = pathlib.Path(path).parent
+    verfile = filedir.joinpath("environments-target.txt")
+    with open(verfile, "w") as f:
+        f.write(commit[:7] + "\n")
 
     print(f"done, {path} has been updated", file=sys.stderr)

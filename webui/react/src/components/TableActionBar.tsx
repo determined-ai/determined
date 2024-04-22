@@ -210,7 +210,10 @@ const TableActionBar: React.FC<Props> = ({
             openExperimentTensorBoardModal();
           } else {
             openCommandResponse(
-              await openOrCreateTensorBoard({ ...params, workspaceId: project?.workspaceId }),
+              await openOrCreateTensorBoard({
+                experimentIds: params.experimentIds,
+                workspaceId: project?.workspaceId,
+              }),
             );
           }
           return;
@@ -391,7 +394,7 @@ const TableActionBar: React.FC<Props> = ({
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
-    <div className={css.base}>
+    <div className={css.base} data-test-component="tableActionBar">
       <Row>
         <Column>
           <Row>

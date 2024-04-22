@@ -1,6 +1,7 @@
 import * as t from 'io-ts';
 import { RouteProps } from 'react-router-dom';
 
+import { DateString } from 'ioTypes';
 import * as Api from 'services/api-ts-sdk';
 import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Slot, V1Trigger } from 'services/api-ts-sdk';
 import { valueof, ValueOf } from 'utils/valueof';
@@ -1207,3 +1208,42 @@ export const XAxisDomain = {
 } as const;
 
 export type XAxisDomain = ValueOf<typeof XAxisDomain>;
+
+export interface FlatRun {
+  id: number;
+  startTime: Date | DateString;
+  endTime?: Date | DateString;
+  state: RunState;
+  labels?: Array<string>;
+  checkpointSize: number;
+  checkpointCount: number;
+  searcherMetricValue?: number;
+  externalRunId?: number;
+  hyperparameters?: TrialHyperparameters;
+  summaryMetrics?: SummaryMetrics;
+  userId?: number;
+  duration?: number;
+  projectId: number;
+  projectName: string;
+  workspaceId: number;
+  workspaceName: string;
+  parentArchived: boolean;
+  experiment?: FlatRunExperiment;
+}
+
+export interface FlatRunExperiment {
+  id: number;
+  searcherType: string;
+  searcherMetric: string;
+  forkedFrom?: number;
+  externalExperimentId?: string;
+  resourcePool: string;
+  progress: number;
+  description: string;
+  name: string;
+  unmanaged: boolean;
+  isMultitrial: boolean;
+}
+export interface SearchFlatRunPagination extends WithPagination {
+  runs: FlatRun[];
+}
