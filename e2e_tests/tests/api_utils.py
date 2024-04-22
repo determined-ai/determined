@@ -46,7 +46,8 @@ def create_test_user(
     """
     session = admin_session()
     user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
-    password = get_random_string()
+    # password must contain both upper-case and lower-case letters
+    password = "AB832ABC-fc98-4c73-a0bd-c4708e6479d9"
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
     sess = make_session(user.username, password)
     return sess, password
