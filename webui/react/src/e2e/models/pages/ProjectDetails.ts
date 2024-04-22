@@ -13,7 +13,9 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  */
 export class ProjectDetails extends BasePage {
   readonly title: RegExp = new RegExp(
-    `(Uncategorized Experiments|Project Details) - ${DevFixture.constants.appTitle}`, "g");
+    `(Uncategorized Experiments|Project Details) - ${DevFixture.constants.appTitle}`,
+    'g',
+  );
   readonly url: RegExp = /projects\/\d+/;
 
   /**

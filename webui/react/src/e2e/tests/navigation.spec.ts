@@ -16,9 +16,7 @@ test.describe('Navigation', () => {
 
     await test.step('Login steps', async () => {
       await auth.login(/dashboard/);
-      await expect(page).toHaveTitle(
-        `Home - ${DevFixture.constants.appTitle}`,
-      );
+      await expect(page).toHaveTitle(`Home - ${DevFixture.constants.appTitle}`);
       await expect(page).toHaveURL(/dashboard/);
     });
 
@@ -28,9 +26,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(
-          `Uncategorized Experiments - ${DevFixture.constants.appTitle}`,
-        );
+        .toHaveTitle(`Uncategorized Experiments - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -38,9 +34,7 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Model Registry' }).click();
       const expectedURL = /models/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(`Model Registry - ${DevFixture.constants.appTitle}`);
+      await expect.soft(page).toHaveTitle(`Model Registry - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -48,9 +42,7 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Tasks' }).click();
       const expectedURL = /tasks/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(`Tasks - ${DevFixture.constants.appTitle}`);
+      await expect.soft(page).toHaveTitle(`Tasks - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -58,9 +50,7 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Webhooks' }).click();
       const expectedURL = /webhooks/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(`Webhooks - ${DevFixture.constants.appTitle}`);
+      await expect.soft(page).toHaveTitle(`Webhooks - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -68,9 +58,7 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Cluster' }).click();
       const expectedURL = /clusters/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(`Cluster - ${DevFixture.constants.appTitle}`);
+      await expect.soft(page).toHaveTitle(`Cluster - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -86,17 +74,13 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { name: 'Admin' }).click();
       const expectedURL = /admin\/user-management/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(DevFixture.constants.appTitle);
+      await expect.soft(page).toHaveTitle(DevFixture.constants.appTitle);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
     await test.step('Navigate to Logout', async () => {
       await auth.logout();
-      await expect
-        .soft(page)
-        .toHaveTitle(`Sign In - ${DevFixture.constants.appTitle}`);
+      await expect.soft(page).toHaveTitle(`Sign In - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(/login/);
     });
   });

@@ -8,8 +8,10 @@ export class DevFixture {
   private static eeEnvironmentValue = Boolean(JSON.parse(process.env.PW_EE ?? ''));
   static readonly constants = {
     isEE: DevFixture.eeEnvironmentValue,
-    appTitle: DevFixture.eeEnvironmentValue ? 'HPE Machine Learning Development Environment' : 'Determined',
-  }
+    appTitle: DevFixture.eeEnvironmentValue
+      ? 'HPE Machine Learning Development Environment'
+      : 'Determined',
+  };
 
   constructor(readonly page: Page) {
     this.#page = page;

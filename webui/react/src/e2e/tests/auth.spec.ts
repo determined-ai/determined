@@ -18,9 +18,7 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveTitle(
-        `Home - ${DevFixture.constants.appTitle}`,
-      );
+      await expect(page).toHaveTitle(`Home - ${DevFixture.constants.appTitle}`);
       await expect(page).toHaveURL(/dashboard/);
     });
 
@@ -40,9 +38,7 @@ test.describe('Authentication', () => {
 
     await test.step('Login and expect redirect to previous page', async () => {
       await auth.login(/models/);
-      await expect(page).toHaveTitle(
-        `Model Registry - ${DevFixture.constants.appTitle}`,
-      );
+      await expect(page).toHaveTitle(`Model Registry - ${DevFixture.constants.appTitle}`);
     });
   });
 
@@ -59,11 +55,11 @@ test.describe('Authentication', () => {
     expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain(
       'invalid credentials',
     );
-    await signInPage.detAuth.errors.close.pwLocator.click()
+    await signInPage.detAuth.errors.close.pwLocator.click();
     await expect(signInPage.detAuth.errors.alert.pwLocator).not.toBeVisible();
 
     await signInPage.detAuth.submit.pwLocator.click();
-    await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible(); 
+    await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible();
     await expect(signInPage.detAuth.errors.message.pwLocator).toBeVisible();
   });
 });
