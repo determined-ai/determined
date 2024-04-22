@@ -721,7 +721,7 @@ type PutExperimentRetainLogsRequest struct {
 
 	// The ID of the experiment.
 	ExperimentId int32 `protobuf:"varint,1,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
-	// The number of days to retain logs, starting from the time of creation.
+	// The number of days to retain logs, starting from the end time of the task.
 	NumDays int32 `protobuf:"varint,2,opt,name=num_days,json=numDays,proto3" json:"num_days,omitempty"`
 }
 
@@ -818,7 +818,7 @@ type PutExperimentsRetainLogsRequest struct {
 
 	// The ids of the experiments being moved.
 	ExperimentIds []int32 `protobuf:"varint,1,rep,packed,name=experiment_ids,json=experimentIds,proto3" json:"experiment_ids,omitempty"`
-	// The number of days to retain logs, starting from the time of creation.
+	// The number of days to retain logs, starting from the end time of the task.
 	NumDays int32 `protobuf:"varint,2,opt,name=num_days,json=numDays,proto3" json:"num_days,omitempty"`
 	// Targets all experiments matching filters.
 	Filters *BulkExperimentFilters `protobuf:"bytes,3,opt,name=filters,proto3" json:"filters,omitempty"`

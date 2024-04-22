@@ -10,6 +10,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { cspHtml } from './vite-plugin-csp';
+import { brandHtml } from "./vite-plugin-branding";
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
@@ -88,7 +89,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.31.0-dev0"',
+    'process.env.VERSION': '"0.31.1-dev0"',
   },
   optimizeDeps: {
     include: ['notebook'],
@@ -112,6 +113,7 @@ export default defineConfig(({ mode }) => ({
     }),
     react(),
     publicUrlBaseHref(),
+    brandHtml(),
     mode !== 'test' &&
       checker({
         typescript: true,

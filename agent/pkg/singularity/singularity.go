@@ -197,8 +197,6 @@ func (s *SingularityClient) RunContainer(
 	}
 	args = append(args, "--env-file", envFilePath)
 
-	req.ContainerConfig.Env = append(req.ContainerConfig.Env, "DET_SHIPPER_EMIT_STDOUT_LOGS=False")
-
 	var b64EnvVars []string
 	for _, env := range req.ContainerConfig.Env {
 		parts := strings.SplitN(env, "=", 2)

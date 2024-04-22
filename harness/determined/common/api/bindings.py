@@ -7349,6 +7349,68 @@ class v1KillNotebookResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
+class v1KillRunsRequest(Printable):
+    """Kill runs."""
+    filter: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        return out
+
+class v1KillRunsResponse(Printable):
+    """Response to KillRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1KillRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1KillShellResponse(Printable):
     """Response to KillShellRequest."""
     shell: "typing.Optional[v1Shell]" = None
@@ -20152,6 +20214,27 @@ def post_KillNotebook(
     if _resp.status_code == 200:
         return v1KillNotebookResponse.from_json(_resp.json())
     raise APIHttpError("post_KillNotebook", _resp)
+
+def post_KillRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1KillRunsRequest",
+) -> "v1KillRunsResponse":
+    """Get a list of runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/kill",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1KillRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_KillRuns", _resp)
 
 def post_KillShell(
     session: "api.BaseSession",

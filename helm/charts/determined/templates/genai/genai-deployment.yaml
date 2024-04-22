@@ -29,7 +29,7 @@ spec:
         imagePullPolicy: "Always"
         env:
           - name: DET_MASTER
-            value: determined-master-service-{{ .Release.Name }}:{{ .Values.masterPort }}
+            value: {{ include "genai.detMasterScheme" . }}://determined-master-service-{{ .Release.Name }}.{{ .Release.Namespace }}:{{ .Values.masterPort }}
           - name: DB_NAME
             value: lore
           - name: DB_USER
@@ -70,6 +70,7 @@ spec:
           {{- end }}
           - name: genai-resource-pool-metadata
             mountPath: /run/determined/workdir/rp_config
+            readOnly: true
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}

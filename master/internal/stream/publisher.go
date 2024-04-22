@@ -178,7 +178,12 @@ func (ps *PublisherSet) streamHandler(
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
-		return fmt.Errorf("error while reading initial startup message: %s", err.Error())
+		if websocket.IsUnexpectedCloseError(
+			err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure,
+		) {
+			return fmt.Errorf("error while reading initial startup message: %s", err.Error())
+		}
+		return nil
 	}
 
 	// startups is where we collect StartupMsg

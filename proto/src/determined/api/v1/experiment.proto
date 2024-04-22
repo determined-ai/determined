@@ -156,7 +156,7 @@ message PutExperimentRetainLogsRequest {
   // The ID of the experiment.
   int32 experiment_id = 1;
 
-  // The number of days to retain logs, starting from the time of creation.
+  // The number of days to retain logs, starting from the end time of the task.
   int32 num_days = 2;
 }
 
@@ -170,7 +170,7 @@ message PutExperimentsRetainLogsRequest {
   };
   // The ids of the experiments being moved.
   repeated int32 experiment_ids = 1;
-  // The number of days to retain logs, starting from the time of creation.
+  // The number of days to retain logs, starting from the end time of the task.
   int32 num_days = 2;
   // Targets all experiments matching filters.
   BulkExperimentFilters filters = 3;

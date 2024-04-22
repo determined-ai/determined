@@ -54,25 +54,40 @@ func GetModelIDsAssociatedWithCheckpoint(ctx context.Context, ckptUUID uuid.UUID
 	return modelIDs, nil
 }
 
+// ModelInfo is a struct containing info used for locating models.
+type ModelInfo struct {
+	ID      int
+	Version int
+	Name    string
+}
+
 // GetRegisteredCheckpoints gets the checkpoints in
 // the model registrys from the list of checkpoints provided.
-func GetRegisteredCheckpoints(ctx context.Context, checkpoints []uuid.UUID) (map[uuid.UUID]bool, error) {
+func GetRegisteredCheckpoints(ctx context.Context, checkpoints []uuid.UUID) (map[uuid.UUID]ModelInfo, error) {
 	var checkpointIDRows []struct {
-		ID uuid.UUID
+		ID           uuid.UUID
+		ModelID      int
+		ModelVersion int
+		ModelName    string
 	}
 
 	if err := db.Bun().NewRaw(`
-	SELECT DISTINCT(mv.checkpoint_uuid) as ID FROM model_versions AS mv
-	WHERE mv.checkpoint_uuid IN (SELECT UNNEST(?::uuid[]));`,
+	SELECT DISTINCT(mv.checkpoint_uuid) as ID, mv.model_id as model_id, mv.version as model_version, m.name as model_name
+	FROM model_versions AS mv LEFT JOIN models as m on mv.model_id=m.id WHERE mv.checkpoint_uuid
+	IN (SELECT UNNEST(?::uuid[]));`,
 		pgdialect.Array(checkpoints)).Scan(ctx, &checkpointIDRows); err != nil {
 		return nil, fmt.Errorf(
 			"filtering checkpoint uuids by those registered in the model registry: %w", err)
 	}
 
-	checkpointIDs := make(map[uuid.UUID]bool, len(checkpointIDRows))
+	checkpointIDs := make(map[uuid.UUID]ModelInfo, len(checkpointIDRows))
 
 	for _, cRow := range checkpointIDRows {
-		checkpointIDs[cRow.ID] = true
+		checkpointIDs[cRow.ID] = ModelInfo{
+			ID:      cRow.ModelID,
+			Version: cRow.ModelVersion,
+			Name:    cRow.ModelName,
+		}
 	}
 
 	return checkpointIDs, nil

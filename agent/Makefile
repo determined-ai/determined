@@ -8,8 +8,10 @@ export DOCKER_REPO ?= determinedai
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-agent
+EE_PROJECT_NAME = hpe-mlde-agent
 ARCHS = amd64 arm64 ppc64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
 NVCR_REPO ?= nvcr.io/isv-ngc-partner/determined
 
@@ -18,9 +20,17 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
 
+EE_PUB_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(VERSION)
+
 DEV_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
 	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+
+EE_DEV_MANIFESTS = \
+	$(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)
 
 NVCR_TAGS = \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
@@ -97,12 +107,23 @@ package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package: packaging/LICENSE buildx
 	goreleaser --snapshot --rm-dist
 
+.PHONY: package-ee
+package-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-ee: packaging/LICENSE buildx
+	goreleaser --snapshot --rm-dist -f ./.goreleaser_ee.yml
+
 .PHONY: release
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: packaging/LICENSE buildx
 	goreleaser --rm-dist
 	make publish-nvcr
+
+.PHONY: release-ee
+release-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+release-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
+release-ee: packaging/LICENSE buildx
+	goreleaser --rm-dist -f ./.goreleaser_ee.yml
 
 define manifest_publish
 	for image in $(2); do \
@@ -119,9 +140,17 @@ endef
 publish-dev:
 	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
 
+.PHONY: publish-dev-ee
+publish-dev-ee:
+	@$(call manifest_publish, $(EE_DEV_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
+
 .PHONY: publish
 publish:
 	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-ee
+publish-ee:
+	@$(call manifest_publish, $(EE_PUB_MANIFESTS), $(EE_MULTI_ARCH_IMAGES))
 
 .PHONY: publish-nvcr
 publish-nvcr:

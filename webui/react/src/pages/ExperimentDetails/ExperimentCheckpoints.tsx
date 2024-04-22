@@ -24,11 +24,9 @@ import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { getExperimentCheckpoints } from 'services/api';
+import { deleteCheckpoints, getExperimentCheckpoints } from 'services/api';
 import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
 import { encodeCheckpointState } from 'services/decoder';
-import { readStream } from 'services/utils';
 import {
   checkpointAction,
   CheckpointAction,
@@ -39,7 +37,7 @@ import {
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import { ensureArray } from 'utils/data';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 import { pluralizer } from 'utils/string';
 
@@ -128,12 +126,16 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [registerModal],
   );
 
-  const handleDelete = useCallback((checkpoints: string[]) => {
-    readStream(
-      detApi.Checkpoint.deleteCheckpoints({
-        checkpointUuids: checkpoints,
-      }),
-    );
+  const handleDelete = useCallback(async (checkpointUuids: string[]) => {
+    try {
+      await deleteCheckpoints({ checkpointUuids });
+    } catch (e) {
+      if (e instanceof DetError && e.type === ErrorType.Server) {
+        e.silent = false;
+      }
+      // confirm modal overwrites error message
+      handleError(e);
+    }
   }, []);
 
   const handleDeleteCheckpoint = useCallback(
