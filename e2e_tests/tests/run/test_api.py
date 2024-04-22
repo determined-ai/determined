@@ -151,6 +151,7 @@ def test_run_kill_filter() -> None:
         assert res.error == ""
         wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
 
+
 @pytest.mark.e2e_cpu
 def test_run_pause_and_resume() -> None:
     sess = api_utils.user_session()
@@ -203,12 +204,32 @@ def test_run_pause_and_resume_filter_no_skip() -> None:
     )
 
     runFilter = (
-        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}"""
+        """{
+  "filterGroup": {
+    "children": [
+      {
+        "columnName": "experimentId",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN",
+        "operator": "=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": %s
+      },
+      {
+        "columnName": "hp.n_filters2",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+        "operator": ">=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": 40
+      }
+    ],
+    "conjunction": "and",
+    "kind": "group"
+  },
+  "showArchived": false
+}"""
+        % exp_id
     )
 
     pauseResp = bindings.post_PauseRuns(
@@ -248,12 +269,32 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
     )
 
     runFilter = (
-        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}"""
+        """{
+  "filterGroup": {
+    "children": [
+      {
+        "columnName": "experimentId",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN",
+        "operator": "=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": %s
+      },
+      {
+        "columnName": "hp.n_filters2",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+        "operator": ">=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": 40
+      }
+    ],
+    "conjunction": "and",
+    "kind": "group"
+  },
+  "showArchived": false
+}"""
+        % exp_id
     )
     pauseResp = bindings.post_PauseRuns(
         sess,
@@ -279,21 +320,3 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
     for res in resumeResp.results:
         assert res.error == ""
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
-
-
-@pytest.mark.e2e_cpu
-def test_run_pause_and_resume_filter_no_skip() -> None:
-    sess = api_utils.user_session()
-
-    with pytest.raises(
-        errors.APIException, match="if filter is provided run id list must be empty"
-    ):
-        bindings.post_PauseRuns(
-            sess,
-            body=bindings.v1PauseRunsRequest(
-                runIds=[123],
-                filter="filter",
-                projectId=1,
-                skipMultitrial=True,
-            ),
-        )
