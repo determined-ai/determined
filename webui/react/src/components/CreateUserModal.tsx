@@ -36,7 +36,7 @@ const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 const USER_PASSWORD_NAME = 'password';
-// const USER_PASSWORD_LABEL = 'User Password';
+const USER_PASSWORD_LABEL = 'User Password';
 const REMOTE_LABEL =
   'Remote (prevents password sign-on and requires user to sign-on using external IdP)';
 const REMOTE_NAME = 'remote';
@@ -209,6 +209,21 @@ const CreateUserModalComponent: React.FC<Props> = ({
               name={REMOTE_NAME}
               valuePropName="checked">
               <Toggle data-testid="isRemote" disabled={viewOnly} />
+            </Form.Item>
+          )}
+          {(!rbacEnabled || !user?.remote) && (
+            <Form.Item
+              label={USER_PASSWORD_LABEL}
+              name={USER_PASSWORD_NAME}
+              required
+              validateTrigger={['onSubmit']}>
+              <Input
+                autoFocus
+                data-testid="password"
+                disabled={!!user}
+                maxLength={128}
+                placeholder="User password"
+              />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (
