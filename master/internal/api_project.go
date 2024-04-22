@@ -28,6 +28,111 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
+var defaultRunsTableColumns = []*projectv1.ProjectColumn{
+	{
+		Column:      "id",
+		DisplayName: "ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "name",
+		DisplayName: "Name",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "experimentDescription",
+		DisplayName: "Description",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "tags",
+		DisplayName: "Tags",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "forkedFrom",
+		DisplayName: "Forked",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "startTime",
+		DisplayName: "Start Time",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+	},
+	{
+		Column:      "duration",
+		DisplayName: "Duration",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "state",
+		DisplayName: "State",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "searcherType",
+		DisplayName: "Searcher",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "resourcePool",
+		DisplayName: "Resource Pool",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "checkpointSize",
+		DisplayName: "Checkpoint Size",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "checkpointCount",
+		DisplayName: "Checkpoints",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "user",
+		DisplayName: "User",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "searcherMetric",
+		DisplayName: "Searcher Metric",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "searcherMetricsVal",
+		DisplayName: "Searcher Metric Value",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "externalExperimentId",
+		DisplayName: "External Experiment ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "externalRunId",
+		DisplayName: "External Run ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+}
+
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
@@ -338,110 +443,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		return nil, err
 	}
 
-	columns := []*projectv1.ProjectColumn{
-		{
-			Column:      "id",
-			DisplayName: "ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "name",
-			DisplayName: "Name",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "experimentDescription",
-			DisplayName: "Description",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "tags",
-			DisplayName: "Tags",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "forkedFrom",
-			DisplayName: "Forked",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "startTime",
-			DisplayName: "Start Time",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
-		},
-		{
-			Column:      "duration",
-			DisplayName: "Duration",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "state",
-			DisplayName: "State",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherType",
-			DisplayName: "Searcher",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "resourcePool",
-			DisplayName: "Resource Pool",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "checkpointSize",
-			DisplayName: "Checkpoint Size",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "checkpointCount",
-			DisplayName: "Checkpoints",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "user",
-			DisplayName: "User",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherMetric",
-			DisplayName: "Searcher Metric",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherMetricsVal",
-			DisplayName: "Searcher Metric Value",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "externalExperimentId",
-			DisplayName: "External Experiment ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "externalRunId",
-			DisplayName: "External Run ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-	}
+	columns := defaultRunsTableColumns
 
 	hyperparameters := []struct {
 		WorkspaceID     int

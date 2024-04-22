@@ -35,113 +35,6 @@ const mockType = "mock"
 
 var pAuthZ *mocks.ProjectAuthZ
 
-func getDefaultProjectRunColumns() []*projectv1.ProjectColumn {
-	return []*projectv1.ProjectColumn{
-		{
-			Column:      "id",
-			DisplayName: "ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "name",
-			DisplayName: "Name",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "experimentDescription",
-			DisplayName: "Description",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "tags",
-			DisplayName: "Tags",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "forkedFrom",
-			DisplayName: "Forked",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "startTime",
-			DisplayName: "Start time",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
-		},
-		{
-			Column:      "duration",
-			DisplayName: "Duration",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "state",
-			DisplayName: "State",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherType",
-			DisplayName: "Searcher",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "resourcePool",
-			DisplayName: "Resource pool",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "checkpointSize",
-			DisplayName: "Checkpoint size",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "checkpointCount",
-			DisplayName: "Checkpoints",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "user",
-			DisplayName: "User",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherMetric",
-			DisplayName: "Searcher Metric",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "searcherMetricsVal",
-			DisplayName: "Searcher Metric Value",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
-		},
-		{
-			Column:      "externalExperimentId",
-			DisplayName: "External Experiment ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "externalRunId",
-			DisplayName: "External Run ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-	}
-}
-
 func isMockAuthZ() bool {
 	return config.GetMasterConfig().Security.AuthZ.Type == mockType
 }
@@ -507,7 +400,7 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 	getColumnsResp, err := api.GetProjectColumns(ctx, getColumnsReq)
 	require.NoError(t, err)
 	require.Len(t, getColumnsResp.Columns, 18)
-	for i, column := range getDefaultProjectRunColumns() {
+	for i, column := range defaultRunsTableColumns {
 		require.Equal(t, column, getColumnsResp.Columns[i])
 	}
 	expectedHparam := &projectv1.ProjectColumn{
