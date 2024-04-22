@@ -21,4 +21,8 @@ export class Toast extends NamedComponent {
     parent: this.alert,
     selector: '.ant-notification-notice-description',
   });
+  readonly close: BaseComponent = new BaseComponent({
+    parent: this,
+    selector: 'a.ant-notification-notice-close',
+  });
 }
