@@ -1,3 +1,20 @@
+"""Build an index from the sphinx XML files and (optionally) upload it to Algolia.
+
+This script is intended to be run from the root of the docs directory.  It will scrape the XML files
+in the site/xml directory and build an index from them.
+
+If the --json flag is given, the index will be dumped to stdout as a JSON list of records.
+If the --upload flag is given, the index will be uploaded to Algolia.
+
+The version of the docs is determined by the VERSION file in the root of the docs directory.  If the
+version contains "-dev" then the index will be uploaded to a special "dev" index (shared amongst
+all dev builds). During a release, the uploaded index will have a non-suffixed version (in particular,
+the "-rc" suffix will be removed).
+
+To view Algolia's repository of indexes built for determined:
+  https://dashboard.algolia.com/apps/9H1PGK6NP7/indices
+"""
+
 import argparse
 import html
 import io
