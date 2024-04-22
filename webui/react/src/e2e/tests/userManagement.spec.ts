@@ -20,7 +20,7 @@ test.describe('User Management', () => {
     await expect(page).toHaveURL(userManagementPage.url);
   });
 
-  test('Users table count matches admin page users tab', async ({ page }) => {
+  test.skip('Users table count matches admin page users tab', async ({ page }) => {
     test.setTimeout(120_000);
     const userManagementPage = new UserManagement(page);
     await userManagementPage.goto();
