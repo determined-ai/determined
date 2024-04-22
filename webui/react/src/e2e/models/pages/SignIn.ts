@@ -1,3 +1,4 @@
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { BasePage } from 'e2e/models/BasePage';
 import { DeterminedAuth } from 'e2e/models/components/DeterminedAuth';
 import { PageComponent } from 'e2e/models/components/Page';
@@ -8,7 +9,7 @@ import { PageComponent } from 'e2e/models/components/Page';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class SignIn extends BasePage {
-  readonly title: string = 'Sign In - HPE Machine Learning Development Environment';
+  readonly title: string = `Sign In - ${DevFixture.constants.appTitle}`;
   readonly url: string = 'login';
   readonly pageComponent: PageComponent = new PageComponent({ parent: this });
   readonly detAuth: DeterminedAuth = new DeterminedAuth({ parent: this.pageComponent });

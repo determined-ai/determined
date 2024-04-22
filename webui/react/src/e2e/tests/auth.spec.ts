@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 
 import { test } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
@@ -18,7 +19,7 @@ test.describe('Authentication', () => {
     await test.step('Login', async () => {
       await auth.login();
       await expect(page).toHaveTitle(
-        /Home - (Determined|HPE Machine Learning Development Environment)/,
+        `Home - ${DevFixture.constants.appTitle}`,
       );
       await expect(page).toHaveURL(/dashboard/);
     });
@@ -40,7 +41,7 @@ test.describe('Authentication', () => {
     await test.step('Login and expect redirect to previous page', async () => {
       await auth.login(/models/);
       await expect(page).toHaveTitle(
-        /Model Registry - (Determined|HPE Machine Learning Development Environment)/,
+        `Model Registry - ${DevFixture.constants.appTitle}`,
       );
     });
   });

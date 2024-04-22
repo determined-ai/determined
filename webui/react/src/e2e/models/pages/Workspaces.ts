@@ -1,3 +1,4 @@
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
@@ -9,7 +10,7 @@ import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class Workspaces extends BasePage {
-  readonly title: RegExp = /Workspaces - (Determined|HPE Machine Learning Development Environment)/;
+  readonly title: string = `Workspaces - ${DevFixture.constants.appTitle}`;
   readonly url: string = 'workspaces';
   readonly list: WorkspacesList = new WorkspacesList({
     parent: this,

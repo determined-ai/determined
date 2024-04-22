@@ -3,6 +3,7 @@ import { expect } from '@playwright/test';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
@@ -38,7 +39,7 @@ test.describe('Projects', () => {
     await dev.setServerAddress();
     await auth.login(/dashboard/);
     await expect(page).toHaveTitle(
-      /Home - (Determined|HPE Machine Learning Development Environment)/,
+      `Home - ${DevFixture.constants.appTitle}`,
     );
     await expect(page).toHaveURL(/dashboard/);
   });

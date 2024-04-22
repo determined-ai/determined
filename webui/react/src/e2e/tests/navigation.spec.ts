@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 
 import { test } from 'e2e/fixtures/global-fixtures';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
@@ -16,7 +17,7 @@ test.describe('Navigation', () => {
     await test.step('Login steps', async () => {
       await auth.login(/dashboard/);
       await expect(page).toHaveTitle(
-        /Home - (Determined|HPE Machine Learning Development Environment)/,
+        `Home - ${DevFixture.constants.appTitle}`,
       );
       await expect(page).toHaveURL(/dashboard/);
     });
@@ -28,7 +29,7 @@ test.describe('Navigation', () => {
       await expect
         .soft(page)
         .toHaveTitle(
-          /Uncategorized Experiments - (Determined|HPE Machine Learning Development Environment)/,
+          `Uncategorized Experiments - ${DevFixture.constants.appTitle}`,
         );
       await expect.soft(page).toHaveURL(expectedURL);
     });
@@ -39,7 +40,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(/Model Registry - (Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(`Model Registry - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -49,7 +50,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(/Tasks - (Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(`Tasks - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -59,7 +60,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(/Webhooks - (Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(`Webhooks - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -69,7 +70,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(/Cluster - (Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(`Cluster - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -87,7 +88,7 @@ test.describe('Navigation', () => {
       await page.waitForURL(expectedURL);
       await expect
         .soft(page)
-        .toHaveTitle(/(Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(DevFixture.constants.appTitle);
       await expect.soft(page).toHaveURL(expectedURL);
     });
 
@@ -95,7 +96,7 @@ test.describe('Navigation', () => {
       await auth.logout();
       await expect
         .soft(page)
-        .toHaveTitle(/Sign In - (Determined|HPE Machine Learning Development Environment)/);
+        .toHaveTitle(`Sign In - ${DevFixture.constants.appTitle}`);
       await expect.soft(page).toHaveURL(/login/);
     });
   });
