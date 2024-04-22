@@ -406,6 +406,8 @@ def skipif_streaming_updates_not_enabled(
 ) -> Callable[[F], F]:
     def decorator(f: F) -> F:
         enabled = _get_streaming_updates_enabled()
+        # enabled is None when there is an APIException or a MasterNotFoundException.
+        # So we want to run the test to an error, but if we skip it, no error will show up.
         if enabled is None:
             return f
         if not enabled:
