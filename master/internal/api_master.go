@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/version"
@@ -32,6 +33,12 @@ func (a *apiServer) GetMaster(
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
 		product = apiv1.GetMasterResponse_PRODUCT_COMMUNITY
 	}
+
+	brand := "determined"
+	if license.IsEE() {
+		brand = "hpe"
+	}
+
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,
@@ -40,7 +47,7 @@ func (a *apiServer) GetMaster(
 		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
-		Branding:              "determined",
+		Branding:              brand,
 		RbacEnabled:           config.GetAuthZConfig().IsRBACUIEnabled(),
 		StrictJobQueueControl: config.GetAuthZConfig().StrictJobQueueControl,
 		Product:               product,

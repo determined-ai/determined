@@ -213,7 +213,7 @@ func TestGetRegisteredCheckpoints(t *testing.T) {
 		Name:       "checkpoint 1",
 		Comment:    "empty",
 	}
-	_, err = db.InsertModelVersion(ctx, pmdl.Id, retCkpt1.Uuid, mv1.Name, mv1.Comment,
+	mv1mdl, err := db.InsertModelVersion(ctx, pmdl.Id, retCkpt1.Uuid, mv1.Name, mv1.Comment,
 		emptyMetadata, strings.Join(mv1.Labels, ","), mv1.Notes, user.ID,
 	)
 	require.NoError(t, err)
@@ -233,8 +233,12 @@ func TestGetRegisteredCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 
 	checkpoints := []uuid.UUID{checkpoint1.UUID, checkpoint3.UUID}
-	expectedRegisteredCheckpoints := make(map[uuid.UUID]bool)
-	expectedRegisteredCheckpoints[checkpoint1.UUID] = true
+	expectedRegisteredCheckpoints := make(map[uuid.UUID]ModelInfo)
+	expectedRegisteredCheckpoints[checkpoint1.UUID] = ModelInfo{
+		ID:      int(pmdl.Id),
+		Version: int(mv1mdl.Version),
+		Name:    pmdl.Name,
+	}
 	dCheckpointsInRegistry, err := GetRegisteredCheckpoints(ctx, checkpoints)
 	require.NoError(t, err)
 	require.Equal(t, expectedRegisteredCheckpoints, dCheckpointsInRegistry)

@@ -261,6 +261,14 @@ func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, er
 	return getQ, nil
 }
 
+func getSelectRunsQueryTables() *bun.SelectQuery {
+	return db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
+}
+
 func (a *apiServer) MoveRuns(
 	ctx context.Context, req *apiv1.MoveRunsRequest,
 ) (*apiv1.MoveRunsResponse, error) {
@@ -405,6 +413,100 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
+) (*apiv1.KillRunsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	type killRunOKResult struct {
+		ID         int32
+		RequestID  *string
+		IsTerminal bool
+	}
+
+	var killCandidatees []killRunOKResult
+	getQ := getSelectRunsQueryTables().
+		Model(&killCandidatees).
+		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
+		Column("r.id").
+		ColumnExpr("t.request_id").
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Where("r.project_id = ?", req.ProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	for _, check := range killCandidatees {
+		visibleIDs.Insert(check.ID)
+		switch {
+		case check.IsTerminal:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    check.ID,
+			})
+		// This should be impossible in the current system but we will leave this check here
+		// to cover a possible error in integration tests
+		case check.RequestID == nil:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run has no associated request id.",
+				Id:    check.ID,
+			})
+		default:
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+
+	for _, runID := range validIDs {
+		_, err = a.KillTrial(ctx, &apiv1.KillTrialRequest{
+			Id: runID,
+		})
+		if err != nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Failed to kill run: %s", err),
+				Id:    runID,
+			})
+		} else {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    runID,
+			})
+		}
+	}
+	return &apiv1.KillRunsResponse{Results: results}, nil
 }
 
 func (a *apiServer) ArchiveRuns(

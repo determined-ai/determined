@@ -59,9 +59,8 @@ Determined also requires an attribute statement named ``userName`` with the name
 and a value ``user.login``.
 
 Okta will show that more steps are required to complete the configuration and link to a page with
-their IdP SSO URL, IdP Issuer URL (synonymous to IdP Descriptor URL), and public certificate. Use
-these to configure the Determined master in ``master.yaml``. The cert will need to be saved and
-mounted into the master's container.
+their IdP SSO URL, IdP Issuer URL (synonymous to IdP Descriptor URL), and IdP metadata URL. Use
+these to configure the Determined master in ``master.yaml``.
 
 .. code:: yaml
 
@@ -71,7 +70,7 @@ mounted into the master's container.
      idp_recipient_url: "https://determined.example.com/saml/sso"
      idp_sso_url: "https://myorg.okta.com/app/.../sso/saml"
      idp_sso_descriptor_url: "http://www.okta.com/..."
-     idp_cert_path: "okta.cert"
+     idp_metadata_url: "https://myorg.okta.com/app/.../sso/saml/metadata"
 
 Once the master is started with this configuration, users should be able to log in to Determined
 from Okta by clicking the Determined tile after they have been provisioned.

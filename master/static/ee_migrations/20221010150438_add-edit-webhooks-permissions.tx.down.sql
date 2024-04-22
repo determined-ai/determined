@@ -1,0 +1,1 @@
+DELETE FROM permissions WHERE id = 97001;

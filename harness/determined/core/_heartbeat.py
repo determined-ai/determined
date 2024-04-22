@@ -1,4 +1,3 @@
-import atexit
 import logging
 import sys
 import threading
@@ -124,7 +123,6 @@ class _UnmanagedTrialHeartbeat(_Heartbeat):
 
         self._hook = _ExitHook()
         self._hook.hook()
-        atexit.register(self._exit_handler)
 
         return self
 
@@ -132,31 +130,25 @@ class _UnmanagedTrialHeartbeat(_Heartbeat):
         body = bindings.v1PatchTrialRequest(trialId=self._trial_id, state=state)
         bindings.patch_PatchTrial(session=self._session, body=body, trialId=self._trial_id)
 
-    def _exit_handler(self) -> None:
-        # TODO(ilia): check if we need to explicitly log the exception, e.g. if it was not
-        # intercepted by the stdout/stderr capture.
-        if self._hook.exception:
-            exc = self._hook.exception
-            self.close(type(exc), exc, None)
-        elif self._hook.exit_code is not None and self._hook.exit_code != 0:
-            exc = RuntimeError(f"exit code {self._hook.exit_code}")
-            self.close(type(exc), exc, None)
-        else:
-            self.close()
-
     def close(
         self,
         exc_type: Optional[type] = None,
         exc_val: Optional[BaseException] = None,
         exc_tb: Optional[types.TracebackType] = None,
     ) -> "_Heartbeat":
-        atexit.unregister(self._exit_handler)
-
         self._heartbeat.close()
+
+        if self._hook.exception:
+            exc = self._hook.exception
+            exc_type, exc_val = type(exc), exc
+        elif self._hook.exit_code is not None and self._hook.exit_code != 0:
+            exc = RuntimeError(f"exit code {self._hook.exit_code}")
+            exc_type, exc_val = type(exc), exc
 
         if exc_type is None:
             self._update_state(bindings.trialv1State.COMPLETED)
         else:
+            logger.error(f"Trial reached an ERROR state: {exc_val}")
             self._update_state(bindings.trialv1State.ERROR)
 
         return self

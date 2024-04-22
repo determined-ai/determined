@@ -2533,6 +2533,17 @@ service Determined {
     };
   }
 
+  // Get a list of runs.
+  rpc KillRuns(KillRunsRequest) returns (KillRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/kill"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Archive runs.
   rpc ArchiveRuns(ArchiveRunsRequest) returns (ArchiveRunsResponse) {
     option (google.api.http) = {

@@ -333,7 +333,7 @@ Parameters include:
    retention settings post-completion for a single trial or the entire experiment, you can use the
    CLI command ``det t set log-retention <trial-id>`` or ``det e set log-retention <exp-id>``. Both
    commands accept either the argument: ``--days``, which sets the number of days to retain logs
-   from the time of creation, or ``--forever`` which retains logs indefinitely.
+   from the end time of the task, or ``--forever`` which retains logs indefinitely.
 
 Example configuration:
 
@@ -1333,8 +1333,8 @@ Optional. The Docker image to use when executing the workload. This image must b
 container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1`` for NVIDIA GPUs.
--  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.30.1`` for CPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1`` for NVIDIA GPUs.
+-  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1`` for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm

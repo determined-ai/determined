@@ -28,7 +28,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
     Auth: new Api.AuthenticationApi(config),
-    Checkpoint: Api.CheckpointsApiFetchParamCreator(config),
+    Checkpoint: new Api.CheckpointsApi(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
@@ -1951,4 +1951,14 @@ export const updateJobQueue: DetApi<
   name: 'updateJobQueue',
   postProcess: identity,
   request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
+};
+
+export const deleteCheckpoints: DetApi<
+  Api.V1DeleteCheckpointsRequest,
+  Api.V1DeleteCheckpointsResponse,
+  Api.V1DeleteCheckpointsResponse
+> = {
+  name: 'deleteCheckpoints',
+  postProcess: identity,
+  request: (params, options) => detApi.Checkpoint.deleteCheckpoints(params, options),
 };

@@ -32,7 +32,7 @@ repos:
         description: Format shell scripts with shfmt
         entry: mvdan/shfmt:v3
         language: docker_image
-        exclude: ^(webui/react/src/services/api-ts-sdk/)
+        exclude: ^(webui/react/src/services/api-ts-sdk/|hpc-ard-launcher-go/launcher/)
         types:
           - file
           - shell
@@ -56,21 +56,21 @@ repos:
         files: '\.go$'
         language: "script"
         description: "Runs `goimport,gofmt`, requires golang"
-        exclude: ^(proto/pkg)
+        exclude: ^(proto/pkg|hpc-ard-launcher-go/launcher/)
       - id: gofumpt
         name: "gofumpt"
         entry: ./pre-commit/run-go-gofumpt.sh
         files: '\.go$'
         language: "script"
         description: "Runs `gofumpt`, requires github.com/mvdan/gofumpt"
-        exclude: ^(proto/pkg)
+        exclude: ^(proto/pkg|hpc-ard-launcher-go/launcher)
       - id: golangci-lint
         name: "go golangci-lint"
         entry: ./pre-commit/run-golangci-lint.sh
         files: '\.go$'
         language: "script"
         description: "Runs `golangci-lint`, install https://github.com/golangci/golangci-lint"
-        exclude: ^(proto/pkg)
+        exclude: ^(proto/pkg|hpc-ard-launcher-go/launcher/)
         require_serial: true
 
   - repo: https://github.com/adrienverge/yamllint.git

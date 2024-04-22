@@ -94,3 +94,7 @@ go.work.sum
 
 # Singularity images
 *.sif
+
+# EE license key and public key
+license.txt
+public.txt

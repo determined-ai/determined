@@ -89,7 +89,28 @@ message MoveRunsResponse {
     json_schema: { required: [ "results" ] }
   };
 
-  // Details on success or error for each experiment.
+  // Details on success or error for each run.
+  repeated RunActionResult results = 1;
+}
+
+// Kill runs.
+message KillRunsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "run_ids", "source_project_id" ] }
+  };
+  // The ids of the runs being killed.
+  repeated int32 run_ids = 1;
+  // Project id of the runs being killed.
+  int32 project_id = 2;
+  // Filter expression
+  optional string filter = 3;
+}
+// Response to KillRunsResponse.
+message KillRunsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+  // Details on success or error for each run.
   repeated RunActionResult results = 1;
 }
 
