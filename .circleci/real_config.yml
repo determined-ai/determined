@@ -1983,19 +1983,47 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
-    docker:
-      - image: mcr.microsoft.com/playwright:v1.40.0-focal
+    machine:
+      image: <<pipeline.parameters.machine-image>>
     resource_class: large
     steps:
+      - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV # DNJ TODO -remove when tested
+      - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
+      - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
+      - run: echo 'export DET_WEBPACK_PROXY_URL="http://localhost:8082"' >> $BASH_ENV
+      - run: echo 'export DET_WEBSOCKET_PROXY_URL="ws://localhost:8082"' >> $BASH_ENV
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - run: apt-get update && apt-get -y install make
+      - attach_workspace:
+          at: .
       - react-get-deps
+      - setup-python-venv:
+          determined: true
+          install-python: true
+          executor: <<pipeline.parameters.machine-image>>
+      - install-protoc 
+      - license-gen
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
+      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
+      - install-devcluster
+      - start-devcluster:
+          devcluster-config: react.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
-      - run: PW_USER_NAME=${PW_USER_NAME} PW_PASSWORD=${PW_PASSWORD} npm run e2e --prefix webui/react
+      - wait-for-master:
+          host: "localhost"
+          port: "8082"
+      - run: |
+          PW_USER_NAME=${PW_USER_NAME} \
+          PW_PASSWORD=${PW_PASSWORD} \
+          PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} \
+          DET_WEBPACK_PROXY_URL=${DET_WEBPACK_PROXY_URL} \
+          DET_WEBPACK_PROXY_URL=${DET_WEBSOCKET_PROXY_URL} \
+          npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -4100,6 +4128,13 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
+      - test-e2e-react:
+          requires:
+            - build-go
+          context: 
+            - playwright
+            - github-read
+          filters: *any-upstream
       - build-docs:
           requires:
             - build-helm
@@ -4181,7 +4216,11 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
-          context: playwright
+          requires:
+            - build-go
+          context: 
+            - playwright
+            - github-read
           filters: *any-upstream
       - build-docs:
           requires:
