@@ -1,7 +1,6 @@
-import { Locator } from '@playwright/test';
-
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
+import { Pagination } from 'e2e/models/hew/Pagination';
 
 type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
 type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
@@ -15,8 +14,10 @@ export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
  * Returns a representation of the InteractiveTable component.
  * This constructor represents the contents in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this InteractiveTable
+ * @param {CanBeParent} obj.parent - The parent used to locate this InteractiveTable
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
+ * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class InteractiveTable<
   RowType extends Row,
@@ -36,8 +37,10 @@ export class InteractiveTable<
  * Returns the representation of a Table.
  * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this Table
+ * @param {CanBeParent} obj.parent - The parent used to locate this Table
  * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
+ * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
   readonly defaultSelector = '[data-testid="table"]';
@@ -75,7 +78,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return (value: string) => {
       return new this.#rowType({
         attachment: `[${key}="${value}"]`,
-        parent: this,
+        parent: this.#body,
       });
     };
   }
@@ -92,7 +95,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
       rows.map(async (row) => {
         return (
           (await row.getAttribute(keyAttribute)) ||
-          Promise.reject(new Error(`all rows should have the attribute ${keyAttribute}`))
+          Promise.reject(new Error(`All rows should have the attribute ${keyAttribute}`))
         );
       }),
     );
@@ -130,7 +133,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
  * Returns the representation of a Table Row.
  * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this Row
+ * @param {CanBeParent} obj.parent - The parent used to locate this Row
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class Row extends NamedComponent {
@@ -154,7 +157,7 @@ export class Row extends NamedComponent {
  * Returns the representation of a Table HeadRow.
  * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
  * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this HeadRow
+ * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class HeadRow extends NamedComponent {
@@ -163,34 +166,4 @@ export class HeadRow extends NamedComponent {
     parent: this,
     selector: '.ant-table-selection-column',
   });
-}
-
-/**
- * Returns the representation of a Table Pagination.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
- * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this Pagination
- * @param {string} obj.selector - Used as a selector uesd to locate this object
- */
-class Pagination extends NamedComponent {
-  readonly defaultSelector = '.ant-pagination';
-  readonly previous: BaseComponent = new BaseComponent({
-    parent: this,
-    selector: 'li.ant-pagination-prev',
-  });
-  readonly next: BaseComponent = new BaseComponent({
-    parent: this,
-    selector: 'li.ant-pagination-next',
-  });
-  readonly #options: BaseComponent = new BaseComponent({
-    parent: this,
-    selector: 'li.ant-pagination-options',
-  });
-  readonly perPage: BaseComponent = new BaseComponent({
-    parent: this.#options,
-    selector: '.ant-pagination-options-size-changer',
-  });
-  pageButtonLocator(n: number): Locator {
-    return this.pwLocator.locator(`.ant-pagination-item.ant-pagination-item-${n}`);
-  }
 }

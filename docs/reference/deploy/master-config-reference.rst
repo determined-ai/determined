@@ -89,9 +89,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1`` for NVIDIA GPUs.
+-  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.30.1`` for CPUs.
+-  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1`` for CPUs.
 
 ``environment_variables``
 =========================
@@ -240,6 +240,30 @@ otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`t
 **********************
 
 The resource manager used to acquire resources. Defaults to ``agent``.
+
+For Kubernetes installations, if you define additional resource managers, the resource manager
+specified under the primary resource_manager key here is considered the default.
+
+``name``
+========
+
+Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
+Kubernetes installations with additional resource managers, ensure unique names for all resource
+managers in the cluster.
+
+``metadata``
+============
+
+Optional. Stores additional information about the resource manager in a yaml map, such as the zone,
+region, or location.
+
+For example:
+
+.. code:: yaml
+
+   metadata:
+      region: us-west1
+      zone: us-west1-a
 
 ``type: agent``
 ===============
@@ -1172,6 +1196,50 @@ those partitions/queues.
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
 
+.. _master-config-additional-resource-managers:
+
+**********************************
+ ``additional_resource_managers``
+**********************************
+
+Cluster administrators for Kubernetes installations can define additional resource managers for
+connecting the Determined master service with remote clusters. Support for notebooks and other
+workloads that require proxying on remote clusters is under development.
+
+To define a single resource manager or designate the default resource manager, do not define it
+under ``additional_resource_manager``; instead, use the primary ``resource_manager`` key.
+
+Resource manager names must be unique among all defined resource managers.
+
+Any additional resource managers must have at least one resource pool assigned to them. These
+resource pool names must be defined and must be distinct among all resource pools across all
+resource managers. You define resource pools for any additional resource managers within their
+respective elements in the resource manager list (not at the root level).
+
+For example, to define three resource managers (one default, two additional):
+
+.. code:: yaml
+
+   resource_manager: # the default resource manager
+   resource_pool: # resource pools for the resource manager defined above.
+      pool_name: "foo"
+
+   additional_resource_managers:
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "bar" # required
+      resource_pools:
+         pool_name: "abc"
+
+      -  resource_manager:
+
+      type: kubernetes # required, this feature is only for Kubernetes.
+      name: "baz" # required
+      resource_pools:
+         pool_name: "def"
+
 ``resource_manager``
 ====================
 
@@ -1570,13 +1638,13 @@ Specifies configuration settings for the retention of trial logs.
 Number of days to retain logs for by default. This can be overridden on a per-experiment basis in
 the :ref:`experiment configuration <log-retention-days>`. Values should be between ``-1`` and
 ``32767``. The default value is ``-1``, retaining logs indefinitely. If set to ``0``, logs will be
-deleted during the next cleanup. If this value is not set, ``det master cleanup-logs`` can be called
-to manually run retention.
+deleted during the next cleanup.
 
 ``schedule``
 ============
 
-Schedule for cleaning up logs. Can be provided as a cron expression or a duration string.
+Schedule for cleaning up logs. Can be provided as a cron expression or a duration string. If this
+value is not set, ``det task cleanup-logs`` can be called to manually run retention.
 
 For example, to schedule cleanup for midnight every day:
 
@@ -1619,7 +1687,7 @@ For example:
           idp_recipient_url: "http://xx.xxx.xxx.xx:8080/saml/sso"
           idp_sso_url: "https://xxx/xxx/xxx0000/sso/saml/"
           idp_sso_descriptor_url: "http://www.okta.com/xxx000"
-          idp_cert_path: "okta.cert"
+          idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
 
 ``enabled``
 ===========
@@ -1664,7 +1732,7 @@ used for :ref:`remote user <remote-users>` management.
           provider: "Okta"
           client_id: "xx0xx0"
           client_secret: "xx0xx0"
-          idp_recipient_url: "https://determined.example.com"
+          idp_recipient_url: "https://determined.example.com/saml/sso"
           idp_sso_url: "https://dev-00000000.okta.com"
           authentication_claim: "string"
           scim_authentication_attribute: "string"
@@ -1756,8 +1824,8 @@ For example:
           enabled: true
           provider: "Okta"
           idp_recipient_url: "https://determined.example.com/saml/sso"
-          idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
-          idp_cert_path: "okta.cert"
+          idp_sso_url: "https://myorg.okta.com/app/.../sso/saml"
+          idp_metadata_url: "https://myorg.okta.com/app/.../sso/saml/metadata"
           auto_provision_users: true
           groups_attribute_name: "groups"
           display_name_attribute_name: "disp_name"
@@ -1788,10 +1856,10 @@ The Single Sign-On (SSO) URL provided by the SAML provider.
 An IdP-provided URL, also known as IdP issuer. It is an identifier for the IdP that issues the SAML
 requests and responses.
 
-``idp_cert_path``
-=================
+``idp_metadata_url``
+====================
 
-The path to the IdP's certificate, used to validate assertions.
+An IdP-provided URL for obtaining IdP metadata, such as certificates and keys.
 
 ``auto_provision_users``
 ========================

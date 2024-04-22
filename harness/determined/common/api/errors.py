@@ -83,12 +83,15 @@ class ForbiddenException(BadRequestException):
 class UnauthenticatedException(BadRequestException):
     """The internal API's analog to a 401 Unauthorized HTTP status code."""
 
-    def __init__(self) -> None:
-        super().__init__(
-            message="Unauthenticated: Please use 'det user login <username>' for password login, or"
+    def __init__(
+        self,
+        message: str = (
+            "Unauthenticated: Please use 'det user login <username>' for password login, or"
             " for Enterprise users logging in with an SSO provider,"
             " use 'det auth login --provider=<provider>'."
-        )
+        ),
+    ) -> None:
+        super().__init__(message=message)
 
 
 class CorruptTokenCacheException(Exception):
@@ -116,3 +119,8 @@ class DeleteFailedException(APIException):
     def __init__(self, error_message: str) -> None:
         self.message = error_message
         self.status_code = 200
+
+
+class InvalidCredentialsException(UnauthenticatedException):
+    def __init__(self) -> None:
+        super().__init__(message="Invalid username/password combination. Please try again.")

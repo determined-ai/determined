@@ -31,8 +31,8 @@ defaultImages:
   kubeSchedulerPreemption: "determinedai/kube-scheduler:0.17.0"
 
   # default images for CPU and GPU environments
-  cpuImage: "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-079eb6d"
-  gpuImage: "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-079eb6d"
+  cpuImage: "determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-748dda4"
+  gpuImage: "determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-748dda4"
 
 # Install Determined enterprise edition.
 enterpriseEdition: false
@@ -87,14 +87,7 @@ useNodePortForMaster: false
 # Determined master and the task containers it launches, but does not include communication between
 # the task containers (distributed training). The specified Secret of type tls must already exist in
 # the same namespace in which Determined is being installed.
-tlsSecret:
-
-
-# TLS security configs for determined master.
-security:
-  tls:
-    cert:
-    key:
+# tlsSecret:
 
 # security:
   # defaultTask sets the user and group that tasks will run as. For convenience, the default Determined
@@ -285,6 +278,9 @@ taskContainerDefaults:
   #    action:
   #      type: exclude_node
 
+  # Configure an optional inline script that will be executed as part of the task setup process.
+  # startupHook: echo "hello from master startup hook"
+
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true
@@ -327,9 +323,9 @@ telemetry:
   # security:
     # username: <username>
     # password: <password>
-      # tls:
-        # enabled: true
-        # skipVerify: false
+    # tls:
+      # enabled: true
+      # skipVerify: false
 
       ## The name to use when verifying the certificate, if different from the name used to connect.
       # certificateName: <name>

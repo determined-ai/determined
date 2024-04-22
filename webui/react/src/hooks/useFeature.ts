@@ -7,7 +7,12 @@ import determinedStore, { DeterminedInfo } from 'stores/determinedInfo';
 import userSettings from 'stores/userSettings';
 
 // add new feature switches here
-export type ValidFeature = 'explist_v2' | 'rp_binding' | 'genai' | 'flat_runs';
+export type ValidFeature =
+  | 'explist_v2'
+  | 'rp_binding'
+  | 'genai'
+  | 'flat_runs'
+  | 'streaming_updates';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -36,6 +41,11 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: true,
     description: 'Allow resource pools to be assigned to workspaces',
     friendlyName: 'Resource Pool Binding',
+  },
+  streaming_updates: {
+    defaultValue: false,
+    description: 'Allow streaming updates through websockets for better performance',
+    friendlyName: 'Streaming Updates',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

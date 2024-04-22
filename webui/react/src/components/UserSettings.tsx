@@ -1,5 +1,6 @@
 import Accordion from 'hew/Accordion';
 import Button from 'hew/Button';
+import Column from 'hew/Column';
 import Drawer from 'hew/Drawer';
 import Icon from 'hew/Icon';
 import InlineForm from 'hew/InlineForm';
@@ -33,17 +34,17 @@ import {
   FeatureSettingsConfig,
   ValidFeature,
 } from 'hooks/useFeature';
-import {
-  experimentListGlobalSettingsConfig,
-  experimentListGlobalSettingsDefaults,
-  experimentListGlobalSettingsPath,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import determinedStore from 'stores/determinedInfo';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
+import {
+  dataGridGlobalSettingsConfig,
+  dataGridGlobalSettingsDefaults,
+  dataGridGlobalSettingsPath,
+} from './OptionsMenu.settings';
 import css from './UserSettings.module.scss';
 import UserSettingsModalComponent from './UserSettingsModal';
 
@@ -129,22 +130,16 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
   return Loadable.match(
     Loadable.all([
-      useObservable(
-        userSettings.get(experimentListGlobalSettingsConfig, experimentListGlobalSettingsPath),
-      ),
+      useObservable(userSettings.get(dataGridGlobalSettingsConfig, dataGridGlobalSettingsPath)),
       useObservable(userSettings.get(shortcutSettingsConfig, shortcutsSettingsPath)),
       useObservable(userSettings.get(FeatureSettingsConfig, FEATURE_SETTINGS_PATH)),
     ]),
     {
       Failed: () => null,
-      Loaded: ([
-        savedExperimentListGlobalSettings,
-        savedShortcutSettings,
-        savedFeatureSettings,
-      ]) => {
-        const experimentListGlobalSettings = {
-          ...experimentListGlobalSettingsDefaults,
-          ...(savedExperimentListGlobalSettings ?? {}),
+      Loaded: ([savedDataGridGlobalSettings, savedShortcutSettings, savedFeatureSettings]) => {
+        const dataGridGlobalSettings = {
+          ...dataGridGlobalSettingsDefaults,
+          ...(savedDataGridGlobalSettings ?? {}),
         };
         const shortcutSettings = { ...shortcutSettingsDefaults, ...(savedShortcutSettings ?? {}) };
 
@@ -235,15 +230,14 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   </Select>
                 </InlineForm>
                 <InlineForm<RowHeight>
-                  initialValue={experimentListGlobalSettings.rowHeight}
+                  initialValue={dataGridGlobalSettings.rowHeight}
                   label="Table Density"
                   valueFormatter={(rh) => rowHeightLabels[rh]}
                   onSubmit={(rh) => {
-                    userSettings.set(
-                      experimentListGlobalSettingsConfig,
-                      experimentListGlobalSettingsPath,
+                    userSettings.setPartial(
+                      dataGridGlobalSettingsConfig,
+                      dataGridGlobalSettingsPath,
                       {
-                        ...experimentListGlobalSettings,
                         rowHeight: rh,
                       },
                     );
@@ -257,14 +251,16 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                   </Select>
                 </InlineForm>
                 <InlineForm<TableViewMode>
-                  initialValue={experimentListGlobalSettings.tableViewMode}
+                  initialValue={dataGridGlobalSettings.tableViewMode}
                   label="Infinite Scroll"
                   valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
                   onSubmit={(mode) => {
-                    userSettings.set(
-                      experimentListGlobalSettingsConfig,
-                      experimentListGlobalSettingsPath,
-                      { ...experimentListGlobalSettings, tableViewMode: mode },
+                    userSettings.setPartial(
+                      dataGridGlobalSettingsConfig,
+                      dataGridGlobalSettingsPath,
+                      {
+                        tableViewMode: mode,
+                      },
                     );
                   }}>
                   <Select searchable={false}>
@@ -329,7 +325,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     label={
                       <Row>
                         {description.friendlyName}
-                        <Icon name="info" showTooltip title={description.description} />
+                        <Column align="right">
+                          <Icon name="info" showTooltip title={description.description} />
+                        </Column>
                       </Row>
                     }
                     valueFormatter={(value) => (value ? 'On' : 'Off')}

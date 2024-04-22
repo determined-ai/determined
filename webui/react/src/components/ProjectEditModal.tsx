@@ -15,7 +15,7 @@ interface FormInputs {
 }
 
 interface Props {
-  onEdit?: (name: string, archived: boolean) => void;
+  onEdit?: (name: string, archived: boolean, description?: string) => void;
   project: Project;
 }
 
@@ -31,7 +31,7 @@ const ProjectEditModalComponent: React.FC<Props> = ({ onEdit, project }: Props) 
 
     try {
       await patchProject({ description, id: project.id, name });
-      onEdit?.(name, project.archived);
+      onEdit?.(name, project.archived, description);
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,

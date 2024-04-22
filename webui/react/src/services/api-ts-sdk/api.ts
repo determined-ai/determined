@@ -3368,10 +3368,10 @@ export interface V1FlatRun {
     externalRunId?: number;
     /**
      * Trial hyperparameters.
-     * @type {string}
+     * @type {any}
      * @memberof V1FlatRun
      */
-    hyperparameters?: string;
+    hyperparameters?: any;
     /**
      * summary metrics.
      * @type {any}
@@ -3456,7 +3456,7 @@ export interface V1FlatRunExperiment {
      * @type {number}
      * @memberof V1FlatRunExperiment
      */
-    forkedFrom: number;
+    forkedFrom?: number;
     /**
      * The id of external experiment
      * @type {string}
@@ -8243,7 +8243,7 @@ export interface V1PutExperimentRetainLogsRequest {
      */
     experimentId: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentRetainLogsRequest
      */
@@ -8269,7 +8269,7 @@ export interface V1PutExperimentsRetainLogsRequest {
      */
     experimentIds: Array<number>;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutExperimentsRetainLogsRequest
      */
@@ -8384,7 +8384,7 @@ export interface V1PutTrialRetainLogsRequest {
      */
     trialId?: number;
     /**
-     * The number of days to retain logs, starting from the time of creation.
+     * The number of days to retain logs, starting from the end time of the task.
      * @type {number}
      * @memberof V1PutTrialRetainLogsRequest
      */

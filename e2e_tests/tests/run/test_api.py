@@ -20,10 +20,25 @@ def wait_for_run_state(
         resp = bindings.get_SearchRuns(
             test_session,
             limit=1,
-            filter="""{"filterGroup":{"children":[{"columnName":"id","kind":"field",
-        "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-            + str(run_id)
-            + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            filter="""
+            {"filterGroup": {
+                "children": [
+                {
+                    "columnName": "id",
+                    "kind": "field",
+                    "location": "LOCATION_TYPE_RUN",
+                    "operator": "=",
+                    "type": "COLUMN_TYPE_NUMBER",
+                    "value": %s
+                }
+                ],
+                "conjunction": "and",
+                "kind": "group"
+            },
+            "showArchived": false
+            }
+            """
+            % run_id,
         )
         if expected_state == resp.runs[0].state:
             return
@@ -41,19 +56,31 @@ def test_run_kill() -> None:
     searchResp = bindings.get_SearchRuns(
         sess,
         limit=1,
-        filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-        "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+        filter="""{
+  "filterGroup": {
+    "children": [
+      {
+        "columnName": "experimentId",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN",
+        "operator": "=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": %s
+      }
+    ],
+    "conjunction": "and",
+    "kind": "group"
+  },
+  "showArchived": false
+}"""
+        % exp_id,
     )
-
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
+
     run_id = searchResp.runs[0].id
     killResp = bindings.post_KillRuns(
         sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
     )
-
-    # validate response
     assert len(killResp.results) == 1
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
@@ -82,12 +109,32 @@ def test_run_kill_filter() -> None:
     )
 
     runFilter = (
-        """{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
-            "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}, {"columnName":"hp.n_filters2","kind":"field",
-            "location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">=","type":"COLUMN_TYPE_NUMBER",
-            "value":40}],"conjunction":"and","kind":"group"},"showArchived":false}"""
+        """{
+  "filterGroup": {
+    "children": [
+      {
+        "columnName": "experimentId",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN",
+        "operator": "=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": %s
+      },
+      {
+        "columnName": "hp.n_filters2",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+        "operator": ">=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": 40
+      }
+    ],
+    "conjunction": "and",
+    "kind": "group"
+  },
+  "showArchived": false
+}"""
+        % exp_id
     )
 
     killResp = bindings.post_KillRuns(
@@ -97,6 +144,8 @@ def test_run_kill_filter() -> None:
     searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
 
     # validate response
+    assert len(killResp.results) > 0
+    assert len(searchResp.runs) > 0
     assert len(killResp.results) == len(searchResp.runs)
     for res in killResp.results:
         assert res.error == ""

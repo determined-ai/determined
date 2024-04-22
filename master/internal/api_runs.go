@@ -9,7 +9,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -146,8 +145,9 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.checkpoint_count").
 		Column("r.external_run_id").
 		Column("r.project_id").
+		Column("r.searcher_metric_value").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
-		ColumnExpr("r.hparams AS hyperparameters").
+		ColumnExpr("CASE WHEN r.hparams='null' THEN NULL ELSE r.hparams END AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
 		ColumnExpr("e.owner_id AS user_id").
 		ColumnExpr("e.config->>'labels' AS labels").
@@ -157,7 +157,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("p.name AS project_name").
 		ColumnExpr(`jsonb_build_object(
 			'searcher_type', e.config->'searcher'->>'name',
-			'searcher_metric', e.config->'metric'->>'name',
+			'searcher_metric', e.config->'searcher'->>'metric',
 			'resource_pool', e.config->'resources'->>'resource_pool',
 			'name', e.config->>'name',
 			'description', e.config->>'description',
@@ -183,17 +183,17 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 	}
 	orderColMap := map[string]string{
 		"id":                    "id",
-		"experimentDescription": "experiment_description",
-		"experimentName":        "experiment_name",
-		"searcherType":          "searcher_type",
-		"searcherMetric":        "searcher_metric",
+		"experimentDescription": "e.config->>'description'",
+		"experimentName":        "e.config->>'name'",
+		"searcherType":          "e.config->'searcher'->>'name'",
+		"searcherMetric":        "e.config->'searcher'->>'metric'",
 		"startTime":             "r.start_time",
 		"endTime":               "r.end_time",
 		"state":                 "r.state",
-		"experimentProgress":    "COALESCE(progress, 0)",
-		"user":                  "display_name",
+		"experimentProgress":    "COALESCE(e.progress, 0)",
+		"user":                  "COALESCE(u.username, u.display_name)",
 		"forkedFrom":            "e.parent_id",
-		"resourcePool":          "resource_pool",
+		"resourcePool":          "e.config->'resources'->>'resource_pool'",
 		"projectId":             "r.project_id",
 		"checkpointSize":        "checkpoint_size",
 		"checkpointCount":       "checkpoint_count",
@@ -202,7 +202,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
-		"isExpMultitrial":       "is_exp_multitrial",
+		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
@@ -431,14 +431,19 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		return nil, err
 	}
 
-	var runChecks []archiveKillRunOKResult
+	type killRunOKResult struct {
+		ID         int32
+		RequestID  *string
+		IsTerminal bool
+	}
+
+	var killCandidatees []killRunOKResult
 	getQ := getSelectRunsQueryTables().
-		Model(&runChecks).
+		Model(&killCandidatees).
 		Join("LEFT JOIN trials_v2 t ON r.id=t.run_id").
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("t.request_id").
-		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Where("r.project_id = ?", req.ProjectId)
 
 	if req.Filter == nil {
@@ -462,16 +467,18 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 
 	var results []*apiv1.RunActionResult
-	var visibleIDs []int32
+	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range runChecks {
-		visibleIDs = append(visibleIDs, check.ID)
+	for _, check := range killCandidatees {
+		visibleIDs.Insert(check.ID)
 		switch {
-		case check.State:
+		case check.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
 				Id:    check.ID,
 			})
+		// This should be impossible in the current system but we will leave this check here
+		// to cover a possible error in integration tests
 		case check.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
@@ -483,7 +490,7 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	}
 	if req.Filter == nil {
 		for _, originalID := range req.RunIds {
-			if !slices.Contains(visibleIDs, originalID) {
+			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
 					Error: fmt.Sprintf("Run with id '%d' not found", originalID),
 					Id:    originalID,

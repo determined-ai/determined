@@ -49,3 +49,6 @@ import-order-style = edited
 # flake8-quotes
 inline-quotes = "
 multiline-quotes = """
+
+# flake8-tidy-imports
+ban-relative-imports = true

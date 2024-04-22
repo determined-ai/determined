@@ -340,7 +340,10 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button disabled={!canCreateWorkspace} onClick={WorkspaceCreateModal.open}>
+        <Button
+          data-testid="newWorkspace"
+          disabled={!canCreateWorkspace}
+          onClick={WorkspaceCreateModal.open}>
           New Workspace
         </Button>
       }

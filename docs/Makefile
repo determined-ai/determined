@@ -35,6 +35,10 @@ build/examples.stamp: ../examples/build/stamp
 attributions.rst: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py sphinx $@
 
+.PHONY: rebrand
+rebrand:
+	python rebrand-docs.py . .
+
 build/sp-%.stamp: $(SPHINXWRAPPER) conf.py attributions.rst $(shell find . -name site -prune -o -type f \( -name '*.rst' -o -name '*.html' -o -name '*.css' \) -print) $(shell find assets -type f) $(shell find _templates -type f) build/examples.stamp build/helm.stamp build/swagger.stamp
 	$(SPHINXWRAPPER) $(SPHINXBUILD) -M $* . site $(SPHINXOPTS)
 	mkdir -p build
@@ -76,9 +80,20 @@ check-links: attributions.rst
 	sphinx-build -b linkcheck . build -a || true
 	! grep -n broken build/output.txt
 
+# publish defaults to the deploy/Makefile default
 .PHONY: publish
 publish: pre-publish publish-check
 	$(MAKE) -C deploy publish
+
+.PHONY: publish-oss
+publish-oss: export DET_VARIANT ?= OSS
+publish-oss:
+	$(MAKE) publish
+
+.PHONY: publish-ee
+publish-ee: export DET_VARIANT ?= EE
+publish-ee:
+	$(MAKE) publish
 
 .PHONY: preview
 preview: build

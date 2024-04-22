@@ -731,6 +731,16 @@ export const decodeTrialResponseToTrialDetails = (
   };
 };
 
+export const decodeV1FlatRun = (data: Sdk.V1FlatRun): types.FlatRun => {
+  return {
+    ...data,
+    checkpointSize: parseInt(data?.checkpointSize || '0'),
+    hyperparameters: flattenObject(data.hyperparameters || {}),
+    state: decodeExperimentState(data.state),
+    summaryMetrics: decodeSummaryMetrics(data.summaryMetrics),
+  };
+};
+
 export const jsonToClusterLog = (data: unknown): types.Log => {
   const logData = data as Sdk.V1MasterLogsResponse;
   return {

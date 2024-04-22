@@ -63,6 +63,17 @@ The same behavior can be replicated with the Python SDK:
    for logline in exp.await_first_trial().iter_logs():
       print(logline)
 
+***********************
+ Download a checkpoint
+***********************
+
+You can download a checkpoint with a given UUID using the Python SDK:
+
+.. code:: python
+
+   ckpt = client.get_checkpoint(uuid)
+   ckpt.download("/path/to/download/dir")
+
 ********************************
  Run and Administer Experiments
 ********************************

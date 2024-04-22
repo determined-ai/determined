@@ -85,6 +85,7 @@ type TaskSpec struct {
 	AgentUserGroup        *model.AgentUserGroup
 	ExtraArchives         []cproto.RunArchive
 	ExtraEnvVars          map[string]string
+	ExtraPodLabels        map[string]string
 	Entrypoint            []string
 	Mounts                []mount.Mount
 	// UseHostMode is whether host mode networking would be desirable for this task.
