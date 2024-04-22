@@ -223,7 +223,7 @@ commands:
     steps:
       - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
       - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
-      - run: ls -a 
+      - run: ls -a
 
   pull-task-images:
     parameters:
@@ -584,13 +584,13 @@ commands:
 
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
-            
+
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
             if [ ! -s /tmp/all-relevant-files ]; then
               echo 'No test files found!'
               exit 1
             fi
-            
+
             if nc -zv <<parameters.master-host>> <<parameters.master-port>> 2>/dev/null; then
               echo "Determined user list from master '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
               DET_MASTER_CERT_FILE=noverify DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
@@ -1104,7 +1104,7 @@ commands:
             ip_addresses=($(echo "${CI_RANGES}" | tr -d '" ' | tr ',' ' '))
             formattedRange="export HELM_VALUES=${HELM_VALUES},'loadBalancerSourceRanges={"
             for i in ${ip_addresses[@]}; do
-              formattedRange+="${i}," 
+              formattedRange+="${i},"
             done
             formattedRange=${formattedRange::-1}
             formattedRange+="}'"
@@ -2003,7 +2003,7 @@ jobs:
           determined: true
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
-      - install-protoc 
+      - install-protoc
       - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
@@ -2096,7 +2096,6 @@ jobs:
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - skip-if-only-webui
       - reinstall-go
       - license-gen
       - restore_cache:
@@ -2669,8 +2668,8 @@ jobs:
       - run:
           name: Delete existing resources (if they exist)
           command: |
-            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this 
-            # is not set at this point since no terraform initiation has happened. See workaround section in README) 
+            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this
+            # is not set at this point since no terraform initiation has happened. See workaround section in README)
             GCLOUD_ZONE=$(grep -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
             | awk -F' = ' '{ print $2 }' | tr -d '\"')
             gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$GCLOUD_ZONE --quiet || true
@@ -2706,7 +2705,7 @@ jobs:
                 exit 1
               fi
               sleep 5
-            done            
+            done
 
       # For when a user wants to use an agent instead of launcher.
       - when:
@@ -3739,7 +3738,7 @@ jobs:
           at: .
       - setup-python-venv:
           install-python: false
-          determined: true 
+          determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run:
@@ -4131,7 +4130,7 @@ workflows:
       - test-e2e-react:
           requires:
             - build-go
-          context: 
+          context:
             - playwright
             - github-read
           filters: *any-upstream
@@ -4218,7 +4217,7 @@ workflows:
       - test-e2e-react:
           requires:
             - build-go
-          context: 
+          context:
             - playwright
             - github-read
           filters: *any-upstream
@@ -4753,15 +4752,15 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
-    
+
   test-e2e-gke-shared-cluster:
     unless: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - package-and-push-system-dev-small
-          
+
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
-          context: 
+          context:
             - gcp-shared-cluster
             - gcp-ci-cluster-default-user-credentials
           requires:
