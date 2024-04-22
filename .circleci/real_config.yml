@@ -1983,7 +1983,7 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
-  parameters:
+    parameters:
       ee:
         type: boolean
         default: false
