@@ -39,13 +39,6 @@ type archiveRunOKResult struct {
 	State        *bool
 }
 
-type archiveKillRunOKResult struct {
-	Archived  bool
-	ID        int32
-	RequestID *string
-	State     bool
-}
-
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
 ) (*apiv1.RunPrepareForReportingResponse, error) {
