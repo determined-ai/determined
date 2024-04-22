@@ -92,7 +92,7 @@ on your environment.
 In general, to install DCGM in a cloud-based environment, follow the documentation for that
 environment.
 
-If following the steps described here for GKE as a reference, you may need to change the
+If you are not following the steps described here for GKE as a reference, you may need to change the
 ``additionalScrapeConfigs`` in the ``grafana-prom-values.yaml``.
 
 If you are deploying on-prem, visit `Nvidia docs on installing the DCGM exporter
@@ -107,13 +107,12 @@ Steps for GKE
 
    kubectl create ns gmp-public
 
-2. Copy and apply the file from the `GKE documentation
-   <https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm#install-exporter>`__
-   in the ``gmp-public`` namespace.
+2. Apply the exporter from `the GKE docs
+   <https://cloud.google.com/stackdriver/docs/managed-prometheus/exporters/nvidia-dcgm#install-exporter>`__.
 
 .. code:: bash
 
-   kubectl apply -n gmp-public -f /tmp/file.yaml
+   kubectl apply -n gmp-public -f https://raw.githubusercontent.com/GoogleCloudPlatform/prometheus-engine/main/examples/nvidia-dcgm/exporter.yaml
 
 3. Create a service for the DCGM exporter.
 
