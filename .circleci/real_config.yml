@@ -2094,7 +2094,8 @@ jobs:
       - run: make -C agent check
 
   build-go:
-    ee:
+    parameters:
+      ee:
         type: boolean
         default: true
     docker:
