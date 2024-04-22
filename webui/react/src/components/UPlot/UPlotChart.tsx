@@ -46,6 +46,8 @@ const shouldRecreate = (
 
   if (prev.title !== next.title) return true;
 
+  if (prev.plugins !== next.plugins) return true;
+
   const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev.scales?.[scaleKey];
     return prevScale?.distr !== nextScale?.distr;
