@@ -2012,9 +2012,6 @@ jobs:
           condition: << parameters.ee >>
           steps:
             - license-gen
-      - run: rm -f ./public.txt
-      - run: rm -f ./license.txt
-      - run: ls -lf # DNJ TODO - debug, remove
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
