@@ -5,14 +5,15 @@ import { BasePage } from 'e2e/models/BasePage';
 
 export class DevFixture {
   readonly #page: Page;
+  private static eeEnvironmentValue = Boolean(JSON.parse(process.env.PW_EE ?? ''));
   static readonly constants = {
-    isEE: !!process.env.PW_EE,
-    appTitle: !!process.env.PW_EE ? 'HPE Machine Learning Development Environment' : 'Determined',
+    isEE: DevFixture.eeEnvironmentValue,
+    appTitle: DevFixture.eeEnvironmentValue ? 'HPE Machine Learning Development Environment' : 'Determined',
   }
 
   constructor(readonly page: Page) {
     this.#page = page;
-    Object.freeze(DevFixture.constants)
+    Object.freeze(DevFixture.constants);
   }
 
   async setServerAddress(): Promise<void> {
