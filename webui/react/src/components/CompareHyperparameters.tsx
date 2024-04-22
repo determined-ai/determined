@@ -157,7 +157,7 @@ const CompareHyperparameters: React.FC<Props> = ({
                 trials={trials}
               />
               <Divider />
-              <Title>Scatter Plots</Title>
+              <Title>Heat Map</Title>
               <CompareHeatMaps
                 fullHParams={fullHParams}
                 metricData={metricData}
