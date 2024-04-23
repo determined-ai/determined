@@ -324,6 +324,7 @@ func (a *allocation) Signal(sig AllocationSignal, reason string) {
 // SetProxyAddress sets the proxy address of the allocation and sets up proxies for any services
 // it provides.
 func (a *allocation) SetProxyAddress(ctx context.Context, address string) error {
+	fmt.Println("SetProxyAddress")
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -1070,16 +1071,27 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			continue
 		}
 
+		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
+		path := ""
+
+		// if ingress
+		path = fmt.Sprintf("det-%s", pcfg.ServiceID[:8])
+		address.HostIP = "127.0.0.1"
+		address.HostPort = 80
+
 		// We are keying on allocation id instead of container id. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
 		urlScheme := "http"
 		if a.req.ProxyTLS {
 			urlScheme = "https"
+			address.HostPort = 443
 		}
+
 		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
 			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+			Path:   path,
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
 		a.syslog.Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
@@ -1117,6 +1129,8 @@ func (a *allocation) containerProxyAddresses() []cproto.Address {
 
 	result := []cproto.Address{}
 
+	// setting up allocation proxies
+
 	for _, pp := range a.req.ProxyPorts {
 		result = append(result, cproto.Address{
 			ContainerIP:   *a.model.ProxyAddress,
@@ -1124,6 +1138,10 @@ func (a *allocation) containerProxyAddresses() []cproto.Address {
 			HostIP:        *a.model.ProxyAddress,
 			HostPort:      pp.Port,
 		})
+	}
+
+	for _, addr := range result {
+		fmt.Printf("containerProxyAddresses: %+v\n", addr)
 	}
 
 	return result

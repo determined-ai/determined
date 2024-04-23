@@ -5,9 +5,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,8 +125,6 @@ func (p *Proxy) GetService(serviceID string) *Service {
 	return &clone
 }
 
-// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
-// running in the cluster. Services an HTTP request through the /proxy/:service/* route.
 func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
@@ -145,33 +145,41 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 			}
 		}
 
-		// Set proxy headers.
+		// Set proxy headers and log them.
 		req := c.Request()
-		if req.Header.Get(echo.HeaderXRealIP) == "" {
-			req.Header.Set(echo.HeaderXRealIP, c.RealIP())
+		logHeaders := func() {
+			headers := make(map[string]string)
+			for name, values := range req.Header {
+				headers[name] = strings.Join(values, ", ")
+			}
+			headers["X-Real-IP"] = c.RealIP()
+			headers["X-Forwarded-Proto"] = c.Scheme()
+			if c.IsWebSocket() {
+				headers["X-Forwarded-For"] = c.RealIP()
+			}
+			log.Printf("Proxying request to: %s, Headers: %+v", service.URL, headers)
 		}
-		if req.Header.Get(echo.HeaderXForwardedProto) == "" {
-			req.Header.Set(echo.HeaderXForwardedProto, c.Scheme())
-		}
-		if c.IsWebSocket() && req.Header.Get(echo.HeaderXForwardedFor) == "" {
-			req.Header.Set(echo.HeaderXForwardedFor, c.RealIP())
-		}
+
+		logHeaders() // Call to log headers
 
 		// Proxy the request to the target host.
 		var proxy http.Handler
 		switch {
 		case service.ProxyTCP:
 			proxy = newSingleHostReverseTCPOverWebSocketProxy(c, service.URL)
+			fmt.Println("Proxying TCP over WebSocket to:", service.URL)
 		case c.IsWebSocket():
 			proxy = newSingleHostReverseWebSocketProxy(c, service.URL)
+			fmt.Println("Proxying WebSocket to:", service.URL)
 		default:
 			newProxy, err := setUpProxy(service.URL)
 			if err != nil {
 				return err
 			}
-
 			proxy = newProxy
+			fmt.Println("Proxying HTTP to:", service.URL)
 		}
+
 		proxy.ServeHTTP(c.Response(), req)
 
 		return nil
