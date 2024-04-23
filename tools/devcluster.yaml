@@ -20,7 +20,7 @@ stages:
 
       # data_dir is where the persistent files will be saved to.  If this key
       # is not present, the database will not persist at all.
-      data_dir: det-postgres
+      #data_dir: det-postgres
 
   - master:
       pre:
@@ -58,7 +58,7 @@ stages:
           schedule: 60m
         enable_cors: true
         observability:
-          enable_prometheus: true
+          enable_prometheus: false
 
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
