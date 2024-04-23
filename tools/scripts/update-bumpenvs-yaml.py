@@ -37,17 +37,14 @@ PROJECT = "environments"
 BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 
 JOB_SUFFIXES = [
-    "tf2-cpu",
-    "pt-cpu",
-    "pt2-cpu",
-    "tf2-gpu",
-    "pt-gpu",
-    "pt2-gpu",
+    "tensorflow-cpu",
+    "pytorch-cpu",
+    "tensorflow-cuda",
+    "pytorch-cuda",
 ]
 
 JOB_SUFFIXES_WITHOUT_MPI = [
-    "deepspeed",
-    "gpt-neox-deepspeed",
+    "deepspeed-gpt-neox",
     "pytorch13-tf210-rocm56",
     "pytorch20-tf210-rocm56",
 ]
@@ -60,24 +57,24 @@ JOB_SUFFIXES_NO_MPI = [
 ]
 
 JOB_SUFFIXES_OFI = [
-    "tf2-gpu",
+    "tensorflow-cuda",
 ]
 
 PACKER_JOBS = {"publish-cloud-images"}
 
 DOCKER_JOBS = (
     {
-        f"build-and-publish-docker-{suffix}-{mpi}"
+        f"build-and-publish-docker-{suffix}-{mpi}-dev"
         for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
     }
-    | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+    | {f"build-and-publish-docker-{suffix}-0-dev" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
     | {
-        f"build-and-publish-docker-{suffix}-0"
+        f"build-and-publish-docker-{suffix}-0-dev"
         for suffix in JOB_SUFFIXES_NO_MPI
         if "hpc" not in suffix
     }
     | {
-        f"build-and-publish-docker-{suffix}-1-{ofi}"
+        f"build-and-publish-docker-{suffix}-1-{ofi}-dev"
         for (suffix, ofi) in itertools.product(JOB_SUFFIXES_OFI, [1])
     }
 )
@@ -136,13 +133,13 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
             build = Build(build_meta)
             builds[build.job_name] = build
 
+    if dev:
+        packer_jobs = {s + "-dev" for s in PACKER_JOBS}
+
     if cloud_images:
-        expected = PACKER_JOBS | DOCKER_JOBS
+        expected = packer_jobs | DOCKER_JOBS
     else:
         expected = DOCKER_JOBS
-
-    if dev:
-        expected = {s + "-dev" for s in expected}
 
     found = set(builds.keys())
     expected_found = expected.difference(found)
