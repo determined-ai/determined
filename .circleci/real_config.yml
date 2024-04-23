@@ -2548,9 +2548,6 @@ jobs:
       parallelism:
         type: integer
         default: 1
-      always-run:
-        type: boolean
-        default: false
       extra-pytest-flags:
         type: string
         default: ""
@@ -4323,7 +4320,6 @@ workflows:
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
-              always-run: [true]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go-ee
@@ -4381,7 +4377,6 @@ workflows:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
               workload-manager: ["pbs"]
-              always-run: [true]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go-ee
@@ -4811,6 +4806,8 @@ workflows:
           requires:
             - build-helm
             - build-proto
+      - build-go:
+          context: github-read
       - package-and-push-system-dev-ee:
           requires:
             - build-react
@@ -4819,6 +4816,21 @@ workflows:
             - determined-ee
             - github-read
           filters: *any-upstream
+
+      - package-and-push-system-local:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+
+      - package-and-push-system-local-ee:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - package-and-push-system-local
 
       # Distributed tests
       - request-e2e-cpu-distributed:
@@ -5014,11 +5026,6 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-      - build-go:
-          context: github-read
-          requires:
-            - request-perf-tests
-
       - test-perf:
           name: test-perf-feature-branch
           snapshot-after-migrations: false
@@ -5126,23 +5133,6 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-      - package-and-push-system-local:
-          context: github-read
-          filters: *upstream-feature-branch
-          requires:
-            - build-react
-            - build-docs
-            - request-packaging-tests
-
-      - package-and-push-system-local-ee:
-          context: github-read
-          filters: *upstream-feature-branch
-          requires:
-            - build-react
-            - build-docs
-            - package-and-push-system-local
-            - request-packaging-tests
-
       - test-debian-packaging:
           filters: *upstream-feature-branch
           requires:
@@ -5155,6 +5145,7 @@ workflows:
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
+            - request-packaging-tests
           matrix:
             parameters:
               parallelism: [2]
@@ -5263,7 +5254,6 @@ workflows:
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
-              always-run: [true]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
             - build-go
@@ -5312,7 +5302,6 @@ workflows:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
               workload-manager: ["pbs"]
-              always-run: [true]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
             - build-go
