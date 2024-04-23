@@ -5,7 +5,6 @@ import { BasePage } from 'e2e/models/BasePage';
 
 export class DevFixture {
   readonly #page: Page;
-
   constructor(readonly page: Page) {
     this.#page = page;
   }
