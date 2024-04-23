@@ -47,7 +47,9 @@
 
   @media only screen and (max-width: $breakpoint-mobile) {
     & > main {
-      height: calc(var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height) - var(--cluster-message-height));
+      height: calc(
+        var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height) - var(--cluster-message-height)
+      );
     }
   }
 }
