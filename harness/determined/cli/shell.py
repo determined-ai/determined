@@ -207,6 +207,7 @@ def _open_shell(
             f"{username}@{shell['id']}",
             *additional_opts,
         ]
+        print(cmd)
 
         if retain_keys_and_print:
             print(termcolor.colored(subprocess.list2cmdline(cmd), "green"))

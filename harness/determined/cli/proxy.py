@@ -62,9 +62,11 @@ def copy_from_websocket(
 ) -> None:
     try:
         for event in ws.connect(ping_rate=0):
+            print("ws.connect:", event)
             if isinstance(event, lomond.events.Binary):
                 f.write(event.data)
             elif isinstance(event, lomond.events.Ready):
+                print("ready")
                 ready_sem.release()
             elif isinstance(
                 event,
