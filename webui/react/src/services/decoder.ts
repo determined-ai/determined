@@ -492,6 +492,7 @@ export function mapV1Experiment(
     archived: data.archived,
     checkpoints: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
+    config: data.config,
     description: data.description,
     duration: data.duration,
     endTime: data.endTime as unknown as string,
