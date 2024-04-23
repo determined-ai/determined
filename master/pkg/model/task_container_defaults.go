@@ -301,6 +301,14 @@ func (c TaskContainerDefaultsConfig) Merge(
 		res.Pbs.SetSbatchArgs(tmp)
 	}
 
+	if other.LogPolicies != nil {
+		if res.LogPolicies == nil {
+			res.LogPolicies = other.LogPolicies
+		} else {
+			res.LogPolicies = res.LogPolicies.Merge(other.LogPolicies)
+		}
+	}
+
 	return res, nil
 }
 

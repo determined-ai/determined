@@ -488,13 +488,31 @@ func (k ResourceManager) IsReattachableOnlyAfterStarted() bool {
 
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
 func (k ResourceManager) TaskContainerDefaults(
-	pool rm.ResourcePoolName,
-	fallbackConfig model.TaskContainerDefaultsConfig,
-) (result model.TaskContainerDefaultsConfig, err error) {
-	return k.getTaskContainerDefaults(taskContainerDefaults{
-		fallbackDefault: fallbackConfig,
-		resourcePool:    pool.String(),
-	}), nil
+	resourcePoolName rm.ResourcePoolName,
+	defaultConfig model.TaskContainerDefaultsConfig,
+) (model.TaskContainerDefaultsConfig, error) {
+	result := defaultConfig
+
+	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+	var poolConfigOverrides *model.TaskContainerDefaultsConfig
+	for _, pool := range k.poolsConfig {
+		if resourcePoolName.String() == pool.PoolName {
+			if pool.TaskContainerDefaults == nil {
+				break
+			}
+			poolConfigOverrides = pool.TaskContainerDefaults
+		}
+	}
+
+	if poolConfigOverrides != nil {
+		tmp, err := result.Merge(*poolConfigOverrides)
+		if err != nil {
+			return model.TaskContainerDefaultsConfig{}, err
+		}
+		result = tmp
+	}
+
+	return result, nil
 }
 
 func (k *ResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {
@@ -611,27 +629,6 @@ func (k *ResourceManager) getResourcePoolConfig(poolName string) (
 		}
 	}
 	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
-}
-
-type taskContainerDefaults struct {
-	fallbackDefault model.TaskContainerDefaultsConfig
-	resourcePool    string
-}
-
-func (k *ResourceManager) getTaskContainerDefaults(
-	msg taskContainerDefaults,
-) model.TaskContainerDefaultsConfig {
-	result := msg.fallbackDefault
-	// Iterate through configured pools looking for a TaskContainerDefaults setting.
-	for _, pool := range k.poolsConfig {
-		if msg.resourcePool == pool.PoolName {
-			if pool.TaskContainerDefaults == nil {
-				break
-			}
-			result = *pool.TaskContainerDefaults
-		}
-	}
-	return result
 }
 
 // EnableAgent allows scheduling on a node that has been disabled.
