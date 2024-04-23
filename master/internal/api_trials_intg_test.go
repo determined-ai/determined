@@ -664,8 +664,7 @@ func TestUnusualMetricNames(t *testing.T) {
 	require.NoError(t, err)
 
 	valuesMap := resp.Trials[0].Metrics[0].Data[0].Values.AsMap()
-	// One extra for the `epoch``.
-	require.Len(t, valuesMap, len(expectedMetricsMap)+1)
+	require.Len(t, valuesMap, len(expectedMetricsMap))
 	require.Equal(t, valuesMap[longMetric], expectedMetricsMap[longMetric])
 }
 

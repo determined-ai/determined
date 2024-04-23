@@ -148,15 +148,17 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 
+	selectMetrics := map[string]string{}
+
 	for i := range metricNames {
-		metricToColumnMap.LookupOrAdd(metricNames[i])
+		selectMetrics[metricToColumnMap.LookupOrAdd(metricNames[i])] = metricNames[i]
 	}
 
 	for i := range results {
 		valuesMap := make(map[string]interface{})
 		for mName, mVal := range results[i] {
-			if metricToColumnMap.ReverseLookup(mName) != "" {
-				valuesMap[metricToColumnMap.ReverseLookup(mName)] = mVal
+			if selectMetrics[mName] != "" {
+				valuesMap[selectMetrics[mName]] = mVal
 			}
 		}
 		var epoch *float64
