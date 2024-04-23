@@ -77,23 +77,15 @@ publish-transformers-dev:
 
 .PHONY: build-mmdetection-dev
 build-mmdetection-dev:
-	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
-	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
-	  exit 1; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.12"* ]]; then \
-	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
-	  exit 1; \
-	else \
-	  docker build -f docker/Dockerfile.mmdetection \
-	  	  --build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
-	  	  --build-arg MMCV_CUDA_VERSION=$(MMCV_CUDA_VERSION) \
-	  	  --build-arg TORCH_VERSION=$(TORCH_VERSION) \
-	  	  --build-arg MMCV_VERSION=$(MMCV_VERSION) \
-	  	  --build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
-	  	  --build-arg MODEL_HUB_VERSION=$(VERSION) \
-	  	  -t $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-	  	  .; \
-	fi;
+	docker build -f docker/Dockerfile.mmdetection \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
+		--build-arg MMCV_CUDA_VERSION=$(MMCV_CUDA_VERSION) \
+		--build-arg TORCH_VERSION=$(TORCH_VERSION) \
+		--build-arg MMCV_VERSION=$(MMCV_VERSION) \
+		--build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
+		--build-arg MODEL_HUB_VERSION=$(VERSION) \
+		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		.
 
 .PHONY: publish-mmdetection-dev
 publish-mmdetection-dev:
@@ -125,24 +117,16 @@ publish-transformers:
 
 .PHONY: build-mmdetection
 build-mmdetection:
-	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
-	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
-	  exit 1; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.12"* ]]; then \
-	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
-	  exit 1; \
-	else \
-	  docker build -f docker/Dockerfile.mmdetection \
-		  --build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
-		  --build-arg MMCV_CUDA_VERSION=$(MMCV_CUDA_VERSION) \
-		  --build-arg TORCH_VERSION=$(TORCH_VERSION) \
-		  --build-arg MMCV_VERSION=$(MMCV_VERSION) \
-		  --build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
-		  --build-arg MODEL_HUB_VERSION=$(VERSION) \
-		  -t $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		  -t $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) \
-		  .; \
-	fi;
+	docker build -f docker/Dockerfile.mmdetection \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
+		--build-arg MMCV_CUDA_VERSION=$(MMCV_CUDA_VERSION) \
+		--build-arg TORCH_VERSION=$(TORCH_VERSION) \
+		--build-arg MMCV_VERSION=$(MMCV_VERSION) \
+		--build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
+		--build-arg MODEL_HUB_VERSION=$(VERSION) \
+		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) \
+		.
 
 .PHONY: publish-mmdetection
 publish-mmdetection:

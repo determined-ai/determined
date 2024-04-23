@@ -135,6 +135,8 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
 
     if dev:
         packer_jobs = {s + "-dev" for s in PACKER_JOBS}
+    else:
+        packer_jobs = PACKER_JOBS
 
     if cloud_images:
         expected = packer_jobs | DOCKER_JOBS
