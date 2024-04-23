@@ -365,5 +365,5 @@ resourcePools:
 retentionPolicy:
   # Specifies the number of days to retain logs for by default.
   logRetentionDays: 7
-  # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retrntion every Sunday at 2 am, use "0 2 * * 0"
+  # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   schedule: "24h"
