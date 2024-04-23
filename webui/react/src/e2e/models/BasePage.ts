@@ -44,7 +44,7 @@ export abstract class BasePage implements ModelBasics {
     return `${prefix} - ${BasePage.appTitle}`;
   }
 
-  public getUrlRegExp() {
+  public getUrlRegExp(): RegExp {
     if (this.url instanceof RegExp) {
       return this.url;
     }

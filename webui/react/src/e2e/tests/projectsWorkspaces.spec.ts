@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 import { randId, safeName } from 'e2e/utils/naming';
-import { BasePage } from 'e2e/models/BasePage';
 
 test.describe('Projects', () => {
   test.setTimeout(120_000);
