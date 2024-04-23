@@ -1,4 +1,4 @@
-project_name: hpe-mlde-master
+project_name: hpe-mlde-master-release-testing
 
 before:
   hooks:
@@ -144,13 +144,13 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined-ee
+    name: determined-ee-release-testing
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined-ee/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined-ee-release-testing/blob/{{ .Tag }}/docs/release-notes.rst)
 
 dockers:
   # amd64

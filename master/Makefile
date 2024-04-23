@@ -14,8 +14,8 @@ export DOCKER_REPO ?= determinedai
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
-PROJECT_NAME = determined-master
-EE_PROJECT_NAME = hpe-mlde-master
+PROJECT_NAME = determined-master-release-testing
+EE_PROJECT_NAME = hpe-mlde-master-release-testing
 ARCHS = amd64 arm64 ppc64
 ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)

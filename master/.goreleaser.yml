@@ -1,4 +1,4 @@
-project_name: determined-master
+project_name: determined-master-release-testing
 
 before:
   hooks:
@@ -57,7 +57,7 @@ brews:
     tap:
       owner: determined-ai
       name: homebrew-determined
-    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/determined-ai/determined-release-testing/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     caveats: |
       Determined master config is located at #{etc}/determined/master.yaml
 
@@ -138,7 +138,7 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined
+    name: determined-release-testing
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version

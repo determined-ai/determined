@@ -1,4 +1,4 @@
-project_name: determined-agent
+project_name: determined-agent-release-testing
 
 snapshot:
   name_template: "{{ .Env.VERSION }}"
@@ -28,7 +28,7 @@ brews:
     tap:
       owner: determined-ai
       name: homebrew-determined
-    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/determined-ai/determined-release-testing/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     caveats: |
       Determined agent config is located at #{etc}/determined/agent.yaml
     homepage: "https://github.com/determined-ai/determined"
@@ -90,7 +90,7 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined
+    name: determined-release-testing
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version
