@@ -43,3 +43,7 @@ prometheus:
         - source_labels: [__meta_kubernetes_pod_node_name]
           action: replace
           target_label: kubernetes_node
+
+kube-state-metrics:
+    metricLabelsAllowlist:
+      - pods=[*]
