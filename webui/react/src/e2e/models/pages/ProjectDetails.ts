@@ -1,4 +1,3 @@
-import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { BasePage } from 'e2e/models/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
@@ -13,7 +12,7 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  */
 export class ProjectDetails extends BasePage {
   readonly title: RegExp = new RegExp(
-    `(Uncategorized Experiments|Project Details) - ${DevFixture.constants.appTitle}`,
+    ProjectDetails.getTitle('(Uncategorized Experiments|Project Details)'),
     'g',
   );
   readonly url: RegExp = /projects\/\d+/;

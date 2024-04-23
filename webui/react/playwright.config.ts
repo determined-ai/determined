@@ -84,8 +84,8 @@ export default defineConfig({
     baseURL: `http://localhost:${port}/`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on', // dnj TODO -debug
-    video: 'on'
+    trace: 'retain-on-failure',
+    video: 'retain-on-failure'
   },
 
   /* Run your local dev server before starting the tests */

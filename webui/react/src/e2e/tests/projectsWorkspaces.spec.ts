@@ -3,8 +3,8 @@ import { expect } from '@playwright/test';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
-import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { randId, safeName } from 'e2e/utils/naming';
+import { BasePage } from 'e2e/models/BasePage';
 
 test.describe('Projects', () => {
   test.setTimeout(120_000);
@@ -38,7 +38,7 @@ test.describe('Projects', () => {
   test.beforeEach(async ({ dev, auth, page }) => {
     await dev.setServerAddress();
     await auth.login(/dashboard/);
-    await expect(page).toHaveTitle(`Home - ${DevFixture.constants.appTitle}`);
+    await expect(page).toHaveTitle(BasePage.getTitle('Home'));
     await expect(page).toHaveURL(/dashboard/);
   });
 

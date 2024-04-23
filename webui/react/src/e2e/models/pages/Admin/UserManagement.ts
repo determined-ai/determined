@@ -1,5 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { DevFixture } from 'e2e/fixtures/dev.fixture';
 
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
@@ -18,7 +17,7 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class UserManagement extends AdminPage {
-  readonly title: string = DevFixture.constants.appTitle;
+  readonly title: string = UserManagement.getTitle();
   readonly url: string = 'admin/user-management';
   readonly getRowByID: (value: string) => UserRow;
 
