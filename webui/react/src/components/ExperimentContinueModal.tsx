@@ -383,8 +383,8 @@ const ExperimentContinueModalComponent = ({
       };
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
-    form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isReactivate, form, requiredFields]);
+    if (modalState.isAdvancedMode) form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
+  }, [experiment, trial, type, isReactivate, form, requiredFields, modalState.isAdvancedMode]);
 
   if (!experiment || (!isReactivate && !trial)) return <></>;
 
