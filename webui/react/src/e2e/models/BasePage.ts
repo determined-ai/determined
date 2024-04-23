@@ -14,6 +14,12 @@ export interface ModelBasics {
 export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
   readonly nav: Navigation = new Navigation({ parent: this });
+
+  private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? ''));
+  private static appTitle = BasePage.isEE
+    ? 'HPE Machine Learning Development Environment'
+    : 'Determined';
+
   abstract readonly url: string | RegExp;
   abstract readonly title: string | RegExp;
 
@@ -26,6 +32,23 @@ export abstract class BasePage implements ModelBasics {
    */
   get pwLocator(): Locator {
     return this._page.locator(':root');
+  }
+  /**
+   * The title of the page. Format of [prefix - ]appTitle
+   * @param prefix
+   */
+  public static getTitle(prefix: string = ''): string {
+    if (prefix === '') {
+      return BasePage.appTitle;
+    }
+    return `${prefix} - ${BasePage.appTitle}`;
+  }
+
+  public getUrlRegExp(): RegExp {
+    if (this.url instanceof RegExp) {
+      return this.url;
+    }
+    return new RegExp(this.url, 'g');
   }
 
   /**

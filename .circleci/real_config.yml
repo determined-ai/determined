@@ -1983,6 +1983,10 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -2003,8 +2007,11 @@ jobs:
           determined: true
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
-      - install-protoc
-      - license-gen
+      - install-protoc 
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
@@ -2017,13 +2024,10 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: |
-          PW_USER_NAME=${PW_USER_NAME} \
-          PW_PASSWORD=${PW_PASSWORD} \
-          PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBPACK_PROXY_URL} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBSOCKET_PROXY_URL} \
-          npm run e2e --prefix webui/react
+      - run: 
+          environment:
+            PW_EE: << parameters.ee >> 
+          command: npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -2087,6 +2091,10 @@ jobs:
       - run: make -C agent check
 
   build-go:
+    parameters:
+      ee:
+        type: boolean
+        default: true
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -2097,7 +2105,10 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - reinstall-go
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - restore_cache:
           keys:
             - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
@@ -4139,6 +4150,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          ee: false
           context: github-read
 
       - package-and-push-system-local:
@@ -4215,6 +4227,7 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          ee: true
           requires:
             - build-go
           context:

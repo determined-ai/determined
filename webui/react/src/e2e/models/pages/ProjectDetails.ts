@@ -11,8 +11,10 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class ProjectDetails extends BasePage {
-  readonly title: RegExp =
-    /(Uncategorized Experiments|Project Details) - (Determined|HPE Machine Learning Development Environment)/;
+  readonly title: RegExp = new RegExp(
+    ProjectDetails.getTitle('(Uncategorized Experiments|Project Details)'),
+    'g',
+  );
   readonly url: RegExp = /projects\/\d+/;
 
   /**

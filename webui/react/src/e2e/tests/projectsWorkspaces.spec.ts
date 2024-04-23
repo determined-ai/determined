@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 import { randId, safeName } from 'e2e/utils/naming';
@@ -37,9 +38,7 @@ test.describe('Projects', () => {
   test.beforeEach(async ({ dev, auth, page }) => {
     await dev.setServerAddress();
     await auth.login(/dashboard/);
-    await expect(page).toHaveTitle(
-      /Home - (Determined|HPE Machine Learning Development Environment)/,
-    );
+    await expect(page).toHaveTitle(BasePage.getTitle('Home'));
     await expect(page).toHaveURL(/dashboard/);
   });
 

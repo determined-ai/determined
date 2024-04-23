@@ -1,6 +1,9 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
+import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
+import { SignIn } from 'e2e/models/pages/SignIn';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 
 test.describe('Navigation', () => {
@@ -15,9 +18,7 @@ test.describe('Navigation', () => {
 
     await test.step('Login steps', async () => {
       await auth.login(/dashboard/);
-      await expect(page).toHaveTitle(
-        /Home - (Determined|HPE Machine Learning Development Environment)/,
-      );
+      await expect(page).toHaveTitle(BasePage.getTitle('Home'));
       await expect(page).toHaveURL(/dashboard/);
     });
 
@@ -25,78 +26,56 @@ test.describe('Navigation', () => {
       await page.getByRole('link', { exact: true, name: 'Uncategorized' }).click();
       const expectedURL = /projects\/1\/experiments/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(
-          /Uncategorized Experiments - (Determined|HPE Machine Learning Development Environment)/,
-        );
-      await expect.soft(page).toHaveURL(expectedURL);
+      await expect.soft(page).toHaveTitle(BasePage.getTitle('Uncategorized Experiments'));
     });
 
     await test.step('Navigate to Model Registry', async () => {
       await page.getByRole('link', { name: 'Model Registry' }).click();
-      const expectedURL = /models/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Model Registry - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await page.waitForURL(/models/);
+      await expect.soft(page).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
 
     await test.step('Navigate to Tasks', async () => {
       await page.getByRole('link', { name: 'Tasks' }).click();
       const expectedURL = /tasks/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Tasks - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await expect.soft(page).toHaveTitle(BasePage.getTitle('Tasks'));
     });
 
     await test.step('Navigate to Webhooks', async () => {
       await page.getByRole('link', { name: 'Webhooks' }).click();
       const expectedURL = /webhooks/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Webhooks - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await expect.soft(page).toHaveTitle(BasePage.getTitle('Webhooks'));
     });
 
     await test.step('Navigate to Cluster', async () => {
       await page.getByRole('link', { name: 'Cluster' }).click();
       const expectedURL = /clusters/;
       await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Cluster - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await expect.soft(page).toHaveTitle(BasePage.getTitle('Cluster'));
     });
 
     await test.step('Navigate to Workspaces', async () => {
       const workspacesPage = new Workspaces(page);
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await page.waitForURL(`**/${workspacesPage.url}?**`);
+      await page.waitForURL(workspacesPage.getUrlRegExp());
       await expect.soft(page).toHaveTitle(workspacesPage.title);
     });
 
     await test.step('Navigate to Admin', async () => {
       await page.getByRole('navigation').getByText(USERNAME).click();
       await page.getByRole('link', { name: 'Admin' }).click();
-      const expectedURL = /admin\/user-management/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/(Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      const userManagementPage = new UserManagement(page);
+      await page.waitForURL(userManagementPage.getUrlRegExp());
+      await expect.soft(page).toHaveTitle(userManagementPage.title);
     });
 
     await test.step('Navigate to Logout', async () => {
       await auth.logout();
-      await expect
-        .soft(page)
-        .toHaveTitle(/Sign In - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(/login/);
+      const signInPage = new SignIn(page);
+      await expect.soft(page).toHaveTitle(signInPage.title);
+      await expect.soft(page).toHaveURL(signInPage.getUrlRegExp());
     });
   });
 });

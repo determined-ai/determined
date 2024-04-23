@@ -17,7 +17,7 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class UserManagement extends AdminPage {
-  readonly title: RegExp = /(Determined|HPE Machine Learning Development Environment)/;
+  readonly title: string = UserManagement.getTitle();
   readonly url: string = 'admin/user-management';
   readonly getRowByID: (value: string) => UserRow;
 
