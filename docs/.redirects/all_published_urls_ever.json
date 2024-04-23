@@ -414,6 +414,7 @@
     "setup-cluster/k8s/setup-aks-cluster",
     "setup-cluster/k8s/setup-eks-cluster",
     "setup-cluster/k8s/setup-gke-cluster",
+    "setup-cluster/k8s/setup-multiple-resource-managers",
     "setup-cluster/k8s/troubleshooting",
     "setup-cluster/mldes/_index",
     "setup-cluster/on-prem/_index",
