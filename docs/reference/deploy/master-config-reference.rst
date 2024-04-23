@@ -1569,7 +1569,7 @@ Specifies whether Determined enables Prometheus monitoring routes. See :ref:`Pro
 ``enable_prometheus``
 =====================
 
-Whether Prometheus is enabled. Defaults to ``false``.
+Whether Prometheus endpoints are present. Defaults to ``true``.
 
 *************
  ``logging``

@@ -46,7 +46,8 @@ def create_test_user(
     """
     session = admin_session()
     user = user or bindings.v1User(username=get_random_string(), admin=False, active=True)
-    password = get_random_string()
+    # password must contain both upper-case and lower-case letters
+    password = "AB832ABC-fc98-4c73-a0bd-c4708e6479d9"
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
     sess = make_session(user.username, password)
     return sess, password
@@ -386,6 +387,31 @@ def skipif_strict_q_control_not_enabled(
         if sq is None:
             return f
         if not sq:
+            return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
+        return f
+
+    return decorator
+
+
+@functools.lru_cache(maxsize=1)
+def _get_streaming_updates_enabled() -> Optional[bool]:
+    config = _get_master_config()
+    if config is not None:
+        streaming_updates_enabled = "streaming_updates" in config["feature_switches"]
+        return streaming_updates_enabled
+    return None
+
+
+def skipif_streaming_updates_not_enabled(
+    reason: str = "streaming updates is required for this test",
+) -> Callable[[F], F]:
+    def decorator(f: F) -> F:
+        enabled = _get_streaming_updates_enabled()
+        # enabled is None when there is an APIException or a MasterNotFoundException.
+        # So we want to run the test to an error, but if we skip it, no error will show up.
+        if enabled is None:
+            return f
+        if not enabled:
             return pytest.mark.skipif(True, reason=reason)(f)  # type: ignore
         return f
 

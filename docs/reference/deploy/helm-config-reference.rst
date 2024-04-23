@@ -224,7 +224,7 @@
 -  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
    :ref:`Prometheus <prometheus>` for details.
 
-   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
+   -  ``enable_prometheus``: Whether Prometheus endpoints are present. Defaults to ``true``.
 
 -  ``tensorboardTimeout``: Specifies the duration in seconds before idle TensorBoard instances are
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive

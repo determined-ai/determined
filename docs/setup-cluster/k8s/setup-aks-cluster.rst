@@ -86,7 +86,7 @@ command:
 
 To allow the AKS cluster to recognize GPU hardware resources, refer to the instructions provided by
 Azure on the `Install NVIDIA Device Plugin
-<https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
+<https://learn.microsoft.com/en-us/azure/aks/gpu-cluster>`_ tutorial.
 
 With this, the cluster is fully set up, and Determined can be deployed onto it.
 

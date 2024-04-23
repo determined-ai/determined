@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 from urllib import parse
 
@@ -20,6 +21,62 @@ def salt_and_hash(password: str) -> str:
         return hashlib.sha512((PASSWORD_SALT + password).encode()).hexdigest()
     else:
         return password
+
+
+def check_password_complexity(password: Optional[str]) -> None:
+    """Raises a ValueError if the password does not meet complexity requirements.
+
+    The complexity requirements are:
+        - Must be at least 8 characters long.
+        - Must contain at least one upper-case letter.
+        - Must contain at least one lower-case letter.
+        - Must contain at least one number.
+
+    Args:
+        password: a password to check.
+
+    Raises:
+        ValueError: an error describing why the password does not meet complexity requirements.
+    """
+    # TODO: DET-10209 - this should either invoke a shared lib or call a server endpoint
+    good = "\u2713 "  # ✓
+    bad = "\u2717 "  # ✗
+
+    results = []
+    ok = True
+
+    if not password:
+        results.append(bad + "password cannot be blank")
+        ok = False
+    else:
+        results.append(good + "password cannot be blank")
+
+    if not password or len(password) < 8:
+        results.append(bad + "password must have at least 8 characters")
+        ok = False
+    else:
+        results.append(good + "password must have at least 8 characters")
+
+    if not password or re.search(r"[A-Z]", password) is None:
+        results.append(bad + "password must include an uppercase letter")
+        ok = False
+    else:
+        results.append(good + "password must include an uppercase letter")
+
+    if not password or re.search(r"[a-z]", password) is None:
+        results.append(bad + "password must include a lowercase letter")
+        ok = False
+    else:
+        results.append(good + "password must include a lowercase letter")
+
+    if not password or re.search(r"\d", password) is None:
+        results.append(bad + "password must include a number")
+        ok = False
+    else:
+        results.append(good + "password must include a number")
+
+    if not ok:
+        raise ValueError("\n".join(results))
 
 
 def get_det_username_from_env() -> Optional[str]:
