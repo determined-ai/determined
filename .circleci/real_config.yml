@@ -687,7 +687,7 @@ commands:
         default: false
       deployment-type:
         type: string
-        default: simple-rds
+        default: simple
       ee:
         type: boolean
         default: false
@@ -816,7 +816,7 @@ commands:
         type: string
       deployment-type:
         type: string
-        default: simple-rds
+        default: simple
       ee:
         type: boolean
         default: false
