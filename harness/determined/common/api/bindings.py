@@ -5029,6 +5029,7 @@ class v1GetMasterConfigResponse(Printable):
 class v1GetMasterResponse(Printable):
     """Response to GetMasterRequest."""
     branding: "typing.Optional[str]" = None
+    clusterMessage: "typing.Optional[v1ClusterMessage]" = None
     externalLoginUri: "typing.Optional[str]" = None
     externalLogoutUri: "typing.Optional[str]" = None
     featureSwitches: "typing.Optional[typing.Sequence[str]]" = None
@@ -5042,12 +5043,12 @@ class v1GetMasterResponse(Printable):
         self,
         *,
         clusterId: str,
-        clusterMessage: "v1ClusterMessage",
         clusterName: str,
         masterId: str,
         strictJobQueueControl: bool,
         version: str,
         branding: "typing.Union[str, None, Unset]" = _unset,
+        clusterMessage: "typing.Union[v1ClusterMessage, None, Unset]" = _unset,
         externalLoginUri: "typing.Union[str, None, Unset]" = _unset,
         externalLogoutUri: "typing.Union[str, None, Unset]" = _unset,
         featureSwitches: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
@@ -5058,13 +5059,14 @@ class v1GetMasterResponse(Printable):
         userManagementEnabled: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.clusterId = clusterId
-        self.clusterMessage = clusterMessage
         self.clusterName = clusterName
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
         self.version = version
         if not isinstance(branding, Unset):
             self.branding = branding
+        if not isinstance(clusterMessage, Unset):
+            self.clusterMessage = clusterMessage
         if not isinstance(externalLoginUri, Unset):
             self.externalLoginUri = externalLoginUri
         if not isinstance(externalLogoutUri, Unset):
@@ -5086,7 +5088,6 @@ class v1GetMasterResponse(Printable):
     def from_json(cls, obj: Json) -> "v1GetMasterResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
-            "clusterMessage": v1ClusterMessage.from_json(obj["clusterMessage"]),
             "clusterName": obj["clusterName"],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
@@ -5094,6 +5095,8 @@ class v1GetMasterResponse(Printable):
         }
         if "branding" in obj:
             kwargs["branding"] = obj["branding"]
+        if "clusterMessage" in obj:
+            kwargs["clusterMessage"] = v1ClusterMessage.from_json(obj["clusterMessage"]) if obj["clusterMessage"] is not None else None
         if "externalLoginUri" in obj:
             kwargs["externalLoginUri"] = obj["externalLoginUri"]
         if "externalLogoutUri" in obj:
@@ -5115,7 +5118,6 @@ class v1GetMasterResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
-            "clusterMessage": self.clusterMessage.to_json(omit_unset),
             "clusterName": self.clusterName,
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
@@ -5123,6 +5125,8 @@ class v1GetMasterResponse(Printable):
         }
         if not omit_unset or "branding" in vars(self):
             out["branding"] = self.branding
+        if not omit_unset or "clusterMessage" in vars(self):
+            out["clusterMessage"] = None if self.clusterMessage is None else self.clusterMessage.to_json(omit_unset)
         if not omit_unset or "externalLoginUri" in vars(self):
             out["externalLoginUri"] = self.externalLoginUri
         if not omit_unset or "externalLogoutUri" in vars(self):
@@ -12966,6 +12970,7 @@ class v1SearcherOperation(Printable):
 
 class v1SetClusterMessageRequest(Printable):
     """Set the cluster-wide message."""
+    duration: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
 
     def __init__(
@@ -12973,10 +12978,13 @@ class v1SetClusterMessageRequest(Printable):
         *,
         message: str,
         startTime: str,
+        duration: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.message = message
         self.startTime = startTime
+        if not isinstance(duration, Unset):
+            self.duration = duration
         if not isinstance(endTime, Unset):
             self.endTime = endTime
 
@@ -12986,6 +12994,8 @@ class v1SetClusterMessageRequest(Printable):
             "message": obj["message"],
             "startTime": obj["startTime"],
         }
+        if "duration" in obj:
+            kwargs["duration"] = obj["duration"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         return cls(**kwargs)
@@ -12995,6 +13005,8 @@ class v1SetClusterMessageRequest(Printable):
             "message": self.message,
             "startTime": self.startTime,
         }
+        if not omit_unset or "duration" in vars(self):
+            out["duration"] = self.duration
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         return out

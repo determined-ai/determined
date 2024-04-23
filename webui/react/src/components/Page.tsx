@@ -5,7 +5,6 @@ import React, { MutableRefObject } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
-import ClusterMessage from 'components/ClusterMessage';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -65,7 +64,6 @@ const Page: React.FC<Props> = (props: Props) => {
 
   return (
     <>
-      <ClusterMessage message={info.clusterMessage} />
       <Helmet>
         <title>{docTitle}</title>
         {info.checked && (

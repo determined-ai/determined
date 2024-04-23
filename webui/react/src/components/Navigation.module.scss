@@ -1,7 +1,7 @@
 .base {
   display: flex;
   flex-grow: 1;
-  height: calc(var(--vh, 1vh) * 100);
+  height: calc(100vh);
   overflow: hidden;
 
   [class*='NavigationSideBar_base_'] {
@@ -35,6 +35,19 @@
     }
     & > main {
       height: calc(var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height));
+    }
+  }
+}
+
+// If clusterMessage is present on page, override some heights to make room
+
+.clusterMessage {
+  --cluster-message-height: 40px;
+  height: calc(100vh - var(--cluster-message-height));
+
+  @media only screen and (max-width: $breakpoint-mobile) {
+    & > main {
+      height: calc(var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height) - var(--cluster-message-height));
     }
   }
 }

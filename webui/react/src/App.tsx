@@ -11,10 +11,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
+import ClusterMessage from 'components/ClusterMessage';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
-import ClusterMessage from 'components/ClusterMessage';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import useUI, { Mode, ThemeProvider } from 'components/ThemeProvider';
@@ -160,24 +160,17 @@ const AppView: React.FC = () => {
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(Number(workspaceId ?? '')));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
 
-  useEffect(() => {
-    console.log(loadableInfo);
-  }, [loadableInfo]);
-
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
     Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
-        {/* <div className={css.topLevelContainer}> */}
-        {/* {info.clusterMessage ? (
-            <ClusterMessage message={info.clusterMessage} />
-            ) : null} */}
         <div className={css.base}>
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
                 <ConfirmationProvider>
-                  <Navigation>
+                  <ClusterMessage message={info.clusterMessage} />
+                  <Navigation clusterMessagePresent={!!info.clusterMessage}>
                     <JupyterLabGlobal
                       enabled={
                         Loadable.isLoaded(loadableUser) &&
@@ -205,7 +198,6 @@ const AppView: React.FC = () => {
             <Spinner center spinning />
           )}
         </div>
-        {/* </div> */}
       </UIProvider>
     ),
     NotLoaded: () => (

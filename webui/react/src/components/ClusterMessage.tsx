@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { ClusterMessage } from 'stores/determinedInfo';
 
@@ -9,21 +9,13 @@ interface Props {
 }
 
 const ClusterMessage: React.FC<Props> = ({ message }) => {
-  useEffect(() => {
-    console.log('message component', message);
-  }, [message]);
-
-  const msg = message
-    ? message.message +
-      'adding a bunch of text to see what it will be like with a longer cluster message. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones. Adding even more to test extremely long ones.'
-    : '';
-  const trimmedMsg = msg.substring(0, 100);
-
   return message ? (
     <>
-      {/* <div className={css.placeHolder}>&nbsp;</div> */}
       <div className={css.base}>
-        <span className={css.clusterMessageLabel}>Message from Admin</span>:{trimmedMsg}
+        <span>
+          <span className={css.clusterMessageLabel}>Message from Admin:</span>{' '}
+          <span>{message.message}</span>
+        </span>
       </div>
     </>
   ) : null;
