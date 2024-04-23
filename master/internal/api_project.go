@@ -133,6 +133,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	},
 }
 
+var (
+	numberType = "number"
+	stringType = "string"
+	boolType   = "boolean"
+)
+
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
@@ -542,11 +548,11 @@ func (a *apiServer) getProjectRunColumnsByID(
 	for _, hparam := range hyperparameters {
 		var columnType projectv1.ColumnType
 		switch {
-		case hparam.Type == "number":
+		case hparam.Type == numberType:
 			columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-		case hparam.Type == "string":
+		case hparam.Type == stringType:
 			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-		case hparam.Type == "boolean":
+		case hparam.Type == boolType:
 			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
 		default:
 			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
@@ -719,7 +725,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 		if r.SummaryMetrics != nil {
 			for metricsGroup, metrics := range r.SummaryMetrics {
 				for name, value := range metrics {
-					if value.Type != "number" {
+					if value.Type != numberType {
 						continue
 					}
 
