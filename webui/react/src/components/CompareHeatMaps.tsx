@@ -90,13 +90,13 @@ const CompareHeatMaps: React.FC<Props> = ({
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric && selectedMetric.group === MetricType.Validation) {
-      const key = metricToKey(selectedMetric);
+      const selectedExperimentsWithMetric = selectedExperiments.filter((exp) => {
+        return selectedMetric.name === exp?.experiment?.config?.searcher?.metric;
+      });
 
-      const searcher = selectedExperiments.find((exp) => {
-        return key === exp?.experiment?.config?.searcher?.metric;
-      })?.experiment?.config?.searcher;
-
-      return searcher?.smallerIsBetter;
+      return selectedExperimentsWithMetric.some((exp) => {
+        return exp?.experiment?.config?.searcher?.smallerIsBetter;
+      });
     }
     return undefined;
   }, [selectedMetric, selectedExperiments]);
