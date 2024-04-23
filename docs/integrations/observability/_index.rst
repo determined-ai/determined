@@ -194,3 +194,5 @@ Monitoring Dashboard
 
 -  Navigate to `127.0.0.1:9000 <http://127.0.0.1:9000>`__. Sign in with the ƒusername ``admin`` and
    the password you set above. You should see the ``Determined API Server Monitoring`` dashboard.
+
+For more information on reported metrics and how to use them, please see [determined/tools/observability/readme](https://github.com/determined-ai/determined/blob/main/tools/observability/README.md)
