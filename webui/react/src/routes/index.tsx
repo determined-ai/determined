@@ -18,6 +18,7 @@ import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskListPage from 'pages/TaskListPage';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
+import TemplatesPage from 'pages/Templates/TemplatesPage';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
 import Webhooks from 'pages/WebhookList';
@@ -48,6 +49,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   signOut: <SignOut />,
   taskList: <TaskListPage />,
   taskLogs: <TaskLogsWrapper />,
+  templates: <TemplatesPage />,
   trialDetails: <TrialDetails />,
   uncategorized: <ProjectDetails key="uncategorized" />,
   wait: <Wait />,

@@ -452,7 +452,11 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item initialValue={defaults?.template} label="Template" name="template">
+      <Form.Item
+        extra={<Link path={paths.templates()}>Manage Templates</Link>}
+        initialValue={defaults?.template}
+        label="Template"
+        name="template">
         <Select allowClear placeholder="No template (optional)">
           {templates.map((temp) => (
             <Option key={temp.name} value={temp.name}>

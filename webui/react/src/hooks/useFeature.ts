@@ -12,7 +12,8 @@ export type ValidFeature =
   | 'rp_binding'
   | 'genai'
   | 'flat_runs'
-  | 'streaming_updates';
+  | 'streaming_updates'
+  | 'templates';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -46,6 +47,11 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: false,
     description: 'Allow streaming updates through websockets for better performance',
     friendlyName: 'Streaming Updates',
+  },
+  templates: {
+    defaultValue: false,
+    description: 'Manage tempaltes through WebUI',
+    friendlyName: 'Manage Templates',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

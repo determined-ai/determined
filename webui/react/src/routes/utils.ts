@@ -154,6 +154,9 @@ export const paths = {
   taskLogs: (task: Pick<CommandTask, 'id' | 'name' | 'type'>): string => {
     return `/${task.type}/${task.id}/logs?id=${task.name}`;
   },
+  templates: (): string => {
+    return '/templates';
+  },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {
     if (!experimentId) {
       return `/trials/${trialId}`;
