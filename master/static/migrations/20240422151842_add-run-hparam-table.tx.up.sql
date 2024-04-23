@@ -15,4 +15,11 @@ SELECT s.id as run_id, s.key as hparam,
 CASE WHEN s.type='number' THEN s.value::text::float ELSE NULL END as number_val,
 CASE WHEN s.type='string' THEN s.value::text ELSE NULL END as text_val,
 CASE WHEN s.type='boolean' THEN s.value::text::boolean ELSE NULL END as bool_val
-FROM (SELECT r.id, h.key, h.value, jsonb_typeof(h.value) as type FROM runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null') as s WHERE s.type!='object'
+FROM (SELECT r.id, h.key, h.value, jsonb_typeof(h.value) as type FROM runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null') as s WHERE s.type!='object';
+
+INSERT INTO run_hparams(run_id, hparam, number_val, text_val, bool_val)
+SELECT n.id as run_id, n.key as hparam,
+CASE WHEN n.type='number' THEN n.value::text::float ELSE NULL END as number_val,
+CASE WHEN n.type='string' THEN n.value::text ELSE NULL END as text_val,
+CASE WHEN n.type='boolean' THEN n.value::text::boolean ELSE NULL END as bool_val
+FROM (SELECT s.id, CONCAT(s.key, '.', nh.key) as key, nh.value,  jsonb_typeof(nh.value) as type FROM (SELECT r.id, h.key, h.value, jsonb_typeof(h.value) as type FROM runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null') as s, jsonb_each(s.value) nh WHERE s.type='object') as n;
