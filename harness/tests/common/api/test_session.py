@@ -3,7 +3,7 @@ from determined.common.api import certs
 from tests.common import api_server
 
 
-def test_session_non_persistent_http_sessions():
+def test_session_non_persistent_http_sessions() -> None:
     with api_server.run_api_server(address=("localhost", 8080)) as master_url:
         session = api.Session(
             master=master_url, username="me", token="t1o2k3e4n5", cert=certs.Cert(noverify=True)
@@ -16,19 +16,19 @@ def test_session_non_persistent_http_sessions():
         num_requests = 5
 
         # Make a few requests using the same session object.
-        for i in range(num_requests):
+        for _ in range(num_requests):
             resp = session.get(path="/info")
 
             # The underlying HTTP connection should be closed immediately after request.
             # To requests and underlying urllib3, this means there are no pools in the poolmanager
-            assert len(resp.connection.poolmanager.pools) == 0
-            resp_connections.append(resp.connection)
+            assert len(resp.connection.poolmanager.pools) == 0  # type: ignore
+            resp_connections.append(resp.connection)  # type: ignore
 
         # Expect each request to have been made with a different underlying HTTP connection.
         assert len(set(resp_connections)) == len(resp_connections)
 
 
-def test_session_persistent_http_sessions():
+def test_session_persistent_http_sessions() -> None:
     with api_server.run_api_server(address=("localhost", 8080)) as master_url:
         session = api.Session(
             master=master_url, username="me", token="t1o2k3e4n5", cert=certs.Cert(noverify=True)
@@ -42,13 +42,13 @@ def test_session_persistent_http_sessions():
             assert persistent_session._http_session
 
             num_requests = 5
-            for i in range(num_requests):
+            for _ in range(num_requests):
                 resp = persistent_session.get(path="/info")
 
                 # There should always be one HTTP connection pool open.
-                assert len(resp.connection.poolmanager.pools) == 1
+                assert len(resp.connection.poolmanager.pools) == 1  # type: ignore
 
-                resp_connections.append(resp.connection)
+                resp_connections.append(resp.connection)  # type: ignore
 
         # Expect each request to have been made with the same underlying HTTP connection.
         assert len(set(resp_connections)) == 1

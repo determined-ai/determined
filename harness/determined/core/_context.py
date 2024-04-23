@@ -39,8 +39,8 @@ class Context:
 
     def __init__(
         self,
-        _session: api.Session,
         checkpoint: core.CheckpointContext,
+        _session: Optional[api.Session] = None,
         distributed: Optional[core.DistributedContext] = None,
         preempt: Optional[core.PreemptContext] = None,
         train: Optional[core.TrainContext] = None,
@@ -68,7 +68,8 @@ class Context:
         self._session = _session
 
     def start(self) -> None:
-        self._session._persist_http_session()
+        if self._session is not None:
+            self._session._persist_http_session()
         self.preempt.start()
         self._metrics.start()
         if self._tensorboard_manager is not None:
@@ -98,7 +99,8 @@ class Context:
             self._heartbeat.close(exc_type, exc_val, exc_tb)
         if self._log_shipper is not None:
             self._log_shipper.close(exc_type, exc_val, exc_tb)
-        self._session.close()
+        if self._session is not None:
+            self._session.close()
 
     def __exit__(
         self,

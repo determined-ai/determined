@@ -1,4 +1,3 @@
-import contextlib
 import enum
 import os
 from typing import Callable, Iterator, Optional, Tuple, TypeVar, Union
@@ -109,29 +108,6 @@ def read_paginated(
             break
         assert pagination.endIndex is not None
         offset = pagination.endIndex
-
-
-def read_paginated_with_session(
-    session: api.Session,
-    get_with_offset: Callable[[int, Optional[api.Session]], T],
-    offset: int = 0,
-    pages: PageOpts = PageOpts.all,
-) -> Iterator[T]:
-    """Fetch responses from a paginated API using the given session."""
-    with contextlib.ExitStack() as es:
-        es.enter_context(session)
-
-        while True:
-            resp = get_with_offset(offset, session)
-            pagination = resp.pagination
-            assert pagination is not None
-            assert pagination.endIndex is not None
-            assert pagination.total is not None
-            yield resp
-            if pagination.endIndex >= pagination.total or pages == PageOpts.single:
-                break
-            assert pagination.endIndex is not None
-            offset = pagination.endIndex
 
 
 # Literal["notebook", "tensorboard", "shell", "command"]

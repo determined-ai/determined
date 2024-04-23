@@ -498,29 +498,28 @@ class Experiment:
         if not sort_by:
             sort_by = checkpoint.CheckpointSortBy.SEARCHER_METRIC
 
-        def get_with_offset(
-            offset: int, session: api.Session
-        ) -> bindings.v1GetExperimentCheckpointsResponse:
-            return bindings.get_GetExperimentCheckpoints(
-                session=session,
-                id=self._id,
-                limit=max_results,
-                offset=offset,
-                orderBy=order_by._to_bindings() if order_by else None,
-                sortByAttr=(
-                    sort_by._to_bindings()
-                    if isinstance(sort_by, checkpoint.CheckpointSortBy)
-                    else None
-                ),
-                sortByMetric=sort_by if isinstance(sort_by, str) else None,
-                states=[bindings.checkpointv1State.COMPLETED],
-            )
+        with self._session as sess:
 
-        resps = api.read_paginated_with_session(
-            get_with_offset=get_with_offset,
-            pages=api.PageOpts.single if max_results else api.PageOpts.all,
-            session=self._session,
-        )
+            def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
+                return bindings.get_GetExperimentCheckpoints(
+                    session=sess,
+                    id=self._id,
+                    limit=max_results,
+                    offset=offset,
+                    orderBy=order_by._to_bindings() if order_by else None,
+                    sortByAttr=(
+                        sort_by._to_bindings()
+                        if isinstance(sort_by, checkpoint.CheckpointSortBy)
+                        else None
+                    ),
+                    sortByMetric=sort_by if isinstance(sort_by, str) else None,
+                    states=[bindings.checkpointv1State.COMPLETED],
+                )
+
+            resps = api.read_paginated(
+                get_with_offset=get_with_offset,
+                pages=api.PageOpts.single if max_results else api.PageOpts.all,
+            )
 
         return [
             checkpoint.Checkpoint._from_bindings(c, self._session)
@@ -562,19 +561,17 @@ class Experiment:
             stacklevel=2,
         )
 
-        def get_with_offset(
-            offset: int, session: api.Session
-        ) -> bindings.v1GetExperimentCheckpointsResponse:
-            return bindings.get_GetExperimentCheckpoints(
-                session=session,
-                id=self._id,
-                offset=offset,
-                states=[bindings.checkpointv1State.COMPLETED],
-            )
+        with self._session as sess:
 
-        resps = api.read_paginated_with_session(
-            get_with_offset=get_with_offset, session=self._session
-        )
+            def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
+                return bindings.get_GetExperimentCheckpoints(
+                    session=sess,
+                    id=self._id,
+                    offset=offset,
+                    states=[bindings.checkpointv1State.COMPLETED],
+                )
+
+            resps = api.read_paginated(get_with_offset=get_with_offset)
 
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)

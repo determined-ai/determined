@@ -6,7 +6,6 @@ from determined.common.api._util import (
     canonicalize_master_url,
     get_default_master_url,
     read_paginated,
-    read_paginated_with_session,
     WARNING_MESSAGE_MAP,
     wait_for_ntsc_state,
     wait_for_task_ready,

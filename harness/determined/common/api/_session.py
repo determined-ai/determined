@@ -1,11 +1,12 @@
 import abc
 import copy
 import json as _json
+from types import TracebackType  # noqa:I2041
 from typing import Any, Dict, Optional, TypeVar, Union
 
 import requests
-from requests import adapters
 import urllib3
+from requests import adapters
 
 import determined as det
 from determined.common import api
@@ -24,7 +25,7 @@ DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
 
 def _make_requests_session(
     server_hostname: Optional[str] = None,
-    verify: Optional[Union[str, bool]] = None,
+    verify: Optional[Union[str, bool]] = True,
     max_retries: Optional[GeneralizedRetry] = None,
     headers: Optional[Dict[str, Any]] = None,
 ) -> requests.Session:
@@ -90,11 +91,11 @@ class BaseSession(metaclass=abc.ABCMeta):
     # Persistent HTTP session
     _http_session: Optional[requests.Session]
 
-    def __enter__(self):
+    def __enter__(self: T) -> T:
         self._persist_http_session()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type, exc_value: Exception, traceback: TracebackType) -> None:
         self.close()
 
     def _persist_http_session(self) -> None:
