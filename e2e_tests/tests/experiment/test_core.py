@@ -145,11 +145,18 @@ def test_labels() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.parallel
 def test_end_to_end_adaptive() -> None:
     sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
         sess,
-        conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
+        conf.fixtures_path("mnist_pytorch/adaptive.yaml"),
+        conf.tutorials_path("mnist_pytorch"),
+        None,
+    )
+    exp.run_basic_test(
+        sess,
+        conf.fixtures_path("mnist_pytorch/adaptive.yaml"),
         conf.tutorials_path("mnist_pytorch"),
         None,
     )

@@ -18,7 +18,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -1520,13 +1519,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	webhooks.Init()
 	defer webhooks.Deinit()
 
-	if slices.Contains(m.config.FeatureSwitches, "streaming_updates") {
-		ssup := stream.NewSupervisor(m.db.URL)
-		go func() {
-			_ = ssup.Run(ctx)
-		}()
-		m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
-	}
+	ssup := stream.NewSupervisor(m.db.URL)
+	go func() {
+		_ = ssup.Run(ctx)
+	}()
+	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
 
 	return m.startServers(ctx, cert, gRPCLogInitDone)
 }
