@@ -306,7 +306,11 @@ class Session(BaseSession):
 
 
 class _HTTPSAdapter(adapters.HTTPAdapter):
-    """Overrides the `server_hostname` of the underlying HTTPS connection."""
+    """Overrides the hostname checked against for TLS verification.
+
+    This is used when the request address specified does not match its DNS resolved hostname
+    (i.e. custom TLS certificates, private IP addresses).
+    """
 
     def __init__(self, server_hostname: Optional[str], **kwargs: Any) -> None:
         super().__init__(**kwargs)
