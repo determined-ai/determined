@@ -28,7 +28,7 @@ The Determined Master labels pods it creates with Determined state values. The f
 | determined.ai/task_type     | Determined task type, e.g. `TRIAL`, `NOTEBOOK`, `TENSORBOARD`     |
 | determined.ai/trial_id      | `task_type=TRIAL` only     |
 | determined.ai/user          | Determined username that initiated the request    |
-| determined.ai/workspace     | name of the workspace, including `Uncategorized    |
+| determined.ai/workspace     | name of the workspace, including `Uncategorized`    |
 
 Kubernetes resource metrics and GPU metrics can be broken down by Determined resources by joining data metrics with `kube_pod_labels` state metric. Some helpful resources (see PromQL documentation for more details):
 - [joining metrics](https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics) from kube-state-metrics
