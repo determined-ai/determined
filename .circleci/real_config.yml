@@ -2987,7 +2987,7 @@ jobs:
             # Cleanup podman state from any issues in prior runs
             #sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
             sinfo -R
-
+            sudo journalctl -fu determined-master
       - run:
           name: Download Apptainer/Enroot image
           command: |
