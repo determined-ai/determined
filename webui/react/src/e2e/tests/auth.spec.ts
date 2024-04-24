@@ -10,7 +10,7 @@ test.describe('Authentication', () => {
   });
   test.afterEach(async ({ page, auth }) => {
     const signInPage = new SignIn(page);
-    if (!signInPage.title.test(await page.title())) {
+    if ((await page.title()).indexOf(signInPage.title) > -1) {
       await auth.logout();
     }
   });
