@@ -1987,7 +1987,6 @@ jobs:
       ee:
         type: boolean
         default: false
-    name: test-e2e-react [ee=<< parameters.ee >>]
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
