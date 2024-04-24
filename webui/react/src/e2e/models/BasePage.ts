@@ -15,7 +15,7 @@ export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
   readonly nav = new Navigation({ parent: this });
 
-  private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? ''));
+  private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? '""'));
   private static appTitle = BasePage.isEE
     ? 'HPE Machine Learning Development Environment'
     : 'Determined';
