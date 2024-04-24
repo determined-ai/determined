@@ -64,17 +64,17 @@ PACKER_JOBS = {"publish-cloud-images"}
 
 DOCKER_JOBS = (
     {
-        f"build-and-publish-docker-{suffix}-{mpi}-dev"
+        f"build-and-publish-docker-{suffix}-{mpi}"
         for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
     }
-    | {f"build-and-publish-docker-{suffix}-0-dev" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
+    | {f"build-and-publish-docker-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
     | {
-        f"build-and-publish-docker-{suffix}-0-dev"
+        f"build-and-publish-docker-{suffix}-0"
         for suffix in JOB_SUFFIXES_NO_MPI
         if "hpc" not in suffix
     }
     | {
-        f"build-and-publish-docker-{suffix}-1-{ofi}-dev"
+        f"build-and-publish-docker-{suffix}-1-{ofi}"
         for (suffix, ofi) in itertools.product(JOB_SUFFIXES_OFI, [1])
     }
 )
@@ -133,15 +133,13 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
             build = Build(build_meta)
             builds[build.job_name] = build
 
-    if dev:
-        packer_jobs = {s + "-dev" for s in PACKER_JOBS}
-    else:
-        packer_jobs = PACKER_JOBS
-
     if cloud_images:
-        expected = packer_jobs | DOCKER_JOBS
+        expected = PACKER_JOBS | DOCKER_JOBS
     else:
         expected = DOCKER_JOBS
+
+    if dev:
+        expected = {s + "-dev" for s in expected}
 
     found = set(builds.keys())
     expected_found = expected.difference(found)
