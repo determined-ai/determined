@@ -170,7 +170,12 @@ Monitoring Dashboard
    kubectl -n det-monitoring create configmap det-api-dash --from-file api-dash.json && \
      kubectl -n det-monitoring label configmap det-api-dash grafana_dashboard=1
 
--  TODO add other dashboards for monitoring.
+-  Add a resource utilization dashboard.
+
+.. code:: bash
+   kubectl -n det-monitoring create configmap det-resource-utilization-dash --from-file resource-utilization-dash.json && \
+     kubectl -n det-monitoring label configmap det-resource-utilization-dash grafana_dashboard=1
+
 -  Check that Prometheus is running correctly by port forwarding.
 
 .. code:: bash
