@@ -50,10 +50,10 @@ export class NavigationSideBar extends BaseReactFragment {
 }
 
 class HeaderDropdown extends Dropdown {
-  readonly nameplate: Nameplate = new Nameplate({
+  readonly nameplate = new Nameplate({
     parent: this,
   });
-  readonly admin: BaseComponent = new BaseComponent({
+  readonly admin = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('admin'),
   });

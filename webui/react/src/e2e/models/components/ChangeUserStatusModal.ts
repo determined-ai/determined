@@ -10,18 +10,18 @@ import { Select } from 'e2e/models/hew/Select';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class ChangeUserStatusModal extends Modal {
-  readonly status: StatusSelect = new StatusSelect({
+  readonly status = new StatusSelect({
     parent: this.body,
     selector: '[data-testid="status"]',
   });
 }
 
 class StatusSelect extends Select {
-  readonly activate: BaseComponent = new BaseComponent({
+  readonly activate = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Activate'),
   });
-  readonly deactivate: BaseComponent = new BaseComponent({
+  readonly deactivate = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Deactivate'),
   });

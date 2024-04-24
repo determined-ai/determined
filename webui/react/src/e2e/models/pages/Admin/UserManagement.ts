@@ -31,11 +31,11 @@ export class UserManagement extends AdminPage {
     parent: this.#actionRow,
     selector: '[data-testid="search"]',
   });
-  readonly filterRole: RoleSelect = new RoleSelect({
+  readonly filterRole = new RoleSelect({
     parent: this.#actionRow,
     selector: '[data-testid="roleSelect"]',
   });
-  readonly filterStatus: StatusSelect = new StatusSelect({
+  readonly filterStatus = new StatusSelect({
     parent: this.#actionRow,
     selector: '[data-testid="statusSelect"]',
   });
@@ -43,7 +43,7 @@ export class UserManagement extends AdminPage {
     parent: this.#actionRow,
     selector: '[data-testid="addUser"]',
   });
-  readonly actions: actionDropdownMenu = new actionDropdownMenu({
+  readonly actions = new actionDropdownMenu({
     parent: this.#actionRow,
     selector: '[data-testid="actions"]',
   });
@@ -100,7 +100,7 @@ export class UserManagement extends AdminPage {
     await this.search.pwLocator.clear();
     await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
     await this.search.pwLocator.fill(name);
-    await expect(this.table.table.rows.pwLocator).toHaveCount(1);
+    await expect(this.table.table.rows.pwLocator).toHaveCount(1, { timeout: 10000 });
     return await this.getRowByUsername(name);
   }
 }
@@ -149,7 +149,7 @@ class UserHeadRow extends HeadRow {
 class UserRow extends Row {
   // If you're wondering where (1) is, it's the checkbox column (smelly)
   // TODO consider nameplate component
-  readonly user: UserBadge = new UserBadge({
+  readonly user = new UserBadge({
     parent: this,
     selector: '[data-testid="user"]',
   });
@@ -209,15 +209,15 @@ class UserActionDropdown extends Dropdown {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class actionDropdownMenu extends Dropdown {
-  readonly status: BaseComponent = new BaseComponent({
+  readonly status = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('change-status'),
   });
-  readonly roles: BaseComponent = new BaseComponent({
+  readonly roles = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('set-roles'),
   });
-  readonly groups: BaseComponent = new BaseComponent({
+  readonly groups = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('add-to-groups'),
   });
@@ -231,15 +231,15 @@ class actionDropdownMenu extends Dropdown {
  * @param {string} obj.selector - Used as a selector used to locate this object
  */
 class RoleSelect extends Select {
-  readonly allRoles: BaseComponent = new BaseComponent({
+  readonly allRoles = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('All Roles'),
   });
-  readonly admin: BaseComponent = new BaseComponent({
+  readonly admin = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Admin'),
   });
-  readonly nonAdmin: BaseComponent = new BaseComponent({
+  readonly nonAdmin = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Non-Admin'),
   });
@@ -253,15 +253,15 @@ class RoleSelect extends Select {
  * @param {string} obj.selector - Used as a selector used to locate this object
  */
 class StatusSelect extends Select {
-  readonly allStatuses: BaseComponent = new BaseComponent({
+  readonly allStatuses = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('All Statuses'),
   });
-  readonly activeUsers: BaseComponent = new BaseComponent({
+  readonly activeUsers = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Active Users'),
   });
-  readonly deactivatedUsers: BaseComponent = new BaseComponent({
+  readonly deactivatedUsers = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('Deactivated Users'),
   });

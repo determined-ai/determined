@@ -47,7 +47,7 @@ export class DataGrid<
       parent: this.#head,
     });
   }
-  readonly canvasTable: BaseComponent = new BaseComponent({
+  readonly canvasTable = new BaseComponent({
     parent: this,
     selector: 'canvas[data-testid="data-grid-canvas"] table',
   });
@@ -261,7 +261,7 @@ export class HeadRow extends NamedComponent {
     this.clickableParentLocator = args.clickableParentLocator;
   }
 
-  readonly selectDropdown: HeaderDropdown = new HeaderDropdown({
+  readonly selectDropdown = new HeaderDropdown({
     parent: this,
     selector: '[aria-colindex="1"]',
   });
@@ -316,19 +316,19 @@ export class HeadRow extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class HeaderDropdown extends Dropdown {
-  readonly select5: BaseComponent = new BaseComponent({
+  readonly select5 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-5'),
   });
-  readonly select10: BaseComponent = new BaseComponent({
+  readonly select10 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-10'),
   });
-  readonly select25: BaseComponent = new BaseComponent({
+  readonly select25 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-25'),
   });
-  readonly selectAll: BaseComponent = new BaseComponent({
+  readonly selectAll = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-all'),
   });

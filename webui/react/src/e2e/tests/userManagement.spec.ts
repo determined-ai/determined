@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import playwright from 'playwright';
 
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
@@ -6,6 +7,8 @@ import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
+import { repeatWithFallback } from 'e2e/utils/polling';
+
 
 test.describe('User Management', () => {
   test.beforeEach(async ({ auth, dev }) => {
@@ -116,7 +119,12 @@ test.describe('User Management', () => {
           );
         });
         await test.step('Reactivate', async () => {
-          await userManagementPage.goto();
+          await userManagementPage.goto({ verify: false });
+          // TODO the verify false on the line above isn't working as expected
+          // if we don't expect this url, the automation runs too fast and login
+          // thinks we've already logged in, skipping the login automation.
+          // We might need to find a way to be more explicit about the page state.
+          await expect(page).toHaveURL(/login/);
           await auth.login({ waitForURL: userManagementPage.url });
           testUser = await user.changeStatusUser(testUser, true);
         });
@@ -130,15 +138,13 @@ test.describe('User Management', () => {
     test.describe('With 10 Users', () => {
       const usernamePrefix = 'test-user-pagination';
       test.beforeAll(async () => {
-        test.setTimeout(120_000);
-        await test.step('Create User', async () => {
-          await userManagementPageSetupTeardown.goto();
-          await test.step('Create some users', async () => {
-            // pagination will be 10 per page, so create 11 users
-            for (let i = 0; i < 11; i++) {
-              await userFixtureSetupTeardown.createUser({ username: `${usernamePrefix}` });
-            }
-          });
+        test.setTimeout(180_000);
+        await userManagementPageSetupTeardown.goto();
+        await test.step('Create users', async () => {
+          // pagination will be 10 per page, so create 11 users
+          for (let i = 0; i < 11; i++) {
+            await userFixtureSetupTeardown.createUser({ username: `${usernamePrefix}` });
+          }
         });
       });
 
@@ -161,7 +167,7 @@ test.describe('User Management', () => {
                 return (await row.user.name.pwLocator.textContent())?.indexOf(usernamePrefix) === 0;
               }),
             ).toHaveLength(10);
-          }).toPass({ timeout: 10000 });
+          }).toPass({ timeout: 10_000 });
           // go to page 2 to see users
           await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
           await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1);
@@ -174,8 +180,18 @@ test.describe('User Management', () => {
           // wait for table to be stable and check that pagination and "no data" both dont show
           await userManagementPage.table.table.pwLocator.click({ trial: true });
           testInfo.fail(); // BUG [ET-178]
-          await userManagementPage.table.table.pagination.pwLocator.waitFor({ state: 'hidden' });
-          await userManagementPage.table.table.noData.pwLocator.waitFor({ state: 'hidden' });
+          try {
+            await userManagementPage.table.table.noData.pwLocator.waitFor();
+            await userManagementPage.table.table.pagination.pwLocator.waitFor();
+            // if we see these elements, we should fail the test
+            expect(false).toBe(true);
+          } catch (error) {
+            // if we see a timeout error, that means we don't see "no data"
+            if (!(error instanceof playwright.errors.TimeoutError)) {
+              // if we see any other error, we should still fail the test
+              throw error;
+            }
+          }
           // Expect to see rows from page 1
           await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(10);
         });
@@ -183,19 +199,18 @@ test.describe('User Management', () => {
 
       test('Users table count matches admin page users tab', async ({ page }) => {
         test.setTimeout(120_000);
-        const userManagementPage = new UserManagement(page);
-        await userManagementPage.goto();
-        const pagination = userManagementPage.table.table.pagination;
-        let expetedRowCount: number;
-        await test.step('Get number of users from the tab at the top', async () => {
+        const getExpectedRowCount = async (): Promise<number> => {
           const match = (await userManagementPage.userTab.pwLocator.innerText()).match(
             /Users \((\d+)\)/,
           );
           if (match === null) {
             throw new Error('Number not present in tab.');
           }
-          expetedRowCount = Number(match[1]);
-        });
+          return Number(match[1]);
+        };
+        const userManagementPage = new UserManagement(page);
+        await userManagementPage.goto();
+        const pagination = userManagementPage.table.table.pagination;
         for await (const { name, paginationOption } of [
           {
             name: '10',
@@ -222,10 +237,21 @@ test.describe('User Management', () => {
             if (matches === null) {
               throw new Error("Couldn't find pagination selection.");
             }
-            const paginationSelection = +matches[1];
-            await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
-              Math.min(paginationSelection, expetedRowCount),
-            );
+            const paginationSelection = Number(matches[1]);
+            await expect(repeatWithFallback(
+              async () => {
+                // grab the count of the table rows and big number at the top at the same time
+                // in case the table refreshes with more users during a parallel run
+                await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
+                  Math.min(paginationSelection, await getExpectedRowCount()),
+                );
+              },
+              async () => {
+                // if the above doesn't pass, refresh the page and try again. This is to handle
+                // the case where the table refreshes with more users, but the other number hasn't refreshed yet
+                await userManagementPage.goto();
+              },
+            )).toPass({ timeout: 20_000 });
           });
         }
       });

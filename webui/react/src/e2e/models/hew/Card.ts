@@ -8,7 +8,7 @@ import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDr
  * @param {implementsGetLocator} obj.parent - The parent used to locate this card
  */
 export class Card extends BaseComponent {
-  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
+  readonly actionMenu = new WorkspaceActionDropdown({
     parent: this,
     selector: '[aria-label="Action menu"]',
   });

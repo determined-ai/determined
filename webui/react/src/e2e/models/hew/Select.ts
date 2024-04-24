@@ -17,11 +17,11 @@ export class Select extends Dropdown {
     return `div.ant-select-item[title$="${title}"]`;
   }
 
-  override readonly _menu: BaseComponent = new BaseComponent({
+  override readonly _menu = new BaseComponent({
     parent: this.root,
     selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
   });
-  readonly selectedOption: BaseComponent = new BaseComponent({
+  readonly selectedOption = new BaseComponent({
     parent: this._menu,
     selector: 'div[role="option"][aria-selected="true"]',
   });

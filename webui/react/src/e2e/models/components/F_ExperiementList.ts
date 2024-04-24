@@ -12,22 +12,22 @@ import { Pagination } from 'e2e/models/hew/Pagination';
  * @param {CanBeParent} obj.parent - The parent used to locate this F_ExperiementList
  */
 export class F_ExperiementList extends BaseReactFragment {
-  readonly tableActionBar: TableActionBar = new TableActionBar({ parent: this });
+  readonly tableActionBar = new TableActionBar({ parent: this });
   // TODO no experiments
   // TODO no filtered experiments
   // TODO error
-  readonly comparisonView: ComparisonView = new ComparisonView({ parent: this });
-  readonly dataGrid: DataGrid<ExperimentRow, ExperimentHeadRow> = new DataGrid({
+  readonly comparisonView = new ComparisonView({ parent: this });
+  readonly dataGrid = new DataGrid({
     headRowType: ExperimentHeadRow,
     parent: this.comparisonView.initial,
     rowType: ExperimentRow,
   });
   // There is no button which activates this dropdown. To display it, right-click the grid
-  readonly experimentActionDropdown: ExperimentActionDropdown = new ExperimentActionDropdown({
+  readonly experimentActionDropdown = new ExperimentActionDropdown({
     parent: this.root,
     selector: '',
   });
-  readonly pagination: Pagination = new Pagination({ parent: this });
+  readonly pagination = new Pagination({ parent: this });
 }
 
 class ExperimentHeadRow extends HeadRow {}

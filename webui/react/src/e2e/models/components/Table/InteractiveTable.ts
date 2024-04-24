@@ -30,7 +30,7 @@ export class InteractiveTable<
   }
 
   readonly table: Table<RowType, HeadRowType>;
-  readonly skeleton: SkeletonTable = new SkeletonTable({ parent: this });
+  readonly skeleton = new SkeletonTable({ parent: this });
 }
 
 /**
@@ -58,7 +58,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     parent: this,
     selector: 'tbody.ant-table-tbody',
   });
-  readonly noData: BaseComponent = new BaseComponent({
+  readonly noData = new BaseComponent({
     parent: this.#body,
     selector: '.ant-empty.ant-empty-normal',
   });
@@ -66,7 +66,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     parent: this,
     selector: 'thead.ant-table-thead',
   });
-  readonly pagination: Pagination = new Pagination({
+  readonly pagination = new Pagination({
     parent: this._parent,
   });
 
@@ -143,7 +143,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
 export class Row extends NamedComponent {
   readonly defaultSelector = 'tr.ant-table-row';
   readonly keyAttribute = 'data-row-key';
-  readonly select: BaseComponent = new BaseComponent({
+  readonly select = new BaseComponent({
     parent: this,
     selector: '.ant-table-selection-column',
   });
@@ -166,7 +166,7 @@ export class Row extends NamedComponent {
  */
 export class HeadRow extends NamedComponent {
   readonly defaultSelector = 'tr';
-  readonly selectAll: BaseComponent = new BaseComponent({
+  readonly selectAll = new BaseComponent({
     parent: this,
     selector: '.ant-table-selection-column .ant-checkbox-input',
   });

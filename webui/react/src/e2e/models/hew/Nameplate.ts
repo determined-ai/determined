@@ -11,7 +11,7 @@ export class Nameplate extends NamedComponent {
   override defaultSelector: string = '[class^="Nameplate_base"]';
 
   #nameSelector = '.ant-typography:last-of-type'; // We could replace this with a more specific selector in Hew
-  readonly icon: BaseComponent = new BaseComponent({
+  readonly icon = new BaseComponent({
     parent: this,
     selector: 'id="avatar"',
   });
@@ -19,11 +19,11 @@ export class Nameplate extends NamedComponent {
     parent: this,
     selector: '[class^="Nameplate_text"]',
   });
-  readonly alias: BaseComponent = new BaseComponent({
+  readonly alias = new BaseComponent({
     parent: this.#text,
     selector: `.ant-typography:not(${this.#nameSelector})`,
   });
-  readonly name: BaseComponent = new BaseComponent({
+  readonly name = new BaseComponent({
     parent: this.#text,
     selector: this.#nameSelector,
   });

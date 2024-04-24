@@ -12,7 +12,7 @@ export class Navigation extends NamedComponent {
   readonly defaultSelector = 'div[data-test-component="navigation"]';
 
   // sidebar is desktop view, tabbar is mobile view
-  readonly sidebar: NavigationSideBar = new NavigationSideBar({ parent: this });
+  readonly sidebar = new NavigationSideBar({ parent: this });
   // TODO mobile
-  // readonly tabbar: NavigationTabbar = new NavigationTabbar({ parent: this });
+  // readonly tabbar = new NavigationTabbar({ parent: this });
 }
