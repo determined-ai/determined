@@ -4798,6 +4798,9 @@ workflows:
           dev-mode: true
           filters: *any-upstream
       - build-docs:
+          matrix:
+            parameters:
+              ee: [true]
           filters: *any-upstream
           requires:
             - build-helm
