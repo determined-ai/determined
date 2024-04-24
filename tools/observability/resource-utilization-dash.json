@@ -344,7 +344,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL)",
+          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL > 0)",
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
@@ -623,9 +623,9 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
-          "placement": "right",
-          "showLegend": false
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "single",
@@ -643,7 +643,7 @@
           "expr": "avg by (label_determined_ai_experiment_id)( DCGM_FI_DEV_GPU_UTIL * on(pod) group_left(label_determined_ai_experiment_id) kube_pod_labels{label_determined_ai_experiment_id!=\"\"} )",
           "instant": false,
           "interval": "5m",
-          "legendFormat": "__auto",
+          "legendFormat": "{{label_determined_ai_experiment_id}}",
           "range": true,
           "refId": "A"
         }
@@ -678,14 +678,14 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -695,6 +695,7 @@
             }
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -707,8 +708,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "percent"
+          }
         },
         "overrides": []
       },
@@ -842,8 +842,8 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
-    "to": "now"
+    "from": "2024-04-24T21:07:30.345Z",
+    "to": "2024-04-24T22:12:29.654Z"
   },
   "timepicker": {},
   "timezone": "browser",
