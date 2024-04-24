@@ -1075,7 +1075,7 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		path := ""
 
 		// if ingress
-		path = fmt.Sprintf("det-%s", pcfg.ServiceID[:8])
+		path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
 		address.HostIP = "127.0.0.1"
 		address.HostPort = 80
 

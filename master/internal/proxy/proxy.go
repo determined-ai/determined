@@ -187,6 +187,7 @@ func (p *Proxy) NewProxyHandler(serviceID string) echo.HandlerFunc {
 }
 
 func setUpProxy(serviceURL *url.URL) (*httputil.ReverseProxy, error) {
+	// here
 	proxy := httputil.NewSingleHostReverseProxy(serviceURL)
 	if serviceURL.Scheme != https {
 		return proxy, nil
