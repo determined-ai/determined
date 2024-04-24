@@ -265,10 +265,8 @@ as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id
 Kubernetes resource metrics and GPU metrics can be broken down by Determined resources by joining data 
 metrics with ``kube_pod_labels`` state metric. Some helpful resources (visit PromQL documentation for more details):
 
--  `joining metrics <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics>`__ 
-from kube-state-metrics
--  `matching vectors <https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching>`__ 
-from Prometheus
+-  `joining metrics <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics>`__ from kube-state-metrics 
+-  `matching vectors <https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching>`__ from Prometheus
 
 .. toctree::
    :hidden:
