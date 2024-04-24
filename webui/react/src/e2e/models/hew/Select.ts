@@ -14,7 +14,7 @@ export class Select extends Dropdown {
    * @param {string} title - menu item id
    */
   static override selectorTemplate(title: string): string {
-    return `div[role="option"][title$="${title}"]`;
+    return `div.ant-select-item[title$="${title}"]`;
   }
 
   override readonly _menu: BaseComponent = new BaseComponent({

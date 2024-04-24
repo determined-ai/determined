@@ -1,5 +1,6 @@
 import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { Nameplate } from 'e2e/models/hew/Nameplate';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
@@ -44,14 +45,15 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this.#nav,
     selector: '', // no open-menu button, only right click on sidebar item to open
   });
-  // TODO the rest of the sidebar items
-  // TODO nameplate with parent = this.headerDropdown
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
   // TODO readonly userSettings= new UserSettings({ parent: this });
 }
 
 class HeaderDropdown extends Dropdown {
-  readonly admin = new BaseComponent({
+  readonly nameplate: Nameplate = new Nameplate({
+    parent: this,
+  });
+  readonly admin: BaseComponent = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('admin'),
   });

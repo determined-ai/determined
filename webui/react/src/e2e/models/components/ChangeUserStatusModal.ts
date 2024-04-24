@@ -1,5 +1,6 @@
 import { BaseComponent } from 'e2e/models/BaseComponent';
 import { Modal } from 'e2e/models/hew/Modal';
+import { Select } from 'e2e/models/hew/Select';
 
 /**
  * Returns a representation of the ChangeUserStatusModal component.
@@ -9,8 +10,19 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class ChangeUserStatusModal extends Modal {
-  readonly status: BaseComponent = new BaseComponent({
+  readonly status: StatusSelect = new StatusSelect({
     parent: this.body,
     selector: '[data-testid="status"]',
+  });
+}
+
+class StatusSelect extends Select {
+  readonly activate: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Activate'),
+  });
+  readonly deactivate: BaseComponent = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Deactivate'),
   });
 }

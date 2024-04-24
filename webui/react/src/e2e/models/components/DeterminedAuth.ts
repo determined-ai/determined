@@ -28,7 +28,6 @@ export class DeterminedAuth extends NamedComponent {
     parent: this,
     selector: 'link[data-testid="docs"]',
   });
-  // TODO consdier a BaseComponents plural class
   readonly errors: ErrorComponent = new ErrorComponent({
     attachment: ErrorComponent.selectorTopRight,
     parent: this.root,
