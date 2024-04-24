@@ -717,16 +717,8 @@ func MoveExperiments(ctx context.Context,
 			return nil, fmt.Errorf("updating experiment's project IDs: %w", err)
 		}
 
-		var local_id int
-		if err := tx.NewUpdate().Table("projects").
-			Set("max_local_id = max_local_id + 1").Where("id = ?", destinationProjectID).
-			Returning("max_local_id").Scan(ctx, &local_id); err != nil {
-			return nil, fmt.Errorf("updating and returning project max_local_id: %w", err)
-		}
-
 		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", destinationProjectID).
-			Set("local_id = ?", local_id).
 			Where("runs.experiment_id IN (?)", bun.In(validIDs)).
 			Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating run's project IDs: %w", err)

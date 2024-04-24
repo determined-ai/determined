@@ -4125,6 +4125,7 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    localId: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     userId: "typing.Optional[int]" = None
@@ -4148,6 +4149,7 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        localId: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
@@ -4174,6 +4176,8 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(localId, Unset):
+            self.localId = localId
         if not isinstance(searcherMetricValue, Unset):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(summaryMetrics, Unset):
@@ -4207,6 +4211,8 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "localId" in obj:
+            kwargs["localId"] = obj["localId"]
         if "searcherMetricValue" in obj:
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "summaryMetrics" in obj:
@@ -4240,6 +4246,8 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "localId" in vars(self):
+            out["localId"] = self.localId
         if not omit_unset or "searcherMetricValue" in vars(self):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "summaryMetrics" in vars(self):
@@ -10480,6 +10488,7 @@ class v1PostModelVersionResponse(Printable):
 class v1PostProjectRequest(Printable):
     """Request for creating a project."""
     description: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -10487,11 +10496,14 @@ class v1PostProjectRequest(Printable):
         name: str,
         workspaceId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         self.workspaceId = workspaceId
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(key, Unset):
+            self.key = key
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
@@ -10501,6 +10513,8 @@ class v1PostProjectRequest(Printable):
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10510,6 +10524,8 @@ class v1PostProjectRequest(Printable):
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
         return out
 
 class v1PostProjectResponse(Printable):
@@ -10951,6 +10967,7 @@ class v1Project(Printable):
         errorMessage: str,
         id: int,
         immutable: bool,
+        key: str,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
@@ -10967,6 +10984,7 @@ class v1Project(Printable):
         self.errorMessage = errorMessage
         self.id = id
         self.immutable = immutable
+        self.key = key
         self.name = name
         self.notes = notes
         self.numActiveExperiments = numActiveExperiments
@@ -10989,6 +11007,7 @@ class v1Project(Printable):
             "errorMessage": obj["errorMessage"],
             "id": obj["id"],
             "immutable": obj["immutable"],
+            "key": obj["key"],
             "name": obj["name"],
             "notes": [v1Note.from_json(x) for x in obj["notes"]],
             "numActiveExperiments": obj["numActiveExperiments"],
@@ -11012,6 +11031,7 @@ class v1Project(Printable):
             "errorMessage": self.errorMessage,
             "id": self.id,
             "immutable": self.immutable,
+            "key": self.key,
             "name": self.name,
             "notes": [x.to_json(omit_unset) for x in self.notes],
             "numActiveExperiments": self.numActiveExperiments,
@@ -13879,16 +13899,6 @@ class v1StartTrialResponse(Printable):
         if not omit_unset or "latestCheckpoint" in vars(self):
             out["latestCheckpoint"] = self.latestCheckpoint
         return out
-
-class v1TableType(DetEnum):
-    """Project Table type.
-    - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
-    - TABLE_TYPE_EXPERIMENT: experiment table.
-    - TABLE_TYPE_RUN: run table.
-    """
-    UNSPECIFIED = "TABLE_TYPE_UNSPECIFIED"
-    EXPERIMENT = "TABLE_TYPE_EXPERIMENT"
-    RUN = "TABLE_TYPE_RUN"
 
 class v1Task(Printable):
     """Task is the model for a task in the database."""
@@ -18547,20 +18557,12 @@ def get_GetProjectColumns(
     session: "api.BaseSession",
     *,
     id: int,
-    tableType: "typing.Optional[v1TableType]" = None,
 ) -> "v1GetProjectColumnsResponse":
     """Get a list of columns for experiment list table.
 
     - id: The id of the project.
-    - tableType: type of table for project columns.
-
- - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
- - TABLE_TYPE_EXPERIMENT: experiment table.
- - TABLE_TYPE_RUN: run table.
     """
-    _params = {
-        "tableType": tableType.value if tableType is not None else None,
-    }
+    _params = None
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/projects/{id}/columns",

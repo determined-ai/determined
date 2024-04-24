@@ -261,6 +261,8 @@ func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, er
 	return getQ, nil
 }
 
+// Updates local id of moved runs
+
 func (a *apiServer) MoveRuns(
 	ctx context.Context, req *apiv1.MoveRunsRequest,
 ) (*apiv1.MoveRunsResponse, error) {
@@ -368,23 +370,20 @@ func (a *apiServer) MoveRuns(
 			return nil, err
 		}
 		failedExpMoveIds := []int32{-1}
+		successExpMoveIds := []int32{-1}
 		for _, res := range expMoveResults {
 			if res.Error != nil {
 				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			} else {
+				successExpMoveIds = append(successExpMoveIds, res.ID)
 			}
-		}
-		var local_id int
-		if err := db.Bun().NewUpdate().Table("projects").
-			Set("max_local_id = max_local_id + 1").Where("id = ?", req.DestinationProjectId).
-			Returning("max_local_id").Scan(ctx, &local_id); err != nil {
-			return nil, fmt.Errorf("updating and returning project max_local_id: %w", err)
 		}
 		var acceptedIDs []int32
 		if _, err = db.Bun().NewUpdate().Table("runs").
 			Set("project_id = ?", req.DestinationProjectId).
-			Set("local_id = ?", local_id).
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(successExpMoveIds)).
 			Returning("runs.id").
 			Model(&acceptedIDs).
 			Exec(ctx); err != nil {
@@ -399,6 +398,7 @@ func (a *apiServer) MoveRuns(
 		}
 		var failedRunIDs []int32
 		if err = db.Bun().NewSelect().Table("runs").
+			Column("id").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
 			Scan(ctx, &failedRunIDs); err != nil {
@@ -408,6 +408,21 @@ func (a *apiServer) MoveRuns(
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Failed to move associated experiment",
 				Id:    failedRunID,
+			})
+		}
+
+		var successRunIDs []int32
+		if err = db.Bun().NewSelect().Table("runs").
+			Column("id").
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id IN (?)", bun.In(successExpMoveIds)).
+			Scan(ctx, &successRunIDs); err != nil {
+			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
+		}
+		for _, successRunID := range successRunIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    successRunID,
 			})
 		}
 	}

@@ -3388,6 +3388,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     experiment?: V1FlatRunExperiment;
+    /**
+     * Project level local id of run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    localId?: string;
 }
 /**
  * 
@@ -7672,6 +7678,12 @@ export interface V1PostProjectRequest {
      * @memberof V1PostProjectRequest
      */
     workspaceId: number;
+    /**
+     * Key for the project.
+     * @type {string}
+     * @memberof V1PostProjectRequest
+     */
+    key?: string;
 }
 /**
  * Response to PostProjectRequest.
@@ -8059,6 +8071,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     errorMessage: string;
+    /**
+     * The key of the project.
+     * @type {string}
+     * @memberof V1Project
+     */
+    key: string;
 }
 /**
  * Project Column is a description of a column used on experiments in the project.
@@ -10156,17 +10174,6 @@ export interface V1StartTrialResponse {
      */
     stepsCompleted: number;
 }
-/**
- * Project Table type.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
- * @export
- * @enum {string}
- */
-export const V1TableType = {
-    UNSPECIFIED: 'TABLE_TYPE_UNSPECIFIED',
-    EXPERIMENT: 'TABLE_TYPE_EXPERIMENT',
-    RUN: 'TABLE_TYPE_RUN',
-} as const
-export type V1TableType = ValueOf<typeof V1TableType>
 /**
  * Task is the model for a task in the database.
  * @export
@@ -19090,11 +19097,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options: any = {}): FetchArgs {
+        getProjectColumns(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -19112,10 +19118,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (tableType !== undefined) {
-                localVarQueryParameter['tableType'] = tableType
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -21696,12 +21698,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, tableType, options);
+        getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22932,12 +22933,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
-            return InternalApiFp(configuration).getProjectColumns(id, tableType, options)(fetch, basePath);
+        getProjectColumns(id: number, options?: any) {
+            return InternalApiFp(configuration).getProjectColumns(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -23809,13 +23809,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
-     * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
-        return InternalApiFp(this.configuration).getProjectColumns(id, tableType, options)(this.fetch, this.basePath)
+    public getProjectColumns(id: number, options?: any) {
+        return InternalApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26921,11 +26920,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options: any = {}): FetchArgs {
+        getProjectColumns(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -26943,10 +26941,6 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (tableType !== undefined) {
-                localVarQueryParameter['tableType'] = tableType
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27331,12 +27325,11 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, tableType, options);
+        getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27538,12 +27531,11 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
-         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
-            return ProjectsApiFp(configuration).getProjectColumns(id, tableType, options)(fetch, basePath);
+        getProjectColumns(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectColumns(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27682,13 +27674,12 @@ export class ProjectsApi extends BaseAPI {
      * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
-     * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectColumns(id, tableType, options)(this.fetch, this.basePath)
+    public getProjectColumns(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
     }
     
     /**
