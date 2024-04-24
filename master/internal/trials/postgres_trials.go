@@ -59,6 +59,8 @@ func generateMetricToColumn(metric string) string {
 	// Max length of a column name in postgres is 63 characters.
 	// Replace longer column names with a metric name prefix (for readability)
 	// and a uuid for randomness.
+	// Replace periods with a unicode dot to avoid postgres interpreting
+	// `val.loss` as `"val"."loss"` identifier.
 	s := strings.ReplaceAll(metric, ".", "·")
 	if len(s) > 62 {
 		uuid := uuid.NewString()
