@@ -11,6 +11,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useEffect, useId } from 'react';
 
 import Link from 'components/Link';
+import { PASSWORD_RULES } from 'constants/passwordRules';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -21,6 +22,8 @@ import userStore from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
+
+import css from './CreateUserModal.module.scss';
 
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
@@ -170,7 +173,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       <Spinner
         spinning={user !== undefined && userRoles?.isNotLoaded && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form form={form} id={idPrefix + FORM_ID}>
+        <Form className={css.createUserModalForm} form={form} id={idPrefix + FORM_ID}>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}
@@ -213,17 +216,13 @@ const CreateUserModalComponent: React.FC<Props> = ({
           )}
           {(!rbacEnabled || !user?.remote) && (
             <Form.Item
+              initialValue=""
               label={USER_PASSWORD_LABEL}
               name={USER_PASSWORD_NAME}
               required
-              validateTrigger={['onSubmit']}>
-              <Input
-                autoFocus
-                data-testid="password"
-                disabled={!!user}
-                maxLength={128}
-                placeholder="User password"
-              />
+              rules={PASSWORD_RULES}
+              validateTrigger={['onSubmit', 'onChange']}>
+              <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
             </Form.Item>
           )}
           {rbacEnabled && canModifyPermissions && (
