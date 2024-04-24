@@ -14,6 +14,7 @@ import CreateUserModalComponent, {
   BUTTON_NAME,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
+  USER_PASSWORD_LABEL,
 } from './CreateUserModal';
 
 vi.mock('services/api', () => ({
@@ -22,6 +23,7 @@ vi.mock('services/api', () => ({
 
 const OPEN_MODAL_TEXT = 'Open Modal';
 const USERNAME = 'test_username1';
+const PASSWORD = 'test_Password1';
 
 const user = userEvent.setup();
 
@@ -63,6 +65,7 @@ describe('Create User Modal', () => {
     await setup();
 
     await user.type(screen.getByLabelText(USER_NAME_LABEL), USERNAME);
+    await user.type(screen.getByLabelText(USER_PASSWORD_LABEL), PASSWORD);
     await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     // Check for successful toast message.
@@ -74,6 +77,7 @@ describe('Create User Modal', () => {
 
     // Check that the API method was called with the correct parameters.
     expect(mockCreateUser).toHaveBeenCalledWith({
+      password: PASSWORD,
       user: { active: true, username: USERNAME },
     });
   });

@@ -39,7 +39,7 @@ const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 const USER_PASSWORD_NAME = 'password';
-const USER_PASSWORD_LABEL = 'User Password';
+export const USER_PASSWORD_LABEL = 'User Password';
 const REMOTE_LABEL =
   'Remote (prevents password sign-on and requires user to sign-on using external IdP)';
 const REMOTE_NAME = 'remote';
