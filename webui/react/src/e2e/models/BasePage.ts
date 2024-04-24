@@ -13,7 +13,7 @@ export interface ModelBasics {
  */
 export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
-  readonly nav: Navigation = new Navigation({ parent: this });
+  readonly nav = new Navigation({ parent: this });
 
   private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? ''));
   private static appTitle = BasePage.isEE
