@@ -46,4 +46,4 @@ prometheus:
 
 kube-state-metrics:
     metricLabelsAllowlist:
-      - pods=[*]
+      - pods=[determined.ai/container_id,determined.ai/experiment_id,determined.ai/resource_pool,determined.ai/task_id,determined.ai/task_type,determined.ai/trial_id,determined.ai/user,determined.ai/workspace]
