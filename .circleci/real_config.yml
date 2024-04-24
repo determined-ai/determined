@@ -4137,10 +4137,12 @@ workflows:
       - build-proto
       - build-helm
       - build-react:
+          name: build-react-oss
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-oss
           requires:
-            - build-go
+            - build-go-oss
           context:
             - playwright
             - github-read
@@ -4150,12 +4152,13 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-oss
           ee: false
           context: github-read
 
       - package-and-push-system-local:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4164,7 +4167,7 @@ workflows:
 
       - package-and-push-system-dev:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4227,9 +4230,10 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-ee
           ee: true
           requires:
-            - build-go
+            - build-go-ee
           context:
             - playwright
             - github-read
@@ -4239,6 +4243,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-ee
           context: github-read
 
       - package-and-push-system-local:
@@ -4344,7 +4349,7 @@ workflows:
               always-run: [true]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4359,7 +4364,7 @@ workflows:
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4374,7 +4379,7 @@ workflows:
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4390,7 +4395,7 @@ workflows:
               always-run: [true]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4407,7 +4412,7 @@ workflows:
               mark: ["e2e_pbs and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4423,7 +4428,7 @@ workflows:
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
@@ -4440,12 +4445,12 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
 
       - test-e2e:
           name: test-e2e-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -4453,7 +4458,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 6
           tf2: true
           mark: e2e_cpu
@@ -4461,7 +4466,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-double
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 3
           tf2: true
           mark: e2e_cpu_2a
@@ -4471,7 +4476,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-oauth
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4480,7 +4485,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
@@ -4489,7 +4494,7 @@ workflows:
       - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 4
           tf2: true
           mark: managed_devcluster
@@ -4501,7 +4506,7 @@ workflows:
       - test-e2e:
           name: test-e2e-multi-k8s
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4512,7 +4517,7 @@ workflows:
       - test-e2e:
           name: test-e2e-port-registry
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4521,7 +4526,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-elastic
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
@@ -4530,7 +4535,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4540,7 +4545,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4550,7 +4555,7 @@ workflows:
       - test-e2e:
           name: test-e2e-old-agent-versions
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -4562,7 +4567,7 @@ workflows:
       - test-e2e:
           name: test-e2e-agent-connection-loss
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -4574,7 +4579,7 @@ workflows:
           context: okta
           name: test-e2e-saml
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
@@ -4584,7 +4589,7 @@ workflows:
           snapshot-after-migrations: true
           deploy-db: false
           requires:
-            - build-go
+            - build-go-ee
           context:
             - perf-tests
             - aws
@@ -5283,6 +5288,7 @@ workflows:
             - build-proto
             - build-helm
       - build-react:
+          name: build-react-ee
           ee: true
       - package-and-push-system-local-ee:
           requires:
