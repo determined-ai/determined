@@ -101,9 +101,9 @@ Default Images
 +-------------+-------------------------------------------------------------------------------+
 | Environment | File Name                                                                     |
 +=============+===============================================================================+
-| CPUs        | ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1``          |
+| CPUs        | ``determinedai/pytorch-tensorflow-cpu-dev:f17151a``          |
 +-------------+-------------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1``       |
+| NVIDIA GPUs | ``determinedai/pytorch-tensorflow-cuda-dev:f17151a``       |
 +-------------+-------------------------------------------------------------------------------+
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``        |
 +-------------+-------------------------------------------------------------------------------+
@@ -132,7 +132,7 @@ Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+   FROM determinedai/pytorch-tensorflow-cuda-dev:f17151a
 
    # Custom Configuration
    RUN apt-get update && \
@@ -195,7 +195,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1
+   FROM determinedai/pytorch-tensorflow-cpu-dev:f17151a
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8
