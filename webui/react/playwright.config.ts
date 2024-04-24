@@ -81,7 +81,7 @@ export default defineConfig({
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    actionTimeout: 5_000,
+    actionTimeout: process.env.CI ? 30_000 : 5_000, // Developing tests locally should be fast, but CI can be slow
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: `http://localhost:${port}/`,
 
