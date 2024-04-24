@@ -2812,7 +2812,7 @@ jobs:
             host: localhost
             port: 5432
             name: determined
-            password: launcher
+            password: ${HPC_DB_PASSWD}
           resource_manager:
             type: slurm
             master_host: $HOSTNAME
@@ -4282,7 +4282,7 @@ workflows:
               host: localhost
               port: 5432
               name: determined
-              password: launcher
+              password: ${HPC_DB_PASSWD}
             resource_manager:
               type: slurm
               master_host: junkmaster
@@ -5219,7 +5219,7 @@ workflows:
               host: localhost
               port: 5432
               name: determined
-              password: launcher
+              password: ${HPC_DB_PASSWD}
             resource_manager:
               type: slurm
               master_host: junkmaster
@@ -5523,7 +5523,7 @@ workflows:
               host: localhost
               port: 5432
               name: determined
-              password: launcher
+              password: ${HPC_DB_PASSWD}
             resource_manager:
               type: slurm
               master_host: $HOSTNAME
@@ -5569,7 +5569,7 @@ workflows:
                   host: localhost
                   port: 5432
                   name: determined
-                  password: launcher
+                  password: ${HPC_DB_PASSWD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 
