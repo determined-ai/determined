@@ -10,7 +10,7 @@ test.describe('Authentication', () => {
   });
   test.afterEach(async ({ page, auth }) => {
     const signInPage = new SignIn(page);
-    if ((await page.title()).indexOf(signInPage.title) > -1) {
+    if ((await page.title()).indexOf(signInPage.title) === -1) {
       await auth.logout();
     }
   });
@@ -62,7 +62,8 @@ test.describe('Authentication', () => {
     await signInPage.goto();
     await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
     await signInPage.detAuth.username.pwLocator.fill('chubbs');
-    await signInPage.detAuth.submit.pwLocator.dblclick();
+    await signInPage.detAuth.submit.pwLocator.click();
+    await signInPage.detAuth.submit.pwLocator.click();
     await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2);
   });
 });
