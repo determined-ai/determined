@@ -189,7 +189,7 @@ func (c TaskContainerDefaultsConfig) Merge(
 	if other.GLOOPortRange != "" {
 		res.GLOOPortRange = other.GLOOPortRange
 	}
-	fmt.Println("checkpoint 1")
+
 	if other.ShmSizeBytes != 0 {
 		res.ShmSizeBytes = other.ShmSizeBytes
 	}
@@ -205,7 +205,6 @@ func (c TaskContainerDefaultsConfig) Merge(
 	if other.GPUPodSpec != nil {
 		res.GPUPodSpec = other.GPUPodSpec.DeepCopy()
 	}
-	fmt.Println("checkpoint 2")
 
 	if other.Image != nil {
 		err := copier.CopyWithOption(&res.Image, other.Image, mergeCopier)

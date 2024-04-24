@@ -497,10 +497,10 @@ func (k ResourceManager) TaskContainerDefaults(
 	var poolConfigOverrides *model.TaskContainerDefaultsConfig
 	for _, pool := range k.poolsConfig {
 		if resourcePoolName.String() == pool.PoolName {
-			if pool.TaskContainerDefaults == nil {
-				break
+			if pool.TaskContainerDefaults != nil {
+				poolConfigOverrides = pool.TaskContainerDefaults
 			}
-			poolConfigOverrides = pool.TaskContainerDefaults
+			break
 		}
 	}
 
