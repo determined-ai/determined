@@ -1463,14 +1463,14 @@ func TestRunLocalID(t *testing.T) {
 		require.NoError(t, db.AddTrial(ctx, trial, task.TaskID))
 
 		// validate local_run_id and max id is correct
-		var localId int
-		err := db.Bun().NewSelect().Table("runs").Column("local_id").Where("id = ?", trial.ID).Scan(ctx, &localId)
+		var localID int
+		err := db.Bun().NewSelect().Table("runs").Column("local_id").Where("id = ?", trial.ID).Scan(ctx, &localID)
 		require.NoError(t, err)
-		require.Equal(t, i, localId)
+		require.Equal(t, i, localID)
 
-		var maxLocalId int
-		err = db.Bun().NewSelect().Table("projects").Column("max_local_id").Where("id = ?", projectID).Scan(ctx, &maxLocalId)
+		var maxLocalID int
+		err = db.Bun().NewSelect().Table("projects").Column("max_local_id").Where("id = ?", projectID).Scan(ctx, &maxLocalID)
 		require.NoError(t, err)
-		require.Equal(t, i, maxLocalId)
+		require.Equal(t, i, maxLocalID)
 	}
 }

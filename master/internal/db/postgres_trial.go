@@ -35,13 +35,13 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("converting trial to run and trialv2: %w", err)
 		}
 
-		var local_id int
+		var localID int
 		if err := tx.NewUpdate().Table("projects").
 			Set("max_local_id = max_local_id + 1").Where("id = ?", run.ProjectID).
-			Returning("max_local_id").Scan(ctx, &local_id); err != nil {
+			Returning("max_local_id").Scan(ctx, &localID); err != nil {
 			return fmt.Errorf("updating and returning project max_local_id: %w", err)
 		}
-		run.LocalID = local_id
+		run.LocalID = localID
 
 		if _, err := tx.NewInsert().Model(run).Returning("id").Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial run model: %w", err)
