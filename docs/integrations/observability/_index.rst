@@ -193,12 +193,12 @@ Monitoring Dashboard
    kubectl -n det-monitoring port-forward svc/monitor-grafana 9000:80
 
 -  Navigate to `127.0.0.1:9000 <http://127.0.0.1:9000>`__. Sign in with the ƒusername ``admin`` and
-   the password you set above. You should see the ``Determined API Server Monitoring`` dashboard.
+   the password you set above. You should visit the ``Determined API Server Monitoring`` dashboard.
 
 ******************
  Metrics
 ******************
-Determined does not produce metrics, rather it uses existing tools to report information. Please see 
+Determined does not produce metrics, rather it uses existing tools to report information. Visit 
 source documentation for details on specific metrics.
 
 API Performance Metrics
@@ -225,7 +225,7 @@ of metrics are scraped by Prometheus
 Health Status
 =====================
 Determined master reports a metric, ``determined_healthy``, with value ``1`` when major dependencies 
-are reachable and ``0`` otherwise. See `alerting <https://github.com/determined-ai/determined/blob/observability_feature_branch/docs/integrations/prometheus/_index.rst#alerts>`__ 
+are reachable and ``0`` otherwise.  Visit `alerting <https://github.com/determined-ai/determined/blob/observability_feature_branch/docs/integrations/prometheus/_index.rst#alerts>`__ 
 for information on how to set up alerts.
 
 Viewing Metrics
@@ -258,9 +258,15 @@ as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id
      - name of the workspace, including ``Uncategorized``
 
 Kubernetes resource metrics and GPU metrics can be broken down by Determined resources by joining data 
-metrics with ``kube_pod_labels`` state metric. Some helpful resources (see PromQL documentation for more details):
+metrics with ``kube_pod_labels`` state metric. Some helpful resources (visit PromQL documentation for more details):
 
 - `joining metrics <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics>`__ 
 from kube-state-metrics
 - `matching vectors <https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching>`__ 
 from Prometheus
+
+.. toctree::
+   :hidden:
+   :glob:
+
+   ./*/_index
