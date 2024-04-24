@@ -5524,7 +5524,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *rc-filters
           requires:
             - package-and-push-system-rc-ee
