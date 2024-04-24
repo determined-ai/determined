@@ -17,6 +17,98 @@ example:
 
    det experiment create config-file.yaml model-directory
 
+.. tabs::
+
+   .. tab::
+
+      about
+
+      Copy the sample experiment configuration file and create your own. The sample contains
+      comments that explain the purpose of sections and options without needing to refer back to the
+      documentation.
+
+   .. tab::
+
+      sample
+
+      .. code:: yaml
+
+          Sample Determined Experiment Configuration File
+          # This YAML file demonstrates various configuration options and parameters.
+
+          application:
+            name: "ExampleApp"
+            version: "1.2.3"
+            description: "This is an example application configuration which covers all possible settings."
+
+         server:
+            host: "localhost"
+            port: 8080
+            timeout: 30
+            endpoints:
+               - path: "/api/v1/users"
+                  method: "GET"
+                  auth_required: true
+               - path: "/api/v1/users"
+                  method: "POST"
+                  auth_required: true
+
+         database:
+            type: "postgresql"
+            host: "db.example.com"
+            port: 5432
+            credentials:
+               username: "user"
+               password: "password"
+            options:
+               pool_size: 10
+               timeout: 5000
+
+         logging:
+            level: "DEBUG"
+            file:
+               path: "/var/log/exampleapp.log"
+               rotation: "daily"
+               max_size: "10MB"
+
+         features:
+            enableFeatureX: true
+            enableFeatureY: false
+            experimentalFeatures:
+               - name: "NewUI"
+                  enabled: true
+                  description: "Enables the new user interface"
+               - name: "DatabaseOptimization"
+                  enabled: false
+                  description: "Optimizes database queries for performance"
+
+         security:
+            encryption: "AES256"
+            api_keys:
+               - "abcdef12345"
+               - "12345abcdef"
+            permissions:
+               admin:
+                  - "read"
+                  - "write"
+                  - "delete"
+               user:
+                  - "read"
+
+         notifications:
+           email:
+             server: "smtp.example.com"
+             port: 587
+             username: "notify@example.com"
+             password: "notify-password"
+           alerts:
+             - type: "error"
+               recipients:
+                 - "admin@example.com"
+             - type: "info"
+               recipients:
+                 - "info@example.com"
+
 ****************
  Training Units
 ****************
