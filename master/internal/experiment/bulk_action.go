@@ -161,6 +161,9 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 	case searchFilter == nil:
 		query = QueryBulkExperiments(query, filters)
 	default:
+		if filters != nil {
+			query = QueryBulkExperiments(query, filters)
+		}
 		query, err = ApplyExperimentFilterToQuery(query, searchFilter, false)
 		if err != nil {
 			return nil, err
@@ -200,6 +203,10 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 func ActivateExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters, searchFilter *string,
 ) ([]ExperimentActionResult, error) {
+	// HACK: ensure only applying action to paused experiments.
+	if searchFilter != nil && filters == nil {
+		filters = &apiv1.BulkExperimentFilters{}
+	}
 	if filters != nil && filters.States == nil {
 		filters.States = []experimentv1.State{experimentv1.State_STATE_PAUSED}
 	}
@@ -209,7 +216,7 @@ func ActivateExperiments(ctx context.Context,
 	}
 
 	var results []ExperimentActionResult
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -230,11 +237,21 @@ func ActivateExperiments(ctx context.Context,
 	return results, nil
 }
 
-// CancelExperiments works on one or many experiments.
-func CancelExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters, searchFilter *string,
+// terminateExperiment handles termination logic for kill/cancel.
+func terminateExperiment(
+	ctx context.Context,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
+	searchFilter *string,
+	terminateFunc func(Experiment) error,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil && filters.States == nil {
+	// HACK: ensure only applying action to paused experiments.
+	if searchFilter != nil && filters == nil {
+		filters = &apiv1.BulkExperimentFilters{}
+		for _, s := range model.NonTerminalStates {
+			filters.States = append(filters.States, model.StateToProto(s))
+		}
+	} else if filters != nil && filters.States == nil {
 		for _, s := range model.NonTerminalStates {
 			filters.States = append(filters.States, model.StateToProto(s))
 		}
@@ -245,7 +262,7 @@ func CancelExperiments(ctx context.Context,
 	}
 
 	var results []ExperimentActionResult
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -271,65 +288,45 @@ func CancelExperiments(ctx context.Context,
 	}
 	for id, ref := range refs {
 		results = append(results, ExperimentActionResult{
-			Error: ref.CancelExperiment(),
+			Error: terminateFunc(ref),
 			ID:    id,
 		})
 	}
 	return results, nil
 }
 
-// KillExperiments works on one or many experiments.
-func KillExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters, searchFilter *string,
+// CancelExperiments works on one or many experiments.
+func CancelExperiments(
+	ctx context.Context,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
+	searchFilter *string,
 ) ([]ExperimentActionResult, error) {
-	if filters != nil && filters.States == nil {
-		for _, s := range model.NonTerminalStates {
-			filters.States = append(filters.States, model.StateToProto(s))
-		}
-	}
-	expIDs, err := editableExperimentIds(ctx, experimentIds, filters, searchFilter)
-	if err != nil {
-		return nil, err
-	}
+	return terminateExperiment(ctx, experimentIds, filters, searchFilter, func(e Experiment) error {
+		return e.CancelExperiment()
+	})
+}
 
-	var results []ExperimentActionResult
-	if filters == nil {
-		for _, originalID := range experimentIds {
-			if !slices.Contains(expIDs, originalID) {
-				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
-					ID:    originalID,
-				})
-			}
-		}
-	}
-
-	refs := make(map[int32]Experiment)
-	for _, expID := range expIDs {
-		ref, ok := ExperimentRegistry.Load(int(expID))
-		if ref == nil || !ok {
-			// For cancel/kill, it's OK if experiment already terminated.
-			results = append(results, ExperimentActionResult{
-				Error: nil,
-				ID:    expID,
-			})
-		} else {
-			refs[expID] = ref
-		}
-	}
-	for id, ref := range refs {
-		results = append(results, ExperimentActionResult{
-			Error: ref.KillExperiment(),
-			ID:    id,
-		})
-	}
-	return results, nil
+// KillExperiments works on one or many experiments.
+func KillExperiments(
+	ctx context.Context,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
+	searchFilter *string,
+) ([]ExperimentActionResult, error) {
+	return terminateExperiment(ctx, experimentIds, filters, searchFilter, func(e Experiment) error {
+		return e.KillExperiment()
+	})
 }
 
 // PauseExperiments works on one or many experiments.
 func PauseExperiments(ctx context.Context,
 	experimentIds []int32, filters *apiv1.BulkExperimentFilters, searchFilter *string,
 ) ([]ExperimentActionResult, error) {
+	// HACK: ensure only applying action to paused experiments.
+	if searchFilter != nil && filters == nil {
+		filters = &apiv1.BulkExperimentFilters{}
+	}
 	if filters != nil && filters.States == nil {
 		filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 	}
@@ -339,7 +336,7 @@ func PauseExperiments(ctx context.Context,
 	}
 
 	var results []ExperimentActionResult
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -532,7 +529,7 @@ func ArchiveExperiments(ctx context.Context,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -634,7 +631,7 @@ func UnarchiveExperiments(ctx context.Context,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -728,7 +725,7 @@ func MoveExperiments(ctx context.Context,
 			validIDs = append(validIDs, check.ID)
 		}
 	}
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
@@ -832,7 +829,7 @@ func BulkUpdateLogRentention(ctx context.Context, database db.DB,
 	if err != nil {
 		return nil, err
 	}
-	if filters == nil {
+	if filters == nil && searchFilter == nil {
 		for _, originalID := range expIDs {
 			if !slices.Contains(editableExperimentIDList, originalID) {
 				results = append(results, ExperimentActionResult{
