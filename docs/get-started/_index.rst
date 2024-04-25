@@ -16,6 +16,12 @@
             </a>
          </div>
          <div class="tile-container">
+            <a class="tile" href="webui-qs.html">
+               <h2 class="tile-title">Run Your First Experiment</h2>
+               <p class="tile-description">Learn how to run your first experiment.</p>
+            </a>
+         </div>
+         <div class="tile-container">
             <a class="tile" href="example-solutions/_index.html">
                <h2 class="tile-title">Examples</h2>
                <p class="tile-description">Get started quickly by using an example machine learning model that has been converted to Determined’s APIs.</p>
