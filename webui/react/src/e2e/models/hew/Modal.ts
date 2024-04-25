@@ -9,6 +9,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  */
 export class Modal extends NamedComponent {
   readonly defaultSelector = '.ant-modal-content';
+  readonly header: ModalHeader = new ModalHeader({ parent: this, selector: '.ant-modal-header' });
   readonly body: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-modal-body' });
   readonly footer: ModalFooter = new ModalFooter({ parent: this, selector: '.ant-modal-footer' });
 }
@@ -18,6 +19,17 @@ export class Modal extends NamedComponent {
  * This constructor represents the footer in hew/src/kit/Modal.tsx.
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this Modal
+ * @param {string} obj.selector - Used instead of `defaultSelector`
+ */
+class ModalHeader extends BaseComponent {
+  readonly title: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-modal-title' });
+}
+
+/**
+ * Returns a representation of the Modal's Footer component from Hew.
+ * This constructor represents the footer in hew/src/kit/Modal.tsx.
+ * @param {object} obj
+ * @param {implementsGetLocator} obj.parent - The parent used to locate this Modal
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 class ModalFooter extends BaseComponent {

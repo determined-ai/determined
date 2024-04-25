@@ -58,6 +58,7 @@ build: build/sp-html.stamp
 .PHONY: xml
 xml: build/sp-xml.stamp
 
+# Uploads the search index to Algolia with a version based roughly on VERSION
 .PHONY: upload-search-index
 upload-search-index: build/sp-xml.stamp
 	python3 deploy/scrape.py --upload

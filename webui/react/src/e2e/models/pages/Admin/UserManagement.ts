@@ -8,6 +8,7 @@ import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { Toast } from 'e2e/models/hew/Toast';
 import { AdminPage } from 'e2e/models/pages/Admin/index';
 
 /**
@@ -16,46 +17,50 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class UserManagement extends AdminPage {
-  readonly title: RegExp = /(Determined|HPE Machine Learning Development Environment)/;
+  readonly title: string = UserManagement.getTitle();
   readonly url: string = 'admin/user-management';
   readonly getRowByID: (value: string) => UserRow;
 
-  readonly #actionRow: BaseComponent = new BaseComponent({
+  readonly #actionRow = new BaseComponent({
     parent: this.pivot.tabContent,
     selector: '[data-testid="actionRow"]',
   });
-  readonly search: BaseComponent = new BaseComponent({
+  readonly search = new BaseComponent({
     parent: this.#actionRow,
     selector: '[data-testid="search"]',
   });
   // TODO do these selects work?
-  readonly filterRole: BaseComponent = new BaseComponent({
+  readonly filterRole = new BaseComponent({
     parent: this.#actionRow,
     selector: '[data-testid="roleSelect"]',
   });
   // TODO do these selects work?
-  readonly filterStatus: BaseComponent = new BaseComponent({
+  readonly filterStatus = new BaseComponent({
     parent: this.#actionRow,
     selector: '[data-testid="statusSelect"]',
   });
-  readonly addUser: BaseComponent = new BaseComponent({
+  readonly addUser = new BaseComponent({
     parent: this.#actionRow,
     selector: '[data-testid="addUser"]',
   });
 
-  readonly table: InteractiveTable<UserRow, UserHeadRow> = new InteractiveTable({
+  readonly table = new InteractiveTable({
     headRowType: UserHeadRow,
     parent: this.pivot.tabContent,
     rowType: UserRow,
   });
-  readonly skeletonTable: SkeletonTable = new SkeletonTable({ parent: this.pivot.tabContent });
+  readonly skeletonTable = new SkeletonTable({ parent: this.pivot.tabContent });
 
-  readonly createUserModal: CreateUserModal = new CreateUserModal({ parent: this });
-  readonly changeUserStatusModal: ChangeUserStatusModal = new ChangeUserStatusModal({
+  readonly createUserModal = new CreateUserModal({ parent: this });
+  readonly changeUserStatusModal = new ChangeUserStatusModal({
     parent: this,
   });
-  readonly setUserRolesModal: SetUserRolesModal = new SetUserRolesModal({ parent: this });
-  readonly addUsersToGroupsModal: AddUsersToGroupsModal = new AddUsersToGroupsModal({
+  readonly setUserRolesModal = new SetUserRolesModal({ parent: this });
+  readonly addUsersToGroupsModal = new AddUsersToGroupsModal({
+    parent: this,
+  });
+  readonly toast = new Toast({
+    attachment: Toast.selectorTopRight,
     parent: this,
   });
 
@@ -72,11 +77,31 @@ export class UserManagement extends AdminPage {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
       return (await row.user.pwLocator.innerText()).includes(name);
     });
+
+    const removeNewLines = (item: string) => item.replace(/(\r\n|\n|\r)/gm, '');
     expect(
       filteredRows,
-      `name:${name}, component:${await this.table.table.rows.pwLocator.allInnerTexts()}`,
+      `name: ${name}
+      users: ${(await this.table.table.rows.user.pwLocator.allInnerTexts()).map(removeNewLines)}
+      table: ${(await this.table.table.rows.pwLocator.allInnerTexts()).map(removeNewLines)}`,
     ).toHaveLength(1);
     return filteredRows[0];
+  }
+
+  /**
+   * Returns a row that matches a given username
+   * @param {string} name - The username to filter UserTable rows by
+   */
+  async getRowByUsernameSearch(name: string): Promise<UserRow> {
+    await this.search.pwLocator.clear();
+    // BUG [INFENG-628] Users page loads slow
+    await expect(this.table.table.rows.pwLocator).not.toHaveCount(1, { timeout: 15_000 });
+    await this.search.pwLocator.fill(name);
+    await expect(this.table.table.rows.pwLocator).toHaveCount(1, { timeout: 15_000 });
+    // await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
+    // await this.search.pwLocator.fill(name);
+    // await expect(this.table.table.rows.pwLocator).toHaveCount(1);
+    return await this.getRowByUsername(name);
   }
 }
 
@@ -88,27 +113,27 @@ export class UserManagement extends AdminPage {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserHeadRow extends HeadRow {
-  readonly user: BaseComponent = new BaseComponent({
+  readonly user = new BaseComponent({
     parent: this,
     selector: '[data-testid="User"]',
   });
-  readonly status: BaseComponent = new BaseComponent({
+  readonly status = new BaseComponent({
     parent: this,
     selector: '[data-testid="Status"]',
   });
-  readonly lastSeen: BaseComponent = new BaseComponent({
+  readonly lastSeen = new BaseComponent({
     parent: this,
     selector: '[data-testid="Last Seen"]',
   });
-  readonly role: BaseComponent = new BaseComponent({
+  readonly role = new BaseComponent({
     parent: this,
     selector: '[data-testid="Role"]',
   });
-  readonly remote: BaseComponent = new BaseComponent({
+  readonly remote = new BaseComponent({
     parent: this,
     selector: '[data-testid="Remote"]',
   });
-  readonly modified: BaseComponent = new BaseComponent({
+  readonly modified = new BaseComponent({
     parent: this,
     selector: '[data-testid="Modified"]',
   });
@@ -124,31 +149,31 @@ class UserHeadRow extends HeadRow {
 class UserRow extends Row {
   // If you're wondering where (1) is, it's the checkbox column (smelly)
   // TODO consider nameplate component
-  readonly user: BaseComponent = new BaseComponent({
+  readonly user = new BaseComponent({
     parent: this,
     selector: '[data-testid="user"]',
   });
-  readonly status: BaseComponent = new BaseComponent({
+  readonly status = new BaseComponent({
     parent: this,
     selector: '[data-testid="status"]',
   });
-  readonly lastSeen: BaseComponent = new BaseComponent({
+  readonly lastSeen = new BaseComponent({
     parent: this,
     selector: '[data-testid="lastSeen"]',
   });
-  readonly role: BaseComponent = new BaseComponent({
+  readonly role = new BaseComponent({
     parent: this,
     selector: '[data-testid="role"]',
   });
-  readonly remote: BaseComponent = new BaseComponent({
+  readonly remote = new BaseComponent({
     parent: this,
     selector: '[data-testid="remote"]',
   });
-  readonly modified: BaseComponent = new BaseComponent({
+  readonly modified = new BaseComponent({
     parent: this,
     selector: '[data-testid="modified"]',
   });
-  readonly actions: UserActionDropdown = new UserActionDropdown({
+  readonly actions = new UserActionDropdown({
     parent: this,
     selector: '[data-testid="actions"]',
   });
@@ -162,15 +187,15 @@ class UserRow extends Row {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class UserActionDropdown extends Dropdown {
-  readonly edit: BaseComponent = new BaseComponent({
+  readonly edit = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('edit'),
   });
-  readonly agent: BaseComponent = new BaseComponent({
+  readonly agent = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('agent'),
   });
-  readonly state: BaseComponent = new BaseComponent({
+  readonly state = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('state'),
   });

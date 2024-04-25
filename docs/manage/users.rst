@@ -62,6 +62,18 @@ are known as remote users.
 
 To find out more, visit :ref:`remote-users`.
 
+.. _password-requirements:
+
+Password Requirements
+=====================
+
+Passwords for non-remote users have the following requirements:
+
+   -  Passwords must be at least 8 characters long (and not None).
+   -  Passwords must contain at least one upper-case letter.
+   -  Passwords must contain at least one lower-case letter.
+   -  Passwords must contain at least one number.
+
 ****************
  Authentication
 ****************

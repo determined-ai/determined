@@ -54,7 +54,7 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 - NPM (>= 9.6.4)
 - Docker (>= 19.03)
 - Helm (>= 3.0.0)
-- protobuf-compiler (>= 3.15)
+- protobuf-compiler (>= 24.3)
 - cURL (>= 7)
 - jq (>= 1.6)
 - socat (>= 1.7)

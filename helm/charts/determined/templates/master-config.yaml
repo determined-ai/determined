@@ -292,6 +292,17 @@ stringData:
       {{- end }}
       {{- end }}
     {{- end}}
+
+    {{- if .Values.retentionPolicy }}
+    retention_policy:
+      {{- if .Values.retentionPolicy.logRetentionDays }}
+      log_retention_days: {{ .Values.retentionPolicy.logRetentionDays }}
+      {{- end }}
+      {{- if .Values.retentionPolicy.schedule }}
+      schedule: {{ .Values.retentionPolicy.schedule | quote }}
+      {{- end }}
+    {{- end }}
+    
   {{- if .Values.logging }}
   {{- if .Values.logging.security }}
   {{- if .Values.logging.security.tls }}

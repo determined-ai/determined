@@ -224,7 +224,7 @@
 -  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
    :ref:`Prometheus <prometheus>` for details.
 
-   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
+   -  ``enable_prometheus``: Whether Prometheus endpoints are present. Defaults to ``true``.
 
 -  ``tensorboardTimeout``: Specifies the duration in seconds before idle TensorBoard instances are
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
@@ -277,5 +277,14 @@
 
    -  ``resource_pools``: The resource pool configuration. See :ref:`resource_pools
       <cluster-resource-pools>` for available configuration options.
+
+-  ``retentionPolicy``: Specifies configuration settings for the retention of trial logs.
+
+   -  ``logRetentionDays``: Specifies the number of days to retain logs for by default. Values
+      should be between ``-1`` and ``32767``. The default value is ``-1``, retaining logs
+      indefinitely. If set to ``0``, logs will be deleted during the next cleanup.
+
+   -  ``schedule``: Specifies the schedule for cleaning up logs. Can be provided as a cron
+      expression or a duration string.
 
 .. include:: ../../_shared/note-dtrain-learn-more.txt

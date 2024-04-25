@@ -19,11 +19,11 @@ export class CreateUserModal extends Modal {
   });
   readonly adminToggle: BaseComponent = new BaseComponent({
     parent: this.body,
-    selector: '[data-testid="isAdmin"] >> button',
+    selector: '[data-testid="isAdmin"] button',
   });
   readonly remoteToggle: BaseComponent = new BaseComponent({
     parent: this.body,
-    selector: '[data-testid="isRemote"] >> button',
+    selector: '[data-testid="isRemote"] button',
   });
   readonly roleSelect: BaseComponent = new BaseComponent({
     parent: this.body,

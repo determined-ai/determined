@@ -72,10 +72,37 @@ class Determined:
     def create_user(
         self, username: str, admin: bool, password: Optional[str] = None, remote: bool = False
     ) -> user.User:
+        """Creates a user.
+
+        The user's credentials may be managed by a remote service (Enterprise edition only),
+        in which case the `remote` argument should be set to `true`, and then SSO should be
+        configured for the user. A remote user has no password and cannot log in except via SSO.
+        Otherwise, a password must be set that meets complexity requirements.
+
+        The complexity requirements are:
+            - Must be at least 8 characters long.
+            - Must contain at least one upper-case letter.
+            - Must contain at least one lower-case letter.
+            - Must contain at least one number.
+
+        Arg:
+            username: username of the user.
+            admin: indicates whether the user is an admin.
+            password: password of the user.
+            remote: indicates whether the user is managed by a remote service.
+
+        Returns:
+            A :class:`~determined.experimental.client.User` of the created user.
+
+        Raises:
+            ValueError: an error describing why the password does not meet complexity requirements.
+        """
         create_user = bindings.v1User(username=username, admin=admin, active=True, remote=remote)
         hashedPassword = None
-        if password is not None:
-            hashedPassword = api.salt_and_hash(password)
+        if not remote:
+            authentication.check_password_complexity(password)
+            if password is not None:
+                hashedPassword = api.salt_and_hash(password)
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         assert resp.user is not None
