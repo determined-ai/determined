@@ -2406,7 +2406,8 @@ jobs:
       - image: cimg/base:stable
     resource_class: gpu.nvidia.small.gen2
     steps:
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: previous
       - run: docker pull determinedai/pytorch-ngc-dev:f17151a
       - run: docker run -it -v /root/project:/root/project --gpus=all --shm-size=2.00gb determinedai/pytorch-ngc-dev:f17151a
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
