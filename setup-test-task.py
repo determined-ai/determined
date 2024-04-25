@@ -17,6 +17,10 @@ parser.add_argument("--rp", type=str, default="default", help="resource pool to 
 args = parser.parse_args()
 
 
+def kctl(ctl_args: List[str]) -> List[str]:
+    return ["kubectl", "--context", args.kctl_context] + ctl_args
+
+
 def call_det_api(args: List[str]) -> str:
     out = subprocess.run(
         ["det", "-u", "admin", "dev", "bindings", "call", "-y"] + args,
@@ -47,10 +51,6 @@ if args.kctl_context:
     assert (
         args.kctl_context in contexts
     ), f"Kubectl context {args.kctl_context} not found in {contexts}"
-    cur = sp.run(["kubectl", "config", "current-context"], stdout=sp.PIPE, text=True)
-    if cur.stdout.strip() != args.kctl_context:
-        print(f"Switching kubectl context to {args.kctl_context}")
-        sp.run(["kubectl", "config", "use-context", args.kctl_context], check=True)
 
 task_id = args.task_id
 if not task_id:
@@ -93,15 +93,16 @@ while not pod_name:
     print(".", end="", flush=True)
     try:
         log_proc = subprocess.run(
-            [
-                "kubectl",
-                "get",
-                "pods",
-                "-l",
-                f"determined.ai/task_id={task_id}",
-                "-o",
-                "jsonpath={.items[0].metadata.name}",
-            ],
+            kctl(
+                [
+                    "get",
+                    "pods",
+                    "-l",
+                    f"determined.ai/task_id={task_id}",
+                    "-o",
+                    "jsonpath={.items[0].metadata.name}",
+                ]
+            ),
             stderr=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
         )
@@ -117,9 +118,7 @@ pod_ip = None
 while not pod_ip:
     print(".", end="", flush=True)
     pod_ip = (
-        subprocess.check_output(
-            ["kubectl", "get", "pod", pod_name, "-o", "jsonpath={.status.podIP}"]
-        )
+        subprocess.check_output(kctl(["get", "pod", pod_name, "-o", "jsonpath={.status.podIP}"]))
         .decode("utf-8")
         .strip()
     )
@@ -127,14 +126,15 @@ while not pod_ip:
 
 pod_port = (
     subprocess.check_output(
-        [
-            "kubectl",
-            "get",
-            "pod",
-            pod_name,
-            "-o",
-            "jsonpath={.spec.containers[0].ports[0].containerPort}",
-        ]
+        kctl(
+            [
+                "get",
+                "pod",
+                pod_name,
+                "-o",
+                "jsonpath={.spec.containers[0].ports[0].containerPort}",
+            ]
+        )
     )
     .decode("utf-8")
     .strip()
@@ -148,7 +148,7 @@ while True:
     print(".", end="", flush=True)
     pod_status = (
         subprocess.check_output(
-            ["kubectl", "get", "pod", pod_name, "-o", "jsonpath={.status.phase}"],
+            kctl(["get", "pod", pod_name, "-o", "jsonpath={.status.phase}"]),
             stderr=subprocess.DEVNULL,
         )
         .decode("utf-8")
@@ -159,7 +159,7 @@ while True:
     time.sleep(0.5)
 
 local_port = 47777
-forward_cmd = ["kubectl", "port-forward", pod_name, f"{local_port}:{pod_port}"]
+forward_cmd = kctl(["port-forward", pod_name, f"{local_port}:{pod_port}"])
 print(f"Port forward: {' '.join(forward_cmd)}")
 time.sleep(3)  # pod ready is not enough
 pforward = subprocess.Popen(forward_cmd, stdout=subprocess.PIPE, text=True)
