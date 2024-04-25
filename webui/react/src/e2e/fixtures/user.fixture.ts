@@ -14,6 +14,7 @@ interface UserArgs {
   username?: string;
   displayName?: string;
   isAdmin?: boolean;
+  password?: string;
 }
 
 export class UserFixture {
@@ -24,12 +25,15 @@ export class UserFixture {
     this.userManagementPage = new UserManagement(page);
   }
 
-  async fillUserForm({ username, displayName, isAdmin }: UserArgs): Promise<void> {
+  async fillUserForm({ username, displayName, isAdmin, password }: UserArgs): Promise<void> {
     if (username !== undefined) {
       await this.userManagementPage.createUserModal.username.pwLocator.fill(username);
     }
     if (displayName !== undefined) {
       await this.userManagementPage.createUserModal.displayName.pwLocator.fill(displayName);
+    }
+    if (password !== undefined) {
+      await this.userManagementPage.createUserModal.password.pwLocator.fill(password);
     }
 
     const checkedAttribute =
@@ -51,16 +55,17 @@ export class UserFixture {
     username = safeName('test-user'),
     displayName,
     isAdmin,
+    password = 'testPassword1',
   }: UserArgs = {}): Promise<User> {
     await this.userManagementPage.addUser.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
-    await this.fillUserForm({ displayName, isAdmin, username });
+    await this.fillUserForm({ displayName, isAdmin, password, username });
     await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
-      'New user with empty password has been created, advise user to reset password as soon as possible.',
+      'New user has been created; advise user to change password as soon as possible.',
     );
     const row = await this.userManagementPage.getRowByUsernameSearch(username);
     const id = await row.getID();

@@ -25,6 +25,10 @@ export class CreateUserModal extends Modal {
     parent: this.body,
     selector: '[data-testid="isRemote"] button',
   });
+  readonly password: BaseComponent = new BaseComponent({
+    parent: this.body,
+    selector: '[data-testid="password"]',
+  });
   readonly roleSelect: BaseComponent = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="roles"]',

@@ -16,6 +16,7 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { assignRolesToUser, patchUser, postUser, removeRolesFromUser } from 'services/api';
+import { V1PatchUser } from 'services/api-ts-sdk';
 import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
@@ -98,7 +99,17 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
     try {
       if (user) {
-        await patchUser({ userId: user.id, userParams: formData });
+        const patchParams: V1PatchUser = {
+          active: formData[ACTIVE_NAME],
+          admin: formData[ADMIN_NAME],
+          displayName: formData[DISPLAY_NAME_NAME],
+          remote: formData[REMOTE_NAME],
+          username: formData[USER_NAME_NAME],
+        };
+        if (formData[USER_PASSWORD_NAME]?.length > 0) {
+          patchParams.password = formData[USER_PASSWORD_NAME];
+        }
+        await patchUser({ userId: user.id, userParams: patchParams });
         if (canModifyPermissions) {
           rolesToAdd.size > 0 &&
             (await assignRolesToUser([{ roleIds: Array.from(rolesToAdd), userId: user.id }]));
@@ -219,7 +230,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
               initialValue=""
               label={USER_PASSWORD_LABEL}
               name={USER_PASSWORD_NAME}
-              required
+              required={!user}
               rules={PASSWORD_RULES}
               validateTrigger={['onSubmit', 'onChange']}>
               <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
