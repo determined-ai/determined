@@ -522,6 +522,7 @@ func TestDeleteRunsNonTerminal(t *testing.T) {
 	}
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
 
 	// delete runs
 	runIDs := []int32{searchResp.Runs[0].Id, searchResp.Runs[1].Id}
@@ -619,9 +620,23 @@ func TestDeleteRunsFilter(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
-	filter := `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
-		`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
-		`"conjunction":"and","kind":"group"},"showArchived":true}`
+	filter := `{
+		"filterGroup": {
+		  "children": [
+			{
+			  "columnName": "hp.test1.test2",
+			  "kind": "field",
+			  "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+			  "operator": "<=",
+			  "type": "COLUMN_TYPE_NUMBER",
+			  "value": 1
+			}
+		  ],
+		  "conjunction": "and",
+		  "kind": "group"
+		},
+		"showArchived": true
+	  }`
 	req := &apiv1.DeleteRunsRequest{
 		RunIds:    []int32{},
 		Filter:    &filter,

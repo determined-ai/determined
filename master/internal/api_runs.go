@@ -31,12 +31,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-type archiveRunOKResult struct {
+type runCandidateResult struct {
 	Archived     bool
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-	State        *bool
+	IsTerminal   *bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -301,7 +301,7 @@ func (a *apiServer) MoveRuns(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	var runChecks []archiveRunOKResult
+	var runChecks []runCandidateResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
@@ -521,9 +521,9 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		return nil, err
 	}
 	// get runs to delete
-	var runChecks []archiveRunOKResult
+	var deleteCandidates []runCandidateResult
 	getQ := getSelectRunsQueryTables().
-		Model(&runChecks).
+		Model(&deleteCandidates).
 		Column("r.id").
 		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
@@ -555,10 +555,10 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range runChecks {
+	for _, check := range deleteCandidates {
 		visibleIDs.Insert(check.ID)
 		switch {
-		case check.State == nil || !*check.State:
+		case check.IsTerminal == nil || !*check.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in a terminal state.",
 				Id:    check.ID,
