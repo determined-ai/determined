@@ -202,16 +202,19 @@ export class UserFixture {
     if (user.isActive === activate) {
       return user;
     }
-    const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username)).actions;
-    await actions.pwLocator.click();
-    if ((await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')) {
-      return user;
-    }
-    await actions.state.pwLocator.click();
-    await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
-      activate ? 'User has been activated' : 'User has been deactivated',
-    );
-    await this.userManagementPage.toast.close.pwLocator.click();
+    await expect(async () => {
+      // user table can flake if running in parrallel
+      const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username)).actions;
+      await actions.pwLocator.click();
+      if ((await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')) {
+        return;
+      }
+      await actions.state.pwLocator.click();
+      await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
+        activate ? 'User has been activated' : 'User has been deactivated',
+      );
+      await this.userManagementPage.toast.close.pwLocator.click();
+    }).toPass({ timeout: 15000 });
     const editedUser = { ...user, isActive: activate };
     users.set(String(user.id), editedUser);
     return editedUser;

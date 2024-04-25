@@ -97,10 +97,13 @@ export class UserManagement extends AdminPage {
    * @param {string} name - The username to filter UserTable rows by
    */
   async getRowByUsernameSearch(name: string): Promise<UserRow> {
-    await this.search.pwLocator.clear();
-    await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
-    await this.search.pwLocator.fill(name);
-    await expect(this.table.table.rows.pwLocator).toHaveCount(1, { timeout: 10000 });
+    await expect(async () => {
+      // user table can flake if running in parrallel
+      await this.search.pwLocator.clear();
+      await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
+      await this.search.pwLocator.fill(name);
+      await expect(this.table.table.rows.pwLocator).toHaveCount(1);
+    }).toPass({ timeout: 15000 });
     return await this.getRowByUsername(name);
   }
 }

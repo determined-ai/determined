@@ -143,9 +143,9 @@ test.describe('User Management', () => {
     });
 
     test.describe('With 10 Users', () => {
-      test.setTimeout(180_000);
       const usernamePrefix = 'test-user-pagination';
       test.beforeAll(async ({ browser }) => {
+        test.setTimeout(180_000);
         const pageSetupTeardown = await browser.newPage();
         const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
         const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
@@ -208,7 +208,7 @@ test.describe('User Management', () => {
             await userManagementPage.table.table.noData.pwLocator.waitFor();
             await userManagementPage.table.table.pagination.pwLocator.waitFor();
             // if we see these elements, we should fail the test
-            fail();
+            throw new Error('Expected table to have data and no pagination');
           } catch (error) {
             // if we see a timeout error, that means we don't see "no data"
             if (!(error instanceof playwright.errors.TimeoutError)) {
