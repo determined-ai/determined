@@ -2403,9 +2403,12 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:748dda4
+      - image: cimg/base:stable
     resource_class: determined-ai/container-runner-gpu
     steps:
+      - setup_remote_docker
+      - run: docker pull determinedai/pytorch-ngc-dev:f17151a
+      - run: docker run -it -v /root/project:/root/project --gpus=all --shm-size=2.00gb determinedai/pytorch-ngc-dev:f17151a
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
       - add-and-fetch-upstream
