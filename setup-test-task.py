@@ -1,20 +1,71 @@
 import argparse
+import json
 import re
 import subprocess
+import subprocess as sp
 import time
+from typing import List
 
 import termcolor
 
+import determined as det
+
 parser = argparse.ArgumentParser(description="Setup a test task")
-# optionally get a task id
 parser.add_argument("--task-id", help="Task ID to use")
+parser.add_argument("--kctl-context", type=str, default="kind-kind", help="Kubectl context to use")
+parser.add_argument("--rp", type=str, default="default", help="resource pool to use")
 args = parser.parse_args()
+
+
+def call_det_api(args: List[str]) -> str:
+    out = subprocess.run(
+        ["det", "-u", "admin", "dev", "bindings", "call", "-y"] + args,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+    return out.stdout
+
+
+def get_det_k8s_contexts() -> List[str]:
+    # get configured k8s clusters
+    mconfig = json.loads(call_det_api(["get_GetMasterConfig"]))["config"]
+    rm = mconfig["resource_manager"]
+    assert rm["type"] == "kubernetes"
+    default_context_name = rm["name"]
+    configured_contexts = [default_context_name]
+    addl = mconfig.get("additional_resource_managers") or []
+    for addl_rm in addl:
+        addl_rm = addl_rm["resource_manager"]
+        if addl_rm["type"] == "kubernetes":
+            configured_contexts.append(addl_rm["name"])
+    return configured_contexts
+
+
+if args.kctl_context:
+    contexts = get_det_k8s_contexts()
+    assert (
+        args.kctl_context in contexts
+    ), f"Kubectl context {args.kctl_context} not found in {contexts}"
+    cur = sp.run(["kubectl", "config", "current-context"], stdout=sp.PIPE, text=True)
+    if cur.stdout.strip() != args.kctl_context:
+        print(f"Switching kubectl context to {args.kctl_context}")
+        sp.run(["kubectl", "config", "use-context", args.kctl_context], check=True)
 
 task_id = args.task_id
 if not task_id:
+    req_config = {"slots": 0, "resource_pool": args.rp}
     task_id = (
         subprocess.check_output(
-            ["det", "notebook", "start", "--config", 'resources={"slots":0}', "-d", "--no-browser"]
+            [
+                "det",
+                "notebook",
+                "start",
+                "--config",
+                f"resources={json.dumps(req_config)}",
+                "-d",
+                "--no-browser",
+            ]
         )
         .decode("utf-8")
         .strip()
@@ -97,7 +148,8 @@ while True:
     print(".", end="", flush=True)
     pod_status = (
         subprocess.check_output(
-            ["kubectl", "get", "pod", pod_name, "-o", "jsonpath={.status.phase}"]
+            ["kubectl", "get", "pod", pod_name, "-o", "jsonpath={.status.phase}"],
+            stderr=subprocess.DEVNULL,
         )
         .decode("utf-8")
         .strip()
@@ -109,11 +161,20 @@ while True:
 local_port = 47777
 forward_cmd = ["kubectl", "port-forward", pod_name, f"{local_port}:{pod_port}"]
 print(f"Port forward: {' '.join(forward_cmd)}")
+time.sleep(3)  # pod ready is not enough
 pforward = subprocess.Popen(forward_cmd, stdout=subprocess.PIPE, text=True)
 while True:
     line = pforward.stdout.readline()
     if "forwarding from" in line.lower():
         break
+
+# wait for the local port to be ready. nc -vz
+while True:
+    print(".", end="", flush=True)
+    nc_proc = subprocess.run(["nc", "-vz", "localhost", str(local_port)], stderr=subprocess.PIPE)
+    if nc_proc.returncode == 0:
+        break
+    time.sleep(0.5)
 
 interests = [
     ["curl", "-s", f"http://{pod_ip}:{pod_port}/", "-m", "1"],
@@ -131,4 +192,5 @@ for cmd in interests:
     return_code = finished_proc.returncode
     print(f"Return code: {return_code}, Got HTML: {got_html}")
 
+input("Press Enter to cleanup")
 pforward.terminate()
