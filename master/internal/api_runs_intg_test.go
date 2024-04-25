@@ -743,3 +743,15 @@ func TestDeleteRunsOverfillInput(t *testing.T) {
 	_, err := api.DeleteRuns(ctx, req)
 	require.Equal(t, expectedError, err)
 }
+
+func TestDeleteRunsNoInput(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	req := &apiv1.DeleteRunsRequest{
+		RunIds:    []int32{},
+		ProjectId: 1,
+	}
+	resp, err := api.DeleteRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 0)
+}
