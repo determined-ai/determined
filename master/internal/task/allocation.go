@@ -1071,19 +1071,21 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			continue
 		}
 
-		goesThroughIngress := false
+		goesThroughIngress := true
 
 		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
 		path := ""
 
+		localSocatPort := 47777
 		address.HostIP = "127.0.0.1"
-		address.HostPort = 47777
+		address.HostPort = localSocatPort
 		a.req.ProxyTLS = false
+
 		if goesThroughIngress {
 			// if ingress
 			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
 			address.HostIP = "127.0.0.1"
-			address.HostPort = 80
+			address.HostPort = localSocatPort
 			if a.req.ProxyTLS {
 				address.HostPort = 443
 			}
