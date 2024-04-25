@@ -990,3 +990,24 @@ func TestArchiveUnarchiveOverfilledInput(t *testing.T) {
 	_, err = api.UnarchiveRuns(ctx, unarchReq)
 	require.Equal(t, expectedError, err)
 }
+
+func TestArchiveUnarchiveNoInput(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	// Archive runs
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    []int32{},
+		ProjectId: 1,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 0)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    []int32{},
+		ProjectId: 1,
+	}
+	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 0)
+}

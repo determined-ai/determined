@@ -36,7 +36,7 @@ type runCandidateResult struct {
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-	IsTerminal   *bool
+	IsTerminal   bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -525,7 +525,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	getQ := getSelectRunsQueryTables().
 		Model(&deleteCandidates).
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
@@ -558,7 +558,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	for _, check := range deleteCandidates {
 		visibleIDs.Insert(check.ID)
 		switch {
-		case check.IsTerminal == nil || !*check.IsTerminal:
+		case !check.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in a terminal state.",
 				Id:    check.ID,
@@ -662,15 +662,15 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 		return nil, err
 	}
 
-	var runChecks []archiveRunOKResult
+	var runCandidates []runCandidateResult
 	query := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
-		Model(&runChecks).
+		Model(&runCandidates).
 		Column("r.id").
 		Column("r.archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("false as is_multitrial").
-		ColumnExpr("r.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -700,7 +700,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range runChecks {
+	for _, check := range runCandidates {
 		visibleIDs.Insert(check.ID)
 		switch {
 		case check.Archived && archive:
@@ -713,7 +713,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 				Error: "",
 				Id:    check.ID,
 			})
-		case !check.State:
+		case !check.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in terminal state.",
 				Id:    check.ID,
