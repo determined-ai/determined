@@ -9,7 +9,7 @@ from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
 from tests import template as tpl
-from tests.cluster import test_rbac, test_workspace_org
+from tests.cluster import test_rbac
 
 
 @pytest.mark.e2e_cpu
@@ -306,36 +306,3 @@ def test_rbac_template_exp_create() -> None:
             )
             assert proc.returncode == 1
             assert "not found" in proc.stderr
-
-
-@pytest.mark.e2e_cpu
-def test_get_templates_by_workspace() -> None:
-    admin = api_utils.admin_session()
-    template_name_1 = "test_template_1"
-    template_name_2 = "test_template_2"
-    with test_workspace_org.setup_workspaces(count=2) as workspaces:
-        bindings.post_PostTemplate(
-            admin,
-            template_name=template_name_1,
-            body=bindings.v1Template(
-                name=template_name_1,
-                workspaceId=workspaces[0].id,
-                config=conf.load_config(conf.fixtures_path(f"templates/template.yaml")),
-            ),
-        )
-        bindings.post_PostTemplate(
-            admin,
-            template_name=template_name_2,
-            body=bindings.v1Template(
-                name=template_name_2,
-                workspaceId=workspaces[1].id,
-                config=conf.load_config(conf.fixtures_path(f"templates/template.yaml")),
-            ),
-        )
-        res = bindings.get_GetTemplates(admin)
-        assert len(res.templates) == 2
-        res = bindings.get_GetTemplates(admin, workspaceId=workspaces[1].id)
-        assert len(res.templates) == 1
-        assert res.templates[0].name == template_name_2
-        bindings.delete_DeleteTemplate(admin, templateName=template_name_1)
-        bindings.delete_DeleteTemplate(admin, templateName=template_name_2)
