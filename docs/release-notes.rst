@@ -17,9 +17,9 @@ Version 0.31.0
 
 **Breaking Changes**
 
--  SAML: The underlying SAML *(Enterprise edition only)* implementation has been updated to use a
-   newer, more maintained library. As a result, the master config no longer accepts the
-   ``idp_cert_path`` field and now requires the ``idp_metadata_url`` field when using SAML.
+-  SAML: The underlying SAML implementation has been updated to use a newer, more maintained
+   library. As a result, the master config no longer accepts the ``idp_cert_path`` field and now
+   requires the ``idp_metadata_url`` field when using SAML.
 
 **New Features**
 
