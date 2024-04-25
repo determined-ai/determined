@@ -313,6 +313,17 @@ def call_bindings(args: argparse.Namespace) -> None:
         )
 
 
+def execute_with_session(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+
+    original_argv = sys.argv
+    sys.argv = ["det-cli"] + args.args
+    with open(args.script, "r") as file:
+        script_content = file.read()
+    exec(script_content, {"cli_session": sess, "global_session": sess})
+    sys.argv = original_argv
+
+
 args_description = [
     cli.Cmd(
         "dev",
@@ -320,6 +331,19 @@ args_description = [
         argparse.SUPPRESS,
         [
             cli.Cmd("auth-token", token, "print the active user's auth token", []),
+            cli.Cmd(
+                "execute",
+                execute_with_session,
+                "execute a python script with pre-configured session: `cli_session`",
+                [
+                    cli.Arg("script", help="path to the script to execute"),
+                    cli.Arg(
+                        "args",
+                        nargs=argparse.REMAINDER,
+                        help="arguments to pass to the function, positional or kw=value",
+                    ),
+                ],
+            ),
             cli.Cmd(
                 "c|url",
                 curl,
