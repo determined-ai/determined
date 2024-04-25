@@ -13,101 +13,101 @@ The behavior of an experiment is configured via a YAML file. A configuration fil
 passed as a command-line argument when an experiment is created with the Determined CLI. For
 example:
 
-.. code::
-
-   det experiment create config-file.yaml model-directory
-
 .. tabs::
 
    .. tab::
 
-      about
+      example
 
-      Copy the sample experiment configuration file and create your own. The sample contains
-      comments that explain the purpose of sections and options without needing to refer back to the
-      documentation.
+      .. code::
+
+         det experiment create config-file.yaml model-directory
 
    .. tab::
 
-      sample
+      example with various configuration options
+
+      This sample contains comments that explain the purpose of sections and options without needing
+      to refer back to the documentation.
 
       .. code:: yaml
 
-          Sample Determined Experiment Configuration File
-          # This YAML file demonstrates various configuration options and parameters.
+         # Sample YAML configuration file for experiment settings
 
-          application:
-            name: "ExampleApp"
-            version: "1.2.3"
-            description: "This is an example application configuration which covers all possible settings."
+         # The unique name of the experiment
+         name: sample_experiment_name
 
-         server:
-            host: "localhost"
-            port: 8080
-            timeout: 30
-            endpoints:
-               - path: "/api/v1/users"
-                  method: "GET"
-                  auth_required: true
-               - path: "/api/v1/users"
-                  method: "POST"
-                  auth_required: true
+         # Maximum number of times the experiment is allowed to restart upon failure
+         max_restarts: 2
 
-         database:
-            type: "postgresql"
-            host: "db.example.com"
-            port: 5432
-            credentials:
-               username: "user"
-               password: "password"
-            options:
-               pool_size: 10
-               timeout: 5000
+         # The environment settings for the experiment
+         environment:
+         # Docker image to use for the GPU environment
+         image:
+            gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
 
-         logging:
-            level: "DEBUG"
-            file:
-               path: "/var/log/exampleapp.log"
-               rotation: "daily"
-               max_size: "10MB"
+         # Resources allocated for the experiment
+         resources:
+         # Number of GPU slots allocated per trial
+         slots_per_trial: 4
+         # Size of shared memory for the trial (in bytes)
+         shm_size: 4294967296 # 4 GiB
 
-         features:
-            enableFeatureX: true
-            enableFeatureY: false
-            experimentalFeatures:
-               - name: "NewUI"
-                  enabled: true
-                  description: "Enables the new user interface"
-               - name: "DatabaseOptimization"
-                  enabled: false
-                  description: "Optimizes database queries for performance"
+         # Configuration for the experiment's search algorithm
+         searcher:
+         # Type of search algorithm used
+         name: adaptive
+         # The main metric to optimize
+         metric: validation_accuracy
+         # Maximum steps or epochs for the search
+         max_length:
+            epochs: 100
 
-         security:
-            encryption: "AES256"
-            api_keys:
-               - "abcdef12345"
-               - "12345abcdef"
-            permissions:
-               admin:
-                  - "read"
-                  - "write"
-                  - "delete"
-               user:
-                  - "read"
+         # Hyperparameters for the model
+         hyperparameters:
+         # Name of the model used in the experiment
+         model_name: resnet50
+         # Learning rate for the optimizer
+         learning_rate:
+            type: double
+            min: 0.001
+            max: 0.1
+         # Batch size for training
+         batch_size:
+            type: categorical
+            vals: [16, 32, 64]
 
+         # Entrypoint for the experiment; command to start the experiment
+         entrypoint:
+         - python3
+         - -m
+         - determined.launch
+         - --trial
+         - model_def:TrialDefinition
+
+         # Optional: Checkpoint storage configuration
+         checkpoint_storage:
+         # Type of storage used for saving checkpoints (e.g., shared file system, S3)
+         type: shared_fs
+         # Host path to store checkpoints
+         host_path: /path/to/checkpoints
+         # Optional: Storage bucket for cloud-based checkpoint storage
+         storage_bucket: my-checkpoint-bucket
+
+         # Optional: Data layer configuration for efficient data handling
+         data_layer:
+         # Type of data layer used (e.g., local, shared)
+         type: local
+         # Path to the data if local data layer is used
+         local_cache_dir: /path/to/local/cache
+
+         # Optional: Configuration for handling notifications about the experiment
          notifications:
-           email:
-             server: "smtp.example.com"
-             port: 587
-             username: "notify@example.com"
-             password: "notify-password"
-           alerts:
-             - type: "error"
-               recipients:
-                 - "admin@example.com"
-             - type: "info"
-               recipients:
-                 - "info@example.com"
+         # Whether to send email notifications
+         email: true
+         # List of email addresses to notify
+         email_addresses:
+            - user@example.com
 
 ****************
  Training Units
