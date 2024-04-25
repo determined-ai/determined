@@ -1071,13 +1071,20 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			continue
 		}
 
+		goesThroughIngress := true
+
 		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
 		path := ""
 
-		// if ingress
-		path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
-		address.HostIP = "127.0.0.1"
-		address.HostPort = 80
+		if goesThroughIngress {
+			// if ingress
+			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
+			address.HostIP = "127.0.0.1"
+			address.HostPort = 80
+			if a.req.ProxyTLS {
+				address.HostPort = 443
+			}
+		}
 
 		// We are keying on allocation id instead of container id. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
@@ -1085,7 +1092,6 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		urlScheme := "http"
 		if a.req.ProxyTLS {
 			urlScheme = "https"
-			address.HostPort = 443
 		}
 
 		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
