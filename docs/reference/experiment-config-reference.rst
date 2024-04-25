@@ -32,82 +32,92 @@ example:
 
       .. code:: yaml
 
-         # Sample YAML configuration file for experiment settings
+         # Sample YAML configuration file for an extensive experiment setup
 
-         # The unique name of the experiment
-         name: sample_experiment_name
+         metadata:
+         # Metadata for the experiment for easy identification and management
+            name: sample_experiment_name
+            description: "An example experiment configuration demonstrating various options."
+            tags:
+               - deep learning
+               - experiment
 
+         max_restarts: 3
          # Maximum number of times the experiment is allowed to restart upon failure
-         max_restarts: 2
 
-         # The environment settings for the experiment
          environment:
-         # Docker image to use for the GPU environment
-         image:
-            gpu: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+         # Environment settings specifying the runtime environment
+            image:
+               gpu: "determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1"
 
-         # Resources allocated for the experiment
          resources:
-         # Number of GPU slots allocated per trial
-         slots_per_trial: 4
-         # Size of shared memory for the trial (in bytes)
-         shm_size: 4294967296 # 4 GiB
+         # Resources used by the experiment
+            slots_per_trial: 4
+            max_slots: 8
+            shm_size: 4294967296 # 4 GiB, shared memory size for the trial
 
-         # Configuration for the experiment's search algorithm
          searcher:
-         # Type of search algorithm used
-         name: adaptive
-         # The main metric to optimize
-         metric: validation_accuracy
-         # Maximum steps or epochs for the search
-         max_length:
-            epochs: 100
+         # Searcher configuration detailing the search strategy and objective
+            name: adaptive_asha
+            metric: "validation_loss"
+            max_length:
+               epochs: 50
+            smaller_is_better: true
 
-         # Hyperparameters for the model
          hyperparameters:
-         # Name of the model used in the experiment
-         model_name: resnet50
-         # Learning rate for the optimizer
-         learning_rate:
-            type: double
-            min: 0.001
-            max: 0.1
-         # Batch size for training
-         batch_size:
-            type: categorical
-            vals: [16, 32, 64]
+         # Hyperparameters for the model training
+            learning_rate:
+               type: double
+               min: 0.001
+               max: 0.1
+            batch_size:
+               type: categorical
+               vals:
+                  - 16
+                  - 32
+                  - 64
+                  - 128
 
-         # Entrypoint for the experiment; command to start the experiment
-         entrypoint:
-         - python3
-         - -m
-         - determined.launch
-         - --trial
-         - model_def:TrialDefinition
-
-         # Optional: Checkpoint storage configuration
          checkpoint_storage:
-         # Type of storage used for saving checkpoints (e.g., shared file system, S3)
-         type: shared_fs
-         # Host path to store checkpoints
-         host_path: /path/to/checkpoints
-         # Optional: Storage bucket for cloud-based checkpoint storage
-         storage_bucket: my-checkpoint-bucket
+         # Checkpoint storage configuration detailing where and how checkpoints are stored
+            type: shared_fs
+            host_path: "/mnt/checkpoints"
+            storage_bucket: "my-checkpoint-bucket"
 
-         # Optional: Data layer configuration for efficient data handling
          data_layer:
-         # Type of data layer used (e.g., local, shared)
-         type: local
-         # Path to the data if local data layer is used
-         local_cache_dir: /path/to/local/cache
+         # Data layer configuration for efficient data handling
+            type: local
+            local_cache_dir: "/mnt/data_cache"
 
-         # Optional: Configuration for handling notifications about the experiment
+         arbitrary_scripts:
+         # Configuration for arbitrary scripts that can be run as part of the experiment setup
+            pre_experiment:
+               - "python prepare_data.py"
+            post_experiment:
+               - "python cleanup.py"
+
          notifications:
-         # Whether to send email notifications
-         email: true
-         # List of email addresses to notify
-         email_addresses:
-            - user@example.com
+         # Notifications about the experiment status
+            email: true
+            email_addresses:
+               - "user@example.com"
+
+         training_units:
+         # Additional notes on training units and their limitations
+            description: "Details limitations or special considerations regarding training units."
+
+         external_storage:
+         # Example section showing how to configure various external storage options
+            s3:
+               bucket_name: "my-s3-bucket"
+               access_key_id: "ABCDEF123456XYZ"
+               secret_access_key: "SecretKeyHere"
+            gcs:
+               bucket_name: "my-gcs-bucket"
+               project_id: "my-google-project"
+            azure:
+               container_name: "my-azure-container"
+               connection_string: "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=..."
 
 ****************
  Training Units
