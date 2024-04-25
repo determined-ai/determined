@@ -359,7 +359,7 @@
           "refId": "A"
         }
       ],
-      "title": "Pods Pending with GPU Requested by Task Type",
+      "title": "Pods Pending with GPU Requested by Task Type, Resource Pool",
       "type": "timeseries"
     },
     {
@@ -458,7 +458,7 @@
           "refId": "A"
         }
       ],
-      "title": "Pods Running with GPU Requested by Task Type",
+      "title": "Pods Running with GPU Requested by Task Type, Resource Pool",
       "type": "timeseries"
     },
     {
@@ -557,7 +557,7 @@
           "refId": "A"
         }
       ],
-      "title": "Pods Failed with GPU Requested by Task Type",
+      "title": "Pods Failed with GPU Requested by Task Type, Resource Pool",
       "type": "timeseries"
     },
     {
