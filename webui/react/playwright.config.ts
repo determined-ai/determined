@@ -6,6 +6,12 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+const serverAddess = process.env.PW_SERVER_ADDRESS
+if (serverAddess === undefined) {
+  throw new Error('Expected PW_SERVER_ADDRESS to be set.')
+}
+const port = Number(new URL(serverAddess).port || '3001')
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -18,7 +24,7 @@ export default defineConfig({
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
   globalTimeout: process.env.PWDEBUG ? 0 : 5 * 60 * 1000, // 3 min unless debugging
-  timeout: 60000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
+  timeout: 90000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
 
@@ -75,7 +81,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3001/',
+    baseURL: `http://localhost:${port}/`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',
@@ -85,7 +91,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run preview',
-    port: 3001,
+    port: port,
     reuseExistingServer: !process.env.CI,
   },
 

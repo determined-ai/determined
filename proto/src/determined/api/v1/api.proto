@@ -2532,4 +2532,26 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get a list of runs.
+  rpc KillRuns(KillRunsRequest) returns (KillRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/kill"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Delete a list of runs.
+  rpc DeleteRuns(DeleteRunsRequest) returns (DeleteRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

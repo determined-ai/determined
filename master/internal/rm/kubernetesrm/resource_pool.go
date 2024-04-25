@@ -197,7 +197,7 @@ func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) e
 		if it.Value().JobID == msg.JobID {
 			req := it.Value()
 			if id, ok := k.allocationIDToContainerID[req.AllocationID]; ok {
-				k.podsService.ChangePriority(ChangePriority{PodID: id})
+				k.podsService.ChangePriority(id)
 				delete(k.allocationIDToContainerID, req.AllocationID)
 			}
 		}
@@ -411,7 +411,7 @@ func (k *kubernetesResourcePool) moveJob(
 		return fmt.Errorf("job with ID %s has no valid containerID", jobID)
 	}
 
-	k.podsService.ChangePosition(ChangePosition{PodID: containerID})
+	k.podsService.ChangePosition(containerID)
 
 	return nil
 }
@@ -728,9 +728,7 @@ func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
 
 // Kill notifies the pods actor that it should stop the pod.
 func (p k8sPodResources) Kill(_ logger.Context) {
-	p.podsService.KillPod(KillTaskPod{
-		PodID: p.containerID,
-	})
+	p.podsService.KillPod(p.containerID)
 }
 
 func (p k8sPodResources) Persist() error {

@@ -23,12 +23,13 @@ master and agent running on the same machine within WSL.
 -  WSL 2 `installed and enabled <https://learn.microsoft.com/en-us/windows/wsl/install>`_ on your
    Windows machine.
 
--  An Ubuntu or an Enterprise Linux WSL distribution installed from the Microsoft Store, such as:
+-  An Ubuntu or an Enterprise Linux WSL distribution installed from the `Microsoft Store
+   <https://apps.microsoft.com/home>`_, such as:
 
-      -  `Ubuntu 22.04 LTS <https://apps.microsoft.com/detail/9PDXGNCFSCZV>`_
-      -  `AlmaLinux 9 <https://apps.microsoft.com/detail/9P5RWLM70SN9>`_
-      -  `Oracle Linux 9 <https://apps.microsoft.com/detail/9mxq65hlmc27>`_
-      -  `Pengwin Enterprise <https://apps.microsoft.com/detail/9P70GX2HQNHN>`_
+   -  Ubuntu 22.04 LTS
+   -  AlmaLinux 9
+   -  Oracle Linux 9
+   -  Pengwin Enterprise
 
 -  `systemd enabled <https://learn.microsoft.com/en-us/windows/wsl/wsl-config#systemd-support>`_
    within your chosen WSL distribution.

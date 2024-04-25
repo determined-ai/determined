@@ -10,22 +10,22 @@ import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
  * @param {CanBeParent} obj.parent - The parent used to locate this NavigationSideBar
  */
 export class NavigationSideBar extends BaseReactFragment {
-  readonly #nav: BaseComponent = new BaseComponent({
+  readonly #nav = new BaseComponent({
     parent: this,
     selector: '[data-testid="navSidebar"]',
   });
-  readonly headerDropdown: HeaderDropdown = new HeaderDropdown({
+  readonly headerDropdown = new HeaderDropdown({
     parent: this.#nav,
     selector: '[data-testid="headerDropdown"]',
   });
-  readonly home: BaseComponent = this.sidebarItem('Home');
-  readonly uncategorized: BaseComponent = this.sidebarItem('Uncategorized');
-  readonly modelRegistry: BaseComponent = this.sidebarItem('Model Registry');
-  readonly tasks: BaseComponent = this.sidebarItem('Tasks');
-  readonly webhooks: BaseComponent = this.sidebarItem('Webhooks');
-  readonly cluster: BaseComponent = this.sidebarItem('Cluster');
-  readonly workspaces: BaseComponent = this.sidebarItem('Workspaces');
-  readonly createWorkspace: BaseComponent = new BaseComponent({
+  readonly home = this.sidebarItem('Home');
+  readonly uncategorized = this.sidebarItem('Uncategorized');
+  readonly modelRegistry = this.sidebarItem('Model Registry');
+  readonly tasks = this.sidebarItem('Tasks');
+  readonly webhooks = this.sidebarItem('Webhooks');
+  readonly cluster = this.sidebarItem('Cluster');
+  readonly workspaces = this.sidebarItem('Workspaces');
+  readonly createWorkspace = new BaseComponent({
     parent: this.#nav,
     selector: 'span[aria-label="Create workspace"]',
   });
@@ -40,30 +40,30 @@ export class NavigationSideBar extends BaseReactFragment {
       selector: `a[aria-label="${label}"]`,
     });
   }
-  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
+  readonly actionMenu = new WorkspaceActionDropdown({
     parent: this.#nav,
     selector: '', // no open-menu button, only right click on sidebar item to open
   });
   // TODO the rest of the sidebar items
   // TODO nameplate with parent = this.headerDropdown
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
-  // TODO readonly userSettings: UserSettings = new UserSettings({ parent: this });
+  // TODO readonly userSettings= new UserSettings({ parent: this });
 }
 
 class HeaderDropdown extends Dropdown {
-  readonly admin: BaseComponent = new BaseComponent({
+  readonly admin = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('admin'),
   });
-  readonly settings: BaseComponent = new BaseComponent({
+  readonly settings = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('settings'),
   });
-  readonly theme: BaseComponent = new BaseComponent({
+  readonly theme = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('theme-toggle'),
   });
-  readonly signOut: BaseComponent = new BaseComponent({
+  readonly signOut = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('sign-out'),
   });

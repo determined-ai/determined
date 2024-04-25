@@ -510,18 +510,29 @@ func (a *ResourceManager) SetGroupWeight(msg sproto.SetGroupWeight) error {
 // TaskContainerDefaults implements rm.ResourceManager.
 func (a *ResourceManager) TaskContainerDefaults(
 	resourcePoolName rm.ResourcePoolName,
-	fallbackConfig model.TaskContainerDefaultsConfig,
+	defaultConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
-	result := fallbackConfig
+	result := defaultConfig
+
 	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+	var poolConfigOverrides *model.TaskContainerDefaultsConfig
 	for _, pool := range a.poolsConfig {
 		if resourcePoolName.String() == pool.PoolName {
-			if pool.TaskContainerDefaults == nil {
-				break
+			if pool.TaskContainerDefaults != nil {
+				poolConfigOverrides = pool.TaskContainerDefaults
 			}
-			result = *pool.TaskContainerDefaults
+			break
 		}
 	}
+
+	if poolConfigOverrides != nil {
+		tmp, err := result.Merge(*poolConfigOverrides)
+		if err != nil {
+			return model.TaskContainerDefaultsConfig{}, err
+		}
+		result = tmp
+	}
+
 	return result, nil
 }
 

@@ -1,30 +1,29 @@
 import { expect } from '@playwright/test';
-import { v4 } from 'uuid';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
+import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
-  test.setTimeout(120000);
+  test.setTimeout(120_000);
   let wsCreatedWithButton: string = '';
   let wsCreatedWithSidebar: string = '';
   const createWorkspaceAllFields = async function (
     modal: WorkspaceCreateModal,
     wsNamePrefix: string,
   ): Promise<string> {
-    const uuid = v4();
-    const fullName = `${wsNamePrefix}-${uuid}`;
+    const fullName = safeName(wsNamePrefix);
     await modal.workspaceName.pwLocator.fill(fullName);
 
-    const randId = () => Math.floor(Math.random() * 10).toString();
     await modal.useAgentUser.switch.pwLocator.click();
-    await modal.agentUid.pwLocator.fill(randId());
-    await modal.agentUser.pwLocator.fill(`user-${uuid}`);
+    await modal.agentUid.pwLocator.fill(randId().toString());
+    await modal.agentUser.pwLocator.fill(safeName('user'));
 
     await modal.useAgentGroup.switch.pwLocator.click();
-    await modal.agentGid.pwLocator.fill(randId());
-    await modal.agentGroup.pwLocator.fill(`group-${uuid}`);
+    await modal.agentGid.pwLocator.fill(randId().toString());
+    await modal.agentGroup.pwLocator.fill(safeName('group'));
 
     await modal.useCheckpointStorage.switch.pwLocator.click();
     await expect(modal.checkpointCodeEditor.pwLocator).toBeVisible();
@@ -39,7 +38,7 @@ test.describe('Projects', () => {
   test.beforeEach(async ({ dev, auth, page }) => {
     await dev.setServerAddress();
     await auth.login(/dashboard/);
-    await expect(page).toHaveTitle('Home - Determined');
+    await expect(page).toHaveTitle(BasePage.getTitle('Home'));
     await expect(page).toHaveURL(/dashboard/);
   });
 
