@@ -173,6 +173,7 @@ Monitoring Dashboard
 -  Add a resource utilization dashboard.
 
 .. code:: bash
+
    kubectl -n det-monitoring create configmap det-resource-utilization-dash --from-file resource-utilization-dash.json && \
      kubectl -n det-monitoring label configmap det-resource-utilization-dash grafana_dashboard=1
 
