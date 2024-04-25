@@ -21,6 +21,14 @@ spec:
     spec:
       priorityClassName: determined-system-priority
       serviceAccount: genai-{{ .Release.Name }}
+      {{- if .Values.genai.agentGroupID }}
+      {{ $gid := .Values.genai.agentGroupID }}
+      securityContext:
+        runAsUser: {{ $gid }}
+        runAsGroup: {{ $gid }}
+        fsGroup: {{ $gid }}
+        fsGroupChangePolicy: "OnRootMismatch"
+      {{- end }}
       containers:
       - name: genai-{{ .Release.Name }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
