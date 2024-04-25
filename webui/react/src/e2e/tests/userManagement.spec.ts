@@ -1,7 +1,8 @@
-import { expect, type Page } from '@playwright/test';
+import { expect } from '@playwright/test';
 import playwright from 'playwright';
 
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
+import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
@@ -9,12 +10,13 @@ import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 
+const loginBeforeEach = async ({ auth, dev }: { auth: AuthFixture; dev: DevFixture }) => {
+  await dev.setServerAddress();
+  await auth.login();
+};
 
 test.describe('User Management', () => {
-  test.beforeEach(async ({ auth, dev }) => {
-    await dev.setServerAddress();
-    await auth.login();
-  });
+  test.beforeEach(loginBeforeEach);
 
   test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
@@ -25,24 +27,14 @@ test.describe('User Management', () => {
   });
 
   test.describe('With New User Teardown', () => {
-    let pageSetupTeardown: Page;
-    let authFixtureSetupTeardown: AuthFixture;
-    let userFixtureSetupTeardown: UserFixture;
-    let userManagementPageSetupTeardown: UserManagement;
-
-    test.beforeAll(async ({ browser }) => {
-      await test.step('Login', async () => {
-        pageSetupTeardown = await browser.newPage();
-        authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-        userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
-        userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
-        await authFixtureSetupTeardown.login();
-      });
-    });
-
-    test.afterAll(async () => {
-      await userManagementPageSetupTeardown.goto();
-      await test.step('Deactivate User', async () => {
+    test.afterAll(async ({ browser }) => {
+      const pageSetupTeardown = await browser.newPage();
+      const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
+      const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
+      const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
+      await authFixtureSetupTeardown.login();
+      await test.step('Deactivate Users', async () => {
+        await userManagementPageSetupTeardown.goto();
         await userFixtureSetupTeardown.deactivateAllTestUsers();
       });
       await pageSetupTeardown.close();
@@ -50,11 +42,18 @@ test.describe('User Management', () => {
 
     test.describe('With a Test User', () => {
       let testUser: User;
-      test.beforeAll(async () => {
+      test.beforeAll(async ({ browser }) => {
+        const pageSetupTeardown = await browser.newPage();
+        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
+        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
+        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
+        await authFixtureSetupTeardown.login();
         await test.step('Create User', async () => {
           await userManagementPageSetupTeardown.goto();
           testUser = await userFixtureSetupTeardown.createUser();
         });
+        await authFixtureSetupTeardown.logout();
+        await pageSetupTeardown.close();
       });
 
       test('User table shows correct data', async ({ page, user }) => {
@@ -93,11 +92,19 @@ test.describe('User Management', () => {
 
     test.describe('With Test User we Deactivate', () => {
       let testUser: User;
-      test.beforeAll(async () => {
+
+      test.beforeAll(async ({ browser }) => {
+        const pageSetupTeardown = await browser.newPage();
+        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
+        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
+        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
+        await authFixtureSetupTeardown.login();
         await test.step('Create User', async () => {
           await userManagementPageSetupTeardown.goto();
           testUser = await userFixtureSetupTeardown.createUser();
         });
+        await authFixtureSetupTeardown.logout();
+        await pageSetupTeardown.close();
       });
 
       test('Deactivate and Reactivate', async ({ page, user, auth }) => {
@@ -136,16 +143,23 @@ test.describe('User Management', () => {
     });
 
     test.describe('With 10 Users', () => {
+      test.setTimeout(180_000);
       const usernamePrefix = 'test-user-pagination';
-      test.beforeAll(async () => {
-        test.setTimeout(180_000);
-        await userManagementPageSetupTeardown.goto();
-        await test.step('Create users', async () => {
+      test.beforeAll(async ({ browser }) => {
+        const pageSetupTeardown = await browser.newPage();
+        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
+        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
+        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
+        await authFixtureSetupTeardown.login();
+        await test.step('Create User', async () => {
+          await userManagementPageSetupTeardown.goto();
           // pagination will be 10 per page, so create 11 users
           for (let i = 0; i < 11; i++) {
             await userFixtureSetupTeardown.createUser({ username: `${usernamePrefix}` });
           }
         });
+        await authFixtureSetupTeardown.logout();
+        await pageSetupTeardown.close();
       });
 
       test('Group actions, pagination, and filter', async ({ page, user }, testInfo) => {
@@ -155,7 +169,17 @@ test.describe('User Management', () => {
         await test.step('Setup table filters', async () => {
           // set pagination to 10
           await userManagementPage.table.table.pagination.perPage.pwLocator.click();
-          await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
+          await expect(
+            repeatWithFallback(
+              async () => {
+                await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
+              },
+              async () => {
+                // BUG [ET-233]
+                await userManagementPage.goto();
+              },
+            ),
+          ).toPass({ timeout: 15_000 });
           // filter by active users
           await userManagementPage.filterStatus.pwLocator.click();
           await userManagementPage.filterStatus.activeUsers.pwLocator.click();
@@ -184,7 +208,7 @@ test.describe('User Management', () => {
             await userManagementPage.table.table.noData.pwLocator.waitFor();
             await userManagementPage.table.table.pagination.pwLocator.waitFor();
             // if we see these elements, we should fail the test
-            expect(false).toBe(true);
+            fail();
           } catch (error) {
             // if we see a timeout error, that means we don't see "no data"
             if (!(error instanceof playwright.errors.TimeoutError)) {
@@ -231,27 +255,39 @@ test.describe('User Management', () => {
         ]) {
           await test.step(`Compare table rows with pagination: ${name}`, async () => {
             await pagination.perPage.pwLocator.click();
-            await paginationOption.pwLocator.click();
+            await expect(
+              repeatWithFallback(
+                async () => {
+                  await paginationOption.pwLocator.click();
+                },
+                async () => {
+                  // BUG [ET-233]
+                  await userManagementPage.goto();
+                },
+              ),
+            ).toPass({ timeout: 15_000 });
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
             const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
             if (matches === null) {
               throw new Error("Couldn't find pagination selection.");
             }
             const paginationSelection = Number(matches[1]);
-            await expect(repeatWithFallback(
-              async () => {
-                // grab the count of the table rows and big number at the top at the same time
-                // in case the table refreshes with more users during a parallel run
-                await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
-                  Math.min(paginationSelection, await getExpectedRowCount()),
-                );
-              },
-              async () => {
-                // if the above doesn't pass, refresh the page and try again. This is to handle
-                // the case where the table refreshes with more users, but the other number hasn't refreshed yet
-                await userManagementPage.goto();
-              },
-            )).toPass({ timeout: 20_000 });
+            await expect(
+              repeatWithFallback(
+                async () => {
+                  // grab the count of the table rows and big number at the top at the same time
+                  // in case the table refreshes with more users during a parallel run
+                  await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(
+                    Math.min(paginationSelection, await getExpectedRowCount()),
+                  );
+                },
+                async () => {
+                  // if the above doesn't pass, refresh the page and try again. This is to handle
+                  // the case where the table refreshes with more users, but the other number hasn't refreshed yet
+                  await userManagementPage.goto();
+                },
+              ),
+            ).toPass({ timeout: 20_000 });
           });
         }
       });

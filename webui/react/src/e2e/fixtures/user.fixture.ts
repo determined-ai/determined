@@ -2,6 +2,7 @@ import { expect, Page } from '@playwright/test';
 
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { safeName } from 'e2e/utils/naming';
+import { repeatWithFallback } from 'e2e/utils/polling';
 
 export interface User {
   username: string;
@@ -70,7 +71,17 @@ export class UserFixture {
    */
   async createUser({ username = 'test-user', displayName, isAdmin }: UserArgs = {}): Promise<User> {
     const safeUsername = safeName(username);
-    await this.userManagementPage.addUser.pwLocator.click();
+    await expect(
+      repeatWithFallback(
+        async () => {
+          await this.userManagementPage.addUser.pwLocator.click();
+        },
+        async () => {
+          // unfortunately, this can fail on CI sometimes. this is to deflake
+          await this.userManagementPage.goto();
+        },
+      ),
+    ).toPass({ timeout: 15000 });
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
