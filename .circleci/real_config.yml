@@ -2403,7 +2403,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: cimg/base:current
+      - image: cimg/base:edge
     resource_class: gpu.nvidia.small.gen2
     steps:
       - setup_remote_docker:
