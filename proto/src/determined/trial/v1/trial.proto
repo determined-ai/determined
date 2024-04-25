@@ -8,7 +8,6 @@ import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
-import "google/protobuf/wrappers.proto";
 
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {

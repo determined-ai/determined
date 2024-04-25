@@ -33,7 +33,8 @@ func permFilterQuery(
 func newDBListener(dbAddress, channel string) (*pq.Listener, error) {
 	reportProblem := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
-			log.Errorf("listener on (%s) reported problem: %s", dbAddress, err.Error())
+			log.Errorf("channel (%s) listener on (%s) reported problem: %s, event type: %v",
+				channel, dbAddress, err.Error(), ev)
 		}
 	}
 	listener := pq.NewListener(

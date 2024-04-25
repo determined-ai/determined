@@ -4445,7 +4445,7 @@ Version 0.12.2
       tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
    #. A `keras.utils.Sequence
-      <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple of
+      <https://www.tensorflow.org/api_docs/python/tf/keras/utils/PyDataset>`__ returning a tuple of
       either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
    #. A ``det.keras.SequenceAdapter`` returning a tuple of either ``(inputs, targets)`` or

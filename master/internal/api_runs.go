@@ -2,10 +2,12 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,12 +31,12 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
-type archiveRunOKResult struct {
+type runCandidateResult struct {
 	Archived     bool
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-	State        bool
+	IsTerminal   *bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -299,7 +301,7 @@ func (a *apiServer) MoveRuns(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	var runChecks []archiveRunOKResult
+	var runChecks []runCandidateResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
@@ -507,6 +509,126 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 		}
 	}
 	return &apiv1.KillRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest,
+) (*apiv1.DeleteRunsResponse, error) {
+	if len(req.RunIds) > 0 && req.Filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// get runs to delete
+	var deleteCandidates []runCandidateResult
+	getQ := getSelectRunsQueryTables().
+		Model(&deleteCandidates).
+		Column("r.id").
+		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Where("r.project_id = ?", req.ProjectId)
+
+	if req.Filter == nil {
+		getQ = getQ.Where("r.id IN (?)", bun.In(req.RunIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, req.Filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if getQ, err = experiment.AuthZProvider.Get().FilterExperimentsQuery(ctx, *curUser, nil, getQ,
+		[]rbacv1.PermissionType{
+			rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
+		}); err != nil {
+		return nil, err
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	for _, check := range deleteCandidates {
+		visibleIDs.Insert(check.ID)
+		switch {
+		case check.IsTerminal == nil || !*check.IsTerminal:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is not in a terminal state.",
+				Id:    check.ID,
+			})
+		default:
+			validIDs = append(validIDs, check.ID)
+		}
+	}
+	if req.Filter == nil {
+		for _, originalID := range req.RunIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, req.ProjectId),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	if len(validIDs) == 0 {
+		return &apiv1.DeleteRunsResponse{Results: results}, nil
+	}
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			log.WithError(txErr).Error("error rolling back transaction in DeleteRuns")
+		}
+	}()
+
+	// delete run logs
+	if _, err = tx.NewDelete().Table("trial_logs").
+		Where("trial_logs.trial_id IN (?)", bun.In(validIDs)).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete run logs: %w", err)
+	}
+
+	// delete task logs
+	trialTaskQuery := tx.NewSelect().Table("run_id_task_id").
+		ColumnExpr("task_id").
+		Where("run_id IN (?)", bun.In(validIDs))
+	if _, err = tx.NewDelete().Table("task_logs").
+		Where("task_logs.task_id IN (?)", trialTaskQuery).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete runs: %w", err)
+	}
+
+	var acceptedIDs []int
+	if _, err = tx.NewDelete().Table("runs").
+		Where("runs.id IN (?)", bun.In(validIDs)).
+		Returning("runs.id").
+		Model(&acceptedIDs).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete runs: %w", err)
+	}
+
+	for _, acceptID := range acceptedIDs {
+		results = append(results, &apiv1.RunActionResult{
+			Error: "",
+			Id:    int32(acceptID),
+		})
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.DeleteRunsResponse{Results: results}, nil
 }
 
 func (a *apiServer) ArchiveRuns(

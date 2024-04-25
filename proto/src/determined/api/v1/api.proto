@@ -2544,6 +2544,17 @@ service Determined {
     };
   }
 
+  // Delete a list of runs.
+  rpc DeleteRuns(DeleteRunsRequest) returns (DeleteRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Archive runs.
   rpc ArchiveRuns(ArchiveRunsRequest) returns (ArchiveRunsResponse) {
     option (google.api.http) = {

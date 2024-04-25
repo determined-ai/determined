@@ -11,7 +11,7 @@ import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDr
 export class Card extends NamedComponent {
   override defaultSelector: string = ''; // must be provided
 
-  readonly actionMenu: WorkspaceActionDropdown = new WorkspaceActionDropdown({
+  readonly actionMenu = new WorkspaceActionDropdown({
     parent: this,
     selector: '[aria-label="Action menu"]',
   });

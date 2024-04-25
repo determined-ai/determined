@@ -157,6 +157,10 @@ func DefaultMasterConfig() (*config.Config, error) {
 	c.DB.Password = pgCfg.Password
 	c.DB.Name = pgCfg.Database
 
+	// Test fail due to reregistering Prometheus metrics.
+	// We use master in an unrealistic way for these tests.
+	c.Observability.EnablePrometheus = false
+
 	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
