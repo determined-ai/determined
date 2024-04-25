@@ -10,6 +10,9 @@ import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 
+// creating users while running tests in parallel can cause the users table to refresh at unexpected times
+test.describe.configure({ mode: 'serial' });
+
 const loginBeforeEach = async ({ auth, dev }: { auth: AuthFixture; dev: DevFixture }) => {
   await dev.setServerAddress();
   await auth.login();

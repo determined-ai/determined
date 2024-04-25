@@ -206,7 +206,9 @@ export class UserFixture {
       // user table can flake if running in parrallel
       const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username)).actions;
       await actions.pwLocator.click();
-      if ((await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')) {
+      if (
+        (await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')
+      ) {
         return;
       }
       await actions.state.pwLocator.click();
