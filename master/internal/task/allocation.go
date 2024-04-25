@@ -1071,11 +1071,14 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			continue
 		}
 
-		goesThroughIngress := true
+		goesThroughIngress := false
 
 		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
 		path := ""
 
+		address.HostIP = "127.0.0.1"
+		address.HostPort = 47777
+		a.req.ProxyTLS = false
 		if goesThroughIngress {
 			// if ingress
 			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
@@ -1093,7 +1096,6 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		if a.req.ProxyTLS {
 			urlScheme = "https"
 		}
-
 		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
 			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
