@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -24,6 +25,50 @@ const (
 	batches = "batches"
 )
 
+type safeMetricToColumnMap struct {
+	m       map[string]string
+	reverse map[string]string
+}
+
+func newSafeMetricToColumnMap() safeMetricToColumnMap {
+	return safeMetricToColumnMap{
+		m:       make(map[string]string),
+		reverse: make(map[string]string),
+	}
+}
+
+func (s safeMetricToColumnMap) LookupOrAdd(key string) string {
+	if _, ok := s.m[key]; !ok {
+		for {
+			safeKey := generateMetricToColumn(key)
+			if _, ok := s.reverse[safeKey]; !ok {
+				s.m[key] = safeKey
+				s.reverse[safeKey] = key
+				break
+			}
+		}
+	}
+	return s.m[key]
+}
+
+func (s safeMetricToColumnMap) ReverseLookup(key string) string {
+	return s.reverse[key]
+}
+
+func generateMetricToColumn(metric string) string {
+	// Max length of a column name in postgres is 63 characters.
+	// Replace longer column names with a metric name prefix (for readability)
+	// and a uuid for randomness.
+	// Replace periods with a unicode dot to avoid postgres interpreting
+	// `val.loss` as `"val"."loss"` identifier.
+	s := strings.ReplaceAll(metric, ".", "·")
+	if len(s) > 62 {
+		uuid := uuid.NewString()
+		return s[:(63-len(uuid))] + uuid
+	}
+	return s
+}
+
 // MetricsTimeSeries returns a time-series of the specified metric in the specified
 // trial.
 func MetricsTimeSeries(trialID int32, startTime time.Time,
@@ -34,6 +79,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	metricMeasurements []db.MetricMeasurements, err error,
 ) {
 	var queryColumn, orderColumn string
+	metricToColumnMap := newSafeMetricToColumnMap()
 	// The data for batches and column are stored under different column names
 	switch timeSeriesColumn {
 	case "batches":
@@ -41,7 +87,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	case "time":
 		queryColumn = "end_time"
 	default:
-		queryColumn = strings.ReplaceAll(timeSeriesColumn, ".", "·")
+		queryColumn = metricToColumnMap.LookupOrAdd(timeSeriesColumn)
 	}
 	subq := db.BunSelectMetricsQuery(metricGroup, false).Table("metrics").
 		ColumnExpr("(select setseed(1)) as _seed").
@@ -77,7 +123,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		}
 		subq = subq.ColumnExpr("(metrics->?->>?)::? as ?",
 			model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup),
-			metricName, bun.Safe(cast), bun.Ident(strings.ReplaceAll(metricName, ".", "·")))
+			metricName, bun.Safe(cast), bun.Ident(metricToColumnMap.LookupOrAdd(metricName)))
 	}
 
 	subq = subq.Where("trial_id = ?", trialID).OrderExpr("random()").
@@ -89,7 +135,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 			Where("total_batches <= 0 OR total_batches <= ?", endBatches).
 			Where("end_time > ?", startTime)
 	default:
-		orderColumn = strings.ReplaceAll(timeSeriesColumn, ".", "·")
+		orderColumn = metricToColumnMap.LookupOrAdd(timeSeriesColumn)
 		subq, err = db.ApplyPolymorphicFilter(subq, queryColumn, timeSeriesFilter)
 		if err != nil {
 			return metricMeasurements, errors.Wrapf(err, "failed to get metrics to sample for experiment")
@@ -107,7 +153,7 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 	selectMetrics := map[string]string{}
 
 	for i := range metricNames {
-		selectMetrics[strings.ReplaceAll(metricNames[i], ".", "·")] = metricNames[i]
+		selectMetrics[metricToColumnMap.LookupOrAdd(metricNames[i])] = metricNames[i]
 	}
 
 	for i := range results {
