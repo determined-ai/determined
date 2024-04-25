@@ -399,7 +399,7 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 
 	getColumnsResp, err := api.GetProjectColumns(ctx, getColumnsReq)
 	require.NoError(t, err)
-	require.Len(t, getColumnsResp.Columns, 18)
+	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+1)
 	for i, column := range defaultRunsTableColumns {
 		require.Equal(t, column, getColumnsResp.Columns[i])
 	}
@@ -422,7 +422,7 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 
 	getColumnsResp, err = api.GetProjectColumns(ctx, getColumnsReq)
 	require.NoError(t, err)
-	require.Len(t, getColumnsResp.Columns, 19)
+	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+2)
 	expectedHparam = &projectv1.ProjectColumn{
 		Column:   "hp.test1.test2",
 		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,

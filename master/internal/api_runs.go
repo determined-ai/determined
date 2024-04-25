@@ -196,6 +196,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
 		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
+		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false

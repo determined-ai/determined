@@ -131,6 +131,36 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
+	{
+		Column:      "experimentProgress",
+		DisplayName: "Experiment Progress",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "experimentId",
+		DisplayName: "Experiment ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	},
+	{
+		Column:      "experimentName",
+		DisplayName: "Experiment Name",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "isExpMultitrial",
+		DisplayName: "Part of Multi-Run Experiment",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+	},
+	{
+		Column:      "parentArchived",
+		DisplayName: "Parent Archived",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+	},
 }
 
 var (
@@ -277,18 +307,6 @@ func (a *apiServer) getProjectColumnsByID(
 			Column:      "externalTrialId",
 			DisplayName: "External Trial ID",
 			Location:    projectv1.LocationType_LOCATION_TYPE_EXPERIMENT,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "externalRunId",
-			DisplayName: "External Run ID",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-		},
-		{
-			Column:      "experimentName",
-			DisplayName: "Experiment Name",
-			Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 			Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 		},
 	}
