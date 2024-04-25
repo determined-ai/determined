@@ -229,10 +229,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         """Generate a new session with a different retry policy."""
         new_session = copy.copy(self)
         new_session._max_retries = max_retries
-        if self._http_session:
-            # If the current session had a persistent HTTP session, create another one on the
-            # new session reflecting the new retry policy.
-            new_session._http_session = self._make_http_session()
+        new_session._http_session = None
         return new_session
 
 
