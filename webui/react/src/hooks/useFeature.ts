@@ -13,7 +13,7 @@ export type ValidFeature =
   | 'genai'
   | 'flat_runs'
   | 'streaming_updates'
-  | 'templates';
+  | 'taskTemplates';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -48,7 +48,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     description: 'Allow streaming updates through websockets for better performance',
     friendlyName: 'Streaming Updates',
   },
-  templates: {
+  taskTemplates: {
     defaultValue: false,
     description: 'Manage tempaltes through WebUI',
     friendlyName: 'Manage Templates',

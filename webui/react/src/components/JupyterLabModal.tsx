@@ -356,7 +356,7 @@ const JupyterLabForm: React.FC<{
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const selectedWorkspaceId = Form.useWatch('workspaceId', form);
-  const templatesOn = useFeature().isOn('templates');
+  const templatesOn = useFeature().isOn('taskTemplates');
 
   const resourcePools = useObservable(clusterStore.resourcePools);
   const boundResourcePoolsMap = useObservable(workspaceStore.boundResourcePoolsMap());
