@@ -103,7 +103,8 @@ export class UserFixture {
       'Add User',
     );
     await this.fillUserForm({ displayName, isAdmin, password, username: safeUsername });
-    await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
+    // Hashing a password after form submit might take a little extra time, so this can be a slower operation
+    await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 10_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
       'New user has been created; advise user to change password as soon as possible.',
     );
