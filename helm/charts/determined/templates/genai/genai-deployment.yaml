@@ -48,6 +48,13 @@ spec:
             value: {{ .Values.db.port | quote }}
           - name: DB_HOST
             value: {{ include "determined.dbHost" . }}
+          {{- if .Values.db.sslMode }}
+          - name: DB_SSL_MODE
+            value: {{ .Values.db.sslMode }}
+          {{- $rootCert := (required "A valid .Values.db.sslRootCert entry required!" .Values.db.sslRootCert )}}
+          - name: DB_SSL_ROOT_CERT
+            value: {{ include "determined.secretPath" . }}{{ $rootCert }}
+          {{- end }}
           - name: LORE_DOCKER_TAG_SUFFIX
             value: {{ $tag | quote }}
           {{- if .Values.genai.sharedFSHostPath }}
@@ -79,6 +86,7 @@ spec:
           - name: genai-resource-pool-metadata
             mountPath: /run/determined/workdir/rp_config
             readOnly: true
+          {{- include "determined.dbCertVolumeMount" . | nindent 10 }}
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}
@@ -114,5 +122,6 @@ spec:
         - name: genai-resource-pool-metadata
           configMap:
             name: genai-resource-pool-metadata-{{ .Release.Name }}
+        {{- include "determined.dbCertVolume" . | nindent 8 }}
 {{ end }}
 {{ end }}
