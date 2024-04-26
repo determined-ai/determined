@@ -47,7 +47,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
-  const templatesOn = useFeature().isOn('taskTemplates');
+  const templatesOn = useFeature().isOn('task_templates');
   const loadableUsers = useObservable(userStore.getUsers());
   const users = loadableUsers.getOrElse([]);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
