@@ -2558,6 +2558,44 @@ export interface V1DeleteProjectResponse {
     completed: boolean;
 }
 /**
+ * Delete runs.
+ * @export
+ * @interface V1DeleteRunsRequest
+ */
+export interface V1DeleteRunsRequest {
+    /**
+     * The ids of the runs being deleted.
+     * @type {Array<number>}
+     * @memberof V1DeleteRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being deleted.
+     * @type {number}
+     * @memberof V1DeleteRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1DeleteRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to DeleteRunsResponse.
+ * @export
+ * @interface V1DeleteRunsResponse
+ */
+export interface V1DeleteRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1DeleteRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * Response to DeleteTemplateRequest.
  * @export
  * @interface V1DeleteTemplateResponse
@@ -18708,6 +18746,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteRuns.');
+            }
+            const localVarPath = `/api/v1/runs/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -21555,6 +21631,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -22899,6 +22994,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+            return InternalApiFp(configuration).deleteRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the set of metric names recorded for a list of experiments.
          * @param {Array<number>} ids The ids for the experiments.
          * @param {number} [periodSeconds] Seconds to wait when polling for updates.
@@ -23761,6 +23866,18 @@ export class InternalApi extends BaseAPI {
      */
     public deleteGroup(groupId: number, options?: any) {
         return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete a list of runs.
+     * @param {V1DeleteRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -29768,10 +29885,11 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -29804,6 +29922,10 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             
             if (name !== undefined) {
                 localVarQueryParameter['name'] = name
+            }
+            
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -30002,11 +30124,12 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30114,11 +30237,12 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -30195,12 +30319,13 @@ export class TemplatesApi extends BaseAPI {
      * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
      * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
      * @param {string} [name] Limit templates to those that match the name.
+     * @param {number} [workspaceId] Limit templates to those that match the workspace id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath)
+    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(this.fetch, this.basePath)
     }
     
     /**

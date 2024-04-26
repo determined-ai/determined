@@ -39,6 +39,7 @@ export const WorkspaceDetailsTab = {
   Projects: 'projects',
   ResourcePools: 'pools',
   Tasks: 'tasks',
+  Templates: 'templates',
 } as const;
 
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
@@ -46,6 +47,7 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 const WorkspaceDetails: React.FC = () => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const rpBindingFlagOn = useFeature().isOn('rp_binding');
+  const templatesOn = useFeature().isOn('task_templates');
   const loadableUsers = useObservable(userStore.getUsers());
   const users = loadableUsers.getOrElse([]);
   const { tab, workspaceId: workspaceID } = useParams<Params>();
@@ -212,6 +214,14 @@ const WorkspaceDetails: React.FC = () => {
       });
     }
 
+    if (templatesOn) {
+      items.push({
+        children: <div />,
+        key: WorkspaceDetailsTab.Templates,
+        label: 'Templates',
+      });
+    }
+
     return items;
   }, [
     addableUsersAndGroups,
@@ -226,6 +236,7 @@ const WorkspaceDetails: React.FC = () => {
     workspace,
     workspaceAssignments,
     rpBindingFlagOn,
+    templatesOn,
   ]);
 
   const canViewWorkspaceFlag = canViewWorkspace({ workspace: { id } });

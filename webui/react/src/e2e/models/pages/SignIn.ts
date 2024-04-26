@@ -10,7 +10,7 @@ import { PageComponent } from 'e2e/models/components/Page';
 export class SignIn extends BasePage {
   readonly title: string = SignIn.getTitle('Sign In');
   readonly url: string = 'login';
-  readonly pageComponent: PageComponent = new PageComponent({ parent: this });
-  readonly detAuth: DeterminedAuth = new DeterminedAuth({ parent: this.pageComponent });
+  readonly pageComponent = new PageComponent({ parent: this });
+  readonly detAuth = new DeterminedAuth({ parent: this.pageComponent });
   // TODO add SSO page model as well
 }

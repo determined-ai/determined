@@ -11,16 +11,16 @@ import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
 export class Workspaces extends BasePage {
   readonly title: string = Workspaces.getTitle('Workspaces');
   readonly url: string = 'workspaces';
-  readonly list: WorkspacesList = new WorkspacesList({
+  readonly list = new WorkspacesList({
     parent: this,
   });
-  readonly projects: WorkspaceDetails = new WorkspaceDetails({
+  readonly projects = new WorkspaceDetails({
     parent: this,
   });
-  readonly createModal: WorkspaceCreateModal = new WorkspaceCreateModal({
+  readonly createModal = new WorkspaceCreateModal({
     parent: this,
   });
-  readonly deleteModal: WorkspaceDeleteModal = new WorkspaceDeleteModal({
+  readonly deleteModal = new WorkspaceDeleteModal({
     parent: this,
   });
 }

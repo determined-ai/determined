@@ -21,13 +21,15 @@ export class AuthFixture {
     this.signInPage = new SignIn(page);
   }
 
-  async login(
-    waitForURL: string | RegExp | ((url: URL) => boolean) = /dashboard/,
-    {
-      username = this.#USERNAME,
-      password = this.#PASSWORD,
-    }: { username?: string; password?: string } = {},
-  ): Promise<void> {
+  async login({
+    waitForURL = /dashboard/,
+    username = this.#USERNAME,
+    password = this.#PASSWORD,
+  }: {
+    waitForURL?: string | RegExp | ((url: URL) => boolean);
+    username?: string;
+    password?: string;
+  } = {}): Promise<void> {
     const detAuth = this.signInPage.detAuth;
     if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');

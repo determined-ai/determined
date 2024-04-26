@@ -136,6 +136,13 @@ const routes: RouteConfig[] = [
     title: 'Model Registry',
   },
   {
+    icon: 'columns',
+    id: 'templates',
+    needAuth: true,
+    path: '/templates',
+    title: 'Manage Templates',
+  },
+  {
     icon: 'cluster',
     id: 'clusterHistorical',
     needAuth: true,
