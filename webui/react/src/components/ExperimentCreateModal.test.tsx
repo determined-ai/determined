@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Button from 'hew/Button';
 import { useModal } from 'hew/Modal';
@@ -65,16 +65,15 @@ describe('Create Experiment Modal', () => {
 
   it('submits a valid create experiment request', async () => {
     await setup();
-
     const nameInput = screen.getByRole('textbox');
 
-    await waitFor(() => user.type(nameInput, 'test name 123'));
+    await user.type(nameInput, 'test name 123');
 
     const button = screen.getByRole('button', { name: CreateExperimentType.Fork });
 
     expect(button).not.toBeDisabled();
 
-    await waitFor(() => user.click(button));
+    await user.click(button);
 
     expect(mockCreateExperiment).toHaveBeenCalled();
   });
