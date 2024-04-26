@@ -11,33 +11,22 @@ export interface User {
   isActive: boolean;
   password: string;
 }
-interface UserEditArgs {
+interface UserArgs {
   username?: string;
   displayName?: string;
   isAdmin?: boolean;
-}
-
-interface UserCreateArgs extends UserEditArgs {
-  password: string;
+  password?: string;
 }
 
 export class UserFixture {
   readonly userManagementPage: UserManagement;
   readonly #users = new Map<string, User>();
-  readonly #PASSWORD: string;
 
   constructor(readonly page: Page) {
-    if (process.env.PW_PASSWORD === undefined) {
-      throw new Error('password must be defined');
-    }
-    this.#PASSWORD = process.env.PW_PASSWORD;
     this.userManagementPage = new UserManagement(page);
   }
 
-  async fillUserEditForm(
-    { username, displayName, isAdmin }: UserEditArgs,
-    password?: string,
-  ): Promise<void> {
+  async fillUserEditForm({ username, displayName, isAdmin, password }: UserArgs): Promise<void> {
     if (username !== undefined) {
       await this.userManagementPage.createUserModal.username.pwLocator.fill(username);
     }
@@ -60,29 +49,28 @@ export class UserFixture {
       await this.userManagementPage.createUserModal.adminToggle.pwLocator.click();
     }
 
-    await this.userManagementPage.createUserModal.footer.submit.pwLocator.click({ timeout: 2_000 });
+    // password and username are required to create a user; if these are filled, submit should be enabled
+    await expect(
+      this.userManagementPage.createUserModal.footer.submit.pwLocator,
+    ).not.toBeDisabled();
+    await this.userManagementPage.createUserModal.footer.submit.pwLocator.click();
   }
 
-  async fillUserCreateForm({
-    username,
+  async fillUserCreateForm({ username, displayName, isAdmin, password }: UserArgs): Promise<void> {
+    await this.fillUserEditForm({ displayName, isAdmin, password, username });
+  }
+
+  async createUser({
+    username = safeName('test-user'),
     displayName,
     isAdmin,
-    password,
-  }: UserCreateArgs): Promise<void> {
-    await this.fillUserEditForm({ displayName, isAdmin, username }, password);
-  }
-
-  async createUser(
-    { username = safeName('test-user'), displayName, isAdmin, password }: UserCreateArgs = {
-      password: this.#PASSWORD,
-    },
-  ): Promise<User> {
+    password = 'TestPassword1',
+  }: UserArgs = {}): Promise<User> {
     await this.userManagementPage.addUser.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
-    password = 'TestPassword1'; // revertme
     await this.fillUserCreateForm({ displayName, isAdmin, password, username });
     // setting a password requires hashing it, which can take a little extra time
     await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
@@ -96,14 +84,14 @@ export class UserFixture {
       id,
       isActive: true,
       isAdmin: !!isAdmin,
-      password: this.#PASSWORD,
+      password,
       username,
     };
     this.#users.set(String(id), user);
     return user;
   }
 
-  async editUser(user: User, edit: UserEditArgs = {}): Promise<User> {
+  async editUser(user: User, edit: UserArgs = {}): Promise<User> {
     const row = await this.userManagementPage.getRowByUsernameSearch(user.username);
     await row.actions.pwLocator.click();
     await row.actions.edit.pwLocator.click();
