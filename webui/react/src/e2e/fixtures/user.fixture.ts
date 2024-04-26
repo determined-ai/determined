@@ -18,7 +18,7 @@ interface UserEditArgs {
 }
 
 interface UserCreateArgs extends UserEditArgs {
-  password?: string;
+  password: string;
 }
 
 export class UserFixture {
@@ -34,12 +34,18 @@ export class UserFixture {
     this.userManagementPage = new UserManagement(page);
   }
 
-  async fillUserEditForm({ username, displayName, isAdmin }: UserEditArgs): Promise<void> {
+  async fillUserEditForm(
+    { username, displayName, isAdmin }: UserEditArgs,
+    password?: string,
+  ): Promise<void> {
     if (username !== undefined) {
       await this.userManagementPage.createUserModal.username.pwLocator.fill(username);
     }
     if (displayName !== undefined) {
       await this.userManagementPage.createUserModal.displayName.pwLocator.fill(displayName);
+    }
+    if (password !== undefined) {
+      await this.userManagementPage.createUserModal.password.pwLocator.fill(password);
     }
 
     const checkedAttribute =
@@ -57,22 +63,26 @@ export class UserFixture {
     await this.userManagementPage.createUserModal.footer.submit.pwLocator.click({ timeout: 2_000 });
   }
 
-  async fillUserCreateForm({ username, displayName, isAdmin }: UserCreateArgs): Promise<void> {
-    await this.userManagementPage.createUserModal.password.pwLocator.fill(this.#PASSWORD);
-    await this.fillUserEditForm({ displayName, isAdmin, username });
-  }
-
-  async createUser({
-    username = safeName('test-user'),
+  async fillUserCreateForm({
+    username,
     displayName,
     isAdmin,
-  }: UserCreateArgs = {}): Promise<User> {
+    password,
+  }: UserCreateArgs): Promise<void> {
+    await this.fillUserEditForm({ displayName, isAdmin, username }, password);
+  }
+
+  async createUser(
+    { username = safeName('test-user'), displayName, isAdmin, password }: UserCreateArgs = {
+      password: this.#PASSWORD,
+    },
+  ): Promise<User> {
     await this.userManagementPage.addUser.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
-    await this.fillUserCreateForm({ displayName, isAdmin, username });
+    await this.fillUserCreateForm({ displayName, isAdmin, password, username });
     // setting a password requires hashing it, which can take a little extra time
     await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
