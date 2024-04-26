@@ -270,6 +270,7 @@ commands:
       - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
 
   setup-go-intg-deps:
     steps:
@@ -2415,7 +2416,6 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: source $BASH_ENV
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
