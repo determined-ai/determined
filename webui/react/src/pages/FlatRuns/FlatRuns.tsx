@@ -34,6 +34,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Error } from 'components/exceptions';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight } from 'components/OptionsMenu';
 import {
@@ -58,6 +59,7 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
+import { eagerSubscribe } from 'utils/observable';
 
 import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
@@ -119,6 +121,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
   const isPagedView = true;
   const [page, setPage] = useState(() =>
@@ -133,6 +136,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
+  const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -201,6 +205,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       rows,
     };
   }, [loadedSelectedRunIds]);
+
+  const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      formStore.sweep();
+    }
+  }, []);
 
   const colorMap = useGlasbey([...loadedSelectedRunIds.keys()]);
 
@@ -328,7 +339,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          //filter: filtersString,
+          filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
           projectId: project.id,
@@ -360,6 +371,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     }
   }, [
     canceler.signal,
+    filtersString,
     isLoadingSettings,
     isPagedView,
     loadableFormset,
@@ -403,19 +415,38 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   }, [page]);
 
   useEffect(() => {
-    // useSettings load the default value first, and then load the data from DB
-    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    if (isLoadingSettings) return;
-    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-    if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
-        publicSubject: 'Unable to initialize filterset from settings',
-      });
-    } else {
-      const formset = formSetValidation.right;
-      formStore.init(formset);
-    }
-  }, [settings.filterset, isLoadingSettings]);
+    let cleanup: () => void;
+    // eagerSubscribe is like subscribe but it runs once before the observed value changes.
+    cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
+      // init formset once from settings when loaded, then flip the sync
+      // direction -- when formset changes, update settings
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          cleanup?.();
+          if (!s?.filterset) {
+            formStore.init();
+          } else {
+            const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+            if (isLeft(formSetValidation)) {
+              handleError(formSetValidation.left, {
+                publicSubject: 'Unable to initialize filterset from settings',
+              });
+            } else {
+              formStore.init(formSetValidation.right);
+            }
+          }
+          cleanup = formStore.asJsonString.subscribe(() => {
+            resetPagination();
+            const loadableFormset = formStore.formset.get();
+            Loadable.forEach(loadableFormset, (formSet) =>
+              updateSettings({ filterset: JSON.stringify(formSet) }),
+            );
+          });
+        });
+      }
+    });
+    return () => cleanup?.();
+  }, [flatRunsSettingsObs, resetPagination, updateSettings]);
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
@@ -618,21 +649,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     ],
   );
 
-  useEffect(
-    () =>
-      formStore.asJsonString.subscribe(() => {
-        resetPagination();
-        const loadableFormset = formStore.formset.get();
-        Loadable.forEach(loadableFormset, (formSet) =>
-          updateSettings({
-            filterset: JSON.stringify(formSet),
-            selection: DEFAULT_SELECTION,
-          }),
-        );
-      }),
-    [resetPagination, updateSettings],
-  );
-
   useEffect(() => {
     return () => {
       canceler.abort();
@@ -661,6 +677,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         <Error fetchData={fetchRuns} />
       ) : (
         <>
+          <TableFilter
+            formStore={formStore}
+            isMobile={isMobile}
+            isOpenFilter={isOpenFilter}
+            loadableColumns={projectColumns}
+            onIsOpenFilterChange={onIsOpenFilterChange}
+          />
           <DataGrid
             columns={columns}
             data={runs}
