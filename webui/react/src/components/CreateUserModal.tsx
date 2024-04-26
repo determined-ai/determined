@@ -8,7 +8,8 @@ import { useToast } from 'hew/Toast';
 import Toggle from 'hew/Toggle';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useEffect, useId } from 'react';
+import { FormInstance } from 'rc-field-form';
+import React, { useEffect, useId, useState } from 'react';
 
 import Link from 'components/Link';
 import { PASSWORD_RULES } from 'constants/passwordRules';
@@ -83,6 +84,12 @@ const CreateUserModalComponent: React.FC<Props> = ({
   const checkAuth = useAuthCheck();
 
   const knownRoles = useObservable(roleStore.roles);
+
+  const [isRemote, setIsRemote] = useState(false);
+
+  const editPasswordRules = PASSWORD_RULES.map((rule) => {
+    return (form: FormInstance) => (form.getFieldValue(USER_PASSWORD_NAME) ? rule : { min: 0 });
+  });
 
   const handleSubmit = async () => {
     if (viewOnly) {
@@ -159,6 +166,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       [DISPLAY_NAME_NAME]: user?.displayName,
       [ROLE_NAME]: userRoles?.getOrElse([]).map((r) => r.id),
     });
+    setIsRemote(!!user?.isAdmin);
   }, [form, user, userRoles]);
 
   return (
@@ -222,17 +230,22 @@ const CreateUserModalComponent: React.FC<Props> = ({
               label={REMOTE_LABEL}
               name={REMOTE_NAME}
               valuePropName="checked">
-              <Toggle data-testid="isRemote" disabled={viewOnly} />
+              <Toggle
+                checked={isRemote}
+                data-testid="isRemote"
+                disabled={viewOnly}
+                onChange={setIsRemote}
+              />
             </Form.Item>
           )}
-          {(!rbacEnabled || !user?.remote) && (
+          {!rbacEnabled && !isRemote && (
             <Form.Item
               initialValue=""
               label={USER_PASSWORD_LABEL}
               name={USER_PASSWORD_NAME}
-              required={!user}
-              rules={PASSWORD_RULES}
-              validateTrigger={['onSubmit', 'onChange']}>
+              required={!user && !isRemote}
+              rules={editPasswordRules}
+              validateTrigger={['onSubmit']}>
               <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
             </Form.Item>
           )}
