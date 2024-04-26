@@ -5300,7 +5300,7 @@ workflows:
       - package-and-push-system-local-ee:
           requires:
             - build-docs
-            - build-react
+            - build-react-ee
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
