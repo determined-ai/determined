@@ -17,7 +17,7 @@ test.describe('Navigation', () => {
     await page.goto('/');
 
     await test.step('Login steps', async () => {
-      await auth.login(/dashboard/);
+      await auth.login();
       await expect(page).toHaveTitle(BasePage.getTitle('Home'));
       await expect(page).toHaveURL(/dashboard/);
     });

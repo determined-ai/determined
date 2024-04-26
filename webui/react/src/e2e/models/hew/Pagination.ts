@@ -12,11 +12,11 @@ import { Select } from 'e2e/models/hew/Select';
  */
 export class Pagination extends NamedComponent {
   readonly defaultSelector = '.ant-pagination';
-  readonly previous: BaseComponent = new BaseComponent({
+  readonly previous = new BaseComponent({
     parent: this,
     selector: 'li.ant-pagination-prev',
   });
-  readonly next: BaseComponent = new BaseComponent({
+  readonly next = new BaseComponent({
     parent: this,
     selector: 'li.ant-pagination-next',
   });
@@ -24,7 +24,7 @@ export class Pagination extends NamedComponent {
     parent: this,
     selector: 'li.ant-pagination-options',
   });
-  readonly perPage: PaginationDropdown = new PaginationDropdown({
+  readonly perPage = new PaginationDropdown({
     parent: this.#options,
     selector: '.ant-pagination-options-size-changer',
   });
@@ -41,19 +41,19 @@ export class Pagination extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class PaginationDropdown extends Select {
-  readonly perPage10: BaseComponent = new BaseComponent({
+  readonly perPage10 = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('10 / page'),
   });
-  readonly perPage20: BaseComponent = new BaseComponent({
+  readonly perPage20 = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('20 / page'),
   });
-  readonly perPage50: BaseComponent = new BaseComponent({
+  readonly perPage50 = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('50 / page'),
   });
-  readonly perPage100: BaseComponent = new BaseComponent({
+  readonly perPage100 = new BaseComponent({
     parent: this._menu,
     selector: Select.selectorTemplate('100 / page'),
   });

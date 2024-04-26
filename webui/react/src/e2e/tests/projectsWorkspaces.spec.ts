@@ -37,7 +37,7 @@ test.describe('Projects', () => {
 
   test.beforeEach(async ({ dev, auth, page }) => {
     await dev.setServerAddress();
-    await auth.login(/dashboard/);
+    await auth.login();
     await expect(page).toHaveTitle(BasePage.getTitle('Home'));
     await expect(page).toHaveURL(/dashboard/);
   });

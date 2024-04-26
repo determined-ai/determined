@@ -7,7 +7,9 @@ import { CreateUserModal } from 'e2e/models/components/CreateUserModal';
 import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
+import { UserBadge } from 'e2e/models/components/UserBadge';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { Select } from 'e2e/models/hew/Select';
 import { Toast } from 'e2e/models/hew/Toast';
 import { AdminPage } from 'e2e/models/pages/Admin/index';
 
@@ -19,7 +21,7 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
 export class UserManagement extends AdminPage {
   readonly title: string = UserManagement.getTitle();
   readonly url: string = 'admin/user-management';
-  readonly getRowByID: (value: string) => UserRow;
+  readonly getRowById: (value: string) => UserRow;
 
   readonly #actionRow = new BaseComponent({
     parent: this.pivot.tabContent,
@@ -29,19 +31,21 @@ export class UserManagement extends AdminPage {
     parent: this.#actionRow,
     selector: '[data-testid="search"]',
   });
-  // TODO do these selects work?
-  readonly filterRole = new BaseComponent({
+  readonly filterRole = new RoleSelect({
     parent: this.#actionRow,
     selector: '[data-testid="roleSelect"]',
   });
-  // TODO do these selects work?
-  readonly filterStatus = new BaseComponent({
+  readonly filterStatus = new StatusSelect({
     parent: this.#actionRow,
     selector: '[data-testid="statusSelect"]',
   });
   readonly addUser = new BaseComponent({
     parent: this.#actionRow,
     selector: '[data-testid="addUser"]',
+  });
+  readonly actions = new actionDropdownMenu({
+    parent: this.#actionRow,
+    selector: '[data-testid="actions"]',
   });
 
   readonly table = new InteractiveTable({
@@ -66,7 +70,7 @@ export class UserManagement extends AdminPage {
 
   constructor(page: Page) {
     super(page);
-    this.getRowByID = this.table.table.getRowByDataKey;
+    this.getRowById = this.table.table.getRowByDataKey;
   }
 
   /**
@@ -75,7 +79,7 @@ export class UserManagement extends AdminPage {
    */
   async getRowByUsername(name: string): Promise<UserRow> {
     const filteredRows = await this.table.table.filterRows(async (row: UserRow) => {
-      return (await row.user.pwLocator.innerText()).includes(name);
+      return (await row.user.name.pwLocator.innerText()).includes(name);
     });
 
     const removeNewLines = (item: string) => item.replace(/(\r\n|\n|\r)/gm, '');
@@ -93,14 +97,13 @@ export class UserManagement extends AdminPage {
    * @param {string} name - The username to filter UserTable rows by
    */
   async getRowByUsernameSearch(name: string): Promise<UserRow> {
-    await this.search.pwLocator.clear();
-    // BUG [INFENG-628] Users page loads slow
-    await expect(this.table.table.rows.pwLocator).not.toHaveCount(1, { timeout: 15_000 });
-    await this.search.pwLocator.fill(name);
-    await expect(this.table.table.rows.pwLocator).toHaveCount(1, { timeout: 15_000 });
-    // await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
-    // await this.search.pwLocator.fill(name);
-    // await expect(this.table.table.rows.pwLocator).toHaveCount(1);
+    await expect(async () => {
+      // user table can flake if running in parrallel
+      await this.search.pwLocator.clear();
+      await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
+      await this.search.pwLocator.fill(name);
+      await expect(this.table.table.rows.pwLocator).toHaveCount(1);
+    }).toPass({ timeout: 15000 });
     return await this.getRowByUsername(name);
   }
 }
@@ -149,7 +152,7 @@ class UserHeadRow extends HeadRow {
 class UserRow extends Row {
   // If you're wondering where (1) is, it's the checkbox column (smelly)
   // TODO consider nameplate component
-  readonly user = new BaseComponent({
+  readonly user = new UserBadge({
     parent: this,
     selector: '[data-testid="user"]',
   });
@@ -198,5 +201,71 @@ class UserActionDropdown extends Dropdown {
   readonly state = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('state'),
+  });
+}
+
+/**
+ * Returns the representation of the ActionDropdownMenu defined by the User Admin page.
+ * This constructor represents the InteractiveTable in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this ActionDropdownMenu
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
+class actionDropdownMenu extends Dropdown {
+  readonly status = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('change-status'),
+  });
+  readonly roles = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('set-roles'),
+  });
+  readonly groups = new BaseComponent({
+    parent: this._menu,
+    selector: Dropdown.selectorTemplate('add-to-groups'),
+  });
+}
+
+/**
+ * Returns the representation of the RoleSelect component defined by the User Admin page.
+ * This constructor represents the RoleSelect in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this RoleSelect
+ * @param {string} obj.selector - Used as a selector used to locate this object
+ */
+class RoleSelect extends Select {
+  readonly allRoles = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('All Roles'),
+  });
+  readonly admin = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Admin'),
+  });
+  readonly nonAdmin = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Non-Admin'),
+  });
+}
+
+/**
+ * Returns the representation of the StatusSelect component defined by the User Admin page.
+ * This constructor represents the StatusSelect in src/pages/Admin/UserManagement.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this StatusSelect
+ * @param {string} obj.selector - Used as a selector used to locate this object
+ */
+class StatusSelect extends Select {
+  readonly allStatuses = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('All Statuses'),
+  });
+  readonly activeUsers = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Active Users'),
+  });
+  readonly deactivatedUsers = new BaseComponent({
+    parent: this._menu,
+    selector: Select.selectorTemplate('Deactivated Users'),
   });
 }
