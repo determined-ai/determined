@@ -2403,13 +2403,9 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: cimg/base:edge
-    resource_class: gpu.nvidia.small.gen2
+      - image: determinedai/pytorch-ngc-dev:f17151a
+    resource_class: determined-ai/container-runner-gpu
     steps:
-      - setup_remote_docker:
-          version: edge
-      - run: docker pull determinedai/pytorch-ngc-dev:f17151a
-      - run: docker run -itd -v /root/project:/root/project --gpus=all --shm-size=2.00gb --name=runner determinedai/pytorch-ngc-dev:f17151a
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
       - add-and-fetch-upstream
@@ -2422,7 +2418,6 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - run: exit
       - persist_to_workspace:
           root: .
           paths:
