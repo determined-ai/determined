@@ -111,6 +111,8 @@ test.describe('User Management', () => {
       });
 
       test('Deactivate and Reactivate', async ({ page, user, auth }) => {
+        // test does does three and a half logins, so we need to increase the timeout
+        test.setTimeout(120_000);
         const userManagementPage = new UserManagement(page);
         const signInPage = new SignIn(page);
         await userManagementPage.goto();
