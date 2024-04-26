@@ -1503,7 +1503,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -3172,9 +3172,12 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      resource-class:
+        type: string
+        default: xlarge
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: <<parameters.resource-class>>
     parallelism: <<parameters.parallelism>>
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
@@ -4459,7 +4462,8 @@ workflows:
           name: test-e2e-cpu
           requires:
             - build-go-ee
-          parallelism: 6
+          parallelism: 9
+          resource-class: large
           tf2: true
           mark: e2e_cpu
 
@@ -4467,7 +4471,8 @@ workflows:
           name: test-e2e-cpu-double
           requires:
             - build-go-ee
-          parallelism: 3
+          parallelism: 5
+          resource-class: large
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -4496,6 +4501,7 @@ workflows:
           requires:
             - build-go-ee
           parallelism: 4
+          resource-class: large
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -4528,6 +4534,7 @@ workflows:
           requires:
             - build-go-ee
           parallelism: 1
+          resource-class: large
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent

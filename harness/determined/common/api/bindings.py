@@ -3137,6 +3137,68 @@ class v1DeleteProjectResponse(Printable):
         }
         return out
 
+class v1DeleteRunsRequest(Printable):
+    """Delete runs."""
+    filter: "typing.Optional[str]" = None
+    projectId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        return out
+
+class v1DeleteRunsResponse(Printable):
+    """Response to DeleteRunsResponse."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DeleteRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1DeleteWorkspaceResponse(Printable):
     """Response to DeleteWorkspaceRequest."""
 
@@ -16986,6 +17048,27 @@ def delete_DeleteProject(
         return v1DeleteProjectResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteProject", _resp)
 
+def post_DeleteRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1DeleteRunsRequest",
+) -> "v1DeleteRunsResponse":
+    """Delete a list of runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/delete",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1DeleteRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_DeleteRuns", _resp)
+
 def delete_DeleteTemplate(
     session: "api.BaseSession",
     *,
@@ -19085,6 +19168,7 @@ def get_GetTemplates(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetTemplatesResponse":
     """Get a list of templates.
 
@@ -19101,6 +19185,7 @@ denote number of templates to skip from the end before returning results.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
+    - workspaceId: Limit templates to those that match the workspace id.
     """
     _params = {
         "limit": limit,
@@ -19108,6 +19193,7 @@ denote number of templates to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",

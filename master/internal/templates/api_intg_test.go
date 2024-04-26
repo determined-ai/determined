@@ -89,13 +89,21 @@ func TestGetTemplates(t *testing.T) {
 		"cde",
 	}
 	var inputs []*templatev1.Template
+	var workspaceIDs []int32
 	for _, inputName := range inputNames {
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err := db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+		workspaceIDs = append(workspaceIDs, int32(w.ID))
 		input := templatev1.Template{
 			Name:        inputName,
 			Config:      fakeTemplate(t),
-			WorkspaceId: 1,
+			WorkspaceId: int32(w.ID),
 		}
-		_, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: &input})
+		_, err = api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: &input})
 		require.NoError(t, err)
 		inputs = append(inputs, &input)
 	}
@@ -138,6 +146,15 @@ func TestGetTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resp.Templates, 2)
 		require.Subset(t, inputNames, templateNames(resp.Templates))
+	})
+
+	t.Run("GetTemplates filter by workspace", func(t *testing.T) {
+		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{
+			WorkspaceId: workspaceIDs[0],
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.Templates, 1)
+		require.Equal(t, inputNames[0], templateNames(resp.Templates)[0])
 	})
 }
 
