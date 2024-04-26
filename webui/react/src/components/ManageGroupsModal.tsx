@@ -31,8 +31,6 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
 
   const { openToast } = useToast();
 
-  const groupsValue = Form.useWatch(GROUPS_NAME, form);
-
   const { rbacEnabled } = useObservable(determinedStore.info);
 
   useEffect(() => {
@@ -81,7 +79,6 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       cancel
       size="small"
       submit={{
-        disabled: !groupsValue?.length,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
