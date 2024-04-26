@@ -54,12 +54,12 @@ export class UserFixture {
       await this.userManagementPage.createUserModal.adminToggle.pwLocator.click();
     }
 
-    await this.userManagementPage.createUserModal.footer.submit.pwLocator.click();
+    await this.userManagementPage.createUserModal.footer.submit.pwLocator.click({ timeout: 2_000 });
   }
 
   async fillUserCreateForm({ username, displayName, isAdmin }: UserCreateArgs): Promise<void> {
-    await this.fillUserEditForm({ displayName, isAdmin, username });
     await this.userManagementPage.createUserModal.password.pwLocator.fill(this.#PASSWORD);
+    await this.fillUserEditForm({ displayName, isAdmin, username });
   }
 
   async createUser({
@@ -73,7 +73,8 @@ export class UserFixture {
       'Add User',
     );
     await this.fillUserCreateForm({ displayName, isAdmin, username });
-    await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
+    // setting a password requires hashing it, which can take a little extra time
+    await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
       'New user has been created; advise user to change password as soon as possible.',
     );
@@ -117,7 +118,7 @@ export class UserFixture {
       expect(adminState).not.toBeTruthy();
     }
     await this.fillUserEditForm(edit);
-    await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
+    await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
       'User has been updated',
     );
