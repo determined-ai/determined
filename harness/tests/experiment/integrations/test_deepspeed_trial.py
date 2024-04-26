@@ -531,6 +531,7 @@ class TestDeepSpeedTrial:
             )
             controller2.run()
 
+    # TODO: Remove these skips after CI is updated (INFENG-659)
     @pytest.mark.skipif(shutil.disk_usage("/dev/shm")[0] < 10**8, reason="insufficient shm size")
     def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> determined.TrialController:
