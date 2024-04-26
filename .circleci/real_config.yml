@@ -2370,8 +2370,7 @@ jobs:
       - skip-if-only-webui
       - run: pip install mypy pytest coverage
       - install-codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' | cat - $BASH_ENV > temp && mv temp $BASH_ENV
-      - run: source $BASH_ENV
+      - run: export PATH=$PATH:$HOME/.local/bin
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
