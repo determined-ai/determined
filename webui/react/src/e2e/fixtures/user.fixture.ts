@@ -151,8 +151,8 @@ export class UserFixture {
    * @param {User} obj - Representation of the user to validate against the table
    */
   async validateUser({ username, displayName, id, isAdmin, isActive }: User): Promise<void> {
-    await this.userManagementPage.search.pwLocator.fill(username);
-    const row = this.userManagementPage.getRowById(id);
+    const row = await this.userManagementPage.getRowByUsernameSearch(username);
+    expect(await row.getId()).toEqual(id);
     await expect(row.user.name.pwLocator).toContainText(username);
     if (displayName) {
       await expect(row.user.alias.pwLocator).toContainText(displayName);
