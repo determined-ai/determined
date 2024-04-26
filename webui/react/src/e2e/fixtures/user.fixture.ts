@@ -82,6 +82,7 @@ export class UserFixture {
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
+    password = 'TestPassword1'; // revertme
     await this.fillUserCreateForm({ displayName, isAdmin, password, username });
     // setting a password requires hashing it, which can take a little extra time
     await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
