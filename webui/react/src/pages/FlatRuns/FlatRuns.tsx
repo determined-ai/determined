@@ -120,7 +120,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
-  const isPagedView = globalSettings.tableViewMode === 'paged';
+  const isPagedView = true;
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
@@ -173,54 +173,34 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
-  const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
-    [isLoadingSettings, settings.selection.type],
-  );
-
-  const [excludedRunIds, selectedRunIds] = useMemo(() => {
+  const selectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
-    const excludedMap = new Map<number, { run: FlatRun; index: number }>();
     if (isLoadingSettings) {
-      return [excludedMap, selectedMap];
+      return selectedMap;
     }
     const selectedIdSet = new Set(
       settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
     );
-    const excludedIdSet = new Set(
-      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
-    );
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        const mapToAdd =
-          (selectAll && !excludedIdSet.has(run.id)) || selectedIdSet.has(run.id)
-            ? selectedMap
-            : excludedMap;
-        mapToAdd.set(run.id, { index, run });
+        if (selectedIdSet.has(run.id)) {
+          selectedMap.set(run.id, { index, run });
+        }
       });
     });
-    return [excludedMap, selectedMap];
-  }, [isLoadingSettings, settings.selection, runs, selectAll]);
+    return selectedMap;
+  }, [isLoadingSettings, settings.selection, runs]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (selectAll) {
-      Loadable.forEach(total, (t) => {
-        rows = rows.add([0, t]);
-      });
-      excludedRunIds.forEach((info) => {
-        rows = rows.remove(info.index);
-      });
-    } else {
-      selectedRunIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    }
+    selectedRunIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectAll, total, excludedRunIds, selectedRunIds]);
+  }, [selectedRunIds]);
 
   const colorMap = useGlasbey([...selectedRunIds.keys()]);
 
@@ -244,7 +224,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return defaultSelectionColumn(selection.rows, selectAll);
+          return defaultSelectionColumn(selection.rows, false);
         }
 
         if (columnName in columnDefs) return columnDefs[columnName];
@@ -321,7 +301,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     isDarkMode,
     projectColumns,
-    selectAll,
     selection.rows,
     settings.columnWidths,
     settings.compare,
@@ -552,7 +531,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 key: 'select-none',
                 label: 'Clear selected',
                 onClick: () => {
-                  handleSelectionChange?.('remove-all');
+                  handleSelectionChange?.('remove', [0, settings.pageLimit]);
                 },
               }
             : null,
@@ -568,7 +547,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('add-all');
+              handleSelectionChange?.('set', [0, settings.pageLimit]);
             },
           },
         ];
@@ -635,6 +614,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       selection.rows.length,
       settings.pinnedColumnsCount,
       sorts,
+      settings.pageLimit,
     ],
   );
 

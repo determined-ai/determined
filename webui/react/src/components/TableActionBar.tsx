@@ -103,7 +103,7 @@ interface Props {
   selectedExperimentIds: Map<number, unknown>;
   selection: SelectionType;
   sorts: Sort[];
-  tableViewMode: TableViewMode;
+  // tableViewMode: TableViewMode;
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
@@ -125,7 +125,7 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  onTableViewModeChange,
+  // onTableViewModeChange,
   onVisibleColumnChange,
   project,
   projectColumns,
@@ -133,7 +133,7 @@ const TableActionBar: React.FC<Props> = ({
   selection,
   selectedExperimentIds,
   sorts,
-  tableViewMode,
+  // tableViewMode,
   total,
   labelSingular,
   labelPlural,
@@ -403,9 +403,9 @@ const TableActionBar: React.FC<Props> = ({
             />
             <OptionsMenu
               rowHeight={rowHeight}
-              tableViewMode={tableViewMode}
+              // tableViewMode={tableViewMode}
               onRowHeightChange={onRowHeightChange}
-              onTableViewModeChange={onTableViewModeChange}
+              // onTableViewModeChange={onTableViewModeChange}
             />
             {selectedExperimentIds.size > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>

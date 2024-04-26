@@ -46,7 +46,10 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import {
+  RowHeight,
+  // TableViewMode
+} from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -160,7 +163,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
-  const isPagedView = globalSettings.tableViewMode === 'paged';
+  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -183,11 +186,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const isMobile = useMobile();
   const { openToast } = useToast();
-
-  const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
-    [isLoadingSettings, settings.selection],
-  );
 
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
@@ -244,50 +242,34 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  // partition experiment list into not selected/selected with indices and experiments so we only iterate the result list once
-  const [excludedExperimentIds, selectedExperimentIds] = useMemo(() => {
+  const selectedExperimentIds = useMemo(() => {
     const selectedMap = new Map<number, ExperimentWithIndex>();
-    const excludedMap = new Map<number, ExperimentWithIndex>();
     if (isLoadingSettings) {
-      return [excludedMap, selectedMap];
+      return selectedMap;
     }
     const selectedIdSet = new Set(
       settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
     );
-    const excludedIdSet = new Set(
-      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
-    );
     experiments.forEach((e, index) => {
       Loadable.forEach(e, ({ experiment }) => {
-        const mapToAdd =
-          (selectAll && !excludedIdSet.has(experiment.id)) || selectedIdSet.has(experiment.id)
-            ? selectedMap
-            : excludedMap;
-        mapToAdd.set(experiment.id, { experiment, index });
+        if (selectedIdSet.has(experiment.id)) {
+          selectedMap.set(experiment.id, { experiment, index });
+        }
       });
     });
-    return [excludedMap, selectedMap];
-  }, [isLoadingSettings, selectAll, settings.selection, experiments]);
+    return selectedMap;
+  }, [isLoadingSettings, settings.selection, experiments]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (selectAll) {
-      Loadable.forEach(total, (t) => {
-        rows = rows.add([0, t]);
-      });
-      excludedExperimentIds.forEach((info) => {
-        rows = rows.remove(info.index);
-      });
-    } else {
-      selectedExperimentIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    }
+    selectedExperimentIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
+  }, [selectedExperimentIds]);
 
   const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
@@ -637,14 +619,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [handleSelectionChange]);
 
-  const handleTableViewModeChange = useCallback(
-    (mode: TableViewMode) => {
-      // Reset page index when table view mode changes.
-      resetPagination();
-      updateGlobalSettings({ tableViewMode: mode });
-    },
-    [resetPagination, updateGlobalSettings],
-  );
+  // const handleTableViewModeChange = useCallback(
+  //   (mode: TableViewMode) => {
+  //     // Reset page index when table view mode changes.
+  //     resetPagination();
+  //     updateGlobalSettings({ tableViewMode: mode });
+  //   },
+  //   [resetPagination, updateGlobalSettings],
+  // );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -791,7 +773,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
@@ -917,7 +899,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     appTheme,
     isDarkMode,
-    selectAll,
     selection.rows,
     users,
   ]);
@@ -930,7 +911,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               key: 'select-none',
               label: 'Clear selected',
               onClick: () => {
-                handleSelectionChange?.('remove-all');
+                handleSelectionChange?.('remove', [0, settings.pageLimit]);
               },
             }
           : null,
@@ -946,7 +927,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           key: 'select-all',
           label: 'Select all',
           onClick: () => {
-            handleSelectionChange?.('add-all');
+            handleSelectionChange?.('add', [0, settings.pageLimit]);
           },
         },
       ];
@@ -1103,7 +1084,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         selectedExperimentIds={selectedExperimentIds}
         selection={settings.selection}
         sorts={sorts}
-        tableViewMode={globalSettings.tableViewMode}
+        // tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
@@ -1112,7 +1093,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
-        onTableViewModeChange={handleTableViewModeChange}
+        // onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>
