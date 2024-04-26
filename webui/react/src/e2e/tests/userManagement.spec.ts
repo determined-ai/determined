@@ -257,10 +257,10 @@ test.describe('User Management', () => {
           },
         ]) {
           await test.step(`Compare table rows with pagination: ${name}`, async () => {
-            await pagination.perPage.pwLocator.click();
             await expect(
               repeatWithFallback(
                 async () => {
+                  await pagination.perPage.pwLocator.click();
                   await paginationOption.pwLocator.click();
                 },
                 async () => {
@@ -268,7 +268,7 @@ test.describe('User Management', () => {
                   await userManagementPage.goto();
                 },
               ),
-            ).toPass({ timeout: 15_000 });
+            ).toPass({ timeout: 25_000 });
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
             const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
             if (matches === null) {
