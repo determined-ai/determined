@@ -9,7 +9,7 @@ import Toggle from 'hew/Toggle';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import { FormInstance } from 'rc-field-form';
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import { PASSWORD_RULES } from 'constants/passwordRules';
@@ -79,6 +79,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
   const { openToast } = useToast();
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
+  const hasFormErrors = useMemo(() => hasErrors(form), [form]);
   const { rbacEnabled } = useObservable(determinedStore.info);
   // Null means the roles have not yet loaded
   const { canAssignRoles, canModifyPermissions } = usePermissions();
@@ -177,7 +178,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       data-test-component="createUserModal"
       size="small"
       submit={{
-        disabled: hasErrors(form),
+        disabled: hasFormErrors,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
