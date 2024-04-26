@@ -9,6 +9,7 @@ export interface User {
   id: string;
   isAdmin: boolean;
   isActive: boolean;
+  password: string;
 }
 interface UserEditArgs {
   username?: string;
@@ -23,8 +24,13 @@ interface UserCreateArgs extends UserEditArgs {
 export class UserFixture {
   readonly userManagementPage: UserManagement;
   readonly #users = new Map<string, User>();
+  readonly #PASSWORD: string;
 
   constructor(readonly page: Page) {
+    if (process.env.PW_PASSWORD === undefined) {
+      throw new Error('password must be defined');
+    }
+    this.#PASSWORD = process.env.PW_PASSWORD;
     this.userManagementPage = new UserManagement(page);
   }
 
@@ -51,37 +57,36 @@ export class UserFixture {
     await this.userManagementPage.createUserModal.footer.submit.pwLocator.click();
   }
 
-  async fillUserCreateForm({
-    username,
-    displayName,
-    isAdmin,
-    password,
-  }: UserCreateArgs): Promise<void> {
+  async fillUserCreateForm({ username, displayName, isAdmin }: UserCreateArgs): Promise<void> {
     await this.fillUserEditForm({ displayName, isAdmin, username });
-    if (password !== undefined) {
-      await this.userManagementPage.createUserModal.password.pwLocator.fill(password);
-    }
+    await this.userManagementPage.createUserModal.password.pwLocator.fill(this.#PASSWORD);
   }
 
   async createUser({
     username = safeName('test-user'),
     displayName,
     isAdmin,
-    password,
   }: UserCreateArgs = {}): Promise<User> {
     await this.userManagementPage.addUser.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
-    await this.fillUserCreateForm({ displayName, isAdmin, password, username });
+    await this.fillUserCreateForm({ displayName, isAdmin, username });
     await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
       'New user has been created; advise user to change password as soon as possible.',
     );
     const row = await this.userManagementPage.getRowByUsernameSearch(username);
     const id = await row.getID();
-    const user = { displayName, id, isActive: true, isAdmin: !!isAdmin, username };
+    const user = {
+      displayName,
+      id,
+      isActive: true,
+      isAdmin: !!isAdmin,
+      password: this.#PASSWORD,
+      username,
+    };
     this.#users.set(String(id), user);
     return user;
   }
