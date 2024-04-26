@@ -32,7 +32,7 @@ import {
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
+import { V1LocationType } from 'services/api-ts-sdk';
 import {
   BulkActionResult,
   ExperimentAction,
@@ -82,9 +82,7 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  excludedExperimentIds?: Map<number, unknown>;
   experiments: Loadable<ExperimentWithTrial>[];
-  filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
   heatmapBtnVisible?: boolean;
   heatmapOn?: boolean;
@@ -102,7 +100,6 @@ interface Props {
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectAll: boolean;
   selectedExperimentIds: Map<number, unknown>;
   selection: SelectionType;
   sorts: Sort[];
@@ -115,9 +112,7 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   compareViewOn,
-  excludedExperimentIds,
   experiments,
-  filters,
   formStore,
   heatmapBtnVisible,
   heatmapOn,
@@ -136,7 +131,6 @@ const TableActionBar: React.FC<Props> = ({
   projectColumns,
   rowHeight,
   selection,
-  selectAll,
   selectedExperimentIds,
   sorts,
   tableViewMode,
@@ -181,12 +175,10 @@ const TableActionBar: React.FC<Props> = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    if (selectAll)
-      return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
     const experiments = experimentIds.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentIds, experimentMap, permissions, selectAll]);
+  }, [experimentIds, experimentMap, permissions]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
@@ -195,14 +187,7 @@ const TableActionBar: React.FC<Props> = ({
         .map((exp) => exp.id);
       const params = {
         experimentIds: managedExperimentIds,
-        filters: selectAll ? filters : undefined,
       };
-      if (excludedExperimentIds?.size) {
-        params.filters = {
-          ...filters,
-          excludedExperimentIds: Array.from(excludedExperimentIds.keys()),
-        };
-      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
           if (managedExperimentIds.length !== selectedExperiments.length) {
@@ -240,9 +225,6 @@ const TableActionBar: React.FC<Props> = ({
     },
     [
       selectedExperiments,
-      selectAll,
-      filters,
-      excludedExperimentIds,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
       openExperimentTensorBoardModal,
@@ -425,7 +407,7 @@ const TableActionBar: React.FC<Props> = ({
               onRowHeightChange={onRowHeightChange}
               onTableViewModeChange={onTableViewModeChange}
             />
-            {(selectAll || selectedExperimentIds.size > 0) && (
+            {selectedExperimentIds.size > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>
               </Dropdown>
@@ -463,19 +445,16 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        excludedExperimentIds={excludedExperimentIds}
         experimentIds={experimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
             permissions.canMoveExperiment({ experiment: experimentMap[id] }),
         )}
-        filters={selectAll ? filters : undefined}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
-        excludedExperimentIds={excludedExperimentIds}
         experimentIds={experimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.RetainLogs, experimentMap[id]) &&
@@ -483,11 +462,9 @@ const TableActionBar: React.FC<Props> = ({
               workspace: { id: experimentMap[id].workspaceId },
             }),
         )}
-        filters={selectAll ? filters : undefined}
         onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent
-        filters={selectAll ? filters : undefined}
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />

@@ -1089,9 +1089,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           V1LocationType.HYPERPARAMETERS,
         ]}
         compareViewOn={settings.compare}
-        excludedExperimentIds={excludedExperimentIds}
         experiments={experiments}
-        filters={experimentFilters}
         formStore={formStore}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}
@@ -1102,7 +1100,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectAll={selectAll}
         selectedExperimentIds={selectedExperimentIds}
         selection={settings.selection}
         sorts={sorts}
