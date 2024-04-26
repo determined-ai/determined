@@ -29,6 +29,8 @@ message GetTemplatesRequest {
   int32 limit = 4;
   // Limit templates to those that match the name.
   string name = 5;
+  // Limit templates to those that match the workspace id.
+  int32 workspace_id = 6;
 }
 // Response to GetTemplatesRequest.
 message GetTemplatesResponse {

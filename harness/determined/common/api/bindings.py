@@ -19168,6 +19168,7 @@ def get_GetTemplates(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetTemplatesResponse":
     """Get a list of templates.
 
@@ -19184,6 +19185,7 @@ denote number of templates to skip from the end before returning results.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
+    - workspaceId: Limit templates to those that match the workspace id.
     """
     _params = {
         "limit": limit,
@@ -19191,6 +19193,7 @@ denote number of templates to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
