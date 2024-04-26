@@ -270,7 +270,7 @@ commands:
       - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
       - run: chmod +x $HOME/.local/bin/codecov
       - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
+      - run: pip install codecov
 
   setup-go-intg-deps:
     steps:
