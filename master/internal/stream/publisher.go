@@ -396,11 +396,16 @@ func publishLoop[T stream.Msg](
 				pingErrChan <- listener.Ping()
 			}()
 			if err := <-pingErrChan; err != nil {
-				return fmt.Errorf("no active connection: %s", err.Error())
+				return fmt.Errorf("(%s) doesn't have active connection: %s", channelName, err.Error())
 			}
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
+			if notification == nil {
+				// Some notification may be lost during connection loss. Restart the publisher
+				// system to recover.
+				return fmt.Errorf("(%s) lost connection", channelName)
+			}
 			var event stream.Event[T]
 			err = json.Unmarshal([]byte(notification.Extra), &event)
 			if err != nil {
