@@ -66,6 +66,8 @@ class BaseSession(metaclass=abc.ABCMeta):
     context manager, all requests within the context will share a persistent underlying HTTP
     connection. When used directly, each request will create a new HTTP connection.
 
+    TODO (MD-392): Migrate all session usage to persistent, remove context manager usage pattern.
+
     Example of direct usage:
 
     .. code:: python
