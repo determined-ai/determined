@@ -1082,7 +1082,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={selectedExperimentIds}
-        selection={settings.selection}
         sorts={sorts}
         // tableViewMode={globalSettings.tableViewMode}
         total={total}

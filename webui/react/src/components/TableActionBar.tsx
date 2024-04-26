@@ -21,7 +21,6 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
-import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
@@ -101,7 +100,6 @@ interface Props {
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: Map<number, unknown>;
-  selection: SelectionType;
   sorts: Sort[];
   // tableViewMode: TableViewMode;
   total: Loadable<number>;
@@ -130,7 +128,6 @@ const TableActionBar: React.FC<Props> = ({
   project,
   projectColumns,
   rowHeight,
-  selection,
   selectedExperimentIds,
   sorts,
   // tableViewMode,
@@ -358,20 +355,15 @@ const TableActionBar: React.FC<Props> = ({
           labelSingular.toLowerCase(),
         )}`;
 
-        if (selection.type === 'ALL_EXCEPT') {
-          const all = selection.exclusions.length === 0 ? 'All ' : '';
-          const totalSelected =
-            (totalExperiments - (selection.exclusions.length ?? 0)).toLocaleString() + ' ';
-          label = `${all}${totalSelected}${labelPlural.toLowerCase()} selected`;
-        } else if (selection.selections.length > 0) {
-          label = `${selection.selections.length} of ${label} selected`;
+        if (selectedExperimentIds.size) {
+          label = `${selectedExperimentIds.size} of ${label} selected`;
         }
 
         return label;
       },
       NotLoaded: () => `Loading ${labelPlural.toLowerCase()}...`,
     });
-  }, [selection, total, labelPlural, labelSingular]);
+  }, [total, labelPlural, labelSingular, selectedExperimentIds]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
