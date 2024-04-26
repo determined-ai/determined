@@ -69,7 +69,7 @@ test.describe('User Management', () => {
         const userManagementPage = new UserManagement(page);
         await page.goto('/');
         await auth.logout();
-        await auth.login({ username: testUser.username });
+        await auth.login(testUser);
         await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
         await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor();
         await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.waitFor({
@@ -120,7 +120,11 @@ test.describe('User Management', () => {
         });
         await test.step('Attempt Sign In', async () => {
           await auth.logout();
-          await auth.login({ username: testUser.username, waitForURL: /login/ });
+          await auth.login({
+            password: testUser.password,
+            username: testUser.username,
+            waitForURL: /login/,
+          });
           expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
             'Login failed',
           );
@@ -140,7 +144,7 @@ test.describe('User Management', () => {
         });
         await test.step('Successful Sign In', async () => {
           await auth.logout();
-          await auth.login({ username: testUser.username });
+          await auth.login(testUser);
         });
       });
     });
