@@ -3,6 +3,7 @@ import uPlot from 'uplot';
 import { UPlotAxisSplits, UPlotData } from 'components/UPlot/types';
 import { Range, Scale } from 'types';
 import { rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
+import { isString } from 'utils/data';
 
 export const X_INDEX = 0;
 export const Y_INDEX = 1;
@@ -22,7 +23,7 @@ export type ColorFn = () => string;
 const safeLog = (x: number): number => Math.log10(Math.max(x, Number.EPSILON));
 
 type BubbleFn<T = number | string> = (
-  value: number | null | undefined,
+  value: UPlotData,
   minValue: number,
   maxValue: number,
   scale?: Scale,
@@ -38,13 +39,9 @@ export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn =>
   const maxColor = matches[2];
   const rgbaMin = str2rgba(minColor);
   const rgbaMax = str2rgba(maxColor);
-  return (
-    value: number | null | undefined,
-    minValue: number,
-    maxValue: number,
-    scale?: Scale,
-  ): string => {
-    if (value == null || minValue === maxValue || minValue == null) return minColor;
+  return (value: UPlotData, minValue: number, maxValue: number, scale?: Scale): string => {
+    if (value == null || isString(value) || minValue === maxValue || minValue == null)
+      return minColor;
     let percent = 0;
     if (scale === Scale.Linear) {
       percent = (value - minValue) / (maxValue - minValue);
@@ -78,12 +75,8 @@ export const getMinMax = (u: uPlot, dataIndex: number): [number, number] => {
 };
 
 // quadratic scaling (px area)
-export const getSize = (
-  value: number | null | undefined,
-  minValue: number,
-  maxValue: number,
-): number => {
-  if (value == null || minValue === maxValue || minValue == null) return 0;
+export const getSize = (value: UPlotData, minValue: number, maxValue: number): number => {
+  if (value == null || isString(value) || minValue === maxValue || minValue == null) return 0;
   const percent = (value - minValue) / (maxValue - minValue);
   const area = (MAX_AREA - MIN_AREA) * percent + MIN_AREA;
   return Math.sqrt(area / Math.PI) * 2;
@@ -96,7 +89,7 @@ export const range = (
   scaleKey: string,
 ): Range<number> => {
   // Return a standard range if there is not any valid data.
-  if (min == null || max == null) return [0, 100];
+  if (min == null || max == null || isString(min) || isString(max)) return [0, 100];
 
   // When there is only one distinct value in the dataset.
   if (min === max) {
@@ -185,7 +178,13 @@ export const makeDrawPoints = (
           const fill = fills[i];
           const stroke = strokes[i];
 
-          if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+          if (
+            !isString(yVal) &&
+            xVal >= filtLft &&
+            xVal <= filtRgt &&
+            yVal >= filtBtm &&
+            yVal <= filtTop
+          ) {
             const cx = valToPosX(xVal, scaleX, xDim, xOff);
             const cy = valToPosY(yVal, scaleY, yDim, yOff);
 

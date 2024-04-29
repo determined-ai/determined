@@ -8,7 +8,7 @@ import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import useUI from 'components/ThemeProvider';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
+import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import useResize from 'hooks/useResize';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
@@ -148,7 +148,7 @@ const CompareHeatMaps: React.FC<Props> = ({
               chartData?.hpMetrics[key] || [],
               chartData?.trialIds || [],
             ],
-          ] as FacetedData,
+          ],
           options: {
             axes: [
               { scale: xScaleKey, splits: xSplits, values: xValues },
