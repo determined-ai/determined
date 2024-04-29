@@ -462,23 +462,23 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range killCandidatees {
-		visibleIDs.Insert(check.ID)
+	for _, cand := range killCandidatees {
+		visibleIDs.Insert(cand.ID)
 		switch {
-		case check.IsTerminal:
+		case cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		// This should be impossible in the current system but we will leave this check here
 		// to cover a possible error in integration tests
-		case check.RequestID == nil:
+		case cand.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		default:
-			validIDs = append(validIDs, check.ID)
+			validIDs = append(validIDs, cand.ID)
 		}
 	}
 	if req.Filter == nil {
@@ -555,16 +555,16 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range deleteCandidates {
-		visibleIDs.Insert(check.ID)
+	for _, cand := range deleteCandidates {
+		visibleIDs.Insert(cand.ID)
 		switch {
-		case !check.IsTerminal:
+		case !cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in a terminal state.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		default:
-			validIDs = append(validIDs, check.ID)
+			validIDs = append(validIDs, cand.ID)
 		}
 	}
 	if req.Filter == nil {
@@ -700,26 +700,26 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range runCandidates {
-		visibleIDs.Insert(check.ID)
+	for _, cand := range runCandidates {
+		visibleIDs.Insert(cand.ID)
 		switch {
-		case check.Archived && archive:
+		case cand.Archived && archive:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
-		case !check.Archived && !archive:
+		case !cand.Archived && !archive:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
-		case !check.IsTerminal:
+		case !cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in terminal state.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		default:
-			validIDs = append(validIDs, check.ID)
+			validIDs = append(validIDs, cand.ID)
 		}
 	}
 
@@ -744,7 +744,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 			Model(&acceptedIDs).
 			Exec(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to archive/unarchive runs: %w", err)
 		}
 		for _, acceptID := range acceptedIDs {
 			results = append(results, &apiv1.RunActionResult{
