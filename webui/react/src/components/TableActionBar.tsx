@@ -184,6 +184,7 @@ const TableActionBar: React.FC<Props> = ({
         .map((exp) => exp.id);
       const params = {
         experimentIds: managedExperimentIds,
+        projectId: project.id,
       };
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
@@ -225,7 +226,7 @@ const TableActionBar: React.FC<Props> = ({
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
       openExperimentTensorBoardModal,
-      project?.workspaceId,
+      project,
     ],
   );
 
@@ -454,6 +455,7 @@ const TableActionBar: React.FC<Props> = ({
               workspace: { id: experimentMap[id].workspaceId },
             }),
         )}
+        projectId={project.id}
         onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent

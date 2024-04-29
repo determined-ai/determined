@@ -1014,6 +1014,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={batchRetainLogsExperimentIds}
+        projectId={project?.id}
         onSubmit={handleActionComplete}
       />
     </>
