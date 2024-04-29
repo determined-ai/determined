@@ -103,7 +103,7 @@ export class UserManagement extends AdminPage {
       await expect(this.table.table.rows.pwLocator).not.toHaveCount(1);
       await this.search.pwLocator.fill(name);
       await expect(this.table.table.rows.pwLocator).toHaveCount(1);
-    }).toPass({ timeout: 15000 });
+    }).toPass({ timeout: 15_000 });
     return await this.getRowByUsername(name);
   }
 }

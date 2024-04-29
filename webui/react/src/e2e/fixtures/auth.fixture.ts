@@ -39,6 +39,7 @@ export class AuthFixture {
     await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
     await this.#page.waitForURL(waitForURL);
+    // BUG [ET-239] can cause the following line to fail
   }
 
   async logout(): Promise<void> {

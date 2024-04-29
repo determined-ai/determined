@@ -2,7 +2,6 @@ import { expect } from '@playwright/test';
 import playwright from 'playwright';
 
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
-import { DevFixture } from 'e2e/fixtures/dev.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
@@ -13,13 +12,29 @@ import { repeatWithFallback } from 'e2e/utils/polling';
 // creating users while running tests in parallel can cause the users table to refresh at unexpected times
 test.describe.configure({ mode: 'serial' });
 
-const loginBeforeEach = async ({ auth, dev }: { auth: AuthFixture; dev: DevFixture }) => {
-  await dev.setServerAddress();
-  await auth.login();
-};
-
 test.describe('User Management', () => {
-  test.beforeEach(loginBeforeEach);
+  test.beforeEach(async ({ auth, dev, page }) => {
+    await dev.setServerAddress();
+    await auth.login();
+    const userManagementPage = new UserManagement(page);
+    await userManagementPage.goto();
+
+    // wait for table to be stable and select page 1
+    await userManagementPage.table.table.rows.pwLocator.count();
+    const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
+    if (await userManagementPage.table.table.pagination.pwLocator.isVisible()) {
+      await expect(
+        repeatWithFallback(
+          async () => {
+            await expect(page1).toHaveClass(/ant-pagination-item-active/);
+          },
+          async () => {
+            await page1.click();
+          },
+        ),
+      ).toPass({ timeout: 10_000 });
+    }
+  });
 
   test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
@@ -59,15 +74,12 @@ test.describe('User Management', () => {
         await pageSetupTeardown.close();
       });
 
-      test('User table shows correct data', async ({ page, user }) => {
-        const userManagementPage = new UserManagement(page);
-        await userManagementPage.goto();
+      test('User table shows correct data', async ({ user }) => {
         await user.validateUser(testUser);
       });
 
-      test('Sign in', async ({ page, auth }) => {
+      test('New user acess', async ({ page, auth }) => {
         const userManagementPage = new UserManagement(page);
-        await page.goto('/');
         await auth.logout();
         await auth.login({ username: testUser.username });
         await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
@@ -77,9 +89,7 @@ test.describe('User Management', () => {
         });
       });
 
-      test('Edit user', async ({ page, user }) => {
-        const userManagementPage = new UserManagement(page);
-        await userManagementPage.goto();
+      test('Edit user', async ({ user }) => {
         await test.step('Edit once', async () => {
           testUser = await user.editUser(testUser, {
             displayName: testUser.username + '_edited',
@@ -115,7 +125,6 @@ test.describe('User Management', () => {
         test.setTimeout(120_000);
         const userManagementPage = new UserManagement(page);
         const signInPage = new SignIn(page);
-        await userManagementPage.goto();
         await test.step('Deactivate', async () => {
           testUser = await user.changeStatusUser(testUser, false);
           await user.validateUser(testUser);
@@ -167,16 +176,15 @@ test.describe('User Management', () => {
         await pageSetupTeardown.close();
       });
 
-      test('Group actions, pagination, and filter', async ({ page, user }, testInfo) => {
+      test('[ET-233, ET-178] Bulk actions', async ({ page, user }, testInfo) => {
         const userManagementPage = new UserManagement(page);
-        await userManagementPage.goto();
 
         await test.step('Setup table filters', async () => {
           // set pagination to 10
-          await userManagementPage.table.table.pagination.perPage.pwLocator.click();
           await expect(
             repeatWithFallback(
               async () => {
+                await userManagementPage.table.table.pagination.perPage.pwLocator.click();
                 await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
               },
               async () => {
@@ -188,6 +196,13 @@ test.describe('User Management', () => {
           // filter by active users
           await userManagementPage.filterStatus.pwLocator.click();
           await userManagementPage.filterStatus.activeUsers.pwLocator.click();
+          await expect(async () => {
+            expect(
+              await userManagementPage.table.table.filterRows(async (row) => {
+                return (await row.status.pwLocator.textContent()) === 'Active';
+              }),
+            ).toHaveLength(10);
+          }).toPass({ timeout: 10_000 });
           // search for users created this session and wait for table stable
           await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
           await expect(async () => {
@@ -198,8 +213,13 @@ test.describe('User Management', () => {
             ).toHaveLength(10);
           }).toPass({ timeout: 10_000 });
           // go to page 2 to see users
-          await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
-          await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1);
+          expect(async () => {
+            // BUG [ET-240]
+            await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
+            await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1, {
+              timeout: 2_000,
+            });
+          }).toPass({ timeout: 10_000 });
         });
         await test.step("Disable all users on the table's page", async () => {
           await user.deactivateTestUsersOnTable();
@@ -213,6 +233,7 @@ test.describe('User Management', () => {
             await userManagementPage.table.table.noData.pwLocator.waitFor();
             await userManagementPage.table.table.pagination.pwLocator.waitFor();
             // if we see these elements, we should fail the test
+            // sometimes BUG [ET-240] makes this test pass unexpectedly
             throw new Error('Expected table to have data and no pagination');
           } catch (error) {
             // if we see a timeout error, that means we don't see "no data"
@@ -228,6 +249,7 @@ test.describe('User Management', () => {
 
       test('Users table count matches admin page users tab', async ({ page }) => {
         test.setTimeout(120_000);
+        const userManagementPage = new UserManagement(page);
         const getExpectedRowCount = async (): Promise<number> => {
           const match = (await userManagementPage.userTab.pwLocator.innerText()).match(
             /Users \((\d+)\)/,
@@ -237,8 +259,7 @@ test.describe('User Management', () => {
           }
           return Number(match[1]);
         };
-        const userManagementPage = new UserManagement(page);
-        await userManagementPage.goto();
+
         const pagination = userManagementPage.table.table.pagination;
         for await (const { name, paginationOption } of [
           {
