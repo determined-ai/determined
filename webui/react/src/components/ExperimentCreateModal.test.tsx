@@ -66,15 +66,10 @@ describe('Create Experiment Modal', () => {
   it('submits a valid create experiment request', async () => {
     await setup();
     const nameInput = screen.getByRole('textbox');
-
     await user.type(nameInput, 'test name 123');
-
     const button = screen.getByRole('button', { name: CreateExperimentType.Fork });
-
     expect(button).not.toBeDisabled();
-
     await user.click(button);
-
     expect(mockCreateExperiment).toHaveBeenCalled();
   });
 });
