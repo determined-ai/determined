@@ -132,18 +132,22 @@ mb-start:
 mb-stop:
 	npx mb stop
 
+# Downloads and saves to a file the recorded requests from Mountebank
 .PHONY: mb-save-imposters
 mb-save-imposters:
 	@curl -X GET -H 'Content-Type: application/json' \
 		"http://localhost:2525/imposters?replayabe=true&removeProxies=true" > "${MOCK_ROOT}/debug-saved-imposters.json"
 
+# Injects a script to MB that records requests and responses to the backend so that they can be re-used with mb-start-saved-imposters
 .PHONY: mb-record-imposters
-mb-record-imposters:
+mb-record-imposters: 
 	injection_script=$(tr -d '\n' <src/e2e/mocks/predicate-generator.js)
 	@curl -i -X PUT -H 'Content-Type: application/json' \
 		http://localhost:2525/imposters \
 		--data "@${MOCK_ROOT}/proxy-always.json"
 
+# Applies previously saved imposters in mountebank without recording requests. Requests that are not present may
+# result in Not Found errors as this does not forward requests to the backend, but instead imposters all requests.
 .PHONY: mb-start-saved-imposters
 mb-start-saved-imposters:
 	@curl -i -X PUT -H 'Content-Type: application/json' \

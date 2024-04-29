@@ -23,7 +23,7 @@
         },
         {
             "port": 4546,
-            "protocol": "tcp",
+            "protocol": "http",
             "stubs": [
                 {
                     "responses": [

@@ -34,6 +34,9 @@ If you don't want to use dev cluster, you can use det deploy to initiate the bac
 ## Mocking with MounteBank
 
 
+### Local mocking 
+`DET_WEBPACK_PROXY_URL='http://localhost:4545' DET_WEBPACK_PROXY_URL='ws://localhost:4546' SERVER_ADDRESS='http://localhost:3000' npm run start -- --open=false`
+
 ### Recording request from remote servers
 You can mock to a remote backend like `https://netlify.determined.ai/dynamic/http/0.0.0.0:8080` if necessary but there are some caveats. MounteBank can not handle any path elements in the `to` proxy field. So, you can only include `https://netlify.determined.ai` in the `to` field. Then you can set `DET_WEBPACK_PROXY_URL="http://localhost:4545/dynamic/http/52.89.73.17:8080"` and use the `predicate-generator.js` to strip thse extra path fields from the path and `match` the path rather than using equals.
 
