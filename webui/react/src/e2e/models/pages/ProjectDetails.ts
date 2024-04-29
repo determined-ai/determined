@@ -11,8 +11,10 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class ProjectDetails extends BasePage {
-  readonly title: RegExp =
-    /(Uncategorized Experiments|Project Details) - (Determined|HPE Machine Learning Development Environment)/;
+  readonly title = new RegExp(
+    ProjectDetails.getTitle('(Uncategorized Experiments|Project Details)'),
+    'g',
+  );
   readonly url: RegExp = /projects\/\d+/;
 
   /**
@@ -24,13 +26,13 @@ export class ProjectDetails extends BasePage {
     return await this.goto({ ...args, url: `projects/${projectID}` });
   }
 
-  readonly pageComponent: PageComponent = new PageComponent({ parent: this });
-  readonly dynamicTabs: DynamicTabs = new DynamicTabs({ parent: this.pageComponent });
-  readonly experimentsTab: BaseComponent = new BaseComponent({
+  readonly pageComponent = new PageComponent({ parent: this });
+  readonly dynamicTabs = new DynamicTabs({ parent: this.pageComponent });
+  readonly experimentsTab = new BaseComponent({
     parent: this.dynamicTabs.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('experiments'),
   });
-  readonly notesTab: BaseComponent = new BaseComponent({
+  readonly notesTab = new BaseComponent({
     parent: this.dynamicTabs.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('notes'),
   });

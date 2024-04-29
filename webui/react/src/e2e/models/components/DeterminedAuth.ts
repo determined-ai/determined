@@ -12,24 +12,23 @@ import { ErrorComponent } from 'e2e/models/utils/error';
 export class DeterminedAuth extends NamedComponent {
   readonly defaultSelector = 'div[data-test-component="detAuth"]';
   readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: 'form' });
-  readonly username: BaseComponent = new BaseComponent({
+  readonly username = new BaseComponent({
     parent: this.#form,
     selector: 'input[data-testid="username"]',
   });
-  readonly password: BaseComponent = new BaseComponent({
+  readonly password = new BaseComponent({
     parent: this.#form,
     selector: 'input[data-testid="password"]',
   });
-  readonly submit: BaseComponent = new BaseComponent({
+  readonly submit = new BaseComponent({
     parent: this.#form,
     selector: 'button[data-testid="submit"]',
   });
-  readonly docs: BaseComponent = new BaseComponent({
+  readonly docs = new BaseComponent({
     parent: this,
     selector: 'link[data-testid="docs"]',
   });
-  // TODO consdier a BaseComponents plural class
-  readonly errors: ErrorComponent = new ErrorComponent({
+  readonly errors = new ErrorComponent({
     attachment: ErrorComponent.selectorTopRight,
     parent: this.root,
   });

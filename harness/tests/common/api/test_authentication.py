@@ -1,4 +1,7 @@
 import json
+from typing import Optional
+
+import pytest
 
 from determined.common.api import authentication
 from tests import confdir
@@ -125,3 +128,31 @@ def test_auth_json_v1_upgrade() -> None:
         # Make sure we got exactly the master urls we expected.
         exp = {"http://firstmaster:80", "https://secondmaster:443", "http://thirdmaster:8080"}
         assert set(obj["masters"]) == exp, list(obj["masters"])
+
+
+def test_salt_and_hash() -> None:
+    assert authentication.salt_and_hash("") == ""
+    assert (
+        authentication.salt_and_hash("A05850A9-bcfe-4ea6-8363-7350ee604be7")
+        == "c7e7c0ffdcdb574914b3c36dc6deb37a37e5c36f25dabef323cf470041c122"
+        + "470b3beab157cb8c1624cab6dd9d8e27dd242a128e5899a5c8b7fb7a1b7c521778"
+    )
+
+
+@pytest.mark.parametrize(
+    "password, error",
+    [
+        ("0penSesame", None),
+        (None, "password cannot be blank"),
+        ("pass", "password must have at least 8 characters"),
+        ("testpassword1234", "password must include an uppercase letter"),
+        ("TESTPASSWORD1234", "password must include a lowercase letter"),
+        ("testPASSWORD", "password must include a number"),
+    ],
+)
+def test_check_password_complexity(password: Optional[str], error: Optional[str]) -> None:
+    if error:
+        with pytest.raises(ValueError, match="\u2717 " + error):
+            authentication.check_password_complexity(password)
+    else:
+        authentication.check_password_complexity(password)

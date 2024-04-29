@@ -8,19 +8,19 @@ import { Dropdown } from 'e2e/models/hew/Dropdown';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspaceActionDropdown extends Dropdown {
-  readonly pin: BaseComponent = new BaseComponent({
+  readonly pin = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('switchPin'),
   });
-  readonly edit: BaseComponent = new BaseComponent({
+  readonly edit = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('edit'),
   });
-  readonly archive: BaseComponent = new BaseComponent({
+  readonly archive = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('switchArchive'),
   });
-  readonly delete: BaseComponent = new BaseComponent({
+  readonly delete = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('delete'),
   });

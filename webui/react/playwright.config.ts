@@ -6,6 +6,12 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+const serverAddess = process.env.PW_SERVER_ADDRESS;
+if (serverAddess === undefined) {
+  throw new Error('Expected PW_SERVER_ADDRESS to be set.');
+}
+const port = Number(new URL(serverAddess).port || 3001);
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -17,16 +23,16 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 5 * 60 * 1000, // 3 min unless debugging
-  timeout: 60000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
+  globalTimeout: process.env.PWDEBUG ? 0 : 800_000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
+  /* Folder for test artifacts such as screenshots, videos, traces, etc. */
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' }
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
 
     {
@@ -71,21 +77,24 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
 
   testDir: './src/e2e',
+  timeout: 90_000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    actionTimeout: 5_000,
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3001/',
+    baseURL: `http://localhost:${port}/`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    navigationTimeout: 10_000,
     trace: 'retain-on-failure',
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
   },
 
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run preview',
-    port: 3001,
+    port: port,
     reuseExistingServer: !process.env.CI,
   },
 

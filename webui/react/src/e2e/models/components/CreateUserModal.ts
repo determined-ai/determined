@@ -9,23 +9,23 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class CreateUserModal extends Modal {
-  readonly username: BaseComponent = new BaseComponent({
+  readonly username = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="username"]',
   });
-  readonly displayName: BaseComponent = new BaseComponent({
+  readonly displayName = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="displayName"]',
   });
-  readonly adminToggle: BaseComponent = new BaseComponent({
+  readonly adminToggle = new BaseComponent({
     parent: this.body,
-    selector: '[data-testid="isAdmin"] >> button',
+    selector: '[data-testid="isAdmin"] button',
   });
-  readonly remoteToggle: BaseComponent = new BaseComponent({
+  readonly remoteToggle = new BaseComponent({
     parent: this.body,
-    selector: '[data-testid="isRemote"] >> button',
+    selector: '[data-testid="isRemote"] button',
   });
-  readonly roleSelect: BaseComponent = new BaseComponent({
+  readonly roleSelect = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="roles"]',
   });

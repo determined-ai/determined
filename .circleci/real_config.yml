@@ -22,7 +22,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.31.1-dev0
+    default: 0.32.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -223,7 +223,7 @@ commands:
     steps:
       - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
       - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
-      - run: ls -a 
+      - run: ls -a
 
   pull-task-images:
     parameters:
@@ -261,7 +261,7 @@ commands:
 
   install-protoc:
     steps:
-      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+      - run: curl --retry-connrefused --retry 10 -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v24.3/protoc-24.3-linux-x86_64.zip
       - run: unzip -o /tmp/protoc.zip -d $HOME/.local
 
   install-codecov:
@@ -584,13 +584,13 @@ commands:
 
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
-            
+
             pytest --setup-plan -m '<<parameters.mark>>' | egrep '\.py s*$' | sed 's/\.py.*$/.py/' > /tmp/all-relevant-files
             if [ ! -s /tmp/all-relevant-files ]; then
               echo 'No test files found!'
               exit 1
             fi
-            
+
             if nc -zv <<parameters.master-host>> <<parameters.master-port>> 2>/dev/null; then
               echo "Determined user list from master '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
               DET_MASTER_CERT_FILE=noverify DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
@@ -1104,7 +1104,7 @@ commands:
             ip_addresses=($(echo "${CI_RANGES}" | tr -d '" ' | tr ',' ' '))
             formattedRange="export HELM_VALUES=${HELM_VALUES},'loadBalancerSourceRanges={"
             for i in ${ip_addresses[@]}; do
-              formattedRange+="${i}," 
+              formattedRange+="${i},"
             done
             formattedRange=${formattedRange::-1}
             formattedRange+="}'"
@@ -1348,7 +1348,7 @@ commands:
         default: agent1
     steps:
       - run:
-          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
 
 jobs:
@@ -1503,7 +1503,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -1983,6 +1983,10 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
+    parameters:
+      ee:
+        type: boolean
+        default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -2004,7 +2008,10 @@ jobs:
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
       - install-protoc 
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
@@ -2017,13 +2024,10 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: |
-          PW_USER_NAME=${PW_USER_NAME} \
-          PW_PASSWORD=${PW_PASSWORD} \
-          PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBPACK_PROXY_URL} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBSOCKET_PROXY_URL} \
-          npm run e2e --prefix webui/react
+      - run: 
+          environment:
+            PW_EE: << parameters.ee >> 
+          command: npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -2087,6 +2091,10 @@ jobs:
       - run: make -C agent check
 
   build-go:
+    parameters:
+      ee:
+        type: boolean
+        default: true
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -2096,9 +2104,11 @@ jobs:
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
-      - skip-if-only-webui
       - reinstall-go
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - restore_cache:
           keys:
             - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
@@ -2669,8 +2679,8 @@ jobs:
       - run:
           name: Delete existing resources (if they exist)
           command: |
-            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this 
-            # is not set at this point since no terraform initiation has happened. See workaround section in README) 
+            # This grabs the zone.default from tools/slurm/terraform/variables.tf used to specify the zone (as this
+            # is not set at this point since no terraform initiation has happened. See workaround section in README)
             GCLOUD_ZONE=$(grep -A2 'variable "zone"' ~/project/tools/slurm/terraform/variables.tf | grep 'default' \
             | awk -F' = ' '{ print $2 }' | tr -d '\"')
             gcloud compute instances delete ${OPT_DEVBOX_PREFIX}-dev-box --zone=$GCLOUD_ZONE --quiet || true
@@ -2706,7 +2716,7 @@ jobs:
                 exit 1
               fi
               sleep 5
-            done            
+            done
 
       # For when a user wants to use an agent instead of launcher.
       - when:
@@ -3162,9 +3172,12 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      resource-class:
+        type: string
+        default: xlarge
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: <<parameters.resource-class>>
     parallelism: <<parameters.parallelism>>
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
@@ -3739,7 +3752,7 @@ jobs:
           at: .
       - setup-python-venv:
           install-python: false
-          determined: true 
+          determined: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run:
@@ -4127,11 +4140,13 @@ workflows:
       - build-proto
       - build-helm
       - build-react:
+          name: build-react-oss
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-oss
           requires:
-            - build-go
-          context: 
+            - build-go-oss
+          context:
             - playwright
             - github-read
           filters: *any-upstream
@@ -4140,11 +4155,13 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-oss
+          ee: false
           context: github-read
 
       - package-and-push-system-local:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4153,7 +4170,7 @@ workflows:
 
       - package-and-push-system-dev:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4216,9 +4233,11 @@ workflows:
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
           requires:
-            - build-go
-          context: 
+            - build-go-ee
+          context:
             - playwright
             - github-read
           filters: *any-upstream
@@ -4227,6 +4246,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-ee
           context: github-read
 
       - package-and-push-system-local:
@@ -4332,7 +4352,7 @@ workflows:
               always-run: [true]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4347,7 +4367,7 @@ workflows:
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4362,7 +4382,7 @@ workflows:
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4378,7 +4398,7 @@ workflows:
               always-run: [true]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4395,7 +4415,7 @@ workflows:
               mark: ["e2e_pbs and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4411,7 +4431,7 @@ workflows:
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
@@ -4428,12 +4448,12 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
 
       - test-e2e:
           name: test-e2e-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -4441,16 +4461,18 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu
           requires:
-            - build-go
-          parallelism: 6
+            - build-go-ee
+          parallelism: 9
+          resource-class: large
           tf2: true
           mark: e2e_cpu
 
       - test-e2e:
           name: test-e2e-cpu-double
           requires:
-            - build-go
-          parallelism: 3
+            - build-go-ee
+          parallelism: 5
+          resource-class: large
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -4459,7 +4481,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-oauth
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4468,7 +4490,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
@@ -4477,8 +4499,9 @@ workflows:
       - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 4
+          resource-class: large
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -4489,7 +4512,7 @@ workflows:
       - test-e2e:
           name: test-e2e-multi-k8s
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4500,7 +4523,7 @@ workflows:
       - test-e2e:
           name: test-e2e-port-registry
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4509,8 +4532,9 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-elastic
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
+          resource-class: large
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
@@ -4518,7 +4542,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4528,7 +4552,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4538,7 +4562,7 @@ workflows:
       - test-e2e:
           name: test-e2e-old-agent-versions
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -4550,7 +4574,7 @@ workflows:
       - test-e2e:
           name: test-e2e-agent-connection-loss
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -4562,7 +4586,7 @@ workflows:
           context: okta
           name: test-e2e-saml
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
@@ -4572,7 +4596,7 @@ workflows:
           snapshot-after-migrations: true
           deploy-db: false
           requires:
-            - build-go
+            - build-go-ee
           context:
             - perf-tests
             - aws
@@ -4753,15 +4777,15 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
-    
+
   test-e2e-gke-shared-cluster:
     unless: << pipeline.parameters.do_nightly_tests >>
     jobs:
       - package-and-push-system-dev-small
-          
+
       - test-e2e-shared-cluster:
           name: test-e2e-shared-cluster-cpu
-          context: 
+          context:
             - gcp-shared-cluster
             - gcp-ci-cluster-default-user-credentials
           requires:
@@ -5271,11 +5295,12 @@ workflows:
             - build-proto
             - build-helm
       - build-react:
+          name: build-react-ee
           ee: true
       - package-and-push-system-local-ee:
           requires:
             - build-docs
-            - build-react
+            - build-react-ee
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
@@ -5512,7 +5537,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *rc-filters
           requires:
             - package-and-push-system-rc-ee

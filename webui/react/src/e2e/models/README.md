@@ -62,16 +62,16 @@ export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-
   constructor({ selector, parent }: NamedComponentArgs) {
     super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
   }
-  readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: `form` });
-  readonly username: BaseComponent = new BaseComponent({
+  readonly #form = new BaseComponent({ parent: this, selector: `form` });
+  readonly username = new BaseComponent({
     parent: this.#form,
     selector: `input[data-testid="username"]`,
   });
-  readonly password: BaseComponent = new BaseComponent({
+  readonly password = new BaseComponent({
     parent: this.#form,
     selector: `input[data-testid="password"]`,
   });
-  readonly submit: BaseComponent = new BaseComponent({
+  readonly submit = new BaseComponent({
     parent: this.#form,
     selector: `button[data-testid="submit"]`,
   });
@@ -84,8 +84,8 @@ export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-
 `NamedComponent`s will have a `static defaultSelector` to use if a selector isn't provided. Since this property is static, we can use it to create elements with more details. Here's an example using an imaginary `DeterminedTable` component:
 
 ```js
-  readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
-  readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
+  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
+  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
 ```
 
 ## Practices around test hooks
@@ -101,8 +101,8 @@ Looking back to the exmaple with the imaginary `DeterminedTable`, we want to ena
 
 ```js
   // DeterminedTable.defaultSelector = '[data-test-component="DetTable"]'
-  readonly userTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="userTable"]' });
-  readonly roleTable: DeterminedTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="roleTable"]' });
+  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="userTable"]' });
+  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="roleTable"]' });
 ```
 
 The component `DeterminedTable` would have `data-test-component="DetTable"` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.

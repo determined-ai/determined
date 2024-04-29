@@ -11,6 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_streaming_updates_not_enabled()
 def test_client_connection() -> None:
     sess = api_utils.admin_session()
     ws = streams._client.LomondStreamWebSocket(sess)
@@ -29,6 +30,7 @@ def test_client_connection() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_streaming_updates_not_enabled()
 def test_client_subscribe() -> None:
     sess = api_utils.admin_session()
     ws = streams._client.LomondStreamWebSocket(sess)
@@ -128,6 +130,7 @@ def test_client_subscribe() -> None:
 
 
 @pytest.mark.e2e_cpu
+@api_utils.skipif_streaming_updates_not_enabled()
 def test_subscribe_model_version() -> None:
     # Subscribe to model versions by model ID
     # When model version is created, verify that can be received from the stream

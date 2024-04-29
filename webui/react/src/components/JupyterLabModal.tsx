@@ -12,6 +12,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -355,6 +356,7 @@ const JupyterLabForm: React.FC<{
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const selectedWorkspaceId = Form.useWatch('workspaceId', form);
+  const templatesOn = useFeature().isOn('task_templates');
 
   const resourcePools = useObservable(clusterStore.resourcePools);
   const boundResourcePoolsMap = useObservable(workspaceStore.boundResourcePoolsMap());
@@ -452,7 +454,11 @@ const JupyterLabForm: React.FC<{
           ))}
         </Select>
       </Form.Item>
-      <Form.Item initialValue={defaults?.template} label="Template" name="template">
+      <Form.Item
+        extra={templatesOn && <Link path={paths.templates()}>Manage Templates</Link>}
+        initialValue={defaults?.template}
+        label="Template"
+        name="template">
         <Select allowClear placeholder="No template (optional)">
           {templates.map((temp) => (
             <Option key={temp.name} value={temp.name}>

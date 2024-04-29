@@ -10,7 +10,7 @@ import { Card } from 'e2e/models/hew/Card';
  */
 export class WorkspacesList extends NamedComponent {
   override defaultSelector: string = '[id=workspaces]';
-  readonly newWorkspaceButton: BaseComponent = new BaseComponent({
+  readonly newWorkspaceButton = new BaseComponent({
     parent: this,
     selector: '[data-testid="newWorkspace"]',
   });

@@ -4,6 +4,7 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { Map } from 'immutable';
 import * as t from 'io-ts';
 import { isEqual } from 'lodash';
+import { debounce } from 'throttle-debounce';
 
 import { getUserSetting, resetUserSetting, updateUserSetting } from 'services/api';
 import { V1GetUserSettingResponse, V1UserWebSetting } from 'services/api-ts-sdk';
@@ -13,6 +14,10 @@ import handleError, { DetError, ErrorType } from 'utils/error';
 import { observable, Observable, WritableObservable } from 'utils/observable';
 
 import PollingStore from './polling';
+
+const debounceFunc = debounce(200, (func: () => void) => {
+  func();
+});
 
 type State = Map<string, Json>;
 
@@ -116,7 +121,10 @@ export class UserSettingsStore extends PollingStore {
     // the user from interacting, just let them know that their settings
     // are not persisting. It's also important to update the value immediately
     // for good rendering performance.
-    this.updateUserSetting(key, encodedValue);
+    debounceFunc(() => {
+      this.updateUserSetting(key, encodedValue);
+    });
+
     this.#settings.update((settings) => {
       return Loadable.flatMap(settings, (settingsMap) => {
         return isEqual(encodedValue, settingsMap.get(key))
@@ -160,7 +168,10 @@ export class UserSettingsStore extends PollingStore {
     // the user from interacting, just let them know that their settings
     // are not persisting. It's also important to update the value immediately
     // for good rendering performance.
-    this.updateUserSetting(key, encodedValue);
+    debounceFunc(() => {
+      this.updateUserSetting(key, encodedValue);
+    });
+
     this.#settings.update((settings) => {
       return Loadable.flatMap(settings, (settingsMap) => {
         const newValue = settingsMap.update(key, (oldValue) => {

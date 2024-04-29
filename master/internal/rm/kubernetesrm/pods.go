@@ -241,28 +241,41 @@ func newPodsService(
 	return p
 }
 
+// StartTaskPod notifies the pods actor to start a pod with the task spec.
+type StartTaskPod struct {
+	Req          *sproto.AllocateRequest
+	AllocationID model.AllocationID
+	Spec         tasks.TaskSpec
+	Slots        int
+	Rank         int
+	ResourcePool string
+	Namespace    string
+
+	LogContext logger.Context
+}
+
 func (p *pods) StartTaskPod(msg StartTaskPod) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.receiveStartTaskPod(msg)
 }
 
-func (p *pods) ChangePriority(msg ChangePriority) {
+func (p *pods) ChangePriority(podID cproto.ID) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.receivePriorityChange(msg)
+	p.receivePriorityChange(podID)
 }
 
-func (p *pods) ChangePosition(msg ChangePosition) {
+func (p *pods) ChangePosition(podID cproto.ID) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.receivePositionChange(msg)
+	p.receivePositionChange(podID)
 }
 
-func (p *pods) KillPod(msg KillTaskPod) {
+func (p *pods) KillPod(podID cproto.ID) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.receiveKillPod(msg)
+	p.receiveKillPod(podID)
 }
 
 func (p *pods) SummarizeResources(msg SummarizeResources) (*PodsInfo, error) {
@@ -1186,34 +1199,34 @@ func (p *pods) verifyPodAndGetRef(podID string) *pod {
 	return ref
 }
 
-func (p *pods) receivePriorityChange(msg ChangePriority) {
-	ref := p.verifyPodAndGetRef(msg.PodID.String())
+func (p *pods) receivePriorityChange(podID cproto.ID) {
+	ref := p.verifyPodAndGetRef(podID.String())
 	if ref != nil {
 		ref.ChangePriority()
 	}
 }
 
-func (p *pods) receivePositionChange(msg ChangePosition) {
-	ref := p.verifyPodAndGetRef(msg.PodID.String())
+func (p *pods) receivePositionChange(podID cproto.ID) {
+	ref := p.verifyPodAndGetRef(podID.String())
 	if ref != nil {
 		ref.ChangePosition()
 	}
 }
 
-func (p *pods) receiveKillPod(msg KillTaskPod) {
-	name, ok := p.containerIDToPodName[string(msg.PodID)]
+func (p *pods) receiveKillPod(podID cproto.ID) {
+	name, ok := p.containerIDToPodName[podID.String()]
 	if !ok {
 		// For multi-pod tasks, when the chief pod exits, the scheduler
 		// will request to terminate pods all other pods that have
 		// notified the scheduler that they have exited.
-		p.syslog.WithField("pod-id", msg.PodID).Info(
+		p.syslog.WithField("pod-id", podID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
 
 	ref, ok := p.podNameToPodHandler[name]
 	if !ok {
-		p.syslog.WithField("pod-id", msg.PodID).Info(
+		p.syslog.WithField("pod-id", podID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
