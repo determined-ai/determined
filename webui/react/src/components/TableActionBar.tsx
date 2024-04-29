@@ -99,7 +99,7 @@ interface Props {
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectedExperimentIds: Map<number, unknown>;
+  selectedExperimentIds: number[];
   sorts: Sort[];
   // tableViewMode: TableViewMode;
   total: Loadable<number>;
@@ -145,10 +145,6 @@ const TableActionBar: React.FC<Props> = ({
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
-  const experimentIds = useMemo(
-    () => Array.from(selectedExperimentIds.keys()),
-    [selectedExperimentIds],
-  );
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce(
@@ -172,10 +168,10 @@ const TableActionBar: React.FC<Props> = ({
   );
 
   const availableBatchActions = useMemo(() => {
-    const experiments = experimentIds.map((id) => experimentMap[id]) ?? [];
+    const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentIds, experimentMap, permissions]);
+  }, [selectedExperimentIds, experimentMap, permissions]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
@@ -267,9 +263,8 @@ const TableActionBar: React.FC<Props> = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${labelPlural.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${labelPlural.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -281,9 +276,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -356,8 +350,8 @@ const TableActionBar: React.FC<Props> = ({
           labelSingular.toLowerCase(),
         )}`;
 
-        if (selectedExperimentIds.size) {
-          label = `${selectedExperimentIds.size} of ${label} selected`;
+        if (selectedExperimentIds.length) {
+          label = `${selectedExperimentIds.length} of ${label} selected`;
         }
 
         return label;
@@ -398,9 +392,9 @@ const TableActionBar: React.FC<Props> = ({
               rowHeight={rowHeight}
               // tableViewMode={tableViewMode}
               onRowHeightChange={onRowHeightChange}
-              // onTableViewModeChange={onTableViewModeChange}
+            // onTableViewModeChange={onTableViewModeChange}
             />
-            {selectedExperimentIds.size > 0 && (
+            {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>
               </Dropdown>
@@ -438,7 +432,7 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        experimentIds={experimentIds.filter(
+        experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
             permissions.canMoveExperiment({ experiment: experimentMap[id] }),
@@ -448,7 +442,7 @@ const TableActionBar: React.FC<Props> = ({
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
-        experimentIds={experimentIds.filter(
+        experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.RetainLogs, experimentMap[id]) &&
             permissions.canModifyExperiment({

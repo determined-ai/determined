@@ -242,7 +242,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  const selectedExperimentIds = useMemo(() => {
+  const loadedSelectedExperimentIds = useMemo(() => {
     const selectedMap = new Map<number, ExperimentWithIndex>();
     if (isLoadingSettings) {
       return selectedMap;
@@ -260,18 +260,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     return selectedMap;
   }, [isLoadingSettings, settings.selection, experiments]);
 
+  const allSelectedExperimentIds = useMemo(() => {
+    if (settings.selection.type === 'ONLY_IN') {
+      return settings.selection.selections;
+    }
+    return [];
+  }, [settings.selection]);
+
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    selectedExperimentIds.forEach((info) => {
+    loadedSelectedExperimentIds.forEach((info) => {
       rows = rows.add(info.index);
     });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectedExperimentIds]);
+  }, [loadedSelectedExperimentIds]);
 
-  const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
+  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
 
   const experimentFilters = useMemo(() => {
@@ -412,7 +419,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
-              experimentColumns.indexOf(b.column as ExperimentColumn)
+            experimentColumns.indexOf(b.column as ExperimentColumn)
             : 0,
         );
 
@@ -727,11 +734,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (selectedExperimentIds.size === 0) return [];
+    if (loadedSelectedExperimentIds.size === 0) return [];
     return Loadable.filterNotLoaded(experiments, (experiment) =>
-      selectedExperimentIds.has(experiment.experiment.id),
+      loadedSelectedExperimentIds.has(experiment.experiment.id),
     );
-  }, [experiments, selectedExperimentIds]);
+  }, [experiments, loadedSelectedExperimentIds]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -818,8 +825,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -831,8 +838,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -843,8 +850,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -855,8 +862,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -869,8 +876,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ) {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+              MIN_COLUMN_WIDTH,
               {
                 max: heatmap.max,
                 min: heatmap.min,
@@ -879,8 +886,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           } else {
             columnDefs[currentColumn.column] = searcherMetricsValColumn(
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as ExperimentColumn] ??
+              MIN_COLUMN_WIDTH,
             );
           }
         }
@@ -908,12 +915,12 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       const items: MenuItem[] = [
         selection.rows.length > 0
           ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove', [0, settings.pageLimit]);
-              },
-            }
+            key: 'select-none',
+            label: 'Clear selected',
+            onClick: () => {
+              handleSelectionChange?.('remove-all');
+            },
+          }
           : null,
         ...[5, 10, 25].map((n) => ({
           key: `select-${n}`,
@@ -972,30 +979,30 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ? null
         : !isPinned
           ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
-                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                );
-              },
-            }
-          : {
-              disabled: settings.pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-              },
+            icon: <Icon decorative name="pin" />,
+            key: 'pin',
+            label: 'Pin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(
+                Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+              );
             },
+          }
+          : {
+            disabled: settings.pinnedColumnsCount <= 1,
+            icon: <Icon decorative name="pin" />,
+            key: 'unpin',
+            label: 'Unpin column',
+            onClick: () => {
+              const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
+              newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
+              handleColumnsOrderChange?.(newColumnsOrder);
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            },
+          },
       {
         icon: <Icon decorative name="eye-close" />,
         key: 'hide',
@@ -1012,46 +1019,46 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       ...(BANNED_FILTER_COLUMNS.includes(column.column)
         ? []
         : [
-            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            { type: 'divider' as const },
-            {
-              icon: <Icon decorative name="filter" />,
-              key: 'filter',
-              label: 'Add Filter',
-              onClick: () => {
-                setTimeout(filterMenuItemsForColumn, 5);
-              },
+          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
             },
-          ]),
+          },
+        ]),
       filterCount > 0
         ? {
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          }
+          icon: <Icon decorative name="filter" />,
+          key: 'filter-clear',
+          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+          onClick: () => {
+            setTimeout(clearFilterForColumn, 5);
+          },
+        }
         : null,
       settings.heatmapOn &&
-      (column.column === 'searcherMetricsVal' ||
-        (column.type === V1ColumnType.NUMBER &&
-          (column.location === V1LocationType.VALIDATIONS ||
-            column.location === V1LocationType.TRAINING)))
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
         ? {
-            icon: <Icon decorative name="heatmap" />,
-            key: 'heatmap',
-            label: !settings.heatmapSkipped.includes(column.column)
-              ? 'Cancel heatmap'
-              : 'Apply heatmap',
-            onClick: () => {
-              handleHeatmapSelection?.(
-                settings.heatmapSkipped.includes(column.column)
-                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
-                  : [...settings.heatmapSkipped, column.column],
-              );
-            },
-          }
+          icon: <Icon decorative name="heatmap" />,
+          key: 'heatmap',
+          label: !settings.heatmapSkipped.includes(column.column)
+            ? 'Cancel heatmap'
+            : 'Apply heatmap',
+          onClick: () => {
+            handleHeatmapSelection?.(
+              settings.heatmapSkipped.includes(column.column)
+                ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                : [...settings.heatmapSkipped, column.column],
+            );
+          },
+        }
         : null,
     ];
     return items;
@@ -1081,7 +1088,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectedExperimentIds={selectedExperimentIds}
+        selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
         // tableViewMode={globalSettings.tableViewMode}
         total={total}
