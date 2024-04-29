@@ -124,7 +124,10 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 }
 
 // A Bun query for editable experiments in multi-experiment actions.
-func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
+func editableExperimentIds(
+	ctx context.Context,
+	inputProjectID int32,
+	inputExpIDs []int32,
 	filters *apiv1.BulkExperimentFilters,
 ) ([]int32, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -149,7 +152,15 @@ func editableExperimentIds(ctx context.Context, inputExpIDs []int32,
 		Column("e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Where("NOT e.archived").
-		Where("e.id IN (?)", bun.In(experimentIDList))
+		Where("e.id IN (?)", bun.In(experimentIDList)).
+		Where("p.id = ?", inputProjectID)
+	if filters == nil && len(inputExpIDs) == 1 {
+		query = query.Where("e.id = ?", inputExpIDs[0])
+	} else if filters == nil {
+		query = query.
+			Where("e.id IN (?)", bun.In(inputExpIDs)).
+			Where("e.project_id = ?", inputProjectID)
+	}
 
 	if query, err = AuthZProvider.Get().
 		FilterExperimentsQuery(ctx, *curUser, nil, query,
@@ -181,13 +192,16 @@ func ToAPIResults(results []ExperimentActionResult) []*apiv1.ExperimentActionRes
 }
 
 // ActivateExperiments works on one or many experiments.
-func ActivateExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func ActivateExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
 		filters.States = []experimentv1.State{experimentv1.State_STATE_PAUSED}
 	}
-	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
+	expIDs, err := editableExperimentIds(ctx, projectId, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -215,15 +229,18 @@ func ActivateExperiments(ctx context.Context,
 }
 
 // CancelExperiments works on one or many experiments.
-func CancelExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func CancelExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
 		for _, s := range model.NonTerminalStates {
 			filters.States = append(filters.States, model.StateToProto(s))
 		}
 	}
-	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
+	expIDs, err := editableExperimentIds(ctx, projectId, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -263,15 +280,18 @@ func CancelExperiments(ctx context.Context,
 }
 
 // KillExperiments works on one or many experiments.
-func KillExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func KillExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
 		for _, s := range model.NonTerminalStates {
 			filters.States = append(filters.States, model.StateToProto(s))
 		}
 	}
-	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
+	expIDs, err := editableExperimentIds(ctx, projectId, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -311,13 +331,16 @@ func KillExperiments(ctx context.Context,
 }
 
 // PauseExperiments works on one or many experiments.
-func PauseExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func PauseExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	if filters != nil && filters.States == nil {
 		filters.States = []experimentv1.State{experimentv1.State_STATE_ACTIVE}
 	}
-	expIDs, err := editableExperimentIds(ctx, experimentIds, filters)
+	expIDs, err := editableExperimentIds(ctx, projectId, experimentIds, filters)
 	if err != nil {
 		return nil, err
 	}
@@ -345,8 +368,11 @@ func PauseExperiments(ctx context.Context,
 }
 
 // DeleteExperiments works on one or many experiments.
-func DeleteExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func DeleteExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, []*model.Experiment, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -365,8 +391,12 @@ func DeleteExperiments(ctx context.Context,
 		Join("LEFT JOIN model_versions ON model_versions.checkpoint_uuid = c.uuid").
 		Group("e.id")
 
-	if filters == nil {
-		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	if filters == nil && len(experimentIds) == 1 {
+		query = query.Where("e.id = ?", experimentIds[0])
+	} else if filters == nil {
+		query = query.
+			Where("e.id IN (?)", bun.In(experimentIds)).
+			Where("e.project_id = ?", projectId)
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("e.state IN (?)", bun.In(model.StatesToStrings(model.TerminalStates)))
@@ -440,8 +470,11 @@ func DeleteExperiments(ctx context.Context,
 }
 
 // ArchiveExperiments works on one or many experiments.
-func ArchiveExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func ArchiveExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -457,8 +490,12 @@ func ArchiveExperiments(ctx context.Context,
 		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id")
 
-	if filters == nil {
-		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	if len(experimentIds) == 1 && filters == nil {
+		query = query.Where("e.id = ?", experimentIds[0])
+	} else if filters == nil {
+		query = query.
+			Where("e.id IN (?)", bun.In(experimentIds)).
+			Where("e.project_id = ?", projectId)
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("NOT e.archived").
@@ -532,8 +569,11 @@ func ArchiveExperiments(ctx context.Context,
 }
 
 // UnarchiveExperiments works on one or many experiments.
-func UnarchiveExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters,
+func UnarchiveExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -549,8 +589,12 @@ func UnarchiveExperiments(ctx context.Context,
 		ColumnExpr("e.state IN (?) AS state", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Join("JOIN projects p ON e.project_id = p.id")
 
-	if filters == nil {
-		query = query.Where("e.id IN (?)", bun.In(experimentIds))
+	if filters == nil && len(experimentIds) == 1 {
+		query = query.Where("e.id = ?", experimentIds[0])
+	} else if filters == nil {
+		query = query.
+			Where("e.id IN (?)", bun.In(experimentIds)).
+			Where("e.project_id = ?", projectId)
 	} else {
 		query = queryBulkExperiments(query, filters).
 			Where("archived").
@@ -624,8 +668,12 @@ func UnarchiveExperiments(ctx context.Context,
 }
 
 // MoveExperiments works on one or many experiments.
-func MoveExperiments(ctx context.Context,
-	experimentIds []int32, filters *apiv1.BulkExperimentFilters, destinationProjectID int32,
+func MoveExperiments(
+	ctx context.Context,
+	projectId int32,
+	experimentIds []int32,
+	filters *apiv1.BulkExperimentFilters,
+	destinationProjectID int32,
 ) ([]ExperimentActionResult, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -640,7 +688,8 @@ func MoveExperiments(ctx context.Context,
 		ColumnExpr("(e.archived OR p.archived OR w.archived) AS archived").
 		ColumnExpr("TRUE AS state").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id")
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("e.project_id = ?", projectId)
 
 	if filters == nil {
 		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
@@ -771,11 +820,16 @@ func changeExperimentConfigLogRetention(ctx context.Context, database db.DB,
 }
 
 // BulkUpdateLogRentention retains logs for the given list of experiments.
-func BulkUpdateLogRentention(ctx context.Context, database db.DB,
-	expIDs []int32, filters *apiv1.BulkExperimentFilters, numDays int16,
+func BulkUpdateLogRentention(
+	ctx context.Context,
+	database db.DB,
+	projectId int32,
+	expIDs []int32,
+	filters *apiv1.BulkExperimentFilters,
+	numDays int16,
 ) ([]ExperimentActionResult, error) {
 	var results []ExperimentActionResult
-	editableExperimentIDList, err := editableExperimentIds(ctx, expIDs, filters)
+	editableExperimentIDList, err := editableExperimentIds(ctx, projectId, expIDs, filters)
 	if err != nil {
 		return nil, err
 	}

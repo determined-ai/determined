@@ -435,7 +435,7 @@ service Determined {
   rpc PutExperimentsRetainLogs(PutExperimentsRetainLogsRequest)
       returns (PutExperimentsRetainLogsResponse) {
     option (google.api.http) = {
-      put: "/api/v1/experiments/retain_logs"
+      put: "/api/v1/projects/{project_id}/experiments/retain_logs"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -529,7 +529,7 @@ service Determined {
   rpc ActivateExperiments(ActivateExperimentsRequest)
       returns (ActivateExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/activate"
+      post: "/api/v1/projects/{project_id}/experiments/activate"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -550,7 +550,7 @@ service Determined {
   rpc PauseExperiments(PauseExperimentsRequest)
       returns (PauseExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/pause"
+      post: "/api/v1/projects/{project_id}/experiments/pause"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -571,7 +571,7 @@ service Determined {
   rpc CancelExperiments(CancelExperimentsRequest)
       returns (CancelExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/cancel"
+      post: "/api/v1/projects/{project_id}/experiments/cancel"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -591,7 +591,7 @@ service Determined {
   rpc KillExperiments(KillExperimentsRequest)
       returns (KillExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/kill"
+      post: "/api/v1/projects/{project_id}/experiments/kill"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -612,7 +612,7 @@ service Determined {
   rpc ArchiveExperiments(ArchiveExperimentsRequest)
       returns (ArchiveExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/archive"
+      post: "/api/v1/projects/{project_id}/experiments/archive"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -633,7 +633,7 @@ service Determined {
   rpc UnarchiveExperiments(UnarchiveExperimentsRequest)
       returns (UnarchiveExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/unarchive"
+      post: "/api/v1/projects/{project_id}/experiments/unarchive"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -655,7 +655,7 @@ service Determined {
   rpc DeleteExperiments(DeleteExperimentsRequest)
       returns (DeleteExperimentsResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/experiments/delete"
+      delete: "/api/v1/projects/{project_id}/experiments/delete"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2165,7 +2165,7 @@ service Determined {
   rpc MoveExperiments(MoveExperimentsRequest)
       returns (MoveExperimentsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/experiments/move"
+      post: "/api/v1/projects/{project_id}/experiments/move"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
