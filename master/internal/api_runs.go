@@ -784,12 +784,12 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	}
 	// Get experiment ids
 	var err error
-	var runChecks []archiveRunOKResult
+	var runCandidates []runCandidateResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
-		Model(&runChecks).
+		Model(&runCandidates).
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
@@ -815,36 +815,36 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	visibleIDs := set.New[int32]()
 	expIDs := set.New[int32]()
 	expToRun := make(map[int32][]int32)
-	for _, check := range runChecks {
-		visibleIDs.Insert(check.ID)
-		if check.Archived {
+	for _, cand := range runCandidates {
+		visibleIDs.Insert(cand.ID)
+		if cand.Archived {
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is archived.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 			continue
 		}
-		if check.IsMultitrial && skipMultitrial {
+		if cand.IsMultitrial && skipMultitrial {
 			results = append(results, &apiv1.RunActionResult{
-				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", check.ID),
-				Id:    check.ID,
+				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", cand.ID),
+				Id:    cand.ID,
 			})
 			continue
 		}
-		if check.ExpID == nil {
+		if cand.ExpID == nil {
 			results = append(results, &apiv1.RunActionResult{
-				Error: fmt.Sprintf("Cannot pause run '%d' (no associated experiment).", check.ID),
-				Id:    check.ID,
+				Error: fmt.Sprintf("Cannot pause run '%d' (no associated experiment).", cand.ID),
+				Id:    cand.ID,
 			})
 			continue
 		}
-		_, ok := expToRun[*check.ExpID]
+		_, ok := expToRun[*cand.ExpID]
 		if ok {
-			expToRun[*check.ExpID] = append(expToRun[*check.ExpID], check.ID)
+			expToRun[*cand.ExpID] = append(expToRun[*cand.ExpID], cand.ID)
 		} else {
-			expToRun[*check.ExpID] = []int32{check.ID}
+			expToRun[*cand.ExpID] = []int32{cand.ID}
 		}
-		expIDs.Insert(*check.ExpID)
+		expIDs.Insert(*cand.ExpID)
 	}
 	if filter == nil {
 		for _, originalID := range runIds {
