@@ -139,6 +139,8 @@
     "jest-websocket-mock": "^2.5.0",
     "jsdom": "^16.7.0",
     "morgan": "^1.10.0",
+    "mountebank": "^2.9.1",
+    "mountebank-helper": "^1.2.1",
     "npm-force-resolutions": "0.0.10",
     "prettier": "^3.1.0",
     "request": "^2.88.2",
