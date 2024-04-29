@@ -82,7 +82,10 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       cancel
       size="small"
       submit={{
-        disabled: lodash.isEqual(userGroups.map((g) => g.group.groupId), formGroupIds),
+        disabled: lodash.isEqual(
+          userGroups.map((g) => g.group.groupId),
+          formGroupIds,
+        ),
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
