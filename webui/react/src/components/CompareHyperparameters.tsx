@@ -15,11 +15,11 @@ import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareHeatMaps from './CompareHeatMaps';
-import CompareParallelCoordinates from './CompareParallelCoordinates';
 import {
-  ExperimentHyperparametersSettings,
-  settingsConfigForExperimentHyperparameters,
-} from './CompareParallelCoordinates.settings';
+  CompareHyperparametersSettings,
+  settingsConfigForCompareHyperparameters,
+} from './CompareHyperparameters.settings';
+import CompareParallelCoordinates from './CompareParallelCoordinates';
 import CompareScatterPlots from './CompareScatterPlots';
 import css from './HpParallelCoordinates.module.scss';
 
@@ -45,12 +45,12 @@ const CompareHyperparameters: React.FC<Props> = ({
   }, [trials]);
 
   const settingsConfig = useMemo(
-    () => settingsConfigForExperimentHyperparameters(fullHParams, projectId),
+    () => settingsConfigForCompareHyperparameters(fullHParams, projectId),
     [fullHParams, projectId],
   );
 
   const { settings, updateSettings, resetSettings } =
-    useSettings<ExperimentHyperparametersSettings>(settingsConfig);
+    useSettings<CompareHyperparametersSettings>(settingsConfig);
 
   const selectedScale = settings.scale;
 

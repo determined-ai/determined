@@ -23,7 +23,7 @@ import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 import { numericSorter } from 'utils/sort';
 
-import { ExperimentHyperparametersSettings } from './CompareParallelCoordinates.settings';
+import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
 import css from './HpParallelCoordinates.module.scss';
 
 interface Props {
@@ -31,7 +31,7 @@ interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
   metricData: TrialMetricData;
-  settings: ExperimentHyperparametersSettings;
+  settings: CompareHyperparametersSettings;
   fullHParams: string[];
 }
 
@@ -114,16 +114,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
-              key,
-              label: key,
-              logBase: 10,
-              type: DimensionType.Logarithmic,
-            }
+            key,
+            label: key,
+            logBase: 10,
+            type: DimensionType.Logarithmic,
+          }
           : {
-              key,
-              label: key,
-              type: DimensionType.Linear,
-            },
+            key,
+            label: key,
+            type: DimensionType.Linear,
+          },
       );
     }
 

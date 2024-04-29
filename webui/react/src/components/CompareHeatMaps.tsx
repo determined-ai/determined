@@ -11,7 +11,6 @@ import useUI from 'components/ThemeProvider';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import useResize from 'hooks/useResize';
-import { ViewType } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
@@ -28,15 +27,14 @@ import { rgba2str, str2rgba } from 'utils/color';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 
-import { ExperimentHyperparametersSettings } from './CompareParallelCoordinates.settings';
+import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
 
 interface Props {
-  selectedView?: ViewType;
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
   metricData: TrialMetricData;
   fullHParams: string[];
-  settings: ExperimentHyperparametersSettings;
+  settings: CompareHyperparametersSettings;
 }
 
 type HpValue = Record<string, (number | string)[]>;
@@ -61,7 +59,6 @@ const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
 };
 
 const CompareHeatMaps: React.FC<Props> = ({
-  selectedView = ViewType.Grid,
   selectedExperiments,
   trials,
   metricData,
@@ -74,7 +71,6 @@ const CompareHeatMaps: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpData>();
   const [activeHParam, setActiveHParam] = useState<string>();
   const galleryModal = useModal(GalleryModalComponent);
-  const isListView = selectedView === ViewType.List;
 
   const selectedScale = settings.scale;
   const selectedMetric = settings.metric;
@@ -324,7 +320,7 @@ const CompareHeatMaps: React.FC<Props> = ({
               <Grid
                 border={true}
                 minItemWidth={resize.width > 320 ? 350 : 270}
-                mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+                mode={GridMode.AutoFill}>
                 {selectedHParams.map((hParam1) =>
                   selectedHParams.map((hParam2) => {
                     const key = generateHpKey(hParam1, hParam2);

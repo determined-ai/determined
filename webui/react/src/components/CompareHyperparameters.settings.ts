@@ -3,16 +3,16 @@ import { array, keyof, string, type, undefined as undefinedType, union } from 'i
 import { SettingsConfig } from 'hooks/useSettings';
 import { Metric, Scale } from 'types';
 
-export interface ExperimentHyperparametersSettings {
+export interface CompareHyperparametersSettings {
   hParams: string[];
   metric?: Metric;
   scale: Scale;
 }
 
-export const settingsConfigForExperimentHyperparameters = (
+export const settingsConfigForCompareHyperparameters = (
   hParams: string[],
   projectId: number,
-): SettingsConfig<ExperimentHyperparametersSettings> => ({
+): SettingsConfig<CompareHyperparametersSettings> => ({
   settings: {
     hParams: {
       defaultValue: hParams,

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
+import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import useResize from 'hooks/useResize';
 import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
@@ -20,14 +20,14 @@ import {
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 
-import { ExperimentHyperparametersSettings } from './CompareParallelCoordinates.settings';
+import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
 
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
   metricData: TrialMetricData;
   fullHParams: string[];
-  settings: ExperimentHyperparametersSettings;
+  settings: CompareHyperparametersSettings;
 }
 
 interface HpMetricData {
@@ -69,7 +69,7 @@ const CompareScatterPlots: React.FC<Props> = ({
   const chartProps = useMemo(() => {
     if (!chartData || !selectedMetric) return undefined;
     return selectedHParams.reduce(
-      (acc, hParam) => {
+      (acc: Record<string, UPlotScatterProps>, hParam) => {
         const xLabel = hParam;
         const yLabel = metricToStr(selectedMetric, 60);
         const title = `${yLabel} (y) vs ${xLabel} (x)`;
@@ -92,7 +92,7 @@ const CompareScatterPlots: React.FC<Props> = ({
               null,
               chartData?.trialIds || [],
             ],
-          ] as FacetedData,
+          ],
           options: {
             axes: [
               {
@@ -109,7 +109,7 @@ const CompareScatterPlots: React.FC<Props> = ({
         };
         return acc;
       },
-      {} as Record<string, UPlotScatterProps>,
+      {},
     );
   }, [chartData, selectedHParams, selectedMetric, yScaleKey]);
 
