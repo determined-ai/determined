@@ -1863,6 +1863,13 @@ export const getTemplates: DetApi<
     ),
 };
 
+export const createTaskTemplate: DetApi<Api.V1Template, Api.V1PostTemplateResponse, Type.Template> =
+  {
+    name: 'createTaskTemplate',
+    postProcess: (response) => decoder.mapV1Template(response.template),
+    request: (params: Api.V1Template) => detApi.Templates.postTemplate(params.name, params),
+  };
+
 export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,
