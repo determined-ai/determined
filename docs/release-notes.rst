@@ -69,6 +69,13 @@ Version 0.32.0
    metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
    via APIs.
 
+-  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
+   as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
+   This issue affects multiple ``det deploy aws`` deployment types, including ``default simple``,
+   ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy
+   aws --deployment-type=govcloud``, are not affected. We urge all users with affected setups to
+   upgrade as soon as possible.
+
 **************
  Version 0.31
 **************
