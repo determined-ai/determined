@@ -62,13 +62,8 @@ test.describe('Authentication', () => {
     await signInPage.goto();
     await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
     await signInPage.detAuth.username.pwLocator.fill('chubbs');
-    await expect(async () => {
-      // on CI, machines are slow and each click can take two seconds!
-      await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(0, { timeout: 3000 });
-      await signInPage.detAuth.submit.pwLocator.click();
-      await signInPage.detAuth.submit.pwLocator.click();
-      // the errors will dissapear after 3 seconds, so let's timeout with 3
-      await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2, { timeout: 3000 });
-    }).toPass({ timeout: 30000 });
+    await signInPage.detAuth.submit.pwLocator.click();
+    await signInPage.detAuth.submit.pwLocator.click();
+    await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2);
   });
 });
