@@ -770,3 +770,244 @@ func TestDeleteRunsNoInput(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Results, 0)
 }
+
+func TestArchiveUnarchiveIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// Archive runs
+	runIDs := []int32{runID1, runID2}
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 2)
+	require.Equal(t, "", archRes.Results[0].Error)
+	require.Equal(t, "", archRes.Results[1].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 0)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 2)
+	require.Equal(t, "", unarchRes.Results[0].Error)
+	require.Equal(t, "", unarchRes.Results[1].Error)
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+}
+
+func TestArchiveUnarchiveFilter(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	filter := `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
+		`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+		`"conjunction":"and","kind":"group"},"showArchived":true}`
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    []int32{},
+		Filter:    &filter,
+		ProjectId: projectID,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 1)
+	require.Equal(t, "", archRes.Results[0].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 1)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    []int32{},
+		Filter:    &filter,
+		ProjectId: projectID,
+	}
+	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 1)
+	require.Equal(t, "", unarchRes.Results[0].Error)
+
+	searchResp, err = api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 2)
+}
+
+func TestArchiveAlreadyArchived(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// Archive runs
+	runIDs := []int32{runID1, runID2}
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 2)
+	require.Equal(t, "", archRes.Results[0].Error)
+	require.Equal(t, "", archRes.Results[1].Error)
+
+	searchReq := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 0)
+
+	// Try to archive again
+	archRes, err = api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 2)
+	require.Equal(t, "", archRes.Results[0].Error)
+	require.Equal(t, "", archRes.Results[1].Error)
+}
+
+func TestArchiveNonTerminalState(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.ActiveState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	runIDs := []int32{resp.Runs[0].Id}
+	// Archive runs
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 1)
+	require.Equal(t, "Run is not in terminal state.", archRes.Results[0].Error)
+}
+
+func TestUnarchivedAlreadyUnarchived(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	// Unarchive runs
+	runIDs := []int32{runID1, runID2}
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+	}
+	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 2)
+	require.Equal(t, "", unarchRes.Results[0].Error)
+	require.Equal(t, "", unarchRes.Results[1].Error)
+}
+
+func TestArchiveUnarchiveOverfilledInput(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	projectID, _, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+
+	expectedError := fmt.Errorf("if filter is provided run id list must be empty")
+	// Archive runs
+	runIDs := []int32{runID1, runID2}
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+		Filter:    ptrs.Ptr("nonempty"),
+	}
+	_, err := api.ArchiveRuns(ctx, archReq)
+	require.Equal(t, expectedError, err)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: projectID,
+		Filter:    ptrs.Ptr("nonempty"),
+	}
+	_, err = api.UnarchiveRuns(ctx, unarchReq)
+	require.Equal(t, expectedError, err)
+}
+
+func TestArchiveUnarchiveNoInput(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	// Archive runs
+	archReq := &apiv1.ArchiveRunsRequest{
+		RunIds:    []int32{},
+		ProjectId: 1,
+	}
+	archRes, err := api.ArchiveRuns(ctx, archReq)
+	require.NoError(t, err)
+	require.Len(t, archRes.Results, 0)
+
+	// Unarchive runs
+	unarchReq := &apiv1.UnarchiveRunsRequest{
+		RunIds:    []int32{},
+		ProjectId: 1,
+	}
+	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 0)
+}
