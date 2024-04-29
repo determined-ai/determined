@@ -77,11 +77,15 @@ def test_archived_proj_exp_list() -> None:
         )
 
     bindings.post_KillExperiments(
-        admin, body=bindings.v1KillExperimentsRequest(experimentIds=experiments), projectId=pid1
+        admin,
+        body=bindings.v1KillExperimentsRequest(projectId=pid1, experimentIds=experiments),
+        projectId=pid1,
     )
 
     bindings.post_KillExperiments(
-        admin, body=bindings.v1KillExperimentsRequest(experimentIds=experiments), projectId=pid2
+        admin,
+        body=bindings.v1KillExperimentsRequest(projectId=pid2, experimentIds=experiments),
+        projectId=pid2,
     )
 
     for x in experiments:
