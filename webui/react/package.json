@@ -27,6 +27,7 @@
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
     "e2e": "playwright test",
+    "e2e:mocked": "npm run e2e",
     "test:coverage": "vitest --run --coverage --silent --exclude \"src/e2e/tests/**\"",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
     "unimported": "unimported"
@@ -54,6 +55,7 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "markdown-to-jsx": "^7.3.2",
+
     "micro-observables": "^1.7.2",
     "modern-normalize": "^2.0.0",
     "notebook": "file:src/vendor/notebook",

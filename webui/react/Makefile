@@ -2,6 +2,7 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 export NODE_OPTIONS=--max-old-space-size=6144
+export MOCK_ROOT=src/e2e/mocks
 source_files := $(shell find src public -type f)
 
 .PHONY: default
@@ -116,4 +117,35 @@ get-playwright:
 
 .PHONY: get-playwright-ci
 get-playwright-ci:
-	npx playwright install --with-deps && npx playwright install chrome
+	npx playwright install --with-deps 
+	npx playwright install chrome 
+	npx playwright install webkit
+	npx playwright install firefox
+
+.PHONY: mb-start
+mb-start:
+	npm install mountebank
+	npx mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
+	sleep 3
+
+.PHONY: mb-stop
+mb-stop:
+	npx mb stop
+
+.PHONY: mb-save-imposters
+mb-save-imposters:
+	@curl -X GET -H 'Content-Type: application/json' \
+		"http://localhost:2525/imposters?replayabe=true&removeProxies=true" > "${MOCK_ROOT}/debug-saved-imposters.json"
+
+.PHONY: mb-record-imposters
+mb-record-imposters:
+	injection_script=$(tr -d '\n' <src/e2e/mocks/predicate-generator.js)
+	@curl -i -X PUT -H 'Content-Type: application/json' \
+		http://localhost:2525/imposters \
+		--data "@${MOCK_ROOT}/proxy-always.json"
+
+.PHONY: mb-start-saved-imposters
+mb-start-saved-imposters:
+	@curl -i -X PUT -H 'Content-Type: application/json' \
+		http://localhost:2525/imposters \
+		--data "@${MOCK_ROOT}/saved-imposters.json"

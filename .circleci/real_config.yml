@@ -2009,13 +2009,20 @@ jobs:
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react
+          command: ./webui/react/run-mocked-playwright.sh
+      - run: 
+          when: always 
+          command: tar cf webui/react/src/e2e/test-results/playwright-report.tar webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_artifacts:
+          path: webui/react/src/e2e/mocks/debug-saved-imposters.json
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
+      - store_test_results:
+          path: /tmp/mb-playwright.log
 
   test-unit-react:
     docker:

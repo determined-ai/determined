@@ -1,0 +1,51 @@
+{
+    "imposters": [
+        {
+            "port": 4545,
+            "protocol": "http",
+            "stubs": [
+                {
+                    "responses": [
+                        {
+                            "proxy": {
+                                "to": "$MB_BACKEND_ADDRESS",
+                                "mode": "proxyAlways",
+                                "predicateGenerators": [
+                                    {
+                                        "inject": "$PRED_GEN_SCRIPT"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "port": 4546,
+            "protocol": "tcp",
+            "stubs": [
+                {
+                    "responses": [
+                        {
+                            "proxy": {
+                                "to": "$MB_BACKEND_ADDRESS_WS",
+                                "mode": "proxyAlways",
+                                "keepAlive":true,
+                                "predicateGenerators": [
+                                    {
+                                        "matches":{
+                                            "body":true,
+                                            "path": true,
+                                            "query": true
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

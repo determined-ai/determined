@@ -1,16 +1,22 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import {
+  Plugin,
+  UserConfig,
+} from 'vite';
+import checker from 'vite-plugin-checker';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import {
+  configDefaults,
+  defineConfig,
+} from 'vitest/config';
 
 import { svgToReact } from '@hpe.com/vite-plugin-svg-to-jsx';
 import react from '@vitejs/plugin-react-swc';
-import { Plugin, UserConfig } from 'vite';
-import checker from 'vite-plugin-checker';
-import tsconfigPaths from 'vite-tsconfig-paths';
-import { configDefaults, defineConfig } from 'vitest/config';
 
+import { brandHtml } from './vite-plugin-branding';
 import { cspHtml } from './vite-plugin-csp';
-import { brandHtml } from "./vite-plugin-branding";
 
 // want to fallback in case of empty string, hence no ??
 const webpackProxyUrl = process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080';
