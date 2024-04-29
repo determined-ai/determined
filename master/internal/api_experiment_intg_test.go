@@ -333,9 +333,10 @@ func TestMoveExperiments(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
-	t.Run("Move an experiement without filters", func(t *testing.T) {
+	t.Run("Move an experiment without filters", func(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp.ProjectID),
 			ExperimentIds:        []int32{int32(exp.ID)},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -351,6 +352,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp1.ProjectID),
 			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -370,6 +372,7 @@ func TestMoveExperiments(t *testing.T) {
 		}
 
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(projectID),
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
 			Filters: &apiv1.BulkExperimentFilters{
@@ -388,6 +391,7 @@ func TestMoveExperiments(t *testing.T) {
 		createTestExp(t, api, curUser)
 
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(projectID),
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
 			Filters: &apiv1.BulkExperimentFilters{
@@ -403,6 +407,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp1.ProjectID),
 			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
 			DestinationProjectId: 0,
 			Filters:              nil,
@@ -413,6 +418,7 @@ func TestMoveExperiments(t *testing.T) {
 
 	t.Run("Move 0 experiments", func(t *testing.T) {
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            0,
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -423,6 +429,7 @@ func TestMoveExperiments(t *testing.T) {
 
 	t.Run("Move a non-existent experiement", func(t *testing.T) {
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            0,
 			ExperimentIds:        []int32{-1, 0},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -435,6 +442,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		expIds := []int32{-1, 0, int32(exp.ID)}
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp.ProjectID),
 			ExperimentIds:        expIds,
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,

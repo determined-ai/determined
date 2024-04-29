@@ -172,7 +172,7 @@ message PutExperimentsRetainLogsRequest {
   repeated int32 experiment_ids = 1;
   // The number of days to retain logs, starting from the end time of the task.
   int32 num_days = 2;
-  // Deprecated: Targets all experiments matching filters. 
+  // Targets all experiments matching filters. 
   BulkExperimentFilters filters = 3;
   // Project id that the experiments belong to.
   int32 project_id = 4;

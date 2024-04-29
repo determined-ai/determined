@@ -8355,7 +8355,7 @@ export interface V1PutExperimentsRetainLogsRequest {
      */
     numDays: number;
     /**
-     * Deprecated: Targets all experiments matching filters.
+     * Targets all experiments matching filters.
      * @type {V1BulkExperimentFilters}
      * @memberof V1PutExperimentsRetainLogsRequest
      */
