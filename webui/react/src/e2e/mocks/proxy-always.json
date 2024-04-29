@@ -8,7 +8,7 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "http://localhost:8081",
+                                "to": "http://localhost:8082",
                                 "mode": "proxyAlways",
                                 "predicateGenerators": [
                                     {
@@ -29,7 +29,7 @@
                     "responses": [
                         {
                             "proxy": {
-                                "to": "ws://localhost:8081",
+                                "to": "ws://localhost:8082",
                                 "mode": "proxyAlways",
                                 "keepAlive":true,
                                 "predicateGenerators": [
