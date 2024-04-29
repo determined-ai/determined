@@ -7,6 +7,69 @@
 ###############
 
 **************
+ Version 0.32
+**************
+
+Version 0.32.0
+==============
+
+**Release Date:** April 30, 2024
+
+**Breaking Changes**
+
+-  Python SDK and CLI: Password requirements are now enforced for all non-remote users. For more
+   information, visit :ref:`password-requirements`.
+
+   -  This change affects the ``create_user``, ``User.change_password``, ``det user create``, and
+      ``det user change-password`` commands.
+   -  Existing users with empty or non-compliant passwords can still sign in. However, we recommend
+      updating these passwords to meet the new requirements as soon as possible.
+
+-  CLI: When creating non-remote users with ``det user create``, setting a password is now
+   mandatory.
+
+   -  You can set the password interactively by following the prompts during user creation.
+   -  Alternatively, set the password non-interactively using the ``--password`` option.
+   -  This requirement does not apply to users created with the ``--remote`` option, as Single
+      Sign-On will be used for these users.
+
+-  Kubernetes: In the enterprise edition, add ability to set up the Determined master service on one
+   Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
+   non-default resource managers and resource pools are configured under the master configuration
+   options ``additional_resource_managers`` and ``resource_pools`` (additional resource managers are
+   required to have at least one resource pool defined). Additional resource managers and their
+   resource pools must have unique names. For more information, visit :ref:`master configuration
+   <master-config-reference>`. Support for notebooks and other workloads that require proxying is
+   under development.
+
+-  WebUI: In the enterprise edition, add ability to view resource manager name for resource pools.
+
+-  API/CLI/WebUI: In the enterprise edition, route any requests to resource pools not defined in the
+   master configuration to the default resource manager, not any additional resource manager, if
+   defined.
+
+-  Configuration: In the enterprise edition, add a ``name`` and ``metadata`` field to resource
+   manager section in the master configuration. Add an ``additional_resource_managers`` section that
+   follows the ``resource_manager`` and ``resource_pool`` configuration pattern.
+
+**New Features**
+
+-  CLI: Add an ``--enterprise-edition`` option for ``det deploy local``. This option enables users
+   to easily deploy enterprise images.
+
+**Improvements**
+
+-  Configuration: The master configuration parameter ``observability.enable_prometheus`` now
+   defaults to ``true``. Consequently, Prometheus endpoints are enabled by default, which does not
+   affect clusters that do not use Prometheus.
+
+**Bug Fixes**
+
+-  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
+   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
+   via APIs.
+
+**************
  Version 0.31
 **************
 
@@ -17,9 +80,9 @@ Version 0.31.0
 
 **Breaking Changes**
 
--  SAML: The underlying SAML implementation has been updated to use a newer, more maintained
-   library. As a result, the master config no longer accepts the ``idp_cert_path`` field and now
-   requires the ``idp_metadata_url`` field when using SAML.
+-  SAML: The underlying SAML *(Enterprise edition only)* implementation has been updated to use a
+   newer, more maintained library. As a result, the master config no longer accepts the
+   ``idp_cert_path`` field and now requires the ``idp_metadata_url`` field when using SAML.
 
 **New Features**
 
