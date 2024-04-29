@@ -182,13 +182,13 @@ func (m *Master) promHealth(ctx context.Context) {
 	}()
 }
 
-//	@Summary Get health of Determined and the dependencies.
-//	@Tags	 Cluster
-//	@ID		 health
-//	@Produce json
-//	@Success 200     {object} model.HealthCheck
-//	@Failure 503     {object} model.HealthCheck
-//	@Router	 /health [get]
+//	@Summary	Get health of Determined and the dependencies.
+//	@Tags		Cluster
+//	@ID			health
+//	@Produce	json
+//	@Success	200	{object}	model.HealthCheck
+//	@Failure	503	{object}	model.HealthCheck
+//	@Router		/health [get]
 //
 // nolint:lll
 func (m *Master) healthCheckEndpoint(c echo.Context) error {
