@@ -4462,7 +4462,7 @@ workflows:
           name: test-e2e-cpu
           requires:
             - build-go-ee
-          parallelism: 9
+          parallelism: 12
           resource-class: large
           tf2: true
           mark: e2e_cpu
