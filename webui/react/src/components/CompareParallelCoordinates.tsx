@@ -114,16 +114,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
-            key,
-            label: key,
-            logBase: 10,
-            type: DimensionType.Logarithmic,
-          }
+              key,
+              label: key,
+              logBase: 10,
+              type: DimensionType.Logarithmic,
+            }
           : {
-            key,
-            label: key,
-            type: DimensionType.Linear,
-          },
+              key,
+              label: key,
+              type: DimensionType.Linear,
+            },
       );
     }
 
