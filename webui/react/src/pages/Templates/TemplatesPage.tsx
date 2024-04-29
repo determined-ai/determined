@@ -24,7 +24,7 @@ const TemplatesPage: React.FC<Props> = ({ workspaceId }) => {
           ? []
           : [
               {
-                breadcrumbName: 'Manage. Templates',
+                breadcrumbName: 'Manage Templates',
                 path: paths.templates(),
               },
             ]
