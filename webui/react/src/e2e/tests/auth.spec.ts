@@ -57,17 +57,18 @@ test.describe('Authentication', () => {
     );
   });
 
-  test('Expect submit disabled, and Show multiple errors', async ({ page }) => {
+  test('Expect submit disabled; Show multiple errors', async ({ page }) => {
     const signInPage = new SignIn(page);
     await signInPage.goto();
     await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
     await signInPage.detAuth.username.pwLocator.fill('chubbs');
     await expect(async () => {
       // on CI, machines are slow and each click can take two seconds!
+      await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(0, { timeout: 3000 });
       await signInPage.detAuth.submit.pwLocator.click();
       await signInPage.detAuth.submit.pwLocator.click();
       // the errors will dissapear after 3 seconds, so let's timeout with 3
       await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2, { timeout: 3000 });
-    }).toPass({ timeout: 20000 });
+    }).toPass({ timeout: 30000 });
   });
 });

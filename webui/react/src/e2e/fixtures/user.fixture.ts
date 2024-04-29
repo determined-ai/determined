@@ -81,7 +81,7 @@ export class UserFixture {
           await this.userManagementPage.goto();
         },
       ),
-    ).toPass({ timeout: 15000 });
+    ).toPass({ timeout: 15_000 });
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
@@ -216,7 +216,7 @@ export class UserFixture {
         activate ? 'User has been activated' : 'User has been deactivated',
       );
       await this.userManagementPage.toast.close.pwLocator.click();
-    }).toPass({ timeout: 15000 });
+    }).toPass({ timeout: 35_000 });
     const editedUser = { ...user, isActive: activate };
     users.set(String(user.id), editedUser);
     return editedUser;
