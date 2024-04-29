@@ -118,13 +118,13 @@ def run_autotuning_experiment(
 def archive_experiments(
     sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
 ) -> None:
-    body = bindings.v1ArchiveExperimentsRequest(projectID=project_id, experimentIds=experiment_ids)
+    body = bindings.v1ArchiveExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     if name is not None:
         filters = bindings.v1BulkExperimentFilters(name=name)
         body = bindings.v1ArchiveExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids, filters=filters
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
         )
-    bindings.post_ArchiveExperiments(sess, projectID=project_id, body=body)
+    bindings.post_ArchiveExperiments(sess, projectId=project_id, body=body)
 
 
 def pause_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -138,13 +138,13 @@ def pause_experiments(
     project_id: int = 1,
     name: Optional[str] = None,
 ) -> None:
-    body = bindings.v1PauseExperimentsRequest(projectID=project_id, experimentIds=experiment_ids)
+    body = bindings.v1PauseExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     if name is not None:
         filters = bindings.v1BulkExperimentFilters(name=name)
         body = bindings.v1PauseExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids, filters=filters
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
         )
-    bindings.post_PauseExperiments(sess, projectID=project_id, body=body)
+    bindings.post_PauseExperiments(sess, projectId=project_id, body=body)
 
 
 def activate_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -157,14 +157,14 @@ def activate_experiments(
 ) -> None:
     if name is None:
         body = bindings.v1ActivateExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids
+            projectId=project_id, experimentIds=experiment_ids
         )
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
         body = bindings.v1ActivateExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids, filters=filters
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
         )
-    bindings.post_ActivateExperiments(sess, projectID=project_id, body=body)
+    bindings.post_ActivateExperiments(sess, projectId=project_id, body=body)
 
 
 def cancel_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -182,27 +182,27 @@ def cancel_experiments(
 ) -> None:
     if name is None:
         body = bindings.v1CancelExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids
+            projectId=project_id, experimentIds=experiment_ids
         )
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
         body = bindings.v1CancelExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids, filters=filters
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
         )
-    bindings.post_CancelExperiments(sess, projectID=project_id, body=body)
+    bindings.post_CancelExperiments(sess, projectId=project_id, body=body)
 
 
 def kill_experiments(
     sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
 ) -> None:
     if name is None:
-        body = bindings.v1KillExperimentsRequest(projectID=project_id, experimentIds=experiment_ids)
+        body = bindings.v1KillExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
         body = bindings.v1KillExperimentsRequest(
-            projectID=project_id, experimentIds=experiment_ids, filters=filters
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
         )
-    bindings.post_KillExperiments(sess, projectID=project_id, body=body)
+    bindings.post_KillExperiments(sess, projectId=project_id, body=body)
 
 
 def kill_trial(sess: api.Session, trial_id: int) -> None:
