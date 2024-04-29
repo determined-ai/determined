@@ -3,6 +3,7 @@ import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
+import lodash from 'lodash';
 import React, { useEffect, useId } from 'react';
 
 import { updateGroup } from 'services/api';
@@ -30,6 +31,8 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
   const [form] = Form.useForm<FormInputs>();
 
   const { openToast } = useToast();
+
+  const formGroupIds = Form.useWatch(GROUPS_NAME, form);
 
   const { rbacEnabled } = useObservable(determinedStore.info);
 
@@ -79,6 +82,7 @@ const ManageGroupsModalComponent: React.FC<Props> = ({ user, groupOptions, userG
       cancel
       size="small"
       submit={{
+        disabled: lodash.isEqual(userGroups.map((g) => g.group.groupId), formGroupIds),
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
