@@ -151,14 +151,13 @@ func editableExperimentIds(
 		Model(&expIDs).
 		Column("e.id").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Where("NOT e.archived").
-		Where("e.id IN (?)", bun.In(experimentIDList)).
-		Where("p.id = ?", inputProjectID)
-	if filters == nil && len(inputExpIDs) == 1 {
-		query = query.Where("e.id = ?", inputExpIDs[0])
+		Where("NOT e.archived")
+
+	if filters == nil && len(experimentIDList) == 1 {
+		query = query.Where("e.id = ?", experimentIDList[0])
 	} else if filters == nil {
 		query = query.
-			Where("e.id IN (?)", bun.In(inputExpIDs)).
+			Where("e.id IN (?)", bun.In(experimentIDList)).
 			Where("e.project_id = ?", inputProjectID)
 	}
 
