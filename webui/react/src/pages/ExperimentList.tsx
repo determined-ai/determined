@@ -1008,13 +1008,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       />
       <ExperimentMoveModal.Component
         experimentIds={batchMovingExperimentIds ?? []}
-        sourceProjectId={project?.id}
+        sourceProjectId={project.id}
         sourceWorkspaceId={project?.workspaceId}
         onSubmit={handleActionComplete}
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={batchRetainLogsExperimentIds}
-        projectId={project?.id}
+        projectId={project.id}
         onSubmit={handleActionComplete}
       />
     </>
