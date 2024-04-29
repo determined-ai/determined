@@ -1723,7 +1723,7 @@ func (a *apiServer) CreateExperiment(
 func (a *apiServer) PutExperimentRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
 ) (*apiv1.PutExperimentRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, 0, []int32{req.ExperimentId}, nil, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, 1, []int32{req.ExperimentId}, nil, int16(req.NumDays))
 	if err != nil {
 		return nil, err
 	}
