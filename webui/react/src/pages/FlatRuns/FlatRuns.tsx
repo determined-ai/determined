@@ -30,10 +30,17 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Error } from 'components/exceptions';
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  IOFilterFormSet,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight } from 'components/OptionsMenu';
@@ -60,6 +67,7 @@ import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 
 import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
@@ -73,6 +81,8 @@ export const PAGE_SIZE = 100;
 const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
 
 const STATIC_COLUMNS = [MULTISELECT];
+
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 
 const formStore = new FilterFormStore();
 
@@ -206,7 +216,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     };
   }, [loadedSelectedRunIds]);
 
-  const onIsOpenFilterChange = useCallback((newOpen: boolean) => {
+  const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
     if (!newOpen) {
       formStore.sweep();
@@ -585,6 +595,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         return items;
       }
 
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
         // Column is pinned if the index is inside of the frozen columns
@@ -616,21 +627,77 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                   handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
                 },
               },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column?.column);
+            handleColumnsOrderChange?.(newColumnsOrder);
+            if (isPinned) {
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            }
+          },
+        },
       ];
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-      if (!column) return items;
 
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
-      const sortOptions = sortMenuItemsForColumn(column, sorts, handleSortChange);
-      if (sortOptions.length > 0) {
-        items.push(
-          ...(BANNED_FILTER_COLUMNS.includes(column.column)
-            ? []
-            : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ]),
+      if (!column) {
+        return items;
+      }
+
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
         );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: Loadable.match(loadableFormset, {
+            _: () => 0,
+            Loaded: (formset) => formset.filterGroup.children.length,
+          }),
+          item: {
+            columnName: column.column,
+            id: uuidv4(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+        handleIsOpenFilterChange?.(true);
+      };
+
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
+      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+        items.push(
+          { type: 'divider' as const },
+          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
+            },
+          },
+        );
+
+        if (filterCount > 0) {
+          items.push({
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          });
+        }
       }
       return items;
     },
@@ -641,6 +708,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       handleSelectionChange,
       handleSortChange,
       isMobile,
+      loadableFormset,
+      handleIsOpenFilterChange,
       projectColumns,
       settings.pinnedColumnsCount,
       sorts,
@@ -658,6 +727,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
+      <TableFilter
+        formStore={formStore}
+        isMobile={isMobile}
+        isOpenFilter={isOpenFilter}
+        loadableColumns={projectColumns}
+        onIsOpenFilterChange={handleIsOpenFilterChange}
+      />
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message
@@ -677,13 +753,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         <Error fetchData={fetchRuns} />
       ) : (
         <>
-          <TableFilter
-            formStore={formStore}
-            isMobile={isMobile}
-            isOpenFilter={isOpenFilter}
-            loadableColumns={projectColumns}
-            onIsOpenFilterChange={onIsOpenFilterChange}
-          />
           <DataGrid
             columns={columns}
             data={runs}
