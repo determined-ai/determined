@@ -8,6 +8,7 @@ import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
 import { Loadable, Loaded } from 'hew/utils/loadable';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
@@ -148,13 +149,22 @@ const TableActionBar: React.FC<Props> = ({
   const [experiments, setExperiments] = useState<Loadable<BulkExperimentItem>[]>([]);
 
   const fetchExperimentsByIds = useCallback(async (selectedIds: number[]) => {
-    const response = await getExperiments({
-      experimentIdFilter: {
-        incl: selectedIds,
-      },
-    });
-    const loadedExperiments = response.experiments;
-    setExperiments(loadedExperiments.map((experiment) => Loaded(experiment)));
+    const CHUNK_SIZE = 80;
+    const requests = _.chunk(selectedIds, CHUNK_SIZE);
+    const responses = await Promise.all(
+      requests.map(async (ids) => {
+        const response = await getExperiments({
+          experimentIdFilter: {
+            incl: ids,
+          },
+        });
+        return response.experiments;
+      }),
+    );
+    const fetchedExperiments = responses.reduce((acc, experiments) => {
+      return acc.concat(experiments);
+    }, []);
+    setExperiments(fetchedExperiments.map((experiment) => Loaded(experiment)));
   }, []);
 
   useEffect(() => {
@@ -272,9 +282,8 @@ const TableActionBar: React.FC<Props> = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${labelPlural.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${labelPlural.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -286,9 +295,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -403,7 +411,7 @@ const TableActionBar: React.FC<Props> = ({
               rowHeight={rowHeight}
               // tableViewMode={tableViewMode}
               onRowHeightChange={onRowHeightChange}
-              // onTableViewModeChange={onTableViewModeChange}
+            // onTableViewModeChange={onTableViewModeChange}
             />
             {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
