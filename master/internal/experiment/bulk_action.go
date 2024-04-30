@@ -689,8 +689,19 @@ func MoveExperiments(
 		ColumnExpr("(e.archived OR p.archived OR w.archived) AS archived").
 		ColumnExpr("TRUE AS state").
 		Join("JOIN projects p ON e.project_id = p.id").
-		Join("JOIN workspaces w ON p.workspace_id = w.id").
-		Where("e.project_id = ?", projectID)
+		Join("JOIN workspaces w ON p.workspace_id = w.id")
+
+	switch {
+	case filters == nil && len(experimentIds) == 1:
+		getQ = getQ.Where("e.id = ?", experimentIds[0])
+	case filters == nil:
+		getQ = getQ.
+			Where("e.id IN (?)", bun.In(experimentIds)).
+			Where("e.project_id = ?", projectID)
+	default:
+		getQ = queryBulkExperiments(getQ, filters).
+			Where("NOT (e.archived OR p.archived OR w.archived)")
+	}
 
 	if filters == nil {
 		getQ = getQ.Where("e.id IN (?)", bun.In(experimentIds))
