@@ -33,10 +33,9 @@ check: check-gen
 test-cpu:
 	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
 
-.PHONY: test-gpu
-test-gpu:
-	# Since integration tests are image-specific, they must be excluded and run separately
-	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
+.PHONY: test-gpu-tf
+test-gpu-tf:
+	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment/keras
 
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
@@ -44,7 +43,7 @@ test-gpu-deepspeed:
 
 .PHONY: test-gpu-parallel
 test-gpu-parallel:
-	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" tests/experiment --ignore=tests/experiment/integrations
+	coverage run -m pytest -v --runslow --durations=0 -m "gpu_parallel" tests/experiment/pytorch
 
 .PHONY: test-pytorch-cpu
 test-pytorch-cpu:

@@ -593,3 +593,32 @@ def test_rng_restore(tmp_path: pathlib.Path) -> None:
 
     assert len(trial_B_metrics) == len(trial_C_metrics) == 5
     assert trial_B_metrics == trial_C_metrics
+
+@pytest.mark.tensorflow
+def test_keras_from_config() -> None:
+    from tests.experiment.fixtures import tf_keras_one_var_model
+
+    data_len = 10
+    lr = 0.001
+    config = {
+        "hyperparameters": {"global_batch_size": 1, "learning_rate": lr, "dataset_range": data_len},
+        "searcher": {"metric": "val_loss"},
+    }
+    context = keras.TFKerasTrialContext.from_config(config)
+    trial = tf_keras_one_var_model.OneVarTrial(context)
+
+    model = trial.build_model()
+    model.fit(trial.build_training_data_loader(), verbose=0)
+    eval_loss = model.evaluate(trial.build_validation_data_loader(), verbose=0)
+
+    # Simulate the training that would happen.
+    weight = 0.0
+    for _epoch in range(1):
+        for data in range(data_len):
+            grad = trial.calc_gradient(weight, [data])
+            weight -= lr * grad
+
+    # Simulate validation loss.
+    sim_loss = trial.calc_loss(weight, range(data_len))
+
+    assert sim_loss == pytest.approx(eval_loss)

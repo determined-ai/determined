@@ -34,8 +34,8 @@ def launch(experiment_config: det.ExperimentConfig) -> int:
         entrypoint = [
             "python3",
             "-m",
-            "determined.launch.horovod",
-            "--autohorovod",
+            "determined.launch.torch_distributed",
+            "--",
             "--trial",
             entrypoint,
         ]

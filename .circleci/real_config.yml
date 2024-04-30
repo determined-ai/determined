@@ -30,13 +30,13 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
+    default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+    default: determinedai/pytorch-ngc-dev:8b3bea3
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -2312,9 +2312,9 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
 
-  test-unit-harness-gpu:
+  test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2326,17 +2326,17 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-gpu-pycov
+            - test-unit-harness-gpu-tf-pycov
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2358,7 +2358,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-cpu-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2379,7 +2379,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2423,7 +2423,7 @@ jobs:
 
   test-unit-harness-tf2:
     docker:
-      - image: <<pipeline.parameters.docker-image>>
+      - image: determinedai/tensorflow-ngc-dev:f17151a
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2431,11 +2431,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - setup-paths
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -4005,7 +4003,7 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-gpu:
+      - test-unit-harness-gpu-tf:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -4016,8 +4014,8 @@ workflows:
       - request-gpu-unit-tests:
           type: approval
           filters: *any-fork
-      - test-unit-harness-gpu:
-          name: f-test-unit-harness-gpu
+      - test-unit-harness-gpu-tf:
+          name: f-test-unit-harness-gpu-tf
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -4033,7 +4031,7 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
-            - test-unit-harness-gpu
+            - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
