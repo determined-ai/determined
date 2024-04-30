@@ -52,7 +52,6 @@ export default defineConfig({
     {
       name: 'mock-setup',
       testMatch: /mocks.setup\.ts/,
-      teardown: 'mock-teardown',
     },
     {
       name: 'mock-teardown',

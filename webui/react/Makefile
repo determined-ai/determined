@@ -124,7 +124,7 @@ get-playwright-ci:
 
 .PHONY: mb-start
 mb-start:
-	npm install mountebank
+	# npm install mountebank
 	npx mb start --allowInjection --localonly >"/tmp/mb-playwright.log" 2>&1 &
 	sleep 3
 
