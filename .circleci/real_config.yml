@@ -2645,7 +2645,6 @@ jobs:
 
       - reinstall-go
       - go-get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
 
       - setup-python-venv:
           install-python: true
@@ -4447,6 +4446,7 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
+            - build-proto
 
       - test-e2e:
           name: test-e2e-rbac
