@@ -216,12 +216,16 @@ test.describe('User Management', () => {
           expect(async () => {
             // BUG [ET-240]
             await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
+            await expect(
+              userManagementPage.table.table.pagination.pageButtonLocator(2),
+            ).toHaveClass(/ant-pagination-item-active/);
             await expect(userManagementPage.table.table.rows.pwLocator).toHaveCount(1, {
               timeout: 2_000,
             });
           }).toPass({ timeout: 10_000 });
         });
         await test.step("Disable all users on the table's page", async () => {
+          await userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
           await user.deactivateTestUsersOnTable();
         });
         // expect this test step to fail

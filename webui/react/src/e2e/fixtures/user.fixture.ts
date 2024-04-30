@@ -170,7 +170,6 @@ export class UserFixture {
     // get all user ids so we can update the status later
     const ids = await this.userManagementPage.table.table.allRowKeys();
     // select all users
-    await this.userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
     await this.userManagementPage.table.table.headRow.selectAll.pwLocator.click();
     await expect(this.userManagementPage.table.table.headRow.selectAll.pwLocator).toBeChecked();
     // open group actions
