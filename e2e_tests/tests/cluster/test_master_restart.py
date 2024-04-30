@@ -256,6 +256,7 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
     # All slots are empty, we don't leave a hanging container.
+    time.sleep(15) # Wait for k8s agent cache to end.
     agentsResp = bindings.get_GetAgents(sess)
     for a in agentsResp.agents:
         if a.slots is not None:

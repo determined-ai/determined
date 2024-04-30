@@ -48,7 +48,10 @@ import (
 // ResourceTypeNvidia describes the GPU resource type.
 const ResourceTypeNvidia = "nvidia.com/gpu"
 
-const summarizeCacheDuration = 5 * time.Second
+const (
+	getAgentsCacheDuration = 15 * time.Second
+	summarizeCacheDuration = 5 * time.Second
+)
 
 type podMetadata struct {
 	podName     string
@@ -1300,7 +1303,7 @@ func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
 	p.getAgentsCacheLock.Lock()
 	defer p.getAgentsCacheLock.Unlock()
 
-	if time.Since(p.getAgentsCacheTime) > summarizeCacheDuration {
+	if time.Since(p.getAgentsCacheTime) > getAgentsCacheDuration {
 		p.getAgentsCacheTime = time.Now()
 
 		nodeSummaries := p.summarizeClusterByNodes()
