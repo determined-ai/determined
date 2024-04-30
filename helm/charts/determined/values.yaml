@@ -1,4 +1,4 @@
-4# The image registry to be used to pull the Master image.
+# The image registry to be used to pull the Master image.
 # Determined OSS edition uses the determinedai repository in DockerHub.
 imageRegistry: determinedai
 # HPE Machine Learning Development Environment (MLDE), Determined Enterprise Edition, uses the HPE MSC as the image registry
