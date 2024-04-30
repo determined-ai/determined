@@ -25,10 +25,12 @@ DEFAULT_MAX_RETRIES = urllib3.util.retry.Retry(
 
 def _make_requests_session(
     server_hostname: Optional[str] = None,
-    verify: Optional[Union[str, bool]] = True,
+    verify: Optional[Union[str, bool]] = None,
     max_retries: Optional[GeneralizedRetry] = None,
     headers: Optional[Dict[str, Any]] = None,
 ) -> requests.Session:
+    if verify is None:
+        verify = True
     requests_session = requests.Session()
     requests_session.mount(
         "https://", _HTTPSAdapter(server_hostname=server_hostname, max_retries=max_retries)
