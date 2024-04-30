@@ -238,7 +238,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
               />
             </Form.Item>
           )}
-          {!rbacEnabled && !isRemote && (
+          {!isRemote && (
             <Form.Item
               initialValue=""
               label={USER_PASSWORD_LABEL}
