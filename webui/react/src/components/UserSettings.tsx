@@ -28,6 +28,7 @@ import {
   shortcutSettingsDefaults,
   shortcutsSettingsPath,
 } from 'components/UserSettings.settings';
+import { PASSWORD_RULES } from 'constants/passwordRules';
 import {
   FEATURE_SETTINGS_PATH,
   FEATURES,
@@ -112,12 +113,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
 
   const [newPassword, setNewPassword] = useState<string>('');
 
-  const NEW_PASSWORD_REQUIRED_MESSAGE = "Password can't be blank";
-  const PASSWORD_TOO_SHORT_MESSAGE = 'Password must have at least 8 characters';
-  const PASSWORD_UPPERCASE_MESSAGE = 'Password must include an uppercase letter';
-  const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter';
-  const PASSWORD_NUMBER_MESSAGE = 'Password must include a number';
-
   const handleSavePassword = useCallback(
     (value: string) => {
       setNewPassword(value);
@@ -173,22 +168,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       isPassword
                       label="Password"
                       open={editingPassword}
-                      rules={[
-                        { message: NEW_PASSWORD_REQUIRED_MESSAGE, required: true },
-                        { message: PASSWORD_TOO_SHORT_MESSAGE, min: 8 },
-                        {
-                          message: PASSWORD_UPPERCASE_MESSAGE,
-                          pattern: /[A-Z]+/,
-                        },
-                        {
-                          message: PASSWORD_LOWERCASE_MESSAGE,
-                          pattern: /[a-z]+/,
-                        },
-                        {
-                          message: PASSWORD_NUMBER_MESSAGE,
-                          pattern: /\d/,
-                        },
-                      ]}
+                      rules={PASSWORD_RULES}
                       valueFormatter={(value: string) => {
                         if (value.length) return value;
                         return '*****';
