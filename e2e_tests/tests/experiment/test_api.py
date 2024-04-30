@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import Dict, List
 
 import pytest
 
@@ -21,30 +21,30 @@ def test_archived_proj_exp_list() -> None:
 
     projects = []
     experiments = []
-    experimentMap = {}
+    experimentMap: Dict[int, List[int]] = {}
     for wrkspc in workspaces:
         workspace_projects = []
         for _ in range(count):
-            body = bindings.v1PostProjectRequest(
+            proj_body = bindings.v1PostProjectRequest(
                 name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=wrkspc.id
             )
             pid = bindings.post_PostProject(
                 admin,
-                body=body,
+                body=proj_body,
                 workspaceId=wrkspc.id,
             ).project.id
             workspace_projects.append(pid)
 
         for p in workspace_projects:
             for _ in range(count):
-                expA = exp.create_experiment(
+                expID = exp.create_experiment(
                     admin,
                     conf.fixtures_path("no_op/single.yaml"),
                     conf.fixtures_path("no_op"),
                     ["--project_id", str(p), "--paused"],
                 )
-                experimentMap[p] = experimentMap.get(p, []) + [expA]
-                experiments.append(expA)
+                experimentMap[p] = experimentMap.get(p, []) + [expID]
+                experiments.append(expID)
 
         projects.extend(workspace_projects)
 
