@@ -149,10 +149,10 @@ const TableActionBar: React.FC<Props> = ({
   const [experiments, setExperiments] = useState<Loadable<BulkExperimentItem>[]>([]);
 
   const fetchExperimentsByIds = useCallback(async (selectedIds: number[]) => {
-    const CHUNK_SIZE = 80;
-    const requests = _.chunk(selectedIds, CHUNK_SIZE);
+    const CHUNK_SIZE = 80; // match largest pageSizeOption used for Pagination components
+    const chunkedExperimentIds = _.chunk(selectedIds, CHUNK_SIZE);
     const responses = await Promise.all(
-      requests.map(async (ids) => {
+      chunkedExperimentIds.map(async (ids) => {
         const response = await getExperiments({
           experimentIdFilter: {
             incl: ids,

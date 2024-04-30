@@ -913,7 +913,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
       const items: MenuItem[] = [
-        selection.rows.length > 0
+        settings.selection.type === 'ONLY_IN' && settings.selection.selections.length > 0
           ? {
               key: 'select-none',
               label: 'Clear selected',
