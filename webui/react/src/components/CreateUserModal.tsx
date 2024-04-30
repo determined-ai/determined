@@ -42,6 +42,8 @@ const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 const USER_PASSWORD_NAME = 'password';
 export const USER_PASSWORD_LABEL = 'User Password';
+const USER_PASSWORD_CONFIRM_NAME = 'confirmPassword';
+export const USER_PASSWORD_CONFIRM_LABEL = 'Confirm User Password';
 const REMOTE_LABEL =
   'Remote (prevents password sign-on and requires user to sign-on using external IdP)';
 const REMOTE_NAME = 'remote';
@@ -239,15 +241,37 @@ const CreateUserModalComponent: React.FC<Props> = ({
             </Form.Item>
           )}
           {!isRemote && (
-            <Form.Item
-              initialValue=""
-              label={USER_PASSWORD_LABEL}
-              name={USER_PASSWORD_NAME}
-              required={!user && !isRemote}
-              rules={editPasswordRules}
-              validateTrigger={['onSubmit']}>
-              <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
-            </Form.Item>
+            <>
+              <Form.Item
+                initialValue=""
+                label={USER_PASSWORD_LABEL}
+                name={USER_PASSWORD_NAME}
+                required={!user && !isRemote}
+                rules={editPasswordRules}
+                validateTrigger={['onSubmit']}>
+                <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
+              </Form.Item>
+              <Form.Item
+                dependencies={[USER_PASSWORD_NAME]}
+                label={USER_PASSWORD_CONFIRM_LABEL}
+                name={USER_PASSWORD_CONFIRM_NAME}
+                required={!user && !isRemote}
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value: string) {
+                      if (!value || getFieldValue(USER_PASSWORD_NAME) === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error('The new password does not match the confirmation field'),
+                      );
+                    },
+                  }),
+                ]}
+                validateTrigger={['onSubmit']}>
+                <Input.Password data-testid="confirmPassword" disabled={viewOnly} />
+              </Form.Item>
+            </>
           )}
           {rbacEnabled && canModifyPermissions && (
             <>

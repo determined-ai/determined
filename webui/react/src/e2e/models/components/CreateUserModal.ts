@@ -29,6 +29,10 @@ export class CreateUserModal extends Modal {
     parent: this.body,
     selector: '[data-testid="password"]',
   });
+  readonly confirmPassword = new BaseComponent({
+    parent: this.body,
+    selector: '[data-testid="confirmPassword"]',
+  });
   readonly roleSelect = new BaseComponent({
     parent: this.body,
     selector: '[data-testid="roles"]',

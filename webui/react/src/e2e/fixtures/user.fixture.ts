@@ -50,6 +50,7 @@ export class UserFixture {
     }
     if (password !== undefined) {
       await this.userManagementPage.createUserModal.password.pwLocator.fill(password);
+      await this.userManagementPage.createUserModal.confirmPassword.pwLocator.fill(password);
     }
 
     const checkedAttribute =
