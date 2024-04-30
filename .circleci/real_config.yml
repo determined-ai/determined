@@ -248,10 +248,6 @@ commands:
     steps:
       - run: echo "<<parameters.password>>" | docker login <<parameters.repository>> -u "<<parameters.username>>" --password-stdin
 
-  login-helm:
-    steps:
-      - run: helm repo add determined https://helm.ngc.nvidia.com/isv-ngc-partner/determined --username=$NGC_API_USERNAME --password=$NGC_API_KEY
-
   reinstall-go:
     steps:
       - run: sudo rm -rf /usr/local/go # Remove system go.
@@ -1806,18 +1802,6 @@ jobs:
       - store_artifacts:
           path: /tmp/pkgs
 
-  publish-helm:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - helm/install-helm-client
-      - run: helm plugin install https://github.com/chartmuseum/helm-push.git
-      - login-helm
-      - run: make -C helm release
-
   publish-helm-gh:
     parameters:
       ee:
@@ -2005,7 +1989,7 @@ jobs:
           determined: true
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
-      - install-protoc 
+      - install-protoc
       - when:
           condition: << parameters.ee >>
           steps:
@@ -2022,9 +2006,9 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: 
+      - run:
           environment:
-            PW_EE: << parameters.ee >> 
+            PW_EE: << parameters.ee >>
           command: npm run e2e --prefix webui/react
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
@@ -5476,12 +5460,6 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
-
-      - publish-helm:
-          requires:
-            - build-helm
-          context: determined-production
-          filters: *release-and-rc-filters
 
       - publish-helm-gh:
           requires:
