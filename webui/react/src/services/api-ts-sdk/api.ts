@@ -30261,7 +30261,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -30416,7 +30416,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -30502,7 +30502,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -30590,7 +30590,7 @@ export class TemplatesApi extends BaseAPI {
     
     /**
      * 
-     * @summary DEPRECATED: Update or create (upsert) the requested template.
+     * @summary Update or create (upsert) the requested template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
      * @param {*} [options] Override http request option.

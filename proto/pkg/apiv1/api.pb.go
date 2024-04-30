@@ -3877,7 +3877,7 @@ type DeterminedClient interface {
 	// Get the requested template.
 	GetTemplate(ctx context.Context, in *GetTemplateRequest, opts ...grpc.CallOption) (*GetTemplateResponse, error)
 	// Deprecated: Do not use.
-	// DEPRECATED: Update or create (upsert) the requested template.
+	// Update or create (upsert) the requested template.
 	PutTemplate(ctx context.Context, in *PutTemplateRequest, opts ...grpc.CallOption) (*PutTemplateResponse, error)
 	// Post a new template.
 	PostTemplate(ctx context.Context, in *PostTemplateRequest, opts ...grpc.CallOption) (*PostTemplateResponse, error)
@@ -6835,7 +6835,7 @@ type DeterminedServer interface {
 	// Get the requested template.
 	GetTemplate(context.Context, *GetTemplateRequest) (*GetTemplateResponse, error)
 	// Deprecated: Do not use.
-	// DEPRECATED: Update or create (upsert) the requested template.
+	// Update or create (upsert) the requested template.
 	PutTemplate(context.Context, *PutTemplateRequest) (*PutTemplateResponse, error)
 	// Post a new template.
 	PostTemplate(context.Context, *PostTemplateRequest) (*PostTemplateResponse, error)
