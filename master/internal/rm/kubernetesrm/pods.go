@@ -1595,7 +1595,6 @@ func (p *pods) getNonDetPods() ([]k8sV1.Pod, error) {
 		return nil, err
 	}
 
-	// TODO cache not working.
 	var nonDetPods []k8sV1.Pod
 	for _, p := range allPods.Items {
 		_, isDet := p.Labels[determinedLabel]
