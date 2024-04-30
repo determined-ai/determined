@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/uptrace/bun"
-
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -356,21 +354,21 @@ func (a *apiServer) getProjectColumnsByID(
 		Count      int32
 	}{}
 
-	if len(trialIDs) > 0 {
-		subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
-			`summary_metrics->jsonb_object_keys(summary_metrics)->
-		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
-		AS metric_type`).
-			Where("id IN (?)", bun.In(trialIDs)).Distinct()
-		trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
-			ColumnExpr("*").ColumnExpr(
-			"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
-			Order("json_path").Order("metric_name")
-		err = trialsQuery.Scan(ctx, &summaryMetrics)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// if len(trialIDs) > 0 {
+	// 	subQuery := db.BunSelectMetricGroupNames().ColumnExpr(
+	// 		`summary_metrics->jsonb_object_keys(summary_metrics)->
+	// 	jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+	// 	AS metric_type`).
+	// 		Where("id IN (?)", bun.In(trialIDs)).Distinct()
+	// 	trialsQuery := db.Bun().NewSelect().TableExpr("(?) AS stats", subQuery).
+	// 		ColumnExpr("*").ColumnExpr(
+	// 		"ROW_NUMBER() OVER(PARTITION BY json_path, metric_name order by metric_type) AS count").
+	// 		Order("json_path").Order("metric_name")
+	// 	err = trialsQuery.Scan(ctx, &summaryMetrics)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	for idx, stats := range summaryMetrics {
 		// If there are multiple metrics with the same group and name, report one unspecified column.
@@ -510,25 +508,25 @@ func (a *apiServer) getProjectRunColumnsByID(
 		MetricType string
 	}{}
 
-	if len(hyperparameters) > 0 {
-		runsQuery := db.Bun().NewSelect().Distinct().Table("runs").
-			ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
-			ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))"+
-				" as metric_name").
-			ColumnExpr(
-				`summary_metrics->jsonb_object_keys(summary_metrics)->
-			jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
-			AS metric_type`).
-			Where("summary_metrics IS NOT NULL").
-			Where("hparams IS NOT NULL").
-			Where("hparams != 'null'").
-			Where("project_id = ?", id).
-			Order("json_path").Order("metric_name")
-		err = runsQuery.Scan(ctx, &summaryMetrics)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// if len(hyperparameters) > 0 {
+	// 	runsQuery := db.Bun().NewSelect().Distinct().Table("runs").
+	// 		ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
+	// 		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))"+
+	// 			" as metric_name").
+	// 		ColumnExpr(
+	// 			`summary_metrics->jsonb_object_keys(summary_metrics)->
+	// 		jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+	// 		AS metric_type`).
+	// 		Where("summary_metrics IS NOT NULL").
+	// 		Where("hparams IS NOT NULL").
+	// 		Where("hparams != 'null'").
+	// 		Where("project_id = ?", id).
+	// 		Order("json_path").Order("metric_name")
+	// 	err = runsQuery.Scan(ctx, &summaryMetrics)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	for _, stats := range summaryMetrics {
 		// If there are multiple metrics with the same group and name, report one unspecified column.
