@@ -1080,7 +1080,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           V1LocationType.HYPERPARAMETERS,
         ]}
         compareViewOn={settings.compare}
-        experiments={experiments}
         formStore={formStore}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}

@@ -136,7 +136,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
-  const id = project?.id;
+  const id = project.id;
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
@@ -417,7 +417,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <div>
             <Tags
               compact
-              disabled={record.archived || project?.archived || !canEditExperiment}
+              disabled={record.archived || project.archived || !canEditExperiment}
               tags={record.labels}
               onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
@@ -717,7 +717,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({
           experimentIds: settings.row,
-          workspaceId: project?.workspaceId,
+          workspaceId: project.workspaceId,
         });
       }
       if (action === Action.Move) {
@@ -774,7 +774,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       permissions,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
-      project?.workspaceId,
+      project.workspaceId,
     ],
   );
 
@@ -1009,7 +1009,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       <ExperimentMoveModal.Component
         experimentIds={batchMovingExperimentIds ?? []}
         sourceProjectId={project.id}
-        sourceWorkspaceId={project?.workspaceId}
+        sourceWorkspaceId={project.workspaceId}
         onSubmit={handleActionComplete}
       />
       <ExperimentRetainLogsModal.Component

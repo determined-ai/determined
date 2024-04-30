@@ -838,7 +838,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     <>
       <TableActionBar
         columnGroups={[V1LocationType.EXPERIMENT]}
-        experiments={experiments}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}

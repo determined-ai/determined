@@ -7,8 +7,8 @@ import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
-import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Loadable, Loaded } from 'hew/utils/loadable';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
@@ -26,6 +26,7 @@ import {
   archiveExperiments,
   cancelExperiments,
   deleteExperiments,
+  getExperiments,
   killExperiments,
   openOrCreateTensorBoard,
   pauseExperiments,
@@ -34,8 +35,8 @@ import {
 import { V1LocationType } from 'services/api-ts-sdk';
 import {
   BulkActionResult,
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentWithTrial,
   Project,
   ProjectColumn,
   ProjectExperiment,
@@ -81,7 +82,6 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  experiments: Loadable<ExperimentWithTrial>[];
   formStore: FilterFormStore;
   heatmapBtnVisible?: boolean;
   heatmapOn?: boolean;
@@ -110,7 +110,6 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   compareViewOn,
-  experiments,
   formStore,
   heatmapBtnVisible,
   heatmapOn,
@@ -146,13 +145,26 @@ const TableActionBar: React.FC<Props> = ({
   const isMobile = useMobile();
   const { openToast } = useToast();
 
+  const [experiments, setExperiments] = useState<Loadable<BulkExperimentItem>[]>([]);
+
+  const fetchExperimentsByIds = useCallback(async (selectedIds: number[]) => {
+    const response = await getExperiments({
+      experimentIdFilter: {
+        incl: selectedIds,
+      },
+    });
+    const loadedExperiments = response.experiments;
+    setExperiments(loadedExperiments.map((experiment) => Loaded(experiment)));
+  }, []);
+
+  useEffect(() => {
+    fetchExperimentsByIds(selectedExperimentIds);
+  }, [selectedExperimentIds, fetchExperimentsByIds]);
+
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce(
       (acc, experiment) => {
-        acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
-          experiment.data.experiment,
-          project,
-        );
+        acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
         return acc;
       },
       {} as Record<number, ProjectExperiment>,
@@ -160,10 +172,7 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(
-    () =>
-      Array.from(selectedExperimentIds.keys()).flatMap((id) =>
-        id in experimentMap ? [experimentMap[id]] : [],
-      ),
+    () => selectedExperimentIds.flatMap((id) => (id in experimentMap ? [experimentMap[id]] : [])),
     [experimentMap, selectedExperimentIds],
   );
 
