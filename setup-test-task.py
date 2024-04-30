@@ -182,12 +182,23 @@ interests = [
     ["curl", "-s", f"http://localhost:{local_port}/", "-m", "1"],
     ["curl", "-s", f"http://localhost:{local_port}/proxy/{task_id}/", "-m", "1"],
     ["curl", "-s", f"http://localhost:{local_port}/lab", "-m", "1"],
+    ["curl", "-s", f"http://localhost:{local_port}/lab", "-m", "1", "|", "grep", "'not exist'"],
     ["curl", "-s", f"http://localhost:{local_port}/proxy/{task_id}/lab", "-m", "1"],
+    [
+        "curl",
+        "-s",
+        f"http://localhost:{local_port}/proxy/{task_id}/lab",
+        "-m",
+        "1",
+        "|",
+        "grep",
+        "'not exist'",
+    ],
     ["det", "dev", "curl", f"/proxy/{task_id}/", "-s", "-m", "1"],
 ]
 for cmd in interests:
     print(termcolor.colored(f"Running: {' '.join(cmd)}", "yellow"))
-    finished_proc = subprocess.run(cmd, stdout=subprocess.PIPE)
+    finished_proc = subprocess.run(" ".join(cmd), stdout=subprocess.PIPE, shell=True)
     got_html = "html" in finished_proc.stdout.decode("utf-8")
     return_code = finished_proc.returncode
     print(f"Return code: {return_code}, Got HTML: {got_html}")
