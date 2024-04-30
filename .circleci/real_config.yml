@@ -2723,7 +2723,7 @@ jobs:
             - run:
                 name: Build agent resources
                 command: |
-                  make -C agent build package
+                  make -C agent package
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
                 host: <<parameters.master-host>>
@@ -4446,7 +4446,6 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
-            - build-proto
 
       - test-e2e:
           name: test-e2e-rbac
