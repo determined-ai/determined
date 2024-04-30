@@ -168,7 +168,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       [DISPLAY_NAME_NAME]: user?.displayName,
       [ROLE_NAME]: userRoles?.getOrElse([]).map((r) => r.id),
     });
-    setIsRemote(!!user?.isAdmin);
+    setIsRemote(!!user?.remote);
   }, [form, user, userRoles]);
 
   return (
