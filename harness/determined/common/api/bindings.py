@@ -1700,6 +1700,63 @@ class v1ArchiveExperimentsResponse(Printable):
         }
         return out
 
+class v1ArchiveRunsRequest(Printable):
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1ArchiveRunsResponse(Printable):
+    """Response to ArchiveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1AssignMultipleGroupsRequest(Printable):
     """Add and remove multiple users from multiple groups."""
 
@@ -15390,6 +15447,63 @@ class v1UnarchiveExperimentsResponse(Printable):
         }
         return out
 
+class v1UnarchiveRunsRequest(Printable):
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1UnarchiveRunsResponse(Printable):
+    """Response to UnarchiveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1UnbindRPFromWorkspaceRequest(Printable):
     """Unbind a resource pool to workspaces."""
     workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -16422,6 +16536,27 @@ def post_ArchiveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveProject", _resp)
+
+def post_ArchiveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1ArchiveRunsRequest",
+) -> "v1ArchiveRunsResponse":
+    """Archive runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/archive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ArchiveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ArchiveRuns", _resp)
 
 def post_ArchiveWorkspace(
     session: "api.BaseSession",
@@ -22837,6 +22972,27 @@ def post_UnarchiveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveProject", _resp)
+
+def post_UnarchiveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1UnarchiveRunsRequest",
+) -> "v1UnarchiveRunsResponse":
+    """Unarchive runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/unarchive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1UnarchiveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_UnarchiveRuns", _resp)
 
 def post_UnarchiveWorkspace(
     session: "api.BaseSession",

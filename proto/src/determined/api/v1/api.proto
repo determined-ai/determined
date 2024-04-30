@@ -2554,4 +2554,26 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Archive runs.
+  rpc ArchiveRuns(ArchiveRunsRequest) returns (ArchiveRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/archive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unarchive runs.
+  rpc UnarchiveRuns(UnarchiveRunsRequest) returns (UnarchiveRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/unarchive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

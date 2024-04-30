@@ -37,7 +37,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-748dda4
+    default: determinedai/pytorch-tensorflow-cuda-dev:f17151a
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -234,7 +234,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-748dda4
+            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:f17151a
 
   login-docker:
     parameters:
@@ -266,10 +266,7 @@ commands:
 
   install-codecov:
     steps:
-      - run: mkdir -p $HOME/.local/bin
-      - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
-      - run: chmod +x $HOME/.local/bin/codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+      - run: pip install codecov
 
   setup-go-intg-deps:
     steps:
@@ -526,6 +523,7 @@ commands:
 
   setup-paths:
     steps:
+      - run: mkdir -p $HOME/.local/bin
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
@@ -1989,7 +1987,7 @@ jobs:
         default: false
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     steps:
       - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV # DNJ TODO -remove when tested
       - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
@@ -2316,7 +2314,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+      - image: determinedai/pytorch-tensorflow-cuda-dev:f17151a
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2338,7 +2336,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-748dda4
+      - image: determinedai/pytorch-cuda-dev:f17151a
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2360,7 +2358,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-748dda4
+      - image: determinedai/pytorch-cpu-dev:f17151a
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2381,7 +2379,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+      - image: determinedai/pytorch-tensorflow-cuda-dev:f17151a
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2403,7 +2401,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+      - image: determinedai/pytorch-ngc-dev:f17151a
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2647,7 +2645,6 @@ jobs:
 
       - reinstall-go
       - go-get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
 
       - setup-python-venv:
           install-python: true
@@ -3656,7 +3653,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1
+        default: determinedai/pytorch-tensorflow-cuda-dev:f17151a
         type: string
       accel-node-taints:
         type: string
@@ -4449,6 +4446,7 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
+            - build-proto
 
       - test-e2e:
           name: test-e2e-rbac

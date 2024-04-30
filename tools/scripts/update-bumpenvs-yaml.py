@@ -37,17 +37,14 @@ PROJECT = "environments"
 BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 
 JOB_SUFFIXES = [
-    "tf2-cpu",
-    "pt-cpu",
-    "pt2-cpu",
-    "tf2-gpu",
-    "pt-gpu",
-    "pt2-gpu",
+    "tensorflow-cpu",
+    "pytorch-cpu",
+    "tensorflow-cuda",
+    "pytorch-cuda",
 ]
 
 JOB_SUFFIXES_WITHOUT_MPI = [
-    "deepspeed",
-    "gpt-neox-deepspeed",
+    "deepspeed-gpt-neox",
     "pytorch13-tf210-rocm56",
     "pytorch20-tf210-rocm56",
 ]
@@ -60,7 +57,7 @@ JOB_SUFFIXES_NO_MPI = [
 ]
 
 JOB_SUFFIXES_OFI = [
-    "tf2-gpu",
+    "tensorflow-cuda",
 ]
 
 PACKER_JOBS = {"publish-cloud-images"}

@@ -14,6 +14,28 @@
     {{- end -}}
 {{- end -}}
 
+{{- define "determined.dbCertVolumeMount" -}}
+{{- if .Values.db.certResourceName -}}
+- name: database-cert
+  mountPath: {{ include "determined.secretPath" . }}
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{- define "determined.dbCertVolume" }}
+{{- if .Values.db.sslMode -}}
+- name: database-cert
+  {{- $resourceType := (required "A valid .Values.db.resourceType entry required!" .Values.db.resourceType | trim)}}
+  {{- if eq $resourceType "configMap"}}
+  configMap:
+    name: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
+  {{- else }}
+  secret:
+    secretName: {{ required  "A valid Values.db.certResourceName entry is required!" .Values.db.certResourceName }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "genai.PVCName" -}}
     {{- if .Values.genai.sharedPVCName }}
         {{- .Values.genai.sharedPVCName }}

@@ -36,7 +36,7 @@ type runCandidateResult struct {
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
-	IsTerminal   *bool
+	IsTerminal   bool
 }
 
 func (a *apiServer) RunPrepareForReporting(
@@ -253,7 +253,7 @@ func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, er
 		return q
 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !efr.ShowArchived {
-			return q.Where(`e.archived = false`)
+			return q.Where(`r.archived = false`)
 		}
 		return q
 	})
@@ -306,7 +306,7 @@ func (a *apiServer) MoveRuns(
 		ModelTableExpr("runs AS r").
 		Model(&runChecks).
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
@@ -462,23 +462,23 @@ func (a *apiServer) KillRuns(ctx context.Context, req *apiv1.KillRunsRequest,
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range killCandidatees {
-		visibleIDs.Insert(check.ID)
+	for _, cand := range killCandidatees {
+		visibleIDs.Insert(cand.ID)
 		switch {
-		case check.IsTerminal:
+		case cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		// This should be impossible in the current system but we will leave this check here
 		// to cover a possible error in integration tests
-		case check.RequestID == nil:
+		case cand.RequestID == nil:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run has no associated request id.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		default:
-			validIDs = append(validIDs, check.ID)
+			validIDs = append(validIDs, cand.ID)
 		}
 	}
 	if req.Filter == nil {
@@ -525,7 +525,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	getQ := getSelectRunsQueryTables().
 		Model(&deleteCandidates).
 		Column("r.id").
-		ColumnExpr("COALESCE((e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
 		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
@@ -555,16 +555,16 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	for _, check := range deleteCandidates {
-		visibleIDs.Insert(check.ID)
+	for _, cand := range deleteCandidates {
+		visibleIDs.Insert(cand.ID)
 		switch {
-		case check.IsTerminal == nil || !*check.IsTerminal:
+		case !cand.IsTerminal:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "Run is not in a terminal state.",
-				Id:    check.ID,
+				Id:    cand.ID,
 			})
 		default:
-			validIDs = append(validIDs, check.ID)
+			validIDs = append(validIDs, cand.ID)
 		}
 	}
 	if req.Filter == nil {
@@ -629,4 +629,130 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 	}
 
 	return &apiv1.DeleteRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) ArchiveRuns(
+	ctx context.Context, req *apiv1.ArchiveRunsRequest,
+) (*apiv1.ArchiveRunsResponse, error) {
+	results, err := archiveUnarchiveAction(ctx, true, req.RunIds, req.ProjectId, req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ArchiveRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) UnarchiveRuns(
+	ctx context.Context, req *apiv1.UnarchiveRunsRequest,
+) (*apiv1.UnarchiveRunsResponse, error) {
+	results, err := archiveUnarchiveAction(ctx, false, req.RunIds, req.ProjectId, req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.UnarchiveRunsResponse{Results: results}, nil
+}
+
+func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
+	projectID int32, filter *string,
+) ([]*apiv1.RunActionResult, error) {
+	if len(runIDs) > 0 && filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var runCandidates []runCandidateResult
+	query := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runCandidates).
+		Column("r.id").
+		Column("r.archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("false as is_multitrial").
+		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", projectID)
+
+	if filter == nil {
+		query = query.Where("r.id IN (?)", bun.In(runIDs))
+	} else {
+		query, err = filterRunQuery(query, filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	query, err = experiment.AuthZProvider.Get().
+		FilterExperimentsQuery(ctx, *curUser, nil, query,
+			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA})
+	if err != nil {
+		return nil, err
+	}
+
+	err = query.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	var validIDs []int32
+	for _, cand := range runCandidates {
+		visibleIDs.Insert(cand.ID)
+		switch {
+		case cand.Archived && archive:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    cand.ID,
+			})
+		case !cand.Archived && !archive:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    cand.ID,
+			})
+		case !cand.IsTerminal:
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is not in terminal state.",
+				Id:    cand.ID,
+			})
+		default:
+			validIDs = append(validIDs, cand.ID)
+		}
+	}
+
+	if filter == nil {
+		for _, originalID := range runIDs {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, projectID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+
+	if len(validIDs) > 0 {
+		var acceptedIDs []int32
+		_, err = db.Bun().NewUpdate().
+			ModelTableExpr("runs as r").
+			Set("archived = ?", archive).
+			Where("id IN (?)", bun.In(validIDs)).
+			Returning("id").
+			Model(&acceptedIDs).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to archive/unarchive runs: %w", err)
+		}
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+	}
+
+	return results, nil
 }
