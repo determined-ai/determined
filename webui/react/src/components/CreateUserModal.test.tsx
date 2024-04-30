@@ -14,6 +14,7 @@ import CreateUserModalComponent, {
   BUTTON_NAME,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
+  USER_PASSWORD_CONFIRM_LABEL,
   USER_PASSWORD_LABEL,
 } from './CreateUserModal';
 
@@ -66,6 +67,7 @@ describe('Create User Modal', () => {
 
     await user.type(screen.getByLabelText(USER_NAME_LABEL), USERNAME);
     await user.type(screen.getByLabelText(USER_PASSWORD_LABEL), PASSWORD);
+    await user.type(screen.getByLabelText(USER_PASSWORD_CONFIRM_LABEL), PASSWORD);
     await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     // Check for successful toast message.
