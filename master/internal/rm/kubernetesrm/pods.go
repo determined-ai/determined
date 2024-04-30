@@ -102,9 +102,13 @@ type pods struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
+	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
+	getAgentsCacheLock sync.Mutex
+	getAgentsCache     *apiv1.GetAgentsResponse
+	getAgentsCacheTime time.Time
 
 	syslog *logrus.Entry
 
@@ -1291,15 +1295,23 @@ func (p *pods) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlo
 }
 
 func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
-	nodeSummaries := p.summarizeClusterByNodes()
-	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
+	p.getAgentsCacheLock.Lock()
+	defer p.getAgentsCacheLock.Unlock()
 
-	response := &apiv1.GetAgentsResponse{}
-	for _, summary := range nodeSummaries {
-		summary.ResourcePool = nodesToPools[summary.ID]
-		response.Agents = append(response.Agents, summary.ToProto())
+	if time.Since(p.getAgentsCacheTime) > 5*time.Second {
+		p.getAgentsCacheTime = time.Now()
+
+		nodeSummaries := p.summarizeClusterByNodes()
+		_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
+
+		p.getAgentsCache = &apiv1.GetAgentsResponse{}
+		for _, summary := range nodeSummaries {
+			summary.ResourcePool = nodesToPools[summary.ID]
+			p.getAgentsCache.Agents = append(p.getAgentsCache.Agents, summary.ToProto())
+		}
 	}
-	return response
+
+	return p.getAgentsCache
 }
 
 func (p *pods) handleGetAgentRequest(agentID string) *apiv1.GetAgentResponse {
@@ -1574,13 +1586,18 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 	return summary
 }
 
-func (p *pods) getNonDetPods() []k8sV1.Pod {
-	var nonDetPods []k8sV1.Pod
-	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{})
+func (p *pods) getNonDetPods() ([]k8sV1.Pod, error) {
+	// TODO(RM-235) use a filter in metaV1.ListOptions. This change gets a lot easier after
+	// we have K8s integration tests. Using a filter means we should really talk to a real
+	// k8s server. Doing an e2e test for this is possible but would take a lot more work.
+	allPods, err := p.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
-		return nonDetPods
+		return nil, err
 	}
-	for _, p := range pList.Items {
+
+	// TODO cache not working.
+	var nonDetPods []k8sV1.Pod
+	for _, p := range allPods.Items {
 		_, isDet := p.Labels[determinedLabel]
 		_, isDetSystem := p.Labels[determinedSystemLabel]
 
@@ -1590,14 +1607,19 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 			}
 		}
 	}
-	return nonDetPods
+	return nonDetPods, nil
 }
 
 func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
 	nodeToTasks := make(map[string][]string, len(p.currentNodes))
 	taskSlots := make(map[string]int64)
 
-	nonDetPods := p.getNonDetPods()
+	nonDetPods, err := p.getNonDetPods()
+	if err != nil {
+		p.syslog.WithError(err).Warn("getting non determined pods, " +
+			"this may cause slots to look free when they are in use")
+	}
+
 	if len(nonDetPods) == 0 {
 		return nodeToTasks, taskSlots
 	}
