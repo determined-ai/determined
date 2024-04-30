@@ -5,7 +5,7 @@ from _pytest import monkeypatch
 
 import determined as det
 from determined import experimental, pytorch
-from tests.experiment import fixtures
+from tests.experiment.fixtures import pytorch_onevar_model
 
 
 def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.Path) -> None:
@@ -16,9 +16,9 @@ def test_test_one_batch(monkeypatch: monkeypatch.MonkeyPatch, tmp_path: pathlib.
         pytorch.PyTorchTrialContext, "get_tensorboard_path", mock_get_tensorboard_path
     )
 
-    with det._local_execution_manager(pathlib.Path(fixtures.pytorch_onevar_model.__file__).parent):
+    with det._local_execution_manager(pathlib.Path(pytorch_onevar_model.__file__).parent):
         experimental.test_one_batch(
-            trial_class=fixtures.pytorch_onevar_model.OneVarTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             config={
                 "hyperparameters": {
                     "hidden_size": 2,

@@ -2313,8 +2313,8 @@ jobs:
             - test-unit-harness-cpu-pycov
 
   test-unit-harness-gpu-tf:
-    docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+    docker:-
+      - image: determinedai/tensorflow-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts

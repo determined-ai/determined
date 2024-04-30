@@ -594,6 +594,7 @@ def test_rng_restore(tmp_path: pathlib.Path) -> None:
     assert len(trial_B_metrics) == len(trial_C_metrics) == 5
     assert trial_B_metrics == trial_C_metrics
 
+
 @pytest.mark.tensorflow
 def test_keras_from_config() -> None:
     from tests.experiment.fixtures import tf_keras_one_var_model
