@@ -50,18 +50,9 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
     {
-      name: 'mock-setup',
-      testMatch: /mocks.setup\.ts/,
-    },
-    {
-      name: 'mock-teardown',
-      testMatch: /mocks.teardown\.ts/,
-    },
-    {
       name: 'mock-env',
       use:{ ...devices['Desktop Firefox'] },
       retries: 0,
-      dependencies: ['mock-setup'],
     },
     /* Test against mobile viewports. */
     // {
