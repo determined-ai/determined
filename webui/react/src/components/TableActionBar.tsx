@@ -162,7 +162,8 @@ const TableActionBar: React.FC<Props> = ({
       }),
     );
     const fetchedExperiments = responses.reduce((acc, experiments) => {
-      return acc.concat(experiments);
+      acc.push(...experiments);
+      return acc;
     }, []);
     setExperiments(fetchedExperiments.map((experiment) => Loaded(experiment)));
   }, []);
