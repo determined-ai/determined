@@ -21,72 +21,41 @@ def test_archived_proj_exp_list() -> None:
 
     projects = []
     experiments = []
+    experimentMap = {}
     for wrkspc in workspaces:
-        body1 = bindings.v1PostProjectRequest(
-            name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=wrkspc.id
-        )
-        pid1 = bindings.post_PostProject(
+        workspace_projects = []
+        for _ in range(count):
+            body = bindings.v1PostProjectRequest(
+                name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=wrkspc.id
+            )
+            pid = bindings.post_PostProject(
+                admin,
+                body=body,
+                workspaceId=wrkspc.id,
+            ).project.id
+            workspace_projects.append(pid)
+
+        for p in workspace_projects:
+            for _ in range(count):
+                expA = exp.create_experiment(
+                    admin,
+                    conf.fixtures_path("no_op/single.yaml"),
+                    conf.fixtures_path("no_op"),
+                    ["--project_id", str(p), "--paused"],
+                )
+                experimentMap[p] = experimentMap.get(p, []) + [expA]
+                experiments.append(expA)
+
+        projects.extend(workspace_projects)
+
+    for proj in experimentMap:
+        bindings.post_KillExperiments(
             admin,
-            body=body1,
-            workspaceId=wrkspc.id,
-        ).project.id
-
-        body2 = bindings.v1PostProjectRequest(
-            name=f"p_{uuid.uuid4().hex[:8]}", workspaceId=wrkspc.id
+            body=bindings.v1KillExperimentsRequest(
+                projectId=proj, experimentIds=experimentMap[proj]
+            ),
+            projectId=proj,
         )
-        pid2 = bindings.post_PostProject(
-            admin,
-            body=body2,
-            workspaceId=wrkspc.id,
-        ).project.id
-
-        projects.append(pid1)
-        projects.append(pid2)
-
-        experiments.append(
-            exp.create_experiment(
-                admin,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid1), ("--paused")],
-            )
-        )
-        experiments.append(
-            exp.create_experiment(
-                admin,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid1), ("--paused")],
-            )
-        )
-        experiments.append(
-            exp.create_experiment(
-                admin,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid2), ("--paused")],
-            )
-        )
-        experiments.append(
-            exp.create_experiment(
-                admin,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid2), ("--paused")],
-            )
-        )
-
-    bindings.post_KillExperiments(
-        admin,
-        body=bindings.v1KillExperimentsRequest(projectId=pid1, experimentIds=experiments),
-        projectId=pid1,
-    )
-
-    bindings.post_KillExperiments(
-        admin,
-        body=bindings.v1KillExperimentsRequest(projectId=pid2, experimentIds=experiments),
-        projectId=pid2,
-    )
 
     for x in experiments:
         exp.wait_for_experiment_state(admin, x, bindings.experimentv1State.CANCELED)
@@ -107,7 +76,7 @@ def test_archived_proj_exp_list() -> None:
     archived_exp.append(experiments[2])
     archived_exp.append(experiments[4])
 
-    # test2: GetExperiments shouldn't return experiements from archived projects when
+    # test2: GetExperiments shouldn't return experiments from archived projects when
     # archived flag is False
     r2 = bindings.get_GetExperiments(admin, archived=False)
     for e in r2.experiments:
@@ -117,7 +86,7 @@ def test_archived_proj_exp_list() -> None:
 
     archived_exp.append(experiments[7])
 
-    # test3: GetExperiments shouldn't return experiements from archived workspaces when
+    # test3: GetExperiments shouldn't return experiments from archived workspaces when
     # archived flag is False
     r3 = bindings.get_GetExperiments(admin, archived=False)
     for e in r3.experiments:
