@@ -449,7 +449,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             resetPagination();
             const loadableFormset = formStore.formset.get();
             Loadable.forEach(loadableFormset, (formSet) =>
-              updateSettings({ filterset: JSON.stringify(formSet) }),
+              updateSettings({ filterset: JSON.stringify(formSet), selection: DEFAULT_SELECTION }),
             );
           });
         });
@@ -627,18 +627,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                   handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
                 },
               },
-        {
-          icon: <Icon decorative name="eye-close" />,
-          key: 'hide',
-          label: 'Hide column',
-          onClick: () => {
-            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column?.column);
-            handleColumnsOrderChange?.(newColumnsOrder);
-            if (isPinned) {
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-            }
-          },
-        },
       ];
 
       if (!column) {
