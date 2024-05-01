@@ -2704,10 +2704,6 @@ jobs:
           condition:
             equal: ["-A", <<parameters.agent-use>>]
           steps:
-            - run:
-                name: Build agent resources
-                command: |
-                  make -C agent build package
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
                 host: <<parameters.master-host>>
@@ -2718,7 +2714,7 @@ jobs:
                   ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
                   INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
                   PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
+                  gcloud compute scp agent/build/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
                   gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
                   srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
                 background: true
@@ -4430,7 +4426,6 @@ workflows:
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
             - build-go-ee
-            - build-proto
 
       - test-e2e:
           name: test-e2e-rbac
