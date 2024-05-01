@@ -116,7 +116,7 @@ def run_autotuning_experiment(
 
 
 def archive_experiments(
-    sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int = -1, name: Optional[str] = None
 ) -> None:
     body = bindings.v1ArchiveExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     if name is not None:
@@ -135,7 +135,7 @@ def pause_experiment(sess: api.Session, experiment_id: int) -> None:
 def pause_experiments(
     sess: api.Session,
     experiment_ids: List[int],
-    project_id: int = 1,
+    project_id: int = -1,
     name: Optional[str] = None,
 ) -> None:
     body = bindings.v1PauseExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
@@ -153,7 +153,7 @@ def activate_experiment(sess: api.Session, experiment_id: int) -> None:
 
 
 def activate_experiments(
-    sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int = -1, name: Optional[str] = None
 ) -> None:
     if name is None:
         body = bindings.v1ActivateExperimentsRequest(
@@ -178,7 +178,7 @@ def kill_experiment(sess: api.Session, experiment_id: int) -> None:
 
 
 def cancel_experiments(
-    sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int = -1, name: Optional[str] = None
 ) -> None:
     if name is None:
         body = bindings.v1CancelExperimentsRequest(
@@ -193,7 +193,7 @@ def cancel_experiments(
 
 
 def kill_experiments(
-    sess: api.Session, experiment_ids: List[int], project_id: int = 1, name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int = -1, name: Optional[str] = None
 ) -> None:
     if name is None:
         body = bindings.v1KillExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)

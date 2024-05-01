@@ -381,8 +381,12 @@ func (a *apiServer) DeleteExperiment(
 		return nil, err
 	}
 
-	results, _, err := experiment.DeleteExperiments(ctx,
-		1, []int32{req.ExperimentId}, nil)
+	results, _, err := experiment.DeleteExperiments(
+		ctx,
+		experiment.GlobalProjectID,
+		[]int32{req.ExperimentId},
+		nil,
+	)
 	// report error from the multi-experiment selection code
 	if err != nil {
 		return nil, err
@@ -973,7 +977,7 @@ func (a *apiServer) ActivateExperiments(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	results, err := experiment.PauseExperiments(ctx, 1, []int32{req.Id}, nil)
+	results, err := experiment.PauseExperiments(ctx, experiment.GlobalProjectID, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -996,7 +1000,7 @@ func (a *apiServer) PauseExperiments(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	results, err := experiment.CancelExperiments(ctx, 1, []int32{req.Id}, nil)
+	results, err := experiment.CancelExperiments(ctx, experiment.GlobalProjectID, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1019,7 +1023,7 @@ func (a *apiServer) CancelExperiments(
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	results, err := experiment.KillExperiments(ctx, 1, []int32{req.Id}, nil)
+	results, err := experiment.KillExperiments(ctx, experiment.GlobalProjectID, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1042,7 +1046,7 @@ func (a *apiServer) KillExperiments(
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	results, err := experiment.ArchiveExperiments(ctx, 1, []int32{req.Id}, nil)
+	results, err := experiment.ArchiveExperiments(ctx, experiment.GlobalProjectID, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1065,7 +1069,7 @@ func (a *apiServer) ArchiveExperiments(
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	results, err := experiment.UnarchiveExperiments(ctx, 1, []int32{req.Id}, nil)
+	results, err := experiment.UnarchiveExperiments(ctx, experiment.GlobalProjectID, []int32{req.Id}, nil)
 
 	if err == nil {
 		if len(results) == 0 {
@@ -1723,7 +1727,14 @@ func (a *apiServer) CreateExperiment(
 func (a *apiServer) PutExperimentRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
 ) (*apiv1.PutExperimentRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(ctx, a.m.db, 1, []int32{req.ExperimentId}, nil, int16(req.NumDays))
+	results, err := experiment.BulkUpdateLogRentention(
+		ctx,
+		a.m.db,
+		experiment.GlobalProjectID,
+		[]int32{req.ExperimentId},
+		nil,
+		int16(req.NumDays),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -2400,7 +2411,7 @@ func (a *apiServer) MoveExperiment(
 
 	results, err := experiment.MoveExperiments(
 		ctx,
-		1,
+		experiment.GlobalProjectID,
 		[]int32{req.ExperimentId},
 		nil,
 		req.DestinationProjectId,
