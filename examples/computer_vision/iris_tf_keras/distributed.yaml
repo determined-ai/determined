@@ -15,4 +15,4 @@ searcher:
   smaller_is_better: false
   max_length:
     batches: 2500
-entrypoint: model_def:IrisTrial
+entrypoint: python3 -m determined.launch.horovod -- --model_def:IrisTrial

@@ -24,4 +24,4 @@ searcher:
   max_length:
     batches: 6400
   max_trials: 512
-entrypoint: model_def:IrisTrial
+entrypoint: python3 -m determined.launch.horovod -- --model_def:IrisTrial
