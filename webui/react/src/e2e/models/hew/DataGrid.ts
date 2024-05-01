@@ -254,6 +254,7 @@ export class Row<
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class HeadRow extends NamedComponent {
+  readonly #columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = 'tr';
   readonly clickableParentLocator: Locator;
   constructor(args: HeadRowArgs) {
@@ -263,7 +264,7 @@ export class HeadRow extends NamedComponent {
 
   readonly selectDropdown = new HeaderDropdown({
     parent: this,
-    selector: '[aria-colindex="1"]',
+    selector: `[${this.#columnIndexAttribute}="1"]`,
   });
   #columnDefs = new Map<string, number>();
 
@@ -285,15 +286,12 @@ export class HeadRow extends NamedComponent {
     }
     await Promise.all(
       cells.map(async (cell) => {
-        try {
-          const index = await cell.getAttribute('aria-colindex');
-          if (index === null) throw new Error();
-          this.#columnDefs.set(await cell.innerText(), +index);
-        } catch {
-          Promise.reject(
-            new Error(`All header cells should have the attribute ${'aria-colindex'}`),
+        const index = await cell.getAttribute(this.#columnIndexAttribute);
+        if (index === null)
+          throw new Error(
+            `All header cells should have the attribute ${this.#columnIndexAttribute}`,
           );
-        }
+        this.#columnDefs.set(await cell.innerText(), +index);
       }),
     );
     return this.#columnDefs;
