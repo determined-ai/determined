@@ -209,7 +209,7 @@ test.describe('User Management', () => {
           }).toPass({ timeout: 10_000 });
           // search for users created this session and wait for table stable
           await userManagementPage.search.pwLocator.fill(usernamePrefix + sessionRandomHash);
-          await expect(async () => {
+          expect(async () => {
             expect(
               await userManagementPage.table.table.filterRows(async (row) => {
                 return (await row.user.name.pwLocator.textContent())?.indexOf(usernamePrefix) === 0;
