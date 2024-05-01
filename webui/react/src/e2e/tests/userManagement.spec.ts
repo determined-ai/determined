@@ -217,7 +217,7 @@ test.describe('User Management', () => {
             ).toHaveLength(10);
           }).toPass({ timeout: 10_000 });
           // go to page 2 to see users
-          expect(async () => {
+          await expect(async () => {
             // BUG [ET-240]
             await userManagementPage.table.table.pagination.pageButtonLocator(2).click();
             await expect(
