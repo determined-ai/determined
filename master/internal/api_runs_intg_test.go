@@ -9,15 +9,64 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	a "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
+
+func TestSearchRunsArchivedExperiment(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	activeConfig := schemas.WithDefaults(minExpConfig)
+	exp := &model.Experiment{
+		JobID:     model.JobID(uuid.New().String()),
+		State:     model.CompletedState,
+		OwnerID:   &curUser.ID,
+		ProjectID: projectIDInt,
+		StartTime: time.Now(),
+		Config:    activeConfig.AsLegacy(),
+	}
+	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
+
+	// Get experiment as our API mostly will to make it easier to mock.
+	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
+	require.NoError(t, err)
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+		Filter:    ptrs.Ptr(`{"showArchived":false}`),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	// Set the experiment as archived
+	_, err = api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{Id: int32(exp.ID)})
+	require.NoError(t, err)
+
+	// Run should not be in result
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 0)
+}
 
 func TestSearchRunsSort(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
