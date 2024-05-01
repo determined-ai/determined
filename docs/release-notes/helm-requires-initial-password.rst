@@ -2,5 +2,5 @@
 
 **Breaking Changes**
 
--  Helm: a ``initialUserPassword`` entry is now required; see :ref:`Helm Chart
-   <helm-config-reference>`
+-  Helm: An entry for ``initialUserPassword`` is now required. See :ref:`Helm Chart
+   <helm-config-reference>`.
