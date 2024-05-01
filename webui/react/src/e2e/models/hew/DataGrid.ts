@@ -290,7 +290,7 @@ export class HeadRow extends NamedComponent {
           if (index === null) throw new Error();
           this.#columnDefs.set(await cell.innerText(), +index);
         } catch {
-          Promise.reject(
+          await Promise.reject(
             new Error(`All header cells should have the attribute ${'aria-colindex'}`),
           );
         }

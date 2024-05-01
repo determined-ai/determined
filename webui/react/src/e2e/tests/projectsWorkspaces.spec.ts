@@ -61,7 +61,7 @@ test.describe('Projects', () => {
           .pwLocator.click({ button: 'right' });
         await workspacesPage.nav.sidebar.actionMenu.delete.pwLocator.click();
         await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
-        expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
+        await expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
         await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
         await workspacesPage.deleteModal.footer.submit.pwLocator.click();
       }
@@ -84,9 +84,11 @@ test.describe('Projects', () => {
         'fromButton',
       );
 
-      expect(workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator).toBeVisible();
+      await expect(
+        workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator,
+      ).toBeVisible();
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      expect(workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator).toBeVisible();
+      await expect(workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator).toBeVisible();
     });
     await test.step('Create a workspace through the sidebar', async () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.hover();
@@ -96,9 +98,11 @@ test.describe('Projects', () => {
         'fromSidebar',
       );
 
-      expect(workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithSidebar).pwLocator).toBeVisible();
+      await expect(
+        workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithSidebar).pwLocator,
+      ).toBeVisible();
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
+      await expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
     });
 
     await test.step('Create projects', async () => {});

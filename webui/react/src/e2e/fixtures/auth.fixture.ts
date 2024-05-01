@@ -33,7 +33,7 @@ export class AuthFixture {
     const detAuth = this.signInPage.detAuth;
     if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');
-      expect(detAuth.pwLocator).toBeVisible();
+      await expect(detAuth.pwLocator).toBeVisible();
     }
     await detAuth.username.pwLocator.fill(username);
     await detAuth.password.pwLocator.fill(password);
