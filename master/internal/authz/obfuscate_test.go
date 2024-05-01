@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
@@ -47,5 +48,32 @@ func TestObfuscateContainer(t *testing.T) {
 	require.True(t, container.PermissionDenied)
 	for _, device := range container.Devices {
 		assertContainerDeviceObfuscated(t, device)
+	}
+}
+
+func TestObfuscateAgentSlots(t *testing.T) {
+	// Loop test so we know that we aren't relying on any random chances.
+	for i := 0; i < 100; i++ {
+		agent := &agentv1.Agent{
+			Slots: map[string]*agentv1.Slot{
+				"005": {
+					Id: "005",
+					Container: &containerv1.Container{
+						Id:     "contID",
+						Parent: "parentID",
+						State:  containerv1.State_STATE_RUNNING,
+					},
+					Device: &devicev1.Device{},
+				},
+				"006": {
+					Id:     "006",
+					Device: &devicev1.Device{},
+				},
+			},
+		}
+
+		require.NoError(t, ObfuscateAgent(agent))
+		require.NotNil(t, agent.Slots["000"].Container)
+		require.Nil(t, agent.Slots["001"].Container)
 	}
 }
