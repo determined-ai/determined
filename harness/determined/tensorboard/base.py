@@ -93,6 +93,10 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
+        # Only sync a maximum of once per second to play nice with cloud storage request quotas.
+        if time.time() - self.last_sync < 1:
+            return
+
         paths = self.to_sync(selector)
         path_list = []
         for path in paths:

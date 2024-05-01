@@ -39,20 +39,24 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
 
     validation_period = 2
 
-    num_steps = 100
+    num_steps = 20
 
     for i in range(num_steps):
         step = i + 1
         batch_writer.on_train_step_end(steps_completed=i, metrics={"x": step})
         if i % validation_period == 0:
             batch_writer.on_validation_step_end(steps_completed=i, metrics={"x": step})
-        time.sleep((int(time.time()) + 1) - time.time())
+
+        # Force next step writes to reset to a new file. This is to test cases where we reset
+        # a file handle then immediately write another event destined for the same file handle,
+        # which would overwrite the file.
+        time.sleep(int(time.time() + 1) - time.time())
 
     train_events = []
     val_events = []
 
     # Read event files saved and verify all metrics are written.
-    event_files = list(tmp_path.iterdir())
+    event_files = sorted(list(tmp_path.iterdir()))
     for file in event_files:
         for event in summary_iterator.summary_iterator(str(file)):
             # TensorFlow injects an event containing metadata at the start of every tfevent
