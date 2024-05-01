@@ -245,14 +245,16 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
+  const allSelectedExperimentIds = useMemo(() => {
+    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
+  }, [settings.selection]);
+
   const loadedSelectedExperimentIds = useMemo(() => {
     const selectedMap = new Map<number, ExperimentWithIndex>();
     if (isLoadingSettings) {
       return selectedMap;
     }
-    const selectedIdSet = new Set(
-      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
-    );
+    const selectedIdSet = new Set(allSelectedExperimentIds);
     experiments.forEach((e, index) => {
       Loadable.forEach(e, ({ experiment }) => {
         if (selectedIdSet.has(experiment.id)) {
@@ -261,11 +263,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       });
     });
     return selectedMap;
-  }, [isLoadingSettings, settings.selection, experiments]);
-
-  const allSelectedExperimentIds = useMemo(() => {
-    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
-  }, [settings.selection]);
+  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
@@ -913,7 +911,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
       const items: MenuItem[] = [
-        settings.selection.type === 'ONLY_IN' && settings.selection.selections.length > 0
+        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
           ? {
               key: 'select-none',
               label: 'Clear selected',
