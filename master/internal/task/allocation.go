@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -1071,21 +1072,23 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			continue
 		}
 
-		goesThroughIngress := true
-
-		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
 		path := ""
+		fmt.Println("registerProxies: ", pcfg.ServiceID, address.HostIP, address.HostPort)
+
+		local_proxy := os.Getenv("H_LOCAL_PROXY")
+		through_ingress := os.Getenv("H_THROUGH_INGRESS")
+		fmt.Println("local_proxy: ", local_proxy, "through_ingress: ", through_ingress)
 
 		localSocatPort := 47777
-		address.HostIP = "127.0.0.1"
-		address.HostPort = localSocatPort
-		a.req.ProxyTLS = false
-
-		if goesThroughIngress {
-			// if ingress
-			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
+		if local_proxy != "" {
 			address.HostIP = "127.0.0.1"
+			a.req.ProxyTLS = false // let's take it out of the equation for now
 			address.HostPort = localSocatPort
+		}
+		if through_ingress != "" {
+			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
+			// address.HostIP = "127.0.0.1"
+			address.HostPort = localSocatPort // minikube port
 			if a.req.ProxyTLS {
 				address.HostPort = 443
 			}
