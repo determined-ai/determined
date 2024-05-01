@@ -253,7 +253,7 @@ func filterRunQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery, er
 		return q
 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !efr.ShowArchived {
-			return q.Where(`r.archived = false`)
+			return q.Where(`NOT (r.archived OR e.archived)`)
 		}
 		return q
 	})
