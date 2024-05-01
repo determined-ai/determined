@@ -42,7 +42,7 @@ def test_job_queue_adjust_weight() -> None:
         # Avoid leaking experiments even if this test fails.
         # Leaking experiments can block the cluster and other tests from running other tasks
         # while the experiments finish.
-        exp.kill_experiments(sess, exp_ids)
+        exp.kill_experiments(sess, exp_ids, -1)
 
 
 def get_raw_data(sess: api.Session) -> Tuple[List[Dict[str, str]], List[str]]:
