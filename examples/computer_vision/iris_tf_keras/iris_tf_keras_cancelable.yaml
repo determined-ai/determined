@@ -16,7 +16,7 @@ searcher:
   smaller_is_better: false
   max_length:
     batches: 500
-entrypoint: python3 -m determined.launch.horovod -- --model_def:IrisTrial
+entrypoint: python3 -m determined.launch.horovod --autohorovod --trial model_def:IrisTrial
 min_validation_period:
   batches: 50
 min_checkpoint_period:
