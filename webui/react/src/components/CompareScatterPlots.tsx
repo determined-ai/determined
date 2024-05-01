@@ -1,5 +1,6 @@
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModalComponent from 'components/GalleryModalComponent';
@@ -214,6 +215,7 @@ const CompareScatterPlots: React.FC<Props> = ({
 
   return (
     <div ref={baseRef}>
+      <Title>Scatter Plots</Title>
       <div>
         {chartProps ? (
           <Grid

@@ -1,5 +1,6 @@
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
+import { Title } from 'hew/Typography';
 import { isObject } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -307,6 +308,7 @@ const CompareHeatMaps: React.FC<Props> = ({
 
   return (
     <div ref={baseRef}>
+      <Title>Heat Map</Title>
       <div>
         {chartProps && selectedMetric ? (
           <>

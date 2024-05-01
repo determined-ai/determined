@@ -1,7 +1,7 @@
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
-import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import { Title } from 'hew/Typography';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -45,7 +45,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
-  const { metrics, data, isLoaded, setScale } = metricData;
+  const { data, isLoaded, setScale } = metricData;
 
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const selectedScale = settings.scale;
@@ -114,16 +114,16 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       newDimensions.push(
         selectedScale === Scale.Log
           ? {
-              key,
-              label: key,
-              logBase: 10,
-              type: DimensionType.Logarithmic,
-            }
+            key,
+            label: key,
+            logBase: 10,
+            type: DimensionType.Logarithmic,
+          }
           : {
-              key,
-              label: key,
-              type: DimensionType.Linear,
-            },
+            key,
+            label: key,
+            type: DimensionType.Linear,
+          },
       );
     }
 
@@ -198,29 +198,20 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     return <Message title="No data available." />;
   }
 
-  if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
-    return (
-      <div className={css.waiting}>
-        <Alert
-          description="Please wait until the experiments are further along."
-          message="Not enough data points to plot."
-        />
-        <Spinner center spinning />
-      </div>
-    );
-  }
-
   return (
     <div className={css.container}>
-      <div className={css.chart}>
-        {selectedExperiments.length > 0 && (
+      <Title>Parallel Coordinates</Title>
+      {chartData ? (
+        <div className={css.chart}>
           <ParallelCoordinates
             config={config}
             data={chartData?.data ?? {}}
             dimensions={dimensions}
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        <Message icon="warning" title="No data to plot." />
+      )}
     </div>
   );
 };

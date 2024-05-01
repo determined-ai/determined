@@ -2,7 +2,6 @@ import Alert from 'hew/Alert';
 import Divider from 'hew/Divider';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
@@ -23,6 +22,7 @@ import CompareParallelCoordinates from './CompareParallelCoordinates';
 import CompareScatterPlots from './CompareScatterPlots';
 import css from './HpParallelCoordinates.module.scss';
 
+export const NO_DATA_MESSAGE = 'No data available.';
 interface Props {
   projectId: number;
   selectedExperiments: ExperimentWithTrial[];
@@ -117,7 +117,7 @@ const CompareHyperparameters: React.FC<Props> = ({
   }
 
   if (trials.length === 0) {
-    return <Message title="No data available." />;
+    return <Message title={NO_DATA_MESSAGE} />;
   }
 
   if (selectedExperiments.length !== 0 && metrics.length === 0) {
@@ -138,7 +138,6 @@ const CompareHyperparameters: React.FC<Props> = ({
         <div className={css.chart}>
           {selectedExperiments.length > 0 && (
             <>
-              <Title>Parallel Coordinates</Title>
               <CompareParallelCoordinates
                 fullHParams={fullHParams}
                 metricData={metricData}
@@ -148,7 +147,6 @@ const CompareHyperparameters: React.FC<Props> = ({
                 trials={trials}
               />
               <Divider />
-              <Title>Scatter Plots</Title>
               <CompareScatterPlots
                 fullHParams={fullHParams}
                 metricData={metricData}
@@ -157,7 +155,6 @@ const CompareHyperparameters: React.FC<Props> = ({
                 trials={trials}
               />
               <Divider />
-              <Title>Heat Map</Title>
               <CompareHeatMaps
                 fullHParams={fullHParams}
                 metricData={metricData}
