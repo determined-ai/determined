@@ -282,9 +282,7 @@ func TestGetAgent(t *testing.T) {
 				compNode1Name: largeNode,
 			}, slotTypeGPU, false),
 			wantedAgentID: compNode1Name,
-			// agentID:        compNode1Name,
-			agentExists: false,
-			// wantedSlotsNum: 16,
+			agentExists:   false,
 		},
 	}
 
@@ -416,7 +414,7 @@ func TestGetSlots(t *testing.T) {
 			for _, slot := range slotsResp.Slots {
 				slotID, err := strconv.Atoi(slot.Id)
 				require.NoError(t, err)
-				require.True(t, slotID >= 0 && slotID < test.wantedSlotsNum,
+				require.True(t, slotID >= 0 && slotID < int(nodeNumSlots),
 					fmt.Sprintf("slot %s is out of range", slot.Id))
 				if slot.Container != nil {
 					activeSlots++
