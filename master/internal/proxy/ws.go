@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -37,6 +38,11 @@ func newSingleHostReverseWebSocketProxy(c echo.Context, t *url.URL) http.Handler
 				c.Logger().Error(cerr)
 			}
 		}()
+
+		backendURL := *t
+		backendURL.Path = path.Join(t.Path, r.URL.Path)
+		backendURL.RawQuery = r.URL.RawQuery
+		r.URL = &backendURL
 
 		out, err := net.Dial("tcp", t.Host)
 		if err != nil {

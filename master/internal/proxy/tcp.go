@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -61,6 +62,11 @@ func newSingleHostReverseTCPOverWebSocketProxy(c echo.Context, t *url.URL) http.
 				c.Logger().Error(cerr)
 			}
 		}()
+
+		backendURL := *t
+		backendURL.Path = path.Join(t.Path, r.URL.Path)
+		backendURL.RawQuery = r.URL.RawQuery
+		r.URL = &backendURL
 
 		ws, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
