@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -187,6 +188,21 @@ func TestGetAgent(t *testing.T) {
 
 	auxNode1, auxNode2, compNode1, compNode2 := setupNodes()
 
+	largeNode := &k8sV1.Node{
+		ObjectMeta: metaV1.ObjectMeta{
+			ResourceVersion: "1",
+			Name:            compNode1Name,
+		},
+		Status: k8sV1.NodeStatus{
+			Allocatable: map[k8sV1.ResourceName]resource.Quantity{
+				k8sV1.ResourceName(ResourceTypeNvidia): *resource.NewQuantity(
+					16,
+					resource.DecimalSI,
+				),
+			},
+		},
+	}
+
 	agentTests := []AgentTestCase{
 		{
 			Name: "GetAgent-CPU-NoPodLabels-Aux1",
@@ -260,6 +276,16 @@ func TestGetAgent(t *testing.T) {
 			agentExists:   false,
 			wantedAgentID: "",
 		},
+		{
+			Name: "GetAgent-CUDA-Large-Node",
+			podsService: createMockPodsService(map[string]*k8sV1.Node{
+				compNode1Name: largeNode,
+			}, slotTypeGPU, false),
+			wantedAgentID: compNode1Name,
+			// agentID:        compNode1Name,
+			agentExists: false,
+			// wantedSlotsNum: 16,
+		},
 	}
 
 	for _, test := range agentTests {
@@ -270,6 +296,21 @@ func TestGetAgent(t *testing.T) {
 				return
 			}
 			require.Equal(t, test.wantedAgentID, agentResp.Agent.Id)
+
+			// Check all filled slots come before an empty slot.
+			var slotIDs []string
+			for _, s := range agentResp.Agent.Slots {
+				slotIDs = append(slotIDs, s.Id)
+			}
+			slices.Sort(slotIDs)
+			seenEmptySlot := false
+			for _, s := range slotIDs {
+				if agentResp.Agent.Slots[s].Container != nil {
+					require.False(t, seenEmptySlot, "all filled slots must come before an empty slot")
+				} else {
+					seenEmptySlot = true
+				}
+			}
 		})
 	}
 }
@@ -375,7 +416,7 @@ func TestGetSlots(t *testing.T) {
 			for _, slot := range slotsResp.Slots {
 				slotID, err := strconv.Atoi(slot.Id)
 				require.NoError(t, err)
-				require.True(t, slotID >= 0 && slotID < int(nodeNumSlots),
+				require.True(t, slotID >= 0 && slotID < test.wantedSlotsNum,
 					fmt.Sprintf("slot %s is out of range", slot.Id))
 				if slot.Container != nil {
 					activeSlots++

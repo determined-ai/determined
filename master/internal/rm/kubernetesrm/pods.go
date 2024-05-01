@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1528,8 +1527,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:        strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:        model.SortableSlotIndex(curSlot),
 					Device:    device.Device{Type: deviceType},
 					Draining:  isDraining,
 					Enabled:   !isDisabled,
@@ -1546,8 +1545,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:       strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:       model.SortableSlotIndex(curSlot),
 					Device:   device.Device{Type: deviceType},
 					Draining: isDraining,
 					Enabled:  !isDisabled,
@@ -1563,8 +1562,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 		}
 
 		for i := curSlot; i < int(numSlots); i++ {
-			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
-				ID:       strconv.Itoa(i),
+			slotsSummary[model.SortableSlotIndex(i)] = model.SlotSummary{
+				ID:       model.SortableSlotIndex(i),
 				Device:   device.Device{Type: deviceType},
 				Draining: isDraining,
 				Enabled:  !isDisabled,
