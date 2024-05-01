@@ -939,7 +939,7 @@ Required. Specifies running dynamic agents on AWS.
 ``image_id``
 ^^^^^^^^^^^^
 
-   Optional. The AMI ID of the Determined agent. Defaults to the latest GCP agent image.
+   Optional. The AMI ID of the Determined agent. Defaults to the latest AWS agent image.
 
 ``tag_key``
 ^^^^^^^^^^^
