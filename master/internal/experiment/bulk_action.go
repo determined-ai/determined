@@ -128,10 +128,10 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	return experimentIDList, nil
 }
 
-// editableExperimentIds returns a list of experiment ids which are editable by
+// experimentsEditableByUser returns a list of experiment ids which are editable by
 // the user found in ctx.
 // If filters are provided, experimentIds are ignored.
-func editableExperimentIds(
+func experimentsEditableByUser(
 	ctx context.Context,
 	projectID int32,
 	experimentIDs []int32,
