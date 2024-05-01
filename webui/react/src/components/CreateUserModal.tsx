@@ -1,5 +1,5 @@
 import { filter } from 'fp-ts/lib/Set';
-import Form, { hasErrors } from 'hew/Form';
+import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
@@ -177,7 +177,6 @@ const CreateUserModalComponent: React.FC<Props> = ({
       data-test-component="createUserModal"
       size="small"
       submit={{
-        disabled: hasErrors(form),
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
@@ -200,7 +199,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
             label={USER_NAME_LABEL}
             name={USER_NAME_NAME}
             required
-            validateTrigger={['onSubmit']}>
+            validateTrigger={['onSubmit', 'onChange']}>
             <Input
               autoFocus
               data-testid="username"
@@ -248,7 +247,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                 name={USER_PASSWORD_NAME}
                 required={!user && !isRemote}
                 rules={editPasswordRules}
-                validateTrigger={['onSubmit']}>
+                validateTrigger={['onSubmit', 'onChange']}>
                 <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
               </Form.Item>
               <Form.Item
@@ -268,7 +267,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                     },
                   }),
                 ]}
-                validateTrigger={['onSubmit']}>
+                validateTrigger={['onSubmit', 'onChange']}>
                 <Input.Password data-testid="confirmPassword" disabled={viewOnly} />
               </Form.Item>
             </>
