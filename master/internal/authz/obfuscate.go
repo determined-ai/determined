@@ -49,7 +49,6 @@ func ObfuscateSlot(slot *agentv1.Slot) error {
 	if slot == nil {
 		return errors.New("slot must be defined")
 	}
-	// TODO(DET-10276) the slotID isn't obfuscated, but it is in the agent.Slots map.
 	if err := ObfuscateDevice(slot.Device); err != nil {
 		return errors.Errorf("unable to obfuscate slot: %s", err)
 	}
