@@ -999,6 +999,7 @@ export interface TrialLog {
 export interface Template {
   config?: RawJson;
   name: string;
+  workspaceId: number;
 }
 
 export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
