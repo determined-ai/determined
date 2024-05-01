@@ -123,7 +123,8 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	return experimentIDList, nil
 }
 
-// A Bun query for editable experiments in multi-experiment actions.
+// editableExperimentIds returns a list of experiment ids which are editable by
+// the user found in ctx.
 func editableExperimentIds(
 	ctx context.Context,
 	inputProjectID int32,
