@@ -152,7 +152,10 @@ func (a *TemplateAPIServer) PutTemplate(
 
 			q.Set("workspace_id = ?", req.Template.WorkspaceId)
 		}
-		q.Returning("*").Scan(ctx, &updated)
+		err = q.Returning("*").Scan(ctx, &updated)
+		if err != nil {
+			return nil, err
+		}
 
 		return &apiv1.PutTemplateResponse{Template: &updated}, nil
 	}
@@ -290,24 +293,24 @@ func (a *TemplateAPIServer) DeleteTemplate(
 	return &apiv1.DeleteTemplateResponse{}, nil
 }
 
-func canCreateTemplateWorkspace(ctx context.Context, user *model.User, workspaceId int32) error {
-	err := workspace.AuthZProvider.Get().CanGetWorkspaceID(ctx, *user, workspaceId)
+func canCreateTemplateWorkspace(ctx context.Context, user *model.User, workspaceID int32) error {
+	err := workspace.AuthZProvider.Get().CanGetWorkspaceID(ctx, *user, workspaceID)
 	if err != nil {
 		return err
 	}
 
-	exists, err := workspace.Exists(ctx, int(workspaceId))
+	exists, err := workspace.Exists(ctx, int(workspaceID))
 	switch {
 	case err != nil:
-		return fmt.Errorf("failed to check workspace %d: %w", workspaceId, err)
+		return fmt.Errorf("failed to check workspace %d: %w", workspaceID, err)
 	case !exists:
-		return api.NotFoundErrs("workspace", fmt.Sprint(workspaceId), true)
+		return api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
 	}
 
 	permErr, err := AuthZProvider.Get().CanCreateTemplate(
 		ctx,
 		user,
-		model.AccessScopeID(workspaceId),
+		model.AccessScopeID(workspaceID),
 	)
 	switch {
 	case err != nil:
