@@ -77,7 +77,7 @@ const CompareScatterPlots: React.FC<Props> = ({
       const isCategorical = hpLabels?.length !== 0;
       const xScaleKey = isCategorical ? 'xCategorical' : isLogarithmic ? 'xLog' : 'x';
       const xSplits = isCategorical
-        ? new Array(hpLabels.length).fill(0).map((_x, i) => i)
+        ? new Array(hpLabels?.length).fill(0).map((_x, i) => i)
         : undefined;
       const xValues = isCategorical ? hpLabels : undefined;
       acc[hParam] = {
