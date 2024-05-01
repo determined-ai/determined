@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  Commands: Commands now support automatically running a ``startup-hook.sh`` when one is present in
-   the commands context directory.
+-  Commands: Commands now support automatically executing a ``startup-hook.sh`` script if it is
+   present in the command's context directory.
