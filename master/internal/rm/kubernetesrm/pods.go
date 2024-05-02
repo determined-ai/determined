@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1292,8 +1293,14 @@ func (p *pods) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlo
 	slots := agentResp.Agent.Slots
 	slot, ok := slots[slotID]
 	if !ok {
-		p.syslog.Warnf("no slot with id %s", slotID)
-		return nil
+		// Try converting an index input to a slot and see if that exists (1 to 001).
+		tryIndex, err := strconv.Atoi(slotID)
+		if s, ok := slots[model.SortableSlotIndex(tryIndex)]; err == nil && ok {
+			slot = s
+		} else {
+			p.syslog.Warnf("no slot with id %s", slotID)
+			return nil
+		}
 	}
 	return &apiv1.GetSlotResponse{Slot: slot}
 }
