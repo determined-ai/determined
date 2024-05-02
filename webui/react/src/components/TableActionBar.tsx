@@ -151,21 +151,25 @@ const TableActionBar: React.FC<Props> = ({
   const fetchExperimentsByIds = useCallback(async (selectedIds: number[]) => {
     const CHUNK_SIZE = 80; // match largest pageSizeOption used for Pagination components
     const chunkedExperimentIds = _.chunk(selectedIds, CHUNK_SIZE);
-    const responses = await Promise.all(
-      chunkedExperimentIds.map(async (ids) => {
-        const response = await getExperiments({
-          experimentIdFilter: {
-            incl: ids,
-          },
-        });
-        return response.experiments;
-      }),
-    );
-    const fetchedExperiments = responses.reduce((acc, experiments) => {
-      acc.push(...experiments);
-      return acc;
-    }, []);
-    setExperiments(fetchedExperiments.map((experiment) => Loaded(experiment)));
+    try {
+      const responses = await Promise.all(
+        chunkedExperimentIds.map(async (ids) => {
+          const response = await getExperiments({
+            experimentIdFilter: {
+              incl: ids,
+            },
+          });
+          return response.experiments;
+        }),
+      );
+      const fetchedExperiments = responses.reduce((acc, experiments) => {
+        acc.push(...experiments);
+        return acc;
+      }, []);
+      setExperiments(fetchedExperiments.map((experiment) => Loaded(experiment)));
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiments for selected experiment ids.' });
+    }
   }, []);
 
   useEffect(() => {
