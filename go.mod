@@ -51,7 +51,7 @@ require (
 	golang.org/x/crypto v0.21.0
 	golang.org/x/net v0.23.0
 	google.golang.org/api v0.126.0
-	google.golang.org/grpc v1.58.0
+	google.golang.org/grpc v1.58.3
 	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect
 	google.golang.org/protobuf v1.33.0 // v1.27.1
 	gopkg.in/guregu/null.v3 v3.4.0
