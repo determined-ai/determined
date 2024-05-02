@@ -1,2 +1,0 @@
-ALTER TABLE experiments ALTER COLUMN project_id DROP NOT NULL;
-ALTER TABLE experiments ALTER COLUMN project_id SET DEFAULT NULL;
