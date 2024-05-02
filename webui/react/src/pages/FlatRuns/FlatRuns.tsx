@@ -716,6 +716,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   return (
     <div className={css.content} ref={contentRef}>
       <TableFilter
+        bannedFilterColumns={BANNED_FILTER_COLUMNS}
         formStore={formStore}
         isMobile={isMobile}
         isOpenFilter={isOpenFilter}
