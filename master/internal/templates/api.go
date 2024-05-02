@@ -110,55 +110,57 @@ func (a *TemplateAPIServer) PutTemplate(
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
-	switch tpl, err := TemplateByName(ctx, req.Template.Name); {
-	case errors.Is(err, db.ErrNotFound):
-		_, err := a.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: req.Template})
-		if err != nil {
-			return nil, err
+	tpl, err := TemplateByName(ctx, req.Template.Name)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			// Create a new template if name does not exist
+			_, err := a.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: req.Template})
+			if err != nil {
+				return nil, err
+			}
+			return &apiv1.PutTemplateResponse{Template: req.Template}, nil
 		}
-		return &apiv1.PutTemplateResponse{Template: req.Template}, nil
-	case err != nil:
 		return nil, err
-	default:
-		user, _, err := grpcutil.GetUser(ctx)
-		if err != nil {
-			return nil, err
-		}
-		permErr, err := AuthZProvider.Get().CanUpdateTemplate(
-			ctx, user, model.AccessScopeID(tpl.WorkspaceID),
-		)
-		switch {
-		case err != nil:
-			return nil, fmt.Errorf("failed to check for permissions: %w", err)
-		case permErr != nil:
-			return nil, permErr
-		}
-
-		var updated templatev1.Template
-		q := db.Bun().NewUpdate().Model(&model.Template{}).Where("name = ?", req.Template.Name)
-
-		if req.Template.Config != nil {
-			configBytes, err := json.Marshal(req.Template.Config.AsMap())
-			if err != nil {
-				return nil, err
-			}
-			q.Set("config = ?", string(configBytes))
-		}
-		if req.Template.WorkspaceId != 0 {
-			err = canCreateTemplateWorkspace(ctx, user, req.Template.WorkspaceId)
-			if err != nil {
-				return nil, err
-			}
-
-			q.Set("workspace_id = ?", req.Template.WorkspaceId)
-		}
-		err = q.Returning("*").Scan(ctx, &updated)
-		if err != nil {
-			return nil, err
-		}
-
-		return &apiv1.PutTemplateResponse{Template: &updated}, nil
 	}
+
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := AuthZProvider.Get().CanUpdateTemplate(
+		ctx, user, model.AccessScopeID(tpl.WorkspaceID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+
+	var updated templatev1.Template
+	q := db.Bun().NewUpdate().Model(&model.Template{}).Where("name = ?", req.Template.Name)
+
+	if req.Template.Config != nil {
+		configBytes, err := json.Marshal(req.Template.Config.AsMap())
+		if err != nil {
+			return nil, err
+		}
+		q.Set("config = ?", string(configBytes))
+	}
+	if req.Template.WorkspaceId != 0 {
+		err = canCreateTemplateWorkspace(ctx, user, req.Template.WorkspaceId)
+		if err != nil {
+			return nil, err
+		}
+
+		q.Set("workspace_id = ?", req.Template.WorkspaceId)
+	}
+	err = q.Returning("*").Scan(ctx, &updated)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PutTemplateResponse{Template: &updated}, nil
 }
 
 // PostTemplate creates a template. If a template with the same name exists, an error is returned.
