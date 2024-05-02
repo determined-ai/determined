@@ -459,13 +459,13 @@ Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
  Upgrade Determined
 ********************
 
-To upgrade Determined or to change a configuration setting, update the helm repo, make the
-appropriate changes in ``values.yaml``, and then run:
+To upgrade Determined or to change a configuration setting, make the appropriate changes in
+``values.yaml``, and then run:
 
 .. code::
 
    helm repo update
-   helm upgrade <name for your deployment> --wait determined-ai/determined
+   helm upgrade <name for your deployment> determined-ai/determined --wait --values values.yaml
 
 Before upgrading Determined, consider pausing all active experiments. Any experiments that are
 active when the Determined master restarts will resume training after the upgrade, but will be
