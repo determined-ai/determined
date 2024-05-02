@@ -1,5 +1,6 @@
 import { test as base } from '@playwright/test';
 
+import { ApiAuthFixture } from './api.auth.fixture';
 import { AuthFixture } from './auth.fixture';
 import { DevFixture } from './dev.fixture';
 import { UserFixture } from './user.fixture';
@@ -7,6 +8,7 @@ import { UserFixture } from './user.fixture';
 type CustomFixtures = {
   dev: DevFixture;
   auth: AuthFixture;
+  apiAuth: ApiAuthFixture;
   user: UserFixture;
 };
 
@@ -15,6 +17,11 @@ export const test = base.extend<CustomFixtures>({
   auth: async ({ page }, use) => {
     const auth = new AuthFixture(page);
     await use(auth);
+  },
+
+  apiAuth: async ({ playwright }, use) => {
+    const apiAuth = new ApiAuthFixture(playwright.request);
+    await use(apiAuth);
   },
 
   dev: async ({ page }, use) => {
