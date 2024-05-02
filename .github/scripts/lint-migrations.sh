@@ -4,7 +4,7 @@ echo "Adding migrations " $added_migrations
 if [ ! -z "$added_migrations" ]; then
     added_migrations=$(echo $added_migrations | xargs -n1 basename)
     for val in $added_migrations; do # Validate the filenames.
-        regex="^[0-9]{14}[a-zA-Z_-]+\.tx\.up\.sql$"
+        regex="^[0-9]{14}[a-zA-Z_-]+\.tx\.(up|down)\.sql$"
         if [[ ! $val =~ $regex ]]; then
             done=1
             echo "migration $val is not in a valid format (does not pass $regex)"

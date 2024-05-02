@@ -29,7 +29,7 @@ func newMigrateCmd() *cobra.Command {
 func runMigrate(cmd *cobra.Command, args []string) error {
 	for _, arg := range args {
 		if arg == "down" || arg == "reset" {
-			return fmt.Errorf("migrating down is not supported")
+			return fmt.Errorf("migrating down or reseting is not supported")
 		}
 	}
 
