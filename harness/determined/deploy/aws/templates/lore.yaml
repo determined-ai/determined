@@ -976,6 +976,8 @@ Resources:
 
             apt-get install -y binutils git
             if [ ! -d "efs-utils" ]; then
+              apt-get update
+              apt-get -y install git binutils rustc cargo pkg-config libssl-dev
               git clone https://github.com/aws/efs-utils
               cd efs-utils
               ./build-deb.sh
