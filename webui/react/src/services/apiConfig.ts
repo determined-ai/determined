@@ -719,7 +719,7 @@ export const archiveExperiments: DetApi<
   name: 'archiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.archiveExperiments(params, options);
+    return detApi.Experiments.archiveExperiments(params.projectId, params, options);
   },
 };
 
@@ -743,7 +743,7 @@ export const deleteExperiments: DetApi<
   name: 'deleteExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.deleteExperiments(params, options);
+    return detApi.Experiments.deleteExperiments(params.projectId, params, options);
   },
 };
 
@@ -767,7 +767,7 @@ export const unarchiveExperiments: DetApi<
   name: 'unarchiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.unarchiveExperiments(params, options);
+    return detApi.Experiments.unarchiveExperiments(params.projectId, params, options);
   },
 };
 
@@ -791,7 +791,7 @@ export const activateExperiments: DetApi<
   name: 'activateExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.activateExperiments(params, options);
+    return detApi.Experiments.activateExperiments(params.projectId, params, options);
   },
 };
 
@@ -815,7 +815,7 @@ export const pauseExperiments: DetApi<
   name: 'pauseExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.pauseExperiments(params, options);
+    return detApi.Experiments.pauseExperiments(params.projectId, params, options);
   },
 };
 
@@ -839,7 +839,7 @@ export const cancelExperiments: DetApi<
   name: 'cancelExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.cancelExperiments(params, options);
+    return detApi.Experiments.cancelExperiments(params.projectId, params, options);
   },
 };
 
@@ -863,7 +863,7 @@ export const killExperiments: DetApi<
   name: 'killExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.killExperiments(params, options);
+    return detApi.Experiments.killExperiments(params.projectId, params, options);
   },
 };
 
@@ -1000,7 +1000,8 @@ export const moveExperiments: DetApi<
 > = {
   name: 'moveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
-  request: (params, options) => detApi.Experiments.moveExperiments(params, options),
+  request: (params, options) =>
+    detApi.Experiments.moveExperiments(params.projectId, params, options),
 };
 
 export const changeExperimentLogRetention: DetApi<
@@ -1010,7 +1011,8 @@ export const changeExperimentLogRetention: DetApi<
 > = {
   name: 'changeExperimentLogRetention',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
-  request: (params, options) => detApi.Experiments.putExperimentsRetainLogs(params, options),
+  request: (params, options) =>
+    detApi.Experiments.putExperimentsRetainLogs(params.projectId, params, options),
 };
 
 export const timeSeries: DetApi<

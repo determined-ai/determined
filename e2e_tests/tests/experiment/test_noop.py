@@ -132,12 +132,12 @@ def test_noop_pause_with_multiexperiment() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(sess, [experiment_id])
+    exp.pause_experiments(sess, [experiment_id], -1)
     exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
 
-    exp.activate_experiments(sess, [experiment_id])
+    exp.activate_experiments(sess, [experiment_id], -1)
     exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.QUEUED)
-    exp.kill_experiments(sess, [experiment_id])
+    exp.kill_experiments(sess, [experiment_id], -1)
 
 
 @pytest.mark.e2e_cpu
@@ -156,13 +156,13 @@ def test_noop_pause_with_multiexperiment_filter() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config_obj, f)
         experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(sess, [], name=tf.name)
+    exp.pause_experiments(sess, [], -1, name=tf.name)
     exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
     # test state=nonTerminalExperimentStates() filter in cancel/kill
-    exp.kill_experiments(sess, [], name=tf.name)
+    exp.kill_experiments(sess, [], -1, name=tf.name)
     exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.CANCELED)
     # test state=terminalExperimentStates() filter in archive
-    exp.archive_experiments(sess, [], name=tf.name)
+    exp.archive_experiments(sess, [], -1, name=tf.name)
 
 
 @pytest.mark.e2e_cpu

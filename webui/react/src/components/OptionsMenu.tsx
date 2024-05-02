@@ -1,13 +1,13 @@
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import Toggle from 'hew/Toggle';
+// import Toggle from 'hew/Toggle';
 import { literal, TypeOf, union } from 'io-ts';
 import { useMemo } from 'react';
 
 import { valueof } from 'utils/valueof';
 
-import css from './OptionsMenu.module.scss';
+// import css from './OptionsMenu.module.scss';
 
 export const RowHeight = {
   EXTRA_TALL: 'EXTRA_TALL',
@@ -49,16 +49,16 @@ export const ioTableViewMode = union([literal('scroll'), literal('paged')]);
 
 interface OptionProps {
   onRowHeightChange?: (r: RowHeight) => void;
-  onTableViewModeChange?: (view: TableViewMode) => void;
+  // onTableViewModeChange?: (view: TableViewMode) => void;
   rowHeight: RowHeight;
-  tableViewMode: TableViewMode;
+  // tableViewMode: TableViewMode;
 }
 
 export const OptionsMenu: React.FC<OptionProps> = ({
   rowHeight,
-  tableViewMode,
+  // tableViewMode,
   onRowHeightChange,
-  onTableViewModeChange,
+  // onTableViewModeChange,
 }) => {
   const dropdownItems: MenuItem[] = useMemo(
     () => [
@@ -71,25 +71,29 @@ export const OptionsMenu: React.FC<OptionProps> = ({
         label: 'Row height',
         type: 'group',
       },
-      {
-        children: [
-          {
-            icon: <Icon decorative name="scroll" />,
-            key: 'scroll',
-            label: (
-              <div className={css.scrollSettingsRow}>
-                <span>Infinite scroll</span>
-                <Toggle checked={tableViewMode === 'scroll'} />
-              </div>
-            ),
-            onClick: () => onTableViewModeChange?.(tableViewMode === 'scroll' ? 'paged' : 'scroll'),
-          },
-        ],
-        label: 'Data',
-        type: 'group',
-      },
+      // {
+      //   children: [
+      //     {
+      //       icon: <Icon decorative name="scroll" />,
+      //       key: 'scroll',
+      //       label: (
+      //         <div className={css.scrollSettingsRow}>
+      //           <span>Infinite scroll</span>
+      //           <Toggle checked={tableViewMode === 'scroll'} />
+      //         </div>
+      //       ),
+      //       onClick: () => onTableViewModeChange?.(tableViewMode === 'scroll' ? 'paged' : 'scroll'),
+      //     },
+      //   ],
+      //   label: 'Data',
+      //   type: 'group',
+      // },
     ],
-    [tableViewMode, onRowHeightChange, onTableViewModeChange],
+    [
+      // tableViewMode,
+      onRowHeightChange,
+      // onTableViewModeChange
+    ],
   );
   const icon = (
     <span className="anticon">
