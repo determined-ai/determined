@@ -24,12 +24,14 @@ set +x
 JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
 READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 
+# f"det-{task_id[:8]}"
+ingress_prefix="det-${DET_TASK_ID:0:8}"
+# --ServerApp.base_url="/$ingress_prefix/proxy/${DET_TASK_ID}/" \
+
 jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
     --ServerApp.allow_origin="*" \
     --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
     --ServerApp.allow_root=True \
-    --ServerApp.certfile=/run/determined/jupyter/jupyterCert.pem \
-    --ServerApp.keyfile=/run/determined/jupyter/jupyterKey.key \
     --ServerApp.ip="0.0.0.0" \
     --ServerApp.open_browser=False \
     --ServerApp.token="" \
