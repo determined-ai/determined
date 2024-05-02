@@ -2,6 +2,7 @@
 set -euxo pipefail
 
 cd webui/react
+make mb-stop
 make mb-start
 export DET_WEBPACK_PROXY_URL="http://localhost:4545"
 export DET_WEBSOCKET_PROXY_URL="ws://localhost:4546"
