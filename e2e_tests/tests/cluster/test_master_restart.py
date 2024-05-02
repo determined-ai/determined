@@ -252,7 +252,7 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
             sess, exp_id, bindings.experimentv1State.STOPPING_CANCELED, max_wait_secs=30
         )
     finally:
-        exp.kill_experiments(sess, [exp_id])
+        exp.kill_experiments(sess, [exp_id], -1)
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
     # All slots are empty, we don't leave a hanging container.
@@ -282,7 +282,7 @@ def test_master_restart_stopping_ignore_preemption_still_gets_killed(
         trial_id = exp.experiment_first_trial(sess, exp_id)
         exp.assert_patterns_in_trial_logs(sess, trial_id, ["137"])
     finally:
-        exp.kill_experiments(sess, [exp_id])
+        exp.kill_experiments(sess, [exp_id], -1)
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 

@@ -7,8 +7,9 @@ import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import Tooltip from 'hew/Tooltip';
-import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Loadable, Loaded } from 'hew/utils/loadable';
+import _ from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
@@ -21,22 +22,22 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
-import { SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 import {
   activateExperiments,
   archiveExperiments,
   cancelExperiments,
   deleteExperiments,
+  getExperiments,
   killExperiments,
   openOrCreateTensorBoard,
   pauseExperiments,
   unarchiveExperiments,
 } from 'services/api';
-import { V1BulkExperimentFilters, V1LocationType } from 'services/api-ts-sdk';
+import { V1LocationType } from 'services/api-ts-sdk';
 import {
   BulkActionResult,
+  BulkExperimentItem,
   ExperimentAction,
-  ExperimentWithTrial,
   Project,
   ProjectColumn,
   ProjectExperiment,
@@ -82,9 +83,6 @@ const actionIcons: Record<BatchAction, IconName> = {
 
 interface Props {
   compareViewOn?: boolean;
-  excludedExperimentIds?: Map<number, unknown>;
-  experiments: Loadable<ExperimentWithTrial>[];
-  filters: V1BulkExperimentFilters;
   formStore: FilterFormStore;
   heatmapBtnVisible?: boolean;
   heatmapOn?: boolean;
@@ -102,11 +100,9 @@ interface Props {
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
-  selectAll: boolean;
-  selectedExperimentIds: Map<number, unknown>;
-  selection: SelectionType;
+  selectedExperimentIds: number[];
   sorts: Sort[];
-  tableViewMode: TableViewMode;
+  // tableViewMode: TableViewMode;
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
@@ -115,9 +111,6 @@ interface Props {
 
 const TableActionBar: React.FC<Props> = ({
   compareViewOn,
-  excludedExperimentIds,
-  experiments,
-  filters,
   formStore,
   heatmapBtnVisible,
   heatmapOn,
@@ -130,16 +123,14 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  onTableViewModeChange,
+  // onTableViewModeChange,
   onVisibleColumnChange,
   project,
   projectColumns,
   rowHeight,
-  selection,
-  selectAll,
   selectedExperimentIds,
   sorts,
-  tableViewMode,
+  // tableViewMode,
   total,
   labelSingular,
   labelPlural,
@@ -154,18 +145,41 @@ const TableActionBar: React.FC<Props> = ({
     useModal(ExperimentTensorBoardModal);
   const isMobile = useMobile();
   const { openToast } = useToast();
-  const experimentIds = useMemo(
-    () => Array.from(selectedExperimentIds.keys()),
-    [selectedExperimentIds],
-  );
+
+  const [experiments, setExperiments] = useState<Loadable<BulkExperimentItem>[]>([]);
+
+  const fetchExperimentsByIds = useCallback(async (selectedIds: number[]) => {
+    const CHUNK_SIZE = 80; // match largest pageSizeOption used for Pagination components
+    const chunkedExperimentIds = _.chunk(selectedIds, CHUNK_SIZE);
+    try {
+      const responses = await Promise.all(
+        chunkedExperimentIds.map(async (ids) => {
+          const response = await getExperiments({
+            experimentIdFilter: {
+              incl: ids,
+            },
+          });
+          return response.experiments;
+        }),
+      );
+      const fetchedExperiments = responses.reduce((acc, experiments) => {
+        acc.push(...experiments);
+        return acc;
+      }, []);
+      setExperiments(fetchedExperiments.map((experiment) => Loaded(experiment)));
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiments for selected experiment ids.' });
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchExperimentsByIds(selectedExperimentIds);
+  }, [selectedExperimentIds, fetchExperimentsByIds]);
 
   const experimentMap = useMemo(() => {
     return experiments.filter(Loadable.isLoaded).reduce(
       (acc, experiment) => {
-        acc[experiment.data.experiment.id] = getProjectExperimentForExperimentItem(
-          experiment.data.experiment,
-          project,
-        );
+        acc[experiment.data.id] = getProjectExperimentForExperimentItem(experiment.data, project);
         return acc;
       },
       {} as Record<number, ProjectExperiment>,
@@ -173,20 +187,15 @@ const TableActionBar: React.FC<Props> = ({
   }, [experiments, project]);
 
   const selectedExperiments = useMemo(
-    () =>
-      Array.from(selectedExperimentIds.keys()).flatMap((id) =>
-        id in experimentMap ? [experimentMap[id]] : [],
-      ),
+    () => selectedExperimentIds.flatMap((id) => (id in experimentMap ? [experimentMap[id]] : [])),
     [experimentMap, selectedExperimentIds],
   );
 
   const availableBatchActions = useMemo(() => {
-    if (selectAll)
-      return batchActions.filter((action) => action !== ExperimentAction.OpenTensorBoard);
-    const experiments = experimentIds.map((id) => experimentMap[id]) ?? [];
+    const experiments = selectedExperimentIds.map((id) => experimentMap[id]) ?? [];
     return getActionsForExperimentsUnion(experiments, [...batchActions], permissions);
     // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  }, [experimentIds, experimentMap, permissions, selectAll]);
+  }, [selectedExperimentIds, experimentMap, permissions]);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
@@ -195,14 +204,8 @@ const TableActionBar: React.FC<Props> = ({
         .map((exp) => exp.id);
       const params = {
         experimentIds: managedExperimentIds,
-        filters: selectAll ? filters : undefined,
+        projectId: project.id,
       };
-      if (excludedExperimentIds?.size) {
-        params.filters = {
-          ...filters,
-          excludedExperimentIds: Array.from(excludedExperimentIds.keys()),
-        };
-      }
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
           if (managedExperimentIds.length !== selectedExperiments.length) {
@@ -240,13 +243,10 @@ const TableActionBar: React.FC<Props> = ({
     },
     [
       selectedExperiments,
-      selectAll,
-      filters,
-      excludedExperimentIds,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
       openExperimentTensorBoardModal,
-      project?.workspaceId,
+      project,
     ],
   );
 
@@ -376,20 +376,15 @@ const TableActionBar: React.FC<Props> = ({
           labelSingular.toLowerCase(),
         )}`;
 
-        if (selection.type === 'ALL_EXCEPT') {
-          const all = selection.exclusions.length === 0 ? 'All ' : '';
-          const totalSelected =
-            (totalExperiments - (selection.exclusions.length ?? 0)).toLocaleString() + ' ';
-          label = `${all}${totalSelected}${labelPlural.toLowerCase()} selected`;
-        } else if (selection.selections.length > 0) {
-          label = `${selection.selections.length} of ${label} selected`;
+        if (selectedExperimentIds.length) {
+          label = `${selectedExperimentIds.length} of ${label} selected`;
         }
 
         return label;
       },
       NotLoaded: () => `Loading ${labelPlural.toLowerCase()}...`,
     });
-  }, [selection, total, labelPlural, labelSingular]);
+  }, [total, labelPlural, labelSingular, selectedExperimentIds]);
 
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
@@ -421,11 +416,11 @@ const TableActionBar: React.FC<Props> = ({
             />
             <OptionsMenu
               rowHeight={rowHeight}
-              tableViewMode={tableViewMode}
+              // tableViewMode={tableViewMode}
               onRowHeightChange={onRowHeightChange}
-              onTableViewModeChange={onTableViewModeChange}
+              // onTableViewModeChange={onTableViewModeChange}
             />
-            {(selectAll || selectedExperimentIds.size > 0) && (
+            {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>
               </Dropdown>
@@ -463,31 +458,27 @@ const TableActionBar: React.FC<Props> = ({
         />
       )}
       <ExperimentMoveModal.Component
-        excludedExperimentIds={excludedExperimentIds}
-        experimentIds={experimentIds.filter(
+        experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.Move, experimentMap[id]) &&
             permissions.canMoveExperiment({ experiment: experimentMap[id] }),
         )}
-        filters={selectAll ? filters : undefined}
         sourceProjectId={project.id}
         sourceWorkspaceId={project.workspaceId}
         onSubmit={handleSubmitMove}
       />
       <ExperimentRetainLogsModal.Component
-        excludedExperimentIds={excludedExperimentIds}
-        experimentIds={experimentIds.filter(
+        experimentIds={selectedExperimentIds.filter(
           (id) =>
             canActionExperiment(ExperimentAction.RetainLogs, experimentMap[id]) &&
             permissions.canModifyExperiment({
               workspace: { id: experimentMap[id].workspaceId },
             }),
         )}
-        filters={selectAll ? filters : undefined}
+        projectId={project.id}
         onSubmit={handleSubmitRetainLogs}
       />
       <ExperimentTensorBoardModalComponent
-        filters={selectAll ? filters : undefined}
         selectedExperiments={selectedExperiments}
         workspaceId={project?.workspaceId}
       />

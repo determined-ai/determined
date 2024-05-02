@@ -106,6 +106,7 @@ export interface BulkActionParams {
   excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
+  projectId: number;
 }
 
 export interface GetExperimentParams {
