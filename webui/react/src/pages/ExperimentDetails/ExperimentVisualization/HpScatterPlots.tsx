@@ -8,7 +8,7 @@ import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import Section from 'components/Section';
 import useUI from 'components/ThemeProvider';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
+import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
@@ -72,49 +72,46 @@ const ScatterPlots: React.FC<Props> = ({
   const chartProps = useMemo(() => {
     if (!chartData || !selectedMetric) return undefined;
 
-    return selectedHParams.reduce(
-      (acc, hParam) => {
-        const xLabel = hParam;
-        const yLabel = metricToStr(selectedMetric, 60);
-        const title = `${yLabel} (y) vs ${xLabel} (x)`;
-        const hpLabels = chartData?.hpLabels[hParam];
-        const isLogarithmic = chartData?.hpLogScales[hParam];
-        const isCategorical = hpLabels?.length !== 0;
-        const xScaleKey = isCategorical ? 'xCategorical' : isLogarithmic ? 'xLog' : 'x';
-        const xSplits = isCategorical
-          ? new Array(hpLabels.length).fill(0).map((_x, i) => i)
-          : undefined;
-        const xValues = isCategorical ? hpLabels : undefined;
-        acc[hParam] = {
-          data: [
+    return selectedHParams.reduce((acc: Record<string, UPlotScatterProps>, hParam) => {
+      const xLabel = hParam;
+      const yLabel = metricToStr(selectedMetric, 60);
+      const title = `${yLabel} (y) vs ${xLabel} (x)`;
+      const hpLabels = chartData?.hpLabels[hParam];
+      const isLogarithmic = chartData?.hpLogScales[hParam];
+      const isCategorical = hpLabels?.length !== 0;
+      const xScaleKey = isCategorical ? 'xCategorical' : isLogarithmic ? 'xLog' : 'x';
+      const xSplits = isCategorical
+        ? new Array(hpLabels.length).fill(0).map((_x, i) => i)
+        : undefined;
+      const xValues = isCategorical ? hpLabels : undefined;
+      acc[hParam] = {
+        data: [
+          null,
+          [
+            chartData?.hpValues[hParam] || [],
+            chartData?.metricValues[hParam] || [],
             null,
-            [
-              chartData?.hpValues[hParam] || [],
-              chartData?.metricValues[hParam] || [],
-              null,
-              null,
-              null,
-              chartData?.trialIds || [],
-            ],
-          ] as FacetedData,
-          options: {
-            axes: [
-              {
-                scale: xScaleKey,
-                splits: xSplits,
-                values: xValues,
-              },
-              { scale: yScaleKey },
-            ],
-            cursor: { drag: { setScale: false, x: false, y: false } },
-            title,
-          },
-          tooltipLabels: [xLabel, yLabel, null, null, null, 'trial ID'],
-        };
-        return acc;
-      },
-      {} as Record<string, UPlotScatterProps>,
-    );
+            null,
+            null,
+            chartData?.trialIds || [],
+          ],
+        ],
+        options: {
+          axes: [
+            {
+              scale: xScaleKey,
+              splits: xSplits,
+              values: xValues,
+            },
+            { scale: yScaleKey },
+          ],
+          cursor: { drag: { setScale: false, x: false, y: false } },
+          title,
+        },
+        tooltipLabels: [xLabel, yLabel, null, null, null, 'trial ID'],
+      };
+      return acc;
+    }, {});
   }, [chartData, selectedHParams, selectedMetric, yScaleKey]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);

@@ -10,7 +10,7 @@ import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
 import useUI from 'components/ThemeProvider';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
+import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
@@ -156,7 +156,7 @@ const HpHeatMaps: React.FC<Props> = ({
               chartData?.hpMetrics[key] || [],
               chartData?.trialIds || [],
             ],
-          ] as FacetedData,
+          ],
           options: {
             axes: [
               { scale: xScaleKey, splits: xSplits, values: xValues },
