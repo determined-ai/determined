@@ -1079,16 +1079,16 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		through_ingress := os.Getenv("H_THROUGH_INGRESS")
 		fmt.Println("local_proxy: ", local_proxy, "through_ingress: ", through_ingress)
 
-		localSocatPort := 47777
+		a.req.ProxyTLS = false // let's take it out of the equation for now
 		if local_proxy != "" {
+			localSocatPort := 47777
 			address.HostIP = "127.0.0.1"
-			a.req.ProxyTLS = false // let's take it out of the equation for now
 			address.HostPort = localSocatPort
 		}
 		if through_ingress != "" {
 			path = fmt.Sprintf("/det-%s", pcfg.ServiceID[:8])
-			// address.HostIP = "127.0.0.1"
-			address.HostPort = localSocatPort // minikube port
+			address.HostIP = "127.0.0.1"
+			address.HostPort = 80
 			if a.req.ProxyTLS {
 				address.HostPort = 443
 			}
