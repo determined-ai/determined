@@ -1,9 +1,46 @@
+import { execSync } from 'child_process';
+import path from 'path';
+
 import { expect } from '@playwright/test';
 
+import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 
 test.describe('Experiement List', () => {
+  test.beforeAll(async ({ browser }) => {
+    const pageSetupTeardown = await browser.newPage();
+    const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
+    const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
+    await authFixtureSetupTeardown.login();
+    await projectDetailsPageSetupTeardown.gotoProject();
+    await test.step('Create an experiment if not already present', async () => {
+      await expect(
+        projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.pwLocator,
+      ).toBeVisible();
+      if (
+        await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
+      ) {
+        const experimentPath = path.join(
+          process.cwd(),
+          '/../../examples/tutorials/mnist_pytorch/const.yaml',
+        );
+        execSync(`${process.env.PW_DET_PATH} user logout`);
+        execSync(
+          `echo ${process.env.PW_PASSWORD} | ${process.env.PW_DET_PATH} user login ${process.env.PW_USER_NAME}`,
+          { stdio: 'inherit' },
+        );
+        execSync(`${process.env.PW_DET_PATH} experiment create ${experimentPath} --paused`);
+        await pageSetupTeardown.reload();
+        await expect(
+          projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
+        ).toHaveCount(1);
+      }
+    });
+    await authFixtureSetupTeardown.logout();
+    await pageSetupTeardown.close();
+  });
+
   test.beforeEach(async ({ auth, dev }) => {
     await dev.setServerAddress();
     await auth.login();
@@ -16,9 +53,7 @@ test.describe('Experiement List', () => {
     await expect(projectDetailsPage.f_experiemntList.tableActionBar.pwLocator).toBeVisible();
   });
 
-  test.skip('Click around the data grid', async ({ page }) => {
-    // This test expects a project to have been deployed.
-    // This test.skip is useful to show an example of what tests can do
+  test('Click around the data grid', async ({ page }) => {
     const projectDetailsPage = new ProjectDetails(page);
     await projectDetailsPage.gotoProject();
     await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).toHaveCount(1);

@@ -13,7 +13,7 @@ export class Nameplate extends NamedComponent {
   #nameSelector = '.ant-typography:last-of-type'; // We could replace this with a more specific selector in Hew
   readonly icon = new BaseComponent({
     parent: this,
-    selector: 'id="avatar"',
+    selector: '[id="avatar"]',
   });
   readonly #text: BaseComponent = new BaseComponent({
     parent: this,
