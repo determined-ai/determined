@@ -662,9 +662,17 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       const filterCount = formStore.getFieldCount(column.column).get();
 
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
+        const sortMenuItems =
+          sortCount === 0
+            ? []
+            : [
+                { type: 'divider' as const },
+                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+              ];
+
         items.push(
-          { type: 'divider' as const },
-          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          ...sortMenuItems,
           { type: 'divider' as const },
           {
             icon: <Icon decorative name="filter" />,
