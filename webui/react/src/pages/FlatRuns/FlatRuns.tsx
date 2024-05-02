@@ -526,7 +526,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     (columnId: string, colIdx: number): MenuItem[] => {
       if (columnId === MULTISELECT) {
         const items: MenuItem[] = [
-          settings.selection.type === 'ONLY_IN' && settings.selection.selections.length > 0
+          settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
                 key: 'select-none',
                 label: 'Clear selected',
