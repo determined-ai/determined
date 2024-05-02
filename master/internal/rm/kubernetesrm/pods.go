@@ -1293,8 +1293,14 @@ func (p *pods) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlo
 	slots := agentResp.Agent.Slots
 	slot, ok := slots[slotID]
 	if !ok {
-		p.syslog.Warnf("no slot with id %s", slotID)
-		return nil
+		// Try converting an index input to a slot and see if that exists (1 to 001).
+		tryIndex, err := strconv.Atoi(slotID)
+		if s, ok := slots[model.SortableSlotIndex(tryIndex)]; err == nil && ok {
+			slot = s
+		} else {
+			p.syslog.Warnf("no slot with id %s", slotID)
+			return nil
+		}
 	}
 	return &apiv1.GetSlotResponse{Slot: slot}
 }
@@ -1528,8 +1534,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:        strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:        model.SortableSlotIndex(curSlot),
 					Device:    device.Device{Type: deviceType},
 					Draining:  isDraining,
 					Enabled:   !isDisabled,
@@ -1546,8 +1552,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:       strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:       model.SortableSlotIndex(curSlot),
 					Device:   device.Device{Type: deviceType},
 					Draining: isDraining,
 					Enabled:  !isDisabled,
@@ -1563,8 +1569,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 		}
 
 		for i := curSlot; i < int(numSlots); i++ {
-			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
-				ID:       strconv.Itoa(i),
+			slotsSummary[model.SortableSlotIndex(i)] = model.SlotSummary{
+				ID:       model.SortableSlotIndex(i),
 				Device:   device.Device{Type: deviceType},
 				Draining: isDraining,
 				Enabled:  !isDisabled,
