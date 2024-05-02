@@ -208,6 +208,7 @@ func (m *Master) healthCheck(ctx context.Context) model.HealthCheck {
 	hc.Database = model.Healthy
 	_, err := db.Bun().NewSelect().Table("cluster_id").Exists(ctx)
 	if err != nil {
+		log.WithError(err).Error("database marked as unhealthy")
 		hc.Database = model.Unhealthy
 	}
 
