@@ -1,7 +1,7 @@
+import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import { Title } from 'hew/Typography';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -26,6 +26,8 @@ import { numericSorter } from 'utils/sort';
 import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
 import css from './HpParallelCoordinates.module.scss';
 
+export const COMPARE_PARALLEL_COORDINATES = 'compare-parallel-coordinates';
+
 interface Props {
   projectId: number;
   selectedExperiments: ExperimentWithTrial[];
@@ -45,7 +47,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
   const [chartData, setChartData] = useState<HpTrialData | undefined>();
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
 
-  const { data, isLoaded, setScale } = metricData;
+  const { metrics, data, isLoaded, setScale } = metricData;
 
   const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
   const selectedScale = settings.scale;
@@ -198,19 +200,28 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     return <Message title="No data available." />;
   }
 
+  if (!chartData || (selectedExperiments.length !== 0 && metrics.length === 0)) {
+    return (
+      <div className={css.waiting}>
+        <Alert
+          description="Please wait until the experiments are further along."
+          message="Not enough data points to plot."
+        />
+        <Spinner center spinning />
+      </div>
+    );
+  }
+
   return (
     <div className={css.container}>
-      <Title>Parallel Coordinates</Title>
-      {chartData ? (
-        <div className={css.chart}>
+      {selectedExperiments.length > 0 && (
+        <div className={css.chart} data-testid={COMPARE_PARALLEL_COORDINATES}>
           <ParallelCoordinates
             config={config}
             data={chartData?.data ?? {}}
             dimensions={dimensions}
           />
         </div>
-      ) : (
-        <Message icon="warning" title="No data to plot." />
       )}
     </div>
   );

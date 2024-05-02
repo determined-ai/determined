@@ -137,10 +137,10 @@ const HpHeatMaps: React.FC<Props> = ({
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
         const yScaleKey = isYCategorical ? 'yCategorical' : isYLogarithmic ? 'yLog' : 'y';
         const xSplits = isXCategorical
-          ? new Array(xHpLabels.length).fill(0).map((_x, i) => i)
+          ? new Array(xHpLabels?.length).fill(0).map((_x, i) => i)
           : undefined;
         const ySplits = isYCategorical
-          ? new Array(yHpLabels.length).fill(0).map((_x, i) => i)
+          ? new Array(yHpLabels?.length).fill(0).map((_x, i) => i)
           : undefined;
         const xValues = isXCategorical ? xHpLabels : undefined;
         const yValues = isYCategorical ? yHpLabels : undefined;

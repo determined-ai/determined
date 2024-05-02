@@ -1,6 +1,6 @@
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
-import { Title } from 'hew/Typography';
+import Spinner from 'hew/Spinner';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GalleryModalComponent from 'components/GalleryModalComponent';
@@ -22,6 +22,8 @@ import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 
 import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
+
+export const COMPARE_SCATTER_PLOTS = 'compare-scatterplots';
 
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
@@ -55,7 +57,7 @@ const CompareScatterPlots: React.FC<Props> = ({
   const selectedMetric = settings.metric;
   const selectedHParams = settings.hParams;
 
-  const { data } = metricData;
+  const { data, isLoaded: metricsLoaded } = metricData;
 
   useEffect(() => {
     if (activeHParam) {
@@ -213,29 +215,36 @@ const CompareScatterPlots: React.FC<Props> = ({
     });
   }, [fullHParams, experimentHyperparameters, selectedMetric, trials, data]);
 
+  const loading = useMemo(() => !metricsLoaded || !chartData, [chartData, metricsLoaded]);
+
   return (
     <div ref={baseRef}>
-      <Title>Scatter Plots</Title>
-      <div>
-        {chartProps ? (
-          <Grid
-            border={true}
-            minItemWidth={resize.width > 320 ? 350 : 270}
-            mode={GridMode.AutoFill}>
-            {selectedHParams.map((hParam) => (
-              <div key={hParam} onClick={() => handleChartClick(hParam)}>
-                <UPlotScatter
-                  data={chartProps[hParam].data}
-                  options={chartProps[hParam].options}
-                  tooltipLabels={chartProps[hParam].tooltipLabels}
-                />
-              </div>
-            ))}
-          </Grid>
-        ) : (
-          <Message icon="warning" title="No data to plot." />
-        )}
-      </div>
+      {loading ? (
+        <Spinner center spinning />
+      ) : (
+        <>
+          {chartProps ? (
+            <div data-testid={COMPARE_SCATTER_PLOTS}>
+              <Grid
+                border={true}
+                minItemWidth={resize.width > 320 ? 350 : 270}
+                mode={GridMode.AutoFill}>
+                {selectedHParams.map((hParam) => (
+                  <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                    <UPlotScatter
+                      data={chartProps[hParam].data}
+                      options={chartProps[hParam].options}
+                      tooltipLabels={chartProps[hParam].tooltipLabels}
+                    />
+                  </div>
+                ))}
+              </Grid>
+            </div>
+          ) : (
+            <Message icon="warning" title="No data to plot." />
+          )}
+        </>
+      )}
       <galleryModal.Component
         activeHParam={activeHParam}
         chartProps={chartProps}

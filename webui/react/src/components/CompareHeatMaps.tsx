@@ -1,6 +1,6 @@
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
-import { Title } from 'hew/Typography';
+import Spinner from 'hew/Spinner';
 import { isObject } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -29,6 +29,9 @@ import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
 
 import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
+
+export const COMPARE_HEAT_MAPS = 'compare-heatmaps';
+export const HEAT_MAPS_TITLE = 'Heat Maps';
 
 interface Props {
   selectedExperiments: ExperimentWithTrial[];
@@ -77,7 +80,7 @@ const CompareHeatMaps: React.FC<Props> = ({
   const selectedMetric = settings.metric;
   const selectedHParams = settings.hParams;
 
-  const { data } = metricData;
+  const { data, isLoaded: metricsLoaded } = metricData;
 
   useEffect(() => {
     if (activeHParam) {
@@ -306,43 +309,50 @@ const CompareHeatMaps: React.FC<Props> = ({
     });
   }, [fullHParams, selectedMetric, ui.isPageHidden, trials, data, experimentHyperparameters]);
 
+  const loading = useMemo(() => !metricsLoaded || !chartData, [chartData, metricsLoaded]);
+
   return (
     <div ref={baseRef}>
-      <Title>Heat Map</Title>
       <div>
-        {chartProps && selectedMetric ? (
-          <>
-            <div>
-              <ColorLegend
-                colorScale={colorScale}
-                title={<MetricBadgeTag metric={selectedMetric} />}
-              />
-            </div>
-            <div>
-              <Grid
-                border={true}
-                minItemWidth={resize.width > 320 ? 350 : 270}
-                mode={GridMode.AutoFill}>
-                {selectedHParams.map((hParam1) =>
-                  selectedHParams.map((hParam2) => {
-                    const key = generateHpKey(hParam1, hParam2);
-                    return (
-                      <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
-                        <UPlotScatter
-                          colorScaleDistribution={selectedScale}
-                          data={chartProps[key].data}
-                          options={chartProps[key].options}
-                          tooltipLabels={chartProps[key].tooltipLabels}
-                        />
-                      </div>
-                    );
-                  }),
-                )}
-              </Grid>
-            </div>
-          </>
+        {loading ? (
+          <Spinner center spinning />
         ) : (
-          <Message icon="warning" title="No data to plot." />
+          <>
+            {chartProps && selectedMetric ? (
+              <>
+                <div>
+                  <ColorLegend
+                    colorScale={colorScale}
+                    title={<MetricBadgeTag metric={selectedMetric} />}
+                  />
+                </div>
+                <div data-testid={COMPARE_HEAT_MAPS}>
+                  <Grid
+                    border={true}
+                    minItemWidth={resize.width > 320 ? 350 : 270}
+                    mode={GridMode.AutoFill}>
+                    {selectedHParams.map((hParam1) =>
+                      selectedHParams.map((hParam2) => {
+                        const key = generateHpKey(hParam1, hParam2);
+                        return (
+                          <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                            <UPlotScatter
+                              colorScaleDistribution={selectedScale}
+                              data={chartProps[key].data}
+                              options={chartProps[key].options}
+                              tooltipLabels={chartProps[key].tooltipLabels}
+                            />
+                          </div>
+                        );
+                      }),
+                    )}
+                  </Grid>
+                </div>
+              </>
+            ) : (
+              <Message title="No data available." />
+            )}
+          </>
         )}
       </div>
       <galleryModal.Component

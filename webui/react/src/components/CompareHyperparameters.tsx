@@ -2,6 +2,7 @@ import Alert from 'hew/Alert';
 import Divider from 'hew/Divider';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
@@ -36,7 +37,7 @@ const CompareHyperparameters: React.FC<Props> = ({
   projectId,
   metricData,
 }: Props) => {
-  const { metrics, isLoaded, setScale } = metricData;
+  const { metrics, isLoaded: metricsLoaded, setScale } = metricData;
 
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
@@ -49,8 +50,12 @@ const CompareHyperparameters: React.FC<Props> = ({
     [fullHParams, projectId],
   );
 
-  const { settings, updateSettings, resetSettings } =
-    useSettings<CompareHyperparametersSettings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+    resetSettings,
+  } = useSettings<CompareHyperparametersSettings>(settingsConfig);
 
   const selectedScale = settings.scale;
 
@@ -112,7 +117,7 @@ const CompareHyperparameters: React.FC<Props> = ({
     );
   }, [fullHParams, handleFiltersChange, handleFiltersReset, metrics, filters]);
 
-  if (!isLoaded) {
+  if (!metricsLoaded || isLoadingSettings) {
     return <Spinner center spinning />;
   }
 
@@ -138,6 +143,7 @@ const CompareHyperparameters: React.FC<Props> = ({
         <div className={css.chart}>
           {selectedExperiments.length > 0 && (
             <>
+              <Title>Parallel Coordinates</Title>
               <CompareParallelCoordinates
                 fullHParams={fullHParams}
                 metricData={metricData}
@@ -147,6 +153,7 @@ const CompareHyperparameters: React.FC<Props> = ({
                 trials={trials}
               />
               <Divider />
+              <Title>Scatter Plots</Title>
               <CompareScatterPlots
                 fullHParams={fullHParams}
                 metricData={metricData}
@@ -155,6 +162,7 @@ const CompareHyperparameters: React.FC<Props> = ({
                 trials={trials}
               />
               <Divider />
+              <Title>Heat Maps</Title>
               <CompareHeatMaps
                 fullHParams={fullHParams}
                 metricData={metricData}
