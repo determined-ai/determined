@@ -8,5 +8,5 @@ home: https://github.com/determined-ai/determined.git
 # appVersion controls the version HPE MLDE / Determined OSS that is deployed.
 # If using a non-release version (e.g., X.Y.Z.dev0) you will have to specify an
 # existing official release version (e.g., X.Y.Z) or specify a commit has
-# that has been publicly published (all commits from master).
+# that has been publicly published (all commits from main).
 appVersion: "0.32.0-dev0"
