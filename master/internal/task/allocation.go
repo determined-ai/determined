@@ -1079,7 +1079,7 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		through_ingress := os.Getenv("H_THROUGH_INGRESS")
 		fmt.Println("local_proxy: ", local_proxy, "through_ingress: ", through_ingress)
 
-		a.req.ProxyTLS = false // let's take it out of the equation for now
+		// a.req.ProxyTLS = false // let's take it out of the equation for now
 		if local_proxy != "" {
 			localSocatPort := 47777
 			address.HostIP = "127.0.0.1"

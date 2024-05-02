@@ -386,7 +386,6 @@ func GenSignedCert() (keyPem []byte, certPem []byte, err error) {
 
 // VerifyMasterSigned checks the offered certificate to ensure that it was signed by the master CA.
 func VerifyMasterSigned(state tls.ConnectionState) error {
-	return nil
 	if state.PeerCertificates != nil {
 		for _, certificate := range state.PeerCertificates {
 			err := certificate.CheckSignatureFrom(masterCACert)
