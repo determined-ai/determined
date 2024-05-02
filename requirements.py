@@ -33,11 +33,24 @@ One could then install specifically what was necessary for the SDK, API, etc
 according to their needs.
 """
 
-HardCodedReqs = Dict[str, List[str]]
+"""
+TODO:
+- support git installs
+- support modifiers such as sys_platform and machine
+"""
 
-REQUIREMENTS = {
-    "watchfiles==0.21.0": ["backend-server"],
-}
+HardCodedReqs = Dict[str, List[str]]
+ReqFile = NamedTuple("ReqFile", [("tag", str), ("path", str)])
+
+REQUIREMENTS = {}
+
+req_files = [
+    ReqFile("base", "./requirements.txt"),
+    ReqFile("base", "./bindings/requirements.txt"),
+    ReqFile("docs", "./docs/requirements.txt"),
+    ReqFile("test", "./e2e_tests/tests/requirements.txt"),
+    ReqFile("test", "./model_hub/tests/requirements.txt"),
+]
 
 
 @dataclasses.dataclass()
@@ -77,30 +90,24 @@ class Requirements:
         return cls(dependencies=requirements_map)
 
 
-ReqFile = NamedTuple("ReqFile", [("tag", str), ("dir", str)])
-req_files = [
-    ReqFile("base", "./requirements.txt"),
-    ReqFile("base", "./bindings/requirements.txt"),
-    ReqFile("docs", "./docs/requirements.txt"),
-    ReqFile("test", "./e2e_tests/tests/requirements.txt"),
-]
-
-
-def build_requirements_map(requirements_dir):
+def build_requirements_map(requirement_files: List[ReqFile]) -> Dict[str, List[str]]:
     """Build a map of dependencies to tags from a directory of requirements files."""
     requirements_map = {}
-    for file_name in os.listdir(requirements_dir):
-        if file_name.endswith("-requirements.txt"):
-            tag = file_name.replace("-requirements.txt", "")
-            file_path = os.path.join(requirements_dir, file_name)
-            with open(file_path, "r") as file:
-                for line in file:
-                    dep = line.strip()
-                    if dep:
-                        if dep in requirements_map:
-                            requirements_map[dep].add(tag)
-                        else:
-                            requirements_map[dep] = {tag}
+    for tag, path in requirement_files:
+        path = pathlib.Path(path)
+        assert path.exists(), f"File {path} does not exist"
+        with open(path.absolute(), "r") as file:
+            for line in file:
+                if "#" in line:
+                    line = line[: line.index("#")]
+                dep = line.strip()
+                if not dep or dep.startswith("#") or not dep[0].isalnum():
+                    continue
+                if dep:
+                    if dep in requirements_map:
+                        requirements_map[dep].add(tag)
+                    else:
+                        requirements_map[dep] = {tag}
     requirements_map = dict(sorted(requirements_map.items()))
     for dep, tags in requirements_map.items():
         requirements_map[dep] = sorted(list(tags))
@@ -215,22 +222,23 @@ if __name__ == "__main__":
 
     # phase 1
     # # build requirements map
-    # requirements_map = build_requirements_map("./requirements")
-    # # merge with original requirements
-    # requirements_map = merge_with_original(requirements_map, REQUIREMENTS)
-    # requirements_map = compress_requirements(REQUIREMENTS)
-    # print(format_for_hardcoding(list(requirements_map.values())))
+    requirements_map = build_requirements_map(req_files)
+    # merge with original requirements
+    requirements_map = merge_with_original(requirements_map, REQUIREMENTS)
+    requirements_map = compress_requirements(requirements_map)
+    print(format_for_hardcoding(list(requirements_map.values())))
     # out = populate_requirements_from_pip_freez(
     #     REQUIREMENTS, pathlib.Path("./ciresolvedpackages.txt")
     # )
     # print(out)
+    # print(REQUIREMENTS)
     # phase 2
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--target-dir", type=str, default="./requirements")
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--target-dir", type=str, default="./requirements")
 
-    args = parser.parse_args()
-    warn_for_deps_without_version(REQUIREMENTS)
-    output_dir = generate_requirements_files(REQUIREMENTS, pathlib.Path(args.target_dir))
-    print(f"Requirements files generated in {output_dir}")
-    for file_name in os.listdir(output_dir):
-        print(file_name)
+    # args = parser.parse_args()
+    # warn_for_deps_without_version(REQUIREMENTS)
+    # output_dir = generate_requirements_files(REQUIREMENTS, pathlib.Path(args.target_dir))
+    # print(f"Requirements files generated in {output_dir}")
+    # for file_name in os.listdir(output_dir):
+    #     print(file_name)
