@@ -18,9 +18,21 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 30,
   "links": [],
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Headlines",
+      "type": "row"
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -29,7 +41,24 @@
       "description": "Indicates whether determined dependencies are reachable. A value of 1 indicates healthy. ",
       "fieldConfig": {
         "defaults": {
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "Unhealthy"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "Healthy"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -48,10 +77,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 4,
+        "h": 7,
+        "w": 5,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 13,
       "options": {
@@ -104,16 +133,17 @@
           "mappings": [],
           "max": 98,
           "min": 0,
+          "noValue": "0",
           "thresholds": {
             "mode": "percentage",
             "steps": [
               {
-                "color": "green",
+                "color": "orange",
                 "value": null
               },
               {
-                "color": "purple",
-                "value": 90
+                "color": "green",
+                "value": 80
               }
             ]
           },
@@ -122,10 +152,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 4,
-        "y": 0
+        "h": 7,
+        "w": 7,
+        "x": 5,
+        "y": 1
       },
       "id": 7,
       "options": {
@@ -151,17 +181,430 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "exemplar": true,
-          "expr": "sum(count by (gpu) (DCGM_FI_DEV_GPU_UTIL > 0) or vector(0)) / sum(count by (gpu) (DCGM_FI_DEV_GPU_UTIL)) * 100",
+          "expr": "sum((kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Running\"}) or vector(0) )/ sum(count by (gpu) (DCGM_FI_DEV_GPU_UTIL)) *100",
+          "hide": false,
           "instant": false,
-          "interval": "",
-          "intervalFactor": 1,
-          "legendFormat": "",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Cluster GPU Allocation (current)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Shows average amount of GPU compute being used across the cluster. Average only includes non-zero utilization.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 98,
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 7,
+        "x": 12,
+        "y": 1
+      },
+      "id": 26,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "avg(DCGM_FI_DEV_GPU_UTIL>0) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Cluster GPU Utilization (current)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Max number of unique users starting Determined workloads.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 1
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(count by (label_determined_ai_user) (kube_pod_labels{label_determined_ai_user != \"\" })) or vector(0)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "Cluster GPU Allocation",
-      "type": "gauge"
+      "title": "Active Users",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of resource pools in use.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 19,
+        "y": 5
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(count by(label_determined_ai_resource_pool) (kube_pod_labels{label_determined_ai_resource_pool != \"\"})) or vector(0)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Resource Pools",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 27,
+      "panels": [],
+      "title": "Cluster Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Running\"}) / sum(count by (gpu) (DCGM_FI_DEV_GPU_UTIL)) *100",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Cluster GPU Allocation (over time)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Average GPU Utilization over time. A GPU can be under-utilized, i.e. it is using a small amount of the compute power available.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "continuous-GrYlRd",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 3,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "avg(DCGM_FI_DEV_GPU_UTIL > 0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Average GPU Utilization (over time)",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -191,7 +634,107 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (label_determined_ai_task_type) \n(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "1m",
+          "legendFormat": "{{label_determined_ai_task_type}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pods Running by Task Type (all)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of pods with status \"Running\" by task type (trial, notebook, etc). Only includes pods with GPU Resources requested.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -228,9 +771,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 17
       },
-      "id": 6,
+      "id": 24,
       "options": {
         "legend": {
           "calcs": [],
@@ -251,7 +794,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (label_determined_ai_task_type) \n(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
+          "expr": "sum by (label_determined_ai_task_type) (kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Running\"} * on(pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
           "hide": false,
           "instant": false,
           "interval": "1m",
@@ -260,8 +803,21 @@
           "refId": "A"
         }
       ],
-      "title": "Pods Running by Task Type",
+      "title": "Pods Running by Task Type (GPU Requested)",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 19,
+      "panels": [],
+      "title": "Determined Pods Requesting GPU Resources by Resource Pool",
+      "type": "row"
     },
     {
       "datasource": {
@@ -291,12 +847,12 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -328,7 +884,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 26
       },
       "id": 16,
       "options": {
@@ -390,7 +946,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -427,7 +983,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 26
       },
       "id": 15,
       "options": {
@@ -470,7 +1026,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "red",
+            "mode": "shades"
           },
           "custom": {
             "axisBorderShow": false,
@@ -479,8 +1036,8 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 24,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -489,12 +1046,12 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -505,7 +1062,6 @@
             }
           },
           "mappings": [],
-          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -526,7 +1082,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 34
       },
       "id": 17,
       "options": {
@@ -561,121 +1117,24 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "GPUs in use by model name.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "noValue": "0",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
+      "collapsed": false,
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
       },
-      "id": 11,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.4.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL > 0)",
-          "instant": false,
-          "interval": "",
-          "intervalFactor": 1,
-          "legendFormat": "{{modelName}} in-use",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{modelName}} total",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "GPUs Used by GPU Model",
-      "type": "timeseries"
+      "id": 40,
+      "panels": [],
+      "title": "Determined Pods Requesting GPU Resources by Namespace",
+      "type": "row"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Number of GPUs in use by resource pool over time.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -698,12 +1157,12 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": true,
             "stacking": {
               "group": "A",
@@ -735,9 +1194,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 43
       },
-      "id": 4,
+      "id": 41,
       "options": {
         "legend": {
           "calcs": [],
@@ -757,15 +1216,16 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (label_determined_ai_resource_pool) (kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Running\"} * on(pod) group_left(label_determined_ai_resource_pool) kube_pod_labels{label_determined_ai_resource_pool!=\"\"})",
+          "expr": "sum by (label_determined_ai_task_type, namespace) (kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Pending\"} * on(pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{label_name}}",
+          "interval": "1m",
+          "legendFormat": "{{label_determined_ai_task_type}}, {{namespace}}",
           "range": true,
-          "refId": "B"
+          "refId": "A"
         }
       ],
-      "title": "GPUs Used by Resource Pool",
+      "title": "Pods Pending with GPU Requested by Task Type, Namespace",
       "type": "timeseries"
     },
     {
@@ -773,7 +1233,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Number of GPUs used by workspace over time.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -796,7 +1256,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -833,7 +1293,218 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 43
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (label_determined_ai_task_type, namespace) (kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Running\"} * on(pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "1m",
+          "legendFormat": "{{label_determined_ai_task_type}}, {{namespace}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pods Running with GPU Requested by Task Type, Namespace",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "shades"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 24,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 43,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (label_determined_ai_task_type, namespace) (kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"}\n  * on (pod) group_left() kube_pod_status_phase{phase=\"Failed\"} * on(pod) group_left(label_determined_ai_task_type) kube_pod_labels{label_determined_ai_task_type!=\"\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "1m",
+          "legendFormat": "{{label_determined_ai_task_type}}, {{namespace}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Pods Failed with GPU Requested by Task Type, Namespace",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 21,
+      "panels": [],
+      "title": "GPU Breakdown by Determined Resources",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of GPUs used by workspace over time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
       },
       "id": 9,
       "options": {
@@ -871,6 +1542,128 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "description": "GPUs in use by model name. ",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{modelName}} total",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count by (modelName) (DCGM_FI_DEV_GPU_UTIL\n  * on (pod) group_left() kube_pod_container_resource_requests{resource=\"nvidia_com_gpu\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{modelName}} in-use",
+          "range": true,
+          "refId": "D"
+        }
+      ],
+      "title": "GPUs Used by GPU Model",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "id": 18,
+      "panels": [],
+      "title": "GPU Utilization",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "description": "Average GPU Utilization (amount of individual GPU used) by workspace over time.",
       "fieldConfig": {
         "defaults": {
@@ -885,7 +1678,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 25,
+            "fillOpacity": 1,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -894,7 +1687,7 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -903,7 +1696,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -932,7 +1725,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 69
       },
       "id": 10,
       "options": {
@@ -994,12 +1787,12 @@
             },
             "insertNulls": false,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
+            "showPoints": "never",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1031,7 +1824,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 69
       },
       "id": 5,
       "options": {
@@ -1063,6 +1856,494 @@
       ],
       "title": "GPU Memory Utilization by Experiment ID and GPU Model",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "id": 22,
+      "panels": [],
+      "title": "Recent Tasks",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 78
+      },
+      "id": 30,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count by (label_determined_ai_workspace) (count by (label_determined_ai_experiment_id, label_determined_ai_workspace) (kube_pod_labels{label_determined_ai_experiment_id!=\"\"}))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Total Trials Running by Workspace",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 78
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count((kube_pod_labels{label_determined_ai_task_type=\"NOTEBOOK\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Notebooks",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 78
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count((kube_pod_labels{label_determined_ai_task_type=\"TENSORBOARD\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Tensorboards",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 78
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(count by (label_determined_ai_experiment_id)(kube_pod_labels{label_determined_ai_task_type=\"TRIAL\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Trials",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 82
+      },
+      "id": 36,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count((kube_pod_labels{label_determined_ai_task_type=\"COMMAND\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Commands",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 82
+      },
+      "id": 37,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count((kube_pod_labels{label_determined_ai_task_type=\"SHELL\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Shells",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 82
+      },
+      "id": 38,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(count by (label_determined_ai_experiment_id)(kube_pod_labels{label_determined_ai_task_type=\"CHECKPOINT_GC\"})) or vector(0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{label_determined_ai_workspace}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "CHECKPOINT GC",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -1104,7 +2385,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 86
       },
       "id": 12,
       "options": {
@@ -1117,7 +2398,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Trend #A"
+          }
+        ]
       },
       "pluginVersion": "10.4.1",
       "targets": [
@@ -1127,7 +2414,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (label_determined_ai_task_type, label_determined_ai_user, label_determined_ai_experiment_id, label_determined_ai_workspace) (kube_pod_labels{label_determined_ai_task_type!=\"\"})",
+          "expr": "sum by (label_determined_ai_task_type, label_determined_ai_user, label_determined_ai_experiment_id, label_determined_ai_workspace, namespace) (kube_pod_labels{label_determined_ai_task_type!=\"\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1145,25 +2432,46 @@
           "options": {
             "limitField": 20
           }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {
+              "Trend #A": 0,
+              "label_determined_ai_experiment_id": 1,
+              "label_determined_ai_task_type": 2,
+              "label_determined_ai_user": 3,
+              "label_determined_ai_workspace": 4
+            },
+            "renameByName": {
+              "Trend #A": "Total Pods",
+              "label_determined_ai_experiment_id": "Experiment ID",
+              "label_determined_ai_task_type": "Task Type",
+              "label_determined_ai_user": "Determined Username",
+              "label_determined_ai_workspace": "Workspace"
+            }
+          }
         }
       ],
       "type": "table"
     }
   ],
-  "refresh": "",
+  "refresh": "10s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2024-04-25T16:30:00.000Z",
-    "to": "2024-04-25T17:00:00.000Z"
+    "from": "now-1h",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Determined Resource Utilization",
-  "uid": "bdjm28ske4xds",
-  "version": 7,
+  "uid": "bdjm28ske4xdsf",
+  "version": 1,
   "weekStart": ""
 }
