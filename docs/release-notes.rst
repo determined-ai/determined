@@ -57,9 +57,6 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
    manager section in the master configuration. Add an ``additional_resource_managers`` section that
    follows the ``resource_manager`` and ``resource_pool`` configuration pattern.
 
--  CLI: Add an ``--enterprise-edition`` option for ``det deploy local``. This option enables users
-   to easily deploy enterprise images.
-
 **Improvements**
 
 -  Configuration: The master configuration parameter ``observability.enable_prometheus`` now
