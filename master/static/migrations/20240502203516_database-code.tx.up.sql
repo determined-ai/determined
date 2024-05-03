@@ -1,6 +1,6 @@
 DO $$
 BEGIN
-   execute 'ALTER DATABASE "'||current_database()||'" SET SEARCH_PATH TO determined_code,public';
+   execute 'ALTER DATABASE "'||current_database()||'" SET SEARCH_PATH TO public,determined_code';
 END
 $$;
 

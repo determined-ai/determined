@@ -151,7 +151,7 @@ func (db *PgDB) dropDBCode() error {
 	if _, err := db.sql.Exec(`
 DROP SCHEMA IF EXISTS determined_code CASCADE;
 CREATE SCHEMA determined_code;
-SET search_path TO determined_code,public`); err != nil {
+SET search_path TO public,determined_code`); err != nil {
 		return fmt.Errorf("removing determined database views so they can be created later: %w", err)
 	}
 
