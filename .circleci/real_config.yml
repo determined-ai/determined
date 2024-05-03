@@ -1977,6 +1977,7 @@ jobs:
       - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV
       - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
       - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
+      - run: echo 'export PW_DET_MASTER="http://localhost:8082"' >> $BASH_ENV
       - run: echo 'export DET_WEBPACK_PROXY_URL="http://localhost:8082"' >> $BASH_ENV
       - run: echo 'export DET_WEBSOCKET_PROXY_URL="ws://localhost:8082"' >> $BASH_ENV
       - checkout-with-sm

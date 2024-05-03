@@ -18,6 +18,7 @@ test.describe('Experiement List', () => {
       await expect(
         projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.pwLocator,
       ).toBeVisible();
+      // wait for it to not say "loading experiments..."
       if (
         await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
       ) {
@@ -25,12 +26,13 @@ test.describe('Experiement List', () => {
           process.cwd(),
           '/../../examples/tutorials/mnist_pytorch/const.yaml',
         );
-        execSync(`${process.env.PW_DET_PATH} user logout`);
+        const detCommandBase = `${process.env.PW_DET_PATH} -m ${process.env.PW_DET_MASTER}`;
+        execSync(`${detCommandBase} user logout`);
         execSync(
-          `echo ${process.env.PW_PASSWORD} | ${process.env.PW_DET_PATH} user login ${process.env.PW_USER_NAME}`,
+          `echo ${process.env.PW_PASSWORD} | ${detCommandBase} user login ${process.env.PW_USER_NAME}`,
           { stdio: 'inherit' },
         );
-        execSync(`${process.env.PW_DET_PATH} experiment create ${experimentPath} --paused`);
+        execSync(`${detCommandBase} experiment create ${experimentPath} --paused`);
         await pageSetupTeardown.reload();
         await expect(
           projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
