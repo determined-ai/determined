@@ -2014,6 +2014,8 @@ jobs:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_artifacts:
+          path: /home/circleci/.npm/_logs/
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
 
