@@ -54,7 +54,7 @@ parameters:
     default: xlarge
   default-slack-channel:
     type: string
-    default: C04PTNKLR8W # ci-bots-ee
+    default: C9LFPNA3Y # ci-bots
   do_nightly_tests:
     type: boolean
     default: false
