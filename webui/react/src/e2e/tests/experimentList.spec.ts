@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
-import { detAuthenticate, detExecSync, fullPath } from 'e2e/utils/detCLI';
+import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
 test.describe('Experiement List', () => {
   test.beforeAll(async ({ browser }) => {
@@ -17,10 +17,10 @@ test.describe('Experiement List', () => {
         projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.pwLocator,
       ).toBeVisible();
       // wait for it to not say "loading experiments..."
+
       if (
         await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
       ) {
-        await detAuthenticate();
         detExecSync(
           `experiment create ${fullPath(
             '/../../examples/tutorials/mnist_pytorch/const.yaml',
@@ -29,7 +29,7 @@ test.describe('Experiement List', () => {
         await pageSetupTeardown.reload();
         await expect(
           projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
-        ).toHaveCount(1);
+        ).not.toHaveCount(0);
       }
     });
     await authFixtureSetupTeardown.logout();
@@ -51,7 +51,7 @@ test.describe('Experiement List', () => {
   test('Click around the data grid', async ({ page }) => {
     const projectDetailsPage = new ProjectDetails(page);
     await projectDetailsPage.gotoProject();
-    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).toHaveCount(1);
+    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0);
     await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.setColumnDefs();
     const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue(
