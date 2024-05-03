@@ -198,8 +198,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
             initialValue={user?.username}
             label={USER_NAME_LABEL}
             name={USER_NAME_NAME}
-            required
-            validateTrigger={['onSubmit', 'onChange']}>
+            required>
             <Input
               autoFocus
               data-testid="username"
@@ -246,8 +245,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                 label={USER_PASSWORD_LABEL}
                 name={USER_PASSWORD_NAME}
                 required={!user && !isRemote}
-                rules={editPasswordRules}
-                validateTrigger={['onSubmit', 'onChange']}>
+                rules={editPasswordRules}>
                 <Input.Password data-testid="password" disabled={viewOnly} placeholder="Password" />
               </Form.Item>
               <Form.Item
@@ -266,8 +264,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
                       );
                     },
                   }),
-                ]}
-                validateTrigger={['onSubmit', 'onChange']}>
+                ]}>
                 <Input.Password data-testid="confirmPassword" disabled={viewOnly} />
               </Form.Item>
             </>
