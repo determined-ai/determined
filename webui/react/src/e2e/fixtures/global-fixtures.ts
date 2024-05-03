@@ -38,9 +38,11 @@ export const test = base.extend<CustomFixtures>({
     await use(user);
   },
   // get a page already logged in
-  authedPage: async ({ playwright, browser }, use) => {
-    const apiAuth = new ApiAuthFixture(playwright.request, browser);
+  authedPage: async ({ playwright, browser, dev }, use) => {
+    await dev.setServerAddress();
+    const apiAuth = new ApiAuthFixture(playwright.request, browser, dev.page);
     await apiAuth.login();
     await use(apiAuth.page);
   },
+
 });

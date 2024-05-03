@@ -1,25 +1,21 @@
-import { expect } from '@playwright/test';
-
 import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 
-test.describe('Experiement List', () => {
-  test.beforeEach(async ({ auth, dev }) => {
-    await dev.setServerAddress();
-    await auth.login();
-  });
+import { expect } from '@playwright/test';
 
-  test('Navigate to Experiment List', async ({ page }) => {
-    const projectDetailsPage = new ProjectDetails(page);
+test.describe('Experiement List', () => {
+
+  test('Navigate to Experiment List', async ({ authedPage }) => {
+    const projectDetailsPage = new ProjectDetails(authedPage);
     await projectDetailsPage.gotoProject();
-    await expect(page).toHaveTitle(projectDetailsPage.title);
+    await expect(authedPage).toHaveTitle(projectDetailsPage.title);
     await expect(projectDetailsPage.f_experiemntList.tableActionBar.pwLocator).toBeVisible();
   });
 
-  test.skip('Click around the data grid', async ({ page }) => {
+  test.skip('Click around the data grid', async ({ authedPage }) => {
     // This test expects a project to have been deployed.
     // This test.skip is useful to show an example of what tests can do
-    const projectDetailsPage = new ProjectDetails(page);
+    const projectDetailsPage = new ProjectDetails(authedPage);
     await projectDetailsPage.gotoProject();
     await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).toHaveCount(1);
     await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
@@ -33,6 +29,6 @@ test.describe('Experiement List', () => {
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.select5.pwLocator.click();
     await row.clickColumn('ID');
-    await page.waitForURL(/overview/);
+    await authedPage.waitForURL(/overview/);
   });
 });

@@ -38,13 +38,12 @@ test.describe('Projects', () => {
     return fullName;
   };
 
-  test.beforeEach(async ({ dev, authedPage }) => {
-    await dev.setServerAddress();
+  test.beforeEach(async ({ authedPage }) => {
     await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
     await expect(authedPage).toHaveURL(/dashboard/);
   });
 
-  test.afterEach(async ({ apiAuth, page: authedPage }) => {
+  test.afterEach(async ( { authedPage }) => {
     const workspacesPage = new Workspaces(authedPage);
     await test.step('Delete a workspace', async () => {
       if (wsCreatedWithButton !== '') {
@@ -68,10 +67,9 @@ test.describe('Projects', () => {
         await workspacesPage.deleteModal.footer.submit.pwLocator.click();
       }
     });
-    await apiAuth.logout();
   });
 
-  test('Projects and Workspaces CRUD', async ({ page: authedPage }) => {
+  test('Projects and Workspaces CRUD', async ({ authedPage }) => {
     const workspacesPage = new Workspaces(authedPage);
 
     await test.step('Navigate to Workspaces', async () => {

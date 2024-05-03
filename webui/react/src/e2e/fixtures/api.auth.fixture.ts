@@ -21,7 +21,7 @@ export class ApiAuthFixture {
     readonly #USERNAME: string;
     readonly #PASSWORD: string;
     context: BrowserContext | undefined;
-    constructor(request: APIRequest, browser: Browser) {
+    constructor(request: APIRequest, browser: Browser, existingPage: Page | undefined = undefined) {
         if (process.env.PW_USER_NAME === undefined) {
             throw new Error('username must be defined');
         }
@@ -32,11 +32,11 @@ export class ApiAuthFixture {
         this.#PASSWORD = process.env.PW_PASSWORD;
         this.request = request;
         this.browser = browser;
+        this._page = existingPage;
     }
 
     async login() {
         this.apiContext = await this.request.newContext();
-        console.log("LOGGING IN");
         await this.apiContext.post(`/api/v1/auth/login`, {
             data: {
                 username: this.#USERNAME,
@@ -45,10 +45,16 @@ export class ApiAuthFixture {
             }
         });
         // Save cookie state into the file.
-        await this.apiContext.storageState({ path: this.#STATE_FILE });
-        // Create a new context for the browser with the saved token.
-        this.context = await this.browser.newContext({ storageState: this.#STATE_FILE });
-        this._page = await this.context.newPage();
+        const state = await this.apiContext.storageState({ path: this.#STATE_FILE });        
+        if (this._page !== undefined){
+            // add cookies to current page's existing context
+            this.context = this._page.context();
+            this.context.addCookies(state.cookies);
+        }else{
+            // Create a new context for the browser with the saved token.
+            this.context = await this.browser.newContext({ storageState: this.#STATE_FILE });
+            this._page = await this.context.newPage();
+        }
     }
 
     async logout() {
