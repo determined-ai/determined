@@ -161,7 +161,8 @@ class MockTensorBoardManager(tensorboard.TensorboardManager):
             async_upload=async_upload,
             sync_on_close=sync_on_close,
         )
-        self._sync_times = []
+        # Record timestamps `self._sync_impl` is called for mock tests.
+        self._sync_times: List[float] = []
 
     def _sync_impl(self, path_info_list: List[tensorboard.base.PathUploadInfo]) -> None:
         self._sync_times.append(time.time())
@@ -178,6 +179,7 @@ def test_sync_throttles_uploads() -> None:
         base_path=BASE_PATH, sync_path=pathlib.Path("mock-tb-sync-path")
     )
 
+    # Call `sync()` at different time intervals.
     for _ in range(5):
         mock_tensorboard_manager.sync()
 

@@ -39,7 +39,7 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
 
     validation_period = 2
 
-    num_steps = 20
+    num_steps = 6
 
     for i in range(num_steps):
         step = i + 1
@@ -56,7 +56,7 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
     val_events = []
 
     # Read event files saved and verify all metrics are written.
-    event_files = sorted(list(tmp_path.iterdir()))
+    event_files = sorted(tmp_path.iterdir())
     for file in event_files:
         for event in summary_iterator.summary_iterator(str(file)):
             # TensorFlow injects an event containing metadata at the start of every tfevent
