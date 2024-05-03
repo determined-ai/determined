@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -61,6 +62,27 @@ type Model struct {
 	Archived        bool          `db:"archived" json:"archived"`
 	Notes           string        `db:"notes" json:"notes"`
 	WorkspaceID     int           `db:"workspace_id" json:"workspace_id"`
+}
+
+func init() {
+	testOnlyDBLock = func(sql *sqlx.DB, lockID int) (unlock func()) {
+		tx, err := sql.Beginx()
+		if err != nil {
+			panic(err)
+		}
+
+		if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", lockID); err != nil {
+			_ = tx.Rollback()
+			panic(err)
+		}
+
+		return func() {
+			if err := tx.Commit(); err != nil {
+				_ = tx.Rollback()
+				panic(err)
+			}
+		}
+	}
 }
 
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
@@ -169,7 +191,8 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 	if len(actions) == 0 {
 		actions = []string{"up"}
 	}
-	_, err := db.Migrate(migrationsPath, actions)
+	_, err := db.Migrate(
+		migrationsPath, strings.ReplaceAll(migrationsPath+"/../db_code", "file://", ""), actions)
 	if err != nil {
 		return fmt.Errorf("failed to migrate postgres: %w", err)
 	}

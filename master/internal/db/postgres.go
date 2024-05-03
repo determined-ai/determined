@@ -175,12 +175,48 @@ type PgDB struct {
 	URL     string
 }
 
+func setSearchPath(sql *sqlx.DB) error {
+	// In integration tests, multiple processes can be running this code at once, which can lead to
+	// errors because PostgreSQL ALTER DATABASE can do weird things.
+	if testOnlyDBLock != nil {
+		const searchLockID = 0x33ad0708c9bed25c
+		defer testOnlyDBLock(sql, searchLockID)
+	}
+
+	if _, err := sql.Exec(`DO $$
+BEGIN
+   execute 'ALTER DATABASE "'||current_database()||'" SET SEARCH_PATH TO public,determined_code';
+END
+$$;`); err != nil {
+		return fmt.Errorf("setting search path on db connection: %w", err)
+	}
+
+	return nil
+}
+
 // ConnectPostgres connects to a Postgres database.
 func ConnectPostgres(url string) (*PgDB, error) {
+	return connectPostgres(url, true)
+}
+
+func connectPostgres(url string, firstTime bool) (*PgDB, error) {
 	numTries := 0
 	for {
 		sql, err := sqlx.Connect("pgx", url)
 		if err == nil {
+			if firstTime {
+				// On first connection set the search path, close the connection and reconnect.
+				// There is a little bit of a chicken and egg problem with setting search path.
+				// We need to actually reconnect for this to take affect.
+				if err := setSearchPath(sql); err != nil {
+					return nil, err
+				}
+				if err := sql.Close(); err != nil {
+					return nil, err
+				}
+				return connectPostgres(url, false)
+			}
+
 			db := &PgDB{sql: sql, queries: &StaticQueryMap{}, URL: url}
 			initTheOneBun(db)
 			return db, nil
