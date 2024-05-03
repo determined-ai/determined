@@ -1,11 +1,9 @@
-import { execSync } from 'child_process';
-import path from 'path';
-
 import { expect } from '@playwright/test';
 
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
+import { detAuthenticate, detExecSync, fullPath } from 'e2e/utils/detCLI';
 
 test.describe('Experiement List', () => {
   test.beforeAll(async ({ browser }) => {
@@ -22,17 +20,12 @@ test.describe('Experiement List', () => {
       if (
         await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
       ) {
-        const experimentPath = path.join(
-          process.cwd(),
-          '/../../examples/tutorials/mnist_pytorch/const.yaml',
+        await detAuthenticate();
+        detExecSync(
+          `experiment create ${fullPath(
+            '/../../examples/tutorials/mnist_pytorch/const.yaml',
+          )} --paused`,
         );
-        const detCommandBase = `${process.env.PW_DET_PATH} -m ${process.env.PW_DET_MASTER}`;
-        execSync(`${detCommandBase} user logout`);
-        execSync(
-          `echo ${process.env.PW_PASSWORD} | ${detCommandBase} user login ${process.env.PW_USER_NAME}`,
-          { stdio: 'inherit' },
-        );
-        execSync(`${detCommandBase} experiment create ${experimentPath} --paused`);
         await pageSetupTeardown.reload();
         await expect(
           projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
