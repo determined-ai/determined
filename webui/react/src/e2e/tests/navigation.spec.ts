@@ -9,7 +9,6 @@ import { expect } from '@playwright/test';
 test.describe('Navigation', () => {
   const USERNAME = process.env.PW_USER_NAME ?? '';
 
-
   test('Sidebar Navigation', async ({ authedPage, auth }) => {
     // we need any page to access the sidebar, and i haven't modeled the homepage yet
     const userManagementPage = new UserManagement(authedPage);

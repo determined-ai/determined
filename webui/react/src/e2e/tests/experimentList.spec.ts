@@ -1,10 +1,9 @@
+import { expect } from '@playwright/test';
+
 import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 
-import { expect } from '@playwright/test';
-
 test.describe('Experiement List', () => {
-
   test('Navigate to Experiment List', async ({ authedPage }) => {
     const projectDetailsPage = new ProjectDetails(authedPage);
     await projectDetailsPage.gotoProject();
