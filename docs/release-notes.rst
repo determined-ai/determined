@@ -15,8 +15,9 @@ Version 0.32.0
 
 **Release Date:** May 03, 2024
 
-Notice: This release includes a fix for the bug posing a risk of data loss. We urge all users on the
-affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for details.
+Notice: This release contains an important fix for a bug that poses data loss risk when using the
+Experiment table in the project view in the WebUI. All users on affected versions are strongly
+encouraged to upgrade as soon as possible. For more details, scroll down to ``Bug Fixes``.
 
 **Breaking Changes**
 
@@ -44,9 +45,6 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
    unique names. For more information, visit :ref:`master configuration <master-config-reference>`.
    Support for notebooks and other workloads that require proxying is under development.
 
--  WebUI: In the enterprise edition, add the ability to view resource manager name for resource
-   pools.
-
 -  API/CLI/WebUI: In the enterprise edition, route any requests to resource pools not defined in the
    master configuration to the default resource manager, not any additional resource manager, if
    defined.
@@ -54,6 +52,9 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
 -  Configuration: In the enterprise edition, add an ``additional_resource_managers`` section that
    can define multiple resource managers following the same patteroas ``resource_manager``. Add
    ``name`` and ``metadata`` fields to individual resource manager definitions.
+
+-  WebUI: In the enterprise edition, add the ability to view resource manager name for resource
+   pools.
 
 **Improvements**
 
@@ -63,25 +64,29 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
 
 **Bug Fixes**
 
--  Since version 0.27.0, the selection functionality in the Experiments page had a bug where it
-   attempts to perform actions on a larger set of experiments than selected on the screen. For
-   instance, if you try to move all experiments in one project into another using Select All ->
-   Actions -> Move, it may inadvertently include all experiments from the project also from other
-   projects you have access to edit. We urge all users on the affected versions to upgrade as soon
-   as possible.
+-  Since version 0.27.1, a bug has affected the selection functionality in the Experiments page.
+   This bug may cause actions to be applied to more experiments than are visibly selected. For
+   example, when using the **Select All > Actions > Move** sequence to transfer all experiments from
+   one project to another, the action may inadvertently include experiments not only from the
+   targeted project but also from other projects you have permissions to edit. We urge all users on
+   the affected versions to upgrade as soon as possible.
 
-   -  There is a risk of data loss if attempting to delete a set of experiments delete and it
+   -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
       inadvertently deletes a larger set than intended.
 
-   -  For RBAC users, thereis a risk of permissions leak if moving experiments from one project to
-      another includes experiments from other workspaces.
+   -  For RBAC (Role-Based Access Control) (an Enterprise-edition feature) users, there is a risk of
+      a permissions leak if moving experiments from one project to another inadvertently includes
+      experiments from other workspaces.
 
-   -  The behavior is true for all bulk actions (delete, move, archive, unarchive, resume, pause,
-      kill, stop, and view in TensorBoard).
+   -  This issue affects all bulk actions including delete, move, archive, unarchive, resume, pause,
+      kill, stop, and viewing in TensorBoard.
 
    -  We strongly advise refraining from using the Experiment table in the project view to take any
-      actions. As a workaround, utilize the Trial View in the Web UI for actions on a single trial,
-      or use the CLI for affected actions as an alternative.
+      actions.
+
+   -  Workaround: To manage actions on a single trial, use the Trial View in the WebUI.
+      Alternatively, for bulk actions affected by this issue, consider using the Command Line
+      Interface (CLI).
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
