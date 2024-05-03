@@ -1,9 +1,3 @@
-DO $$
-BEGIN
-   execute 'ALTER DATABASE "'||current_database()||'" SET SEARCH_PATH TO public,determined_code';
-END
-$$;
-
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
 

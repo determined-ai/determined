@@ -150,8 +150,7 @@ func (db *PgDB) dropDBCode() error {
 	// since it was created after the migration ran.
 	if _, err := db.sql.Exec(`
 DROP SCHEMA IF EXISTS determined_code CASCADE;
-CREATE SCHEMA determined_code;
-SET search_path TO public,determined_code`); err != nil {
+CREATE SCHEMA determined_code;`); err != nil {
 		return fmt.Errorf("removing determined database views so they can be created later: %w", err)
 	}
 
@@ -162,20 +161,31 @@ SET search_path TO public,determined_code`); err != nil {
 func (db *PgDB) Migrate(
 	migrationURL string, dbCodeDir string, actions []string,
 ) (isNew bool, err error) {
-	// In integration tests, multiple processes can be running this code at once, which can lead to
-	// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
-	//
-	// Avoid using a transcation level advisory lock because `SET search_path` gives weird
-	// results running after a transcation started.
-	const MigrationLockID = 0x33ad0708c9bed25b // Arbitrarily chosen unique consistent ID for the lock.
-	_, err = db.sql.Exec("SELECT pg_advisory_lock($1)", MigrationLockID)
-	if err != nil {
+	if err := db.withTransaction("migrate", func(tx *sqlx.Tx) error {
+		// In integration tests, multiple processes can be running this code at once, which can lead to
+		// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
+		// Arbitrarily chosen unique consistent ID for the lock.
+		const MigrationLockID = 0x33ad0708c9bed25b
+		if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", MigrationLockID); err != nil {
+			return fmt.Errorf("getting migration advisory lock: %w", err)
+		}
+
+		isNew, err = db.migrate(migrationURL, dbCodeDir, actions)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return false, err
 	}
-	defer func() {
-		db.sql.Exec("SELECT pg_advisory_unlock($1)", MigrationLockID)
-	}()
 
+	return isNew, nil
+}
+
+func (db *PgDB) migrate(
+	migrationURL string, dbCodeDir string, actions []string,
+) (isNew bool, err error) {
 	if err := db.dropDBCode(); err != nil {
 		return false, err
 	}
