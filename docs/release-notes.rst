@@ -15,6 +15,9 @@ Version 0.32.0
 
 **Release Date:** May 03, 2024
 
+Notice: This release includes a fix for the bug posing a risk of data loss. We urge all users on the
+affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for details.
+
 **Breaking Changes**
 
 -  Python SDK and CLI: Password requirements are now enforced for all non-remote users. For more
@@ -65,9 +68,25 @@ Version 0.32.0
 
 **Bug Fixes**
 
--  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
-   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
-   via APIs.
+-  Since version 0.27.0, the selection functionality in the Experiments page had a bug where it
+   attempts to perform actions on a larger set of experiments than selected on the screen. For
+   instance, if you try to move all experiments in one project into another using Select All ->
+   Actions -> Move, it may inadvertently include all experiments from the project also from other
+   projects you have access to edit. We urge all users on the affected versions to upgrade as soon
+   as possible.
+
+   -  There is a risk of data loss if attempting to delete a set of experiments delete and it
+      inadvertently deletes a larger set than intended.
+
+   -  For RBAC users, thereis a risk of permissions leak if moving experiments from one project to
+      another includes experiments from other workspaces.
+
+   -  The behavior is true for all bulk actions (delete, move, archive, unarchive, resume, pause,
+      kill, stop, and view in TensorBoard).
+
+   -  We strongly advise refraining from using the Experiment table in the project view to take any
+      actions. As a workaround, utilize the Trial View in the Web UI for actions on a single trial,
+      or use the CLI for affected actions as an alternative.
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
@@ -75,6 +94,10 @@ Version 0.32.0
    ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy
    aws --deployment-type=govcloud``, are not affected. We urge all users with affected setups to
    upgrade as soon as possible.
+
+-  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
+   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
+   via APIs.
 
 **************
  Version 0.31
