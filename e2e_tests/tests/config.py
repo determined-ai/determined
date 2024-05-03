@@ -14,12 +14,12 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF2_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:f17151a"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:f17151a"
-DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:f17151a"
-DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:f17151a"
-DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-cpu-dev:f17151a"
-DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-cuda-dev:f17151a"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
+DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3"
+DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
+DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-cpu-dev:8b3bea3"
+DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-cuda-dev:8b3bea3"
 
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
