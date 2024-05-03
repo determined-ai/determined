@@ -17,9 +17,10 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TemplateColumnName, number> = {
 export interface Settings extends InteractiveTableSettings {
   columns: TemplateColumnName[];
   workspace?: number[];
+  name?: string;
 }
 
-const config: SettingsConfig<Settings> = {
+const config = (id: string): SettingsConfig<Settings> => ({
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -59,7 +60,7 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, array(number)]),
     },
   },
-  storagePath: 'template-list',
-};
+  storagePath: `template-list-${id}`,
+});
 
 export default config;
