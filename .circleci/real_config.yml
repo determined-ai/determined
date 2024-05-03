@@ -58,6 +58,12 @@ parameters:
   do_nightly_tests:
     type: boolean
     default: false
+  ee:
+    type: boolean
+    default: false
+  e2e-react:
+    type: string
+    default: ""
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,6 +106,11 @@ any-fork: &any-fork
   branches:
     only:
       - /pull\/.*/
+
+do-not-run-on-manual-trigger: &do-not-run-on-manual-trigger
+  unless:
+    equal: [ api, << pipeline.trigger_source >> ]
+
 
 commands:
   fix-circle-working-directory:
@@ -1969,6 +1980,9 @@ jobs:
       ee:
         type: boolean
         default: false
+      playwright-options:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2009,7 +2023,7 @@ jobs:
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react
+          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -3996,6 +4010,7 @@ jobs:
 
 workflows:
   lint:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - check-py-bindings:
@@ -4012,6 +4027,7 @@ workflows:
       - lint-secrets
 
   previews:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
@@ -4026,6 +4042,7 @@ workflows:
           filters: *any-upstream
 
   test-cli:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-cli:
           matrix:
@@ -4035,6 +4052,7 @@ workflows:
                 - "python-39"
                 - "win/default"
   test-unit:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-unit-react
       - test-unit-harness-cpu
@@ -4079,6 +4097,7 @@ workflows:
             - test-unit-storage
 
   test-go:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
           context: storage-unit-tests
@@ -4095,6 +4114,7 @@ workflows:
             - go-coverage
 
   package-and-deploy-oss:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # These jobs are important for docs and latest main and have been moved
       # here from test-e2e. These jobs are OSS focused while test-e2e now only
@@ -4190,6 +4210,7 @@ workflows:
           compute-agent-instance-type: t2.medium
 
   test-e2e:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
@@ -4776,7 +4797,10 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-gke-shared-cluster:
-    unless: << pipeline.parameters.do_nightly_tests >>
+    unless:
+      or:
+        - << pipeline.parameters.do_nightly_tests >>
+        - equal: [ api, << pipeline.trigger_source >> ]
     jobs:
       - package-and-push-system-dev-small
 
@@ -4792,6 +4816,7 @@ workflows:
           test-type: cpu
 
   test-e2e-longrunning:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
@@ -5572,6 +5597,22 @@ workflows:
                   password: ${HPC_DB_PASSWD}
       - terminate-vpc-circleci:
             context: ["gcp"]
+
+  manual-e2e-react:
+    when: << pipeline.parameters.e2e-react >>
+    jobs:
+      - build-go:
+          name: build-go
+          ee: << pipeline.parameters.ee >>
+          context: github-read
+      - test-e2e-react:
+          ee: << pipeline.parameters.ee >>
+          playwright-options: << pipeline.parameters.e2e-react >>
+          requires:
+            - build-go
+          context:
+            - playwright
+            - github-read
 
   release:
     jobs:
