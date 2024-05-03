@@ -38,8 +38,8 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
 
 **New Features**
 
--  Kubernetes: In the enterprise edition, add ability to set up the Determined master service on one
-   Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
+-  Kubernetes: In the enterprise edition, add the ability to set up the Determined master service on
+   one Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
    non-default resource managers and resource pools are configured under the master configuration
    options ``additional_resource_managers`` and ``resource_pools`` (additional resource managers are
    required to have at least one resource pool defined). Additional resource managers and their
@@ -47,13 +47,14 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
    <master-config-reference>`. Support for notebooks and other workloads that require proxying is
    under development.
 
--  WebUI: In the enterprise edition, add ability to view resource manager name for resource pools.
+-  WebUI: In the enterprise edition, add the ability to view resource manager name for resource
+   pools.
 
 -  API/CLI/WebUI: In the enterprise edition, route any requests to resource pools not defined in the
    master configuration to the default resource manager, not any additional resource manager, if
    defined.
 
--  Configuration: In the enterprise edition, add a ``name`` and ``metadata`` field to resource
+-  Configuration: In the enterprise edition, add a ``name`` and ``metadata`` field to the resource
    manager section in the master configuration. Add an ``additional_resource_managers`` section that
    follows the ``resource_manager`` and ``resource_pool`` configuration pattern.
 
@@ -87,10 +88,10 @@ affected versions to upgrade as soon as possible. See ``Bug Fixes`` below for de
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
-   This issue affects multiple ``det deploy aws`` deployment types, including ``default simple``,
-   ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy
-   aws --deployment-type=govcloud``, are not affected. We urge all users with affected setups to
-   upgrade as soon as possible.
+   This issue affects multiple ``det deploy aws`` deployment types, including ``simple``, ``vpc``,
+   ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy aws
+   --deployment-type=govcloud``, are not affected. We urge all users with affected setups to upgrade
+   as soon as possible.
 
 -  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
    metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
