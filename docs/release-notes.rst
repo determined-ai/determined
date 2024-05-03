@@ -74,19 +74,19 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
    -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
       inadvertently deletes a larger set than intended.
 
-   -  For RBAC (Role-Based Access Control) (an Enterprise-edition feature) users, there is a risk of
+   -  When role-based access control (an enterprise edition feature) is enabled, there is a risk of
       a permissions leak if moving experiments from one project to another inadvertently includes
       experiments from other workspaces.
 
    -  This issue affects all bulk actions including delete, move, archive, unarchive, resume, pause,
-      kill, stop, and viewing in TensorBoard.
+      kill, stop, and view in TensorBoard.
 
-   -  We strongly advise refraining from using the Experiment table in the project view to take any
+   -  We strongly advise refraining from using the experiment table in the project view to take any
       actions.
 
-   -  Workaround: To manage actions on a single trial, use the Trial View in the WebUI.
-      Alternatively, for bulk actions affected by this issue, consider using the Command Line
-      Interface (CLI).
+   -  Workaround: To manage actions on a single trial, use the trial view in the WebUI.
+      Alternatively, for bulk actions affected by this issue, consider using the command-line
+      interface (CLI).
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
