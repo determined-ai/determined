@@ -179,8 +179,8 @@ func setSearchPath(sql *sqlx.DB) error {
 	// In integration tests, multiple processes can be running this code at once, which can lead to
 	// errors because PostgreSQL ALTER DATABASE can do weird things.
 	if testOnlyDBLock != nil {
-		const searchLockID = 0x33ad0708c9bed25c
-		defer testOnlyDBLock(sql, searchLockID)
+		cleanup := testOnlyDBLock(sql)
+		defer cleanup()
 	}
 
 	if _, err := sql.Exec(`DO $$

@@ -65,12 +65,13 @@ type Model struct {
 }
 
 func init() {
-	testOnlyDBLock = func(sql *sqlx.DB, lockID int) (unlock func()) {
+	testOnlyDBLock = func(sql *sqlx.DB) (unlock func()) {
 		tx, err := sql.Beginx()
 		if err != nil {
 			panic(err)
 		}
 
+		const lockID = 0x33ad0708c9bed25b // Chosen arbitrarily.
 		if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", lockID); err != nil {
 			_ = tx.Rollback()
 			panic(err)

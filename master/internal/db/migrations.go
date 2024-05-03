@@ -157,7 +157,7 @@ CREATE SCHEMA determined_code;`); err != nil {
 	return nil
 }
 
-var testOnlyDBLock func(sql *sqlx.DB, lockID int) (unlock func())
+var testOnlyDBLock func(sql *sqlx.DB) (unlock func())
 
 // Migrate runs the migrations from the specified directory URL.
 func (db *PgDB) Migrate(
@@ -166,8 +166,8 @@ func (db *PgDB) Migrate(
 	if testOnlyDBLock != nil {
 		// In integration tests, multiple processes can be running this code at once, which can lead to
 		// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
-		const migrationLockID = 0x33ad0708c9bed25b
-		defer testOnlyDBLock(db.sql, migrationLockID)
+		cleanup := testOnlyDBLock(db.sql)
+		defer cleanup()
 	}
 	if err := db.dropDBCode(); err != nil {
 		return false, err
