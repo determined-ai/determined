@@ -5190,7 +5190,7 @@ workflows:
       # Request HPC tests
       - request-hpc-tests:
           type: approval
-          filters: *any-upstream
+          filters: *upstream-feature-branch
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
