@@ -1,5 +1,5 @@
 import { filter } from 'fp-ts/lib/Set';
-import Form from 'hew/Form';
+import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
@@ -87,6 +87,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
   const knownRoles = useObservable(roleStore.roles);
 
+  const [canSubmit, setCanSubmit] = useState(false);
   const [isRemote, setIsRemote] = useState(false);
 
   const editPasswordRules = PASSWORD_RULES.map((rule) => {
@@ -177,6 +178,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
       data-test-component="createUserModal"
       size="small"
       submit={{
+        disabled: !canSubmit,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
@@ -193,7 +195,18 @@ const CreateUserModalComponent: React.FC<Props> = ({
       <Spinner
         spinning={user !== undefined && userRoles?.isNotLoaded && rbacEnabled && canAssignRoles({})}
         tip="Loading roles...">
-        <Form className={css.createUserModalForm} form={form} id={idPrefix + FORM_ID}>
+        <Form
+          className={css.createUserModalForm}
+          form={form}
+          id={idPrefix + FORM_ID}
+          onFieldsChange={() =>
+            setCanSubmit(
+              !hasErrors(form) &&
+                form.getFieldValue(USER_NAME_NAME) &&
+                form.getFieldValue(USER_PASSWORD_NAME) &&
+                form.getFieldValue(USER_PASSWORD_CONFIRM_NAME),
+            )
+          }>
           <Form.Item
             initialValue={user?.username}
             label={USER_NAME_LABEL}
