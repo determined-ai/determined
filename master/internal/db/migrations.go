@@ -127,7 +127,7 @@ func (db *PgDB) addDBCode(dbCodeDir string) error {
 			}
 
 			filePath := filepath.Join(dbCodeDir, f.Name())
-			b, err := os.ReadFile(filePath)
+			b, err := os.ReadFile(filePath) //nolint: gosec // We trust dbCodeDir.
 			if err != nil {
 				return fmt.Errorf("reading view definition file '%s': %w", filePath, err)
 			}
@@ -246,6 +246,5 @@ func (db *PgDB) Migrate(
 	}
 
 	log.Info("DB migrations completed")
-
 	return oldVersion == 0, nil
 }

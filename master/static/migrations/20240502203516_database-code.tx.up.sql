@@ -38,5 +38,3 @@ DROP FUNCTION public.stream_project_seq_modify CASCADE;
 DROP FUNCTION public.try_float8_cast CASCADE;
 
 DROP AGGREGATE public.jsonb_collect(jsonb);
-
-
