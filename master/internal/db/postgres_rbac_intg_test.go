@@ -184,7 +184,8 @@ func cleanUp(t *testing.T) {
 
 func TestPermissionMatch(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	t.Cleanup(func() { cleanUp(t) })
@@ -347,7 +348,8 @@ func TestEditorVSEditorRestricted(t *testing.T) {
 	// Verify that the EditorRestricted role only has two less permissions than Editor and that
 	// it does not have the create or update notebooks/shells/commands permissions.
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	numEditorRestrictedPermissions, err := Bun().NewSelect().Table("permission_assignments").

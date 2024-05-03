@@ -89,7 +89,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 
 	if pgdb == nil {
 		if thePgDB == nil {
-			thePgDB = db.MustResolveTestPostgres(t)
+			thePgDB, _ = db.MustResolveTestPostgres(t)
 			db.MustMigrateTestPostgres(t, thePgDB, "file://../static/migrations")
 			require.NoError(t, etc.SetRootPath("../static/srv"))
 

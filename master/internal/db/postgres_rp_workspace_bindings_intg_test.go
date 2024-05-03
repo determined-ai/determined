@@ -90,7 +90,8 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 func TestCheckIfRPUnbound(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	poolName := uuid.New().String()
@@ -113,7 +114,8 @@ func TestCheckIfRPUnbound(t *testing.T) {
 
 func TestGetDefaultPoolsForWorkspace(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	comp, aux, err := GetDefaultPoolsForWorkspace(ctx, -1)
@@ -161,7 +163,8 @@ func TestGetDefaultPoolsForWorkspace(t *testing.T) {
 func TestBindingFail(t *testing.T) {
 	// Test add the same binding multiple times - should fail
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	user := RequireMockUser(t, pgDB)
@@ -255,7 +258,8 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 
 func TestListRPsAvailableToWorkspace(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
@@ -387,7 +391,8 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 
 func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
@@ -452,7 +457,8 @@ func TestOverwriteBindings(t *testing.T) {
 
 func TestOverwriteFail(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	existingPools := []config.ResourcePoolConfig{{PoolName: testPoolName}}
@@ -469,7 +475,8 @@ func TestOverwriteFail(t *testing.T) {
 
 func TestRemoveInvalidBinding(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 	// remove binding that doesn't exist
 	workspaceIDs := []int32{1}

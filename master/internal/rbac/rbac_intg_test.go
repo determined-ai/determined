@@ -112,7 +112,8 @@ type Workspace struct {
 
 func TestRbac(t *testing.T) {
 	ctx := context.Background()
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
 	t.Cleanup(func() { cleanUp(ctx, t, pgDB) })

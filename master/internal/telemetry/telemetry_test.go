@@ -30,7 +30,7 @@ var pgDB *db.PgDB
 
 // TestMain sets up the DB for tests.
 func TestMain(m *testing.M) {
-	tmp, err := db.ResolveTestPostgres()
+	tmp, _, err := db.ResolveTestPostgres()
 	pgDB = tmp
 	if err != nil {
 		log.Panicln(err)

@@ -159,7 +159,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Fetch average queued time for resource pool
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../../static/migrations")
 	_, err = agentRM.fetchAvgQueuedTime("cpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for cpu-pool")

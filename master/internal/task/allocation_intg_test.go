@@ -182,7 +182,8 @@ func setup(t *testing.T) (
 	var rm mocks.ResourceManager
 
 	// real db.
-	pgDB := db.MustSetupTestPostgres(t)
+	pgDB, close := db.MustSetupTestPostgres(t)
+	defer close()
 
 	// instantiate the allocation
 	task := db.RequireMockTask(t, pgDB, nil)

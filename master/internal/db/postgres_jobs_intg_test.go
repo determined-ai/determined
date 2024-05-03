@@ -138,7 +138,8 @@ func TestUpdateJobPosition(t *testing.T) {
 func setupDBForTest(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 }
 

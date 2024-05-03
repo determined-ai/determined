@@ -89,19 +89,23 @@ func init() {
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
 // (or otherwise run the tests outside of the Makefile), make sure to set
 // DET_INTEGRATION_POSTGRES_URL.
-func ResolveTestPostgres() (*PgDB, error) {
+func ResolveTestPostgres() (*PgDB, func(), error) {
 	pgDB, err := ConnectPostgres(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
+		return nil, nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
-	return pgDB, nil
+	return pgDB, func() {
+		if err := pgDB.Close(); err != nil {
+			panic(err)
+		}
+	}, nil
 }
 
 // MustResolveTestPostgres is the same as ResolveTestPostgres but with panics on errors.
-func MustResolveTestPostgres(t *testing.T) *PgDB {
-	pgDB, err := ResolveTestPostgres()
+func MustResolveTestPostgres(t *testing.T) (*PgDB, func()) {
+	pgDB, close, err := ResolveTestPostgres()
 	require.NoError(t, err, "failed to connect to postgres")
-	return pgDB
+	return pgDB, close
 }
 
 // ResolveNewPostgresDatabase returns a connection to a randomly-named, newly-created database, and
@@ -206,10 +210,10 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 }
 
 // MustSetupTestPostgres returns a ready to use test postgres connection.
-func MustSetupTestPostgres(t *testing.T) *PgDB {
-	pgDB := MustResolveTestPostgres(t)
+func MustSetupTestPostgres(t *testing.T) (*PgDB, func()) {
+	pgDB, close := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
-	return pgDB
+	return pgDB, close
 }
 
 // RequireMockJob returns a stub job.

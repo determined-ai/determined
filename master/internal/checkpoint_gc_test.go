@@ -24,7 +24,8 @@ import (
 )
 
 func TestRunCheckpointGCTask(t *testing.T) {
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
 	user := db.RequireMockUser(t, pgDB)
 

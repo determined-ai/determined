@@ -72,7 +72,8 @@ func conditionServerUp() bool {
 }
 
 func TestProxyLifecycle(t *testing.T) {
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../static/migrations")
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 
@@ -141,7 +142,8 @@ func TestProxyLifecycle(t *testing.T) {
 }
 
 func TestNewProxyHandler(t *testing.T) {
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../static/migrations")
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 	// First init the new Proxy

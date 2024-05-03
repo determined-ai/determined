@@ -34,7 +34,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	db, err := ResolveTestPostgres()
+	db, _, err := ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}

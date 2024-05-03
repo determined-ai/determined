@@ -16,7 +16,8 @@ import (
 
 func TestDispatcherStatePersistence(t *testing.T) {
 	assert.NilError(t, etc.SetRootPath(db.RootFromDB))
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../../static/migrations")
 
 	// clear any existing state
