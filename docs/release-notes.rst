@@ -7,6 +7,73 @@
 ###############
 
 **************
+ Version 0.32
+**************
+
+Version 0.32.0
+==============
+
+**Release Date:** May 03, 2024
+
+**Breaking Changes**
+
+-  Python SDK and CLI: Enforce password requirements for all non-remote users: see
+   :ref:`password-requirements`
+
+      -  This applies to ``create_user``, ``User.change_password``, ``det user create``, and ``det
+         user change-password``.
+
+      -  This does not affect logging in with an existing user who already has an empty or
+         non-compliant password, but we recommend setting good passwords for such users as soon as
+         possible.
+
+-  CLI: Require and allow passwords to be set when creating non-remote users with ``det user
+   create``.
+
+      -  This may be done interactively by following the prompts.
+      -  This may be done noninteractively by using the ``--password`` option.
+      -  This is not required when creating a user with ``--remote`` since Single Sign-On will be
+         used.
+
+**New Features**
+
+-  Kubernetes: Add ability to set up the Determined master service on one Kubernetes cluster and
+   manage workloads across different Kubernetes clusters. Additional non-default resource managers
+   and resource pools are configured under the master configuration options
+   ``additional_resource_managers`` and ``resource_pools`` (additional resource managers are
+   required to have at least one resource pool defined). Additional resource managers and their
+   resource pools must have unique names. For more information, visit :ref:master configuration
+   <master-config-reference>. Support for notebooks and other workloads that require proxying is
+   under development.
+
+-  WebUI: Add ability to view resource manager name for resource pools.
+
+-  API/CLI/WebUI: Route any requests to resource pools not defined in the master configuration to
+   the default resource manager, not any additional resource manager, if defined.
+
+-  Configuration: Add a ``name`` and ``metadata`` field to resource manager section in the master
+   configuration. Add an ``additional_resource_managers`` section that follows the
+   ``resource_manager`` and ``resource_pool`` configuration pattern.
+
+-  CLI: Add the `--enterprise-edition` option for `det deploy local`, allowing users to easily
+   deploy enterprise images.
+
+**Improvements**
+
+-  Configuration: The master config parameter ``observability.enable_prometheus`` now defaults to
+   true. As a result, Prometheus endpoints will now be available by default. This will cause no
+   impact to clusters not using Prometheus.
+
+**Bug Fixes**
+
+-  Since 0.28.1, all deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1 for
+   its database were at risk of becoming completely unresponsive whenever Aurora hits certain
+   autoscaling errors. Multiple ``det deploy aws`` deployment types (default ``simple``, ``vpc``,
+   ``efs``, ``fsx``, ``secure``) are affected. AWS installations using RDS are not affected,
+   including ``det deploy aws --deployment-type=govcloud`` deployments. We recommend all users
+   running affected setups to upgrade as soon as possible.
+
+**************
  Version 0.31
 **************
 
