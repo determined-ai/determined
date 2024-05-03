@@ -645,6 +645,40 @@ func (a *apiServer) GetExperimentTrials(
 	return resp, nil
 }
 
+func (a *apiServer) GetTrialRemainingLogRetentionDays(
+	ctx context.Context, req *apiv1.GetTrialRemainingLogRetentionDaysRequest,
+) (resp *apiv1.GetTrialRemainingLogRetentionDaysResponse, err error) {
+	t, err := db.TrialByID(ctx, int(req.Id))
+	if err != nil {
+		return nil, fmt.Errorf("getting trial %v: %w", req.Id, err)
+	}
+
+	q := `
+SELECT   
+CASE
+	WHEN MIN(t.end_time) <= ( retention_timestamp() - make_interval(days => ?) ) THEN 0
+	ELSE extract(day from MIN(end_time) + make_interval(days => ?) - NOW())::int
+END remaining_log_retention_days
+FROM tasks t
+JOIN run_id_task_id as r ON t.task_id = r.task_id
+WHERE r.run_id = ?
+`
+	resp = &apiv1.GetTrialRemainingLogRetentionDaysResponse{}
+	if t.LogRetentionDays == nil || *t.LogRetentionDays == -1 {
+		days := int32(-1)
+		resp.RemainingDays = &days
+	} else {
+		var days *int32
+		err = db.Bun().NewRaw(q, t.LogRetentionDays, t.LogRetentionDays, t.ID).Scan(ctx, &days)
+		if err != nil {
+			return nil, fmt.Errorf("getting remaining log days for trial %v: %w", t.ID, err)
+		}
+		resp.RemainingDays = days
+	}
+
+	return resp, nil
+}
+
 func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {

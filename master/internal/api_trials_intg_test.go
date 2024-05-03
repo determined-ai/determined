@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 	"time"
@@ -1446,4 +1447,61 @@ func TestPutTrialRetainLogs(t *testing.T) {
 	updatedLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
 	require.NoError(t, err)
 	require.Equal(t, updatedLogRetentionDays, newLogRetentionDays)
+}
+
+func completeTrialsandTasks(ctx context.Context, trialID int, endTimeDays int) error {
+	_, err := db.Bun().NewUpdate().Table("runs").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", trialID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Bun().NewUpdate().
+		Table("tasks", "run_id_task_id").
+		Set("end_time = (NOW() - make_interval(days => ?))", endTimeDays).
+		Where("run_id_task_id.run_id = ? and tasks.task_id = run_id_task_id.task_id", trialID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func TestGetTrialRemainingLogRetentionDays(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	tests := []struct {
+		name             string
+		logRetentionDays string
+		expRemainingDays []int32
+	}{
+		{"test-null-days", "", []int32{-1, -1, -1, -1}},
+		{"test-forever", `
+retention_policy:
+  log_retention_days: -1
+`, []int32{-1, -1, -1, -1}},
+		{"test-10days", `
+retention_policy:
+  log_retention_days: 10
+`, []int32{0, 0, 4, 9}},
+	}
+
+	for _, tt := range tests {
+		log.Printf("Starting %v", tt.name)
+		testEndTimes := []int{15, 10, 5, 0}
+		_, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, tt.logRetentionDays, len(testEndTimes))
+
+		for i, v := range testEndTimes {
+			err := completeTrialsandTasks(ctx, trialIDs[i], v)
+			require.NoError(t, err)
+
+			d, err := api.GetTrialRemainingLogRetentionDays(ctx, &apiv1.GetTrialRemainingLogRetentionDaysRequest{
+				Id: int32(trialIDs[i]),
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.expRemainingDays[i], *d.RemainingDays)
+		}
+	}
 }

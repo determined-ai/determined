@@ -739,6 +739,18 @@ service Determined {
     };
   }
 
+  // Get the list of trials for an experiment.
+  rpc GetTrialRemainingLogRetentionDays(
+      GetTrialRemainingLogRetentionDaysRequest)
+      returns (GetTrialRemainingLogRetentionDaysResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{id}/remaining_log_retention_days"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Return a downsampled time series of metrics from multiple trials to compare
   // them side-by-side.
   rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {

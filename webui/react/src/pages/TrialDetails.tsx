@@ -1,10 +1,11 @@
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
-import { Loadable } from 'hew/utils/loadable';
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Badge from 'components/Badge';
 import Page from 'components/Page';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -18,13 +19,18 @@ import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
-import { getExperimentDetails, getTrialDetails } from 'services/api';
+import {
+  getExperimentDetails,
+  getTrialDetails,
+  getTrialRemainingLogRetentionDays,
+} from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ApiState, ExperimentBase, TrialDetails, ValueOf, Workspace } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound } from 'utils/service';
+import { pluralizer } from 'utils/string';
 
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
@@ -65,6 +71,7 @@ const TrialDetailsComp: React.FC = () => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
+  const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number>>(NotLoaded);
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment?.workspaceId ?? 0 },
@@ -108,6 +115,48 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [canceler, trialDetails.error, trialId]);
 
+  const fetchRemainingLogDays = useCallback(async () => {
+    try {
+      const remainingDays = await getTrialRemainingLogRetentionDays({ id: trialId });
+      setRemainingLogDays(
+        remainingDays.remainingLogRetentionDays !== undefined
+          ? Loaded(remainingDays.remainingLogRetentionDays)
+          : NotLoaded,
+      );
+    } catch (e) {
+      setRemainingLogDays(NotLoaded);
+    }
+  }, [trialId]);
+
+  const fetchAllTrialDetails = useCallback(async () => {
+    await Promise.allSettled([fetchTrialDetails(), fetchRemainingLogDays()]);
+  }, [fetchRemainingLogDays, fetchTrialDetails]);
+
+  const getRemainingLogsLabel = useMemo(() => {
+    let toolTipText = '';
+    let badgeText = '';
+    const days = Loadable.getOrElse(null, remainingLogDays);
+    if (days === null) {
+      toolTipText = 'Days remaining to retention are not available yet.';
+      badgeText = '-';
+    } else if (days === -1) {
+      toolTipText = 'Logs will be retained forever.';
+      badgeText = 'Frvr';
+    } else if (days === 0) {
+      toolTipText = 'Some logs have begun to be deleted for this trial.';
+      badgeText = '0';
+    } else {
+      toolTipText = `${pluralizer(days, 'day')} left to retain logs`;
+      badgeText = `${remainingLogDays}`;
+    }
+    return (
+      <div>
+        <>Logs </>
+        <Badge tooltip={toolTipText}>{badgeText}</Badge>
+      </div>
+    );
+  }, [remainingLogDays]);
+
   const handleTabChange = useCallback(
     (key: string) => {
       setTabKey(key as TabType);
@@ -134,7 +183,7 @@ const TrialDetailsComp: React.FC = () => {
       return [];
     }
 
-    const tabs: Array<{ children: ReactNode; key: TabType; label: string }> = [
+    const tabs: PivotProps['items'] = [
       {
         children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
         key: TabType.Overview,
@@ -161,7 +210,7 @@ const TrialDetailsComp: React.FC = () => {
       {
         children: <TrialDetailsLogs experiment={experiment} trial={trial} />,
         key: TabType.Logs,
-        label: 'Logs',
+        label: getRemainingLogsLabel,
       },
     ];
 
@@ -174,9 +223,9 @@ const TrialDetailsComp: React.FC = () => {
     }
 
     return tabs;
-  }, [experiment, trial, showExperimentArtifacts]);
+  }, [experiment, trial, getRemainingLogsLabel, showExperimentArtifacts]);
 
-  const { stopPolling } = usePolling(fetchTrialDetails);
+  const { stopPolling } = usePolling(fetchAllTrialDetails);
 
   useEffect(() => {
     setTrialId(Number(trialID));
@@ -184,8 +233,8 @@ const TrialDetailsComp: React.FC = () => {
 
   useEffect(() => {
     setIsFetching(true);
-    fetchTrialDetails();
-  }, [fetchTrialDetails, trialId]);
+    fetchAllTrialDetails();
+  }, [fetchAllTrialDetails, trialId]);
 
   useEffect(() => {
     fetchExperimentDetails();
@@ -241,7 +290,7 @@ const TrialDetailsComp: React.FC = () => {
       headerComponent={
         <TrialDetailsHeader
           experiment={experiment}
-          fetchTrialDetails={fetchTrialDetails}
+          fetchTrialDetails={fetchAllTrialDetails}
           trial={trial}
         />
       }
