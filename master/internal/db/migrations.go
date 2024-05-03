@@ -162,6 +162,20 @@ SET search_path TO public,determined_code`); err != nil {
 func (db *PgDB) Migrate(
 	migrationURL string, dbCodeDir string, actions []string,
 ) (isNew bool, err error) {
+	// In integration tests, multiple processes can be running this code at once, which can lead to
+	// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
+	//
+	// Avoid using a transcation level advisory lock because `SET search_path` gives weird
+	// results running after a transcation started.
+	const MigrationLockID = 0x33ad0708c9bed25b // Arbitrarily chosen unique consistent ID for the lock.
+	_, err = db.sql.Exec("SELECT pg_advisory_lock($1)", MigrationLockID)
+	if err != nil {
+		return false, err
+	}
+	defer func() {
+		db.sql.Exec("SELECT pg_advisory_unlock($1)", MigrationLockID)
+	}()
+
 	if err := db.dropDBCode(); err != nil {
 		return false, err
 	}
@@ -191,17 +205,6 @@ func (db *PgDB) Migrate(
 			log.Errorf("failed to rollback pg transaction while migrating: %s", errd)
 		}
 	}()
-
-	// In integration tests, multiple processes can be running this code at once, which can lead to
-	// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
-
-	// Arbitrarily chosen unique consistent ID for the lock.
-	const MigrationLockID = 0x33ad0708c9bed25b
-
-	_, err = tx.Exec("SELECT pg_advisory_xact_lock(?)", MigrationLockID)
-	if err != nil {
-		return false, err
-	}
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
 		return false, errors.Wrap(err, "error upgrading migration metadata")
