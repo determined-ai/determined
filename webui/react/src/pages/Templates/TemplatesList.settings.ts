@@ -9,7 +9,7 @@ export type TemplateColumnName = 'action' | 'name' | 'workspace';
 export const DEFAULT_COLUMNS: TemplateColumnName[] = ['name', 'workspace'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TemplateColumnName, number> = {
-  action: 30,
+  action: 46,
   name: 150,
   workspace: 50,
 };
@@ -55,7 +55,7 @@ const config = (id: string): SettingsConfig<Settings> => ({
       type: number,
     },
     workspace: {
-      defaultValue: [],
+      defaultValue: undefined,
       storageKey: 'workspace',
       type: union([undefinedType, array(number)]),
     },

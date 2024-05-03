@@ -55,7 +55,6 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   );
   const [selectedTemplate, setSelectedTemplate] = useState<Template>();
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
@@ -73,17 +72,17 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
           name: settings.name,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetTemplatesRequestSortBy, settings.sortKey),
+          workspaceIds: workspaceId
+            ? [workspaceId]
+            : settings.workspace?.length
+              ? settings.workspace
+              : undefined,
         },
         { signal: canceler.signal },
       );
-      setTotal(res.length);
       setTemplates((prev) => {
-        let tmpls = res;
-        if (workspaceId) tmpls = res.filter((t) => t.workspaceId === workspaceId);
-        else if (settings.workspace?.length)
-          tmpls = res.filter((t) => settings.workspace?.includes(t.workspaceId));
-        if (_.isEqual(prev, tmpls)) return prev;
-        return tmpls;
+        if (_.isEqual(prev, res)) return prev;
+        return res;
       });
     } catch (e) {
       handleError(e, {
@@ -198,7 +197,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
               text: <WorkspaceFilter workspace={ws} />,
               value: ws.id,
             })),
-        isFiltered: (settings: Settings) => !!settings.workspace,
+        isFiltered: (settings: Settings) => !!settings.workspace?.length,
         key: V1GetTemplatesRequestSortBy.NAME,
         render: (_v: string, record: Template) => taskWorkspaceRenderer(record, workspaces),
         title: 'Workspace',
@@ -250,7 +249,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
       <div className={css.headerButton}>
         {canCreate && <Button onClick={TemplateCreateModal.open}>New Template</Button>}
       </div>
-      {(workspaceId ? templates.length === 0 : total === 0) && !isLoading ? (
+      {!(settings.name || settings.workspace?.length) && templates.length === 0 && !isLoading ? (
         <Message
           description="Move settings that are shared by many tasks into a single YAML file, that can then be referenced by configurations that require those settings."
           icon="columns"
