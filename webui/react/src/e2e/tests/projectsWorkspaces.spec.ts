@@ -1,10 +1,13 @@
-import { expect } from '@playwright/test';
-
 import { test } from 'e2e/fixtures/global-fixtures';
 import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
-import { randId, safeName } from 'e2e/utils/naming';
+import {
+  randId,
+  safeName,
+} from 'e2e/utils/naming';
+
+import { expect } from '@playwright/test';
 
 test.describe('Projects', () => {
   test.setTimeout(120_000);
@@ -35,15 +38,14 @@ test.describe('Projects', () => {
     return fullName;
   };
 
-  test.beforeEach(async ({ dev, auth, page }) => {
+  test.beforeEach(async ({ dev, authedPage }) => {
     await dev.setServerAddress();
-    await auth.login();
-    await expect(page).toHaveTitle(BasePage.getTitle('Home'));
-    await expect(page).toHaveURL(/dashboard/);
+    await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
+    await expect(authedPage).toHaveURL(/dashboard/);
   });
 
-  test.afterEach(async ({ page }) => {
-    const workspacesPage = new Workspaces(page);
+  test.afterEach(async ({ apiAuth, page: authedPage }) => {
+    const workspacesPage = new Workspaces(authedPage);
     await test.step('Delete a workspace', async () => {
       if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
@@ -66,15 +68,16 @@ test.describe('Projects', () => {
         await workspacesPage.deleteModal.footer.submit.pwLocator.click();
       }
     });
+    await apiAuth.logout();
   });
 
-  test('Projects and Workspaces CRUD', async ({ page }) => {
-    const workspacesPage = new Workspaces(page);
+  test('Projects and Workspaces CRUD', async ({ page: authedPage }) => {
+    const workspacesPage = new Workspaces(authedPage);
 
     await test.step('Navigate to Workspaces', async () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await page.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
-      await expect.soft(page).toHaveTitle(workspacesPage.title);
+      await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
+      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
     });
 
     await test.step('Create a workspace', async () => {

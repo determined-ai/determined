@@ -3,16 +3,25 @@ import {
   APIRequestContext,
   Browser,
   BrowserContext,
+  Page,
 } from '@playwright/test';
 
 export class ApiAuthFixture {
     apiContext: APIRequestContext | undefined; // DNJ TODO - how to not have undefined
     readonly request: APIRequest;
+    readonly browser: Browser;
+    _page: Page | undefined;
+    get page() {
+        if (this._page === undefined) {
+            throw new Error("Accessing page object before initialization in authentication")
+        }
+        return this._page;
+    }
     readonly #STATE_FILE = 'state.json';
     readonly #USERNAME: string;
     readonly #PASSWORD: string;
     context: BrowserContext | undefined;
-    constructor(request: APIRequest) {
+    constructor(request: APIRequest, browser: Browser) {
         if (process.env.PW_USER_NAME === undefined) {
             throw new Error('username must be defined');
         }
@@ -22,28 +31,28 @@ export class ApiAuthFixture {
         this.#USERNAME = process.env.PW_USER_NAME;
         this.#PASSWORD = process.env.PW_PASSWORD;
         this.request = request;
+        this.browser = browser;
     }
 
-    async login(browser: Browser) {
-
-        this.apiContext = await this.request.newContext({
-            httpCredentials: {
+    async login() {
+        this.apiContext = await this.request.newContext();
+        console.log("LOGGING IN");
+        await this.apiContext.post(`/api/v1/auth/login`, {
+            data: {
                 username: this.#USERNAME,
-                password: this.#PASSWORD
+                password: this.#PASSWORD,
+                isHashed: false
             }
         });
-        await this.apiContext.get(`/login`);
         // Save cookie state into the file.
         await this.apiContext.storageState({ path: this.#STATE_FILE });
         // Create a new context for the browser with the saved token.
-        this.context = await browser.newContext({ storageState: this.#STATE_FILE });
+        this.context = await this.browser.newContext({ storageState: this.#STATE_FILE });
+        this._page = await this.context.newPage();
     }
 
-    async useContext(){
-
-    }
     async logout() {
-        this.apiContext?.dispose();
-        this.context?.close();
+        await this.apiContext?.dispose();
+        await this.context?.close();
     }
 }
