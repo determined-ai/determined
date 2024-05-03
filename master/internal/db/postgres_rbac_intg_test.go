@@ -185,10 +185,12 @@ func cleanUp(t *testing.T) {
 func TestPermissionMatch(t *testing.T) {
 	ctx := context.Background()
 	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
-	t.Cleanup(func() { cleanUp(t) })
+	t.Cleanup(func() {
+		cleanUp(t)
+		close()
+	})
 	setup(t, pgDB)
 	userIDViewer := userModelViewer.ID
 	userIDEditor := userModelEditor.ID

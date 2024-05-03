@@ -21,10 +21,12 @@ import (
 func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
 	pgDB, close := db.MustResolveTestPostgres(t)
-	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
-	t.Cleanup(func() { cleanUp(ctx, t) })
+	t.Cleanup(func() {
+		cleanUp(ctx, t)
+		close()
+	})
 	setUp(ctx, t, pgDB)
 
 	t.Run("group creation", func(t *testing.T) {

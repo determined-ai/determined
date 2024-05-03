@@ -16,7 +16,8 @@ import (
 )
 
 func TestAddJob(t *testing.T) {
-	setupDBForTest(t)
+	close := setupDBForTest(t)
+	defer close()
 
 	t.Run("add job", func(t *testing.T) {
 		_, err := createAndAddJob(0)
@@ -40,7 +41,8 @@ func TestAddJob(t *testing.T) {
 }
 
 func TestJobByID(t *testing.T) {
-	setupDBForTest(t)
+	close := setupDBForTest(t)
+	defer close()
 
 	t.Run("add and retrieve job", func(t *testing.T) {
 		// create and send job
@@ -65,7 +67,8 @@ func TestJobByID(t *testing.T) {
 }
 
 func TestUpdateJobPosition(t *testing.T) {
-	setupDBForTest(t)
+	close := setupDBForTest(t)
+	defer close()
 
 	t.Run("update position", func(t *testing.T) {
 		// create and send job
@@ -135,12 +138,12 @@ func TestUpdateJobPosition(t *testing.T) {
 }
 
 // TODO [RM-27] initialize db in a TestMain(...) when there's enough package isolation.
-func setupDBForTest(t *testing.T) {
+func setupDBForTest(t *testing.T) func() {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
 	db, close := MustResolveTestPostgres(t)
-	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	return close
 }
 
 func createAndAddJob(pos int64) (model.Job, error) {

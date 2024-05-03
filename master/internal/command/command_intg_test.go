@@ -27,8 +27,7 @@ import (
 )
 
 func TestCommandManagerLifecycle(t *testing.T) {
-	db, close := setupTest(t)
-	defer close()
+	db := setupTest(t)
 	ctx := context.TODO()
 
 	// Launch a Command.
@@ -63,8 +62,7 @@ func TestCommandManagerLifecycle(t *testing.T) {
 }
 
 func TestNotebookManagerLifecycle(t *testing.T) {
-	db, close := setupTest(t)
-	defer close()
+	db := setupTest(t)
 	ctx := context.TODO()
 
 	// Launch a Notebook.
@@ -99,8 +97,7 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 }
 
 func TestShellManagerLifecycle(t *testing.T) {
-	db, close := setupTest(t)
-	defer close()
+	db := setupTest(t)
 	ctx := context.TODO()
 
 	// Launch a Shell.
@@ -135,8 +132,7 @@ func TestShellManagerLifecycle(t *testing.T) {
 }
 
 func TestTensorboardManagerLifecycle(t *testing.T) {
-	db, close := setupTest(t)
-	defer close()
+	db := setupTest(t)
 	ctx := context.TODO()
 
 	// Launch a Tensorboard.
@@ -170,9 +166,7 @@ func TestTensorboardManagerLifecycle(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func setupTest(t *testing.T) (*db.PgDB, func()) {
-	pgDB, close := db.MustSetupTestPostgres(t)
-
+func setupTest(t *testing.T) *db.PgDB {
 	// First init the new Command Service
 	var mockRM mocks.ResourceManager
 	sub := sproto.NewAllocationSubscription(queue.New[sproto.ResourcesEvent](), func() {})
@@ -180,13 +174,13 @@ func setupTest(t *testing.T) (*db.PgDB, func()) {
 	mockRM.On("Release", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything, mock.Anything).Return(nil)
 
-	cs, _ := NewService(pgDB, &mockRM)
+	cs, _ := NewService(db.SingleDB(), &mockRM)
 	SetDefaultService(cs)
 
 	jobservice.SetDefaultService(&mockRM)
 
 	require.NotNil(t, DefaultCmdService)
-	return pgDB, close
+	return db.SingleDB()
 }
 
 func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {
