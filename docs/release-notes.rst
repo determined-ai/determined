@@ -54,8 +54,6 @@ Version 0.32.0
    manager section in the master configuration. Add an ``additional_resource_managers`` section that
    follows the ``resource_manager`` and ``resource_pool`` configuration pattern.
 
-**New Features**
-
 -  CLI: Add an ``--enterprise-edition`` option for ``det deploy local``. This option enables users
    to easily deploy enterprise images.
 
