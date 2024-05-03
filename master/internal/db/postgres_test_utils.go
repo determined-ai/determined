@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -169,7 +170,8 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 	if len(actions) == 0 {
 		actions = []string{"up"}
 	}
-	_, err := db.Migrate(migrationsPath, actions)
+	_, err := db.Migrate(
+		migrationsPath, strings.ReplaceAll(migrationsPath+"/../db_code", "file://", ""), actions)
 	if err != nil {
 		return fmt.Errorf("failed to migrate postgres: %w", err)
 	}

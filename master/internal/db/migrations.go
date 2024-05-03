@@ -2,12 +2,15 @@ package db
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
 	"github.com/go-pg/migrations/v8"
 	"github.com/go-pg/pg/v10"
 	"github.com/jackc/pgconn"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -111,8 +114,58 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	return nil
 }
 
+func (db *PgDB) addDBCode(dbCodeDir string) error {
+	files, err := os.ReadDir(dbCodeDir)
+	if err != nil {
+		return fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
+	}
+
+	if err := db.withTransaction("determined database views", func(tx *sqlx.Tx) error {
+		for _, f := range files {
+			if filepath.Ext(f.Name()) != ".sql" {
+				continue
+			}
+
+			filePath := filepath.Join(dbCodeDir, f.Name())
+			b, err := os.ReadFile(filePath)
+			if err != nil {
+				return fmt.Errorf("reading view definition file '%s': %w", filePath, err)
+			}
+
+			if _, err := tx.Exec(string(b)); err != nil {
+				return fmt.Errorf("running database view file '%s': %w", filePath, err)
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("adding determined database views: %w", err)
+	}
+
+	return nil
+}
+
+func (db *PgDB) dropDBCode() error {
+	// SET search_path since the ALTER DATABASE ... SET SEARCH_PATH won't apply to this connection
+	// since it was created after the migration ran.
+	if _, err := db.sql.Exec(`
+DROP SCHEMA IF EXISTS determined_code CASCADE;
+CREATE SCHEMA determined_code;
+SET search_path TO determined_code,public`); err != nil {
+		return fmt.Errorf("removing determined database views so they can be created later: %w", err)
+	}
+
+	return nil
+}
+
 // Migrate runs the migrations from the specified directory URL.
-func (db *PgDB) Migrate(migrationURL string, actions []string) (isNew bool, err error) {
+func (db *PgDB) Migrate(
+	migrationURL string, dbCodeDir string, actions []string,
+) (isNew bool, err error) {
+	if err := db.dropDBCode(); err != nil {
+		return false, err
+	}
+
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
 	// with pgx, so we use a one-off go-pg/pg connection.
 	pgOpts, err := makeGoPgOpts(db.URL)
@@ -186,6 +239,13 @@ func (db *PgDB) Migrate(migrationURL string, actions []string) (isNew bool, err 
 		log.Infof("migrated from %d to %d", oldVersion, newVersion)
 	}
 
+	if newVersion >= 20240502203516 { // Only comes up in testing old data.
+		if err := db.addDBCode(dbCodeDir); err != nil {
+			return false, err
+		}
+	}
+
 	log.Info("DB migrations completed")
+
 	return oldVersion == 0, nil
 }
