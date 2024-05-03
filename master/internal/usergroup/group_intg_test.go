@@ -399,8 +399,8 @@ var (
 	}
 	testGroups = []model.Group{testGroup, testGroupStatic}
 	testUser   = model.User{
-		ID:       1217651234,
-		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
+		ID:       1217651235,
+		Username: fmt.Sprintf("IntegrationTest%d", 1217651235),
 		Admin:    false,
 		Active:   false,
 	}
