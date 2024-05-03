@@ -476,7 +476,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 	}{}
 
 	// get all runs in project
-	runsQuery := db.Bun().NewSelect().Distinct().
+	runsQuery := db.Bun().NewSelect().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
 		ColumnExpr("rhp.hparam as hparam").
 		ColumnExpr(`CASE
@@ -486,13 +486,14 @@ func (a *apiServer) getProjectRunColumnsByID(
 		END as type`).
 		TableExpr("run_hparams as rhp").
 		Join("JOIN runs as r ON rhp.run_id=r.id").
-		Where("project_id = ?", id)
+		Where("project_id = ?", id).
+		Group("hparam", "type")
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
 		curUser,
 		p,
-		db.Bun().NewSelect().TableExpr("(?) AS subq", runsQuery),
+		runsQuery,
 		[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA},
 	)
 	if err != nil {
@@ -504,6 +505,65 @@ func (a *apiServer) getProjectRunColumnsByID(
 		return nil, err
 	}
 
+	summaryMetrics := []struct {
+		MetricName string
+		JSONPath   string
+		MetricType string
+	}{}
+
+	if len(hyperparameters) > 0 {
+		runsQuery := db.Bun().NewSelect().Distinct().Table("runs").
+			ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
+			ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))"+
+				" as metric_name").
+			ColumnExpr(
+				`summary_metrics->jsonb_object_keys(summary_metrics)->
+			jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))->>'type'
+			AS metric_type`).
+			Where("summary_metrics IS NOT NULL").
+			Where("hparams IS NOT NULL").
+			Where("hparams != 'null'").
+			Where("project_id = ?", id).
+			Order("json_path").Order("metric_name")
+		err = runsQuery.Scan(ctx, &summaryMetrics)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, stats := range summaryMetrics {
+		// If there are multiple metrics with the same group and name, report one unspecified column.
+
+		columnType := parseMetricsType(stats.MetricType)
+
+		columnPrefix := stats.JSONPath
+		columnLocation := projectv1.LocationType_LOCATION_TYPE_CUSTOM_METRIC
+		if stats.JSONPath == metricGroupTraining {
+			columnPrefix = metricIDTraining
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_TRAINING
+		}
+		if stats.JSONPath == metricGroupValidation {
+			columnPrefix = metricIDValidation
+			columnLocation = projectv1.LocationType_LOCATION_TYPE_VALIDATIONS
+		}
+		// don't surface aggregates that don't make sense for non-numbers
+		if columnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER {
+			aggregates := []string{"last", "max", "mean", "min"}
+			for _, aggregate := range aggregates {
+				columns = append(columns, &projectv1.ProjectColumn{
+					Column:   fmt.Sprintf("%s.%s.%s", columnPrefix, stats.MetricName, aggregate),
+					Location: columnLocation,
+					Type:     columnType,
+				})
+			}
+		} else {
+			columns = append(columns, &projectv1.ProjectColumn{
+				Column:   fmt.Sprintf("%s.%s.last", columnPrefix, stats.MetricName),
+				Location: columnLocation,
+				Type:     columnType,
+			})
+		}
+	}
 	for _, hparam := range hyperparameters {
 		var columnType projectv1.ColumnType
 		switch {
