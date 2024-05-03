@@ -21911,7 +21911,7 @@ def put_PutTemplate(
     body: "v1Template",
     template_name: str,
 ) -> "v1PutTemplateResponse":
-    """DEPRECATED: Update or create (upsert) the requested template.
+    """Update or create (upsert) the requested template.
 
     - body: The template to put.
     - template_name: The name of the template.

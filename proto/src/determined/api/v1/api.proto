@@ -1330,7 +1330,7 @@ service Determined {
       tags: "Templates"
     };
   }
-  // DEPRECATED: Update or create (upsert) the requested template.
+  // Update or create (upsert) the requested template.
   rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
     option (google.api.http) = {
       put: "/api/v1/templates/{template.name}"
