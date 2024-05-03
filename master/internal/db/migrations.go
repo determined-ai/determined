@@ -1,6 +1,8 @@
 package db
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -114,25 +116,64 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	return nil
 }
 
-func (db *PgDB) addDBCode(dbCodeDir string) error {
+func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]string, bool, error) {
 	files, err := os.ReadDir(dbCodeDir)
 	if err != nil {
-		return fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
+		return nil, false, fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
 	}
 
+	allCode := ""
+	fileNamesToSQL := make(map[string]string)
+	for _, f := range files {
+		if filepath.Ext(f.Name()) != ".sql" {
+			continue
+		}
+
+		filePath := filepath.Join(dbCodeDir, f.Name())
+		b, err := os.ReadFile(filePath) //nolint: gosec // We trust dbCodeDir.
+		if err != nil {
+			return nil, false, fmt.Errorf("reading view definition file '%s': %w", filePath, err)
+		}
+		fileNamesToSQL[f.Name()] = string(b)
+		allCode += string(b)
+	}
+
+	// I didn't want to get into deciding when to apply database or code or not but integration
+	// tests make it really hard to not do this.
+	hash := sha256.Sum256([]byte(allCode))
+	ourHash := hex.EncodeToString(hash[:])
+
+	// Check if the db_code_hash table exists. If it doesn't return that we need to create db code.
+	var tableExists bool
+	if err = db.sql.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'db_code_hash')").
+		Scan(&tableExists); err != nil {
+		return nil, false, fmt.Errorf("checking db_code_hash exists: %w", err)
+	}
+	if !tableExists {
+		return fileNamesToSQL, true, nil
+	}
+
+	// Check if our hashes match. If they do we can just return we don't need to do anything.
+	var databaseHash string
+	if err := db.sql.QueryRow("SELECT hash FROM db_code_hash").Scan(&databaseHash); err != nil {
+		return nil, false, fmt.Errorf("getting hash from db_code_hash: %w", err)
+	}
+	if databaseHash == ourHash {
+		return fileNamesToSQL, false, nil
+	}
+
+	// Update our hash and return we need to create db code.
+	if _, err := db.sql.Exec("UPDATE db_code_hash SET hash = $1", ourHash); err != nil {
+		return nil, false, fmt.Errorf("updating our database hash: %w", err)
+	}
+	return fileNamesToSQL, false, nil
+}
+
+func (db *PgDB) addDBCode(fileNamesToSQL map[string]string) error {
 	if err := db.withTransaction("determined database views", func(tx *sqlx.Tx) error {
-		for _, f := range files {
-			if filepath.Ext(f.Name()) != ".sql" {
-				continue
-			}
-
-			filePath := filepath.Join(dbCodeDir, f.Name())
-			b, err := os.ReadFile(filePath) //nolint: gosec // We trust dbCodeDir.
-			if err != nil {
-				return fmt.Errorf("reading view definition file '%s': %w", filePath, err)
-			}
-
-			if _, err := tx.Exec(string(b)); err != nil {
+		for filePath, sql := range fileNamesToSQL {
+			if _, err := tx.Exec(sql); err != nil {
 				return fmt.Errorf("running database view file '%s': %w", filePath, err)
 			}
 		}
@@ -169,8 +210,18 @@ func (db *PgDB) Migrate(
 		cleanup := testOnlyDBLock(db.sql)
 		defer cleanup()
 	}
-	if err := db.dropDBCode(); err != nil {
+
+	dbCodeFiles, needToUpdateDBCode, err := db.readDBCodeAndCheckIfDifferent(dbCodeDir)
+	if err != nil {
 		return false, err
+	}
+	if needToUpdateDBCode {
+		if err := db.dropDBCode(); err != nil {
+			return false, err
+		}
+		log.Info("database views changed")
+	} else {
+		log.Info("database views unchanged, will not updated")
 	}
 
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
@@ -236,8 +287,10 @@ func (db *PgDB) Migrate(
 	}
 
 	if newVersion >= 20240502203516 { // Only comes up in testing old data.
-		if err := db.addDBCode(dbCodeDir); err != nil {
-			return false, err
+		if needToUpdateDBCode {
+			if err := db.addDBCode(dbCodeFiles); err != nil {
+				return false, err
+			}
 		}
 	}
 

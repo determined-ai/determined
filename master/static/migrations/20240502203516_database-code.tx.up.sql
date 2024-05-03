@@ -1,3 +1,8 @@
+CREATE TABLE db_code_hash (
+    hash text PRIMARY KEY NOT NULL
+);
+INSERT INTO db_code_hash VALUES('blank');
+
 DROP VIEW public.proto_checkpoints_view;
 DROP VIEW public.checkpoints_view;
 
