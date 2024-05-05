@@ -487,7 +487,8 @@ func (a *apiServer) getProjectRunColumnsByID(
 		TableExpr("run_hparams as rhp").
 		Join("JOIN runs as r ON rhp.run_id=r.id").
 		Where("project_id = ?", id).
-		Group("hparam", "type")
+		Group("hparam", "type").
+		Limit(100)
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
