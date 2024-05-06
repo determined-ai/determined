@@ -135,7 +135,7 @@ Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/pytorch-tensorflow-cuda-dev:f17151a
+   FROM determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
 
    # Custom Configuration
    RUN apt-get update && \
@@ -198,7 +198,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/pytorch-tensorflow-cpu-dev:f17151a
+   FROM determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8
