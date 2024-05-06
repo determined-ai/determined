@@ -624,6 +624,111 @@ func (x *PatchTemplateConfigResponse) GetTemplate() *templatev1.Template {
 	return nil
 }
 
+// Rename a template
+type PatchTemplateNameRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OldName string `protobuf:"bytes,1,opt,name=old_name,json=oldName,proto3" json:"old_name,omitempty"`
+	NewName string `protobuf:"bytes,2,opt,name=new_name,json=newName,proto3" json:"new_name,omitempty"`
+}
+
+func (x *PatchTemplateNameRequest) Reset() {
+	*x = PatchTemplateNameRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_template_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchTemplateNameRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchTemplateNameRequest) ProtoMessage() {}
+
+func (x *PatchTemplateNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_template_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchTemplateNameRequest.ProtoReflect.Descriptor instead.
+func (*PatchTemplateNameRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PatchTemplateNameRequest) GetOldName() string {
+	if x != nil {
+		return x.OldName
+	}
+	return ""
+}
+
+func (x *PatchTemplateNameRequest) GetNewName() string {
+	if x != nil {
+		return x.NewName
+	}
+	return ""
+}
+
+// Response to PatchTemplateNameRequest
+type PatchTemplateNameResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The updated template.
+	Template *templatev1.Template `protobuf:"bytes,1,opt,name=template,proto3" json:"template,omitempty"`
+}
+
+func (x *PatchTemplateNameResponse) Reset() {
+	*x = PatchTemplateNameResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_template_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchTemplateNameResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchTemplateNameResponse) ProtoMessage() {}
+
+func (x *PatchTemplateNameResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_template_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchTemplateNameResponse.ProtoReflect.Descriptor instead.
+func (*PatchTemplateNameResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PatchTemplateNameResponse) GetTemplate() *templatev1.Template {
+	if x != nil {
+		return x.Template
+	}
+	return nil
+}
+
 // Delete the template with the given id.
 type DeleteTemplateRequest struct {
 	state         protoimpl.MessageState
@@ -637,7 +742,7 @@ type DeleteTemplateRequest struct {
 func (x *DeleteTemplateRequest) Reset() {
 	*x = DeleteTemplateRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_template_proto_msgTypes[10]
+		mi := &file_determined_api_v1_template_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -650,7 +755,7 @@ func (x *DeleteTemplateRequest) String() string {
 func (*DeleteTemplateRequest) ProtoMessage() {}
 
 func (x *DeleteTemplateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_template_proto_msgTypes[10]
+	mi := &file_determined_api_v1_template_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -663,7 +768,7 @@ func (x *DeleteTemplateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTemplateRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTemplateRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{10}
+	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteTemplateRequest) GetTemplateName() string {
@@ -683,7 +788,7 @@ type DeleteTemplateResponse struct {
 func (x *DeleteTemplateResponse) Reset() {
 	*x = DeleteTemplateResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_template_proto_msgTypes[11]
+		mi := &file_determined_api_v1_template_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -696,7 +801,7 @@ func (x *DeleteTemplateResponse) String() string {
 func (*DeleteTemplateResponse) ProtoMessage() {}
 
 func (x *DeleteTemplateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_template_proto_msgTypes[11]
+	mi := &file_determined_api_v1_template_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +814,7 @@ func (x *DeleteTemplateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTemplateResponse.ProtoReflect.Descriptor instead.
 func (*DeleteTemplateResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{11}
+	return file_determined_api_v1_template_proto_rawDescGZIP(), []int{13}
 }
 
 var File_determined_api_v1_template_proto protoreflect.FileDescriptor
@@ -807,16 +912,30 @@ var file_determined_api_v1_template_proto_rawDesc = []byte{
 	0x2e, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x6d,
 	0x70, 0x6c, 0x61, 0x74, 0x65, 0x52, 0x08, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x3a,
 	0x10, 0x92, 0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74,
-	0x65, 0x22, 0x3c, 0x0a, 0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c,
-	0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x74, 0x65,
-	0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0c, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22,
-	0x18, 0x0a, 0x16, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x22, 0x6d, 0x0a, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61,
+	0x74, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a,
+	0x08, 0x6f, 0x6c, 0x64, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x6f, 0x6c, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x19, 0x0a, 0x08, 0x6e, 0x65, 0x77, 0x5f,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6e, 0x65, 0x77, 0x4e,
+	0x61, 0x6d, 0x65, 0x3a, 0x1b, 0x92, 0x41, 0x18, 0x0a, 0x16, 0xd2, 0x01, 0x08, 0x6f, 0x6c, 0x64,
+	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0xd2, 0x01, 0x08, 0x6e, 0x65, 0x77, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
+	0x22, 0x6b, 0x0a, 0x19, 0x50, 0x61, 0x74, 0x63, 0x68, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74,
+	0x65, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a,
+	0x08, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x20, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x74, 0x65, 0x6d,
+	0x70, 0x6c, 0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74,
+	0x65, 0x52, 0x08, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x3a, 0x10, 0x92, 0x41, 0x0d,
+	0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x22, 0x3c, 0x0a,
+	0x15, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x74, 0x65, 0x6d, 0x70, 0x6c, 0x61,
+	0x74, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x74,
+	0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x18, 0x0a, 0x16, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x54, 0x65, 0x6d, 0x70, 0x6c, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61,
+	0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -832,7 +951,7 @@ func file_determined_api_v1_template_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_template_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_template_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_determined_api_v1_template_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_determined_api_v1_template_proto_goTypes = []interface{}{
 	(GetTemplatesRequest_SortBy)(0),     // 0: determined.api.v1.GetTemplatesRequest.SortBy
 	(*GetTemplatesRequest)(nil),         // 1: determined.api.v1.GetTemplatesRequest
@@ -845,30 +964,33 @@ var file_determined_api_v1_template_proto_goTypes = []interface{}{
 	(*PostTemplateResponse)(nil),        // 8: determined.api.v1.PostTemplateResponse
 	(*PatchTemplateConfigRequest)(nil),  // 9: determined.api.v1.PatchTemplateConfigRequest
 	(*PatchTemplateConfigResponse)(nil), // 10: determined.api.v1.PatchTemplateConfigResponse
-	(*DeleteTemplateRequest)(nil),       // 11: determined.api.v1.DeleteTemplateRequest
-	(*DeleteTemplateResponse)(nil),      // 12: determined.api.v1.DeleteTemplateResponse
-	(OrderBy)(0),                        // 13: determined.api.v1.OrderBy
-	(*templatev1.Template)(nil),         // 14: determined.template.v1.Template
-	(*Pagination)(nil),                  // 15: determined.api.v1.Pagination
-	(*_struct.Struct)(nil),              // 16: google.protobuf.Struct
+	(*PatchTemplateNameRequest)(nil),    // 11: determined.api.v1.PatchTemplateNameRequest
+	(*PatchTemplateNameResponse)(nil),   // 12: determined.api.v1.PatchTemplateNameResponse
+	(*DeleteTemplateRequest)(nil),       // 13: determined.api.v1.DeleteTemplateRequest
+	(*DeleteTemplateResponse)(nil),      // 14: determined.api.v1.DeleteTemplateResponse
+	(OrderBy)(0),                        // 15: determined.api.v1.OrderBy
+	(*templatev1.Template)(nil),         // 16: determined.template.v1.Template
+	(*Pagination)(nil),                  // 17: determined.api.v1.Pagination
+	(*_struct.Struct)(nil),              // 18: google.protobuf.Struct
 }
 var file_determined_api_v1_template_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetTemplatesRequest.sort_by:type_name -> determined.api.v1.GetTemplatesRequest.SortBy
-	13, // 1: determined.api.v1.GetTemplatesRequest.order_by:type_name -> determined.api.v1.OrderBy
-	14, // 2: determined.api.v1.GetTemplatesResponse.templates:type_name -> determined.template.v1.Template
-	15, // 3: determined.api.v1.GetTemplatesResponse.pagination:type_name -> determined.api.v1.Pagination
-	14, // 4: determined.api.v1.GetTemplateResponse.template:type_name -> determined.template.v1.Template
-	14, // 5: determined.api.v1.PutTemplateRequest.template:type_name -> determined.template.v1.Template
-	14, // 6: determined.api.v1.PutTemplateResponse.template:type_name -> determined.template.v1.Template
-	14, // 7: determined.api.v1.PostTemplateRequest.template:type_name -> determined.template.v1.Template
-	14, // 8: determined.api.v1.PostTemplateResponse.template:type_name -> determined.template.v1.Template
-	16, // 9: determined.api.v1.PatchTemplateConfigRequest.config:type_name -> google.protobuf.Struct
-	14, // 10: determined.api.v1.PatchTemplateConfigResponse.template:type_name -> determined.template.v1.Template
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	15, // 1: determined.api.v1.GetTemplatesRequest.order_by:type_name -> determined.api.v1.OrderBy
+	16, // 2: determined.api.v1.GetTemplatesResponse.templates:type_name -> determined.template.v1.Template
+	17, // 3: determined.api.v1.GetTemplatesResponse.pagination:type_name -> determined.api.v1.Pagination
+	16, // 4: determined.api.v1.GetTemplateResponse.template:type_name -> determined.template.v1.Template
+	16, // 5: determined.api.v1.PutTemplateRequest.template:type_name -> determined.template.v1.Template
+	16, // 6: determined.api.v1.PutTemplateResponse.template:type_name -> determined.template.v1.Template
+	16, // 7: determined.api.v1.PostTemplateRequest.template:type_name -> determined.template.v1.Template
+	16, // 8: determined.api.v1.PostTemplateResponse.template:type_name -> determined.template.v1.Template
+	18, // 9: determined.api.v1.PatchTemplateConfigRequest.config:type_name -> google.protobuf.Struct
+	16, // 10: determined.api.v1.PatchTemplateConfigResponse.template:type_name -> determined.template.v1.Template
+	16, // 11: determined.api.v1.PatchTemplateNameResponse.template:type_name -> determined.template.v1.Template
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_template_proto_init() }
@@ -999,7 +1121,7 @@ func file_determined_api_v1_template_proto_init() {
 			}
 		}
 		file_determined_api_v1_template_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteTemplateRequest); i {
+			switch v := v.(*PatchTemplateNameRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1011,6 +1133,30 @@ func file_determined_api_v1_template_proto_init() {
 			}
 		}
 		file_determined_api_v1_template_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PatchTemplateNameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_template_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteTemplateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_template_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteTemplateResponse); i {
 			case 0:
 				return &v.state
@@ -1029,7 +1175,7 @@ func file_determined_api_v1_template_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_template_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

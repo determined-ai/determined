@@ -101,6 +101,23 @@ message PatchTemplateConfigResponse {
   determined.template.v1.Template template = 1;
 }
 
+// Rename a template
+message PatchTemplateNameRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "old_name", "new_name" ] }
+  };
+  string old_name = 1;
+  string new_name = 2;
+}
+// Response to PatchTemplateNameRequest
+message PatchTemplateNameResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "template" ] }
+  };
+  // The updated template.
+  determined.template.v1.Template template = 1;
+}
+
 // Delete the template with the given id.
 message DeleteTemplateRequest {
   // The id of the template.

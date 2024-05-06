@@ -7233,6 +7233,38 @@ export interface V1PatchTemplateConfigResponse {
     template: V1Template;
 }
 /**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameRequest
+ */
+export interface V1PatchTemplateNameRequest {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    oldName: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    newName: string;
+}
+/**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameResponse
+ */
+export interface V1PatchTemplateNameResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateNameResponse
+     */
+    template: V1Template;
+}
+/**
  * Patch a trial.
  * @export
  * @interface V1PatchTrialRequest
@@ -30352,6 +30384,44 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
         },
         /**
          * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTemplateName.');
+            }
+            const localVarPath = `/api/v1/template/rename`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -30531,6 +30601,25 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateNameResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateName(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -30626,6 +30715,16 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+            return TemplatesApiFp(configuration).patchTemplateName(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -30708,6 +30807,18 @@ export class TemplatesApi extends BaseAPI {
      */
     public patchTemplateConfig(templateName: string, body: any, options?: any) {
         return TemplatesApiFp(this.configuration).patchTemplateConfig(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch template name.
+     * @param {V1PatchTemplateNameRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+        return TemplatesApiFp(this.configuration).patchTemplateName(body, options)(this.fetch, this.basePath)
     }
     
     /**
