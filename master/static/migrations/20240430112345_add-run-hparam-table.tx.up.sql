@@ -6,9 +6,10 @@ CREATE TABLE run_hparams (
     bool_val boolean NULL
 );
 
-CREATE INDEX ix_run_hparams_num ON run_hparams(hparam, number_val);
-CREATE INDEX ix_run_hparams_text ON run_hparams(hparam, text_val);
-CREATE INDEX ix_run_hparams_bool ON run_hparams(hparam, bool_val);
+CREATE INDEX ix_run_hparams_num ON run_hparams(number_val);
+CREATE INDEX ix_run_hparams_text ON run_hparams(text_val);
+CREATE INDEX ix_run_hparams_bool ON run_hparams(bool_val);
+CREATE INDEX ix_run_project_id ON runs(project_id);
 
 INSERT INTO run_hparams(run_id, hparam, number_val, text_val, bool_val)
 SELECT s.id as run_id, s.key as hparam,
