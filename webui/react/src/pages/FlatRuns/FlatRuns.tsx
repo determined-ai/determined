@@ -31,6 +31,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import { Error } from 'components/exceptions';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import { IOFilterFormSet } from 'components/FilterForm/components/type';
@@ -642,6 +643,20 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
+      <Row>
+        <ColumnPickerMenu
+          initialVisibleColumns={columnsIfLoaded}
+          isMobile={isMobile}
+          projectColumns={projectColumns}
+          projectId={project.id}
+          tabs={[
+            V1LocationType.EXPERIMENT,
+            [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+            V1LocationType.HYPERPARAMETERS,
+          ]}
+          onVisibleColumnChange={handleColumnsOrderChange}
+        />
+      </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message
