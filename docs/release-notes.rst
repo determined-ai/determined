@@ -13,49 +13,48 @@
 Version 0.32.0
 ==============
 
-**Release Date:** April 30, 2024
+**Release Date:** May 03, 2024
+
+Notice: This release contains an important fix for a bug that poses data loss risk when using the
+Experiment table in the project view in the WebUI. All users on affected versions are strongly
+encouraged to upgrade as soon as possible. For more details, scroll down to ``Bug Fixes``.
 
 **Breaking Changes**
 
--  Python SDK and CLI: Password requirements are now enforced for all non-remote users. For more
-   information, visit :ref:`password-requirements`.
+-  Python SDK and CLI: Password requirements are now enforced for all non-remote users. (The
+   requirements do not apply to remote users, since they use single sign-on.) Existing users with
+   empty or non-compliant passwords can still sign in. However, we recommend updating these
+   passwords to meet the new requirements as soon as possible. For more information, visit
+   :ref:`password-requirements`.
 
-   -  This change affects the ``create_user``, ``User.change_password``, ``det user create``, and
-      ``det user change-password`` commands.
-   -  Existing users with empty or non-compliant passwords can still sign in. However, we recommend
-      updating these passwords to meet the new requirements as soon as possible.
+   This change affects the :meth:`~determined.experimental.client.Determined.create_user` and
+   :meth:`~determined.experimental.client.User.change_password` SDK methods and the ``det user
+   create`` and ``det user change-password`` CLI commands.
 
--  CLI: When creating non-remote users with ``det user create``, setting a password is now
-   mandatory.
+   When creating non-remote users at the CLI with ``det user create``, setting a password is now
+   mandatory. You can set the password interactively by following the prompts during user creation
+   or non-interactively with the ``--password`` option.
 
-   -  You can set the password interactively by following the prompts during user creation.
-   -  Alternatively, set the password non-interactively using the ``--password`` option.
-   -  This requirement does not apply to users created with the ``--remote`` option, as Single
-      Sign-On will be used for these users.
+**New Features**
 
--  Kubernetes: In the enterprise edition, add ability to set up the Determined master service on one
-   Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
-   non-default resource managers and resource pools are configured under the master configuration
-   options ``additional_resource_managers`` and ``resource_pools`` (additional resource managers are
-   required to have at least one resource pool defined). Additional resource managers and their
-   resource pools must have unique names. For more information, visit :ref:`master configuration
-   <master-config-reference>`. Support for notebooks and other workloads that require proxying is
-   under development.
-
--  WebUI: In the enterprise edition, add ability to view resource manager name for resource pools.
+-  Kubernetes: In the enterprise edition, add the ability to set up the Determined master service on
+   one Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
+   non-default resource managers and resource pools are configured under the
+   ``additional_resource_managers`` section (additional resource managers are required to have at
+   least one resource pool defined). Additional resource managers and their resource pools must have
+   unique names. For more information, visit :ref:`master configuration <master-config-reference>`.
+   Support for notebooks and other workloads that require proxying is under development.
 
 -  API/CLI/WebUI: In the enterprise edition, route any requests to resource pools not defined in the
    master configuration to the default resource manager, not any additional resource manager, if
    defined.
 
--  Configuration: In the enterprise edition, add a ``name`` and ``metadata`` field to resource
-   manager section in the master configuration. Add an ``additional_resource_managers`` section that
-   follows the ``resource_manager`` and ``resource_pool`` configuration pattern.
+-  Configuration: In the enterprise edition, add an ``additional_resource_managers`` section that
+   can define multiple resource managers following the same patteroas ``resource_manager``. Add
+   ``name`` and ``metadata`` fields to individual resource manager definitions.
 
-**New Features**
-
--  CLI: Add an ``--enterprise-edition`` option for ``det deploy local``. This option enables users
-   to easily deploy enterprise images.
+-  WebUI: In the enterprise edition, add the ability to view resource manager name for resource
+   pools.
 
 **Improvements**
 
@@ -65,16 +64,42 @@ Version 0.32.0
 
 **Bug Fixes**
 
--  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
-   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
-   via APIs.
+-  Since version 0.27.1, a bug has affected the selection functionality in the Experiments page.
+   This bug may cause actions to be applied to more experiments than are visibly selected. For
+   example, when using the **Select All > Actions > Move** sequence to transfer all experiments from
+   one project to another, the action may inadvertently include experiments not only from the
+   targeted project but also from other projects you have permissions to edit. We urge all users on
+   the affected versions to upgrade as soon as possible.
+
+   -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
+      inadvertently deletes a larger set than intended.
+
+   -  When role-based access control (an enterprise edition feature) is enabled, there is a risk of
+      a permissions leak if moving experiments from one project to another inadvertently includes
+      experiments from other workspaces.
+
+   -  This issue affects all bulk actions including delete, move, archive, unarchive, resume, pause,
+      kill, stop, and view in TensorBoard.
+
+   -  We strongly advise refraining from using the experiment table in the project view to take any
+      actions.
+
+   -  Workaround: To manage actions on a single trial, use the trial view in the WebUI.
+      Alternatively, for bulk actions affected by this issue, consider using the command-line
+      interface (CLI). You can also turn off the **New Experiment List** setting under the **User
+      Settings** > **Experimental** section. For more information visit **Manage User Settings**
+      under :ref:`WebUI <web-ui-if>`.
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
-   This issue affects multiple ``det deploy aws`` deployment types, including ``default simple``,
-   ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy
-   aws --deployment-type=govcloud``, are not affected. We urge all users with affected setups to
-   upgrade as soon as possible.
+   This issue affects multiple ``det deploy aws`` deployment types, including ``simple``, ``vpc``,
+   ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy aws
+   --deployment-type=govcloud``, are not affected. We urge all users with affected setups to upgrade
+   as soon as possible.
+
+-  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
+   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
+   via APIs.
 
 **************
  Version 0.31
