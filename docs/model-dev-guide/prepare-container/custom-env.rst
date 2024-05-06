@@ -98,7 +98,7 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-.. list-table:: 
+.. list-table::
    :widths: 25 75
    :header-rows: 1
 
