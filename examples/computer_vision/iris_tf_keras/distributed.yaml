@@ -2,6 +2,10 @@ name: iris_tf_keras_distributed
 data:
   train_url: http://download.tensorflow.org/data/iris_training.csv
   test_url: http://download.tensorflow.org/data/iris_test.csv
+environment:
+  image:
+    cpu: determinedai/tensorflow-ngc-dev:f17151a
+    gpu: determinedai/tensorflow-ngc-dev:f17151a
 hyperparameters:
   learning_rate: 1.0e-4
   learning_rate_decay: 1.0e-6

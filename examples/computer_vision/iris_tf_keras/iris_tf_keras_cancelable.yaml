@@ -2,6 +2,10 @@ name: iris_tf_keras_cancelable
 data:
   train_url: http://download.tensorflow.org/data/iris_training.csv
   test_url: http://download.tensorflow.org/data/iris_test.csv
+environment:
+  image:
+    cpu: determinedai/tensorflow-ngc-dev:f17151a
+    gpu: determinedai/tensorflow-ngc-dev:f17151a
 resources:
   slots_per_trial: 8
   resource_pool: defq_GPU_cancelable

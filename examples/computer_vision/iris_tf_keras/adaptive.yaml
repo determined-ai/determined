@@ -2,6 +2,10 @@ name: iris_tf_keras_adaptive_search
 data:
   train_url: http://download.tensorflow.org/data/iris_training.csv
   test_url: http://download.tensorflow.org/data/iris_test.csv
+environment:
+  image:
+    cpu: determinedai/tensorflow-ngc-dev:f17151a
+    gpu: determinedai/tensorflow-ngc-dev:f17151a
 hyperparameters:
   learning_rate:
     type: log
