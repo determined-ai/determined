@@ -87,7 +87,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
 
   const knownRoles = useObservable(roleStore.roles);
 
-  const [canSubmit, setCanSubmit] = useState(false);
+  const [canSubmit, setCanSubmit] = useState(!!user);
   const [isRemote, setIsRemote] = useState(false);
 
   const editPasswordRules = PASSWORD_RULES.map((rule) => {
@@ -203,8 +203,9 @@ const CreateUserModalComponent: React.FC<Props> = ({
             setCanSubmit(
               !hasErrors(form) &&
                 form.getFieldValue(USER_NAME_NAME) &&
-                form.getFieldValue(USER_PASSWORD_NAME) &&
-                form.getFieldValue(USER_PASSWORD_CONFIRM_NAME),
+                (user ||
+                  (form.getFieldValue(USER_PASSWORD_NAME) &&
+                    form.getFieldValue(USER_PASSWORD_CONFIRM_NAME))),
             )
           }>
           <Form.Item
