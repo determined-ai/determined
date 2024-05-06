@@ -98,15 +98,18 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-+-------------+-------------------------------------------------------------------------------+
-| Environment | File Name                                                                     |
-+=============+===============================================================================+
-| CPUs        | ``determinedai/pytorch-tensorflow-cpu-dev:f17151a``                           |
-+-------------+-------------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/pytorch-tensorflow-cuda-dev:f17151a``                          |
-+-------------+-------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``        |
-+-------------+-------------------------------------------------------------------------------+
+.. list-table:: 
+   :widths: 25 75
+   :header-rows: 1
+
+   -  -  Environment
+      -  File Name
+   -  -  CPUs
+      -  ``determinedai/pytorch-tensorflow-cpu-dev:f17151a``
+   -  -  NVIDIA GPUs
+      -  ``determinedai/pytorch-tensorflow-cuda-dev:f17151a``
+   -  -  AMD GPUs
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
 
 .. _custom-docker-images:
 
