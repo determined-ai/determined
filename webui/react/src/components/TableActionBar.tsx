@@ -199,16 +199,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      const managedExperimentIds = selectedExperiments
-        .filter((exp) => !exp.unmanaged)
+      const validExperimentIds = selectedExperiments
+        .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
         .map((exp) => exp.id);
       const params = {
-        experimentIds: managedExperimentIds,
+        experimentIds: validExperimentIds,
         projectId: project.id,
       };
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          if (managedExperimentIds.length !== selectedExperiments.length) {
+          if (validExperimentIds.length !== selectedExperiments.length) {
             // if unmanaged experiments are selected, open experimentTensorBoardModal
             openExperimentTensorBoardModal();
           } else {
