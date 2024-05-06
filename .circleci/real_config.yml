@@ -4797,18 +4797,19 @@ workflows:
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-proto:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-react:
           dev-mode: true
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-docs:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
           requires:
             - build-helm
             - build-proto
       - build-go:
+          filters: *upstream-feature-branch
           context: github-read
       - package-and-push-system-dev-ee:
           requires:
@@ -4817,7 +4818,7 @@ workflows:
           context:
             - determined-ee
             - github-read
-          filters: *any-upstream
+          filters: *upstream-feature-branch
 
       - package-and-push-system-local:
           context: github-read
@@ -5196,6 +5197,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          filters: *upstream-feature-branch
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
@@ -5240,6 +5242,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          filters: *upstream-feature-branch
           slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
@@ -5248,6 +5251,7 @@ workflows:
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5263,6 +5267,7 @@ workflows:
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5279,6 +5284,7 @@ workflows:
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5295,6 +5301,7 @@ workflows:
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5311,6 +5318,7 @@ workflows:
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5329,6 +5337,7 @@ workflows:
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5346,6 +5355,7 @@ workflows:
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
