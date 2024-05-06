@@ -8,8 +8,10 @@ Determined launches workloads using Docker containers. By default, workloads exe
 Determined-provided container that includes common deep learning libraries and frameworks. The
 default containers can be found on the Determined Docker Hub with tags for each Determined version:
 
--  `Default containers for CPU training <https://hub.docker.com/r/determinedai/pytorch-ngc>`__
--  `Containers for GPU training <https://hub.docker.com/r/determinedai/tensorflow-ngc>`__
+-  `Default containers for CPU and GPU training
+   <https://hub.docker.com/r/determinedai/pytorch-ngc>`__
+-  `Containers for TensorFlow CPU and GPU training
+   <https://hub.docker.com/r/determinedai/tensorflow-ngc>`__
 
 By default, Determined will use the tag corresponding to your cluster's version. To specify a
 different image from this default, update your job configuration to include:
@@ -18,8 +20,8 @@ different image from this default, update your job configuration to include:
 
    environment:
      image:
-       cpu: # full CPU image path, e.g., determined/pytorch-ngc:<tag>
-       gpu: # full GPU image path, e.g., determined/pytorch-ngc:<tag>
+       cpu: # full CPU image path, e.g., determined/tensorflow-ngc:<tag>
+       gpu: # full GPU image path, e.g., determined/tensorflow-ngc:<tag>
 
 If one of the images above contain your required libraries, there is no additional environment
 preparation needed.

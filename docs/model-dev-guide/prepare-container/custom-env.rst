@@ -108,6 +108,8 @@ Default Images
 | AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``        |
 +-------------+-------------------------------------------------------------------------------+
 
+.. _ngc-version:
+
 NGC Version
 ===========
 
