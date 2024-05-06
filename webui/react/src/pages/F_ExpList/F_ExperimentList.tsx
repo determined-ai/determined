@@ -107,6 +107,8 @@ type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
+export const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
@@ -945,7 +947,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
     const filterCount = formStore.getFieldCount(column.column).get();
 
-    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
     const loadableFormset = formStore.formset.get();
     const filterMenuItemsForColumn = () => {
       const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
@@ -1014,7 +1015,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         },
       },
       { type: 'divider' as const },
-      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      ...(BANNED_FILTER_COLUMNS.has(column.column)
         ? []
         : [
             ...sortMenuItemsForColumn(column, sorts, handleSortChange),

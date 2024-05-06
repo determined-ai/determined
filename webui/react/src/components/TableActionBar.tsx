@@ -22,6 +22,7 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { BANNED_FILTER_COLUMNS } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
   archiveExperiments,
@@ -394,6 +395,7 @@ const TableActionBar: React.FC<Props> = ({
         <Column>
           <Row>
             <TableFilter
+              bannedFilterColumns={BANNED_FILTER_COLUMNS}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
