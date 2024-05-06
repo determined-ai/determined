@@ -1,2 +1,0 @@
--- Function has rotten. We are removing down migrations soon
--- so not worth the effort trying to add a working down migration.
