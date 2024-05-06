@@ -3221,6 +3221,22 @@ jobs:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
 
+  send-job-level-alerts:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: small
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install alert deps
+          command: tools/scripts/retry.sh pip install requests # TODO slack api maybe?
+      - run:
+          name: Listen for failures and send slack alerts
+          command: python .circleci/scripts/job_level_alerts.py
+
   test-perf:
     parameters:
       snapshot-after-migrations:
@@ -4097,6 +4113,11 @@ workflows:
             - test-unit-harness-pytorch2-gpu
             - test-unit-model-hub
             - test-unit-storage
+
+  send-alerts:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - send-job-level-alerts:
 
   test-go:
     <<: *do-not-run-on-manual-trigger

@@ -27,11 +27,14 @@ def send_alerts_for_failed_jobs(sent_alerts):
             continue
 
         workflow_id = w["id"]
-        workflows_are_running = workflows_are_running or w["status"] == "running"
+        if not workflows_are_running and w["status"] == "running":
+            print(f"waiting for workflow {w['name']} to finish")
+            workflows_are_running = True
+
         jobs = requests.get(f"https://circleci.com/api/v2/workflow/{workflow_id}/job").json()
         for j in jobs["items"]:
             job_name = j["name"]
-            if workflow_id + job_name not in sent_alerts and j["status"] == "failed" or True:
+            if workflow_id + job_name not in sent_alerts and j["status"] == "failed":
                 send_alert(job_name, w["pipeline_number"], workflow_id, j["job_number"])
                 sent_alerts[workflow_id + job_name] = True
 
@@ -45,6 +48,7 @@ def main():
             print("Checking circleci API for jobs")
             still_workflows_in_progress = send_alerts_for_failed_jobs(sent_alerts)
             if not still_workflows_in_progress:
+                print("all workflows complete, ending")
                 return
         except Exception as e:
             print(f"failed to read circleci state and send alerts: {e}")
