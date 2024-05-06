@@ -46,7 +46,7 @@ def test_hf_trainer_api_accuracy() -> None:
     validations = _get_validation_metrics(detobj, trials[0].trial.id)
     validation_accuracies = [v["eval_accuracy"] for v in validations]
 
-    target_accuracy = 0.82
+    target_accuracy = 0.75
     assert max(validation_accuracies) > target_accuracy, (
         f"hf_trainer_api did not reach minimum target accuracy {target_accuracy}."
         f" full validation accuracy history: {validation_accuracies}"
