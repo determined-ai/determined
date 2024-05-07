@@ -239,7 +239,12 @@ func TestPatchTemplateName(t *testing.T) {
 	ctx := apitest.WithCredentials(context.Background())
 
 	t.Run("TestPatchTemplateName that doesn't exist", func(t *testing.T) {
-		_, err := api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: uuid.NewString(), NewName: uuid.NewString()})
+		_, err := api.PatchTemplateName(
+			ctx,
+			&apiv1.PatchTemplateNameRequest{
+				OldName: uuid.NewString(),
+				NewName: uuid.NewString(),
+			})
 		require.ErrorContains(t, err, "not found")
 	})
 	t.Run("TestPatchTemplateName functions", func(t *testing.T) {

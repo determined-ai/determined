@@ -1363,7 +1363,7 @@ service Determined {
       tags: "Templates"
     };
   }
-   // Patch template name.
+  // Patch template name.
   rpc PatchTemplateName(PatchTemplateNameRequest)
       returns (PatchTemplateNameResponse) {
     option (google.api.http) = {

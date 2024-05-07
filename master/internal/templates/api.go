@@ -231,7 +231,10 @@ func (a *TemplateAPIServer) PatchTemplateName(
 	}
 
 	var updated templatev1.Template
-	_, err = db.Bun().NewUpdate().Model(&updated).Where("name = ?", req.OldName).Set("name = ?", req.NewName).Returning("*").Exec(ctx)
+	_, err = db.Bun().NewUpdate().Model(&updated).
+		Where("name = ?", req.OldName).
+		Set("name = ?", req.NewName).
+		Returning("*").Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update template name: %w", err)
 	}
