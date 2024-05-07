@@ -628,6 +628,18 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                   handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
                 },
               },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+            handleColumnsOrderChange?.(newColumnsOrder);
+            if (isPinned) {
+              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            }
+          },
+        },
       ];
 
       if (!column) {
