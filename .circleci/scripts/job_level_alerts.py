@@ -37,10 +37,9 @@ def send_alerts_for_failed_jobs(sent_alerts):
         jobs = requests.get(f"https://circleci.com/api/v2/workflow/{workflow_id}/job").json()
         for j in jobs["items"]:
             job_name = j["name"]
-            if workflow_id + job_name not in sent_alerts and j["status"] == "failed" or True: # TODO
+            if workflow_id + job_name not in sent_alerts and j["status"] == "failed":
                 send_alert(job_name, w["pipeline_number"], workflow_id, j["job_number"])
                 sent_alerts[workflow_id + job_name] = True
-            return # TODO
 
     return workflows_are_running
 
