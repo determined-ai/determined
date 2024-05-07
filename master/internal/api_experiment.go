@@ -207,7 +207,6 @@ func (a *apiServer) getExperimentTx(
 	WHERE e.id = ?
 	`
 	err := db.MatchSentinelError(idb.NewRaw(query, experimentID, experimentID).Scan(ctx, &expMap))
-	log.Infof("Experiment Query Map Result: %v", expMap)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, expNotFound
 	} else if err != nil {
