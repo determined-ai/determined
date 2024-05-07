@@ -282,6 +282,10 @@ export class HeadRow extends NamedComponent {
    * Row.getCellByColumnName will fail without running this first.
    */
   async setColumnDefs(): Promise<Map<string, number>> {
+    // let's just make sure we all the columns on the right side
+    await expect
+      .poll(async () => await this.pwLocator.locator('th').count())
+      .toBeGreaterThanOrEqual(4);
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
       throw new Error('Expected to see more than 0 columns.');
