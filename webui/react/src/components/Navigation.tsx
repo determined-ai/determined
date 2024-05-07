@@ -1,7 +1,7 @@
 import Spinner from 'hew/Spinner';
 import { useInitApi } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useEffect } from 'react';
+import React, { PropsWithChildren, useEffect } from 'react';
 
 import useUI from 'components/ThemeProvider';
 import clusterStore from 'stores/cluster';
@@ -16,11 +16,11 @@ import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
 import NavigationTabbar from './NavigationTabbar';
 
-interface Props {
-  children?: React.ReactNode;
+interface Props extends PropsWithChildren {
+  clusterMessagePresent?: boolean;
 }
 
-const Navigation: React.FC<Props> = ({ children }) => {
+const Navigation: React.FC<Props> = ({ clusterMessagePresent, children }) => {
   useInitApi();
   const { ui } = useUI();
   const info = useObservable(determinedStore.info);
@@ -46,9 +46,14 @@ const Navigation: React.FC<Props> = ({ children }) => {
     return permissionStore.startPolling({ condition: shouldPoll, delay: 120_000 });
   }, [loadableCurrentUser, rbacEnabled]);
 
+  const navClasses = [css.base];
+  if (clusterMessagePresent) {
+    navClasses.push(css.clusterMessage);
+  }
+
   return (
     <Spinner spinning={ui.showSpinner}>
-      <div className={css.base} data-test-component="navigation">
+      <div className={navClasses.join(' ')} data-test-component="navigation">
         <NavigationSideBar />
         {children}
         <NavigationTabbar />

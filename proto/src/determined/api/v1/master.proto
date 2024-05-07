@@ -24,6 +24,22 @@ message SSOProvider {
   string type = 3;
 }
 
+// Active notice from the server admin.
+message ClusterMessage {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "message", "start_time" ] }
+  };
+
+  // Text content of message.
+  string message = 1;
+  // Time to begin showing message.
+  google.protobuf.Timestamp start_time = 2;
+  // Time to stop showing message.
+  optional google.protobuf.Timestamp end_time = 3;
+  // Time message was created.
+  google.protobuf.Timestamp created_time = 4;
+}
+
 // Get master information.
 message GetMasterRequest {}
 // Response to GetMasterRequest.
@@ -74,6 +90,8 @@ message GetMasterResponse {
   bool user_management_enabled = 13;
   // Feature flag for strict job queue control.
   bool strict_job_queue_control = 14;
+  // Active server cluster-wide message if any.
+  optional ClusterMessage cluster_message = 15;
 }
 
 // Get telemetry information.
@@ -109,6 +127,34 @@ message PatchMasterConfigRequest {
 }
 // Response to PatchMasterConfigRequest.
 message PatchMasterConfigResponse {}
+
+message GetClusterMessageRequest {}
+message GetClusterMessageResponse {
+  optional ClusterMessage cluster_message = 1;
+}
+
+// Set the cluster-wide message.
+message SetClusterMessageRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "message", "start_time" ] }
+  };
+  // Text content of message.
+  string message = 1;
+  // Time to begin showing message.
+  google.protobuf.Timestamp start_time = 2;
+  // Time to stop showing message.
+  optional google.protobuf.Timestamp end_time = 3;
+  // Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h,
+  // 2w, 5d)
+  optional string duration = 4;
+}
+// Response to SetClusterMessageRequest.
+message SetClusterMessageResponse {}
+
+// Clear the configured cluster-wide message.
+message DeleteClusterMessageRequest {}
+// Response to DeleteClusterMessageRequest.
+message DeleteClusterMessageResponse {}
 
 // Stream master logs.
 message MasterLogsRequest {

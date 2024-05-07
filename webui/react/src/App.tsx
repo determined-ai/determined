@@ -11,6 +11,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
+import ClusterMessage from 'components/ClusterMessage';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
@@ -163,14 +164,15 @@ const AppView: React.FC = () => {
 
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
-    Loaded: () => (
+    Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
                 <ConfirmationProvider>
-                  <Navigation>
+                  <ClusterMessage message={info.clusterMessage} />
+                  <Navigation clusterMessagePresent={!!info.clusterMessage}>
                     <JupyterLabGlobal
                       enabled={
                         Loadable.isLoaded(loadableUser) &&

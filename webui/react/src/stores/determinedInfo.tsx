@@ -17,6 +17,13 @@ export const BrandingType = {
   HPE: 'hpe',
 } as const;
 
+export interface ClusterMessage {
+  startTime: Date; // TODO: type?
+  endTime?: Date; // TODO: type?
+  message: string;
+  createdTime?: Date; // TODO: type?
+}
+
 export type BrandingType = ValueOf<typeof BrandingType>;
 
 export interface DeterminedInfo {
@@ -27,6 +34,7 @@ export interface DeterminedInfo {
   externalLoginUri?: string;
   externalLogoutUri?: string;
   featureSwitches: string[];
+  clusterMessage?: ClusterMessage;
   isTelemetryEnabled: boolean;
   masterId: string;
   rbacEnabled: boolean;
@@ -44,6 +52,7 @@ const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
+  clusterMessage: undefined,
   clusterName: '',
   featureSwitches: [],
   isTelemetryEnabled: false,
