@@ -9,6 +9,7 @@ orbs:
   kubernetes: circleci/kubernetes@0.11.0
   queue: eddiewebb/queue@2.2.1
   win: circleci/windows@5.0.0
+  minikube: ccpgames/minikube@0.0.1
 
 executors:
   python-38:

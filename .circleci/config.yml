@@ -6,7 +6,6 @@ setup: true
 orbs:
   continuation: circleci/continuation@1.0.0
   gh: circleci/github-cli@2.0
-  minikube: ccpgames/minikube@0.0.1
 
 parameters:
   workspace_path:
