@@ -47,6 +47,8 @@ message FlatRunExperiment {
   bool unmanaged = 10;
   // True if the associated experiment is a multitrial experiment
   bool is_multitrial = 11;
+  // The experiment pachyderm integration config.
+  optional google.protobuf.Struct pachyderm_integration = 12;
 }
 
 // Flat run respresentation.

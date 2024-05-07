@@ -4394,6 +4394,7 @@ class v1FlatRun(Printable):
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
@@ -4409,6 +4410,7 @@ class v1FlatRunExperiment(Printable):
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -4423,6 +4425,8 @@ class v1FlatRunExperiment(Printable):
             self.externalExperimentId = externalExperimentId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
@@ -4441,6 +4445,8 @@ class v1FlatRunExperiment(Printable):
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -4459,6 +4465,8 @@ class v1FlatRunExperiment(Printable):
             out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         return out
 
 class v1GenericTaskState(DetEnum):

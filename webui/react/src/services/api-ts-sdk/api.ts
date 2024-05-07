@@ -3567,6 +3567,12 @@ export interface V1FlatRunExperiment {
      * @memberof V1FlatRunExperiment
      */
     isMultitrial: boolean;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1FlatRunExperiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown

@@ -1685,24 +1685,18 @@ var (
         },
         "commit": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "branch": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "token": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         }
     }
 }
