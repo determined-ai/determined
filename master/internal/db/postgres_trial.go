@@ -62,6 +62,17 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			}
 		}
 
+		// Update Hparms for project hparam table
+		projHparams, err := AddProjectHparams(ctx, run.ProjectID, run.HParams, "")
+		if err != nil {
+			return fmt.Errorf("getting project hyperparameters: %w", err)
+		}
+		if len(projHparams) > 0 {
+			if err := tx.NewInsert().Model(&projHparams).
+				On("CONFLICT (project_id, hparam, type) DO NOTHING").Scan(ctx); err != nil {
+				return fmt.Errorf("inserting project hyperparameters: %w", err)
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -69,6 +80,39 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	}
 
 	return nil
+}
+
+// AddProjectHparams
+func AddProjectHparams(ctx context.Context, projectID int, hparams map[string]any,
+	parentName string,
+) ([]model.ProjectHparam, error) {
+	hparamsModel := []model.ProjectHparam{}
+	for hpName, v := range hparams {
+		hp := model.ProjectHparam{
+			ProjectID: projectID,
+			HParam:    parentName + hpName,
+		}
+		switch val := v.(type) {
+		case float64:
+		case int:
+			hp.Type = "number"
+		case string:
+			hp.Type = "string"
+		case bool:
+			hp.Type = "bool"
+		case map[string]any:
+			nestedHParams, err := AddProjectHparams(ctx, projectID, v.(map[string]any), hpName+".")
+			if err != nil {
+				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
+			}
+			hparamsModel = append(hparamsModel, nestedHParams...)
+			continue
+		default:
+			return hparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
+		}
+		hparamsModel = append(hparamsModel, hp)
+	}
+	return hparamsModel, nil
 }
 
 // AddRunHParams adds hyperparameters for a run into the `run_hparams` table.

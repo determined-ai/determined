@@ -478,7 +478,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 	// get all runs in project
 	runsQuery := db.Bun().NewSelect().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
-		Column("project_id").
+		Column("hparam").
 		Column("type").
 		TableExpr("project_hparams").
 		Where("project_id = ?", id)

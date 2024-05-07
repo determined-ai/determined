@@ -539,6 +539,15 @@ type RunHparam struct {
 	BoolVal   *bool    `bun:"bool_val"`
 }
 
+// ProjectHparam represents a row from the `project_hparams` table.
+type ProjectHparam struct {
+	bun.BaseModel `bun:"table:project_hparams"`
+
+	ProjectID int    `db:"project_id" bun:"project_id"`
+	HParam    string `bun:"hparam"`
+	Type      string `bun:"type"`
+}
+
 // NewTrial creates a new trial in the specified state.  Note that the trial ID
 // will not be set.
 func NewTrial(

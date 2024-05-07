@@ -25,6 +25,7 @@ CREATE TABLE project_hparams (
     project_id int REFERENCES projects(id) ON DELETE CASCADE,
     hparam text NOT NULL,
     type text NOT NULL,
+    UNIQUE (project_id, hparam, type)
 );
 
 INSERT INTO project_hparams(project_id, hparam, type)
