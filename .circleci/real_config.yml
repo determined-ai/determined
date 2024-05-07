@@ -4055,7 +4055,7 @@ workflows:
           filters:
             branches:
               only:
-                - send_job_level_alerts # main # TODO
+                - main
 
   test-go:
     <<: *do-not-run-on-manual-trigger
