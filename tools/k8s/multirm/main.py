@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import json
+import os
+import pathlib
 import re
 import subprocess as sp
+import tempfile
 import threading
 import time
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
@@ -17,6 +20,7 @@ DEFAULT_LOCAL_PORT = 47777
 TARGET_CONTEXT = sp.check_output(["kubectl", "config", "current-context"], text=True).strip()
 
 PodConfig = NamedTuple("PodConfig", [("name", str), ("image", str), ("port", int)])
+ServiceConfig = NamedTuple("ServiceConfig", [("name", str), ("port", int)])
 PodDetails = NamedTuple("PodDetails", [("name", str), ("ip", str), ("port", int)])
 NamedAddr = NamedTuple("NamedAddr", [("name", str), ("host", str), ("port", int)])
 
@@ -43,8 +47,8 @@ def run_command(command: Union[str, List[str]], capture: bool = False) -> sp.Com
     return result
 
 
-def kctl(ctl_args: List[str]) -> List[str]:
-    return ["kubectl", "--context", TARGET_CONTEXT] + ctl_args
+def kctl(ctl_args: List[Any]) -> List[str]:
+    return ["kubectl", "--context", TARGET_CONTEXT] + [str(arg) for arg in ctl_args]
 
 
 def call_det_api(args: List[str]) -> str:
@@ -460,7 +464,10 @@ spec:
         file.write(deployment_manifest)
 
 
-def create_service(app_name: str, port: int, target_port: int, selector: Optional[str] = "") -> str:
+def create_service(
+    app_name: str, port: int, target_port: int, selector: Optional[str] = ""
+) -> ServiceConfig:
+    service_name = app_name + "-service"
     if not selector:
         selector = f"app: {app_name}"
     """create k8s service."""
@@ -468,7 +475,7 @@ def create_service(app_name: str, port: int, target_port: int, selector: Optiona
 apiVersion: v1
 kind: Service
 metadata:
-  name: {app_name}-service
+  name: {service_name}
 spec:
   type: ClusterIP
   selector:
@@ -479,10 +486,8 @@ spec:
       port: {port}
       targetPort: {target_port}
 """
-    with open("service.yaml", "w") as file:
-        file.write(service_manifest)
-    run_command("kubectl apply -f service.yaml")
-    return f"{app_name}-service"
+    apply_manifest(service_manifest, service_name)
+    return ServiceConfig(service_name, port)
 
 
 def download_files_from_pod(pod_name: str, src: str, dest: str) -> None:
@@ -567,17 +572,84 @@ def add_route(name: str) -> None:
 
 def report() -> None:
     """report ingress, pods, and services."""
-    run_command("kubectl get pods,services,ingress")
+    run_command(kctl([" get pods,services,ingress,gateway,httproute"]))
 
 
-def create_http_test_setup() -> None:
+def create_http_test_service() -> ServiceConfig:
     podConfig = PodConfig("httptest", "crccheck/hello-world", 8000)
-    create_ingress()
     create_deployment(podConfig.image, podConfig.name, podConfig.port)
+    service_config = create_service(podConfig.name, DEFAULT_SERVICE_PORT, podConfig.port)
     kubectl_apply("deployment.yaml")
-    create_service(podConfig.name, DEFAULT_SERVICE_PORT, podConfig.port)
-    _add_route("/", f"{podConfig.name}-service")
+    return service_config
+
+
+def create_http_test_ingress_setup() -> None:
+    service_conf = create_http_test_service()
+    create_ingress()
+    _add_route("/", service_conf.name)
     kubectl_apply("ingress.yaml")
+    report()
+
+
+def apply_manifest(manifest: str, name: Optional[str] = None) -> pathlib.Path:
+    temp_file = pathlib.Path(tempfile.mktemp())
+    with open(temp_file, "w") as file:
+        file.write(manifest)
+    run_command(kctl(["apply", "-f", temp_file.absolute()]))
+    if name:
+        print(f"applied manifest {name} at {temp_file}")
+    return temp_file
+
+
+def create_gateway() -> str:
+    name = "det-gateway"
+    conf = f"""
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {name}
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+    """
+    apply_manifest(conf, name)
+    return name
+
+
+def add_gw_http_route(gw_name: str, prefix: str, service: ServiceConfig) -> None:
+    route_name = f"{service.name}-route"
+    gw_route = f"""
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {route_name}
+spec:
+  parentRefs:
+  - name: {gw_name}
+  # hostnames:
+  # - "foo.example.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: {prefix}
+    backendRefs:
+    - name: {service.name}
+      port: {service.port}
+    """
+    apply_manifest(gw_route, route_name)
+
+
+def create_http_test_gw_setup() -> None:
+    service_conf = create_http_test_service()
+    gw_name = create_gateway()
+    add_gw_http_route(gw_name, "/", service_conf)
     report()
 
 
@@ -668,10 +740,12 @@ if __name__ == "__main__":
             "demo_kport_forward": demo_kport_forward,
             "demo_ingress_flow": demo_ingress_flow,
             "cleanup_cluster": cleanup_cluster,
-            "create_http_test_setup": create_http_test_setup,
             "setup_ingress_for_task": setup_ingress_for_task,
             "run_det_tests": run_det_tests,
             "run_tests": run_tests,
             "create_test_tasks": create_test_tasks,
+            "create_http_test_service": create_http_test_service,
+            "create_http_test_ingress_setup": create_http_test_ingress_setup,
+            "create_http_test_gw_setup": create_http_test_gw_setup,
         }
     )
