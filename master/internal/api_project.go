@@ -478,16 +478,10 @@ func (a *apiServer) getProjectRunColumnsByID(
 	// get all runs in project
 	runsQuery := db.Bun().NewSelect().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
-		ColumnExpr("rhp.hparam as hparam").
-		ColumnExpr(`CASE
-			WHEN number_val iS NOT NULL THEN 'number'
-			WHEN text_val iS NOT NULL THEN 'string'
-			WHEN bool_val iS NOT NULL THEN 'boolean'
-		END as type`).
-		TableExpr("run_hparams as rhp").
-		Join("JOIN runs as r ON rhp.run_id=r.id").
-		Where("project_id = ?", id).
-		Group("hparam", "type")
+		Column("project_id").
+		Column("type").
+		TableExpr("project_hparams").
+		Where("project_id = ?", id)
 
 	runsQuery, err = exputil.AuthZProvider.Get().FilterExperimentsQuery(
 		ctx,
