@@ -1,8 +1,10 @@
-import os
-import requests
-import time
-import logging
 import json
+import logging
+import os
+import time
+from typing import Set
+
+import requests
 
 workflows_to_skip = {
     # Skip test-e2e-longrunning for testing on feature branches since it won't complete on them.
@@ -10,19 +12,27 @@ workflows_to_skip = {
     "send-alerts",
 }
 
-def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number: str):
-    job_url = f"https://app.circleci.com/pipelines/github/determined-ai/determined/{pipeline_number}/workflows/{workflow_id}/jobs/{job_number}"
+
+def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number: str) -> None:
+    job_url = f"https://app.circleci.com/pipelines/github/determined-ai/determined/{pipeline_number}/workflows/{workflow_id}/jobs/{job_number}"  # noqa: E501
 
     # TODO(RM-252) mention the team who owns the test.
     slack_message = f"{job_name} failed on main, {job_url}"
     print(f"sending slack message: {slack_message}")
 
-    r = requests.post(os.environ["SLACK_WEBHOOK"], headers={'Content-Type': 'application/json'}, data=json.dumps({
-        "text": slack_message,
-    }))
+    r = requests.post(
+        os.environ["SLACK_WEBHOOK"],
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(
+            {
+                "text": slack_message,
+            }
+        ),
+    )
     assert r.content == b"ok", r.content
 
-def send_alerts_for_failed_jobs(sent_alerts):
+
+def send_alerts_for_failed_jobs(sent_alerts: Set[str]) -> bool:
     pipeline_id = os.environ["CIRCLE_PIPELINE_ID"]
     workflows = requests.get(f"https://circleci.com/api/v2/pipeline/{pipeline_id}/workflow").json()
     workflows_are_running = False
@@ -40,13 +50,14 @@ def send_alerts_for_failed_jobs(sent_alerts):
             job_name = j["name"]
             if workflow_id + job_name not in sent_alerts and j["status"] == "failed":
                 send_alert(job_name, w["pipeline_number"], workflow_id, j["job_number"])
-                sent_alerts[workflow_id + job_name] = True
+                sent_alerts.add(workflow_id + job_name)
 
     return workflows_are_running
 
-def main():
+
+def main() -> None:
     failure_count = 0
-    sent_alerts = {}
+    sent_alerts: Set[str] = set()
     while failure_count < 20:
         try:
             print("Checking circleci API for jobs")
