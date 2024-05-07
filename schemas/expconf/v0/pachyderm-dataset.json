@@ -6,7 +6,10 @@
     "additionalProperties": false,
     "required": [
         "project",
-        "repo"
+        "repo",
+        "commit",
+        "branch",
+        "token"
     ],
     "properties": {
         "project": {
@@ -21,17 +24,18 @@
         },
         "commit": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
         },
         "branch": {
             "type": [
-                "string",
-                "null"
-            ],
-            "default": null
+                "string"
+            ]
+        },
+        "token": {
+            "type": [
+                "string"
+            ]
         }
     }
 }

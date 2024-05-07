@@ -771,13 +771,13 @@ var (
             ],
             "default": {}
         },
-        "integration": {
+        "integrations": {
             "type": [
                 "object",
                 "null"
             ],
             "default": null,
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/integration.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/integrations.json"
         },
         "data_layer": {
             "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
@@ -1393,10 +1393,10 @@ var (
     }
 }
 `)
-	textIntegrationConfigV0 = []byte(`{
+	textIntegrationsConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/integration.json",
-    "title": "IntegrationConfig",
+    "$id": "http://determined.ai/schemas/expconf/v0/integrations.json",
+    "title": "IntegrationsConfig",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -1667,7 +1667,10 @@ var (
     "additionalProperties": false,
     "required": [
         "project",
-        "repo"
+        "repo",
+        "commit",
+        "branch",
+        "token"
     ],
     "properties": {
         "project": {
@@ -1693,6 +1696,13 @@ var (
                 "null"
             ],
             "default": null
+        },
+        "token": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         }
     }
 }
@@ -1705,8 +1715,7 @@ var (
     "additionalProperties": false,
     "required": [
         "host",
-        "port",
-        "token"
+        "port"
     ],
     "properties": {
         "host": {
@@ -1717,11 +1726,6 @@ var (
         "port": {
             "type": [
                 "integer"
-            ]
-        },
-        "token": {
-            "type": [
-                "string"
             ]
         }
     }
@@ -3397,7 +3401,7 @@ var (
 
 	schemaHyperparametersV0 interface{}
 
-	schemaIntegrationConfigV0 interface{}
+	schemaIntegrationsConfigV0 interface{}
 
 	schemaKerberosConfigV0 interface{}
 
@@ -3982,24 +3986,24 @@ func ParsedHyperparametersV0() interface{} {
 	return schemaHyperparametersV0
 }
 
-func ParsedIntegrationConfigV0() interface{} {
+func ParsedIntegrationsConfigV0() interface{} {
 	cacheLock.RLock()
-	if schemaIntegrationConfigV0 != nil {
+	if schemaIntegrationsConfigV0 != nil {
 		cacheLock.RUnlock()
-		return schemaIntegrationConfigV0
+		return schemaIntegrationsConfigV0
 	}
 	cacheLock.RUnlock()
 
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
-	if schemaIntegrationConfigV0 != nil {
-		return schemaIntegrationConfigV0
+	if schemaIntegrationsConfigV0 != nil {
+		return schemaIntegrationsConfigV0
 	}
-	err := json.Unmarshal(textIntegrationConfigV0, &schemaIntegrationConfigV0)
+	err := json.Unmarshal(textIntegrationsConfigV0, &schemaIntegrationsConfigV0)
 	if err != nil {
-		panic("invalid embedded json for IntegrationConfigV0")
+		panic("invalid embedded json for IntegrationsConfigV0")
 	}
-	return schemaIntegrationConfigV0
+	return schemaIntegrationsConfigV0
 }
 
 func ParsedKerberosConfigV0() interface{} {
@@ -4827,8 +4831,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textHyperparameterV0
 	url = "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
 	cachedSchemaBytesMap[url] = textHyperparametersV0
-	url = "http://determined.ai/schemas/expconf/v0/integration.json"
-	cachedSchemaBytesMap[url] = textIntegrationConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/integrations.json"
+	cachedSchemaBytesMap[url] = textIntegrationsConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/kerberos.json"
 	cachedSchemaBytesMap[url] = textKerberosConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/length.json"

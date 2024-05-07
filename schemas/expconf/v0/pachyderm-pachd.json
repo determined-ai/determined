@@ -6,8 +6,7 @@
     "additionalProperties": false,
     "required": [
         "host",
-        "port",
-        "token"
+        "port"
     ],
     "properties": {
         "host": {
@@ -18,11 +17,6 @@
         "port": {
             "type": [
                 "integer"
-            ]
-        },
-        "token": {
-            "type": [
-                "string"
             ]
         }
     }

@@ -1,7 +1,7 @@
 package expconf
 
-// IntegrationConfigV0 configures experiment-level integrations.
-type IntegrationConfigV0 struct {
+// IntegrationsConfigV0 configures experiment-level integrations.
+type IntegrationsConfigV0 struct {
 	Pachyderm *PachydermConfigV0 `json:"pachyderm,omitempty"`
 }
 
@@ -14,9 +14,8 @@ type PachydermConfigV0 struct {
 
 // PachydermPachdConfigV0 configures the fields relevant to the pachyderm daemon.
 type PachydermPachdConfigV0 struct {
-	Host  *string `json:"host"`
-	Port  *int    `json:"port"`
-	Token *string `json:"token"`
+	Host *string `json:"host"`
+	Port *int    `json:"port"`
 }
 
 // PachydermProxyConfigV0 configures the fields relevant to the pachyderm console proxy.
@@ -30,6 +29,7 @@ type PachydermProxyConfigV0 struct {
 type PachydermDatasetConfigV0 struct {
 	Project *string `json:"project"`
 	Repo    *string `json:"repo"`
-	Commit  *string `json:"commit,omitempty"`
-	Branch  *string `json:"branch,omitempty"`
+	Commit  *string `json:"commit"`
+	Branch  *string `json:"branch"`
+	Token   *string `json:"token"`
 }

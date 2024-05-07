@@ -48,7 +48,7 @@ type (
 	SharedFSConfig            = SharedFSConfigV0
 	SingleConfig              = SingleConfigV0
 	SlurmConfig               = SlurmConfigV0
-	IntegrationConfig         = IntegrationConfigV0
+	IntegrationsConfig        = IntegrationsConfigV0
 	PachydermConfig           = PachydermConfigV0
 	PachydermPachdConfig      = PachydermPachdConfigV0
 	PachydermProxyConfig      = PachydermProxyConfigV0
