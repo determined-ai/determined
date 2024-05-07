@@ -13,10 +13,11 @@ workflows_to_skip = {
 def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number: str):
     job_url = f"https://app.circleci.com/pipelines/github/determined-ai/determined/{pipeline_number}/workflows/{workflow_id}/jobs/{job_number}"
 
+    # TODO(RM-252) mention the team who owns the test.
     slack_message = f"{job_name} failed on main, {job_url}"
     print(f"sending slack message: {slack_message}")
 
-    r = requests.post(os.envorn["SLACK_WEBHOOK"], headers={'Content-Type': 'application/json'}, data=json.dumps({
+    r = requests.post(os.environ["SLACK_WEBHOOK"], headers={'Content-Type': 'application/json'}, data=json.dumps({
         "text": slack_message,
     }))
     assert r.content == b"ok", r.content
