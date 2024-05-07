@@ -2155,7 +2155,8 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
-      - run: minikube start --profile defaultrm
+      - minikube/minikube-install
+      - minikube/minikube-start
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
