@@ -159,6 +159,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'forked_from', e.parent_id,
 			'external_experiment_id', e.external_experiment_id,
 			'is_multitrial', ((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1),
+			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").

@@ -46,6 +46,14 @@ func (e *ExperimentConfigV0) SetData(val map[string]interface{}) {
 	e.RawData = val
 }
 
+func (e ExperimentConfigV0) Integrations() *IntegrationsConfigV0 {
+	return e.RawIntegrations
+}
+
+func (e *ExperimentConfigV0) SetIntegrations(val *IntegrationsConfigV0) {
+	e.RawIntegrations = val
+}
+
 func (e ExperimentConfigV0) Debug() bool {
 	if e.RawDebug == nil {
 		panic("You must call WithDefaults on ExperimentConfigV0 before .Debug")
