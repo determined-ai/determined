@@ -7239,13 +7239,13 @@ export interface V1PatchTemplateConfigResponse {
  */
 export interface V1PatchTemplateNameRequest {
     /**
-     * 
+     * The current name.
      * @type {string}
      * @memberof V1PatchTemplateNameRequest
      */
     oldName: string;
     /**
-     * 
+     * The updated name.
      * @type {string}
      * @memberof V1PatchTemplateNameRequest
      */
