@@ -428,13 +428,12 @@ def wait_for_experiment_workload_progress(
 def experiment_has_completed_workload(sess: api.Session, experiment_id: int) -> bool:
     trials = experiment_trials(sess, experiment_id)
 
-    if not any(trials):
-        return False
-
     for t in trials:
         for s in t.workloads:
             if s.training is not None or s.validation is not None:
                 return True
+        print(f"trial for experiment {experiment_id} is in the {t.trial.state} state")
+
     return False
 
 

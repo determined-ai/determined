@@ -22,6 +22,7 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { BANNED_FILTER_COLUMNS } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
   archiveExperiments,
@@ -199,16 +200,16 @@ const TableActionBar: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
-      const managedExperimentIds = selectedExperiments
-        .filter((exp) => !exp.unmanaged)
+      const validExperimentIds = selectedExperiments
+        .filter((exp) => !exp.unmanaged && canActionExperiment(action, exp))
         .map((exp) => exp.id);
       const params = {
-        experimentIds: managedExperimentIds,
+        experimentIds: validExperimentIds,
         projectId: project.id,
       };
       switch (action) {
         case ExperimentAction.OpenTensorBoard: {
-          if (managedExperimentIds.length !== selectedExperiments.length) {
+          if (validExperimentIds.length !== selectedExperiments.length) {
             // if unmanaged experiments are selected, open experimentTensorBoardModal
             openExperimentTensorBoardModal();
           } else {
@@ -394,6 +395,7 @@ const TableActionBar: React.FC<Props> = ({
         <Column>
           <Row>
             <TableFilter
+              bannedFilterColumns={BANNED_FILTER_COLUMNS}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}

@@ -30,11 +30,19 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import { Error } from 'components/exceptions';
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { IOFilterFormSet } from 'components/FilterForm/components/type';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  IOFilterFormSet,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
+import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { RowHeight } from 'components/OptionsMenu';
 import {
@@ -59,6 +67,8 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
+import { eagerSubscribe } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 
 import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
 import css from './FlatRuns.module.scss';
@@ -72,6 +82,8 @@ export const PAGE_SIZE = 100;
 const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
 
 const STATIC_COLUMNS = [MULTISELECT];
+
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 
 const formStore = new FilterFormStore();
 
@@ -120,6 +132,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
   const isPagedView = true;
   const [page, setPage] = useState(() =>
@@ -134,6 +147,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
+  const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -202,6 +216,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       rows,
     };
   }, [loadedSelectedRunIds]);
+
+  const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      formStore.sweep();
+    }
+  }, []);
 
   const colorMap = useGlasbey([...loadedSelectedRunIds.keys()]);
 
@@ -329,7 +350,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          //filter: filtersString,
+          filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
           projectId: project.id,
@@ -361,6 +382,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     }
   }, [
     canceler.signal,
+    filtersString,
     isLoadingSettings,
     isPagedView,
     loadableFormset,
@@ -404,19 +426,38 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   }, [page]);
 
   useEffect(() => {
-    // useSettings load the default value first, and then load the data from DB
-    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    if (isLoadingSettings) return;
-    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-    if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
-        publicSubject: 'Unable to initialize filterset from settings',
-      });
-    } else {
-      const formset = formSetValidation.right;
-      formStore.init(formset);
-    }
-  }, [settings.filterset, isLoadingSettings]);
+    let cleanup: () => void;
+    // eagerSubscribe is like subscribe but it runs once before the observed value changes.
+    cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
+      // init formset once from settings when loaded, then flip the sync
+      // direction -- when formset changes, update settings
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          cleanup?.();
+          if (!s?.filterset) {
+            formStore.init();
+          } else {
+            const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+            if (isLeft(formSetValidation)) {
+              handleError(formSetValidation.left, {
+                publicSubject: 'Unable to initialize filterset from settings',
+              });
+            } else {
+              formStore.init(formSetValidation.right);
+            }
+          }
+          cleanup = formStore.asJsonString.subscribe(() => {
+            resetPagination();
+            const loadableFormset = formStore.formset.get();
+            Loadable.forEach(loadableFormset, (formSet) =>
+              updateSettings({ filterset: JSON.stringify(formSet), selection: DEFAULT_SELECTION }),
+            );
+          });
+        });
+      }
+    });
+    return () => cleanup?.();
+  }, [flatRunsSettingsObs, resetPagination, updateSettings]);
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
@@ -555,6 +596,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         return items;
       }
 
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
         // Column is pinned if the index is inside of the frozen columns
@@ -587,20 +629,72 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 },
               },
       ];
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-      if (!column) return items;
 
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
-      const sortOptions = sortMenuItemsForColumn(column, sorts, handleSortChange);
-      if (sortOptions.length > 0) {
-        items.push(
-          ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      if (!column) {
+        return items;
+      }
+
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
+        );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: Loadable.match(loadableFormset, {
+            _: () => 0,
+            Loaded: (formset) => formset.filterGroup.children.length,
+          }),
+          item: {
+            columnName: column.column,
+            id: uuidv4(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+        handleIsOpenFilterChange?.(true);
+      };
+
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
+      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
+        const sortMenuItems =
+          sortCount === 0
             ? []
             : [
                 { type: 'divider' as const },
                 ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ]),
+              ];
+
+        items.push(
+          ...sortMenuItems,
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
+            },
+          },
         );
+
+        if (filterCount > 0) {
+          items.push({
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          });
+        }
       }
       return items;
     },
@@ -611,27 +705,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       handleSelectionChange,
       handleSortChange,
       isMobile,
+      loadableFormset,
+      handleIsOpenFilterChange,
       projectColumns,
       settings.pinnedColumnsCount,
       sorts,
       settings.pageLimit,
       settings.selection,
     ],
-  );
-
-  useEffect(
-    () =>
-      formStore.asJsonString.subscribe(() => {
-        resetPagination();
-        const loadableFormset = formStore.formset.get();
-        Loadable.forEach(loadableFormset, (formSet) =>
-          updateSettings({
-            filterset: JSON.stringify(formSet),
-            selection: DEFAULT_SELECTION,
-          }),
-        );
-      }),
-    [resetPagination, updateSettings],
   );
 
   useEffect(() => {
@@ -644,6 +725,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   return (
     <div className={css.content} ref={contentRef}>
       <Row>
+        <TableFilter
+          bannedFilterColumns={BANNED_FILTER_COLUMNS}
+          formStore={formStore}
+          isMobile={isMobile}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          onIsOpenFilterChange={handleIsOpenFilterChange}
+        />
         <ColumnPickerMenu
           initialVisibleColumns={columnsIfLoaded}
           isMobile={isMobile}

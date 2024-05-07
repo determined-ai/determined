@@ -1,1 +1,0 @@
-ALTER TABLE allocations DROP COLUMN proxy_address;

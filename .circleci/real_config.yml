@@ -37,7 +37,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/pytorch-tensorflow-cuda-dev:f17151a
+    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -58,6 +58,12 @@ parameters:
   do_nightly_tests:
     type: boolean
     default: false
+  ee:
+    type: boolean
+    default: false
+  e2e-react:
+    type: string
+    default: ""
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,6 +106,11 @@ any-fork: &any-fork
   branches:
     only:
       - /pull\/.*/
+
+do-not-run-on-manual-trigger: &do-not-run-on-manual-trigger
+  unless:
+    equal: [ api, << pipeline.trigger_source >> ]
+
 
 commands:
   fix-circle-working-directory:
@@ -234,7 +245,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:f17151a
+            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
 
   login-docker:
     parameters:
@@ -1969,6 +1980,9 @@ jobs:
       ee:
         type: boolean
         default: false
+      playwright-options:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2009,11 +2023,13 @@ jobs:
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react
+          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_artifacts:
+          path: /home/circleci/.npm/_logs/
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
 
@@ -2298,7 +2314,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:f17151a
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2320,7 +2336,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-cuda-dev:f17151a
+      - image: determinedai/pytorch-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2342,7 +2358,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-cpu-dev:f17151a
+      - image: determinedai/pytorch-cpu-dev:8b3bea3
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2363,7 +2379,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:f17151a
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2385,7 +2401,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:f17151a
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -3619,7 +3635,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-tensorflow-cuda-dev:f17151a
+        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
         type: string
       accel-node-taints:
         type: string
@@ -3996,6 +4012,7 @@ jobs:
 
 workflows:
   lint:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - check-py-bindings:
@@ -4012,6 +4029,7 @@ workflows:
       - lint-secrets
 
   previews:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
@@ -4026,6 +4044,7 @@ workflows:
           filters: *any-upstream
 
   test-cli:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-cli:
           matrix:
@@ -4035,6 +4054,7 @@ workflows:
                 - "python-39"
                 - "win/default"
   test-unit:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-unit-react
       - test-unit-harness-cpu
@@ -4079,6 +4099,7 @@ workflows:
             - test-unit-storage
 
   test-go:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
           context: storage-unit-tests
@@ -4095,6 +4116,7 @@ workflows:
             - go-coverage
 
   package-and-deploy-oss:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # These jobs are important for docs and latest main and have been moved
       # here from test-e2e. These jobs are OSS focused while test-e2e now only
@@ -4190,6 +4212,7 @@ workflows:
           compute-agent-instance-type: t2.medium
 
   test-e2e:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
@@ -4776,7 +4799,10 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-gke-shared-cluster:
-    unless: << pipeline.parameters.do_nightly_tests >>
+    unless:
+      or:
+        - << pipeline.parameters.do_nightly_tests >>
+        - equal: [ api, << pipeline.trigger_source >> ]
     jobs:
       - package-and-push-system-dev-small
 
@@ -4792,21 +4818,23 @@ workflows:
           test-type: cpu
 
   test-e2e-longrunning:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-proto:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-react:
           dev-mode: true
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-docs:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
           requires:
             - build-helm
             - build-proto
       - build-go:
+          filters: *upstream-feature-branch
           context: github-read
       - package-and-push-system-dev-ee:
           requires:
@@ -4815,7 +4843,7 @@ workflows:
           context:
             - determined-ee
             - github-read
-          filters: *any-upstream
+          filters: *upstream-feature-branch
 
       - package-and-push-system-local:
           context: github-read
@@ -5190,10 +5218,11 @@ workflows:
       # Request HPC tests
       - request-hpc-tests:
           type: approval
-          filters: *any-upstream
+          filters: *upstream-feature-branch
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          filters: *upstream-feature-branch
           slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
@@ -5238,6 +5267,7 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          filters: *upstream-feature-branch
           slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
@@ -5246,6 +5276,7 @@ workflows:
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5261,6 +5292,7 @@ workflows:
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5277,6 +5309,7 @@ workflows:
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5293,6 +5326,7 @@ workflows:
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5309,6 +5343,7 @@ workflows:
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5327,6 +5362,7 @@ workflows:
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5344,6 +5380,7 @@ workflows:
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
           context:
             # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
             # that's required by the "gh" command for authentication.
@@ -5572,6 +5609,22 @@ workflows:
                   password: ${HPC_DB_PASSWD}
       - terminate-vpc-circleci:
             context: ["gcp"]
+
+  manual-e2e-react:
+    when: << pipeline.parameters.e2e-react >>
+    jobs:
+      - build-go:
+          name: build-go
+          ee: << pipeline.parameters.ee >>
+          context: github-read
+      - test-e2e-react:
+          ee: << pipeline.parameters.ee >>
+          playwright-options: << pipeline.parameters.e2e-react >>
+          requires:
+            - build-go
+          context:
+            - playwright
+            - github-read
 
   release:
     jobs:
