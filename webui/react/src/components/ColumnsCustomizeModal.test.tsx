@@ -235,14 +235,12 @@ describe('Columns Customize Modal', () => {
 
     await user.click(await view.findByText('Add All'));
 
-    await waitFor(() => {
-      expect(
-        lists[0].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
-      ).toEqual(0);
-      expect(
-        lists[1].querySelector('[data-test-id="virtuoso-item-list"]')?.childElementCount,
-      ).toBeGreaterThan(0);
-    });
+    expect((await within(lists[0]).findByTestId('virtuoso-item-list')).childElementCount).toEqual(
+      0,
+    );
+    expect(
+      (await within(lists[1]).findByTestId('virtuoso-item-list')).childElementCount,
+    ).toBeGreaterThan(0);
   });
 
   it('should remove all', async () => {
