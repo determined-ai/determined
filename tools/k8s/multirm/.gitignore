@@ -1,0 +1,4 @@
+ingress.yaml
+deployment.yaml
+service.yaml
+.envrc
