@@ -54,10 +54,7 @@ test.describe('Experiement List', () => {
     await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0);
     await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.setColumnDefs();
-    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue(
-      'Trials',
-      '1',
-    );
+    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
     await row.clickColumn('Select');
     expect(await row.isSelected()).toBeTruthy();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();

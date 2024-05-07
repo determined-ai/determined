@@ -1,4 +1,4 @@
-import { Locator } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
@@ -242,7 +242,7 @@ export class Row<
     const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${map.entries()}`);
+      throw new Error(`Column with title expected but not found ${[...map.entries()]}`);
     }
     return this.getCellByIndex(index - 1);
   }
@@ -293,6 +293,10 @@ export class HeadRow extends NamedComponent {
           throw new Error(
             `All header cells should have the attribute ${this.#columnIndexAttribute}`,
           );
+        if (index !== '1') {
+          // we don't care about the select column
+          await expect(cell).not.toHaveText('');
+        }
         this.#columnDefs.set(await cell.innerText(), +index);
       }),
     );
