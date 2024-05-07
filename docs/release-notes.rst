@@ -86,7 +86,9 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
 
    -  Workaround: To manage actions on a single trial, use the trial view in the WebUI.
       Alternatively, for bulk actions affected by this issue, consider using the command-line
-      interface (CLI).
+      interface (CLI). You can also turn off the New Experiment List setting under the User Settings
+      > Experimental section. For more information visit Manage User Settings under :ref:WebUI
+      <web-ui-if>.
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
