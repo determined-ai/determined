@@ -151,7 +151,7 @@ export class DataGrid<
         rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerText()),
       );
       throw new Error(
-        `Expected one row to have ${columnName} ${value}. Found ${rows.length}: ${names}.`,
+        `Expected one row to match ${columnName}:${value}. Found ${rows.length} rows that meet the condition: ${names}.`,
       );
     }
     return rows[0];
