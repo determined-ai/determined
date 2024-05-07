@@ -695,6 +695,7 @@ func TestHealthCheck(t *testing.T) {
 			podInterfaces: map[string]typedV1.PodInterface{
 				"namespace": mockPodInterface,
 			},
+			syslog: logrus.WithField("namespace", "test"),
 		},
 	}
 

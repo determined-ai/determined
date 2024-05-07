@@ -96,7 +96,7 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
         trial_logs = "\n".join(exp.trial_logs(sess, experiment_trials[0].trial.id))
         assert "therefore will not schedule on" in trial_logs
 
-        exp.kill_experiments(sess, [exp_id])
+        exp.kill_experiments(sess, [exp_id], -1)
     else:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
@@ -145,7 +145,7 @@ def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
     else:
         if should_match:
             exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.QUEUED)
-            exp.kill_experiments(sess, [exp_id])
+            exp.kill_experiments(sess, [exp_id], -1)
         else:
             exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 

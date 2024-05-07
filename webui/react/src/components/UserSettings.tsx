@@ -18,7 +18,11 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import Grid from 'components/Grid';
-import { RowHeight, rowHeightItems, TableViewMode } from 'components/OptionsMenu';
+import {
+  RowHeight,
+  rowHeightItems,
+  // TableViewMode
+} from 'components/OptionsMenu';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -230,7 +234,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     ))}
                   </Select>
                 </InlineForm>
-                <InlineForm<TableViewMode>
+                {/* <InlineForm<TableViewMode>
                   initialValue={dataGridGlobalSettings.tableViewMode}
                   label="Infinite Scroll"
                   valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
@@ -251,7 +255,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                       Off
                     </Option>
                   </Select>
-                </InlineForm>
+                </InlineForm> */}
               </div>
             </Section>
             <Section divider title="Shortcuts">

@@ -323,6 +323,7 @@ func (p *pods) HealthStatus() model.HealthStatus {
 	for _, podInterface := range p.podInterfaces {
 		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
 		if err != nil {
+			p.syslog.WithError(err).Error("kubernetes resource manager marked as unhealthy")
 			return model.Unhealthy
 		}
 		return model.Healthy

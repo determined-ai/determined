@@ -44,6 +44,14 @@
     {{- end -}}
 {{- end -}}
 
+{{- define "genai.sharedFSMountPath" -}}
+    {{- if .Values.genai.sharedFSMountPath -}}
+        {{- .Values.genai.sharedFSMountPath }}
+    {{- else }}
+        {{- "/run/determined/workdir/shared_fs" }}
+    {{- end -}}
+{{- end -}}
+
 {{- define "genai.allResourcePoolNames" -}}
     {{- $orig_resource_pool_data := (required "A valid .Values.resourcePools entry required!" .Values.resourcePools) }}
     {{- $resource_pools := list -}}

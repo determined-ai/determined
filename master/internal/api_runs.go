@@ -373,7 +373,7 @@ func (a *apiServer) MoveRuns(
 		}
 	}
 	if len(validIDs) > 0 {
-		expMoveResults, err := experiment.MoveExperiments(ctx, expMoveIds, nil, req.DestinationProjectId)
+		expMoveResults, err := experiment.MoveExperiments(ctx, srcProject.Id, expMoveIds, nil, req.DestinationProjectId)
 		if err != nil {
 			return nil, err
 		}

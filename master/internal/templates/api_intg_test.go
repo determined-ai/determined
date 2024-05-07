@@ -270,7 +270,54 @@ func TestPutTemplate(t *testing.T) {
 
 		resp, err = api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
 		require.NoError(t, err)
+		requireToJSONEq(t, input.Config, resp.Template.Config)
+	})
+
+	t.Run("TestPutTemplate with workspace change", func(t *testing.T) {
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
 		requireToJSONEq(t, input, resp.Template)
+
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+
+		input.WorkspaceId = int32(w.ID)
+
+		resp1, err := api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
+		require.NoError(t, err)
+		require.Equal(t, resp1.Template.WorkspaceId, int32(w.ID))
+	})
+
+	t.Run("TestPutTemplate with invalid workspace change", func(t *testing.T) {
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp.Template)
+
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+
+		input.WorkspaceId = int32(w.ID) + 1
+
+		_, err = api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
+		require.ErrorContains(t, err, "not found")
 	})
 }
 

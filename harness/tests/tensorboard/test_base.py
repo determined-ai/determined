@@ -1,4 +1,6 @@
 import pathlib
+import time
+from typing import List
 from unittest import mock
 
 import pytest
@@ -143,3 +145,50 @@ def test_upload_thread_normal_case() -> None:
     upload_thread.close()
 
     assert upload_function.call_count == 2
+
+
+class MockTensorBoardManager(tensorboard.TensorboardManager):
+    def __init__(
+        self,
+        base_path: pathlib.Path,
+        sync_path: pathlib.Path,
+        async_upload: bool = True,
+        sync_on_close: bool = True,
+    ) -> None:
+        super().__init__(
+            base_path=base_path,
+            sync_path=sync_path,
+            async_upload=async_upload,
+            sync_on_close=sync_on_close,
+        )
+        # Record timestamps `self._sync_impl` is called for mock tests.
+        self._sync_times: List[float] = []
+
+    def _sync_impl(self, path_info_list: List[tensorboard.base.PathUploadInfo]) -> None:
+        self._sync_times.append(time.time())
+
+    def delete(self) -> None:
+        return
+
+
+def test_sync_throttles_uploads() -> None:
+    """
+    Test that `TensorBoardManager.sync()` throttles uploads to a maximum of once per second.
+    """
+    mock_tensorboard_manager = MockTensorBoardManager(
+        base_path=BASE_PATH, sync_path=pathlib.Path("mock-tb-sync-path")
+    )
+
+    # Call `sync()` at different time intervals.
+    for _ in range(5):
+        mock_tensorboard_manager.sync()
+
+    for _ in range(5):
+        mock_tensorboard_manager.sync()
+        time.sleep(0.5)
+
+    # Verify that the recorded sync times are all at least 1 second apart.
+    sync_times = mock_tensorboard_manager._sync_times
+    assert len(sync_times) > 1
+    sync_intervals = [sync_times[i] - sync_times[i - 1] for i in range(1, len(sync_times))]
+    assert all(sync_interval > 1 for sync_interval in sync_intervals)

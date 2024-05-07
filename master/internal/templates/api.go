@@ -109,29 +109,58 @@ func (a *TemplateAPIServer) PutTemplate(
 	if len(req.Template.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
-	if req.Template.WorkspaceId != 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "setting workspace_id is not supported.")
+
+	tpl, err := TemplateByName(ctx, req.Template.Name)
+	if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			// Create a new template if name does not exist
+			_, err := a.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: req.Template})
+			if err != nil {
+				return nil, err
+			}
+			return &apiv1.PutTemplateResponse{Template: req.Template}, nil
+		}
+		return nil, err
 	}
 
-	switch _, err := TemplateByName(ctx, req.Template.Name); {
-	case errors.Is(err, db.ErrNotFound):
-		_, err := a.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: req.Template})
-		if err != nil {
-			return nil, err
-		}
-	case err != nil:
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
 		return nil, err
-	default:
-		req := &apiv1.PatchTemplateConfigRequest{
-			TemplateName: req.Template.Name,
-			Config:       req.Template.Config,
-		}
-		_, err = a.PatchTemplateConfig(ctx, req)
+	}
+	permErr, err := AuthZProvider.Get().CanUpdateTemplate(
+		ctx, user, model.AccessScopeID(tpl.WorkspaceID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+
+	var updated templatev1.Template
+	q := db.Bun().NewUpdate().Model(&model.Template{}).Where("name = ?", req.Template.Name)
+
+	if req.Template.Config != nil {
+		configBytes, err := json.Marshal(req.Template.Config.AsMap())
 		if err != nil {
 			return nil, err
 		}
+		q.Set("config = ?", string(configBytes))
 	}
-	return &apiv1.PutTemplateResponse{Template: req.Template}, nil
+	if req.Template.WorkspaceId != 0 {
+		err = canCreateTemplateWorkspace(ctx, user, req.Template.WorkspaceId)
+		if err != nil {
+			return nil, err
+		}
+
+		q.Set("workspace_id = ?", req.Template.WorkspaceId)
+	}
+	err = q.Returning("*").Scan(ctx, &updated)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PutTemplateResponse{Template: &updated}, nil
 }
 
 // PostTemplate creates a template. If a template with the same name exists, an error is returned.
@@ -147,34 +176,14 @@ func (a *TemplateAPIServer) PostTemplate(
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
-	workspaceID := int(req.Template.WorkspaceId)
+	workspaceID := req.Template.WorkspaceId
 	if req.Template.WorkspaceId == 0 {
 		workspaceID = model.DefaultWorkspaceID
 	}
 
-	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(ctx, *user, req.Template.WorkspaceId)
+	err = canCreateTemplateWorkspace(ctx, user, workspaceID)
 	if err != nil {
 		return nil, err
-	}
-
-	exists, err := workspace.Exists(ctx, workspaceID)
-	switch {
-	case err != nil:
-		return nil, fmt.Errorf("failed to check workspace %d: %w", workspaceID, err)
-	case !exists:
-		return nil, api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
-	}
-
-	permErr, err := AuthZProvider.Get().CanCreateTemplate(
-		ctx,
-		user,
-		model.AccessScopeID(workspaceID),
-	)
-	switch {
-	case err != nil:
-		return nil, fmt.Errorf("failed to check for permissions: %w", err)
-	case permErr != nil:
-		return nil, permErr
 	}
 
 	// json.Marshal + AsMap is 2x faster than protojson.Marshal or just json.Marshal because
@@ -186,7 +195,7 @@ func (a *TemplateAPIServer) PostTemplate(
 
 	var inserted templatev1.Template
 	err = db.Bun().NewInsert().
-		Model(&model.Template{Name: req.Template.Name, WorkspaceID: workspaceID}).
+		Model(&model.Template{Name: req.Template.Name, WorkspaceID: int(workspaceID)}).
 		Value("config", "?", string(configBytes)).
 		Returning("*").
 		Scan(ctx, &inserted)
@@ -284,4 +293,32 @@ func (a *TemplateAPIServer) DeleteTemplate(
 		return nil, fmt.Errorf("error deleting template '%v': %w", req.TemplateName, err)
 	}
 	return &apiv1.DeleteTemplateResponse{}, nil
+}
+
+func canCreateTemplateWorkspace(ctx context.Context, user *model.User, workspaceID int32) error {
+	err := workspace.AuthZProvider.Get().CanGetWorkspaceID(ctx, *user, workspaceID)
+	if err != nil {
+		return err
+	}
+
+	exists, err := workspace.Exists(ctx, int(workspaceID))
+	switch {
+	case err != nil:
+		return fmt.Errorf("failed to check workspace %d: %w", workspaceID, err)
+	case !exists:
+		return api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
+	}
+
+	permErr, err := AuthZProvider.Get().CanCreateTemplate(
+		ctx,
+		user,
+		model.AccessScopeID(workspaceID),
+	)
+	switch {
+	case err != nil:
+		return fmt.Errorf("failed to check for permissions: %w", err)
+	case permErr != nil:
+		return permErr
+	}
+	return nil
 }

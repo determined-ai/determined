@@ -9,4 +9,4 @@ if [ -z "$name" ]; then
     exit 1
 fi
 
-touch "$(date +%Y%m%d%H%M%S)_$name.tx."{up,down}".sql"
+touch "$(date +%Y%m%d%H%M%S)_$name.tx.up.sql"

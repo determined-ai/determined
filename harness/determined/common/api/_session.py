@@ -49,8 +49,14 @@ def _get_error_str(r: requests.models.Response) -> str:
         mes = json_resp.get("message")
         if mes is not None:
             return str(mes)
+
         # Try getting GRPC error description if message does not exist.
-        return str(json_resp.get("error").get("error"))
+        # GRPC errors can have an optional {"error": {"message": "..."}} field.
+        # Look here first then fallback to {"error": {"error": "..."}} if there is no message.
+        error = json_resp.get("error")
+        if "message" in error:
+            return str(error.get("message"))
+        return str(error.get("error"))
     except Exception:
         return ""
 
