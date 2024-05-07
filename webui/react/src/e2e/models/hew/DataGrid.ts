@@ -215,7 +215,9 @@ export class Row<
     const position = this.columnPositions.get(columnID);
     if (position === undefined) {
       throw new Error(
-        `Column with title expected but not found ${JSON.stringify(this.columnPositions)}`,
+        `We don't know how to click this column. Here are the positions we know: ${JSON.stringify(
+          this.columnPositions,
+        )}`,
       );
     }
     await this.parentTable.pwLocator.click({
@@ -240,7 +242,7 @@ export class Row<
     const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${JSON.stringify(map)}`);
+      throw new Error(`Column with title expected but not found ${map}`);
     }
     return this.getCellByIndex(index - 1);
   }
