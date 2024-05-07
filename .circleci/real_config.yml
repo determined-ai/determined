@@ -3232,7 +3232,7 @@ jobs:
           at: .
       - run:
           name: Install alert deps
-          command: tools/scripts/retry.sh pip install requests # TODO slack api maybe?
+          command: tools/scripts/retry.sh pip install requests slack_sdk
       - run:
           name: Listen for failures and send slack alerts
           command: python .circleci/scripts/job_level_alerts.py

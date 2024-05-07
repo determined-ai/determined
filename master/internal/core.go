@@ -118,7 +118,7 @@ func New(logStore *logger.LogBuffer, config *config.Config) *Master {
 	return &Master{
 		MasterID: uuid.New().String(),
 		logs:     logStore,
-		config:   configsas,
+		config:   config,
 	}
 }
 

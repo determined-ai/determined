@@ -1,6 +1,8 @@
 import os
 import requests
 import time
+import logging
+import json
 
 workflows_to_skip = {
     # Skip test-e2e-longrunning for testing on feature branches since it won't complete on them.
@@ -8,15 +10,16 @@ workflows_to_skip = {
     "send-alerts",
 }
 
-sent_alerts = {}
-
-# To test locally.
-# export CIRCLE_PIPELINE_ID='ca8f23cf-f9a9-4a72-ba5e-e78bfe501dda'
 def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number: str):
     job_url = f"https://app.circleci.com/pipelines/github/determined-ai/determined/{pipeline_number}/workflows/{workflow_id}/jobs/{job_number}"
 
-    slack_message = f"{job_name} failed on main, {job_url}\nowning team: @TODO"
-    print(slack_message)
+    slack_message = f"{job_name} failed on main, {job_url}"
+    print(f"sending slack message: {slack_message}")
+
+    r = requests.post(os.envorn["SLACK_WEBHOOK"], headers={'Content-Type': 'application/json'}, data=json.dumps({
+        "text": slack_message,
+    }))
+    assert r.content == b"ok", r.content
 
 def send_alerts_for_failed_jobs(sent_alerts):
     pipeline_id = os.environ["CIRCLE_PIPELINE_ID"]
@@ -28,30 +31,32 @@ def send_alerts_for_failed_jobs(sent_alerts):
 
         workflow_id = w["id"]
         if not workflows_are_running and w["status"] == "running":
-            print(f"waiting for workflow {w['name']} to finish")
+            print(f"waiting for at least workflow {w['name']} to finish")
             workflows_are_running = True
 
         jobs = requests.get(f"https://circleci.com/api/v2/workflow/{workflow_id}/job").json()
         for j in jobs["items"]:
             job_name = j["name"]
-            if workflow_id + job_name not in sent_alerts and j["status"] == "failed":
+            if workflow_id + job_name not in sent_alerts and j["status"] == "failed" or True: # TODO
                 send_alert(job_name, w["pipeline_number"], workflow_id, j["job_number"])
                 sent_alerts[workflow_id + job_name] = True
+            return # TODO
 
     return workflows_are_running
 
 def main():
     failure_count = 0
     sent_alerts = {}
-    while failure_count < 5: # TODO make this higher
+    while failure_count < 20:
         try:
             print("Checking circleci API for jobs")
             still_workflows_in_progress = send_alerts_for_failed_jobs(sent_alerts)
             if not still_workflows_in_progress:
                 print("all workflows complete, ending")
                 return
+            failure_count = 0
         except Exception as e:
-            print(f"failed to read circleci state and send alerts: {e}")
+            logging.critical(e, exc_info=True)
             failure_count += 1
 
         time.sleep(15)
@@ -59,6 +64,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#api_url = f'https://circleci.com/api/v2/project/github/{username}/{project}/workflow/{workflow}/job'
