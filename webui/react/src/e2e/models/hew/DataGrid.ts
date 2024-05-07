@@ -242,7 +242,7 @@ export class Row<
     const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${map}`);
+      throw new Error(`Column with title expected but not found ${map.entries()}`);
     }
     return this.getCellByIndex(index - 1);
   }
