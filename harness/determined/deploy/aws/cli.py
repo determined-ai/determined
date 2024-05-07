@@ -281,6 +281,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
         constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
         constants.cloudformation.GENAI_VERSION: args.genai_version,
+        constants.cloudformation.GENAI_SHARED_FS_MOUNT_PATH: args.genai_shared_fs_mount_path,
     }
 
     if args.master_config_template_path:
@@ -700,6 +701,12 @@ args_description = cli.Cmd(
                     type=str,
                     help="Specifies the version of GenAI to install. The value must be a valid"
                     + " GenAI tag available on Docker Hub.",
+                ),
+                cli.Arg(
+                    "--genai-shared-fs-mount-path",
+                    type=str,
+                    help="Specifies the path to mount the shared filesystem used for datasets in"
+                    + " GenAI. Defaults to `/run/determined/workdir/shared_fs`",
                 ),
                 cli.Arg(
                     "--initial-user-password",
