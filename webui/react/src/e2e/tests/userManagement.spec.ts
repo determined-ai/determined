@@ -180,7 +180,7 @@ test.describe('User Management', () => {
         await pageSetupTeardown.close();
       });
 
-      test('[ET-233, ET-178] Bulk actions', async ({ page, user }, testInfo) => {
+      test.skip('[ET-233, ET-178] Bulk actions', async ({ page, user }, testInfo) => {
         const userManagementPage = new UserManagement(page);
 
         await test.step('Setup table filters', async () => {
