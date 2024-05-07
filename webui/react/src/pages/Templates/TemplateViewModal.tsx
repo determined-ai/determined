@@ -24,7 +24,7 @@ const TemplateViewModalComponent: React.FC<Props> = ({ template, workspaces }) =
   if (!template || !workspaces) return null;
 
   return (
-    <Modal size="small" title={`Template ${template.name}`}>
+    <Modal size="medium" title={`Template ${template.name}`}>
       <Label>Workspace</Label>
       {workspace && (
         <NavigationItem

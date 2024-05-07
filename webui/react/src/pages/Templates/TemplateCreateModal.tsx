@@ -82,7 +82,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess 
   return (
     <Modal
       cancel
-      size="small"
+      size="medium"
       submit={{
         disabled,
         form: idPrefix + FORM_ID,
