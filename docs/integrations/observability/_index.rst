@@ -304,8 +304,17 @@ formatted as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_co
 +-----------------------------+---------------------------------------------------+
 
 Kubernetes resource metrics and GPU metrics can be broken down by Determined resources by joining
-data metrics with ``kube_pod_labels`` state metric. Some helpful resources (visit PromQL
-documentation for more details):
+data metrics with ``kube_pod_labels`` state metric. As an example, the following PromQL query
+computes the average GPU Utilization by Determined experiment ID.
+
+.. code:: bash
+
+   avg by (label_determined_ai_experiment_id)(
+      DCGM_FI_DEV_GPU_UTIL * on(pod) group_left(label_determined_ai_experiment_id)
+      kube_pod_labels{label_determined_ai_experiment_id!=""}
+   )
+
+Some helpful resources (visit PromQL documentation for more details):
 
 -  `joining metrics
    <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics>`__ from
