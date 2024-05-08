@@ -70,6 +70,10 @@ export interface GetTemplatesParams extends PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
 }
 
+export interface DeleteTemplateParams {
+  name: string
+}
+
 export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;

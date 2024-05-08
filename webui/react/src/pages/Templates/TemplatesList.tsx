@@ -36,6 +36,7 @@ import { validateDetApiEnum } from 'utils/service';
 import { alphaNumericSorter } from 'utils/sort';
 
 import TemplateCreateModalComponent from './TemplateCreateModal';
+import TemplateDeleteModalComponent from './TemplateDeleteModal';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TemplatesList.settings';
 import TemplateViewModalComponent from './TemplateViewModal';
 
@@ -44,10 +45,12 @@ interface Props {
 }
 
 const MenuKey = {
+  DeleteTemplate: 'delete-template',
+  EditTemplate: 'edit-template',
   ViewTemplate: 'view-template',
 } as const;
 
-const DROPDOWN_MENU = [{ key: MenuKey.ViewTemplate, label: 'View Template' }];
+const DROPDOWN_MENU = [{ key: MenuKey.ViewTemplate, label: 'View Template' }, { key: MenuKey.EditTemplate, label: 'Edit Template' }, { danger: true, key: MenuKey.DeleteTemplate, label: 'Delete Template' }];
 
 const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   const { settings, updateSettings } = useSettings<Settings>(
@@ -59,9 +62,10 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const { canCreateTemplate, canCreateTemplateWorkspace } = usePermissions();
-  const TemplateCreateModal = useModal(TemplateCreateModalComponent);
 
+  const TemplateCreateModal = useModal(TemplateCreateModalComponent);
   const TemplateViewModal = useModal(TemplateViewModalComponent);
+  const TemplateDeleteModal = useModal(TemplateDeleteModalComponent);
 
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
@@ -135,14 +139,20 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
 
   const handleDropdown = useCallback(
     (key: string, record: Template) => {
+      setSelectedTemplate(record);
       switch (key) {
         case MenuKey.ViewTemplate:
-          setSelectedTemplate(record);
           TemplateViewModal.open();
+          break;
+        case MenuKey.EditTemplate:
+          TemplateCreateModal.open();
+          break;
+        case MenuKey.DeleteTemplate:
+          TemplateDeleteModal.open();
           break;
       }
     },
-    [TemplateViewModal],
+    [TemplateViewModal, TemplateCreateModal, TemplateDeleteModal],
   );
 
   const handleNameSearchReset = useCallback(() => {
@@ -244,10 +254,15 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
       : canCreateTemplate;
   }, [workspaceId, canCreateTemplate, canCreateTemplateWorkspace]);
 
+  const onClickCreate = useCallback(() => {
+    setSelectedTemplate(undefined);
+    TemplateCreateModal.open();
+  }, [TemplateCreateModal]);
+
   return (
     <>
       <div className={css.headerButton}>
-        {canCreate && <Button onClick={TemplateCreateModal.open}>New Template</Button>}
+        {canCreate && <Button onClick={onClickCreate}>New Template</Button>}
       </div>
       {!(settings.name || settings.workspace?.length) && templates.length === 0 && !isLoading ? (
         <Message
@@ -280,8 +295,9 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      <TemplateCreateModal.Component workspaceId={workspaceId} onSuccess={fetchTemplates} />
+      <TemplateCreateModal.Component template={selectedTemplate} workspaceId={workspaceId} onSuccess={fetchTemplates} />
       <TemplateViewModal.Component template={selectedTemplate} workspaces={workspaces} />
+      <TemplateDeleteModal.Component template={selectedTemplate!} onSuccess={fetchTemplates} />
     </>
   );
 };
