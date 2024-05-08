@@ -3731,6 +3731,7 @@ class v1Experiment(Printable):
     labels: "typing.Optional[typing.Sequence[str]]" = None
     modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
     projectName: "typing.Optional[str]" = None
@@ -3773,6 +3774,7 @@ class v1Experiment(Printable):
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
@@ -3827,6 +3829,8 @@ class v1Experiment(Printable):
             self.modelDefinitionSize = modelDefinitionSize
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
         if not isinstance(progress, Unset):
@@ -3895,6 +3899,8 @@ class v1Experiment(Printable):
             kwargs["modelDefinitionSize"] = obj["modelDefinitionSize"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
         if "progress" in obj:
@@ -3963,6 +3969,8 @@ class v1Experiment(Printable):
             out["modelDefinitionSize"] = self.modelDefinitionSize
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
         if not omit_unset or "progress" in vars(self):
@@ -4386,6 +4394,7 @@ class v1FlatRun(Printable):
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
@@ -4401,6 +4410,7 @@ class v1FlatRunExperiment(Printable):
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -4415,6 +4425,8 @@ class v1FlatRunExperiment(Printable):
             self.externalExperimentId = externalExperimentId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
@@ -4433,6 +4445,8 @@ class v1FlatRunExperiment(Printable):
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -4451,6 +4465,8 @@ class v1FlatRunExperiment(Printable):
             out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         return out
 
 class v1GenericTaskState(DetEnum):

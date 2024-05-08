@@ -1331,22 +1331,14 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-// nolint: exhaustruct
-func createTestExpWithProjectID(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
-	labelMap := make(map[string]bool)
-	for _, l := range labels {
-		labelMap[l] = true
-	}
-
-	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-		RawLabels:      labelMap,
-		RawDescription: ptrs.Ptr("desc"),
-		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-	})
-	activeConfig = schemas.WithDefaults(activeConfig)
-	exp := &model.Experiment{
+func createTestExpWithActiveConfig(
+	t *testing.T,
+	api *apiServer,
+	curUser model.User,
+	projectID int,
+	activeConfig expconf.ExperimentConfig,
+) (exp *model.Experiment) {
+	exp = &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.PausedState,
 		OwnerID:   &curUser.ID,
@@ -1360,6 +1352,25 @@ func createTestExpWithProjectID(
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
 	return exp
+}
+
+// nolint: exhaustruct
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
+) *model.Experiment {
+	labelMap := make(map[string]bool)
+	for _, l := range labels {
+		labelMap[l] = true
+	}
+
+	experimentConfig := expconf.ExperimentConfig{
+		RawLabels:      labelMap,
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+	return createTestExpWithActiveConfig(t, api, curUser, projectID, activeConfig)
 }
 
 func TestAuthZGetExperiment(t *testing.T) {

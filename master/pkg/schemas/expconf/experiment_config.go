@@ -22,6 +22,7 @@ type ExperimentConfigV0 struct {
 	RawCheckpointPolicy         *string                     `json:"checkpoint_policy"`
 	RawCheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
 	RawData                     map[string]interface{}      `json:"data"`
+	RawIntegrations             *IntegrationsConfigV0       `json:"integrations"`
 	RawDebug                    *bool                       `json:"debug"`
 	RawDescription              *string                     `json:"description"`
 	RawEntrypoint               *EntrypointV0               `json:"entrypoint"`
