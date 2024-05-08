@@ -43,7 +43,7 @@ import {
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight } from 'components/OptionsMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -129,7 +129,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [flatRunsSettings],
   );
 
-  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
@@ -328,6 +329,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     settings.pinnedColumnsCount,
     users,
   ]);
+
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateGlobalSettings({ rowHeight: newRowHeight });
+    },
+    [updateGlobalSettings],
+  );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -723,14 +731,17 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
-      <TableFilter
-        bannedFilterColumns={BANNED_FILTER_COLUMNS}
-        formStore={formStore}
-        isMobile={isMobile}
-        isOpenFilter={isOpenFilter}
-        loadableColumns={projectColumns}
-        onIsOpenFilterChange={handleIsOpenFilterChange}
-      />
+      <Row>
+        <TableFilter
+          bannedFilterColumns={BANNED_FILTER_COLUMNS}
+          formStore={formStore}
+          isMobile={isMobile}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          onIsOpenFilterChange={handleIsOpenFilterChange}
+        />
+        <OptionsMenu rowHeight={globalSettings.rowHeight} onRowHeightChange={onRowHeightChange} />
+      </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message

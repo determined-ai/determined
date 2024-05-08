@@ -1154,7 +1154,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                     </ExperimentActionDropdown>
                   );
                 }}
-                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
+                rowHeight={rowHeightMap[globalSettings.rowHeight]}
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
