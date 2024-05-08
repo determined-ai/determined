@@ -284,7 +284,9 @@ export class HeadRow extends NamedComponent {
   async setColumnDefs(): Promise<Map<string, number>> {
     // let's just make sure we all the columns on the right side
     await expect
-      .poll(async () => await this.pwLocator.locator('th').count())
+      .poll(
+        async () => (await this.pwLocator.locator('th').allInnerTexts()).filter((x) => x).length,
+      )
       .toBeGreaterThanOrEqual(4);
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
