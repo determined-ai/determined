@@ -144,11 +144,11 @@ export class DataGrid<
    */
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
     const rows = await this.filterRows(async (row) => {
-      return (await row.getCellByColumnName(columnName).pwLocator.innerText()).indexOf(value) > -1;
+      return (await row.getCellByColumnName(columnName).pwLocator.innerHTML()).indexOf(value) > -1;
     });
     if (rows.length !== 1) {
       const names = await Promise.all(
-        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerText()),
+        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerHTML()),
       );
       throw new Error(
         `Expected one row to match ${columnName}:${value}. Found ${rows.length} rows that meet the condition: ${names}.`,
@@ -282,11 +282,10 @@ export class HeadRow extends NamedComponent {
    * Row.getCellByColumnName will fail without running this first.
    */
   async setColumnDefs(): Promise<Map<string, number>> {
-    // let's just make sure we all the columns on the right side
+    // make sure we see enough columns before getting innerhtml of each.
+    // there are four columns on the left
     await expect
-      .poll(
-        async () => (await this.pwLocator.locator('th').allInnerTexts()).filter((x) => x).length,
-      )
+      .poll(async () => await this.pwLocator.locator('th').count())
       .toBeGreaterThanOrEqual(4);
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
@@ -300,10 +299,9 @@ export class HeadRow extends NamedComponent {
             `All header cells should have the attribute ${this.#columnIndexAttribute}`,
           );
         if (index !== '1') {
-          // we don't care about the select column
-          await expect(cell).not.toHaveText('');
+          expect(await cell.innerHTML()).not.toBe('');
         }
-        this.#columnDefs.set(await cell.innerText(), +index);
+        this.#columnDefs.set(await cell.innerHTML(), parseInt(index));
       }),
     );
     return this.#columnDefs;
