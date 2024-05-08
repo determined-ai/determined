@@ -7,7 +7,6 @@ import { Workspaces } from 'e2e/models/pages/Workspaces';
 import { expect } from '@playwright/test';
 
 test.describe('Navigation', () => {
-  const USERNAME = process.env.PW_USER_NAME ?? '';
 
   test('Sidebar Navigation', async ({ authedPage, auth }) => {
     // we need any page to access the sidebar, and i haven't modeled the homepage yet
@@ -28,8 +27,8 @@ test.describe('Navigation', () => {
 
     await test.step('Navigate to Model Registry', async () => {
       await userManagementPage.nav.sidebar.modelRegistry.pwLocator.click();
-      await page.waitForURL(/models/);
-      await expect.soft(page).toHaveTitle(BasePage.getTitle('Model Registry'));
+      await authedPage.waitForURL(/models/);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
 
     await test.step('Navigate to Tasks', async () => {
@@ -61,11 +60,11 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to Admin', async () => {
-      const userManagementPage = new UserManagement(page);
+      const userManagementPage = new UserManagement(authedPage);
       await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
       await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click();
-      await page.waitForURL(userManagementPage.getUrlRegExp());
-      await expect.soft(page).toHaveTitle(userManagementPage.title);
+      await authedPage.waitForURL(userManagementPage.getUrlRegExp());
+      await expect.soft(authedPage).toHaveTitle(userManagementPage.title);
     });
 
     await test.step('Navigate to Logout', async () => {
