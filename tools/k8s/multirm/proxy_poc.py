@@ -8,7 +8,7 @@ import subprocess as sp
 import tempfile
 import threading
 import time
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, Tuple, Union
 
 import fire
 import termcolor
@@ -601,8 +601,36 @@ def apply_manifest(manifest: str, name: Optional[str] = None) -> pathlib.Path:
     return temp_file
 
 
-def create_gateway() -> str:
-    name = "det-gateway"
+def create_gateway_contour(name: str) -> None:
+    conf = f"""
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+"""
+    apply_manifest(conf, "contour-gw-class")
+    conf = f"""
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {name}
+  namespace: projectcontour
+spec:
+  gatewayClassName: contour
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+    """
+    apply_manifest(conf, name)
+
+
+def create_gateway_nginx(name: str) -> None:
     conf = f"""
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -619,6 +647,16 @@ spec:
         from: All
     """
     apply_manifest(conf, name)
+
+
+def create_gateway(gw_class: str) -> str:
+    supported = ["contour", "nginx"]
+    assert gw_class in supported, f"Gateway class {gw_class} not supported. Supported: {supported}"
+    name = "det-gateway"
+    if gw_class == "contour":
+        create_gateway_contour(name)
+    elif gw_class == "nginx":
+        create_gateway_nginx(name)
     return name
 
 
@@ -646,9 +684,9 @@ spec:
     apply_manifest(gw_route, route_name)
 
 
-def create_http_test_gw_setup() -> None:
+def create_http_test_gw_setup(gw_class: str) -> None:
     service_conf = create_http_test_service()
-    gw_name = create_gateway()
+    gw_name = create_gateway(gw_class)
     add_gw_http_route(gw_name, "/", service_conf)
     report()
 
