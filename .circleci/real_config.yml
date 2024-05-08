@@ -5770,7 +5770,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *release-filters
           requires:
             - package-and-push-system-release-ee
