@@ -9,7 +9,6 @@ orbs:
   kubernetes: circleci/kubernetes@0.11.0
   queue: eddiewebb/queue@2.2.1
   win: circleci/windows@5.0.0
-  minikube: ccpgames/minikube@0.0.1
 
 executors:
   python-38:
@@ -2156,7 +2155,7 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
-      - minikube/minikube-install
+      - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
       - run: minikube start
       - run: make -C master test-intg
       - codecov/upload:
