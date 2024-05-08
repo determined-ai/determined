@@ -1,17 +1,15 @@
+import { expect } from '@playwright/test';
+
 import { test } from 'e2e/fixtures/global-fixtures';
 import { BasePage } from 'e2e/models/BasePage';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 
-import { expect } from '@playwright/test';
-
 test.describe('Navigation', () => {
-
   test('Sidebar Navigation', async ({ authedPage, auth }) => {
     // we need any page to access the sidebar, and i haven't modeled the homepage yet
     const userManagementPage = new UserManagement(authedPage);
-
 
     await test.step('Login steps', async () => {
       await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
