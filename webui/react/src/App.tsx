@@ -88,7 +88,7 @@ const AppView: React.FC = () => {
     () => (isAuthenticated ? workspaceStore.startPolling({ delay: 60_000 }) : undefined),
     [isAuthenticated],
   );
-  useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
+  useEffect(() => determinedStore.startPolling({ delay: 60_000 }), []);
 
   useEffect(() => {
     /*
