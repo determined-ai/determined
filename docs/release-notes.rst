@@ -64,12 +64,16 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
 
 **Bug Fixes**
 
--  Since version 0.27.1, a bug has affected the selection functionality in the Experiments page.
-   This bug may cause actions to be applied to more experiments than are visibly selected. For
-   example, when using the **Select All > Actions > Move** sequence to transfer all experiments from
-   one project to another, the action may inadvertently include experiments not only from the
-   targeted project but also from other projects you have permissions to edit. We urge all users on
-   the affected versions to upgrade as soon as possible.
+-  A bug was fixed impacting the selection functionality in the Experiments page. From version
+   0.27.1 to version 0.31.0, this bug was causing actions to be applied to more experiments than are
+   visibly selected. For example, for versions 0.27.1 to version 0.31.0, when using the **Select All
+   > Actions > Move** sequence to transfer all experiments from one project to another, the action
+   may inadvertently include experiments not only from the targeted project but also from other
+   projects you have permissions to edit. We urge all users on the affected versions to upgrade as
+   soon as possible.
+
+   -  For versions 0.27.1 to version 0.31.0, there is a risk of data loss if, when attempting to
+      delete a set of experiments, the action
 
    -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
       inadvertently deletes a larger set than intended.
@@ -87,8 +91,8 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
    -  Workaround: To manage actions on a single trial, use the trial view in the WebUI.
       Alternatively, for bulk actions affected by this issue, consider using the command-line
       interface (CLI). You can also turn off the New Experiment List setting under the User Settings
-      > Experimental section. For more information visit Manage User Settings under :ref:WebUI
-      <web-ui-if>.
+      > Experimental section. For more information visit Manage User Settings under :ref:`WebUI
+      <web-ui-if>`.
 
 -  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
    as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
