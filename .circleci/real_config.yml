@@ -118,6 +118,14 @@ commands:
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
+  python-debug:
+    description: "Help with debugging Python and pip related issues."
+    steps:
+      - run: python --version
+      - run: pip --version
+      - run: sh -c "pip check || true"
+      - run: pip list
+
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
   checkout-with-sm:
@@ -2541,7 +2549,7 @@ jobs:
       - run: pip install setuptools_scm setuptools
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
-      - run: sh -c "pip check || true"
+      - python-debug
       - run: pytest harness/tests/cli
 
   test-e2e-slurm-disabled:
