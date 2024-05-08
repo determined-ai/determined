@@ -349,7 +349,7 @@ resourcePools:
 ## Will be the password for both `admin` and `determined` default users at launch
 ## This is required to ensure all launches have a password set, but has no effect
 ## once a password is already set.
-# initialUserPassword
+# initialUserPassword:
 
 # additional_resource_managers:
 #   - resource_manager:
