@@ -62,18 +62,19 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
    defaults to ``true``. Consequently, Prometheus endpoints are enabled by default, which does not
    affect clusters that do not use Prometheus.
 
+-  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
+   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
+   via APIs.
+
 **Bug Fixes**
 
 -  A bug was fixed impacting the selection functionality in the Experiments page. From version
    0.27.1 to version 0.31.0, this bug was causing actions to be applied to more experiments than are
-   visibly selected. For example, for versions 0.27.1 to version 0.31.0, when using the **Select All
-   > Actions > Move** sequence to transfer all experiments from one project to another, the action
-   may inadvertently include experiments not only from the targeted project but also from other
-   projects you have permissions to edit. We urge all users on the affected versions to upgrade as
-   soon as possible.
-
-   -  For versions 0.27.1 to version 0.31.0, there is a risk of data loss if, when attempting to
-      delete a set of experiments, the action
+   visibly selected. For example, when using the **Select All > Actions > Move** sequence to
+   transfer all experiments from one project to another, the action may inadvertently include
+   experiments not only from the targeted project but also from other projects you have permissions
+   to edit. We urge all users on the affected versions to upgrade as soon as possible. The following
+   applies to versions 0.27.1 to 0.31.0:
 
    -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
       inadvertently deletes a larger set than intended.
@@ -94,16 +95,13 @@ encouraged to upgrade as soon as possible. For more details, scroll down to ``Bu
       > Experimental section. For more information visit Manage User Settings under :ref:`WebUI
       <web-ui-if>`.
 
--  Since version 0.28.1, deployments using Amazon Aurora PostgreSQL-Compatible Edition Serverless V1
-   as the database have been at risk of becoming unresponsive due to certain autoscaling errors.
-   This issue affects multiple ``det deploy aws`` deployment types, including ``simple``, ``vpc``,
-   ``efs``, ``fsx``, and ``secure``. Installations using AWS RDS, including ``det deploy aws
-   --deployment-type=govcloud``, are not affected. We urge all users with affected setups to upgrade
-   as soon as possible.
-
--  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
-   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
-   via APIs.
+-  A bug was fixed impacting deployments using Amazon Aurora PostgreSQL-Compatible Edition
+   Serverless V1 as the database. Since version 0.28.1, deployments using Amazon Aurora
+   PostgreSQL-Compatible Edition Serverless V1 as the database have been at risk of becoming
+   unresponsive due to certain autoscaling errors. This issue affects multiple ``det deploy aws``
+   deployment types, including ``simple``, ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations
+   using AWS RDS, including ``det deploy aws --deployment-type=govcloud``, are not affected. We urge
+   all users with affected setups to upgrade as soon as possible.
 
 **************
  Version 0.31
