@@ -2157,7 +2157,7 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - minikube/minikube-install
-      - minikube/minikube-start
+      - run: minikube start
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
