@@ -22,7 +22,8 @@ container definitions, which are used by Prometheus to collect relevant metrics 
 Determined. The endpoint is not enabled by default but can be enabled in the master configuration
 file.
 
-Visit :ref:_kubernetes-observability for instructions on enabling observability in Kubernetes environments.
+Visit :ref:_kubernetes-observability for instructions on enabling observability in Kubernetes
+environments.
 
 ***********
  Reference
@@ -63,7 +64,8 @@ other tools can differ, depending on the format and organization of the returned
 **********************
 
 Install and run Determined on a cluster. When launching the master instance, the Prometheus
-endpoints are enabled by default in versions 0.32.0 and later. To manually enable the Prometheus endpoints, add a flag to the ``master.yaml`` configuration file:
+endpoints are enabled by default in versions 0.32.0 and later. To manually enable the Prometheus
+endpoints, add a flag to the ``master.yaml`` configuration file:
 
 .. code:: yaml
 
@@ -178,6 +180,7 @@ metric on the cluster as a percentage of total capacity. Results can be further 
 ``tags`` and ``resource pool`` and time range in Grafana.
 
 .. _prometheus-grafana-alerts:
+
 ********
  Alerts
 ********

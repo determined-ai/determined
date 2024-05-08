@@ -271,8 +271,8 @@ Health Status
 =============
 
 Determined master reports a metric, ``determined_healthy``, with value ``1`` when major dependencies
-are reachable and ``0`` otherwise. Visit :ref:_prometheus-grafana-alerts`
-for information on how to set up alerts.
+are reachable and ``0`` otherwise. Visit :ref:_prometheus-grafana-alerts` for information on how to
+set up alerts.
 
 Viewing Metrics
 ===============
