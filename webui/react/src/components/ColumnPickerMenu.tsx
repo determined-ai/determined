@@ -74,10 +74,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   onHeatmapSelectionRemove,
 }) => {
   const checkedColumns = useMemo(
-    () =>
-      compare
-        ? new Set(columnState.slice(0, pinnedColumnsCount))
-        : new Set(columnState),
+    () => (compare ? new Set(columnState.slice(0, pinnedColumnsCount)) : new Set(columnState)),
     [columnState, compare, pinnedColumnsCount],
   );
 
@@ -106,9 +103,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
     // If uncheck something pinned, reduce the pinnedColumnsCount
     allFilteredColumnsChecked &&
-      onPinnedColumnsCountChange?.(newColumns?.filter(
-        (col) => columnState.indexOf(col) < pinnedColumnsCount,
-      ).length);
+      onPinnedColumnsCountChange?.(
+        newColumns?.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length,
+      );
   }, [
     allFilteredColumnsChecked,
     columnState,
@@ -225,6 +222,8 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectId,
   isMobile = false,
   onVisibleColumnChange,
+  onHeatmapSelectionRemove,
+  onPinnedColumnsCountChange,
   tabs,
 }) => {
   const [searchString, setSearchString] = useState('');
@@ -272,6 +271,8 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                       setSearchString={setSearchString}
                       tab={tab}
                       totalColumns={totalColumns}
+                      onHeatmapSelectionRemove={onHeatmapSelectionRemove}
+                      onPinnedColumnsCountChange={onPinnedColumnsCountChange}
                       onVisibleColumnChange={onVisibleColumnChange}
                     />
                   ),
