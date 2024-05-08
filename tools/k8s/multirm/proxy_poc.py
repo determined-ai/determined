@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Literal, NamedTuple, Optional, Tuple, Union
 import fire
 import termcolor
 import websocket
+import yaml
 
 DEFAULT_SERVICE_PORT = 4000
 DEFAULT_LOCAL_PORT = 47777
@@ -595,13 +596,24 @@ def apply_manifest(manifest: str, name: Optional[str] = None) -> pathlib.Path:
     temp_file = pathlib.Path(tempfile.mktemp())
     with open(temp_file, "w") as file:
         file.write(manifest)
-    run_command(kctl(["apply", "-f", temp_file.absolute()]))
+    # proc = run_command(kctl(["validate", temp_file.absolute()]))
+    # if proc.returncode != 0:
+    #     print(f"Error validating manifest {name}")
+    #     raise sp.CalledProcessError(proc.returncode, "kubectl validate " + str(temp_file.absolute()))
+    proc = run_command(kctl(["apply", "-f", temp_file.absolute()]))
+    if proc.returncode != 0:
+        print(f"Error applying manifest {name}")
+        raise sp.CalledProcessError(proc.returncode, "kubectl apply " + str(temp_file.absolute()))
     if name:
         print(f"applied manifest {name} at {temp_file}")
     return temp_file
 
 
-def create_gateway_contour(name: str) -> None:
+def gen_route_label(port: int) -> str:
+    return f'single_port_route: "{port}"'
+
+
+def create_gateway_contour(name: str, tcp_ports: Optional[List[int]] = None) -> None:
     conf = f"""
 kind: GatewayClass
 apiVersion: gateway.networking.k8s.io/v1
@@ -627,6 +639,18 @@ spec:
       namespaces:
         from: All
     """
+    for port in tcp_ports or []:
+        conf += f"""
+  - name: tcp-listener
+    protocol: TCP
+    port: {port}
+    allowedRoutes:
+      namespaces:
+        from: All
+        selector:
+          matchLabels:
+            {gen_route_label(port)}
+"""
     apply_manifest(conf, name)
 
 
@@ -649,15 +673,39 @@ spec:
     apply_manifest(conf, name)
 
 
-def create_gateway(gw_class: str) -> str:
+def create_gateway(gw_class: str, tcp_ports: Optional[List[int]] = None) -> str:
     supported = ["contour", "nginx"]
     assert gw_class in supported, f"Gateway class {gw_class} not supported. Supported: {supported}"
     name = "det-gateway"
     if gw_class == "contour":
-        create_gateway_contour(name)
+        create_gateway_contour(name, tcp_ports)
     elif gw_class == "nginx":
         create_gateway_nginx(name)
     return name
+
+
+def add_gw_tcp_route(gw_name: str, service: ServiceConfig, label: str) -> None:
+    route_name = f"{service.name}-route"
+    gw_route = f"""
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: {route_name}
+  labels:
+    {label}
+spec:
+  parentRefs:
+  - name: {gw_name}
+    # sectionName: foo
+  rules:
+  - backendRefs:
+    - name: {service.name}
+      port: {service.port}
+"""
+    # conf_d = yaml.safe_load(gw_route)
+    # conf_d["metadata"]["labels"] = {label: "" for label in labels}
+    # gw_route = yaml.dump(conf_d)
+    apply_manifest(gw_route, route_name)
 
 
 def add_gw_http_route(gw_name: str, prefix: str, service: ServiceConfig) -> None:
@@ -684,10 +732,11 @@ spec:
     apply_manifest(gw_route, route_name)
 
 
-def create_http_test_gw_setup(gw_class: str) -> None:
+def create_http_test_gw_setup(gw_class: str, tcp_port: int = 9090) -> None:
     service_conf = create_http_test_service()
-    gw_name = create_gateway(gw_class)
+    gw_name = create_gateway(gw_class, [tcp_port])
     add_gw_http_route(gw_name, "/", service_conf)
+    add_gw_tcp_route(gw_name, service_conf, gen_route_label(tcp_port))
     report()
 
 
