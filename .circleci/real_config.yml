@@ -114,6 +114,16 @@ commands:
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
+  python-report:
+    description: Report information about the Python environment.
+    steps:
+      - run: |
+          python --version
+          pip --version
+          pip list
+          sh -c "pip check || true"
+
+
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
   checkout-with-sm:
@@ -484,8 +494,7 @@ commands:
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
-      - run: python --version
-      - run: pip --version
+      - python-report
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
@@ -2522,11 +2531,10 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - run: python --version
+      - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
-      - run: pip --version
-      - run: pip install wheel
+      - run: pip install wheel setuptools
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
@@ -2534,10 +2542,10 @@ jobs:
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install setuptools_scm
+      - run: pip install setuptools_scm setuptools
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
-      - run: sh -c "pip check || true"
+      - python-report
       - run: pytest harness/tests/cli
 
   test-e2e-slurm-disabled:
