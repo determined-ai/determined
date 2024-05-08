@@ -8,7 +8,7 @@ export class DevFixture {
   constructor(readonly page: Page) {
     this.#page = page;
   }
-
+  // tells the frontend where to find the backend if built for a different url. Incidentally reloads and logs out of Determined.
   async setServerAddress(): Promise<void> {
     await this.#page.goto('/');
     await this.#page.evaluate(`dev.setServerAddress("${process.env.PW_SERVER_ADDRESS}")`);
