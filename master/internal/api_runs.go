@@ -401,6 +401,14 @@ func (a *apiServer) MoveRuns(
 				Id:    acceptID,
 			})
 		}
+
+		if err = db.AddProjectHparams(ctx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+			return nil, err
+		}
+		if err = db.RemoveProjectHparams(ctx, int(req.SourceProjectId)); err != nil {
+			return nil, err
+		}
+
 		var failedRunIDs []int32
 		if err = db.Bun().NewSelect().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
@@ -623,6 +631,17 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 			Error: "",
 			Id:    int32(acceptID),
 		})
+	}
+
+	// delete run hparams
+	if _, err = tx.NewDelete().Table("run_hparams").
+		Where("run_id IN (?)", bun.In(acceptedIDs)).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("deleting run hparams: %w", err)
+	}
+	// remove project hparams
+	if err = db.RemoveProjectHparams(ctx, int(req.ProjectId)); err != nil {
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {

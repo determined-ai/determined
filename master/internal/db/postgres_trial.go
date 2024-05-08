@@ -51,7 +51,7 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("inserting trial task id relationship: %w", err)
 		}
 
-		hparams, err := AddRunHParams(ctx, run.ID, run.HParams, "")
+		hparams, err := AddRunHParams(run.ID, run.HParams, "")
 		if err != nil {
 			return fmt.Errorf("getting run hyperparameters: %w", err)
 		}
@@ -63,7 +63,7 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 		}
 
 		// Update Hparms for project hparam table
-		projHparams, err := AddProjectHparams(ctx, run.ProjectID, run.HParams, "")
+		projHparams, err := BuildProjectHparams(run.ProjectID, run.HParams, "")
 		if err != nil {
 			return fmt.Errorf("getting project hyperparameters: %w", err)
 		}
@@ -82,8 +82,50 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 	return nil
 }
 
-// AddProjectHparams
-func AddProjectHparams(ctx context.Context, projectID int, hparams map[string]any,
+// AddProjectHparams adds project hyperparams from provided runs to provided project.
+func AddProjectHparams(ctx context.Context, projectID int, runIDs []int32) error {
+	if _, err := Bun().NewRaw(`
+		INSERT INTO project_hparams
+		SELECT ?::int as project_id, hparam,
+		CASE
+			WHEN number_val iS NOT NULL THEN 'number'
+			WHEN text_val iS NOT NULL THEN 'string'
+			WHEN bool_val iS NOT NULL THEN 'boolean'
+		END as type 
+		FROM run_hparams WHERE run_id IN (?)
+		GROUP BY hparam, type
+		ON CONFLICT (project_id, hparam, type) DO NOTHING`,
+		projectID, bun.In(runIDs)).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("bulk inserting project hyperparameters: %w", err)
+	}
+	return nil
+}
+
+// RemoveProjectHparams removes outdated project hyperparams from provided project.
+func RemoveProjectHparams(ctx context.Context, projectID int) error {
+	if _, err := Bun().NewRaw(`
+	WITH removed_project_hparams as 
+	(SELECT * FROM project_hparams WHERE project_id=?
+	EXCEPT
+	SELECT ? as project_id, rhp.hparam, CASE
+							WHEN rhp.number_val iS NOT NULL THEN 'number'
+							WHEN rhp.text_val iS NOT NULL THEN 'string'
+							WHEN rhp.bool_val iS NOT NULL THEN 'boolean'
+					END as type FROM run_hparams as rhp JOIN
+					(SELECT id, project_id FROM runs WHERE project_id=?) as r ON
+					r.id=rhp.run_id GROUP BY hparam, type)
+	DELETE FROM project_hparams as p WHERE EXISTS
+	(SELECT * FROM removed_project_hparams as rm
+		 WHERE (p.project_id=rm.project_id AND p.type=rm.type AND p.hparam=rm.hparam))
+	`, projectID, projectID, projectID).Exec(ctx); err != nil {
+		return fmt.Errorf("bulk deleting project hyperparameters: %w", err)
+	}
+	return nil
+}
+
+// BuildProjectHparams returns the run hyperparams in the form necessary for the project_hparams table.
+func BuildProjectHparams(projectID int, hparams map[string]any,
 	parentName string,
 ) ([]model.ProjectHparam, error) {
 	hparamsModel := []model.ProjectHparam{}
@@ -95,13 +137,13 @@ func AddProjectHparams(ctx context.Context, projectID int, hparams map[string]an
 		switch val := v.(type) {
 		case float64:
 		case int:
-			hp.Type = "number"
+			hp.Type = MetricTypeNumber
 		case string:
-			hp.Type = "string"
+			hp.Type = MetricTypeString
 		case bool:
-			hp.Type = "bool"
+			hp.Type = MetricTypeBool
 		case map[string]any:
-			nestedHParams, err := AddProjectHparams(ctx, projectID, v.(map[string]any), hpName+".")
+			nestedHParams, err := BuildProjectHparams(projectID, v.(map[string]any), hpName+".")
 			if err != nil {
 				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
 			}
@@ -116,7 +158,7 @@ func AddProjectHparams(ctx context.Context, projectID int, hparams map[string]an
 }
 
 // AddRunHParams adds hyperparameters for a run into the `run_hparams` table.
-func AddRunHParams(ctx context.Context, runID int, hparams map[string]any,
+func AddRunHParams(runID int, hparams map[string]any,
 	parentName string,
 ) ([]model.RunHparam, error) {
 	hparamsModel := []model.RunHparam{}
@@ -136,7 +178,7 @@ func AddRunHParams(ctx context.Context, runID int, hparams map[string]any,
 		case bool:
 			hp.BoolVal = &val
 		case map[string]any:
-			nestedHParams, err := AddRunHParams(ctx, runID, v.(map[string]any), hpName+".")
+			nestedHParams, err := AddRunHParams(runID, v.(map[string]any), hpName+".")
 			if err != nil {
 				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
 			}
