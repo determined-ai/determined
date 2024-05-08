@@ -251,7 +251,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
+            - run: docker pull determinedai/pytorch-ngc-dev:8b3bea3
 
   login-docker:
     parameters:
@@ -3603,7 +3603,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+        default: determinedai/pytorch-ngc-dev:8b3bea3
         type: string
       accel-node-taints:
         type: string
