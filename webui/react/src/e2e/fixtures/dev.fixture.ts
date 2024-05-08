@@ -1,7 +1,13 @@
-import { expect, Page } from '@playwright/test';
-
-import { BaseComponent, CanBeParent } from 'e2e/models/BaseComponent';
+import {
+  BaseComponent,
+  CanBeParent,
+} from 'e2e/models/BaseComponent';
 import { BasePage } from 'e2e/models/BasePage';
+
+import {
+  expect,
+  Page,
+} from '@playwright/test';
 
 export class DevFixture {
   readonly #page: Page;
@@ -13,6 +19,7 @@ export class DevFixture {
     await this.#page.goto('/');
     await this.#page.evaluate(`dev.setServerAddress("${process.env.PW_SERVER_ADDRESS}")`);
     await this.#page.reload();
+    await this.#page.waitForLoadState('networkidle'); // dev.setServerAddress fires a logout request in the background, so we will wait until no network traffic is happening.
   }
 
   /**
