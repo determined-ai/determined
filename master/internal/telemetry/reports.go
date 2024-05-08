@@ -172,8 +172,8 @@ func fetchNumTrials(db db.DB, experimentID int) *int64 {
 	return &result
 }
 
-func fetchNumSteps(ctx context.Context, db db.DB, experimentID int) *int64 {
-	result, err := db.ExperimentNumSteps(ctx, experimentID)
+func fetchNumSteps(experimentID int) *int64 {
+	result, err := db.ExperimentNumSteps(context.TODO(), experimentID)
 	if err != nil {
 		syslog.WithError(err).Warn("failed to fetch telemetry metrics")
 		return nil
@@ -181,8 +181,8 @@ func fetchNumSteps(ctx context.Context, db db.DB, experimentID int) *int64 {
 	return &result
 }
 
-func fetchTotalStepTime(ctx context.Context, db db.DB, experimentID int) *float64 {
-	result, err := db.ExperimentTotalStepTime(ctx, experimentID)
+func fetchTotalStepTime(experimentID int) *float64 {
+	result, err := db.ExperimentTotalStepTime(context.TODO(), experimentID)
 	if err != nil {
 		syslog.WithError(err).Warn("failed to fetch telemetry metrics")
 		return nil
@@ -191,7 +191,7 @@ func fetchTotalStepTime(ctx context.Context, db db.DB, experimentID int) *float6
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
-func ReportExperimentStateChanged(ctx context.Context, db db.DB, e *model.Experiment) {
+func ReportExperimentStateChanged(db db.DB, e *model.Experiment) {
 	var numTrials *int64
 	var numSteps *int64
 	var totalStepTime *float64
@@ -200,8 +200,8 @@ func ReportExperimentStateChanged(ctx context.Context, db db.DB, e *model.Experi
 		// Report additional metrics when an experiment reaches a terminal state.
 		// These metrics are null for non-terminal state transitions.
 		numTrials = fetchNumTrials(db, e.ID)
-		numSteps = fetchNumSteps(ctx, db, e.ID)
-		totalStepTime = fetchTotalStepTime(ctx, db, e.ID)
+		numSteps = fetchNumSteps(e.ID)
+		totalStepTime = fetchTotalStepTime(e.ID)
 	}
 
 	defaultTelemeter.track(

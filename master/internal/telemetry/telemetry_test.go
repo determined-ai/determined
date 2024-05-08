@@ -4,7 +4,6 @@
 package telemetry
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -76,7 +75,7 @@ func TestTelemetry(t *testing.T) {
 	ReportProvisionerTick([]*model.Instance{}, "test-instance")
 	ReportExperimentCreated(1, schemas.WithDefaults(createExpConfig()))
 	ReportAllocationTerminal(*aIn, &device.Device{})
-	ReportExperimentStateChanged(context.TODO(), pgDB, &model.Experiment{})
+	ReportExperimentStateChanged(pgDB, &model.Experiment{})
 	ReportUserCreated(true, true)
 	ReportUserCreated(false, false)
 
