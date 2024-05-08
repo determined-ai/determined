@@ -2538,7 +2538,8 @@ jobs:
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
       - run: pip --version
-      - run: pip install wheel
+      - run: pip install wheel setuptools
+      - python-debug
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
