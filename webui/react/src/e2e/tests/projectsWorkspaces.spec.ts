@@ -35,15 +35,13 @@ test.describe('Projects', () => {
     return fullName;
   };
 
-  test.beforeEach(async ({ dev, auth, page }) => {
-    await dev.setServerAddress();
-    await auth.login();
-    await expect(page).toHaveTitle(BasePage.getTitle('Home'));
-    await expect(page).toHaveURL(/dashboard/);
+  test.beforeEach(async ({ authedPage }) => {
+    await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
+    await expect(authedPage).toHaveURL(/dashboard/);
   });
 
-  test.afterEach(async ({ page }) => {
-    const workspacesPage = new Workspaces(page);
+  test.afterEach(async ({ authedPage }) => {
+    const workspacesPage = new Workspaces(authedPage);
     await test.step('Delete a workspace', async () => {
       if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
@@ -68,13 +66,13 @@ test.describe('Projects', () => {
     });
   });
 
-  test('Projects and Workspaces CRUD', async ({ page }) => {
-    const workspacesPage = new Workspaces(page);
+  test('Projects and Workspaces CRUD', async ({ authedPage }) => {
+    const workspacesPage = new Workspaces(authedPage);
 
     await test.step('Navigate to Workspaces', async () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await page.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
-      await expect.soft(page).toHaveTitle(workspacesPage.title);
+      await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
+      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
     });
 
     await test.step('Create a workspace', async () => {

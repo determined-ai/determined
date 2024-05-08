@@ -1862,6 +1862,7 @@ export const getTemplates: DetApi<
       params.offset,
       params.limit,
       params.name,
+      params.workspaceIds,
     ),
 };
 

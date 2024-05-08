@@ -176,7 +176,7 @@ export const taskNameRenderer: TaskRenderer = (_id, record) => (
 );
 
 export const taskWorkspaceRenderer = (
-  record: CommandTask,
+  record: { workspaceId: number },
   workspaces: Workspace[],
 ): React.ReactNode => {
   const workspace = workspaces.find((u) => u.id === record.workspaceId);

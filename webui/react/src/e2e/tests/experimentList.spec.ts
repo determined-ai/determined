@@ -36,20 +36,15 @@ test.describe('Experiement List', () => {
     await pageSetupTeardown.close();
   });
 
-  test.beforeEach(async ({ auth, dev }) => {
-    await dev.setServerAddress();
-    await auth.login();
-  });
-
-  test('Navigate to Experiment List', async ({ page }) => {
-    const projectDetailsPage = new ProjectDetails(page);
+  test('Navigate to Experiment List', async ({ authedPage }) => {
+    const projectDetailsPage = new ProjectDetails(authedPage);
     await projectDetailsPage.gotoProject();
-    await expect(page).toHaveTitle(projectDetailsPage.title);
+    await expect(authedPage).toHaveTitle(projectDetailsPage.title);
     await expect(projectDetailsPage.f_experiemntList.tableActionBar.pwLocator).toBeVisible();
   });
 
-  test('Click around the data grid', async ({ page }) => {
-    const projectDetailsPage = new ProjectDetails(page);
+  test('Click around the data grid', async ({ authedPage }) => {
+    const projectDetailsPage = new ProjectDetails(authedPage);
     await projectDetailsPage.gotoProject();
     await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0);
     await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
@@ -60,6 +55,6 @@ test.describe('Experiement List', () => {
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.select5.pwLocator.click();
     await row.clickColumn('ID');
-    await page.waitForURL(/overview/);
+    await authedPage.waitForURL(/overview/);
   });
 });
