@@ -2538,7 +2538,7 @@ jobs:
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install setuptools_scm
+      - run: pip install setuptools_scm setuptools
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - run: sh -c "pip check || true"
