@@ -201,6 +201,34 @@ Monitoring Dashboard
 -  Navigate to `127.0.0.1:9000 <http://127.0.0.1:9000>`__. Sign in with the username ``admin`` and
    the password you set above. You should see the ``Determined API Server Monitoring`` dashboard.
 
+Dashboard Example
+=================
+
+After submitting experiments on the cluster, you should see populated panels in the imported Grafana
+dashboard: **Grafana** -> **Dashboards**.
+
+.. image:: /assets/images/resource-util-dash-1.png
+   :width: 704px
+   :align: center
+   :alt: Resource Utilization Dashboard Headlines
+
+.. image:: /assets/images/resource-util-dash-2.png
+   :width: 704px
+   :align: center
+   :alt: Resource Utilization Dashboard Cluster Overview
+
+.. image:: /assets/images/resource-util-dash-3.png
+   :width: 704px
+   :align: center
+   :alt: Resource Utilization Dashboard GPU Breakdown
+
+.. image:: /assets/images/resource-util-dash-4.png
+   :width: 704px
+   :align: center
+   :alt: Resource Utilization Dashboard Recent Tasks
+
+Each panel in the dashboard is powered by one or more Prometheus queries.
+
 *********
  Metrics
 *********
@@ -242,7 +270,7 @@ Health Status
 
 Determined master reports a metric, ``determined_healthy``, with value ``1`` when major dependencies
 are reachable and ``0`` otherwise. Visit `alerting
-<https://github.com/determined-ai/determined/blob/observability_feature_branch/docs/integrations/prometheus/_index.rst#alerts>`__
+<https://github.com/determined-ai/determined/blob/main/docs/integrations/prometheus/_index.rst#alerts>`__
 for information on how to set up alerts.
 
 Viewing Metrics
