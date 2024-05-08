@@ -3149,6 +3149,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     modelDefinitionSize?: number;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -3561,6 +3567,12 @@ export interface V1FlatRunExperiment {
      * @memberof V1FlatRunExperiment
      */
     isMultitrial: boolean;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1FlatRunExperiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
@@ -30286,11 +30298,11 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options: any = {}): FetchArgs {
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -30325,8 +30337,8 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarQueryParameter['name'] = name
             }
             
-            if (workspaceId !== undefined) {
-                localVarQueryParameter['workspaceId'] = workspaceId
+            if (workspaceIds) {
+                localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -30563,12 +30575,12 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30695,12 +30707,12 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
-            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(fetch, basePath);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -30787,13 +30799,13 @@ export class TemplatesApi extends BaseAPI {
      * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
      * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
      * @param {string} [name] Limit templates to those that match the name.
-     * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+     * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(this.fetch, this.basePath)
+    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(this.fetch, this.basePath)
     }
     
     /**

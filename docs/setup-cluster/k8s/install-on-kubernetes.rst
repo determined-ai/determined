@@ -11,7 +11,7 @@
 +-----------------------------------------------------------------+
 
 This user guide describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__.
-using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
+using the `Determined Helm Chart <https://helm.determined.ai/>`__.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 
@@ -27,10 +27,6 @@ When the Determined Helm chart is installed, the following entities will be crea
 -  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
 -  Service to allow the Determined master to communicate with the Postgres database. Omitted if
    using an external database.
-
-When installing :ref:`Determined on Kubernetes <install-on-kubernetes>` using Helm, the deployment
-should be configured by editing the ``values.yaml`` and ``Chart.yaml`` files in the
-:download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 
 ***************
  Prerequisites
@@ -52,9 +48,6 @@ are satisfied:
 -  Optional: for GPU-based training, the Kubernetes cluster should have `GPU support
    <https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/>`_ enabled.
 
-You should also download a copy of the :download:`Determined Helm Chart
-</helm/determined-latest.tgz>` and extract it on your local machine.
-
 If you do not yet have a Kubernetes cluster deployed and you want to use Determined in a public
 cloud environment, we recommend using a managed Kubernetes offering such as `Google Kubernetes
 Engine (GKE) <https://cloud.google.com/kubernetes-engine>`__ on GCP or `Elastic Kubernetes Service
@@ -63,12 +56,50 @@ Determined, refer to the :ref:`Instructions for setting up a GKE cluster <setup-
 info on configuring EKS, refer to the :ref:`Instructions for setting up an EKS cluster
 <setup-eks-cluster>`.
 
+************
+ Quickstart
+************
+
+First, add Determined helm chart repository:
+
+.. code:: bash
+
+   helm repo add determined-ai https://helm.determined.ai/
+
+Then, create a ``values.yaml`` file to configure the Determined deployment:
+
+.. code:: yaml
+
+   # values.yaml
+   # Minimal configuration requires you to specify the number of GPUs per node.
+   maxSlotsPerPod: 1
+
+Finally, install Determined using Helm:
+
+.. code:: bash
+
+   helm install determined determined-ai/determined --values values.yaml
+
+You can find more details about the configuration options in the :ref:`helm-config-reference` or in
+the :ref:`Configuration <install-on-kubernetes-configuration>` section below.
+
+Alternatively, you can:
+
+-  Download the full helm chart using ``helm pull determined-ai/determined --untar=true``, edit the
+   ``values.yaml`` file, and then install it using ``helm install determined ./determined``.
+-  Download the packaged :download:`Determined Helm Chart </helm/determined-latest.tgz>`, extract
+   the archive, edit ``values.yaml`` and install it.
+-  Use the latest main branch version version from `Determined GitHub repo
+   <https://github.com/determined-ai/determined/tree/main/helm>`__.
+
+.. _install-on-kubernetes-configuration:
+
 ***************
  Configuration
 ***************
 
 When installing Determined using Helm, first configure some aspects of the Determined deployment by
-editing the ``values.yaml`` and ``Chart.yaml`` files in the Helm chart.
+editing the ``values.yaml`` file.
 
 Image Registry Configuration
 ============================
@@ -90,10 +121,16 @@ that is configured using `kubectl create secret
 Version Configuration
 =====================
 
-To configure which version of Determined will be installed by the Helm chart, change ``appVersion``
-in ``Chart.yaml``. You can specify a release version (e.g., ``0.13.0``) or specify any commit hash
-from the `upstream Determined repo <https://github.com/determined-ai/determined>`_ (e.g.,
-``b13461ed06f2fad339e179af8028d4575db71a81``). You are strongly encouraged to use a released
+To install a specific version of Determined, use helm ``--version <version>`` flag, for example:
+
+.. code:: bash
+
+   helm install determined determined-ai/determined --values values.yaml --version 0.30.0
+
+Alternatively, if you have a copy of the Determined Helm chart, you can edit the ``Chart.yaml`` file
+and change ``appVersion``. You can specify a release version (e.g., ``0.30.0``) or specify any
+commit hash from the `upstream Determined repo <https://github.com/determined-ai/determined>`_
+(e.g., ``b13461ed06f2fad339e179af8028d4575db71a81``). You are strongly encouraged to use a released
 version.
 
 Resource Configuration (GPU-based setups)
@@ -396,19 +433,16 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
  Install Determined
 ********************
 
-Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml``, Determined is
-ready to be installed. To install Determined, run:
+Once finished making configuration changes in ``values.yaml``, install Determined using:
 
 .. code::
 
-   helm install <name for your deployment> determined-helm-chart
+   helm install <name for your deployment> determined-ai/determined --values values.yaml
 
-``determined-helm-chart`` is a relative path to where the :download:`Determined Helm Chart
-</helm/determined-latest.tgz>` is located. It may take a few minutes for all resources to come up.
-If you encounter issues during installation, refer to the list of :ref:`useful kubectl commands
-<useful-kubectl-commands>`. Helm will install Determined within the default namespace. If you wish
-to install Determined into a non-default namespace, add ``-n <namespace name>`` to the command shown
-above.
+It may take a few minutes for all resources to come up. If you encounter issues during installation,
+refer to the list of :ref:`useful kubectl commands <useful-kubectl-commands>`. Helm will install
+Determined within the default namespace. If you wish to install Determined into a non-default
+namespace, add ``-n <namespace name>`` to the command shown above.
 
 Once the installation has completed, instructions will be displayed for discovering the IP address
 assigned to the Determined master. The IP address can also be discovered by running ``kubectl get
@@ -425,16 +459,19 @@ Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
  Upgrade Determined
 ********************
 
-To upgrade Determined or to change a configuration setting, first make the appropriate changes in
-``values.yaml`` and ``Chart.yaml``, and then run:
+To upgrade Determined or to change a configuration setting, make the appropriate changes in
+``values.yaml``, and then run:
 
 .. code::
 
-   helm upgrade <name for your deployment> --wait determined-helm-chart
+   helm repo update
+   helm upgrade <name for your deployment> determined-ai/determined --wait --values values.yaml
 
 Before upgrading Determined, consider pausing all active experiments. Any experiments that are
 active when the Determined master restarts will resume training after the upgrade, but will be
 rolled back to their most recent checkpoint.
+
+If using a local downloaded helm chart instead of the helm repo, make sure to update it manually.
 
 **********************
  Uninstall Determined

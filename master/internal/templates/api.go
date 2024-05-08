@@ -48,8 +48,8 @@ func (a *TemplateAPIServer) GetTemplates(
 	if req.Name != "" {
 		q.Where("name ILIKE  ('%%' || ? || '%%')", req.Name)
 	}
-	if req.WorkspaceId != 0 {
-		q.Where("workspace_id = ?", req.WorkspaceId)
+	if req.WorkspaceIds != nil {
+		q.Where("workspace_id IN (?)", bun.In(req.WorkspaceIds))
 	}
 	q.Order(fmt.Sprintf("name %s", grpcutil.OrderBySQL[req.OrderBy])) // Only name is supported.
 	q, pagination, err := bunutils.Paginate(ctx, q, int(req.Offset), int(req.Limit))

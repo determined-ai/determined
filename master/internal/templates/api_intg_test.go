@@ -150,7 +150,7 @@ func TestGetTemplates(t *testing.T) {
 
 	t.Run("GetTemplates filter by workspace", func(t *testing.T) {
 		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{
-			WorkspaceId: workspaceIDs[0],
+			WorkspaceIds: []int32{workspaceIDs[0]},
 		})
 		require.NoError(t, err)
 		require.Len(t, resp.Templates, 1)

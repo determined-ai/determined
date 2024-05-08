@@ -225,7 +225,7 @@ export const mapV1TensorBoard = (tensorboard: Sdk.V1Tensorboard): types.CommandT
 };
 
 export const mapV1Template = (template: Sdk.V1Template): types.Template => {
-  return { config: template.config, name: template.name };
+  return { config: template.config, name: template.name, workspaceId: template.workspaceId };
 };
 
 export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {

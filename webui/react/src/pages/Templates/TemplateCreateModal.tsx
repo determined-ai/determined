@@ -25,9 +25,10 @@ interface FormInputs {
 
 interface Props {
   workspaceId?: number;
+  onSuccess?: () => void;
 }
 
-const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
+const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess }) => {
   const idPrefix = useId();
   const { openToast } = useToast();
   const [form] = Form.useForm<FormInputs>();
@@ -55,6 +56,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
           severity: 'Info',
           title: 'Template Created',
         });
+        onSuccess?.();
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -75,12 +77,12 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
         });
       }
     }
-  }, [form, openToast]);
+  }, [form, openToast, onSuccess]);
 
   return (
     <Modal
       cancel
-      size="small"
+      size="medium"
       submit={{
         disabled,
         form: idPrefix + FORM_ID,

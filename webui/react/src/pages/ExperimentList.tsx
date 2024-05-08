@@ -714,39 +714,38 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
+      const validExperimentIds = [...settings.row].filter((id) =>
+        canActionExperiment(action, experimentMap[id]),
+      );
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({
-          experimentIds: settings.row,
+          experimentIds: validExperimentIds,
           workspaceId: project.workspaceId,
         });
       }
       if (action === Action.Move) {
-        if (!settings?.row?.length) return;
+        if (!validExperimentIds.length) return;
         setBatchMovingExperimentIds(
-          settings.row.filter(
-            (id) =>
-              canActionExperiment(Action.Move, experimentMap[id]) &&
-              permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+          validExperimentIds.filter((id) =>
+            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
         );
         ExperimentMoveModal.open();
       }
       if (action === Action.RetainLogs) {
-        if ((settings?.row ?? []).length === 0) return;
+        if (!validExperimentIds.length) return;
         setBatchRetainLogsExperimentIds(
-          settings.row.filter(
-            (id) =>
-              canActionExperiment(Action.RetainLogs, experimentMap[id]) &&
-              permissions.canModifyExperiment({
-                workspace: { id: experimentMap[id].workspaceId },
-              }),
+          validExperimentIds.filter((id) =>
+            permissions.canModifyExperiment({
+              workspace: { id: experimentMap[id].workspaceId },
+            }),
           ),
         );
         ExperimentRetainLogsModal.open();
       }
 
       return Promise.all(
-        (settings.row || []).map((experimentId) => {
+        (validExperimentIds || []).map((experimentId) => {
           switch (action) {
             case Action.Activate:
               return activateExperiment({ experimentId });
