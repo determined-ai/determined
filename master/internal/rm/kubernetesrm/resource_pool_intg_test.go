@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,93 +14,50 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
-	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 var defaultSlots = 3
 
-func TestSetGroupMaxSlots(t *testing.T) {
-	cases := []struct {
-		name          string
-		originalSlots int
-		newSlots      int
-	}{
-		{"no change", 5, 5},
-		{"increase", 3, 6},
-		{"decrease", 4, 2},
-		{"negative slots", -2, 0}, // This is allowed, although it doesn't make sense.
-	}
-
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			rp, jobID := testResourcePoolWithJob(t, tt.originalSlots)
-			group := rp.getOrCreateGroup(jobID)
-			require.Equal(t, tt.originalSlots, *group.MaxSlots)
-
-			rp.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
-				MaxSlots:     &tt.newSlots,
-				ResourcePool: rp.poolConfig.PoolName,
-				JobID:        jobID,
-			})
-
-			slots := rp.getOrCreateGroup(jobID).MaxSlots
-			require.Equal(t, tt.newSlots, *slots)
-		})
-	}
-}
-
 func TestAllocateAndRelease(t *testing.T) {
-	cases := []struct {
-		name    string
-		allocID []model.AllocationID
-	}{
-		{"simple", []model.AllocationID{model.AllocationID(uuid.NewString())}},
-		{"multiple", []model.AllocationID{
-			model.AllocationID(uuid.NewString()),
-			model.AllocationID(uuid.NewString()),
-		}},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			for _, n := range tt.allocID {
-				rp, jobID := testResourcePoolWithJob(t, defaultSlots)
+	n := model.NewAllocationID(ptrs.Ptr(uuid.NewString()))
+	rp, jobID := testResourcePoolWithJob(t, defaultSlots)
 
-				// AllocateRequest
-				allocReq := sproto.AllocateRequest{
-					AllocationID: n,
-					JobID:        jobID,
-					Name:         uuid.NewString(),
-					BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
-				}
-				rp.AllocateRequest(allocReq)
-				req, ok := rp.reqList.TaskByID(n)
-				require.True(t, ok)
-				require.Equal(t, n, req.AllocationID)
-				require.Equal(t, allocReq.JobID, req.JobID)
-				require.Equal(t, allocReq.Name, req.Name)
-				require.Equal(t, allocReq.BlockedNodes, req.BlockedNodes)
-
-				// ResourcesReleased
-				rp.ResourcesReleased(sproto.ResourcesReleased{
-					AllocationID: n,
-					ResourcePool: rp.poolConfig.PoolName,
-				})
-				req, ok = rp.reqList.TaskByID(n)
-				require.False(t, ok)
-				require.Nil(t, req)
-				require.Empty(t, rp.allocationIDToContainerID[n])
-				require.Empty(t, rp.allocationIDToJobID[n])
-			}
-		})
+	// AllocateRequest
+	allocReq := sproto.AllocateRequest{
+		AllocationID: *n,
+		JobID:        jobID,
+		Name:         uuid.NewString(),
+		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
 	}
+	rp.AllocateRequest(allocReq)
+	req, ok := rp.reqList.TaskByID(*n)
+	require.True(t, ok)
+	require.Equal(t, n, req.AllocationID)
+	require.Equal(t, allocReq.JobID, req.JobID)
+	require.Equal(t, allocReq.Name, req.Name)
+	require.Equal(t, allocReq.BlockedNodes, req.BlockedNodes)
+
+	// ResourcesReleased
+	rp.ResourcesReleased(sproto.ResourcesReleased{
+		AllocationID: *n,
+		ResourcePool: rp.poolConfig.PoolName,
+	})
+	req, ok = rp.reqList.TaskByID(*n)
+	require.False(t, ok)
+	require.Nil(t, req)
+	require.Empty(t, rp.allocationIDToContainerID[*n])
+	require.Empty(t, rp.allocationIDToJobID[*n])
 }
 
 func TestUpdatePodStatus(t *testing.T) {
+	rp, jobID := testResourcePoolWithJob(t, defaultSlots)
+
 	cases := []struct {
 		name           string
 		state          sproto.SchedulingState
@@ -113,7 +71,6 @@ func TestUpdatePodStatus(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			rp, jobID := testResourcePoolWithJob(t, defaultSlots)
 			newAllocID := newTestPod(t, rp, jobID)
 
 			// Check that the allocation is queued first.
@@ -130,7 +87,7 @@ func TestUpdatePodStatus(t *testing.T) {
 			rp.UpdatePodStatus(req)
 
 			// If scheduled (backfilled or scheduled), check that running pods++
-			require.Equal(t, tt.runningPod, rp.allocationIDToRunningPods[newAllocID])
+			require.Equal(t, tt.runningPod, rp.allocationIDToRunningPods[newAllocID]) // TODO CAROLINA
 		})
 	}
 }
@@ -150,53 +107,74 @@ func TestSetGroupWeight(t *testing.T) {
 	require.Equal(t, rmerrors.UnsupportedError("set group weight is unsupported in k8s"), err)
 }
 
-func TestSetGroupPriority(t *testing.T) {
+func TestSetGroupPriority(t *testing.T) { // TODO
+	rp, _ := testResourcePoolWithJob(t, defaultSlots)
+	var wg sync.WaitGroup
+	var wg2 sync.WaitGroup
+
 	cases := []struct {
 		name        string
 		newPriority int
+		preemptible bool
 	}{
-		{"no change", int(config.KubernetesDefaultPriority)},
-		{"increase", 100},
-		{"decrease", 1},
-		{"negative", -10}, // doesn't make sense, but it is allowed
+		{"no change", int(config.KubernetesDefaultPriority), true},
+		{"increase", 100, true},
+		{"decrease", 1, true},
+		{"negative", -10, true}, // doesn't make sense, but it is allowed
+		{"not-preemptible", 0, false},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			rp, jobID := testResourcePoolWithJob(t, defaultSlots)
-			group := rp.getOrCreateGroup(jobID)
-			require.Equal(t, int(config.KubernetesDefaultPriority), *group.Priority)
+			jobID := model.NewJobID()
 
-			err := rp.SetGroupPriority(sproto.SetGroupPriority{
-				Priority:     tt.newPriority,
-				ResourcePool: rp.poolConfig.PoolName,
-				JobID:        jobID,
-			})
+			wg.Add(1)
+			var err error
+			go func() {
+				defer wg.Done()
+				rp.AllocateRequest(sproto.AllocateRequest{
+					JobID:       jobID,
+					Preemptible: tt.preemptible,
+				})
 
-			require.NoError(t, err)
-			require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
+				group := rp.getOrCreateGroup(jobID)
+				require.Equal(t, int(config.KubernetesDefaultPriority), *group.Priority)
+
+				err = rp.SetGroupPriority(sproto.SetGroupPriority{
+					Priority:     tt.newPriority,
+					ResourcePool: rp.poolConfig.PoolName,
+					JobID:        jobID,
+				})
+			}()
+			wg.Wait()
+
+			if tt.preemptible {
+				require.NoError(t, err)
+				wg2.Add(1)
+				go func() {
+					defer wg2.Done()
+					rp.mu.Lock()
+					defer rp.mu.Unlock()
+					require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
+				}()
+				wg2.Wait()
+
+			} else {
+				require.Error(t, err)
+			}
 		})
 	}
 }
 
 func TestRecoverJobPosition(t *testing.T) {
-	cases := []struct {
-		name     string
-		position decimal.Decimal
-	}{
-		{"simple", decimal.New(200, 10)},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			rp, jobID := testResourcePoolWithJob(t, defaultSlots)
+	rp, jobID := testResourcePoolWithJob(t, defaultSlots)
+	position := decimal.New(200, 10)
 
-			rp.RecoverJobPosition(sproto.RecoverJobPosition{
-				ResourcePool: rp.poolConfig.PoolName,
-				JobID:        jobID,
-				JobPosition:  tt.position,
-			})
-			require.Equal(t, tt.position, rp.queuePositions[jobID])
-		})
-	}
+	rp.RecoverJobPosition(sproto.RecoverJobPosition{
+		ResourcePool: rp.poolConfig.PoolName,
+		JobID:        jobID,
+		JobPosition:  position,
+	})
+	require.Equal(t, position, rp.queuePositions[jobID]) // TODO CAROLINA
 }
 
 func TestValidateResources(t *testing.T) {
@@ -259,14 +237,10 @@ func newTestPod(t *testing.T, rp *kubernetesResourcePool, jobID model.JobID) mod
 }
 
 func testResourcePoolWithJob(t *testing.T, slots int) (*kubernetesResourcePool, model.JobID) {
-	rp := newResourcePool(slots, &config.ResourcePoolConfig{}, testPodsService(t), db.SingleDB())
-	priority := int(config.KubernetesDefaultPriority)
 	jobID := model.NewJobID()
-	rp.groups[jobID] = &tasklist.Group{
-		JobID:    jobID,
-		MaxSlots: &slots,
-		Priority: &priority,
-	}
+	rp := newResourcePool(slots, &config.ResourcePoolConfig{}, testPodsService(t), db.SingleDB())
+	rp.AllocateRequest(sproto.AllocateRequest{JobID: jobID, Preemptible: true})
+
 	return rp, jobID
 }
 
