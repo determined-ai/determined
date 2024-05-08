@@ -942,15 +942,13 @@ func ExperimentTotalStepTime(ctx context.Context, id int) (float64, error) {
 	if err := Bun().NewSelect().
 		ColumnExpr("COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)").
 		TableExpr("allocations AS a").
-		Join("JOIN run_id_task_id AS tasks").
-		JoinOn("a.task_id = tasks.task_id").
-		Join("JOIN trials AS t").
-		JoinOn("tasks.run_id = t.id").
+		Join("JOIN run_id_task_id AS tasks ON a.task_id = tasks.task_id").
+		Join("JOIN trials AS t ON tasks.run_id = t.id").
 		Where("t.experiment_id = ?", id).
 		Scan(ctx, &seconds); err != nil {
-		return 0.0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
+		return 0.0, fmt.Errorf("querying for total step time of experiment %v", id)
 	}
-	return float64(seconds), nil
+	return seconds, nil
 }
 
 // ExperimentNumTrials returns the total number of trials for the experiment.
@@ -1018,9 +1016,8 @@ func ExperimentNumSteps(ctx context.Context, id int) (int64, error) {
 		Join("JOIN trials AS t ON t.id = s.trial_id").
 		Where("t.experiment_id = ?", id).
 		Count(ctx)
-
 	if err != nil {
-		return int64(0), errors.Wrapf(err, "querying for number of steps of experiment %v", id)
+		return int64(0), fmt.Errorf("querying for number of steps of experiment %v", id)
 	}
 
 	return int64(numSteps), nil

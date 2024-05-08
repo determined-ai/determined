@@ -1004,7 +1004,7 @@ func TestExperimentTotalStepTime(t *testing.T) {
 		_, task := RequireMockTrial(t, db, exp)
 		alloc := RequireMockAllocation(t, db, task.TaskID)
 		endTime := alloc.StartTime.Add(time.Hour)
-		alloc.EndTime = &endTime //its changing the mem not db
+		alloc.EndTime = &endTime // It only changes the memory and not DB.
 		require.NoError(t, CompleteAllocation(ctx, alloc))
 		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
 		require.NoError(t, err)
@@ -1015,22 +1015,22 @@ func TestExperimentTotalStepTime(t *testing.T) {
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
 
-		// add 3 tasks to an exp
+		// Add 3 tasks to an experiment.
 		_, task := RequireMockTrial(t, db, exp)
 		alloc := RequireMockAllocation(t, db, task.TaskID)
-		endTime := alloc.StartTime.Add(time.Hour) // Adding an hour
+		endTime := alloc.StartTime.Add(time.Hour) // Adding an hour.
 		alloc.EndTime = &endTime
 		require.NoError(t, CompleteAllocation(ctx, alloc))
 
 		_, task = RequireMockTrial(t, db, exp)
 		alloc = RequireMockAllocation(t, db, task.TaskID)
-		endTime = alloc.StartTime.Add(time.Minute) // Adding a minute
+		endTime = alloc.StartTime.Add(time.Minute) // Adding a minute.
 		alloc.EndTime = &endTime
 		require.NoError(t, CompleteAllocation(ctx, alloc))
 
 		_, task = RequireMockTrial(t, db, exp)
 		alloc = RequireMockAllocation(t, db, task.TaskID)
-		endTime = alloc.StartTime.Add(time.Second) // Adding a second
+		endTime = alloc.StartTime.Add(time.Second) // Adding a second.
 		alloc.EndTime = &endTime
 		require.NoError(t, CompleteAllocation(ctx, alloc))
 
@@ -1058,7 +1058,7 @@ func TestExperimentNumSteps(t *testing.T) {
 		exp := RequireMockExperiment(t, db, user)
 		trialID := RequireMockTrialID(t, db, exp)
 
-		// create training metrics (raw_steps)
+		// Create training metrics (raw_steps).
 		mRaw1 := createMetric(10, 0.5, trialID)
 		err := db.AddTrainingMetrics(ctx, mRaw1)
 		require.NoError(t, err)
@@ -1073,7 +1073,7 @@ func TestExperimentNumSteps(t *testing.T) {
 		exp := RequireMockExperiment(t, db, user)
 		trialID := RequireMockTrialID(t, db, exp)
 
-		// create training metrics (raw_steps)
+		// Create training metrics (raw_steps).
 		for i := 1; i < 5; i++ {
 			mRaw := createMetric(int32(i), 0.5, trialID)
 			err := db.AddTrainingMetrics(ctx, mRaw)
@@ -1089,7 +1089,7 @@ func TestExperimentNumSteps(t *testing.T) {
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
 
-		// create training metrics (raw_steps)
+		// Create training metrics (raw_steps).
 		for i := 0; i < 3; i++ {
 			trialID := RequireMockTrialID(t, db, exp)
 			mRaw := createMetric(10, 0.5, trialID)
