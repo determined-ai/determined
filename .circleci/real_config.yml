@@ -119,10 +119,14 @@ commands:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
 
   python-report:
-    description: "Help with debugging Python and pip related issues."
+    description: Report information about the Python environment.
     steps:
-      # keep it a single line to avoid adding ci overhead. each step is about 5s.
-      - run: python --version; pip --version; pip list; sh -c "pip check || true"
+      - run: |
+          python --version
+          pip --version
+          pip list
+          sh -c "pip check || true"
+
 
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
