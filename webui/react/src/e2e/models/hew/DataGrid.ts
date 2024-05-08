@@ -144,11 +144,14 @@ export class DataGrid<
    */
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
     const rows = await this.filterRows(async (row) => {
-      return (await row.getCellByColumnName(columnName).pwLocator.innerHTML()).indexOf(value) > -1;
+      return (
+        ((await row.getCellByColumnName(columnName).pwLocator.textContent()) || '').indexOf(value) >
+        -1
+      );
     });
     if (rows.length !== 1) {
       const names = await Promise.all(
-        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerHTML()),
+        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.textContent()),
       );
       throw new Error(
         `Expected one row to match ${columnName}:${value}. Found ${rows.length} rows that meet the condition: ${names}.`,
@@ -282,7 +285,7 @@ export class HeadRow extends NamedComponent {
    * Row.getCellByColumnName will fail without running this first.
    */
   async setColumnDefs(): Promise<Map<string, number>> {
-    // make sure we see enough columns before getting innerhtml of each.
+    // make sure we see enough columns before getting textContent of each.
     // there are four columns on the left
     await expect
       .poll(async () => await this.pwLocator.locator('th').count())
@@ -299,9 +302,17 @@ export class HeadRow extends NamedComponent {
             `All header cells should have the attribute ${this.#columnIndexAttribute}`,
           );
         if (index !== '1') {
-          expect(await cell.innerHTML()).not.toBe('');
+          expect(await cell.textContent()).not.toBe('');
         }
-        this.#columnDefs.set(await cell.innerHTML(), parseInt(index));
+        let text = await cell.textContent();
+        if (text === null) {
+          if (index === '1') {
+            text = '';
+          } else {
+            throw new Error('Expected to see text in the column header.');
+          }
+        }
+        this.#columnDefs.set(text, parseInt(index));
       }),
     );
     return this.#columnDefs;
