@@ -747,5 +747,6 @@ if __name__ == "__main__":
             "create_http_test_service": create_http_test_service,
             "create_http_test_ingress_setup": create_http_test_ingress_setup,
             "create_http_test_gw_setup": create_http_test_gw_setup,
+            "report": report,
         }
     )
