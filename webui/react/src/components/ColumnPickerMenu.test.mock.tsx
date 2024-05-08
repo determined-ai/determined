@@ -1572,5 +1572,4 @@ export const initialVisibleColumns = [
   'resourcePool',
   'checkpointCount',
   'checkpointSize',
-  'training.☃.last',
 ];
