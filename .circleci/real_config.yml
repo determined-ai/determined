@@ -3774,16 +3774,6 @@ jobs:
           name: Set initial user password
           command: |
             echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> $BASH_ENV
-      - run:
-          name: Wait for master connection
-          command: |
-            set +o pipefail
-            export DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD}
-            export DET_MASTER_TLS_CERT=${MASTER_TLS_CERT} DET_MASTER_CERT_NAME=${MASTER_CERT_NAME}
-            for i in {1..10}; do
-              yes | det -m https://${MASTER_HOST}:${MASTER_PORT} user whoami | grep "logged in" && break || \
-              echo "Trying to connect to master host again in 5 seconds" && sleep 5
-            done
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3791,7 +3781,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
-          wait-for-master: false
+          wait-for-master: true
       - store_test_results:
           path: /tmp/test-results/
 
