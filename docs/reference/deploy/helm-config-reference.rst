@@ -231,8 +231,9 @@
    any HTTP traffic. The default timeout is 300 (5 minutes).
 
 -  ``initialUserPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts in a brand new deployment. This is required in order to prevent potentially
-   launching an unsecured cluster, but has no effect if the database has already been created. (*Required*)
+   determined user accounts in a brand new deployment. This is required in order to prevent
+   potentially launching an unsecured cluster, but has no effect if the database has already been
+   created. (*Required*)
 
 -  ``defaultPassword``: (*Deprecated*) Specifies a string containing the default password for the
    admin and determined user accounts in a brand new deployment. Use ``initialUserPassword``
