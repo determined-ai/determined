@@ -31,4 +31,4 @@ release-gh-ee: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creator
 release-gh-ee:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
-	goreleaser --rm-dist
+	goreleaser --rm-dist -f ./.goreleaser_ee.yml
