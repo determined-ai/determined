@@ -452,7 +452,7 @@ func (e *internalExperiment) stop() error {
 	} else if !wasPatched {
 		return errors.New("experiment is already in a terminal state")
 	}
-	telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
+	telemetry.ReportExperimentStateChanged(context.TODO(), e.db, e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {
@@ -934,7 +934,7 @@ func (e *internalExperiment) updateState(state model.StateWithReason) bool {
 	} else if !wasPatched {
 		return true
 	}
-	telemetry.ReportExperimentStateChanged(e.db, e.Experiment)
+	telemetry.ReportExperimentStateChanged(context.TODO(), e.db, e.Experiment)
 	if err := webhooks.ReportExperimentStateChanged(
 		context.TODO(), *e.Experiment, e.activeConfig,
 	); err != nil {

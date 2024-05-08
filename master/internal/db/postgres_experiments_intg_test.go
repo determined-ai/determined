@@ -985,50 +985,58 @@ func TestExperimentTotalStepTime(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0.0, no error", func(t *testing.T) {
-
-		sec, err := db.ExperimentTotalStepTime(-1)
+		sec, err := db.ExperimentTotalStepTime(ctx, -1)
 		require.Equal(t, 0.0, sec)
 		require.NoError(t, err)
 	})
 
 	t.Run("experiment with single trial/task with null endtime", func(t *testing.T) {
-
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
-		timeInSeconds, err := db.ExperimentTotalStepTime(exp.ID)
+		timeInSeconds, err := db.ExperimentTotalStepTime(ctx, exp.ID)
 		require.NoError(t, err)
 		require.Equal(t, 0.0, timeInSeconds)
 	})
 
 	t.Run("experiment with single trial/task with set endtime", func(t *testing.T) {
-
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
 		_, task := RequireMockTrial(t, db, exp)
 		alloc := RequireMockAllocation(t, db, task.TaskID)
 		endTime := alloc.StartTime.Add(time.Hour)
 		alloc.EndTime = &endTime //its changing the mem not db
-		CompleteAllocation(ctx, alloc)
-		timeInSeconds, err := db.ExperimentTotalStepTime(exp.ID)
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+		timeInSeconds, err := db.ExperimentTotalStepTime(ctx, exp.ID)
 		require.NoError(t, err)
 		require.Equal(t, 3600.0, timeInSeconds)
 	})
 
 	t.Run("experiment with multiple trials/tasks", func(t *testing.T) {
-
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
+
 		// add 3 tasks to an exp
-		for i := 0; i < 3; i++ {
-			_, task := RequireMockTrial(t, db, exp)
-			alloc := RequireMockAllocation(t, db, task.TaskID)
-			endTime := alloc.StartTime.Add(time.Hour)
-			alloc.EndTime = &endTime
-			CompleteAllocation(ctx, alloc)
-		}
-		timeInSeconds, err := db.ExperimentTotalStepTime(exp.ID)
+		_, task := RequireMockTrial(t, db, exp)
+		alloc := RequireMockAllocation(t, db, task.TaskID)
+		endTime := alloc.StartTime.Add(time.Hour) // Adding an hour
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Minute) // Adding a minute
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Second) // Adding a second
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		timeInSeconds, err := db.ExperimentTotalStepTime(ctx, exp.ID)
 		require.NoError(t, err)
-		require.Equal(t, 10800.0, timeInSeconds)
+		require.Equal(t, 3661.0, timeInSeconds)
 	})
 }
 
@@ -1040,13 +1048,12 @@ func TestExperimentNumSteps(t *testing.T) {
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0, no error", func(t *testing.T) {
-		sec, err := db.ExperimentNumSteps(-1)
+		sec, err := db.ExperimentNumSteps(ctx, -1)
 		require.Equal(t, int64(0), sec)
 		require.NoError(t, err)
 	})
 
 	t.Run("experiment with single trial metrics", func(t *testing.T) {
-
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
 		trialID := RequireMockTrialID(t, db, exp)
@@ -1056,13 +1063,12 @@ func TestExperimentNumSteps(t *testing.T) {
 		err := db.AddTrainingMetrics(ctx, mRaw1)
 		require.NoError(t, err)
 
-		count, err := db.ExperimentNumSteps(exp.ID)
+		count, err := db.ExperimentNumSteps(ctx, exp.ID)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 	})
 
 	t.Run("experiment with single trial multiple raw metrics", func(t *testing.T) {
-
 		user := RequireMockUser(t, db)
 		exp := RequireMockExperiment(t, db, user)
 		trialID := RequireMockTrialID(t, db, exp)
@@ -1074,7 +1080,7 @@ func TestExperimentNumSteps(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		count, err := db.ExperimentNumSteps(exp.ID)
+		count, err := db.ExperimentNumSteps(ctx, exp.ID)
 		require.NoError(t, err)
 		require.Equal(t, int64(4), count)
 	})
@@ -1091,7 +1097,7 @@ func TestExperimentNumSteps(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		count, err := db.ExperimentNumSteps(exp.ID)
+		count, err := db.ExperimentNumSteps(ctx, exp.ID)
 		require.NoError(t, err)
 		require.Equal(t, int64(3), count)
 	})
