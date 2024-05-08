@@ -90,7 +90,7 @@ def clear_cluster_message(args: argparse.Namespace) -> None:
 def get_cluster_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
-    resp = bindings.get_GetMaster(sess)
+    resp = bindings.get_GetClusterMessage(sess)
     message = resp.to_json()['clusterMessage']
 
     if args.json:
