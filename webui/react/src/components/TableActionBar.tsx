@@ -98,12 +98,14 @@ interface Props {
   onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange?: (sorts: Sort[]) => void;
   onVisibleColumnChange?: (newColumns: string[]) => void;
+  onPinnedColumnsCountChange?: (pinnedColumnsCount: number) => void;
+  onHeatmapSelectionRemove?: (id: string) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   sorts: Sort[];
-  // tableViewMode: TableViewMode;
+  pinnedColumnsCount?: number;
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
@@ -124,14 +126,15 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  // onTableViewModeChange,
+  onPinnedColumnsCountChange,
+  onHeatmapSelectionRemove,
   onVisibleColumnChange,
   project,
   projectColumns,
   rowHeight,
   selectedExperimentIds,
   sorts,
-  // tableViewMode,
+  pinnedColumnsCount = 0,
   total,
   labelSingular,
   labelPlural,
@@ -288,9 +291,8 @@ const TableActionBar: React.FC<Props> = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${labelPlural.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${labelPlural.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -302,9 +304,8 @@ const TableActionBar: React.FC<Props> = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${labelPlural.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -409,18 +410,20 @@ const TableActionBar: React.FC<Props> = ({
               onChange={onSortChange}
             />
             <ColumnPickerMenu
+              compare={compareViewOn}
               initialVisibleColumns={initialVisibleColumns}
               isMobile={isMobile}
+              pinnedColumnsCount={pinnedColumnsCount}
               projectColumns={projectColumns}
               projectId={project.id}
               tabs={columnGroups}
+              onHeatmapSelectionRemove={onHeatmapSelectionRemove}
+              onPinnedColumnsCountChange={onPinnedColumnsCountChange}
               onVisibleColumnChange={onVisibleColumnChange}
             />
             <OptionsMenu
               rowHeight={rowHeight}
-              // tableViewMode={tableViewMode}
               onRowHeightChange={onRowHeightChange}
-              // onTableViewModeChange={onTableViewModeChange}
             />
             {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>

@@ -287,8 +287,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -297,8 +297,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -309,8 +309,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -534,7 +534,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
-    useCallback(() => {}, []);
+    useCallback(() => { }, []);
 
   const handleColumnsOrderChange = useCallback(
     (newColumnsOrder: string[]) => {
@@ -570,12 +570,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -604,30 +604,30 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange?.(newColumnsOrder);
+                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -680,9 +680,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           sortCount === 0
             ? []
             : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
 
         items.push(
           ...sortMenuItems,
@@ -748,6 +748,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         <ColumnPickerMenu
           initialVisibleColumns={columnsIfLoaded}
           isMobile={isMobile}
+          pinnedColumnsCount={settings.pinnedColumnsCount}
           projectColumns={projectColumns}
           projectId={project.id}
           tabs={[

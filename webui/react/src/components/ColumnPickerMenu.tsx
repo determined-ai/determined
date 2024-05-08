@@ -7,27 +7,22 @@ import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
-import { useObservable } from 'micro-observables';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
-import {
-  defaultProjectSettings,
-  ProjectSettings,
-  settingsPathForProject,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import { V1LocationType } from 'services/api-ts-sdk';
-import userSettings from 'stores/userSettings';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 
 import css from './ColumnPickerMenu.module.scss';
 
+export const COLUMN_PICKER_MENU = 'column-picker-menu';
+
 const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
-  columns.filter((col) => !BANNED_COLUMNS.has(col.column));
+  columns?.filter((col) => !BANNED_COLUMNS.has(col.column));
 
 const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
@@ -41,9 +36,13 @@ interface ColumnMenuProps {
   isMobile?: boolean;
   initialVisibleColumns: string[];
   onVisibleColumnChange?: (newColumns: string[]) => void;
+  onPinnedColumnsCountChange?: (newCount: number) => void;
+  onHeatmapSelectionRemove?: (id: string) => void;
   projectColumns: Loadable<ProjectColumn[]>;
   projectId: number;
   tabs: (V1LocationType | V1LocationType[])[];
+  compare?: boolean;
+  pinnedColumnsCount: number;
 }
 
 interface ColumnTabProps {
@@ -55,50 +54,43 @@ interface ColumnTabProps {
   setSearchString: React.Dispatch<React.SetStateAction<string>>;
   tab: V1LocationType | V1LocationType[];
   totalColumns: ProjectColumn[];
+  compare: boolean;
+  pinnedColumnsCount: number;
+  onPinnedColumnsCountChange?: (newCount: number) => void;
+  onHeatmapSelectionRemove?: (id: string) => void;
 }
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
+  compare,
+  pinnedColumnsCount,
   handleShowSuggested,
-  projectId,
   searchString,
   setSearchString,
   tab,
   totalColumns,
   onVisibleColumnChange,
+  onPinnedColumnsCountChange,
+  onHeatmapSelectionRemove,
 }) => {
-  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
-  const projectSettings = useObservable(userSettings.get(ProjectSettings, settingsPath));
-  const updateSettings = useCallback(
-    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
-    [settingsPath],
-  );
-  const settings = useMemo(
+  const checkedColumns = useMemo(
     () =>
-      projectSettings
-        .map((s) => ({ ...s, ...defaultProjectSettings }))
-        .getOrElse(defaultProjectSettings),
-    [projectSettings],
-  );
-
-  const checkedColumn = useMemo(
-    () =>
-      settings.compare
-        ? new Set(columnState.slice(0, settings.pinnedColumnsCount))
+      compare
+        ? new Set(columnState.slice(0, pinnedColumnsCount))
         : new Set(columnState),
-    [columnState, settings.compare, settings.pinnedColumnsCount],
+    [columnState, compare, pinnedColumnsCount],
   );
 
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
     const locations = ensureArray(tab);
-    return totalColumns.filter(
+    return totalColumns?.filter(
       (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
     );
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns.every((col) => columnState.includes(col.column));
+    return filteredColumns?.every((col) => columnState.includes(col.column));
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
@@ -114,44 +106,41 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 
     // If uncheck something pinned, reduce the pinnedColumnsCount
     allFilteredColumnsChecked &&
-      updateSettings({
-        pinnedColumnsCount: newColumns.filter(
-          (col) => columnState.indexOf(col) < settings.pinnedColumnsCount,
-        ).length,
-      });
+      onPinnedColumnsCountChange?.(newColumns?.filter(
+        (col) => columnState.indexOf(col) < pinnedColumnsCount,
+      ).length);
   }, [
     allFilteredColumnsChecked,
     columnState,
     filteredColumns,
     onVisibleColumnChange,
-    settings.pinnedColumnsCount,
-    updateSettings,
+    pinnedColumnsCount,
+    onPinnedColumnsCountChange,
   ]);
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
       const { id, checked } = event.target;
       if (id === undefined) return;
-      const pinnedColumnsCount = settings.pinnedColumnsCount;
-      if (settings.compare) {
+      if (compare) {
         // pin or unpin column
         const newColumns = columnState.filter((c) => c !== id);
         if (checked) {
           newColumns.splice(pinnedColumnsCount, 0, id);
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount + 1, 0) });
+          onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount + 1, 0));
         } else {
           newColumns.splice(pinnedColumnsCount - 1, 0, id);
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+          onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
         }
         onVisibleColumnChange?.(newColumns);
       } else {
         // If uncheck something pinned, reduce the pinnedColumnsCount
         if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+          onPinnedColumnsCountChange?.(Math.max(pinnedColumnsCount - 1, 0));
         }
         // If uncheck something had heatmap skipped, reset to heatmap visible
         if (!checked) {
-          updateSettings({ heatmapSkipped: settings.heatmapSkipped.filter((s) => s !== id) });
+          onHeatmapSelectionRemove?.(id);
         }
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(id) : newColumnSet.delete(id);
@@ -159,12 +148,12 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       }
     },
     [
+      compare,
       columnState,
       onVisibleColumnChange,
-      settings.compare,
-      settings.pinnedColumnsCount,
-      settings.heatmapSkipped,
-      updateSettings,
+      onHeatmapSelectionRemove,
+      pinnedColumnsCount,
+      onPinnedColumnsCountChange,
     ],
   );
 
@@ -181,7 +170,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       return (
         <div className={css.rows} key={col.column} style={style}>
           <Checkbox
-            checked={checkedColumn.has(col.column)}
+            checked={checkedColumns.has(col.column)}
             id={col.column}
             onChange={handleColumnChange}>
             {col.displayName || col.column}
@@ -189,7 +178,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         </div>
       );
     },
-    [filteredColumns, checkedColumn, handleColumnChange],
+    [filteredColumns, checkedColumns, handleColumnChange],
   );
 
   return (
@@ -201,9 +190,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         value={searchString}
         onChange={handleSearch}
       />
-      {totalColumns.length !== 0 ? (
+      {totalColumns?.length !== 0 ? (
         <div className={css.columns}>
-          {filteredColumns.length > 0 ? (
+          {filteredColumns?.length > 0 ? (
             <List height={360} itemCount={filteredColumns.length} itemSize={30} width="100%">
               {rows}
             </List>
@@ -214,7 +203,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       ) : (
         <Spinner spinning />
       )}
-      {!settings.compare && (
+      {!compare && (
         <div className={css.actionRow}>
           <Button type="text" onClick={handleShowHideAll}>
             {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
@@ -229,6 +218,8 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 };
 
 const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
+  compare = false,
+  pinnedColumnsCount,
   projectColumns,
   initialVisibleColumns,
   projectId,
@@ -260,7 +251,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   return (
     <Dropdown
       content={
-        <div className={css.base}>
+        <div className={css.base} data-testid={COLUMN_PICKER_MENU}>
           {tabs.length > 1 && (
             <Pivot
               items={[
@@ -273,7 +264,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                   children: (
                     <ColumnPickerTab
                       columnState={initialVisibleColumns}
+                      compare={compare}
                       handleShowSuggested={handleShowSuggested}
+                      pinnedColumnsCount={pinnedColumnsCount}
                       projectId={projectId}
                       searchString={searchString}
                       setSearchString={setSearchString}
@@ -292,7 +285,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           {tabs.length === 1 && (
             <ColumnPickerTab
               columnState={initialVisibleColumns}
+              compare={compare}
               handleShowSuggested={handleShowSuggested}
+              pinnedColumnsCount={pinnedColumnsCount}
               projectId={projectId}
               searchString={searchString}
               setSearchString={setSearchString}
