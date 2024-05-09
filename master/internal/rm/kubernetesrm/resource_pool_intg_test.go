@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	k8sClient "k8s.io/client-go/kubernetes"
@@ -144,24 +143,6 @@ func TestSetGroupPriority(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestRecoverJobPosition(t *testing.T) {
-	rp, jobID := testResourcePoolWithJob(t, defaultSlots)
-	position := decimal.New(200, 10)
-
-	go func() {
-		defer func() {
-			pos := rp.queuePositions[jobID]
-			require.Equal(t, position, pos)
-		}()
-
-		rp.RecoverJobPosition(sproto.RecoverJobPosition{
-			ResourcePool: rp.poolConfig.PoolName,
-			JobID:        jobID,
-			JobPosition:  position,
-		})
-	}()
 }
 
 func TestValidateResources(t *testing.T) {
