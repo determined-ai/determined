@@ -27,13 +27,13 @@ func TestAllocateAndRelease(t *testing.T) {
 
 	// AllocateRequest
 	allocReq := sproto.AllocateRequest{
-		AllocationID: model.AllocationID(allocID),
+		AllocationID: allocID,
 		JobID:        jobID,
 		Name:         uuid.NewString(),
 		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
 	}
 	rp.AllocateRequest(allocReq)
-	req, ok := rp.reqList.TaskByID(model.AllocationID(allocID))
+	req, ok := rp.reqList.TaskByID(allocID)
 	require.True(t, ok)
 	require.Equal(t, allocID, req.AllocationID)
 	require.Equal(t, allocReq.JobID, req.JobID)
@@ -42,29 +42,27 @@ func TestAllocateAndRelease(t *testing.T) {
 
 	// ResourcesReleased
 	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: model.AllocationID(allocID),
+		AllocationID: allocID,
 		ResourcePool: rp.poolConfig.PoolName,
 	})
-	req, ok = rp.reqList.TaskByID(model.AllocationID(allocID))
+	req, ok = rp.reqList.TaskByID(allocID)
 	require.False(t, ok)
 	require.Nil(t, req)
-	require.Empty(t, rp.allocationIDToContainerID[model.AllocationID(allocID)])
-	require.Empty(t, rp.allocationIDToJobID[model.AllocationID(allocID)])
+	require.Empty(t, rp.allocationIDToContainerID[allocID])
+	require.Empty(t, rp.allocationIDToJobID[allocID])
 }
 
 func TestUpdatePodStatus(t *testing.T) {
 	rp, jobID := testResourcePoolWithJob(t, defaultSlots)
 
 	cases := []struct {
-		name           string
-		state          sproto.SchedulingState
-		containerMatch bool
-		runningPod     int
+		name       string
+		state      sproto.SchedulingState
+		runningPod int
 	}{
-		{"scheduled", sproto.SchedulingStateScheduled, true, 1},
-		{"backfilled", sproto.SchedulingStateScheduledBackfilled, true, 1},
-		{"queued", sproto.SchedulingStateQueued, true, 0},
-		{"container error", sproto.SchedulingStateScheduled, false, 0},
+		{"scheduled", sproto.SchedulingStateScheduled, 1},
+		{"backfilled", sproto.SchedulingStateScheduledBackfilled, 1},
+		{"queued", sproto.SchedulingStateQueued, 0},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -78,9 +76,9 @@ func TestUpdatePodStatus(t *testing.T) {
 				ContainerID: "bogus",
 				State:       tt.state,
 			}
-			if tt.containerMatch {
-				req.ContainerID = string(rp.allocationIDToContainerID[newAllocID])
-			}
+			// TODO (bradley, pods2jobs): new implementation won't require container ID
+			req.ContainerID = string(rp.allocationIDToContainerID[newAllocID])
+
 			rp.UpdatePodStatus(req)
 
 			// If scheduled (backfilled or scheduled), check that running pods++
