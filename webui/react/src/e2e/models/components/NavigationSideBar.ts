@@ -32,7 +32,7 @@ export class NavigationSideBar extends BaseReactFragment {
   });
   /**
    * Returns a representation of a sidebar NavigationItem with the specified label.
-   * For example, a rokspace pinned to the sidebar is accessible through it's label here.
+   * For example, a workspace pinned to the sidebar is accessible through it's label here.
    * @param {string} [label] - the label of the tab, generally the name
    */
   public sidebarItem(label: string): BaseComponent {

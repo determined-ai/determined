@@ -20,6 +20,6 @@ export class Pivot extends NamedComponent {
   readonly tablist = new BaseComponent({ parent: this, selector: '.ant-tabs-nav' });
   readonly tabContent = new BaseComponent({
     parent: this,
-    selector: '.ant-tabs-content-holder',
+    selector: '.ant-tabs-content-holder role="tabpanel".ant-tabs-tabpane-active',
   });
 }

@@ -28,15 +28,22 @@ export class ProjectDetails extends BasePage {
 
   readonly pageComponent = new PageComponent({ parent: this });
   readonly dynamicTabs = new DynamicTabs({ parent: this.pageComponent });
+  readonly runsTab = new BaseComponent({
+    parent: this.dynamicTabs.pivot.tablist,
+    selector: Pivot.selectorTemplateTabs('runs'),
+  });
   readonly experimentsTab = new BaseComponent({
     parent: this.dynamicTabs.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('experiments'),
+  });
+  readonly searchesTab = new BaseComponent({
+    parent: this.dynamicTabs.pivot.tablist,
+    selector: Pivot.selectorTemplateTabs('searches'),
   });
   readonly notesTab = new BaseComponent({
     parent: this.dynamicTabs.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('notes'),
   });
   readonly f_experiemntList = new F_ExperiementList({ parent: this.dynamicTabs.pivot.tabContent });
-  // TODO add models for ExperimentList
-  // TODO add models for notes tab content
+  // TODO add models for other tabs
 }
