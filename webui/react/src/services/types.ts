@@ -71,7 +71,7 @@ export interface GetTemplatesParams extends PaginationParams {
 }
 
 export interface DeleteTemplateParams {
-  name: string
+  name: string;
 }
 
 export interface GetExperimentsParams extends PaginationParams {

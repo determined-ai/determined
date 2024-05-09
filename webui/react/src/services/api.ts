@@ -827,14 +827,21 @@ export const getTaskTemplates = generateDetApi<
   Type.Template[]
 >(Config.getTemplates);
 
-export const updateTaskTemplate = generateDetApi<
-Api.V1Template, Api.V1PutTemplateResponse, void>(Config.updateTaskTemplate);
+export const updateTaskTemplate = generateDetApi<Api.V1Template, Api.V1PutTemplateResponse, void>(
+  Config.updateTaskTemplate,
+);
+
+export const updateTaskTemplateName = generateDetApi<
+  Api.V1PatchTemplateNameRequest,
+  Api.V1PatchTemplateNameResponse,
+  void
+>(Config.updateTaskTemplateName);
 
 export const deleteTaskTemplate = generateDetApi<
   Service.DeleteTemplateParams,
   Api.V1DeleteTemplateResponse,
   void
-  >(Config.deleteTaskTemplate);
+>(Config.deleteTaskTemplate);
 
 export const createTaskTemplate = generateDetApi<
   Api.V1Template,

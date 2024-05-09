@@ -10,21 +10,20 @@ interface Props {
 }
 
 const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) => {
-
-    const handleOk = async () => {
-        try {
-          await deleteTaskTemplate({ name: template.name });
-        } catch (e) {
-          handleError(e, {
-            level: ErrorLevel.Error,
-            publicMessage: 'Please try again later.',
-            publicSubject: 'Unable to delete template.',
-            silent: false,
-            type: ErrorType.Server,
-          });
-        }
-        onSuccess?.();
-      };
+  const handleOk = async () => {
+    try {
+      await deleteTaskTemplate({ name: template.name });
+    } catch (e) {
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to delete template.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+    onSuccess?.();
+  };
 
   return (
     <Modal
@@ -36,9 +35,7 @@ const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) 
         text: 'Delete Template',
       }}
       title="Confirm Delete Template">
-      <div>
-        Are you sure you want to delete this template &quot;{template?.name}&quot;
-      </div>
+      <div>Are you sure you want to delete this template &quot;{template?.name}&quot;</div>
     </Modal>
   );
 };

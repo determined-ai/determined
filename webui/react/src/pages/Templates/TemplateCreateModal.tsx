@@ -8,9 +8,9 @@ import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
-import { createTaskTemplate, updateTaskTemplate } from 'services/api';
+import { createTaskTemplate, updateTaskTemplate, updateTaskTemplateName } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Template, Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
@@ -56,14 +56,16 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
 
           // Edit template name
           if (template.name !== values.name) {
-            console.log('edit tempalte name');
+            await updateTaskTemplateName({
+              newName: values.name,
+              oldName: template.name,
+            });
           }
           openToast({
             description: `Template ${values.name} has been updated`,
             severity: 'Info',
             title: 'Template Updated',
           });
-
         } else {
           await createTaskTemplate({
             ...values,
@@ -100,6 +102,15 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
     }
   }, [form, openToast, onSuccess, template]);
 
+  useEffect(() => {
+    if (!template || !form) return;
+    form.setFieldsValue({
+      config: yaml.dump(template.config),
+      name: template.name,
+      workspaceId: template.workspaceId,
+    });
+  }, [template, form]);
+
   return (
     <Modal
       cancel
@@ -130,7 +141,10 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
           label="Workspace"
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-          <Select allowClear disabled={!!workspaceId && !template} placeholder="Workspace (required)">
+          <Select
+            allowClear
+            disabled={!!workspaceId && !template}
+            placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
                 {workspace.name}
