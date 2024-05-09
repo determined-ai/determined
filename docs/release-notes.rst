@@ -13,7 +13,7 @@
 Version 0.32.0
 ==============
 
-**Release Date:** May 03, 2024
+**Release Date:** May 08, 2024
 
 Notice: This release contains an important fix for a bug that poses data loss risk when using the
 Experiment table in the project view in the WebUI. All users on affected versions are strongly
