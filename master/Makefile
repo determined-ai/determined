@@ -5,7 +5,7 @@ SCHEMA_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name 'zgen_*.go' 
 STREAM_INPUTS = $(shell find ./internal/stream/ -name '*_test.go' -prune -o -name '*.go' -print)
 STREAM_PYTHON_CLIENT = ../harness/determined/common/streams/wire.py
 STREAM_TS_CLIENT = ../webui/react/src/services/stream/wire.ts
-MOCK_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
+MOCK_INPUTS = Makefile ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
@@ -99,11 +99,13 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go
 	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go
 	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go
+	mockery --quiet --name=JobInterface --srcpkg=k8s.io/client-go/kubernetes/typed/batch/v1 --output internal/mocks --filename job_iface.go
 	mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
 	mockery --quiet --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
 	mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
 	mockery --quiet --name=Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes" --filename k8s_clientset.go --structname K8sClientsetInterface
 	mockery --quiet --name=CoreV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/core/v1" --filename k8s_corev1_iface.go --structname K8sCoreV1Interface
+	mockery --quiet --name=BatchV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/batch/v1" --filename k8s_batchv1_iface.go --structname K8sBatchV1Interface
 
 	mkdir -p build
 	touch $@

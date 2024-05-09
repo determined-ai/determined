@@ -257,7 +257,7 @@ func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) (done bool) {
 		a.releaseResources(msg)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
-	case *sproto.ResourcesRestoreError:
+	case *sproto.ResourcesFailedError:
 		a.restoreResourceFailure(msg)
 		return true
 	case *sproto.InvalidResourcesRequestError:
@@ -481,7 +481,7 @@ func (a *allocation) validateRendezvous() error {
 	}
 
 	switch a.resources.first().Summary().ResourcesType {
-	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
+	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sJob:
 		break
 	default:
 		return BehaviorUnsupportedError{Behavior: "rendezvous"}
@@ -724,7 +724,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 	}
 
 	a.resources[msg.ResourcesID].Container = msg.Container
-	a.syslog.Debugf("resources state changed: %+v", msg)
+	a.syslog.Debugf("resources state changed: %s", msg)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
@@ -847,7 +847,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 }
 
 // restoreResourceFailure handles the restored resource failures.
-func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
+func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailedError) {
 	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -1028,7 +1028,7 @@ func (a *allocation) exitedWithoutErr() bool {
 
 func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
 	switch err := exitErr.(type) {
-	case sproto.ResourcesRestoreError:
+	case sproto.ResourcesFailedError:
 		a.model.ExitErr = ptrs.Ptr(err.Error())
 		if err.ExitCode != nil {
 			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
@@ -1158,7 +1158,7 @@ func (a *allocation) calculateExitStatus(reason string) (
 		return fmt.Sprintf("allocation stopped early after %s", reason), true, logrus.InfoLevel, nil
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
-		case sproto.ResourcesRestoreError:
+		case sproto.ResourcesFailedError:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {

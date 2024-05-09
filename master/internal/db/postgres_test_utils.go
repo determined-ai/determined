@@ -47,6 +47,8 @@ const (
 	DefaultTestSrcPath = "../../../examples/tutorials/mnist_pytorch"
 	// DefaultProjectID is the project used when none is specified.
 	DefaultProjectID = 1
+
+	localPostgresURL = "postgres://postgres:postgres@localhost:5432/determined?sslmode=disable"
 )
 
 // Model represents a row from the `models` table. Unused except for tests.
@@ -90,7 +92,12 @@ func init() {
 // (or otherwise run the tests outside of the Makefile), make sure to set
 // DET_INTEGRATION_POSTGRES_URL.
 func ResolveTestPostgres() (*PgDB, func(), error) {
-	pgDB, err := ConnectPostgres(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
+	postgresURL := os.Getenv("DET_INTEGRATION_POSTGRES_URL")
+	if postgresURL == "" {
+		postgresURL = localPostgresURL
+	}
+
+	pgDB, err := ConnectPostgres(postgresURL)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
@@ -113,7 +120,7 @@ func MustResolveTestPostgres(t *testing.T) (*PgDB, func()) {
 func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	baseURL := os.Getenv("DET_INTEGRATION_POSTGRES_URL")
 	if baseURL == "" {
-		return nil, nil, errors.New("no DET_INTEGRATION_POSTGRES_URL detected")
+		baseURL = localPostgresURL
 	}
 
 	url, err := url.Parse(baseURL)

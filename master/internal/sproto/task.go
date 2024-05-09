@@ -131,7 +131,7 @@ func (*ReleaseResources) ResourcesEvent() {}
 func (*ResourcesStateChanged) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
-func (*ResourcesRestoreError) ResourcesEvent() {}
+func (*ResourcesFailedError) ResourcesEvent() {}
 
 // ResourcesEvent implements ResourcesEvent.
 func (*ContainerLog) ResourcesEvent() {}
@@ -289,8 +289,8 @@ const (
 	// SlurmProxyIfaceEnvVar is the env var for overriding the net iface used to proxy between
 	// the master and agents.
 	SlurmProxyIfaceEnvVar = "DET_SLURM_PROXY_IFACE"
-	// ResourcesTypeK8sPod indicates the resources are a handle for a k8s pod.
-	ResourcesTypeK8sPod ResourcesType = "k8s-pod"
+	// ResourcesTypeK8sJob indicates the resources are a handle for a k8s pod.
+	ResourcesTypeK8sJob ResourcesType = "k8s-job"
 	// ResourcesTypeDockerContainer indicates the resources are a handle for a docker container.
 	ResourcesTypeDockerContainer ResourcesType = "docker-container"
 	// ResourcesTypeSlurmJob indicates the resources are a handle for a slurm job.

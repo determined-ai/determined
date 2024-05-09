@@ -41,7 +41,7 @@ type ResourceManager struct {
 	poolsConfig           []config.ResourcePoolConfig
 	taskContainerDefaults *model.TaskContainerDefaultsConfig
 
-	podsService *pods
+	jobsService *jobsService
 	pools       map[string]*kubernetesResourcePool // immutable after initialization in new.
 
 	masterTLSConfig model.TLSClientConfig
@@ -65,11 +65,11 @@ func New(
 	}
 
 	// TODO(DET-9833) clusterID should just be a `internal/config` package singleton.
-	clusterID, err := db.GetOrCreateClusterID("")
+	id, err := db.GetOrCreateClusterID("")
 	if err != nil {
 		return nil, fmt.Errorf("getting clusterID: %w", err)
 	}
-	setClusterID(clusterID)
+	setClusterID(id)
 
 	k := &ResourceManager{
 		syslog: logrus.WithField("component", "k8srm"),
@@ -95,12 +95,11 @@ func New(
 		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 	}
 
-	k.podsService = newPodsService(
+	k.jobsService = newJobsService(
 		k.config.Namespace,
 		poolNamespaces,
 		k.config.MasterServiceName,
 		k.masterTLSConfig,
-		k.loggingConfig,
 		k.config.DefaultScheduler,
 		k.config.SlotType,
 		config.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
@@ -109,7 +108,7 @@ func New(
 		k.config.DetMasterIP,
 		k.config.DetMasterPort,
 		k.config.KubeconfigPath,
-		k.podStatusUpdateCallback,
+		k.jobSchedulingStateCallback,
 	)
 
 	for _, poolConfig := range k.poolsConfig {
@@ -124,7 +123,7 @@ func New(
 		}
 
 		poolConfig := poolConfig
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.podsService, k.db)
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()
@@ -178,19 +177,19 @@ func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
 			Name:   k.config.Name,
-			Status: k.podsService.HealthStatus(),
+			Status: k.jobsService.HealthStatus(),
 		},
 	}
 }
 
 // GetAgent implements rm.ResourceManager.
 func (k *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentResponse, error) {
-	return k.podsService.GetAgent(msg), nil
+	return k.jobsService.GetAgent(msg), nil
 }
 
 // GetAgents implements rm.ResourceManager.
 func (k *ResourceManager) GetAgents() (*apiv1.GetAgentsResponse, error) {
-	return k.podsService.GetAgents(), nil
+	return k.jobsService.GetAgents(), nil
 }
 
 // GetAllocationSummaries implements rm.ResourceManager.
@@ -292,12 +291,12 @@ func (k *ResourceManager) GetResourcePools() (*apiv1.GetResourcePoolsResponse, e
 
 // GetSlot implements rm.ResourceManager.
 func (k *ResourceManager) GetSlot(msg *apiv1.GetSlotRequest) (*apiv1.GetSlotResponse, error) {
-	return k.podsService.GetSlot(msg), nil
+	return k.jobsService.GetSlot(msg), nil
 }
 
 // GetSlots implements rm.ResourceManager.
 func (k *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
-	return k.podsService.GetSlots(msg), nil
+	return k.jobsService.GetSlots(msg), nil
 }
 
 // MoveJob implements rm.ResourceManager.
@@ -515,9 +514,9 @@ func (k ResourceManager) TaskContainerDefaults(
 	return result, nil
 }
 
-func (k *ResourceManager) podStatusUpdateCallback(msg sproto.UpdatePodStatus) {
+func (k *ResourceManager) jobSchedulingStateCallback(msg jobSchedulingStateChanged) {
 	for _, rp := range k.pools {
-		rp.UpdatePodStatus(msg)
+		rp.JobSchedulingStateChanged(msg)
 	}
 }
 
@@ -588,7 +587,7 @@ func (k *ResourceManager) createResourcePoolSummary(
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
-	resourceSummary, err := rp.getResourceSummary(getResourceSummary{})
+	resourceSummary, err := rp.getResourceSummary()
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
 	}
@@ -635,14 +634,14 @@ func (k *ResourceManager) getResourcePoolConfig(poolName string) (
 func (k *ResourceManager) EnableAgent(
 	req *apiv1.EnableAgentRequest,
 ) (resp *apiv1.EnableAgentResponse, err error) {
-	return k.podsService.EnableAgent(req)
+	return k.jobsService.EnableAgent(req)
 }
 
 // DisableAgent prevents scheduling on a node and has the option to kill running jobs.
 func (k *ResourceManager) DisableAgent(
 	req *apiv1.DisableAgentRequest,
 ) (resp *apiv1.DisableAgentResponse, err error) {
-	return k.podsService.DisableAgent(req)
+	return k.jobsService.DisableAgent(req)
 }
 
 // EnableSlot implements 'det slot enable...' functionality.
