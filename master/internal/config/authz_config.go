@@ -25,9 +25,10 @@ const (
 
 // AuthZConfig is a authz-related section of master config.
 type AuthZConfig struct {
-	Type          string  `json:"type"`
-	FallbackType  *string `json:"fallback"`
-	RBACUIEnabled *bool   `json:"rbac_ui_enabled"`
+	Type             string  `json:"type"`
+	FallbackType     *string `json:"fallback"`
+	RBACUIEnabled    *bool   `json:"rbac_ui_enabled"`
+	AuditLogDisabled bool    `json:"audit_log_disabled"`
 	// Removed: this option is removed and will not have any effect.
 	StrictNTSCEnabled      bool                         `json:"_strict_ntsc_enabled"`
 	AssignWorkspaceCreator AssignWorkspaceCreatorConfig `json:"workspace_creator_assign_role"`

@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/config"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -87,7 +86,7 @@ integrations:
     address: foo
 `
 	expected := Config{
-		Log: logger.Config{
+		Log: LoggerConfig{
 			Level: "info",
 			Color: false,
 		},
@@ -231,7 +230,7 @@ db:
   port: "3000"
 `
 	expected := Config{
-		Log: logger.Config{
+		Log: LoggerConfig{
 			Level: "info",
 			Color: false,
 		},
@@ -267,7 +266,7 @@ checkpoint_storage:
   bucket: my_bucket
 `
 	expected := Config{
-		Log: logger.Config{
+		Log: LoggerConfig{
 			Level: "info",
 			Color: false,
 		},

@@ -38,6 +38,11 @@ stages:
 
       # config_file is just a master.yaml
       config_file:
+        # security:
+        #   authz:
+        #     type: rbac
+        #     audit_log_disabled: true
+
         db:
           host: localhost
           port: 5432
