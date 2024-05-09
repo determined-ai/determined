@@ -3,6 +3,7 @@ import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Joyride from 'react-joyride';
 import { useParams } from 'react-router-dom';
 
 import Page, { BreadCrumbRoute } from 'components/Page';
@@ -112,40 +113,63 @@ const ExperimentDetails: React.FC = () => {
   });
 
   return (
-    <Page
-      breadcrumb={pageBreadcrumb}
-      containerRef={pageRef}
-      headerComponent={
-        experiment && (
-          <ExperimentDetailsHeader
-            experiment={experiment}
-            fetchExperimentDetails={fetchExperimentDetails}
-            trial={trial}
-          />
-        )
-      }
-      notFound={pageError && isNotFound(pageError)}
-      stickyHeader
-      title={`Experiment ${experimentId}`}>
-      {experiment &&
-        (isSingleTrial ? (
-          <ExperimentSingleTrialTabs
-            experiment={experiment}
-            fetchExperimentDetails={fetchExperimentDetails}
-            pageRef={pageRef}
-            onTrialUpdate={handleSingleTrialUpdate}
-          />
-        ) : (
-          <>
-            <TrialInfoBoxMultiTrial experiment={experiment} />
-            <ExperimentMultiTrialTabs
+    <>
+      <Joyride
+        showProgress
+        showSkipButton
+        steps={[
+          {
+            content: 'This is my awesome feature!',
+            disableBeacon: true,
+            target: '[data-node-key="metrics"]',
+          },
+          {
+            content: 'This is another awesome feature!',
+            disableBeacon: true,
+            target: '[data-node-key="hyperparameters"]',
+          },
+          {
+            content: 'Going back!',
+            disableBeacon: true,
+            target: '[data-node-key="checkpoints"]',
+          },
+        ]}
+      />
+      <Page
+        breadcrumb={pageBreadcrumb}
+        containerRef={pageRef}
+        headerComponent={
+          experiment && (
+            <ExperimentDetailsHeader
+              experiment={experiment}
+              fetchExperimentDetails={fetchExperimentDetails}
+              trial={trial}
+            />
+          )
+        }
+        notFound={pageError && isNotFound(pageError)}
+        stickyHeader
+        title={`Experiment ${experimentId}`}>
+        {experiment &&
+          (isSingleTrial ? (
+            <ExperimentSingleTrialTabs
               experiment={experiment}
               fetchExperimentDetails={fetchExperimentDetails}
               pageRef={pageRef}
+              onTrialUpdate={handleSingleTrialUpdate}
             />
-          </>
-        ))}
-    </Page>
+          ) : (
+            <>
+              <TrialInfoBoxMultiTrial experiment={experiment} />
+              <ExperimentMultiTrialTabs
+                experiment={experiment}
+                fetchExperimentDetails={fetchExperimentDetails}
+                pageRef={pageRef}
+              />
+            </>
+          ))}
+      </Page>
+    </>
   );
 };
 
