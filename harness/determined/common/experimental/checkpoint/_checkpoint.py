@@ -449,6 +449,23 @@ class Checkpoint:
         for d in resp.metrics:
             yield metrics.TrialMetrics._from_bindings(d, group)
 
+    def get_pachyderm_commit(self) -> str:
+        """Return the Pachyderm commit ID associated with this checkpoint."""
+        if not self.training:
+            # In the case that Checkpoint was constructed manually, reload to populate attributes.
+            self.reload()
+        assert self.training  # for mypy
+
+        try:
+            exp_conf = self.training.experiment_config
+            pachyderm_commit = exp_conf["integrations"]["pachyderm"]["dataset"]["commit"]
+            return str(pachyderm_commit)
+        except (KeyError, TypeError):
+            raise ValueError(
+                f"Pachyderm configuration not found for checkpoint {self.uuid}, "
+                f"experiment {self.training.experiment_id}"
+            )
+
     def __repr__(self) -> str:
         if self.training is not None:
             return (
