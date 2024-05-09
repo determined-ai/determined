@@ -1,6 +1,7 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Joyride from 'react-joyride';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -103,18 +104,47 @@ const SettingsContent: React.FC = () => {
   );
 };
 
+const steps = [
+  {
+    content: 'This is my awesome feature!',
+    disableBeacon: true,
+    target: '[data-node-key="user-management"]',
+  },
+  {
+    content: 'This is another awesome feature!',
+    disableBeacon: true,
+    target: '[data-node-key="group-management"]',
+  },
+  {
+    content: 'Going back!',
+    disableBeacon: true,
+    target: '[data-node-key="user-management"]',
+  },
+];
+
+// export default function App() {
+//   return (
+//     <div>
+//       <Joyride steps={steps} />
+//     </div>
+//   );
+// }
+
 const Admin: React.FC = () => (
-  <Page
-    breadcrumb={[
-      {
-        breadcrumbName: 'Admin Settings',
-        path: paths.admin(),
-      },
-    ]}
-    id="admin"
-    stickyHeader>
-    <SettingsContent />
-  </Page>
+  <div>
+    <Joyride showProgress showSkipButton steps={steps} />
+    <Page
+      breadcrumb={[
+        {
+          breadcrumbName: 'Admin Settings',
+          path: paths.admin(),
+        },
+      ]}
+      id="admin"
+      stickyHeader>
+      <SettingsContent />
+    </Page>
+  </div>
 );
 
 export default Admin;
