@@ -1,5 +1,6 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
 import React, { useCallback, useMemo, useState } from 'react';
+import Joyride from 'react-joyride';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -48,6 +49,27 @@ const Cluster: React.FC = () => {
     [basePath, navigate],
   );
 
+  const steps = useMemo(
+    () => [
+      {
+        content: 'This is my awesome feature!',
+        // disableBeacon: true,
+        target: '[data-node-key="historical-usage"]',
+      },
+      {
+        content: 'This is another awesome feature!',
+        //disableBeacon: true,
+        target: '[data-node-key="logs"]',
+      },
+      // {
+      //   content: 'Going back!',
+      //   disableBeacon: true,
+      //   target: '[data-node-key="checkpoints"]',
+      // },
+    ],
+    [],
+  );
+
   const tabItems: PivotProps['items'] = useMemo(() => {
     type Unboxed<T> = T extends (infer U)[] ? U : T;
     type TabType = Unboxed<PivotProps['items']>;
@@ -83,19 +105,22 @@ const Cluster: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page
-      breadcrumb={[
-        {
-          breadcrumbName: 'Cluster',
-          path: paths.clusters(),
-        },
-      ]}
-      id="cluster"
-      title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
-      <div className={css.pivoter}>
-        <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
-      </div>
-    </Page>
+    <>
+      <Joyride showProgress showSkipButton steps={steps} />
+      <Page
+        breadcrumb={[
+          {
+            breadcrumbName: 'Cluster',
+            path: paths.clusters(),
+          },
+        ]}
+        id="cluster"
+        title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
+        <div className={css.pivoter}>
+          <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
+        </div>
+      </Page>
+    </>
   );
 };
 
