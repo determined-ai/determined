@@ -946,7 +946,7 @@ func ExperimentTotalStepTime(ctx context.Context, id int) (float64, error) {
 		Join("JOIN trials AS t ON tasks.run_id = t.id").
 		Where("t.experiment_id = ?", id).
 		Scan(ctx, &seconds); err != nil {
-		return 0.0, fmt.Errorf("querying for total step time of experiment %v", id)
+		return 0.0, fmt.Errorf("querying for total step time of experiment %v: %w", id, err)
 	}
 	return seconds, nil
 }
@@ -1017,7 +1017,7 @@ func ExperimentNumSteps(ctx context.Context, id int) (int64, error) {
 		Where("t.experiment_id = ?", id).
 		Count(ctx)
 	if err != nil {
-		return int64(0), fmt.Errorf("querying for number of steps of experiment %v", id)
+		return int64(0), fmt.Errorf("querying for number of steps of experiment %v: %w", id, err)
 	}
 
 	return int64(numSteps), nil
