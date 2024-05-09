@@ -56,7 +56,9 @@ stringData:
       {{- end }}
 
     security:
-      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote | required "An initial password for admin and determined users is required!" }}
+      {{- if .Values.initialUserPassword }}
+      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote }}
+      {{- end }}
       {{- if .Values.tlsSecret }}
       tls:
         cert: {{ include "determined.secretPath" . }}tls.crt
