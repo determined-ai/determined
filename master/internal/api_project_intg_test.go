@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -378,21 +380,12 @@ func TestCreateProjectWithoutProjectKey(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	projectKeyPrefix := projectName[:3]
+	projectKeyPrefix := strings.ToUpper(projectName[:project.MaxProjectKeyPrefixLength])
 	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id,
 	})
 	require.NoError(t, err)
-
-	// Check that the project key is generated correctly.
-	countPostFix := 0
-	err = db.Bun().NewSelect().
-		ColumnExpr("COUNT(*)").
-		Table("projects").
-		Where("key ILIKE ?", (projectKeyPrefix+"%")).
-		Scan(ctx, &countPostFix)
-	require.NoError(t, err)
-	require.Equal(t, (projectKeyPrefix + fmt.Sprintf("%d", countPostFix)), resp.Project.Key)
+	require.Equal(t, projectKeyPrefix, resp.Project.Key[:project.MaxProjectKeyPrefixLength])
 }
 
 func TestCreateProjectWithProjectKey(t *testing.T) {
@@ -401,7 +394,7 @@ func TestCreateProjectWithProjectKey(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	projectKey := uuid.New().String()[:5]
+	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
 	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
 	})
@@ -423,7 +416,7 @@ func TestCreateProjectWithDuplicateProjectKey(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	projectKey := uuid.New().String()[:5]
+	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
 	_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
 	})
@@ -442,17 +435,43 @@ func TestCreateProjectWithDefaultKeyAndDuplicatePrefix(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := uuid.New().String()
-	projectKeyPrefix := projectName[:3]
+	projectKeyPrefix := strings.ToUpper(projectName[:project.MaxProjectKeyPrefixLength])
 	resp1, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id,
 	})
 	require.NoError(t, err)
-	require.Equal(t, (projectKeyPrefix + "1"), resp1.Project.Key)
+	require.Equal(t, projectKeyPrefix, resp1.Project.Key[:project.MaxProjectKeyPrefixLength])
 
 	resp2, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName + "2", WorkspaceId: wresp.Workspace.Id,
 	})
 	require.NoError(t, err)
 	require.NoError(t, err)
-	require.Equal(t, (projectKeyPrefix + "2"), resp2.Project.Key)
+	require.Equal(t, projectKeyPrefix, resp2.Project.Key[:project.MaxProjectKeyPrefixLength])
+}
+
+func TestConcurrentProjectKeyGenerationAttempts(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+	for x := 0; x < 20; x++ {
+		errgrp := errgroupx.WithContext(ctx)
+		for i := 0; i < 20; i++ {
+			projectName := "test-project" + uuid.New().String()
+			errgrp.Go(func(context.Context) error {
+				_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+					Name: projectName, WorkspaceId: wresp.Workspace.Id,
+				})
+				require.NoError(t, err)
+				return err
+			})
+		}
+		require.NoError(t, errgrp.Wait())
+		t.Cleanup(func() {
+			_, err := db.Bun().NewDelete().Table("projects").Where("workspace_id = ?", wresp.Workspace.Id).Exec(ctx)
+			require.NoError(t, err)
+			_, err = db.Bun().NewDelete().Table("workspaces").Where("id = ?", wresp.Workspace.Id).Exec(ctx)
+			require.NoError(t, err)
+		})
+	}
 }
