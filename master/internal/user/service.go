@@ -126,14 +126,22 @@ func GetService() *Service {
 	return userService
 }
 
-// The middleware looks for a token in two places (in this order):
-// 1. The HTTP Authorization header.
-// 2. A cookie named "auth".
+// The middleware looks for a token in three places (in this order):
+// 1. A token query parameter in the request URL.
+// 2. The HTTP Authorization header.
+// 3. A cookie named "auth".
 func (s *Service) extractToken(r *http.Request) (string, error) {
+	authParam := r.URL.Query().Get("token")
 	authRaw := r.Header.Get("Authorization")
-	if authRaw != "" {
+	if authParam != "" {
+		return authParam, nil
+	} else if authRaw != "" {
 		// We attempt to parse out the token, which should be
 		// transmitted as a Bearer authentication token.
+		if strings.HasPrefix(authRaw, "token ") {
+			token := strings.TrimPrefix(authRaw, "token ")
+			return token, nil
+		}
 		if !strings.HasPrefix(authRaw, "Bearer ") {
 			return "", echo.ErrUnauthorized
 		}

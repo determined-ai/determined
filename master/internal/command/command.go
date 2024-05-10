@@ -323,14 +323,14 @@ func (c *Command) ToV1Command() *commandv1.Command {
 func (c *Command) ToV1Notebook() *notebookv1.Notebook {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
 	allo := c.refreshAllocationState()
+	notebookAddress := fmt.Sprintf("%s?token=%s", c.serviceAddress(), c.Base.UserSessionToken)
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),
 		State:          enrichState(allo.State),
 		Description:    c.Config.Description,
 		Container:      allo.SingleContainer().ToProto(),
-		ServiceAddress: c.serviceAddress(),
+		ServiceAddress: notebookAddress,
 		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
