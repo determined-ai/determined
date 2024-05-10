@@ -14,14 +14,14 @@ export class Select extends Dropdown {
    * @param {string} title - menu item id
    */
   static override selectorTemplate(title: string): string {
-    return `div[role="option"][title$="${title}"]`;
+    return `div.ant-select-item[title$="${title}"]`;
   }
 
-  override readonly _menu: BaseComponent = new BaseComponent({
+  override readonly _menu = new BaseComponent({
     parent: this.root,
     selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
   });
-  readonly selectedOption: BaseComponent = new BaseComponent({
+  readonly selectedOption = new BaseComponent({
     parent: this._menu,
     selector: 'div[role="option"][aria-selected="true"]',
   });

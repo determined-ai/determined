@@ -31,6 +31,12 @@ module.exports = {
         'no-fallthrough': 'off',
       },
     },
+    {
+      files: ['**/src/e2e/**'],
+      rules: {
+        '@typescript-eslint/no-floating-promises': 'error',
+      },
+    },
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {

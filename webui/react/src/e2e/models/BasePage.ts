@@ -13,7 +13,13 @@ export interface ModelBasics {
  */
 export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
-  readonly nav: Navigation = new Navigation({ parent: this });
+  readonly nav = new Navigation({ parent: this });
+
+  private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? '""'));
+  private static appTitle = BasePage.isEE
+    ? 'HPE Machine Learning Development Environment'
+    : 'Determined';
+
   abstract readonly url: string | RegExp;
   abstract readonly title: string | RegExp;
 
@@ -27,6 +33,23 @@ export abstract class BasePage implements ModelBasics {
   get pwLocator(): Locator {
     return this._page.locator(':root');
   }
+  /**
+   * The title of the page. Format of [prefix - ]appTitle
+   * @param prefix
+   */
+  public static getTitle(prefix: string = ''): string {
+    if (prefix === '') {
+      return BasePage.appTitle;
+    }
+    return `${prefix} - ${BasePage.appTitle}`;
+  }
+
+  public getUrlRegExp(): RegExp {
+    if (this.url instanceof RegExp) {
+      return this.url;
+    }
+    return new RegExp(this.url, 'g');
+  }
 
   /**
    * Returns this so we can chain. Visits the page.
@@ -35,14 +58,16 @@ export abstract class BasePage implements ModelBasics {
    * @param {string} args.url - A URL to visit. It can be different from the URL to verify
    * @param {boolean} [args.verify] - Whether for the URL to change
    */
-  async goto(
-    { url, verify = true }: { url: string | RegExp; verify?: boolean } = this,
-  ): Promise<BasePage> {
+  async goto({
+    url = this.url,
+    verify = true,
+  }: { url?: string | RegExp; verify?: boolean } = {}): Promise<BasePage> {
     if (url instanceof RegExp) {
       throw new Error(`${typeof this}.url is a regular expression. Please provide a url to visit.`);
     }
     await this._page.goto(url);
     if (verify) {
+      // TODO this does nothing because we end up checking, passing, and then getting redirected
       await this._page.waitForURL(this.url);
       await expect(this._page).toHaveTitle(this.title);
     }

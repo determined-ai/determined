@@ -27,6 +27,7 @@ done.stamp
 /test-results/
 /playwright-report/
 /playwright/.cache/
+state.json
 src/e2e/test-results/
 src/e2e/playwright-report/
 src/e2e/junit-results.xml

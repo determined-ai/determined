@@ -265,6 +265,7 @@ func (m *DispatcherResourceManager) HealthCheck() []model.ResourceManagerHealth 
 	status := model.Healthy
 	_, err := m.apiClient.getVersion(context.TODO(), m.syslog.WithField("caller", "HealthCheck"))
 	if err != nil {
+		m.syslog.WithError(err).Error("dispatcher resource manager marked as unhealthy")
 		status = model.Unhealthy
 	}
 

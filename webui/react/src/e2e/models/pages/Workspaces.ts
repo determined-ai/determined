@@ -9,18 +9,18 @@ import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export class Workspaces extends BasePage {
-  readonly title: RegExp = /Workspaces - (Determined|HPE Machine Learning Development Environment)/;
+  readonly title: string = Workspaces.getTitle('Workspaces');
   readonly url: string = 'workspaces';
-  readonly list: WorkspacesList = new WorkspacesList({
+  readonly list = new WorkspacesList({
     parent: this,
   });
-  readonly projects: WorkspaceDetails = new WorkspaceDetails({
+  readonly projects = new WorkspaceDetails({
     parent: this,
   });
-  readonly createModal: WorkspaceCreateModal = new WorkspaceCreateModal({
+  readonly createModal = new WorkspaceCreateModal({
     parent: this,
   });
-  readonly deleteModal: WorkspaceDeleteModal = new WorkspaceDeleteModal({
+  readonly deleteModal = new WorkspaceDeleteModal({
     parent: this,
   });
 }

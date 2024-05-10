@@ -183,7 +183,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const canModifyExp = canActionExperiment(Action.Move, experiment) &&
     expPermissions.canModifyExperiment({
       workspace: { id: experiment.workspaceId },
-  });
+    });
   const canPausePlay = expPermissions.canModifyExperiment({
     workspace: { id: experiment.workspaceId },
   });
@@ -752,6 +752,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={canModifyExp ? [experiment.id] : []}
+        projectId={experiment.projectId}
       />
       <ExperimentStopModal.Component
         experimentId={experiment.id}

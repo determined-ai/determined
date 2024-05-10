@@ -116,13 +116,15 @@ def run_autotuning_experiment(
 
 
 def archive_experiments(
-    sess: api.Session, experiment_ids: List[int], name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int, name: Optional[str] = None
 ) -> None:
-    body = bindings.v1ArchiveExperimentsRequest(experimentIds=experiment_ids)
+    body = bindings.v1ArchiveExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     if name is not None:
         filters = bindings.v1BulkExperimentFilters(name=name)
-        body = bindings.v1ArchiveExperimentsRequest(experimentIds=[], filters=filters)
-    bindings.post_ArchiveExperiments(sess, body=body)
+        body = bindings.v1ArchiveExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
+        )
+    bindings.post_ArchiveExperiments(sess, projectId=project_id, body=body)
 
 
 def pause_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -133,13 +135,16 @@ def pause_experiment(sess: api.Session, experiment_id: int) -> None:
 def pause_experiments(
     sess: api.Session,
     experiment_ids: List[int],
+    project_id: int,
     name: Optional[str] = None,
 ) -> None:
-    body = bindings.v1PauseExperimentsRequest(experimentIds=experiment_ids)
+    body = bindings.v1PauseExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     if name is not None:
         filters = bindings.v1BulkExperimentFilters(name=name)
-        body = bindings.v1PauseExperimentsRequest(experimentIds=[], filters=filters)
-    bindings.post_PauseExperiments(sess, body=body)
+        body = bindings.v1PauseExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
+        )
+    bindings.post_PauseExperiments(sess, projectId=project_id, body=body)
 
 
 def activate_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -148,14 +153,18 @@ def activate_experiment(sess: api.Session, experiment_id: int) -> None:
 
 
 def activate_experiments(
-    sess: api.Session, experiment_ids: List[int], name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int, name: Optional[str] = None
 ) -> None:
     if name is None:
-        body = bindings.v1ActivateExperimentsRequest(experimentIds=experiment_ids)
+        body = bindings.v1ActivateExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids
+        )
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
-        body = bindings.v1ActivateExperimentsRequest(experimentIds=[], filters=filters)
-    bindings.post_ActivateExperiments(sess, body=body)
+        body = bindings.v1ActivateExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
+        )
+    bindings.post_ActivateExperiments(sess, projectId=project_id, body=body)
 
 
 def cancel_experiment(sess: api.Session, experiment_id: int) -> None:
@@ -169,25 +178,31 @@ def kill_experiment(sess: api.Session, experiment_id: int) -> None:
 
 
 def cancel_experiments(
-    sess: api.Session, experiment_ids: List[int], name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int, name: Optional[str] = None
 ) -> None:
     if name is None:
-        body = bindings.v1CancelExperimentsRequest(experimentIds=experiment_ids)
+        body = bindings.v1CancelExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids
+        )
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
-        body = bindings.v1CancelExperimentsRequest(experimentIds=[], filters=filters)
-    bindings.post_CancelExperiments(sess, body=body)
+        body = bindings.v1CancelExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
+        )
+    bindings.post_CancelExperiments(sess, projectId=project_id, body=body)
 
 
 def kill_experiments(
-    sess: api.Session, experiment_ids: List[int], name: Optional[str] = None
+    sess: api.Session, experiment_ids: List[int], project_id: int, name: Optional[str] = None
 ) -> None:
     if name is None:
-        body = bindings.v1KillExperimentsRequest(experimentIds=experiment_ids)
+        body = bindings.v1KillExperimentsRequest(projectId=project_id, experimentIds=experiment_ids)
     else:
         filters = bindings.v1BulkExperimentFilters(name=name)
-        body = bindings.v1KillExperimentsRequest(experimentIds=[], filters=filters)
-    bindings.post_KillExperiments(sess, body=body)
+        body = bindings.v1KillExperimentsRequest(
+            projectId=project_id, experimentIds=experiment_ids, filters=filters
+        )
+    bindings.post_KillExperiments(sess, projectId=project_id, body=body)
 
 
 def kill_trial(sess: api.Session, trial_id: int) -> None:
@@ -413,13 +428,12 @@ def wait_for_experiment_workload_progress(
 def experiment_has_completed_workload(sess: api.Session, experiment_id: int) -> bool:
     trials = experiment_trials(sess, experiment_id)
 
-    if not any(trials):
-        return False
-
     for t in trials:
         for s in t.workloads:
             if s.training is not None or s.validation is not None:
                 return True
+        print(f"trial for experiment {experiment_id} is in the {t.trial.state} state")
+
     return False
 
 

@@ -827,6 +827,12 @@ export const getTaskTemplates = generateDetApi<
   Type.Template[]
 >(Config.getTemplates);
 
+export const createTaskTemplate = generateDetApi<
+  Api.V1Template,
+  Api.V1PostTemplateResponse,
+  Type.Template
+>(Config.createTaskTemplate);
+
 export const launchJupyterLab = generateDetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,

@@ -48,6 +48,11 @@ import (
 // ResourceTypeNvidia describes the GPU resource type.
 const ResourceTypeNvidia = "nvidia.com/gpu"
 
+const (
+	getAgentsCacheDuration = 15 * time.Second
+	summarizeCacheDuration = 5 * time.Second
+)
+
 type podMetadata struct {
 	podName     string
 	containerID string
@@ -102,9 +107,13 @@ type pods struct {
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
+	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
 	summarizeCacheTime time.Time
+	getAgentsCacheLock sync.Mutex
+	getAgentsCache     *apiv1.GetAgentsResponse
+	getAgentsCacheTime time.Time
 
 	syslog *logrus.Entry
 
@@ -314,6 +323,7 @@ func (p *pods) HealthStatus() model.HealthStatus {
 	for _, podInterface := range p.podInterfaces {
 		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
 		if err != nil {
+			p.syslog.WithError(err).Error("kubernetes resource manager marked as unhealthy")
 			return model.Unhealthy
 		}
 		return model.Healthy
@@ -1284,22 +1294,36 @@ func (p *pods) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlo
 	slots := agentResp.Agent.Slots
 	slot, ok := slots[slotID]
 	if !ok {
-		p.syslog.Warnf("no slot with id %s", slotID)
-		return nil
+		// Try converting an index input to a slot and see if that exists (1 to 001).
+		tryIndex, err := strconv.Atoi(slotID)
+		if s, ok := slots[model.SortableSlotIndex(tryIndex)]; err == nil && ok {
+			slot = s
+		} else {
+			p.syslog.Warnf("no slot with id %s", slotID)
+			return nil
+		}
 	}
 	return &apiv1.GetSlotResponse{Slot: slot}
 }
 
 func (p *pods) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
-	nodeSummaries := p.summarizeClusterByNodes()
-	_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
+	p.getAgentsCacheLock.Lock()
+	defer p.getAgentsCacheLock.Unlock()
 
-	response := &apiv1.GetAgentsResponse{}
-	for _, summary := range nodeSummaries {
-		summary.ResourcePool = nodesToPools[summary.ID]
-		response.Agents = append(response.Agents, summary.ToProto())
+	if time.Since(p.getAgentsCacheTime) > getAgentsCacheDuration {
+		p.getAgentsCacheTime = time.Now()
+
+		nodeSummaries := p.summarizeClusterByNodes()
+		_, nodesToPools := p.getNodeResourcePoolMapping(nodeSummaries)
+
+		p.getAgentsCache = &apiv1.GetAgentsResponse{}
+		for _, summary := range nodeSummaries {
+			summary.ResourcePool = nodesToPools[summary.ID]
+			p.getAgentsCache.Agents = append(p.getAgentsCache.Agents, summary.ToProto())
+		}
 	}
-	return response
+
+	return p.getAgentsCache
 }
 
 func (p *pods) handleGetAgentRequest(agentID string) *apiv1.GetAgentResponse {
@@ -1324,7 +1348,7 @@ func (p *pods) summarize() (map[string]model.AgentSummary, error) {
 	p.summarizeCacheLock.Lock()
 	defer p.summarizeCacheLock.Unlock()
 
-	if time.Since(p.summarizeCacheTime) > 5*time.Second {
+	if time.Since(p.summarizeCacheTime) > summarizeCacheDuration {
 		summary, err := p.computeSummary()
 		p.summarizeCacheTime = time.Now()
 		p.summarizeCache = summarizeResult{
@@ -1511,8 +1535,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:        strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:        model.SortableSlotIndex(curSlot),
 					Device:    device.Device{Type: deviceType},
 					Draining:  isDraining,
 					Enabled:   !isDisabled,
@@ -1529,8 +1553,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:       strconv.Itoa(curSlot),
+				slotsSummary[model.SortableSlotIndex(curSlot)] = model.SlotSummary{
+					ID:       model.SortableSlotIndex(curSlot),
 					Device:   device.Device{Type: deviceType},
 					Draining: isDraining,
 					Enabled:  !isDisabled,
@@ -1546,8 +1570,8 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 		}
 
 		for i := curSlot; i < int(numSlots); i++ {
-			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
-				ID:       strconv.Itoa(i),
+			slotsSummary[model.SortableSlotIndex(i)] = model.SlotSummary{
+				ID:       model.SortableSlotIndex(i),
 				Device:   device.Device{Type: deviceType},
 				Draining: isDraining,
 				Enabled:  !isDisabled,
@@ -1574,13 +1598,17 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 	return summary
 }
 
-func (p *pods) getNonDetPods() []k8sV1.Pod {
-	var nonDetPods []k8sV1.Pod
-	pList, err := p.clientSet.CoreV1().Pods("default").List(context.TODO(), metaV1.ListOptions{})
+func (p *pods) getNonDetPods() ([]k8sV1.Pod, error) {
+	// TODO(RM-235) use a filter in metaV1.ListOptions. This change gets a lot easier after
+	// we have K8s integration tests. Using a filter means we should really talk to a real
+	// k8s server. Doing an e2e test for this is possible but would take a lot more work.
+	allPods, err := p.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
-		return nonDetPods
+		return nil, err
 	}
-	for _, p := range pList.Items {
+
+	var nonDetPods []k8sV1.Pod
+	for _, p := range allPods.Items {
 		_, isDet := p.Labels[determinedLabel]
 		_, isDetSystem := p.Labels[determinedSystemLabel]
 
@@ -1590,14 +1618,19 @@ func (p *pods) getNonDetPods() []k8sV1.Pod {
 			}
 		}
 	}
-	return nonDetPods
+	return nonDetPods, nil
 }
 
 func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[string]int64) {
 	nodeToTasks := make(map[string][]string, len(p.currentNodes))
 	taskSlots := make(map[string]int64)
 
-	nonDetPods := p.getNonDetPods()
+	nonDetPods, err := p.getNonDetPods()
+	if err != nil {
+		p.syslog.WithError(err).Warn("getting non determined pods, " +
+			"this may cause slots to look free when they are in use")
+	}
+
 	if len(nonDetPods) == 0 {
 		return nodeToTasks, taskSlots
 	}

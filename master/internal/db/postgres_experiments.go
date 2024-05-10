@@ -937,16 +937,16 @@ func ActiveLogPolicies(
 // ExperimentTotalStepTime returns the total elapsed time for all allocations of the experiment
 // with the given ID. Any step with a NULL end_time does not contribute. Elapsed time is
 // expressed as a floating point number of seconds.
-func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
+func ExperimentTotalStepTime(ctx context.Context, id int) (float64, error) {
 	var seconds float64
-	if err := db.sql.Get(&seconds, `
-SELECT COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)
-FROM allocations a
-JOIN run_id_task_id tasks ON a.task_id = tasks.task_id
-JOIN trials t ON tasks.run_id = t.id
-WHERE t.experiment_id = $1
-`, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
+	if err := Bun().NewSelect().
+		ColumnExpr("COALESCE(extract(epoch from sum(a.end_time - a.start_time)), 0)").
+		TableExpr("allocations AS a").
+		Join("JOIN run_id_task_id AS tasks ON a.task_id = tasks.task_id").
+		Join("JOIN trials AS t ON tasks.run_id = t.id").
+		Where("t.experiment_id = ?", id).
+		Scan(ctx, &seconds); err != nil {
+		return 0.0, fmt.Errorf("querying for total step time of experiment %v: %w", id, err)
 	}
 	return seconds, nil
 }
@@ -1010,16 +1010,17 @@ func ExperimentsTrialAndTaskIDs(ctx context.Context, idb bun.IDB, expIDs []int) 
 }
 
 // ExperimentNumSteps returns the total number of steps for all trials of the experiment.
-func (db *PgDB) ExperimentNumSteps(id int) (int64, error) {
-	var numSteps int64
-	if err := db.sql.Get(&numSteps, `
-SELECT count(*)
-FROM raw_steps s, trials t
-WHERE t.experiment_id = $1 AND s.trial_id = t.id
-`, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for number of steps of experiment %v", id)
+func ExperimentNumSteps(ctx context.Context, id int) (int64, error) {
+	numSteps, err := Bun().NewSelect().
+		TableExpr("raw_steps AS s").
+		Join("JOIN trials AS t ON t.id = s.trial_id").
+		Where("t.experiment_id = ?", id).
+		Count(ctx)
+	if err != nil {
+		return int64(0), fmt.Errorf("querying for number of steps of experiment %v: %w", id, err)
 	}
-	return numSteps, nil
+
+	return int64(numSteps), nil
 }
 
 // ExperimentModelDefinitionRaw returns the zipped model definition for an experiment as a byte

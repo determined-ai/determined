@@ -136,7 +136,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const permissions = usePermissions();
 
-  const id = project?.id;
+  const id = project.id;
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
@@ -417,7 +417,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <div>
             <Tags
               compact
-              disabled={record.archived || project?.archived || !canEditExperiment}
+              disabled={record.archived || project.archived || !canEditExperiment}
               tags={record.labels}
               onAction={experimentTags.handleTagListChange(record.id, record.labels)}
             />
@@ -714,39 +714,38 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const sendBatchActions = useCallback(
     (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
+      const validExperimentIds = [...settings.row].filter((id) =>
+        canActionExperiment(action, experimentMap[id]),
+      );
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({
-          experimentIds: settings.row,
-          workspaceId: project?.workspaceId,
+          experimentIds: validExperimentIds,
+          workspaceId: project.workspaceId,
         });
       }
       if (action === Action.Move) {
-        if (!settings?.row?.length) return;
+        if (!validExperimentIds.length) return;
         setBatchMovingExperimentIds(
-          settings.row.filter(
-            (id) =>
-              canActionExperiment(Action.Move, experimentMap[id]) &&
-              permissions.canMoveExperiment({ experiment: experimentMap[id] }),
+          validExperimentIds.filter((id) =>
+            permissions.canMoveExperiment({ experiment: experimentMap[id] }),
           ),
         );
         ExperimentMoveModal.open();
       }
       if (action === Action.RetainLogs) {
-        if ((settings?.row ?? []).length === 0) return;
+        if (!validExperimentIds.length) return;
         setBatchRetainLogsExperimentIds(
-          settings.row.filter(
-            (id) =>
-              canActionExperiment(Action.RetainLogs, experimentMap[id]) &&
-              permissions.canModifyExperiment({
-                workspace: { id: experimentMap[id].workspaceId },
-              }),
+          validExperimentIds.filter((id) =>
+            permissions.canModifyExperiment({
+              workspace: { id: experimentMap[id].workspaceId },
+            }),
           ),
         );
         ExperimentRetainLogsModal.open();
       }
 
       return Promise.all(
-        (settings.row || []).map((experimentId) => {
+        (validExperimentIds || []).map((experimentId) => {
           switch (action) {
             case Action.Activate:
               return activateExperiment({ experimentId });
@@ -774,7 +773,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       permissions,
       ExperimentMoveModal,
       ExperimentRetainLogsModal,
-      project?.workspaceId,
+      project.workspaceId,
     ],
   );
 
@@ -1008,12 +1007,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       />
       <ExperimentMoveModal.Component
         experimentIds={batchMovingExperimentIds ?? []}
-        sourceProjectId={project?.id}
-        sourceWorkspaceId={project?.workspaceId}
+        sourceProjectId={project.id}
+        sourceWorkspaceId={project.workspaceId}
         onSubmit={handleActionComplete}
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={batchRetainLogsExperimentIds}
+        projectId={project.id}
         onSubmit={handleActionComplete}
       />
     </>

@@ -89,9 +89,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1`` for NVIDIA GPUs.
+-  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1`` for CPUs.
+-  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3`` for CPUs.
 
 ``environment_variables``
 =========================
@@ -939,7 +939,7 @@ Required. Specifies running dynamic agents on AWS.
 ``image_id``
 ^^^^^^^^^^^^
 
-   Optional. The AMI ID of the Determined agent. Defaults to the latest GCP agent image.
+   Optional. The AMI ID of the Determined agent. Defaults to the latest AWS agent image.
 
 ``tag_key``
 ^^^^^^^^^^^

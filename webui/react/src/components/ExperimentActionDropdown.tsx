@@ -349,6 +349,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={[id]}
+        projectId={experiment.projectId}
         onSubmit={handleRetainLogsComplete}
       />
       {experimentItem.isLoaded && (

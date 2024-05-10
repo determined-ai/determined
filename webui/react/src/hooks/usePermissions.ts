@@ -57,6 +57,8 @@ interface PermissionsHook {
   canCreateModels: boolean;
   canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateTemplate: boolean;
+  canCreateTemplateWorkspace: (args0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
   canCreateWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -127,6 +129,9 @@ const usePermissions = (): PermissionsHook => {
       canCreateNSC: canCreateNSC(rbacOpts),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
+      canCreateTemplate: canCreateTemplate(rbacOpts),
+      canCreateTemplateWorkspace: (args: WorkspacePermissionsArgs) =>
+        canCreateTemplateWorkspace(rbacOpts, args.workspace!.id),
       canCreateWorkspace: canCreateWorkspace(rbacOpts),
       canCreateWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
         canCreateWorkspaceNSC(rbacOpts, args.workspace),
@@ -397,6 +402,25 @@ const canModifyModelVersion = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+};
+
+// Template actions
+const canCreateTemplate = ({ rbacEnabled, userRoles }: RbacOptsProps): boolean => {
+  return (
+    !rbacEnabled ||
+    (!!userRoles &&
+      !!userRoles.find(
+        (r) => !!r.permissions.find((p) => p.id === V1PermissionType.CREATETEMPLATES),
+      ))
+  );
+};
+
+const canCreateTemplateWorkspace = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspaceId: number,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATETEMPLATES);
 };
 
 // Project actions

@@ -21,6 +21,21 @@
       save_trial_latest: 1
     data:
       any: thing
+    integrations:
+      pachyderm: 
+        pachd:
+          host: localhost
+          port: 80
+        proxy:
+          scheme: http
+          host: localhost
+          port: 80
+        dataset:
+          branch: br
+          commit: commit-hash
+          project: proj
+          repo: repo-name
+          token: tkn
     data_layer:
       # data_layer feature is gone, and the config is ignored
       container_storage_path: null
@@ -32,8 +47,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-748dda4
-        cuda: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-748dda4
+        cpu: determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
+        cuda: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
         rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
       pod_spec: null
       ports:
@@ -160,6 +175,7 @@
     checkpoint_policy: best
     checkpoint_storage: null
     data: {}
+    integrations: null
     debug: false
     description: null
     entrypoint: model_def:MyTrial

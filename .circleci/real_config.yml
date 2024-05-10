@@ -8,7 +8,6 @@ orbs:
   helm: circleci/helm@1.2.0
   kubernetes: circleci/kubernetes@0.11.0
   queue: eddiewebb/queue@2.2.1
-  slack: circleci/slack@3.4.2
   win: circleci/windows@5.0.0
 
 executors:
@@ -22,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.31.1-dev0
+    default: 0.32.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -37,7 +36,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/environments:cuda-11.3-pytorch-1.12-gpu-748dda4
+    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -52,12 +51,15 @@ parameters:
   master-build-resource-class:
     type: string
     default: xlarge
-  default-slack-channel:
-    type: string
-    default: C04PTNKLR8W # ci-bots-ee
   do_nightly_tests:
     type: boolean
     default: false
+  ee:
+    type: boolean
+    default: false
+  e2e-react:
+    type: string
+    default: ""
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -101,11 +103,26 @@ any-fork: &any-fork
     only:
       - /pull\/.*/
 
+do-not-run-on-manual-trigger: &do-not-run-on-manual-trigger
+  unless:
+    equal: [ api, << pipeline.trigger_source >> ]
+
+
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
+
+  python-report:
+    description: Report information about the Python environment.
+    steps:
+      - run: |
+          python --version
+          pip --version
+          pip list
+          sh -c "pip check || true"
+
 
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
@@ -234,7 +251,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-748dda4
+            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
 
   login-docker:
     parameters:
@@ -247,10 +264,6 @@ commands:
         type: string
     steps:
       - run: echo "<<parameters.password>>" | docker login <<parameters.repository>> -u "<<parameters.username>>" --password-stdin
-
-  login-helm:
-    steps:
-      - run: helm repo add determined https://helm.ngc.nvidia.com/isv-ngc-partner/determined --username=$NGC_API_USERNAME --password=$NGC_API_KEY
 
   reinstall-go:
     steps:
@@ -266,10 +279,7 @@ commands:
 
   install-codecov:
     steps:
-      - run: mkdir -p $HOME/.local/bin
-      - run: curl --output $HOME/.local/bin/codecov https://uploader.codecov.io/latest/linux/codecov
-      - run: chmod +x $HOME/.local/bin/codecov
-      - run: echo 'export PATH=$PATH:$HOME/.local/bin/codecov' >> $BASH_ENV
+      - run: pip install codecov
 
   setup-go-intg-deps:
     steps:
@@ -484,8 +494,7 @@ commands:
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
-      - run: python --version
-      - run: pip --version
+      - python-report
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
@@ -526,6 +535,7 @@ commands:
 
   setup-paths:
     steps:
+      - run: mkdir -p $HOME/.local/bin
       - run: echo 'export PATH=$PATH:$HOME/.local/bin' >> $BASH_ENV
       - run: echo 'export PATH=$PATH:/usr/local/nvidia/bin' >> $BASH_ENV
       - run: echo 'export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/nvidia/lib64' >> $BASH_ENV
@@ -1348,7 +1358,7 @@ commands:
         default: agent1
     steps:
       - run:
-          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
 
 jobs:
@@ -1435,7 +1445,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          command: make -C docs check-links
+          command: MAX_RETRIES=2 tools/scripts/retry.sh make -C docs check-links
 
   publish-docs:
     parameters:
@@ -1503,7 +1513,7 @@ jobs:
       - image: <<pipeline.parameters.docker-image>>
         environment:
           GO111MODULE: "on"
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -1808,18 +1818,6 @@ jobs:
       - store_artifacts:
           path: /tmp/pkgs
 
-  publish-helm:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - helm/install-helm-client
-      - run: helm plugin install https://github.com/chartmuseum/helm-push.git
-      - login-helm
-      - run: make -C helm release
-
   publish-helm-gh:
     parameters:
       ee:
@@ -1983,15 +1981,17 @@ jobs:
             - webui/react/build
 
   test-e2e-react:
+    parameters:
+      ee:
+        type: boolean
+        default: false
+      playwright-options:
+        type: string
+        default: ""
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     steps:
-      - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV # DNJ TODO -remove when tested
-      - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
-      - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
-      - run: echo 'export DET_WEBPACK_PROXY_URL="http://localhost:8082"' >> $BASH_ENV
-      - run: echo 'export DET_WEBSOCKET_PROXY_URL="ws://localhost:8082"' >> $BASH_ENV
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
@@ -2004,7 +2004,10 @@ jobs:
           install-python: true
           executor: <<pipeline.parameters.machine-image>>
       - install-protoc
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - run: PATH=$HOME/.local/bin:$PATH make -C proto get-deps
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
@@ -2017,17 +2020,16 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
-      - run: |
-          PW_USER_NAME=${PW_USER_NAME} \
-          PW_PASSWORD=${PW_PASSWORD} \
-          PW_SERVER_ADDRESS=${PW_SERVER_ADDRESS} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBPACK_PROXY_URL} \
-          DET_WEBPACK_PROXY_URL=${DET_WEBSOCKET_PROXY_URL} \
-          npm run e2e --prefix webui/react
+      - run:
+          environment:
+            PW_EE: << parameters.ee >>
+          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
           path: webui/react/src/e2e/test-results
+      - store_artifacts:
+          path: /home/circleci/.npm/_logs/
       - store_test_results:
           path: webui/react/src/e2e/junit-results.xml
 
@@ -2087,6 +2089,10 @@ jobs:
       - run: make -C agent check
 
   build-go:
+    parameters:
+      ee:
+        type: boolean
+        default: true
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -2097,7 +2103,10 @@ jobs:
       - skip-if-only-docs
       - skip-if-only-github
       - reinstall-go
-      - license-gen
+      - when:
+          condition: << parameters.ee >>
+          steps:
+            - license-gen
       - restore_cache:
           keys:
             - det-go-build-<<pipeline.parameters.cache-buster>>-{{ checksum  "go.sum" }}
@@ -2305,7 +2314,7 @@ jobs:
 
   test-unit-harness-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2327,7 +2336,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/environments:cuda-11.8-pytorch-2.0-gpu-748dda4
+      - image: determinedai/pytorch-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2349,7 +2358,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/environments:py-3.10-pytorch-2.0-cpu-748dda4
+      - image: determinedai/pytorch-cpu-dev:8b3bea3
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2370,7 +2379,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2392,7 +2401,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2517,11 +2526,10 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - run: python --version
+      - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
-      - run: pip --version
-      - run: pip install wheel
+      - run: pip install wheel setuptools
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
@@ -2529,10 +2537,10 @@ jobs:
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install setuptools_scm
+      - run: pip install setuptools_scm setuptools
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
-      - run: sh -c "pip check || true"
+      - python-report
       - run: pytest harness/tests/cli
 
   test-e2e-slurm-disabled:
@@ -2555,16 +2563,7 @@ jobs:
       parallelism:
         type: integer
         default: 1
-      always-run:
-        type: boolean
-        default: false
       extra-pytest-flags:
-        type: string
-        default: ""
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
         type: string
         default: ""
       container-run-type:
@@ -2603,17 +2602,6 @@ jobs:
     parallelism: <<parameters.parallelism>>
     steps:
       - checkout
-      # This is a bit confusing... basically only enter logic for NOT running job
-      # when always-run=false
-      - unless:
-          condition:
-            or:
-              - equal: [ true, <<parameters.always-run>> ]
-              - equal: [ "main", <<pipeline.git.branch>> ]
-              - matches: { pattern: "^release-.*$", value: <<pipeline.git.branch>> }
-          steps:
-            - skip-on-dev-branch
-
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
@@ -2636,7 +2624,6 @@ jobs:
 
       - reinstall-go
       - go-get-deps
-      - run: PATH=$HOME/.local/bin:$PATH make -C proto build
 
       - setup-python-venv:
           install-python: true
@@ -2712,10 +2699,6 @@ jobs:
           condition:
             equal: ["-A", <<parameters.agent-use>>]
           steps:
-            - run:
-                name: Build agent resources
-                command: |
-                  make -C agent build package
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
                 host: <<parameters.master-host>>
@@ -2726,7 +2709,7 @@ jobs:
                   ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
                   INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
                   PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
+                  gcloud compute scp agent/build/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
                   gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
                   srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
                 background: true
@@ -2838,7 +2821,7 @@ jobs:
             host: localhost
             port: 5432
             name: determined
-            password: launcher
+            password: ${HPC_DB_PASSWD}
           resource_manager:
             type: slurm
             master_host: $HOSTNAME
@@ -2868,9 +2851,6 @@ jobs:
       determined_master_host:
         type: string
         default: localhost:8080
-      slack-mentions:
-        type: string
-        default: ""
       cluster_unix_user:
         type: string
         default: launcher
@@ -3121,13 +3101,6 @@ jobs:
                 command: |
                   scancel -u $USER --jobname=determined-agent-$HOSTNAME
 
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E slurm job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<pipeline.parameters.default-slack-channel>>
-
   test-e2e:
     parameters:
       tf2:
@@ -3161,9 +3134,12 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      resource-class:
+        type: string
+        default: xlarge
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
+    resource_class: <<parameters.resource-class>>
     parallelism: <<parameters.parallelism>>
     environment:
       DET_POSTGRES_VERSION: <<parameters.postgres-version>>
@@ -3227,6 +3203,22 @@ jobs:
             - store_artifacts:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
+
+  send-job-level-alerts:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: small
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install alert deps
+          command: tools/scripts/retry.sh pip install requests slack_sdk
+      - run:
+          name: Listen for failures and send slack alerts
+          command: python .circleci/scripts/job_level_alerts.py
 
   test-perf:
     parameters:
@@ -3392,12 +3384,6 @@ jobs:
               echo "PERF_SNAPSHOT_TO_USE is not set. Skipping deletion."
             fi
 
-      - slack/status:
-          fail_only: true
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
-          mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
-
   deploy:
     parameters:
       compute-agent-instance-type:
@@ -3449,11 +3435,6 @@ jobs:
           deployment-type: simple
           extra-tags: <<parameters.extra-tags>>
           ee: <<parameters.ee>>
-      - slack/status:
-          fail_only: true
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: "${SLACK_USER_ID}"
-          channel: <<pipeline.parameters.default-slack-channel>>
 
   deploy-latest-gke:
     parameters:
@@ -3531,12 +3512,6 @@ jobs:
       enable-tls:
         type: boolean
         default: false
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
       environment-gpu-enabled:
         type: string
         default: "1"
@@ -3586,12 +3561,6 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
           path: /tmp/test-results/
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
 
   test-e2e-gke:
     parameters:
@@ -3632,17 +3601,11 @@ jobs:
       node-locations:
         type: string
         default: "us-west1-b"
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
       environment-gpu-enabled:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.30.1
+        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
         type: string
       accel-node-taints:
         type: string
@@ -3701,12 +3664,6 @@ jobs:
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
 
   test-e2e-shared-cluster:
     parameters:
@@ -3760,16 +3717,6 @@ jobs:
           name: Set initial user password
           command: |
             echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> $BASH_ENV
-      - run:
-          name: Wait for master connection
-          command: |
-            set +o pipefail
-            export DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD}
-            export DET_MASTER_TLS_CERT=${MASTER_TLS_CERT} DET_MASTER_CERT_NAME=${MASTER_CERT_NAME}
-            for i in {1..10}; do
-              yes | det -m https://${MASTER_HOST}:${MASTER_PORT} user whoami | grep "logged in" && break || \
-              echo "Trying to connect to master host again in 5 seconds" && sleep 5
-            done
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3777,7 +3724,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
-          wait-for-master: false
+          wait-for-master: true
       - store_test_results:
           path: /tmp/test-results/
 
@@ -3865,12 +3812,6 @@ jobs:
       max-dynamic-agents:
         type: integer
         default: 1
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -3923,12 +3864,7 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
+
   terminate-vpc-circleci:
     parameters:
         gcloud-service-key:
@@ -4019,6 +3955,7 @@ jobs:
 
 workflows:
   lint:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - check-py-bindings:
@@ -4035,6 +3972,7 @@ workflows:
       - lint-secrets
 
   previews:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
@@ -4049,6 +3987,7 @@ workflows:
           filters: *any-upstream
 
   test-cli:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-cli:
           matrix:
@@ -4058,6 +3997,7 @@ workflows:
                 - "python-39"
                 - "win/default"
   test-unit:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-unit-react
       - test-unit-harness-cpu
@@ -4101,7 +4041,17 @@ workflows:
             - test-unit-model-hub
             - test-unit-storage
 
+  send-alerts:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - send-job-level-alerts:
+          filters:
+            branches:
+              only:
+                - main
+
   test-go:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
           context: storage-unit-tests
@@ -4118,6 +4068,7 @@ workflows:
             - go-coverage
 
   package-and-deploy-oss:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # These jobs are important for docs and latest main and have been moved
       # here from test-e2e. These jobs are OSS focused while test-e2e now only
@@ -4126,10 +4077,12 @@ workflows:
       - build-proto
       - build-helm
       - build-react:
+          name: build-react-oss
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-oss
           requires:
-            - build-go
+            - build-go-oss
           context:
             - playwright
             - github-read
@@ -4139,11 +4092,13 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-oss
+          ee: false
           context: github-read
 
       - package-and-push-system-local:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4152,7 +4107,7 @@ workflows:
 
       - package-and-push-system-dev:
           requires:
-            - build-react
+            - build-react-oss
             - build-docs
           filters:
             branches:
@@ -4209,14 +4164,17 @@ workflows:
           compute-agent-instance-type: t2.medium
 
   test-e2e:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       - build-proto
       - build-helm
       - build-react:
           dev-mode: true
       - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
           requires:
-            - build-go
+            - build-go-ee
           context:
             - playwright
             - github-read
@@ -4226,6 +4184,7 @@ workflows:
             - build-helm
             - build-proto
       - build-go:
+          name: build-go-ee
           context: github-read
 
       - package-and-push-system-local:
@@ -4270,9 +4229,12 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
+          filters:
+            branches:
+              only:
+                - main
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
@@ -4294,7 +4256,7 @@ workflows:
               host: localhost
               port: 5432
               name: determined
-              password: launcher
+              password: ${HPC_DB_PASSWD}
             resource_manager:
               type: slurm
               master_host: junkmaster
@@ -4313,10 +4275,13 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
-          slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4328,10 +4293,13 @@ workflows:
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
-              always-run: [true]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4346,7 +4314,11 @@ workflows:
               container-run-type: ["podman"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Enroot over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -4361,7 +4333,11 @@ workflows:
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Singularity over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4374,10 +4350,13 @@ workflows:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
               workload-manager: ["pbs"]
-              always-run: [true]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4394,7 +4373,11 @@ workflows:
               mark: ["e2e_pbs and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Enroot over PBS test on GCP
       - test-e2e-hpc-gcp:
@@ -4410,7 +4393,11 @@ workflows:
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       # Podman over SLURM test using Agent on GCP
       - test-e2e-hpc-gcp:
@@ -4427,12 +4414,16 @@ workflows:
               mark: ["e2e_slurm and not parallel and not gpu_required"]
               extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
           requires:
-            - build-go
+            - build-go-ee
+          filters:
+            branches:
+              only:
+                - main
 
       - test-e2e:
           name: test-e2e-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_rbac
           devcluster-config: single-rbac.devcluster.yaml
@@ -4440,16 +4431,18 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 6
+          resource-class: xlarge
           tf2: true
           mark: e2e_cpu
 
       - test-e2e:
           name: test-e2e-cpu-double
           requires:
-            - build-go
-          parallelism: 3
+            - build-go-ee
+          parallelism: 5
+          resource-class: large
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
@@ -4458,7 +4451,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-oauth
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: oauth.devcluster.yaml
           mark: test_oauth
@@ -4467,7 +4460,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: rbac-model-registry.yaml
           mark: test_model_registry_rbac
@@ -4476,8 +4469,9 @@ workflows:
       - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 4
+          resource-class: large
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
@@ -4488,7 +4482,7 @@ workflows:
       - test-e2e:
           name: test-e2e-multi-k8s
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           tf2: true
           mark: e2e_multi_k8s
@@ -4499,7 +4493,7 @@ workflows:
       - test-e2e:
           name: test-e2e-port-registry
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: port-registry.devcluster.yaml
           mark: port_registry
@@ -4508,8 +4502,9 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu-elastic
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
+          resource-class: large
           mark: e2e_cpu_elastic
           devcluster-config: elastic.devcluster.yaml
           target-stage: agent
@@ -4517,7 +4512,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4527,7 +4522,7 @@ workflows:
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
@@ -4537,7 +4532,7 @@ workflows:
       - test-e2e:
           name: test-e2e-old-agent-versions
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_postgres
           devcluster-config: custom-agent-version.devcluster.yaml
@@ -4549,7 +4544,7 @@ workflows:
       - test-e2e:
           name: test-e2e-agent-connection-loss
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           mark: e2e_cpu_agent_connection_loss
           devcluster-config: agent-no-connection.devcluster.yaml
@@ -4561,7 +4556,7 @@ workflows:
           context: okta
           name: test-e2e-saml
           requires:
-            - build-go
+            - build-go-ee
           parallelism: 1
           devcluster-config: saml.devcluster.yaml
           mark: e2e_saml
@@ -4571,7 +4566,7 @@ workflows:
           snapshot-after-migrations: true
           deploy-db: false
           requires:
-            - build-go
+            - build-go-ee
           context:
             - perf-tests
             - aws
@@ -4598,8 +4593,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -4618,8 +4611,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
@@ -4636,8 +4627,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -4654,8 +4643,6 @@ workflows:
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
@@ -4677,8 +4664,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
               mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -4697,8 +4682,6 @@ workflows:
               cluster-id-prefix: ["e2e-cpu"]
               mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4721,8 +4704,6 @@ workflows:
               cluster-id-prefix: ["e2e-k8s"]
               mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4754,7 +4735,10 @@ workflows:
             - package-and-push-system-dev-ee
 
   test-e2e-gke-shared-cluster:
-    unless: << pipeline.parameters.do_nightly_tests >>
+    unless:
+      or:
+        - << pipeline.parameters.do_nightly_tests >>
+        - equal: [ api, << pipeline.trigger_source >> ]
     jobs:
       - package-and-push-system-dev-small
 
@@ -4770,20 +4754,24 @@ workflows:
           test-type: cpu
 
   test-e2e-longrunning:
+    <<: *do-not-run-on-manual-trigger
     jobs:
       # Build and publish artifacts used in tests
       - build-helm:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-proto:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-react:
           dev-mode: true
-          filters: *any-upstream
+          filters: *upstream-feature-branch
       - build-docs:
-          filters: *any-upstream
+          filters: *upstream-feature-branch
           requires:
             - build-helm
             - build-proto
+      - build-go:
+          filters: *upstream-feature-branch
+          context: github-read
       - package-and-push-system-dev-ee:
           requires:
             - build-react
@@ -4791,7 +4779,22 @@ workflows:
           context:
             - determined-ee
             - github-read
-          filters: *any-upstream
+          filters: *upstream-feature-branch
+
+      - package-and-push-system-local:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+
+      - package-and-push-system-local-ee:
+          context: github-read
+          filters: *upstream-feature-branch
+          requires:
+            - build-react
+            - build-docs
+            - package-and-push-system-local
 
       # Distributed tests
       - request-e2e-cpu-distributed:
@@ -4839,8 +4842,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               max-dynamic-agents: [2]
 
       # K8s GPU tests
@@ -4862,8 +4863,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -4879,8 +4878,6 @@ workflows:
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
@@ -4901,8 +4898,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
               mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -4925,8 +4920,6 @@ workflows:
               cluster-id-prefix: ["e2e-cpu"]
               mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4948,8 +4941,6 @@ workflows:
               cluster-id-prefix: ["e2e-k8s"]
               mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4986,11 +4977,6 @@ workflows:
       - request-perf-tests:
           type: approval
           filters: *upstream-feature-branch
-
-      - build-go:
-          context: github-read
-          requires:
-            - request-perf-tests
 
       - test-perf:
           name: test-perf-feature-branch
@@ -5047,8 +5033,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -5066,8 +5050,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       # mmdetection tests
       - request-mmdetection-tests:
@@ -5090,31 +5072,12 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               max-dynamic-agents: [2]
 
       # packaging tests
       - request-packaging-tests:
           type: approval
           filters: *upstream-feature-branch
-
-      - package-and-push-system-local:
-          context: github-read
-          filters: *upstream-feature-branch
-          requires:
-            - build-react
-            - build-docs
-            - request-packaging-tests
-
-      - package-and-push-system-local-ee:
-          context: github-read
-          filters: *upstream-feature-branch
-          requires:
-            - build-react
-            - build-docs
-            - package-and-push-system-local
-            - request-packaging-tests
 
       - test-debian-packaging:
           filters: *upstream-feature-branch
@@ -5128,6 +5091,7 @@ workflows:
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
+            - request-packaging-tests
           matrix:
             parameters:
               parallelism: [2]
@@ -5151,8 +5115,6 @@ workflows:
             - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
-          slack-mentions: "${SLACK_USER_ID}"
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -5166,8 +5128,186 @@ workflows:
             - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
-          slack-mentions: "${SLACK_USER_ID}"
+
+      # Request HPC tests
+      - request-hpc-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-misconfigured
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          mark: e2e_slurm_misconfigured
+          master_config: |
+            task_container_defaults:
+              slurm:
+                sbatch_args:
+                  - --time=04:00:00
+              environment_variables:
+                # Some ports are not working, disable them so distributed jobs work.
+                - NCCL_IB_HCA=mlx6_0:0
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: ${HPC_DB_PASSWD}
+            resource_manager:
+              type: slurm
+              master_host: junkmaster
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-gpu
+          filters: *upstream-feature-branch
+          mark: "e2e_slurm_gpu"
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+
+      # Singularity over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-singularity-gcp]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-podman-gcp]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over SLURM test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-enroot-gcp]
+              container-run-type: ["enroot"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Singularity over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-singularity-gcp]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-podman-gcp]
+              container-run-type: ["podman"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Enroot over PBS test on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-pbs-enroot-gcp]
+              container-run-type: ["enroot"]
+              workload-manager: ["pbs"]
+              mark: ["e2e_pbs and not parallel and not gpu_required"]
+          requires:
+            - build-go
+            - request-hpc-tests
+
+      # Podman over SLURM test using Agent on GCP
+      - test-e2e-hpc-gcp:
+          filters: *upstream-feature-branch
+          context:
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
+            - gcp
+          matrix:
+            parameters:
+              name: [test-e2e-slurm-agent-podman-gcp]
+              agent-use: ["-A"]
+              container-run-type: ["podman"]
+              mark: ["e2e_slurm and not parallel and not gpu_required"]
+              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
+          requires:
+            - build-go
+            - request-hpc-tests
 
   nightly:
     when: << pipeline.parameters.do_nightly_tests >>
@@ -5245,8 +5385,6 @@ workflows:
             - determined-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-mentions: "${SLACK_USER_ID}"
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -5256,8 +5394,6 @@ workflows:
             - determined-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-mentions: "${SLACK_USER_ID}"
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
 
       - run-shared-cluster-cleanup:
           name: gke-cleanup
@@ -5270,29 +5406,27 @@ workflows:
             - build-proto
             - build-helm
       - build-react:
+          name: build-react-ee
           ee: true
       - package-and-push-system-local-ee:
           requires:
             - build-docs
-            - build-react
+            - build-react-ee
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
           mark: "e2e_slurm_restart"
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           mark: "e2e_slurm_preemption"
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
@@ -5301,7 +5435,6 @@ workflows:
           matrix:
             parameters:
               mark: ["e2e_slurm and not deepspeed"]
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           master_config: |
@@ -5331,7 +5464,7 @@ workflows:
               host: localhost
               port: 5432
               name: determined
-              password: launcher
+              password: ${HPC_DB_PASSWD}
             resource_manager:
               type: slurm
               master_host: $HOSTNAME
@@ -5350,7 +5483,6 @@ workflows:
               ld_library_path:
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
-            slack-mentions: "${SLACK_USER_ID}"
             requires:
               - package-and-push-system-local-ee
             agent-use: "-A"
@@ -5377,9 +5509,25 @@ workflows:
                   host: localhost
                   port: 5432
                   name: determined
-                  password: launcher
+                  password: ${HPC_DB_PASSWD}
       - terminate-vpc-circleci:
             context: ["gcp"]
+
+  manual-e2e-react:
+    when: << pipeline.parameters.e2e-react >>
+    jobs:
+      - build-go:
+          name: build-go
+          ee: << pipeline.parameters.ee >>
+          context: github-read
+      - test-e2e-react:
+          ee: << pipeline.parameters.ee >>
+          playwright-options: << pipeline.parameters.e2e-react >>
+          requires:
+            - build-go
+          context:
+            - playwright
+            - github-read
 
   release:
     jobs:
@@ -5453,12 +5601,6 @@ workflows:
           context: determined-production
           filters: *release-filters
 
-      - publish-helm:
-          requires:
-            - build-helm
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - publish-helm-gh:
           requires:
             - build-helm
@@ -5511,7 +5653,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *rc-filters
           requires:
             - package-and-push-system-rc-ee
@@ -5529,7 +5673,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *release-filters
           requires:
             - package-and-push-system-release-ee

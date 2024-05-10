@@ -33,7 +33,7 @@ interface Props {
   experimentIds: number[];
   filters?: V1BulkExperimentFilters;
   onSubmit?: (successfulIds?: number[]) => void;
-  sourceProjectId?: number;
+  sourceProjectId: number;
   sourceWorkspaceId?: number;
 }
 
@@ -88,6 +88,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
       destinationProjectId: projId,
       experimentIds,
       filters,
+      projectId: sourceProjectId,
     });
 
     onSubmit?.(results.successful);

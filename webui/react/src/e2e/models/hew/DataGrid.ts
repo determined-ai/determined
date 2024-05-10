@@ -1,4 +1,4 @@
-import { Locator } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { Dropdown } from 'e2e/models/hew/Dropdown';
@@ -47,7 +47,7 @@ export class DataGrid<
       parent: this.#head,
     });
   }
-  readonly canvasTable: BaseComponent = new BaseComponent({
+  readonly canvasTable = new BaseComponent({
     parent: this,
     selector: 'canvas[data-testid="data-grid-canvas"] table',
   });
@@ -144,14 +144,17 @@ export class DataGrid<
    */
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
     const rows = await this.filterRows(async (row) => {
-      return (await row.getCellByColumnName(columnName).pwLocator.innerText()).indexOf(value) > -1;
+      return (
+        ((await row.getCellByColumnName(columnName).pwLocator.textContent()) || '').indexOf(value) >
+        -1
+      );
     });
     if (rows.length !== 1) {
       const names = await Promise.all(
-        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.innerText()),
+        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.textContent()),
       );
       throw new Error(
-        `Expected one row to have ${columnName} ${value}. Found ${rows.length}: ${names}.`,
+        `Expected one row to match ${columnName}:${value}. Found ${rows.length} rows that meet the condition: ${names}.`,
       );
     }
     return rows[0];
@@ -215,7 +218,9 @@ export class Row<
     const position = this.columnPositions.get(columnID);
     if (position === undefined) {
       throw new Error(
-        `Column with title expected but not found ${JSON.stringify(this.columnPositions)}`,
+        `We don't know how to click this column. Here are the positions we know: ${JSON.stringify(
+          this.columnPositions,
+        )}`,
       );
     }
     await this.parentTable.pwLocator.click({
@@ -240,7 +245,7 @@ export class Row<
     const map = this.parentTable.headRow.columnDefs;
     const index = map.get(s);
     if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${JSON.stringify(map)}`);
+      throw new Error(`Column with title expected but not found ${[...map.entries()]}`);
     }
     return this.getCellByIndex(index - 1);
   }
@@ -254,6 +259,7 @@ export class Row<
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class HeadRow extends NamedComponent {
+  readonly #columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = 'tr';
   readonly clickableParentLocator: Locator;
   constructor(args: HeadRowArgs) {
@@ -261,9 +267,9 @@ export class HeadRow extends NamedComponent {
     this.clickableParentLocator = args.clickableParentLocator;
   }
 
-  readonly selectDropdown: HeaderDropdown = new HeaderDropdown({
+  readonly selectDropdown = new HeaderDropdown({
     parent: this,
-    selector: '[aria-colindex="1"]',
+    selector: `[${this.#columnIndexAttribute}="1"]`,
   });
   #columnDefs = new Map<string, number>();
 
@@ -279,21 +285,34 @@ export class HeadRow extends NamedComponent {
    * Row.getCellByColumnName will fail without running this first.
    */
   async setColumnDefs(): Promise<Map<string, number>> {
+    // make sure we see enough columns before getting textContent of each.
+    // there are four columns on the left
+    await expect
+      .poll(async () => await this.pwLocator.locator('th').count())
+      .toBeGreaterThanOrEqual(4);
     const cells = await this.pwLocator.locator('th').all();
     if (cells.length === 0) {
       throw new Error('Expected to see more than 0 columns.');
     }
     await Promise.all(
       cells.map(async (cell) => {
-        try {
-          const index = await cell.getAttribute('aria-colindex');
-          if (index === null) throw new Error();
-          this.#columnDefs.set(await cell.innerText(), +index);
-        } catch {
-          Promise.reject(
-            new Error(`All header cells should have the attribute ${'aria-colindex'}`),
+        const index = await cell.getAttribute(this.#columnIndexAttribute);
+        if (index === null)
+          throw new Error(
+            `All header cells should have the attribute ${this.#columnIndexAttribute}`,
           );
+        if (index !== '1') {
+          expect(await cell.textContent()).not.toBe('');
         }
+        let text = await cell.textContent();
+        if (text === null) {
+          if (index === '1') {
+            text = '';
+          } else {
+            throw new Error('Expected to see text in the column header.');
+          }
+        }
+        this.#columnDefs.set(text, parseInt(index));
       }),
     );
     return this.#columnDefs;
@@ -316,19 +335,19 @@ export class HeadRow extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class HeaderDropdown extends Dropdown {
-  readonly select5: BaseComponent = new BaseComponent({
+  readonly select5 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-5'),
   });
-  readonly select10: BaseComponent = new BaseComponent({
+  readonly select10 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-10'),
   });
-  readonly select25: BaseComponent = new BaseComponent({
+  readonly select25 = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-25'),
   });
-  readonly selectAll: BaseComponent = new BaseComponent({
+  readonly selectAll = new BaseComponent({
     parent: this._menu,
     selector: Dropdown.selectorTemplate('select-all'),
   });

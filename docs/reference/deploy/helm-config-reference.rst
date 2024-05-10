@@ -194,13 +194,13 @@
 
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1``.
+      Defaults to: ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``.
 
    -  ``startupHook``: An optional inline script that will be executed as part of task set up.
 
    -  ``gpuImage``: Sets the default Docker image for all GPU tasks. If a Docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1``.
+      to: ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3``.
 
    -  ``logPolicies``: Sets log policies for trials. For details, visit :ref:`log_policies
       <experiment-config-min-validation-period>`.
@@ -277,5 +277,14 @@
 
    -  ``resource_pools``: The resource pool configuration. See :ref:`resource_pools
       <cluster-resource-pools>` for available configuration options.
+
+-  ``retentionPolicy``: Specifies configuration settings for the retention of trial logs.
+
+   -  ``logRetentionDays``: Specifies the number of days to retain logs for by default. Values
+      should be between ``-1`` and ``32767``. The default value is ``-1``, retaining logs
+      indefinitely. If set to ``0``, logs will be deleted during the next cleanup.
+
+   -  ``schedule``: Specifies the schedule for cleaning up logs. Can be provided as a cron
+      expression or a duration string.
 
 .. include:: ../../_shared/note-dtrain-learn-more.txt

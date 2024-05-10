@@ -119,6 +119,7 @@ const NavigationSideBar: React.FC = () => {
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const gasLinkOn = useFeature().isOn('genai');
+  const templatesOn = useFeature().isOn('task_templates');
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -166,6 +167,13 @@ const NavigationSideBar: React.FC = () => {
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.clusters() },
     ];
+    if (templatesOn) {
+      topItems.splice(topItems.length - 1, 0, {
+        icon: 'columns',
+        label: 'Templates',
+        path: paths.templates(),
+      });
+    }
     if (canEditWebhooks) {
       topItems.splice(topItems.length - 1, 0, {
         icon: 'webhooks',
@@ -205,7 +213,7 @@ const NavigationSideBar: React.FC = () => {
       bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, gasLinkOn]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, gasLinkOn, templatesOn]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

@@ -1,9 +1,12 @@
 package authz
 
 import (
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
@@ -78,13 +81,23 @@ func ObfuscateAgent(agent *agentv1.Agent) error {
 		}
 	}
 
-	obfuscatedSlots := make(map[string]*agentv1.Slot)
+	// Retain map lexicographically order so the webui doesn't hop around every refresh.
+	slotIDToObfuscated := make(map[string]*agentv1.Slot)
+	var slotIDs []string
 	for _, slot := range agent.Slots {
 		if err := ObfuscateSlot(slot); err != nil {
 			return errors.Errorf("unable to obfuscate agent: %s", err)
 		}
-		obfuscatedKey := uuid.New().String()
-		obfuscatedSlots[obfuscatedKey] = slot
+
+		slotIDToObfuscated[slot.Id] = slot
+		slotIDs = append(slotIDs, slot.Id)
+	}
+	slices.Sort(slotIDs)
+	obfuscatedSlots := make(map[string]*agentv1.Slot)
+	for i, slotID := range slotIDs {
+		s := slotIDToObfuscated[slotID]
+		s.Id = model.SortableSlotIndex(i)
+		obfuscatedSlots[s.Id] = s
 	}
 	agent.Slots = obfuscatedSlots
 

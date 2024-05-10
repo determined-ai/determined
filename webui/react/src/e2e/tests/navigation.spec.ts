@@ -1,102 +1,75 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
+import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
+import { SignIn } from 'e2e/models/pages/SignIn';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 
 test.describe('Navigation', () => {
-  const USERNAME = process.env.PW_USER_NAME ?? '';
-
-  test.beforeEach(async ({ dev }) => {
-    await dev.setServerAddress();
-  });
-
-  test('Top Level', async ({ page, auth }) => {
-    await page.goto('/');
+  test('Sidebar Navigation', async ({ authedPage, auth }) => {
+    // we need any page to access the sidebar, and i haven't modeled the homepage yet
+    const userManagementPage = new UserManagement(authedPage);
 
     await test.step('Login steps', async () => {
-      await auth.login(/dashboard/);
-      await expect(page).toHaveTitle(
-        /Home - (Determined|HPE Machine Learning Development Environment)/,
-      );
-      await expect(page).toHaveURL(/dashboard/);
+      await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
+      await expect(authedPage).toHaveURL(/dashboard/);
     });
 
     await test.step('Navigate to Uncategorized', async () => {
-      await page.getByRole('link', { exact: true, name: 'Uncategorized' }).click();
+      await userManagementPage.nav.sidebar.uncategorized.pwLocator.click();
       const expectedURL = /projects\/1\/experiments/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(
-          /Uncategorized Experiments - (Determined|HPE Machine Learning Development Environment)/,
-        );
-      await expect.soft(page).toHaveURL(expectedURL);
+      await authedPage.waitForURL(expectedURL);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Uncategorized Experiments'));
     });
 
     await test.step('Navigate to Model Registry', async () => {
-      await page.getByRole('link', { name: 'Model Registry' }).click();
-      const expectedURL = /models/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Model Registry - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await userManagementPage.nav.sidebar.modelRegistry.pwLocator.click();
+      await authedPage.waitForURL(/models/);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
 
     await test.step('Navigate to Tasks', async () => {
-      await page.getByRole('link', { name: 'Tasks' }).click();
+      await userManagementPage.nav.sidebar.tasks.pwLocator.click();
       const expectedURL = /tasks/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Tasks - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await authedPage.waitForURL(expectedURL);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Tasks'));
     });
 
     await test.step('Navigate to Webhooks', async () => {
-      await page.getByRole('link', { name: 'Webhooks' }).click();
+      await userManagementPage.nav.sidebar.webhooks.pwLocator.click();
       const expectedURL = /webhooks/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Webhooks - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await authedPage.waitForURL(expectedURL);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Webhooks'));
     });
 
     await test.step('Navigate to Cluster', async () => {
-      await page.getByRole('link', { name: 'Cluster' }).click();
+      await userManagementPage.nav.sidebar.cluster.pwLocator.click();
       const expectedURL = /clusters/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/Cluster - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      await authedPage.waitForURL(expectedURL);
+      await expect.soft(authedPage).toHaveTitle(BasePage.getTitle('Cluster'));
     });
 
     await test.step('Navigate to Workspaces', async () => {
-      const workspacesPage = new Workspaces(page);
+      const workspacesPage = new Workspaces(authedPage);
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await page.waitForURL(`**/${workspacesPage.url}?**`);
-      await expect.soft(page).toHaveTitle(workspacesPage.title);
+      await authedPage.waitForURL(workspacesPage.getUrlRegExp());
+      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
     });
 
     await test.step('Navigate to Admin', async () => {
-      await page.getByRole('navigation').getByText(USERNAME).click();
-      await page.getByRole('link', { name: 'Admin' }).click();
-      const expectedURL = /admin\/user-management/;
-      await page.waitForURL(expectedURL);
-      await expect
-        .soft(page)
-        .toHaveTitle(/(Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(expectedURL);
+      const userManagementPage = new UserManagement(authedPage);
+      await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
+      await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click();
+      await authedPage.waitForURL(userManagementPage.getUrlRegExp());
+      await expect.soft(authedPage).toHaveTitle(userManagementPage.title);
     });
 
     await test.step('Navigate to Logout', async () => {
       await auth.logout();
-      await expect
-        .soft(page)
-        .toHaveTitle(/Sign In - (Determined|HPE Machine Learning Development Environment)/);
-      await expect.soft(page).toHaveURL(/login/);
+      const signInPage = new SignIn(authedPage);
+      await expect.soft(authedPage).toHaveTitle(signInPage.title);
+      await expect.soft(authedPage).toHaveURL(signInPage.getUrlRegExp());
     });
   });
 });

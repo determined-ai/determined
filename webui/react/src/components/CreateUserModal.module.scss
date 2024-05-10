@@ -1,0 +1,11 @@
+// TODO: ET-70 - Remove when no longer necessary
+
+:global(.ant-modal-content) {
+  & > :global(.ant-modal-body) {
+    .createUserModalForm {
+      :global(.ant-form-item-explain) {
+        display: unset;
+      }
+    }
+  }
+}

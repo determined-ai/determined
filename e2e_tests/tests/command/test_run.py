@@ -120,6 +120,16 @@ def test_environment_variables_command() -> None:
     _run_cmd(sess, ["--config", config_str, "env | grep -q THISISTRUE=true"], expect_success=True)
 
 
+@pytest.mark.e2e_cpu
+def test_command_startup_hook_works() -> None:
+    sess = api_utils.user_session()
+    _run_cmd(
+        sess,
+        ["--context", conf.fixtures_path("no_op/"), '[ -e "startup-hook-ran" ]'],
+        expect_success=True,
+    )
+
+
 @pytest.mark.parametrize("actual,expected", [("24576", "24"), ("1.5g", "1572864")])
 @pytest.mark.parametrize("use_config_file", [True, False])
 @pytest.mark.slow

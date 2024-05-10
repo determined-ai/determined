@@ -11,6 +11,8 @@ Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
   - `PW_USER_NAME`: user name for determined account
   - `PW_PASSWORD`: password for determined account
   - `PW_SERVER_ADDRESS`: API server address
+  - `PW_DET_PATH`: path to `det` if not already in path
+  - `PW_DET_MASTER`: typically http://localhost:8080"
 - Run `npx playwright install`
 - Run `SERVER_ADDRESS={set server address} npm run build` in `webui/react`
   - It is `SERVER_ADDRESS` here. not `PW_SERVER_ADDRESS`, but the both values should be the same
@@ -37,3 +39,11 @@ CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 
 We use `mcr.microsoft.com/playwright` for [docker container](https://playwright.dev/docs/docker).
 Update the docker image version along with Playwright version.
+
+- PW_DET_PATH=/tmp/venv/bin/det"
+- PW_SERVER_ADDRESS=http://localhost:3001"
+- PW_USER_NAME=admin
+- PW_PASSWORD=
+- PW_DET_MASTER=http://localhost:8082"
+- DET_WEBPACK_PROXY_URL=http://localhost:8082"
+- DET_WEBSOCKET_PROXY_URL=ws://localhost:8082"
