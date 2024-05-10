@@ -215,36 +215,34 @@ const CompareScatterPlots: React.FC<Props> = ({
     });
   }, [fullHParams, experimentHyperparameters, selectedMetric, trials, data]);
 
-  const loading = useMemo(() => !metricsLoaded || !chartData, [chartData, metricsLoaded]);
+  if (!metricsLoaded || !chartData) {
+    return <Spinner center spinning />;
+  }
 
   return (
     <div ref={baseRef}>
-      {loading ? (
-        <Spinner center spinning />
-      ) : (
-        <>
-          {chartProps ? (
-            <div data-testid={COMPARE_SCATTER_PLOTS}>
-              <Grid
-                border={true}
-                minItemWidth={resize.width > 320 ? 350 : 270}
-                mode={GridMode.AutoFill}>
-                {selectedHParams.map((hParam) => (
-                  <div key={hParam} onClick={() => handleChartClick(hParam)}>
-                    <UPlotScatter
-                      data={chartProps[hParam].data}
-                      options={chartProps[hParam].options}
-                      tooltipLabels={chartProps[hParam].tooltipLabels}
-                    />
-                  </div>
-                ))}
-              </Grid>
-            </div>
-          ) : (
-            <Message icon="warning" title="No data to plot." />
-          )}
-        </>
-      )}
+      <>
+        {chartProps ? (
+          <div data-testid={COMPARE_SCATTER_PLOTS}>
+            <Grid
+              border={true}
+              minItemWidth={resize.width > 320 ? 350 : 270}
+              mode={GridMode.AutoFill}>
+              {selectedHParams.map((hParam) => (
+                <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                  <UPlotScatter
+                    data={chartProps[hParam].data}
+                    options={chartProps[hParam].options}
+                    tooltipLabels={chartProps[hParam].tooltipLabels}
+                  />
+                </div>
+              ))}
+            </Grid>
+          </div>
+        ) : (
+          <Message icon="warning" title="No data to plot." />
+        )}
+      </>
       <galleryModal.Component
         activeHParam={activeHParam}
         chartProps={chartProps}

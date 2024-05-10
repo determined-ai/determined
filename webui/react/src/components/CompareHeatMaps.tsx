@@ -1,7 +1,7 @@
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import { isObject } from 'lodash';
+import { isObject, isUndefined } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
@@ -20,6 +20,7 @@ import {
   MetricType,
   Primitive,
   Range,
+  Scale,
   TrialItem,
   XAxisDomain,
 } from 'types';
@@ -59,7 +60,7 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
 
 const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
   const parts = key.split(':');
-  return [parts[0], parts[1]];
+  return [parts[0], parts[1] ?? ''];
 };
 
 const CompareHeatMaps: React.FC<Props> = ({
@@ -72,8 +73,8 @@ const CompareHeatMaps: React.FC<Props> = ({
   const { ui } = useUI();
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
-  const [chartData, setChartData] = useState<HpData>();
-  const [activeHParam, setActiveHParam] = useState<string>();
+  const [chartData, setChartData] = useState<HpData | undefined>();
+  const [activeHParam, setActiveHParam] = useState<string | undefined>();
   const galleryModal = useModal(GalleryModalComponent);
 
   const selectedScale = settings.scale;
@@ -106,7 +107,7 @@ const CompareHeatMaps: React.FC<Props> = ({
   }, [chartData, smallerIsBetter, ui.theme]);
 
   const chartProps = useMemo(() => {
-    if (!chartData || !selectedMetric) return undefined;
+    if (!chartData || !selectedMetric || colorScale.length < 2) return undefined;
 
     const props: Record<string, UPlotScatterProps> = {};
     const rgbaStroke0 = str2rgba(colorScale[0].color);
@@ -126,8 +127,8 @@ const CompareHeatMaps: React.FC<Props> = ({
         const title = `${yLabel} (y) vs ${xLabel} (x)`;
         const xHpLabels = chartData?.hpLabels[hParam2];
         const yHpLabels = chartData?.hpLabels[hParam1];
-        const isXLogarithmic = chartData?.hpLogScales[hParam2];
-        const isYLogarithmic = chartData?.hpLogScales[hParam1];
+        const isXLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam2];
+        const isYLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam1];
         const isXCategorical = xHpLabels?.length !== 0;
         const isYCategorical = yHpLabels?.length !== 0;
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
@@ -168,7 +169,7 @@ const CompareHeatMaps: React.FC<Props> = ({
     });
 
     return props;
-  }, [chartData, colorScale, selectedHParams, selectedMetric]);
+  }, [chartData, colorScale, selectedHParams, selectedMetric, selectedScale]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
@@ -309,51 +310,49 @@ const CompareHeatMaps: React.FC<Props> = ({
     });
   }, [fullHParams, selectedMetric, ui.isPageHidden, trials, data, experimentHyperparameters]);
 
-  const loading = useMemo(() => !metricsLoaded || !chartData, [chartData, metricsLoaded]);
+  if (!metricsLoaded || !chartData) {
+    return <Spinner center spinning />;
+  }
 
   return (
     <div ref={baseRef}>
       <div>
-        {loading ? (
-          <Spinner center spinning />
-        ) : (
-          <>
-            {chartProps && selectedMetric ? (
-              <>
-                <div>
-                  <ColorLegend
-                    colorScale={colorScale}
-                    title={<MetricBadgeTag metric={selectedMetric} />}
-                  />
-                </div>
-                <div data-testid={COMPARE_HEAT_MAPS}>
-                  <Grid
-                    border={true}
-                    minItemWidth={resize.width > 320 ? 350 : 270}
-                    mode={GridMode.AutoFill}>
-                    {selectedHParams.map((hParam1) =>
-                      selectedHParams.map((hParam2) => {
-                        const key = generateHpKey(hParam1, hParam2);
-                        return (
-                          <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
-                            <UPlotScatter
-                              colorScaleDistribution={selectedScale}
-                              data={chartProps[key].data}
-                              options={chartProps[key].options}
-                              tooltipLabels={chartProps[key].tooltipLabels}
-                            />
-                          </div>
-                        );
-                      }),
-                    )}
-                  </Grid>
-                </div>
-              </>
-            ) : (
-              <Message title="No data available." />
-            )}
-          </>
-        )}
+        <>
+          {chartProps && selectedMetric ? (
+            <>
+              <div>
+                <ColorLegend
+                  colorScale={colorScale}
+                  title={<MetricBadgeTag metric={selectedMetric} />}
+                />
+              </div>
+              <div data-testid={COMPARE_HEAT_MAPS}>
+                <Grid
+                  border={true}
+                  minItemWidth={resize.width > 320 ? 350 : 270}
+                  mode={GridMode.AutoFill}>
+                  {selectedHParams.map((hParam1) =>
+                    selectedHParams.map((hParam2) => {
+                      const key = generateHpKey(hParam1, hParam2);
+                      return (
+                        <div key={key} onClick={() => handleChartClick(hParam1, hParam2)}>
+                          <UPlotScatter
+                            colorScaleDistribution={selectedScale}
+                            data={chartProps[key].data}
+                            options={chartProps[key].options}
+                            tooltipLabels={chartProps[key].tooltipLabels}
+                          />
+                        </div>
+                      );
+                    }),
+                  )}
+                </Grid>
+              </div>
+            </>
+          ) : (
+            <Message title="No data available." />
+          )}
+        </>
       </div>
       <galleryModal.Component
         activeHParam={activeHParam}

@@ -2,6 +2,7 @@ import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
+import { isUndefined } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
@@ -64,7 +65,7 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
 
 const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
   const parts = key.split(':');
-  return [parts[0], parts[1]];
+  return [parts[0], parts[1] ?? ''];
 };
 
 const HpHeatMaps: React.FC<Props> = ({
@@ -82,9 +83,9 @@ const HpHeatMaps: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [chartData, setChartData] = useState<HpData>();
+  const [chartData, setChartData] = useState<HpData | undefined>();
   const [pageError, setPageError] = useState<Error>();
-  const [activeHParam, setActiveHParam] = useState<string>();
+  const [activeHParam, setActiveHParam] = useState<string | undefined>();
   const galleryModal = useModal(GalleryModalComponent);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
@@ -110,7 +111,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [chartData, smallerIsBetter, ui.theme]);
 
   const chartProps = useMemo(() => {
-    if (!chartData || !selectedMetric) return undefined;
+    if (!chartData || !selectedMetric || colorScale.length < 2) return undefined;
 
     const props: Record<string, UPlotScatterProps> = {};
     const rgbaStroke0 = str2rgba(colorScale[0].color);
@@ -130,8 +131,8 @@ const HpHeatMaps: React.FC<Props> = ({
         const title = `${yLabel} (y) vs ${xLabel} (x)`;
         const xHpLabels = chartData?.hpLabels[hParam2];
         const yHpLabels = chartData?.hpLabels[hParam1];
-        const isXLogarithmic = chartData?.hpLogScales[hParam2];
-        const isYLogarithmic = chartData?.hpLogScales[hParam1];
+        const isXLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam2];
+        const isYLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam1];
         const isXCategorical = xHpLabels?.length !== 0;
         const isYCategorical = yHpLabels?.length !== 0;
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
@@ -172,7 +173,7 @@ const HpHeatMaps: React.FC<Props> = ({
     });
 
     return props;
-  }, [chartData, colorScale, selectedHParams, selectedMetric]);
+  }, [chartData, colorScale, selectedHParams, selectedMetric, selectedScale]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
