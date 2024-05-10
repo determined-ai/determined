@@ -3,7 +3,6 @@ minikube start --profile $1
 
 kubectl apply -f https://projectcontour.io/quickstart/contour-gateway-provisioner.yaml
 
-
 kubectl apply -f - <<EOF
 kind: GatewayClass
 apiVersion: gateway.networking.k8s.io/v1
@@ -28,7 +27,6 @@ spec:
           from: All
 EOF
 
-
 # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
 nohup minikube --profile $1 tunnel & # TODO won't work for users with sudo passwords.
 
@@ -41,4 +39,3 @@ for ((i=0; i<60; i++)); do
 
     sleep 1
 done
-
