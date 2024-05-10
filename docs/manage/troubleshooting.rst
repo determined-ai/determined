@@ -6,8 +6,8 @@
 
    .. important::
 
-      TensorFlow users must configure their environment image in their experiment configuration file
-      before submitting an experiment.
+      TensorFlow users must configure their environment image in their :ref:`experiment
+      configuration <experiment-config-reference>` file before submitting an experiment.
 
       .. code:: bash
 

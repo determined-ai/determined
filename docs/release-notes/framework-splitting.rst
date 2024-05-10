@@ -2,9 +2,10 @@
 
 **Breaking Change**
 
--  Default images are being changed to support only PyTorch by default. TensorFlow users must
+-  Images: The default environment includes images that support PyTorch. TensorFlow users must
    configure their experiments to target our non-default TensorFlow images. Details on this process
    can be found at :ref:`set-environment-images`
 
--  Our new default images are built off of Nvidia NGC images. We select an NGC version, however
-   users can build their own images from an NGC version of their choice. See :ref:`ngc-version`
+-  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
+   version, users have the flexibility to build their own images using any NGC version that meets
+   their specific requirements. For more information, visit :ref:`ngc-version`
