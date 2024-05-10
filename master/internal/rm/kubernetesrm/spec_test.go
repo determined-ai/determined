@@ -246,13 +246,10 @@ func TestDeterminedLabels(t *testing.T) {
 
 	// define expectations
 	expectedLabels := map[string]string{
-		determinedLabel:   taskSpec.AllocationID,
-		userLabel:         taskSpec.Owner.Username,
-		workspaceLabel:    taskSpec.Workspace,
-		resourcePoolLabel: p.req.ResourcePool,
-		taskTypeLabel:     string(taskSpec.TaskType),
-		taskIDLabel:       taskSpec.TaskID,
-		containerIDLabel:  taskSpec.ContainerID,
+		determinedLabel:  taskSpec.AllocationID,
+		taskTypeLabel:    string(taskSpec.TaskType),
+		taskIDLabel:      taskSpec.TaskID,
+		containerIDLabel: taskSpec.ContainerID,
 	}
 	for k, v := range taskSpec.ExtraPodLabels {
 		expectedLabels[labelPrefix+k] = v
