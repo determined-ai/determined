@@ -3,9 +3,9 @@ package internal
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -27,6 +27,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+)
+const (
+	// ProjectKeyRegex is the regex pattern for a project key.
+	ProjectKeyRegex = "^[A-Z0-9]{5}$"
 )
 
 var defaultRunsTableColumns = []*projectv1.ProjectColumn{
@@ -222,6 +226,7 @@ func getRunSummaryMetrics(ctx context.Context, whereClause string, group []int) 
 	}
 	return columns, nil
 }
+
 
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
@@ -711,6 +716,19 @@ func (a *apiServer) getProjectNumericMetricsRange(
 	return metricsValues, searcherMetricsValue, nil
 }
 
+func validateProjectKey(key string) error {
+	switch {
+	case len(key) > project.MaxProjectKeyLength:
+		return errors.Errorf("project key cannot be longer than %d characters", project.MaxProjectKeyLength)
+	case len(key) < 1:
+		return errors.New("project key cannot be empty")
+	case !regexp.MustCompile(ProjectKeyRegex).MatchString(key):
+		return errors.Errorf("project key can only contain alphanumeric characters")
+	default:
+		return nil
+	}
+}
+
 func (a *apiServer) PostProject(
 	ctx context.Context, req *apiv1.PostProjectRequest,
 ) (*apiv1.PostProjectResponse, error) {
@@ -726,28 +744,24 @@ func (a *apiServer) PostProject(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	var projectKey string
-	if req.Key == nil {
-		projectKey, err = project.GenerateProjectKey(ctx, req.Name)
-		if err != nil {
-			return nil, fmt.Errorf("error generating project key: %w", err)
-		}
-	} else {
-		projectKey = *req.Key
-	}
-
-	p := &projectv1.Project{}
-	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
-		req.WorkspaceId, curUser.ID, projectKey)
-
-	if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
-		if strings.Contains(err.Error(), "projects_key_key") {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "project with key %s already exists", projectKey)
+	if req.Key != nil {
+		if err = validateProjectKey(*req.Key); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 	}
 
-	return &apiv1.PostProjectResponse{Project: p},
+	p := &model.Project{
+		Name:        req.Name,
+		Description: req.Description,
+		WorkspaceID: int(req.WorkspaceId),
+		UserID:      int(curUser.ID),
+		Username:    curUser.Username,
+	}
+
+	if err = project.InsertProject(ctx, p, req.Key); err != nil {
+		return nil, err
+	}
+	return &apiv1.PostProjectResponse{Project: p.Proto()},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)
 }
 
