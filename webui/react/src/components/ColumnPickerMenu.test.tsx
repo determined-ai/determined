@@ -71,9 +71,7 @@ describe('ColumnPickerMenu', () => {
     );
     const resets = await screen.findAllByText('Reset');
     fireEvent.click(resets[0]);
-    expect(onVisibleColumnChange).toHaveBeenCalledWith(
-      initialVisibleColumns,
-    );
+    expect(onVisibleColumnChange).toHaveBeenCalledWith(initialVisibleColumns);
   });
   it('should switch tabs and display correct columns', async () => {
     setup();
@@ -95,15 +93,15 @@ describe('ColumnPickerMenu', () => {
     fireEvent.click(await screen.findByRole('button'));
     const showAlls = await screen.findAllByText('Show all');
     fireEvent.click(showAlls[0]);
-    const locationColumns = projectColumns.filter((c) => c.location === locations[0])
+    const locationColumns = projectColumns
+      .filter((c) => c.location === locations[0])
       .map((c) => c.column);
     const addedColumns = _.difference(locationColumns, initialVisibleColumns);
-    expect(onVisibleColumnChange).toHaveBeenCalledWith(
-      [...initialVisibleColumns, ...addedColumns],
-    );
+    expect(onVisibleColumnChange).toHaveBeenCalledWith([...initialVisibleColumns, ...addedColumns]);
   });
   it('should hide all', async () => {
-    const locationColumns = projectColumns.filter((c) => c.location === locations[0])
+    const locationColumns = projectColumns
+      .filter((c) => c.location === locations[0])
       .map((c) => c.column);
     const { onVisibleColumnChange } = setup(locationColumns);
     fireEvent.click(await screen.findByRole('button'));
