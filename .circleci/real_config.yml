@@ -1445,7 +1445,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          command: make -C docs check-links
+          command: MAX_RETRIES=2 tools/scripts/retry.sh make -C docs check-links
 
   publish-docs:
     parameters:
