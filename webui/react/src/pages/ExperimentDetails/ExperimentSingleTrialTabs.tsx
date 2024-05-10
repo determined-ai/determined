@@ -10,8 +10,8 @@ import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import Badge from 'components/Badge';
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
+import RemainingRetentionDaysLabelComponent from 'components/RemainingRetentionDaysLabelComponent';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
@@ -33,7 +33,6 @@ import {
 } from 'services/api';
 import { ExperimentBase, Note, TrialDetails, TrialItem, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { pluralizer } from 'utils/string';
 
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 import ExperimentCodeViewer from './ExperimentCodeViewer';
@@ -84,7 +83,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const [canceler] = useState(new AbortController());
   const [trialDetails, setTrialDetails] = useState<TrialDetails>();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
-  const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number>>(NotLoaded);
+  const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 
@@ -139,12 +138,16 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     }
   }, [canceler, experiment.id, experiment.state, onTrialUpdate]);
 
-  const fetchTrialDetails = useCallback(async () => {
+  const fetchTrialData = useCallback(async () => {
     if (!trialId) return;
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      onTrialUpdate?.(response);
-      setTrialDetails(response);
+      const [trialDetailResponse, logRemainingResponse] = await Promise.all([
+        getTrialDetails({ id: trialId }, { signal: canceler.signal }),
+        getTrialRemainingLogRetentionDays({ id: trialId }),
+      ]);
+      onTrialUpdate?.(trialDetailResponse);
+      setTrialDetails(trialDetailResponse);
+      setRemainingLogDays(Loaded(logRemainingResponse.remainingLogRetentionDays));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -155,50 +158,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     }
   }, [canceler.signal, onTrialUpdate, trialId]);
 
-  const fetchRemainingLogDays = useCallback(async () => {
-    if (!trialId) return;
-    try {
-      const remainingDays = await getTrialRemainingLogRetentionDays({ id: trialId });
-      setRemainingLogDays(
-        remainingDays.remainingLogRetentionDays !== undefined
-          ? Loaded(remainingDays.remainingLogRetentionDays)
-          : NotLoaded,
-      );
-    } catch (e) {
-      setRemainingLogDays(NotLoaded);
-    }
-  }, [trialId]);
-
-  const fetchAllTrialDetails = useCallback(async () => {
-    await Promise.allSettled([fetchTrialDetails(), fetchRemainingLogDays()]);
-  }, [fetchRemainingLogDays, fetchTrialDetails]);
-
-  const getRemainingLogsLabel = useMemo(() => {
-    let toolTipText = '';
-    let badgeText = '';
-    const days = Loadable.getOrElse(null, remainingLogDays);
-    if (days === null) {
-      toolTipText = 'Days remaining to retention are not available yet.';
-      badgeText = '-';
-    } else if (days === -1) {
-      toolTipText = 'Logs will be retained forever.';
-      badgeText = 'Frvr';
-    } else if (days === 0) {
-      toolTipText = 'Some logs have begun to be deleted for this trial.';
-      badgeText = '0';
-    } else {
-      toolTipText = `${pluralizer(days, 'day')} left to retain logs`;
-      badgeText = `${remainingLogDays}`;
-    }
-    return (
-      <div>
-        <>Logs </>
-        <Badge tooltip={toolTipText}>{badgeText}</Badge>
-      </div>
-    );
-  }, [remainingLogDays]);
-
-  const { stopPolling } = usePolling(fetchAllTrialDetails, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchTrialData, { rerunOnNewFn: true });
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId, {
     rerunOnNewFn: true,
   });
@@ -250,8 +210,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
    * next polling cycle when trial Id goes from undefined to defined.
    */
   useEffect(() => {
-    if (prevTrialId === undefined && prevTrialId !== trialId) fetchAllTrialDetails();
-  }, [fetchAllTrialDetails, prevTrialId, trialId]);
+    if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialData();
+  }, [fetchTrialData, prevTrialId, trialId]);
 
   const handleNotesUpdate = useCallback(
     async (notes: Note) => {
@@ -371,7 +331,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         ),
         key: TabType.Logs,
-        label: getRemainingLogsLabel,
+        label: RemainingRetentionDaysLabelComponent({ remainingLogDays }),
       });
     }
 
@@ -379,10 +339,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [
     editableNotes,
     experiment,
-    getRemainingLogsLabel,
     handleNotesUpdate,
     handleSelectFile,
     pageRef,
+    remainingLogDays,
     settings.filePath,
     showExperimentArtifacts,
     trialDetails,

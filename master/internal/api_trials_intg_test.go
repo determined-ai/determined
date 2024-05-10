@@ -1450,18 +1450,29 @@ func TestPutTrialRetainLogs(t *testing.T) {
 }
 
 func completeTrialsandTasks(ctx context.Context, trialID int, endTimeDays int) error {
-	_, err := db.Bun().NewUpdate().Table("runs").
+	_, err := db.Bun().NewUpdate().
+		Table("tasks", "run_id_task_id").
+		Set("end_time = (NOW() - make_interval(days => ?))", endTimeDays).
+		Where("run_id_task_id.run_id = ? and tasks.task_id = run_id_task_id.task_id", trialID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = db.Bun().NewUpdate().Table("runs", "run_id_task_id", "tasks").
 		Set("state = ?", model.CompletedState).
+		Set("end_time = (NOW() - make_interval(days => ?))", endTimeDays).
 		Where("id = ?", trialID).
 		Exec(ctx)
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	_, err = db.Bun().NewUpdate().
-		Table("tasks", "run_id_task_id").
-		Set("end_time = (NOW() - make_interval(days => ?))", endTimeDays).
-		Where("run_id_task_id.run_id = ? and tasks.task_id = run_id_task_id.task_id", trialID).
+func completeExp(ctx context.Context, expID int32) error {
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", expID).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -1491,7 +1502,7 @@ retention_policy:
 	for _, tt := range tests {
 		log.Printf("Starting %v", tt.name)
 		testEndTimes := []int{15, 10, 5, 0}
-		_, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, tt.logRetentionDays, len(testEndTimes))
+		exp, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, tt.logRetentionDays, len(testEndTimes))
 
 		for i, v := range testEndTimes {
 			err := completeTrialsandTasks(ctx, trialIDs[i], v)
@@ -1503,5 +1514,7 @@ retention_policy:
 			require.NoError(t, err)
 			require.Equal(t, tt.expRemainingDays[i], *d.RemainingDays)
 		}
+		err := completeExp(ctx, exp.Id)
+		require.NoError(t, err)
 	}
 }

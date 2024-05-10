@@ -656,7 +656,7 @@ func (a *apiServer) GetTrialRemainingLogRetentionDays(
 	q := `
 SELECT   
 CASE
-	WHEN MIN(t.end_time) <= ( retention_timestamp() - make_interval(days => ?) ) THEN 0
+	WHEN MIN(t.end_time) <= ( NOW() - make_interval(days => ?) ) THEN 0
 	ELSE extract(day from MIN(end_time) + make_interval(days => ?) - NOW())::int
 END remaining_log_retention_days
 FROM tasks t
@@ -1568,6 +1568,8 @@ func (a *apiServer) PostTrialRunnerMetadata(
 func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.TerminationCheckFn {
 	return func() (bool, error) {
 		state, endTime, err := a.m.db.TrialStatus(trialID)
+		log.Print("state, ", state)
+		log.Print("endTime", endTime)
 		if err != nil ||
 			(model.TerminalStates[state] && endTime.Add(buffer).Before(time.Now().UTC())) {
 			return true, err
