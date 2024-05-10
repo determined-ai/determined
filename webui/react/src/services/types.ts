@@ -66,6 +66,7 @@ interface PaginationParams {
 
 export interface GetTemplatesParams extends PaginationParams {
   name?: string;
+  workspaceIds?: number[];
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
 }
 

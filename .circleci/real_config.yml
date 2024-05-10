@@ -8,7 +8,6 @@ orbs:
   helm: circleci/helm@1.2.0
   kubernetes: circleci/kubernetes@0.11.0
   queue: eddiewebb/queue@2.2.1
-  slack: circleci/slack@3.4.2
   win: circleci/windows@5.0.0
 
 executors:
@@ -22,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.32.0-dev0
+    default: 0.32.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -52,9 +51,6 @@ parameters:
   master-build-resource-class:
     type: string
     default: xlarge
-  default-slack-channel:
-    type: string
-    default: C9LFPNA3Y # ci-bots
   do_nightly_tests:
     type: boolean
     default: false
@@ -117,6 +113,16 @@ commands:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
+
+  python-report:
+    description: Report information about the Python environment.
+    steps:
+      - run: |
+          python --version
+          pip --version
+          pip list
+          sh -c "pip check || true"
+
 
   # circleci's checkout does not fetch submodules by default
   # https://circleci.com/docs/2.0/configuration-reference/#checkout
@@ -488,8 +494,7 @@ commands:
           paths:
             - "/tmp/venv"
             - "/tmp/conda"
-      - run: python --version
-      - run: pip --version
+      - python-report
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
@@ -1440,7 +1445,7 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          command: make -C docs check-links
+          command: MAX_RETRIES=2 tools/scripts/retry.sh make -C docs check-links
 
   publish-docs:
     parameters:
@@ -1987,11 +1992,6 @@ jobs:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
     steps:
-      - run: echo 'export PW_SERVER_ADDRESS="http://localhost:3001"' >> $BASH_ENV # DNJ TODO -remove when tested
-      - run: echo 'export PW_USER_NAME=admin' >> $BASH_ENV
-      - run: echo 'export PW_PASSWORD=' >> $BASH_ENV
-      - run: echo 'export DET_WEBPACK_PROXY_URL="http://localhost:8082"' >> $BASH_ENV
-      - run: echo 'export DET_WEBSOCKET_PROXY_URL="ws://localhost:8082"' >> $BASH_ENV
       - checkout-with-sm
       - add-and-fetch-upstream
       - skip-if-only-docs
@@ -2526,11 +2526,10 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - run: python --version
+      - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
-      - run: pip --version
-      - run: pip install wheel
+      - run: pip install wheel setuptools
       - run: cd harness; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
@@ -2538,10 +2537,10 @@ jobs:
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install setuptools_scm
+      - run: pip install setuptools_scm setuptools
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
-      - run: sh -c "pip check || true"
+      - python-report
       - run: pytest harness/tests/cli
 
   test-e2e-slurm-disabled:
@@ -2565,12 +2564,6 @@ jobs:
         type: integer
         default: 1
       extra-pytest-flags:
-        type: string
-        default: ""
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
         type: string
         default: ""
       container-run-type:
@@ -2858,9 +2851,6 @@ jobs:
       determined_master_host:
         type: string
         default: localhost:8080
-      slack-mentions:
-        type: string
-        default: ""
       cluster_unix_user:
         type: string
         default: launcher
@@ -3111,13 +3101,6 @@ jobs:
                 command: |
                   scancel -u $USER --jobname=determined-agent-$HOSTNAME
 
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E slurm job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<pipeline.parameters.default-slack-channel>>
-
   test-e2e:
     parameters:
       tf2:
@@ -3220,6 +3203,22 @@ jobs:
             - store_artifacts:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
+
+  send-job-level-alerts:
+    machine:
+      image: <<pipeline.parameters.machine-image>>
+    resource_class: small
+    steps:
+      - checkout
+      - add-and-fetch-upstream
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install alert deps
+          command: tools/scripts/retry.sh pip install requests slack_sdk
+      - run:
+          name: Listen for failures and send slack alerts
+          command: python .circleci/scripts/job_level_alerts.py
 
   test-perf:
     parameters:
@@ -3385,12 +3384,6 @@ jobs:
               echo "PERF_SNAPSHOT_TO_USE is not set. Skipping deletion."
             fi
 
-      - slack/status:
-          fail_only: true
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
-          mentions: "U03CP4ZKY2D" # Ping Nick Blaskey for now. Eventually switch this to perf team.
-
   deploy:
     parameters:
       compute-agent-instance-type:
@@ -3442,11 +3435,6 @@ jobs:
           deployment-type: simple
           extra-tags: <<parameters.extra-tags>>
           ee: <<parameters.ee>>
-      - slack/status:
-          fail_only: true
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: "${SLACK_USER_ID}"
-          channel: <<pipeline.parameters.default-slack-channel>>
 
   deploy-latest-gke:
     parameters:
@@ -3524,12 +3512,6 @@ jobs:
       enable-tls:
         type: boolean
         default: false
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
       environment-gpu-enabled:
         type: string
         default: "1"
@@ -3579,12 +3561,6 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
           path: /tmp/test-results/
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
 
   test-e2e-gke:
     parameters:
@@ -3625,12 +3601,6 @@ jobs:
       node-locations:
         type: string
         default: "us-west1-b"
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
       environment-gpu-enabled:
         type: string
         default: "1"
@@ -3694,12 +3664,6 @@ jobs:
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
 
   test-e2e-shared-cluster:
     parameters:
@@ -3753,16 +3717,6 @@ jobs:
           name: Set initial user password
           command: |
             echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> $BASH_ENV
-      - run:
-          name: Wait for master connection
-          command: |
-            set +o pipefail
-            export DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD}
-            export DET_MASTER_TLS_CERT=${MASTER_TLS_CERT} DET_MASTER_CERT_NAME=${MASTER_CERT_NAME}
-            for i in {1..10}; do
-              yes | det -m https://${MASTER_HOST}:${MASTER_PORT} user whoami | grep "logged in" && break || \
-              echo "Trying to connect to master host again in 5 seconds" && sleep 5
-            done
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3770,7 +3724,7 @@ jobs:
           master-port: ${MASTER_PORT:-8080}
           master-cert: ${MASTER_TLS_CERT}
           master-cert-name: ${MASTER_CERT_NAME}
-          wait-for-master: false
+          wait-for-master: true
       - store_test_results:
           path: /tmp/test-results/
 
@@ -3858,12 +3812,6 @@ jobs:
       max-dynamic-agents:
         type: integer
         default: 1
-      slack-mentions:
-        type: string
-        default: ""
-      slack-channel:
-        type: string
-        default: ""
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -3916,12 +3864,7 @@ jobs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
-      - slack/status:
-          fail_only: True
-          only_for_branches: main
-          failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
+
   terminate-vpc-circleci:
     parameters:
         gcloud-service-key:
@@ -4097,6 +4040,15 @@ workflows:
             - test-unit-harness-pytorch2-gpu
             - test-unit-model-hub
             - test-unit-storage
+
+  send-alerts:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - send-job-level-alerts:
+          filters:
+            branches:
+              only:
+                - main
 
   test-go:
     <<: *do-not-run-on-manual-trigger
@@ -4277,7 +4229,6 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           filters:
@@ -4324,7 +4275,6 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
-          slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
@@ -4643,8 +4593,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -4663,8 +4611,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
@@ -4681,8 +4627,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -4699,8 +4643,6 @@ workflows:
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
@@ -4722,8 +4664,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
               mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -4742,8 +4682,6 @@ workflows:
               cluster-id-prefix: ["e2e-cpu"]
               mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4766,8 +4704,6 @@ workflows:
               cluster-id-prefix: ["e2e-k8s"]
               mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -4906,8 +4842,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               max-dynamic-agents: [2]
 
       # K8s GPU tests
@@ -4929,8 +4863,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel
@@ -4946,8 +4878,6 @@ workflows:
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
@@ -4968,8 +4898,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu-tfonly"]
               mark: ["e2e_gpu and tensorflow2"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
@@ -4992,8 +4920,6 @@ workflows:
               cluster-id-prefix: ["e2e-cpu"]
               mark: ["e2e_gpu and not gpu_required"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -5015,8 +4941,6 @@ workflows:
               cluster-id-prefix: ["e2e-k8s"]
               mark: ["e2e_k8s"]
               parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
               environment-gpu-enabled: ["0"]
@@ -5109,8 +5033,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -5128,8 +5050,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
 
       # mmdetection tests
       - request-mmdetection-tests:
@@ -5152,8 +5072,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              slack-channel: [<<pipeline.parameters.default-slack-channel>>]
               max-dynamic-agents: [2]
 
       # packaging tests
@@ -5197,8 +5115,6 @@ workflows:
             - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
-          slack-mentions: "${SLACK_USER_ID}"
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -5212,8 +5128,6 @@ workflows:
             - package-and-push-system-dev-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
-          slack-mentions: "${SLACK_USER_ID}"
 
       # Request HPC tests
       - request-hpc-tests:
@@ -5223,7 +5137,6 @@ workflows:
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
           filters: *upstream-feature-branch
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
             - request-hpc-tests
@@ -5268,7 +5181,6 @@ workflows:
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           filters: *upstream-feature-branch
-          slack-mentions: "${SLACK_USER_ID}"
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
@@ -5473,8 +5385,6 @@ workflows:
             - determined-ee
           cluster-id-prefix: aws-fs-fsx
           deployment-type: fsx
-          slack-mentions: "${SLACK_USER_ID}"
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
 
       - test-aws-fs:
           name: test-aws-fs-efs
@@ -5484,8 +5394,6 @@ workflows:
             - determined-ee
           cluster-id-prefix: aws-fs-efs
           deployment-type: efs
-          slack-mentions: "${SLACK_USER_ID}"
-          slack-channel: <<pipeline.parameters.default-slack-channel>>
 
       - run-shared-cluster-cleanup:
           name: gke-cleanup
@@ -5508,20 +5416,17 @@ workflows:
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
           mark: "e2e_slurm_restart"
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           mark: "e2e_slurm_preemption"
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
@@ -5530,7 +5435,6 @@ workflows:
           matrix:
             parameters:
               mark: ["e2e_slurm and not deepspeed"]
-          slack-mentions: "${SLACK_USER_ID}"
           requires:
             - package-and-push-system-local-ee
           master_config: |
@@ -5579,7 +5483,6 @@ workflows:
               ld_library_path:
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
-            slack-mentions: "${SLACK_USER_ID}"
             requires:
               - package-and-push-system-local-ee
             agent-use: "-A"
@@ -5770,7 +5673,9 @@ workflows:
             parameters:
               path: ["harness"]
               ee: [true]
-          context: determined-production
+          context:
+            - determined-production
+            - determined-ee # to override TWINE envs for fury.io
           filters: *release-filters
           requires:
             - package-and-push-system-release-ee

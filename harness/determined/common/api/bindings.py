@@ -9835,6 +9835,54 @@ class v1PatchTemplateConfigResponse(Printable):
         }
         return out
 
+class v1PatchTemplateNameRequest(Printable):
+
+    def __init__(
+        self,
+        *,
+        newName: str,
+        oldName: str,
+    ):
+        self.newName = newName
+        self.oldName = oldName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "newName": obj["newName"],
+            "oldName": obj["oldName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "newName": self.newName,
+            "oldName": self.oldName,
+        }
+        return out
+
+class v1PatchTemplateNameResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchTrialRequest(Printable):
     """Patch a trial."""
     state: "typing.Optional[trialv1State]" = None
@@ -19371,7 +19419,7 @@ def get_GetTemplates(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
-    workspaceId: "typing.Optional[int]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetTemplatesResponse":
     """Get a list of templates.
 
@@ -19388,7 +19436,7 @@ denote number of templates to skip from the end before returning results.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
-    - workspaceId: Limit templates to those that match the workspace id.
+    - workspaceIds: Limit templates to those that match the workspace id.
     """
     _params = {
         "limit": limit,
@@ -19396,7 +19444,7 @@ denote number of templates to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "workspaceId": workspaceId,
+        "workspaceIds": workspaceIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -21185,6 +21233,27 @@ def patch_PatchTemplateConfig(
     if _resp.status_code == 200:
         return v1PatchTemplateConfigResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchTemplateConfig", _resp)
+
+def patch_PatchTemplateName(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchTemplateNameRequest",
+) -> "v1PatchTemplateNameResponse":
+    """Patch template name."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/template/rename",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTemplateNameResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTemplateName", _resp)
 
 def patch_PatchTrial(
     session: "api.BaseSession",

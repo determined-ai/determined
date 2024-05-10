@@ -3,6 +3,7 @@ import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
 import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
+import { Message } from 'e2e/models/hew/Message';
 import { Pagination } from 'e2e/models/hew/Pagination';
 
 /**
@@ -13,7 +14,7 @@ import { Pagination } from 'e2e/models/hew/Pagination';
  */
 export class F_ExperiementList extends BaseReactFragment {
   readonly tableActionBar = new TableActionBar({ parent: this });
-  // TODO no experiments
+  readonly noExperimentsMessage = new Message({ parent: this });
   // TODO no filtered experiments
   // TODO error
   readonly comparisonView = new ComparisonView({ parent: this });

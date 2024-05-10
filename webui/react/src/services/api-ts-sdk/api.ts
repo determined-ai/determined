@@ -7245,6 +7245,38 @@ export interface V1PatchTemplateConfigResponse {
     template: V1Template;
 }
 /**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameRequest
+ */
+export interface V1PatchTemplateNameRequest {
+    /**
+     * The current name.
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    oldName: string;
+    /**
+     * The updated name.
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    newName: string;
+}
+/**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameResponse
+ */
+export interface V1PatchTemplateNameResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateNameResponse
+     */
+    template: V1Template;
+}
+/**
  * Patch a trial.
  * @export
  * @interface V1PatchTrialRequest
@@ -30266,11 +30298,11 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options: any = {}): FetchArgs {
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -30305,8 +30337,8 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarQueryParameter['name'] = name
             }
             
-            if (workspaceId !== undefined) {
-                localVarQueryParameter['workspaceId'] = workspaceId
+            if (workspaceIds) {
+                localVarQueryParameter['workspaceIds'] = workspaceIds
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -30337,6 +30369,44 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTemplateName.');
+            }
+            const localVarPath = `/api/v1/template/rename`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
@@ -30505,12 +30575,12 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30531,6 +30601,25 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          */
         patchTemplateConfig(templateName: string, body: any, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateConfigResponse> {
             const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateConfig(templateName, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateNameResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateName(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -30618,12 +30707,12 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
-         * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
-            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(fetch, basePath);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -30635,6 +30724,16 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          */
         patchTemplateConfig(templateName: string, body: any, options?: any) {
             return TemplatesApiFp(configuration).patchTemplateConfig(templateName, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+            return TemplatesApiFp(configuration).patchTemplateName(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -30700,13 +30799,13 @@ export class TemplatesApi extends BaseAPI {
      * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
      * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
      * @param {string} [name] Limit templates to those that match the name.
-     * @param {number} [workspaceId] Limit templates to those that match the workspace id.
+     * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceId?: number, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceId, options)(this.fetch, this.basePath)
+    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -30720,6 +30819,18 @@ export class TemplatesApi extends BaseAPI {
      */
     public patchTemplateConfig(templateName: string, body: any, options?: any) {
         return TemplatesApiFp(this.configuration).patchTemplateConfig(templateName, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Patch template name.
+     * @param {V1PatchTemplateNameRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+        return TemplatesApiFp(this.configuration).patchTemplateName(body, options)(this.fetch, this.basePath)
     }
     
     /**

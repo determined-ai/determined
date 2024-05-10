@@ -1,7 +1,7 @@
 codecov:
-  require_ci_to_pass: yes
+  require_ci_to_pass: true
   notify:
-    wait_for_ci: no
+    wait_for_ci: false
 
 # Backend code coverage must be >= 42% +/- 3%. Backend PR coverage must be >= 80% +/- 5%.
 coverage:
