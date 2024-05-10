@@ -17,14 +17,12 @@ import { ensureArray } from 'utils/data';
 
 import css from './ColumnPickerMenu.module.scss';
 
-export const COLUMN_PICKER_MENU = 'column-picker-menu';
-
 const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns?.filter((col) => !BANNED_COLUMNS.has(col.column));
 
-const locationLabelMap = {
+export const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
@@ -250,7 +248,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   return (
     <Dropdown
       content={
-        <div className={css.base} data-testid={COLUMN_PICKER_MENU}>
+        <div className={css.base}>
           {tabs.length > 1 && (
             <Pivot
               items={[
