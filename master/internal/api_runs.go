@@ -384,8 +384,18 @@ func (a *apiServer) MoveRuns(
 				failedExpMoveIds = append(failedExpMoveIds, res.ID)
 			}
 		}
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				log.WithError(txErr).Error("error rolling back transaction in MoveRuns")
+			}
+		}()
 		var acceptedIDs []int32
-		if _, err = db.Bun().NewUpdate().Table("runs").
+		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", req.DestinationProjectId).
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
@@ -402,10 +412,14 @@ func (a *apiServer) MoveRuns(
 			})
 		}
 
-		if err = db.AddProjectHparams(ctx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+		if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
 			return nil, err
 		}
-		if err = db.RemoveProjectHparams(ctx, int(req.SourceProjectId)); err != nil {
+		if err = db.RemoveProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
+			return nil, err
+		}
+
+		if err = tx.Commit(); err != nil {
 			return nil, err
 		}
 
@@ -640,7 +654,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		return nil, fmt.Errorf("deleting run hparams: %w", err)
 	}
 	// remove project hparams
-	if err = db.RemoveProjectHparams(ctx, int(req.ProjectId)); err != nil {
+	if err = db.RemoveProjectHparams(ctx, tx, int(req.ProjectId)); err != nil {
 		return nil, err
 	}
 

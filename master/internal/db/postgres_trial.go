@@ -83,8 +83,8 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 }
 
 // AddProjectHparams adds project hyperparams from provided runs to provided project.
-func AddProjectHparams(ctx context.Context, projectID int, runIDs []int32) error {
-	if _, err := Bun().NewRaw(`
+func AddProjectHparams(ctx context.Context, tx bun.Tx, projectID int, runIDs []int32) error {
+	if _, err := tx.NewRaw(`
 		INSERT INTO project_hparams
 		SELECT ?::int as project_id, hparam,
 		CASE
@@ -103,8 +103,8 @@ func AddProjectHparams(ctx context.Context, projectID int, runIDs []int32) error
 }
 
 // RemoveProjectHparams removes outdated project hyperparams from provided project.
-func RemoveProjectHparams(ctx context.Context, projectID int) error {
-	if _, err := Bun().NewRaw(`
+func RemoveProjectHparams(ctx context.Context, tx bun.Tx, projectID int) error {
+	if _, err := tx.NewRaw(`
 	WITH removed_project_hparams as 
 	(SELECT * FROM project_hparams WHERE project_id=?
 	EXCEPT
