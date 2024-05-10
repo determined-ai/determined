@@ -147,6 +147,24 @@ def list_pools(args: argparse.Namespace) -> None:
         as_csv=False,
     )
 
+def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    w = api.workspace_by_name(sess, args.workspace_name)
+    resp = bindings.get_ListWorkspaceNamespaceBindings(sess, id=w.id)
+    if len(resp.workspaceNamespaceBindings) > 0:
+        cluster_namespaces = []
+        for binding in resp.workspaceNamespaceBindings:
+            cluster_namespaces.append([binding.clusterName, binding.namespaceName])
+        render.tabulate_or_csv(
+        headers=["Cluster", "Namespace"],
+        values=cluster_namespaces,
+        as_csv=False,
+)
+    else:
+        print("No workspace-namespace bindings for workspace " + args.workspace_name)
+
+   
+
 def add_workspace_namespace_binding(args: argparse.Namespace):
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
@@ -475,6 +493,14 @@ args_description = [
                                 the workspace-namespace binding"),
                             cli.Arg("--namespace_name", type=str, help="existing namespace to which \
                                 the workspace is bound."),
+                        ],
+                    ),
+                    cli.Cmd(
+                        "l|ist",
+                        list_workspace_namespace_bindings,
+                        "list workspace-namespace bindings",
+                        [
+                            cli.Arg("workspace_name", type=str, help="name of the workspace"),
                         ],
                     ),
                 ],

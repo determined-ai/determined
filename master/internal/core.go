@@ -103,10 +103,11 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs *logger.LogBuffer
-	echo *echo.Echo
-	db   *db.PgDB
-	rm   rm.ResourceManager
+	logs   *logger.LogBuffer
+	echo   *echo.Echo
+	db     *db.PgDB
+	rm     rm.ResourceManager
+	allRms map[string]rm.ResourceManager
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  TaskLogBackend
@@ -1061,7 +1062,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
-func buildRM(
+func (m *Master) buildRM(
 	db *db.PgDB,
 	echo *echo.Echo,
 	rmConfigs []*config.ResourceManagerWithPoolsConfig,
@@ -1128,7 +1129,7 @@ func buildRM(
 	if len(clusterNames) != len(rmConfigs) {
 		return nil, fmt.Errorf("resource managers must all have distinct cluster names")
 	}
-
+	m.allRms = rms
 	return multirm.New(defaultRMName, rms), nil
 }
 
@@ -1344,7 +1345,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	if m.rm, err = buildRM(m.db, m.echo, m.config.ResourceManagers(),
+	if m.rm, err = m.buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),

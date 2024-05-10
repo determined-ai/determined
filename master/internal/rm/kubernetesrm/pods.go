@@ -1362,20 +1362,19 @@ func (p *pods) handleCreateNamespaceRequest(autoCreateNamespace bool, namespaceN
 			},
 		}
 
-		namespaceToCreate.Name = namespaceName
-		_, err := p.clientSet.CoreV1().Namespaces().Create(context.TODO(), &namespaceToCreate,
+		_, err := p.clientSet.CoreV1().Namespaces().Create(context.Background(), &namespaceToCreate,
 			metaV1.CreateOptions{},
 		)
 		if err != nil {
 			if !strings.Contains(err.Error(), "already exists") {
-				return errors.Wrapf(err, "error creating namespace %s", namespaceName)
+				return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
 			}
 		}
 
 	} else {
 		// If the namespace doesn't exist, return an error.
 		// Remember that quota should not be specified here (which we verify in workspace.py)
-		_, err := p.clientSet.CoreV1().Namespaces().Get(context.TODO(), namespaceName,
+		_, err := p.clientSet.CoreV1().Namespaces().Get(context.Background(), namespaceName,
 			metaV1.GetOptions{
 				TypeMeta: metaV1.TypeMeta{
 					Kind:       "Namespace",

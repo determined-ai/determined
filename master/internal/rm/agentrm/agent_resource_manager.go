@@ -579,7 +579,7 @@ func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
 
 func (a *ResourceManager) CreateNamespace(autoCreateNamespace bool, namespaceName,
 	clusterName string) error {
-	return errors.New("Cannot create namespace with resource manager type AgentRM.")
+	return fmt.Errorf("Cannot create namespace with resource manager type AgentRM.", rmerrors.ErrNotSupported)
 }
 
 func (a *ResourceManager) createResourcePool(

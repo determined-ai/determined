@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -31,7 +33,22 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-const kubernetesDefaultNamespace = "default"
+const (
+	// defaultKubernetesNamespace is the name of Kubernete's default namespace for a given cluster.
+	defaultKubernetesNamespace = "default"
+	// maxNamespaceLength is the maximum character length that a Kubernetes namespace can be.
+	maxNamespaceLength = 63
+	// extraDetChars is the maximum amount of additional characters that can be added to a
+	// Kubernetes namespace name. Kubernetes namespace name length cannot exceed 63 characters as
+	// they must comply with RFC 1123 DNS labels. However, to ensure that all auto-generated
+	// namespace names are both given a determined prefix and are guaranteed to be unique, we must
+	// attach the det- prefix to the name while also appending _<workspace_id> to the end of the
+	// namespace name. Allowing the workspace ID to occupy up to 6 characters (<= 999,999 unique
+	// workspaces), and considering the _ preceding the workspace ID, we allow for determined to
+	// occupy up to 4 + 1 + 6 = 11 characters of the auto-generated namespace name, which is
+	// accounted for using extraDetChars below.
+	extraDetChars = 11
+)
 
 func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	if w.CheckpointStorageConfig == nil {
@@ -75,7 +92,7 @@ func validateWorkspaceName(name string) error {
 	switch {
 	case len(name) < 1:
 		return status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
-	case len(name) > 53:
+	case len(name) > 80:
 		return status.Errorf(codes.InvalidArgument, "name '%s' must be at most 53 character long", name)
 	case len(strings.TrimFunc(name, unicode.IsSpace)) == 0:
 		return status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
@@ -83,13 +100,17 @@ func validateWorkspaceName(name string) error {
 		return nil
 	}
 }
-
-func generateNamespaceName(workspace string) (*string, error) {
-	namespace := "det-" + workspace
-	// Ensure the namespace name is <= 63 characters.
-	if len(namespace) > 63 {
-		return nil, status.Error(codes.InvalidArgument, "The namespace name must be at most 63 characters")
-	}
+func generateNamespaceName(workspace string, workspaceID int) (*string, error) {
+	// Kubernetes namespace names must follow the regex pattern [a-z0-9]([-a-z0-9]*[a-z0-9])? and
+	// therefore cannot contain any capital letters nor special characters other than "-".
+	// Ensure namespace name is lowercased and strip workspace of all characters that are out of
+	// compliance with the kubernetes namespace name.
+	re := regexp.MustCompile(`[a-z0-9]([-a-z0-9]*[a-z0-9])?`)
+	re.ReplaceAllString(workspace, "")
+	cap := math.Min(float64(len(workspace)), float64(maxNamespaceLength-extraDetChars))
+	workspacePrefix := workspace[0:int(cap)]
+	id := strconv.Itoa(workspaceID)
+	namespace := "det-" + workspacePrefix + "_" + id
 	return &namespace, nil
 }
 
@@ -346,89 +367,80 @@ func (a *apiServer) PostWorkspace(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
-
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.WithError(err).Error("error rolling back transaction in create workspace")
-		}
-	}()
-
 	w := &model.Workspace{
 		Name: req.Name, UserID: curUser.ID,
 		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
 	}
 
-	if req.AgentUserGroup != nil {
-		w.AgentUID = req.AgentUserGroup.AgentUid
-		w.AgentGID = req.AgentUserGroup.AgentGid
-		w.AgentUser = req.AgentUserGroup.AgentUser
-		w.AgentGroup = req.AgentUserGroup.AgentGroup
-	}
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
-		var bytes []byte
-		bytes, err = req.CheckpointStorageConfig.MarshalJSON()
+		if req.AgentUserGroup != nil {
+			w.AgentUID = req.AgentUserGroup.AgentUid
+			w.AgentGID = req.AgentUserGroup.AgentGid
+			w.AgentUser = req.AgentUserGroup.AgentUser
+			w.AgentGroup = req.AgentUserGroup.AgentGroup
+		}
+
+		if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
+			var bytes []byte
+			bytes, err = req.CheckpointStorageConfig.MarshalJSON()
+			if err != nil {
+				return err
+			}
+			var sc expconf.CheckpointStorageConfig
+			w.CheckpointStorageConfig = &sc
+			if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+				return err
+			}
+			if err = schemas.IsComplete(w.CheckpointStorageConfig); err != nil {
+				return status.Errorf(codes.InvalidArgument, err.Error())
+			}
+		}
+
+		if err = workspace.AuthZProvider.Get().
+			CanModifyWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
+			return status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		if err := validatePostWorkspaceRequest(req); err != nil {
+			return err
+		}
+
+		err = tx.NewInsert().Model(w).Scan(ctx, w)
 		if err != nil {
-			return nil, err
+			if strings.Contains(err.Error(), db.CodeUniqueViolation) {
+				return status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+			}
+			return errors.Wrapf(err, "error creating workspace %s in database", req.Name)
 		}
-		var sc expconf.CheckpointStorageConfig
-		w.CheckpointStorageConfig = &sc
-		if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
-			return nil, err
-		}
-		if err = schemas.IsComplete(w.CheckpointStorageConfig); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
-		}
-	}
 
-	if err = workspace.AuthZProvider.Get().
-		CanModifyWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
+		// Verify that the specified cluster name is also provided in the master config.
+		if req.ClusterName != nil {
+			newReq := &apiv1.ModifyWorkspaceNamespaceBindingRequest{
+				Id:            int32(w.ID),
+				ClusterName:   *req.ClusterName,
+				NamespaceName: req.NamespaceName,
+			}
 
-	if err := validatePostWorkspaceRequest(req); err != nil {
+			_, err := a.modifyWorkspaceNamespaceBinding(ctx, newReq, &tx, w)
+			if err != nil {
+				return fmt.Errorf("Failed to create namespace binding: %w", err)
+			}
+		}
+
+		pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
+		_, err = tx.NewInsert().Model(pin).Exec(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "error creating workspace pin %s in database", req.Name)
+		}
+
+		if err = a.AssignWorkspaceAdminToUserTx(ctx, tx, w.ID, w.UserID); err != nil {
+			return errors.Wrap(err, "error assigning workspace admin")
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
-	}
-
-	err = tx.NewInsert().Model(w).Scan(ctx, w)
-	if err != nil {
-		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
-		}
-		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
-	}
-
-	// Verify that the specified cluster name is also provided in the master config.
-	if req.ClusterName != nil {
-		newReq := &apiv1.ModifyWorkspaceNamespaceBindingRequest{
-			Id:            int32(w.ID),
-			ClusterName:   *req.ClusterName,
-			NamespaceName: req.NamespaceName,
-		}
-
-		_, err := a.modifyWorkspaceNamespaceBinding(ctx, newReq, &tx, w)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create namespace binding: %w", err)
-		}
-	}
-
-	pin := &model.WorkspacePin{WorkspaceID: w.ID, UserID: w.UserID}
-	_, err = tx.NewInsert().Model(pin).Exec(ctx)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error creating workspace pin %s in database", req.Name)
-	}
-
-	if err = a.AssignWorkspaceAdminToUserTx(ctx, tx, w.ID, w.UserID); err != nil {
-		return nil, errors.Wrap(err, "error assigning workspace admin")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "could not commit create workspace transcation")
 	}
 
 	protoWorkspace, err := w.ToProto()
@@ -619,31 +631,36 @@ func (a *apiServer) modifyWorkspaceNamespaceBinding(ctx context.Context,
 
 func (a *apiServer) ModifyWorkspaceNamespaceBinding(ctx context.Context,
 	req *apiv1.ModifyWorkspaceNamespaceBindingRequest) (*apiv1.ModifyWorkspaceNamespaceBindingResponse, error) {
-	tx, err := db.Bun().BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.WithError(err).Error("error rolling back transaction in bind workspace to namespace")
+	var finalRes *apiv1.ModifyWorkspaceNamespaceBindingResponse
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		var w model.Workspace
+		err := tx.NewSelect().Model(&model.Workspace{}).Where("id = ?", req.Id).Scan(ctx, &w)
+		if err != nil {
+			return errors.Wrapf(err, "workspace with name %s not found", w.Name)
 		}
-	}()
 
-	var w model.Workspace
-	err = tx.NewSelect().Model(&model.Workspace{}).Where("id = ?", req.Id).Scan(ctx, &w)
-	if err != nil {
-		return nil, errors.Wrapf(err, "workspace with name %s not found", w.Name)
-	}
-
-	res, err := a.modifyWorkspaceNamespaceBinding(ctx, req, &tx, &w)
+		res, err := a.modifyWorkspaceNamespaceBinding(ctx, req, &tx, &w)
+		finalRes = res
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if err = tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "could not commit modify workspace-namespace bindings transcation")
-	}
-	return res, nil
+
+	// defer func() {
+	// 	if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+	// 		log.WithError(err).Error("error rolling back transaction in bind workspace to namespace")
+	// 	}
+	// }()
+
+	// if err = tx.Commit(); err != nil {
+	// 	return nil, errors.Wrap(err, "could not commit modify workspace-namespace bindings transcation")
+	// }
+
+	return finalRes, nil
 }
 
 func (a *apiServer) deleteWorkspace(
@@ -675,6 +692,50 @@ func (a *apiServer) deleteWorkspace(
 		return
 	}
 	log.Debugf("workspace %d deleted successfully", workspaceID)
+}
+
+func (a *apiServer) ListWorkspaceNamespaceBindings(
+	ctx context.Context,
+	req *apiv1.ListWorkspaceNamespaceBindingsRequest,
+) (*apiv1.ListWorkspaceNamespaceBindingsResponse, error) {
+	var workspaceNamespaceBindings []model.WorkspaceNamespace
+	var protoWorkspaceNamespaceBindings []*workspacev1.WorkspaceNamespaceBinding
+	allRms := a.m.allRms
+	err := db.Bun().NewSelect().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", req.Id).
+		Scan(ctx, &workspaceNamespaceBindings)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, errors.Wrap(err, "Error getting workspace-namespace bindings")
+		} else {
+			return &apiv1.ListWorkspaceNamespaceBindingsResponse{
+				WorkspaceNamespaceBindings: []*workspacev1.WorkspaceNamespaceBinding{},
+			}, nil
+		}
+	}
+
+	for _, binding := range workspaceNamespaceBindings {
+		if _, ok := allRms[binding.ClusterName]; !ok {
+			log.Warnf("You have a workspace-namespace binding for cluster %s, but you are not using this cluster.", binding.ClusterName)
+		}
+		delete(allRms, binding.ClusterName)
+		protoBinding := binding.ToProto()
+		protoWorkspaceNamespaceBindings = append(protoWorkspaceNamespaceBindings, protoBinding)
+	}
+
+	for rmName, _ := range allRms {
+		protoBinding := workspacev1.WorkspaceNamespaceBinding{
+			Id:            req.Id,
+			NamespaceName: defaultKubernetesNamespace,
+			ClusterName:   rmName,
+		}
+		protoWorkspaceNamespaceBindings = append(protoWorkspaceNamespaceBindings, &protoBinding)
+
+	}
+	return &apiv1.ListWorkspaceNamespaceBindingsResponse{
+		WorkspaceNamespaceBindings: protoWorkspaceNamespaceBindings,
+	}, nil
 }
 
 func (a *apiServer) DeleteWorkspace(

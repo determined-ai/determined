@@ -100,3 +100,13 @@ message PatchWorkspace {
   // Namespaces to which the workspace is bound.
   optional string namespace_bindings = 18;
 }
+
+// WorkspaceNamespaceBinding represents workspace-namespace binding for a given cluster.
+message WorkspaceNamespaceBinding {
+  // The id of the workspace.
+  int32 id = 1;
+  // The namespace name.
+  string namespace_name = 2;
+  // User cluster name.
+  string cluster_name = 3;
+}
