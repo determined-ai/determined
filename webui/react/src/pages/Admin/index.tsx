@@ -106,29 +106,27 @@ const SettingsContent: React.FC = () => {
 
 const steps = [
   {
-    content: 'This is my awesome feature!',
+    content: 'User management lets you add or edit users and modify attributes like display name and permissions',
     disableBeacon: true,
     target: '[data-node-key="user-management"]',
+    title: 'User Management',
   },
   {
-    content: 'This is another awesome feature!',
+    content: 'Click here to access user actions',
+    disableBeacon: true,
+    target: '[data-testid="actions"]',
+  },
+  {
+    content: 'Click here to edit user',
+    disableBeacon: true,
+    target: '[data-menu-id="rc-menu-uuid-74283-2-edit"]',
+  },
+  {
+    content: 'Group management lets you create groups and edit the users that belong to them',
     disableBeacon: true,
     target: '[data-node-key="group-management"]',
   },
-  {
-    content: 'Going back!',
-    disableBeacon: true,
-    target: '[data-node-key="user-management"]',
-  },
 ];
-
-// export default function App() {
-//   return (
-//     <div>
-//       <Joyride steps={steps} />
-//     </div>
-//   );
-// }
 
 const Admin: React.FC = () => (
   <div>
