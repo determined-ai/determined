@@ -55,7 +55,7 @@ func createPod(
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue,
-		slotType, slotResourceRequests, "default-scheduler",
+		slotType, slotResourceRequests, "default-scheduler", nil,
 	)
 
 	return newPodHandler
@@ -108,7 +108,7 @@ func createPodWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 		k8sRequestQueue = startRequestQueue(
 			map[string]typedV1.PodInterface{"default": podInterface},
 			map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-			failures,
+			nil, nil, nil, failures,
 		)
 	}
 
@@ -672,7 +672,7 @@ func TestKillTaskPod(t *testing.T) {
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 	ref, _, _ := createPodWithMockQueue(t, k8sRequestQueue)
 
@@ -697,7 +697,7 @@ func TestResourceCreationCancelled(t *testing.T) {
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
@@ -746,7 +746,7 @@ func TestResourceDeletionFailed(t *testing.T) {
 	k8sRequestQueue := startRequestQueue(
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ref, aID, sub := createPodWithMockQueue(t, k8sRequestQueue)

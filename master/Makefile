@@ -97,6 +97,8 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 	mockery --quiet --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --quiet --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
 	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go
+	mockery --quiet --name=ConfigMapInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename config_map_iface.go
+	mockery --quiet --name=ServiceInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename service_iface.go
 	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go
 	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go
 	mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
@@ -104,6 +106,8 @@ build/mock_gen.stamp: $(MOCK_INPUTS)
 	mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
 	mockery --quiet --name=Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes" --filename k8s_clientset.go --structname K8sClientsetInterface
 	mockery --quiet --name=CoreV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/core/v1" --filename k8s_corev1_iface.go --structname K8sCoreV1Interface
+	mockery --quiet --name=GatewayInterface --output internal/mocks --srcpkg "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1" --structname GatewayInterface
+	mockery --quiet --name=TCPRouteInterface --output internal/mocks --srcpkg "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2" --structname TCPRouteInterface
 
 	mkdir -p build
 	touch $@

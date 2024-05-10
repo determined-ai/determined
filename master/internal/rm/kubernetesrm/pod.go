@@ -28,6 +28,8 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
@@ -47,6 +49,12 @@ type podSubmissionInfo struct {
 // podStatusUpdate: messages that are sent by the pod informer.
 type podStatusUpdate struct {
 	updatedPod *k8sV1.Pod
+}
+
+type gatewayProxyResource struct {
+	serviceSpec     *k8sV1.Service
+	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
+	gatewayListener gatewayTyped.Listener
 }
 
 // pod manages the lifecycle of a Kubernetes pod that executes a
@@ -73,7 +81,6 @@ type pod struct {
 	loggingConfig        model.LoggingConfig
 	slots                int
 	podInterface         typedV1.PodInterface
-	configMapInterface   typedV1.ConfigMapInterface
 	resourceRequestQueue *requestQueue
 	scheduler            string
 	slotType             device.Type
@@ -83,6 +90,10 @@ type pod struct {
 	podName       string
 	configMap     *k8sV1.ConfigMap
 	configMapName string
+
+	gatewayProxyResources []gatewayProxyResource
+	exposeProxyConfig     *config.ExposeProxiesExternallyConfig
+
 	// TODO(DET-10013) : Remove container field from pod struct.
 	container        cproto.Container
 	ports            []int
@@ -117,6 +128,7 @@ func newPod(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
+	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
 ) *pod {
 	podContainer := cproto.Container{
 		ID:          cproto.ID(msg.Spec.ContainerID),
@@ -145,7 +157,6 @@ func newPod(
 		loggingConfig:        loggingConfig,
 		slots:                msg.Slots,
 		podInterface:         podInterface,
-		configMapInterface:   configMapInterface,
 		resourceRequestQueue: resourceRequestQueue,
 		podName:              uniqueName,
 		configMapName:        uniqueName,
@@ -154,6 +165,7 @@ func newPod(
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
+		exposeProxyConfig:    exposeProxyConfig,
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,
@@ -222,7 +234,7 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports))
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig))
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -309,12 +321,24 @@ func (p *pod) kill() {
 		return
 	}
 
+	// TODO(RM-270/gateways) make sure this is set on restore.
+	var serviceNames, tcpRouteNames []string
+	var gatewayPortsToFree []int
+	for _, g := range p.gatewayProxyResources {
+		serviceNames = append(serviceNames, g.serviceSpec.Name)
+		tcpRouteNames = append(tcpRouteNames, g.tcpRouteSpec.Name)
+		gatewayPortsToFree = append(gatewayPortsToFree, int(g.gatewayListener.Port))
+	}
+
 	p.syslog.Infof("requesting to delete kubernetes resources")
-	p.resourceRequestQueue.deleteKubernetesResources(
-		p.namespace,
-		p.podName,
-		p.configMapName,
-	)
+	p.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace:          p.namespace,
+		podName:            &p.podName,
+		configMapName:      &p.configMapName,
+		serviceNames:       serviceNames,
+		tcpRouteNames:      tcpRouteNames,
+		gatewayPortsToFree: gatewayPortsToFree,
+	})
 }
 
 func (p *pod) getPodNodeInfo() podNodeInfo {
@@ -346,7 +370,7 @@ func (p *pod) createPodSpecAndSubmit() error {
 		return err
 	}
 
-	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap)
+	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, p.gatewayProxyResources)
 	return nil
 }
 
@@ -559,15 +583,25 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 	return 0, "", errors.Errorf("unable to get exit code from pod %s", pod.Name)
 }
 
-func getResourcesStartedForPod(pod *k8sV1.Pod, ports []int) sproto.ResourcesStarted {
+func getResourcesStartedForPod(
+	pod *k8sV1.Pod, ports []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
 	for _, port := range ports {
-		addresses = append(addresses, cproto.Address{
+		address := cproto.Address{
 			ContainerIP:   pod.Status.PodIP,
 			ContainerPort: port,
 			HostIP:        pod.Status.PodIP,
 			HostPort:      port,
-		})
+		}
+		// TODO(RM-271/gateways) overwrite the port too if we do a translation of port
+		// to task container in the service layer.
+		if exposeProxy := exposeProxyConfig; exposeProxy != nil {
+			address.ContainerIP = exposeProxy.GatewayAddress
+			address.HostIP = exposeProxy.GatewayAddress
+		}
+
+		addresses = append(addresses, address)
 	}
 
 	var taskContainerID string
