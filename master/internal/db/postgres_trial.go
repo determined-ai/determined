@@ -102,8 +102,8 @@ func AddProjectHparams(ctx context.Context, tx bun.Tx, projectID int, runIDs []i
 	return nil
 }
 
-// RemoveProjectHparams removes outdated project hyperparams from provided project.
-func RemoveProjectHparams(ctx context.Context, tx bun.Tx, projectID int) error {
+// RemoveOutdatedProjectHparams removes outdated project hyperparams from provided project.
+func RemoveOutdatedProjectHparams(ctx context.Context, tx bun.Tx, projectID int) error {
 	if _, err := tx.NewRaw(`
 	WITH removed_project_hparams as 
 	(SELECT * FROM project_hparams WHERE project_id=?

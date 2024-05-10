@@ -415,7 +415,7 @@ func (a *apiServer) MoveRuns(
 		if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
 			return nil, err
 		}
-		if err = db.RemoveProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
+		if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
 			return nil, err
 		}
 
@@ -654,7 +654,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		return nil, fmt.Errorf("deleting run hparams: %w", err)
 	}
 	// remove project hparams
-	if err = db.RemoveProjectHparams(ctx, tx, int(req.ProjectId)); err != nil {
+	if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.ProjectId)); err != nil {
 		return nil, err
 	}
 

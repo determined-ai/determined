@@ -717,11 +717,36 @@ func MoveExperiments(ctx context.Context,
 			return nil, fmt.Errorf("updating experiment's project IDs: %w", err)
 		}
 
+		// Move hyperparams for perf table
+		var runIDs []int32
+		err = tx.NewSelect().Table("runs").Column("id").
+			Where("experiment_id IN (?)", bun.In(validIDs)).
+			Scan(ctx, &runIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		var sourceProjectID int
+		err = tx.NewSelect().Table("runs").Column("project_id").
+			Where("id IN (?)", bun.In(runIDs)).
+			Limit(1).
+			Scan(ctx, &sourceProjectID)
+		if err != nil {
+			return nil, err
+		}
+
 		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", destinationProjectID).
 			Where("runs.experiment_id IN (?)", bun.In(validIDs)).
 			Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		if err = db.AddProjectHparams(ctx, tx, int(destinationProjectID), runIDs); err != nil {
+			return nil, err
+		}
+		if err = db.RemoveOutdatedProjectHparams(ctx, tx, sourceProjectID); err != nil {
+			return nil, err
 		}
 
 		for _, acceptID := range acceptedIDs {
