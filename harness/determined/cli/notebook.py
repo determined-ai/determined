@@ -49,7 +49,7 @@ def start_notebook(args: argparse.Namespace) -> None:
 
     cli.wait_ntsc_ready(sess, api.NTSC_Kind.notebook, nb.id)
 
-    assert nb.serviceAddress is not None, "missing tensorboard serviceAddress"
+    assert nb.serviceAddress is not None, "missing Jupyter serviceAddress"
     nb_path = ntsc.make_interactive_task_url(
         task_id=nb.id,
         service_address=nb.serviceAddress,
@@ -62,6 +62,11 @@ def start_notebook(args: argparse.Namespace) -> None:
     if not args.no_browser:
         webbrowser.open(url)
     print(termcolor.colored(f"Jupyter Notebook is running at: {url}", "green"))
+    print(
+        termcolor.colored(
+            f"Connect to remote Jupyter server: " f"{args.master}{nb.serviceAddress}", "blue"
+        )
+    )
 
 
 def open_notebook(args: argparse.Namespace) -> None:
