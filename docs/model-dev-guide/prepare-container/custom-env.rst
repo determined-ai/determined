@@ -98,15 +98,18 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-+-------------+-------------------------------------------------------------------------------+
-| Environment | File Name                                                                     |
-+=============+===============================================================================+
-| CPUs        | ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``                           |
-+-------------+-------------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3``                          |
-+-------------+-------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``        |
-+-------------+-------------------------------------------------------------------------------+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   -  -  Environment
+      -  File Name
+   -  -  CPUs
+      -  ``determinedai/pytorch-ngc-dev:8b3bea3``
+   -  -  NVIDIA GPUs
+      -  ``determinedai/pytorch-ngc-dev:8b3bea3``
+   -  -  AMD GPUs
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
 
 .. _ngc-version:
 
