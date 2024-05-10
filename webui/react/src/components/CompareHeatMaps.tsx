@@ -127,8 +127,12 @@ const CompareHeatMaps: React.FC<Props> = ({
         const title = `${yLabel} (y) vs ${xLabel} (x)`;
         const xHpLabels = chartData?.hpLabels[hParam2];
         const yHpLabels = chartData?.hpLabels[hParam1];
-        const isXLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam2];
-        const isYLogarithmic = !isUndefined(selectedScale) ? selectedScale === Scale.Log : chartData?.hpLogScales[hParam1];
+        const isXLogarithmic = !isUndefined(selectedScale)
+          ? selectedScale === Scale.Log
+          : chartData?.hpLogScales[hParam2];
+        const isYLogarithmic = !isUndefined(selectedScale)
+          ? selectedScale === Scale.Log
+          : chartData?.hpLogScales[hParam1];
         const isXCategorical = xHpLabels?.length !== 0;
         const isYCategorical = yHpLabels?.length !== 0;
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
@@ -142,12 +146,29 @@ const CompareHeatMaps: React.FC<Props> = ({
         const xValues = isXCategorical ? xHpLabels : undefined;
         const yValues = isYCategorical ? yHpLabels : undefined;
 
+        const getHParamData = (hParam: string, axis: 'x' | 'y') => {
+          // categorical x-axis should have values as element of xSplits
+          if (axis === 'x' && isXCategorical) {
+            return chartData?.hpValues[hParam]?.map((v) => {
+              return xValues?.findIndex((val) => val === v);
+            });
+          }
+          // categorical y-axis should have values as elements of ySplits
+          if (axis === 'y' && isYCategorical) {
+            return chartData?.hpValues[hParam]?.map((v) => {
+              return yValues?.findIndex((val) => val === v);
+            });
+          }
+
+          return chartData?.hpValues[hParam];
+        };
+
         props[key] = {
           data: [
             null,
             [
-              chartData?.hpValues[hParam2] || [],
-              chartData?.hpValues[hParam1] || [],
+              getHParamData(hParam2, 'x') || [],
+              getHParamData(hParam1, 'y') || [],
               null,
               chartData?.hpMetrics[key] || [],
               chartData?.hpMetrics[key] || [],
