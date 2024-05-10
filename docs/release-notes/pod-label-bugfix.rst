@@ -2,4 +2,4 @@
 
 **Bug Fixes**
 
--  Kubernetes: Remove pod labels that could have characters incompatible with Kubernetes naming requirements. This change will not affect Determined functionality.
+-  Kubernetes: Fix an issue introduced in 0.32.0 where workspaces with names incompatible with Kubernetes naming requirements would cause jobs in that workspace to fail. 
