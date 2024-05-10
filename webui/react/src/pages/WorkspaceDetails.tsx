@@ -4,6 +4,7 @@ import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Joyride from 'react-joyride';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import ModelRegistry from 'components/ModelRegistry';
@@ -294,22 +295,49 @@ const WorkspaceDetails: React.FC = () => {
     });
   }
 
+  const steps = [
+    {
+      content: 'Displays the projects under the Workspace.',
+      disableBeacon: true,
+      target: '[data-node-key="projects"]',
+      title: 'User Management',
+    },
+    {
+      content: 'Displays the Tasks under the Workspace.',
+      disableBeacon: true,
+      target: '[data-testid="tasks"]',
+    },
+    {
+      content: 'Displays the models registered under the Workspace.',
+      disableBeacon: true,
+      target: '[data-menu-id="models"]',
+    },
+    {
+      content: 'Displays the resource pools the Workspace is bound to.',
+      disableBeacon: true,
+      target: '[data-node-key="pools"]',
+    },
+  ];
+
   return (
-    <Page
-      breadcrumb={breadcrumb}
-      containerRef={pageRef}
-      id="workspaceDetails"
-      key={workspaceId}
-      menuItems={menu.length > 0 ? menu : undefined}
-      onClickMenu={onClick}>
-      <Pivot
-        activeKey={tabKey}
-        destroyInactiveTabPane
-        items={tabItems}
-        onChange={handleTabChange}
-      />
-      {contextHolders}
-    </Page>
+    <div>
+      <Joyride showProgress showSkipButton steps={steps} />
+      <Page
+        breadcrumb={breadcrumb}
+        containerRef={pageRef}
+        id="workspaceDetails"
+        key={workspaceId}
+        menuItems={menu.length > 0 ? menu : undefined}
+        onClickMenu={onClick}>
+        <Pivot
+          activeKey={tabKey}
+          destroyInactiveTabPane
+          items={tabItems}
+          onChange={handleTabChange}
+        />
+        {contextHolders}
+      </Page>
+    </div>
   );
 };
 
