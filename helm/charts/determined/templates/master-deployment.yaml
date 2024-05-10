@@ -45,6 +45,10 @@ spec:
                 name: {{ required "A valid client secret name is required!" .Values.oidc.clientSecretName }}
                 key: {{ required "A valid client secret filename is required!" .Values.oidc.clientSecretKey }}
                 optional: false
+          - name: DET_INSTALLATION_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
         {{- end }}
         {{- end }}
         volumeMounts:

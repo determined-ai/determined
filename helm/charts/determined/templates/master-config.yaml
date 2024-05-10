@@ -169,7 +169,7 @@ stringData:
 
     resource_manager:
       type: "kubernetes"
-      default_namespace: {{ .Release.Namespace }}
+      default_namespace: {{ .Values.namespace }}
       max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
       master_service_name: determined-master-service-{{ .Release.Name }}
       {{- if .Values.defaultScheduler}}
@@ -190,7 +190,6 @@ stringData:
 
       default_aux_resource_pool: {{.Values.defaultAuxResourcePool}}
       default_compute_resource_pool: {{.Values.defaultComputeResourcePool}}
-
 
     {{- if .Values.additional_resource_managers}}
     additional_resource_managers:
