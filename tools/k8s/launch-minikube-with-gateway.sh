@@ -30,7 +30,7 @@ EOF
 # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
 nohup minikube --profile $1 tunnel & # TODO won't work for users with sudo passwords.
 
-for ((i=0; i<60; i++)); do
+for ((i = 0; i < 60; i++)); do
     export GATEWAY_IP=$(kubectl -n projectcontour get svc envoy-contour -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
     if [ -n "$GATEWAY_IP" ]; then
         echo "External IP address of envoy-contour service: $GATEWAY_IP"
