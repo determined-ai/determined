@@ -212,10 +212,8 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 func (k KubernetesResourceManagerConfig) Validate() []error {
 	var checkSlotType error
 	switch k.SlotType {
-	case device.CPU, device.CUDA:
+	case device.CPU, device.CUDA, device.ROCM:
 		break
-	case device.ROCM:
-		checkSlotType = errors.Errorf("rocm slot_type is not supported yet on k8s")
 	default:
 		checkSlotType = errors.Errorf("slot_type must be either cuda or cpu")
 	}

@@ -59,7 +59,20 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 			},
 		}
 	case device.ROCM:
-		panic("ROCm is not supported on k8s yet")
+		if p.slots > 0 {
+			return k8sV1.ResourceRequirements{
+				Limits: map[k8sV1.ResourceName]resource.Quantity{
+					ResourceTypeAMD: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+				},
+				Requests: map[k8sV1.ResourceName]resource.Quantity{
+					ResourceTypeAMD: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+				},
+			}
+		}
+		return k8sV1.ResourceRequirements{
+			Limits:   map[k8sV1.ResourceName]resource.Quantity{},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{},
+		}
 	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:

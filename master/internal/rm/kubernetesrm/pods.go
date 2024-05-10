@@ -48,6 +48,8 @@ import (
 // ResourceTypeNvidia describes the GPU resource type.
 const ResourceTypeNvidia = "nvidia.com/gpu"
 
+const ResourceTypeAMD = "amd.com/gpu"
+
 const (
 	getAgentsCacheDuration = 15 * time.Second
 	summarizeCacheDuration = 5 * time.Second
@@ -1372,6 +1374,10 @@ func (p *pods) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSu
 		Key:      ResourceTypeNvidia,
 		Value:    "present",
 		Operator: k8sV1.TolerationOpEqual,
+	}, k8sV1.Toleration{ // Under the assumption AMD will probably do the same.
+		Key:      ResourceTypeAMD,
+		Value:    "present",
+		Operator: k8sV1.TolerationOpEqual,
 	}}
 	cpuTolerations, gpuTolerations := extractTolerations(p.baseContainerDefaults)
 	poolsToNodes := make(map[string][]*k8sV1.Node, len(p.namespaceToPoolName))
@@ -1513,7 +1519,9 @@ func (p *pods) summarizeClusterByNodes() map[string]model.AgentSummary {
 			numSlots = int64(float32(milliCPUs) / (1000. * p.slotResourceRequests.CPU))
 			deviceType = device.CPU
 		case device.ROCM:
-			panic("ROCm is not supported on k8s yet")
+			resources := node.Status.Allocatable[ResourceTypeAMD]
+			numSlots = resources.Value()
+			deviceType = device.ROCM
 		case device.CUDA:
 			fallthrough
 		default:
@@ -1649,6 +1657,8 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 				reqs += p.getCPUReqs(c)
 			} else if deviceType == device.CUDA {
 				reqs += c.Resources.Requests.Name(ResourceTypeNvidia, resource.DecimalSI).Value()
+			} else if deviceType == device.ROCM {
+				reqs += c.Resources.Requests.Name(ResourceTypeAMD, resource.DecimalSI).Value()
 			}
 		}
 		if reqs > 0 {
