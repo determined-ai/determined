@@ -10,7 +10,7 @@ from packaging import version
 import determined as det
 from determined import keras, workload
 from tests.experiment import utils
-from tests.experiment.fixtures import tf_keras_xor_model
+from tests.experiment.fixtures import tf_keras_one_var_model, tf_keras_xor_model
 
 
 def test_executing_eagerly() -> None:
@@ -597,8 +597,6 @@ def test_rng_restore(tmp_path: pathlib.Path) -> None:
 
 @pytest.mark.tensorflow
 def test_keras_from_config() -> None:
-    from tests.experiment.fixtures import tf_keras_one_var_model
-
     data_len = 10
     lr = 0.001
     config = {
