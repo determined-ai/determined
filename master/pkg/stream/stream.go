@@ -288,7 +288,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 
 					if entityCache, ok := idToEventCache[afterMsg.GetID()]; ok {
 						cachedSeq := entityCache.Seq
-						fmt.Printf("cached Seq: %+v\n", cachedSeq)
+						fmt.Printf("cached Seq: %+v, afterMsg Seq: %v\n", cachedSeq, afterMsg.SeqNum())
 						if cachedSeq == afterMsg.SeqNum() {
 							if entityCache.DeleteCache == nil {
 								entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
@@ -331,7 +331,8 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					}
 
 				default:
-					// ignore this message
+					fmt.Printf("it's a malformed message %v\n", ev)
+					log.Debugf("unable to this event %v\n", ev)
 					continue
 				}
 				// is this the first match for this Subscription during this Broadcast?
