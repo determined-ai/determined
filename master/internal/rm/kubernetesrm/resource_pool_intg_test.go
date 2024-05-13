@@ -134,7 +134,7 @@ func TestSetGroupPriority(t *testing.T) {
 			if tt.preemptible {
 				require.NoError(t, err)
 				// TODO (bradley): check that the priority change is reflected in rm events
-				//require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
+				// require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
 			} else {
 				require.Error(t, err)
 			}
