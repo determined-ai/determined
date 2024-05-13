@@ -964,7 +964,7 @@ commands:
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="initialUserPassword=${INITIAL_USER_PASSWORD},detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - run:
           command: |
