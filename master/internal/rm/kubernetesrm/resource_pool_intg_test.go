@@ -170,7 +170,7 @@ func TestSchedule(t *testing.T) {
 	rp.Schedule()
 
 	require.False(t, rp.reschedule)
-	require.True(t, rp.reqList.IsScheduled(allocID))
+	go require.True(t, rp.reqList.IsScheduled(allocID))
 }
 
 func newTestPod(t *testing.T, rp *kubernetesResourcePool, jobID model.JobID) model.AllocationID {
