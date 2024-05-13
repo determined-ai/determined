@@ -346,7 +346,7 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 ## Configure the initial user password for the cluster
-# initialUserPassword
+# initialUserPassword:
 
 # additional_resource_managers:
 #   - resource_manager:
