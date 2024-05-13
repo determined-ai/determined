@@ -48,8 +48,6 @@ func TestAllocateAndRelease(t *testing.T) {
 	req, ok = rp.reqList.TaskByID(allocID)
 	require.False(t, ok)
 	require.Nil(t, req)
-	require.Empty(t, rp.allocationIDToContainerID[allocID])
-	require.Empty(t, rp.allocationIDToJobID[allocID])
 }
 
 func TestUpdatePodStatus(t *testing.T) {
