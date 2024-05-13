@@ -35,7 +35,7 @@ const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) 
         text: 'Delete Template',
       }}
       title="Confirm Delete Template">
-      <div>Are you sure you want to delete this template &quot;{template?.name}&quot;</div>
+      <div>Are you sure you want to delete this template &quot;{template.name}&quot;</div>
     </Modal>
   );
 };
