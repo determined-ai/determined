@@ -1,12 +1,16 @@
 :orphan:
 
-**Deprecation Notice**
+Deprecations
 
-The following features may be removed in future releases, in order to provide a more stable user experience and simplify onboarding. The goal is for Agent Resource Manager environments will work out-of-the-box with minimal custom configuration.
+To enhance stability and streamline the onboarding process, we may remove the following features in
+future releases. Our goal is for Agent Resource Manager environments to function seamlessly
+out-of-the-box with minimal customization required.
 
-- Agent Resource Manager:
-  - Container Runtimes: Limit support to Docker for Agent Resource Managers.
-  - Job Scheduling: Moving a job will require updating its priority; a job cannot be moved within the same priority group. Round-robin and fair share schedulers are no longer supported; the priority scheduler is recommended.  Most scheduling needs can be provided with the priority scheduler; focusing on one feature-rich scheduler eliminates noise in setup and configuration.
-  - AMD GPUs: Nvidia GPUs remain supported. 
+Agent Resource Manager:
 
-- Machine Architectures: PPC64/POWER builds are no longer supported. This applies to all environments.
+Container Runtimes: We will limit support to Docker for Agent Resource Managers. Job Scheduling:
+Adjusting a job's priority will be required to move it; jobs cannot be shifted within the same
+priority group. Support for round-robin and fair share schedulers is discontinued. We recommend
+using the priority scheduler, as it meets most scheduling needs and simplifies configuration. AMD
+GPUs: Support will continue only for Nvidia GPUs. Machine Architectures: PPC64/POWER builds across
+all environments are no longer supported.
