@@ -38,7 +38,7 @@ export type NamedComponentArgs =
  * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-export class BaseComponent implements ModelBasics {
+export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
   protected _locator: Locator | undefined;
@@ -82,7 +82,7 @@ export class BaseComponent implements ModelBasics {
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  */
-export class BaseReactFragment implements ModelBasics {
+export class BaseReactFragment implements ComponentBasics {
   readonly _parent: CanBeParent;
 
   constructor({ parent }: ComponentArgBasics) {

@@ -1,10 +1,10 @@
+import { Pagination } from 'e2e/models/ant/Pagination';
 import { BaseReactFragment } from 'e2e/models/BaseComponent';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
 import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
 import { Message } from 'e2e/models/hew/Message';
-import { Pagination } from 'e2e/models/hew/Pagination';
 
 /**
  * Returns a representation of the F_ExperiementList component.
@@ -23,11 +23,6 @@ export class F_ExperiementList extends BaseReactFragment {
     parent: this.comparisonView.initial,
     rowType: ExperimentRow,
   });
-  // There is no button which activates this dropdown. To display it, right-click the grid
-  readonly experimentActionDropdown = new ExperimentActionDropdown({
-    parent: this.root,
-    selector: '',
-  });
   readonly pagination = new Pagination({ parent: this });
 }
 
@@ -37,4 +32,8 @@ class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
     super(args);
     this.columnPositions.set('ID', 50);
   }
+  readonly experimentActionDropdown = new ExperimentActionDropdown({
+    openMethod: this.rightClick.bind(this),
+    root: this.root,
+  });
 }

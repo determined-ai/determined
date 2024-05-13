@@ -46,7 +46,7 @@ test.describe('Projects', () => {
       if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
         const workspaceCard = workspacesPage.list.cardWithName(wsCreatedWithButton);
-        await workspaceCard.actionMenu.pwLocator.click();
+        await workspaceCard.actionMenu.open();
         await workspaceCard.actionMenu.delete.pwLocator.click();
         await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton);
         await workspacesPage.deleteModal.footer.submit.pwLocator.click();
@@ -54,10 +54,9 @@ test.describe('Projects', () => {
     });
     await test.step('Delete a workspace through sidebar', async () => {
       if (wsCreatedWithSidebar !== '') {
-        await workspacesPage.nav.sidebar
-          .sidebarItem(wsCreatedWithSidebar)
-          .pwLocator.click({ button: 'right' });
-        await workspacesPage.nav.sidebar.actionMenu.delete.pwLocator.click();
+        const workspaceItem = workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar);
+        await workspaceItem.actionMenu.open();
+        await workspaceItem.actionMenu.delete.pwLocator.click();
         await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
         await expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
         await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
@@ -83,7 +82,7 @@ test.describe('Projects', () => {
       );
 
       await expect(
-        workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithButton).pwLocator,
+        workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator,
       ).toBeVisible();
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
       await expect(workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator).toBeVisible();
@@ -97,7 +96,7 @@ test.describe('Projects', () => {
       );
 
       await expect(
-        workspacesPage.nav.sidebar.sidebarItem(wsCreatedWithSidebar).pwLocator,
+        workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar).pwLocator,
       ).toBeVisible();
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
       await expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();

@@ -1,7 +1,7 @@
 import { expect, Locator } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 type RowClass<RowType extends Row<RowType, HeadRowType>, HeadRowType extends HeadRow> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -229,6 +229,16 @@ export class Row<
   }
 
   /**
+   * Right clicks the row
+   */
+  async rightClick(): Promise<void> {
+    await this.parentTable.pwLocator.click({
+      button: 'right',
+      position: { x: 5, y: this.getY(await this.getIndex()) },
+    });
+  }
+
+  /**
    * Returns a cell from an index. Start counting at 0.
    */
   getCellByIndex(n: number): BaseComponent {
@@ -268,9 +278,14 @@ export class HeadRow extends NamedComponent {
   }
 
   readonly selectDropdown = new HeaderDropdown({
-    parent: this,
-    selector: `[${this.#columnIndexAttribute}="1"]`,
+    childNode: new BaseComponent({
+      parent: this,
+      selector: `[${this.#columnIndexAttribute}="1"]`,
+    }),
+    openMethod: this.clickSelectDropdown.bind(this),
+    root: this.root,
   });
+
   #columnDefs = new Map<string, number>();
 
   get columnDefs(): Map<string, number> {
@@ -334,21 +349,9 @@ export class HeadRow extends NamedComponent {
  * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-class HeaderDropdown extends Dropdown {
-  readonly select5 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-5'),
-  });
-  readonly select10 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-10'),
-  });
-  readonly select25 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-25'),
-  });
-  readonly selectAll = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-all'),
-  });
+class HeaderDropdown extends DropdownMenu {
+  readonly select5 = this.menuItem('select-5');
+  readonly select10 = this.menuItem('select-10');
+  readonly select25 = this.menuItem('select-25');
+  readonly selectAll = this.menuItem('select-all');
 }

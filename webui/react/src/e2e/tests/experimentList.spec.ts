@@ -52,7 +52,7 @@ test.describe('Experiement List', () => {
     const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
     await row.clickColumn('Select');
     expect(await row.isSelected()).toBeTruthy();
-    await projectDetailsPage.f_experiemntList.dataGrid.headRow.clickSelectDropdown();
+    await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.select5.pwLocator.click();
     await row.clickColumn('ID');
     await authedPage.waitForURL(/overview/);
