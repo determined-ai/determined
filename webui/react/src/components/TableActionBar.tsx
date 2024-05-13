@@ -22,6 +22,7 @@ import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import { BANNED_FILTER_COLUMNS } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
@@ -411,6 +412,7 @@ const TableActionBar: React.FC<Props> = ({
             />
             <ColumnPickerMenu
               compare={compareViewOn}
+              defaultVisibleColumns={defaultExperimentColumns}
               initialVisibleColumns={initialVisibleColumns}
               isMobile={isMobile}
               pinnedColumnsCount={pinnedColumnsCount}

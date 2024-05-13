@@ -3,6 +3,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -71,7 +72,13 @@ import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
-import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
+import {
+  defaultColumnWidths,
+  defaultRunColumns,
+  getColumnDefs,
+  RunColumn,
+  runColumns,
+} from './columns';
 import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
@@ -540,12 +547,22 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
     (newColumnsOrder: string[], pinnedCount?: number) => {
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
       updateSettings({
         columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
         pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
       });
     },
-    [updateSettings, settings.pinnedColumnsCount],
+    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleSortChange = useCallback(
@@ -615,7 +632,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(
+                  handleColumnsOrderChange(
                     newColumnsOrder,
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                   );
@@ -629,7 +646,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(
+                  handleColumnsOrderChange(
                     newColumnsOrder,
                     Math.max(settings.pinnedColumnsCount - 1, 0),
                   );
@@ -642,12 +659,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           onClick: () => {
             const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
             if (isPinned) {
-              handleColumnsOrderChange?.(
+              handleColumnsOrderChange(
                 newColumnsOrder,
                 Math.max(settings.pinnedColumnsCount - 1, 0),
               );
             } else {
-              handleColumnsOrderChange?.(newColumnsOrder);
+              handleColumnsOrderChange(newColumnsOrder);
             }
           },
         },
@@ -756,6 +773,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           onIsOpenFilterChange={handleIsOpenFilterChange}
         />
         <ColumnPickerMenu
+          defaultVisibleColumns={defaultRunColumns}
           initialVisibleColumns={columnsIfLoaded}
           isMobile={isMobile}
           pinnedColumnsCount={settings.pinnedColumnsCount}

@@ -10,7 +10,6 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import { V1LocationType } from 'services/api-ts-sdk';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
@@ -20,7 +19,7 @@ import css from './ColumnPickerMenu.module.scss';
 const BANNED_COLUMNS: Set<string> = new Set([]);
 
 const removeBannedColumns = (columns: ProjectColumn[]) =>
-  columns?.filter((col) => !BANNED_COLUMNS.has(col.column));
+  columns.filter((col) => !BANNED_COLUMNS.has(col.column));
 
 export const locationLabelMap = {
   [V1LocationType.EXPERIMENT]: 'General',
@@ -33,6 +32,7 @@ export const locationLabelMap = {
 interface ColumnMenuProps {
   isMobile?: boolean;
   initialVisibleColumns: string[];
+  defaultVisibleColumns: string[];
   onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   onHeatmapSelectionRemove?: (id: string) => void;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -76,13 +76,13 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
     const locations = ensureArray(tab);
-    return totalColumns?.filter(
+    return totalColumns.filter(
       (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
     );
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
-    return filteredColumns?.every((col) => columnState.includes(col.column));
+    return filteredColumns.every((col) => columnState.includes(col.column));
   }, [columnState, filteredColumns]);
 
   const handleShowHideAll = useCallback(() => {
@@ -96,7 +96,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
-        newColumns?.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
+        newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
       : pinnedColumnsCount;
 
     onVisibleColumnChange?.(newColumns, pinnedCount);
@@ -175,9 +175,9 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         value={searchString}
         onChange={handleSearch}
       />
-      {totalColumns?.length !== 0 ? (
+      {totalColumns.length !== 0 ? (
         <div className={css.columns}>
-          {filteredColumns?.length > 0 ? (
+          {filteredColumns.length > 0 ? (
             <List height={360} itemCount={filteredColumns.length} itemSize={30} width="100%">
               {rows}
             </List>
@@ -207,6 +207,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   pinnedColumnsCount,
   projectColumns,
   initialVisibleColumns,
+  defaultVisibleColumns,
   projectId,
   isMobile = false,
   onVisibleColumnChange,
@@ -230,9 +231,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   );
 
   const handleShowSuggested = useCallback(() => {
-    onVisibleColumnChange?.(defaultExperimentColumns);
+    onVisibleColumnChange?.(defaultVisibleColumns);
     closeMenu();
-  }, [onVisibleColumnChange]);
+  }, [onVisibleColumnChange, defaultVisibleColumns]);
 
   return (
     <Dropdown
