@@ -97,8 +97,7 @@ interface Props {
   onRowHeightChange?: (rowHeight: RowHeight) => void;
   onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange?: (sorts: Sort[]) => void;
-  onVisibleColumnChange?: (newColumns: string[]) => void;
-  onPinnedColumnsCountChange?: (pinnedColumnsCount: number) => void;
+  onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   onHeatmapSelectionRemove?: (id: string) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -126,7 +125,6 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  onPinnedColumnsCountChange,
   onHeatmapSelectionRemove,
   onVisibleColumnChange,
   project,
@@ -420,7 +418,6 @@ const TableActionBar: React.FC<Props> = ({
               projectId={project.id}
               tabs={columnGroups}
               onHeatmapSelectionRemove={onHeatmapSelectionRemove}
-              onPinnedColumnsCountChange={onPinnedColumnsCountChange}
               onVisibleColumnChange={onVisibleColumnChange}
             />
             <OptionsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />

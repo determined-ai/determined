@@ -27,6 +27,7 @@ import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -537,10 +538,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
+      updateSettings({
+        columns: newColumnsOrder,
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.pinnedColumnsCount],
   );
 
   const handleSortChange = useCallback(
@@ -610,8 +615,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(
+                  handleColumnsOrderChange?.(
+                    newColumnsOrder,
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                   );
                 },
@@ -624,8 +629,10 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                  handleColumnsOrderChange?.(
+                    newColumnsOrder,
+                    Math.max(settings.pinnedColumnsCount - 1, 0),
+                  );
                 },
               },
         {
@@ -634,9 +641,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           label: 'Hide column',
           onClick: () => {
             const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-            handleColumnsOrderChange?.(newColumnsOrder);
             if (isPinned) {
-              handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+              handleColumnsOrderChange?.(
+                newColumnsOrder,
+                Math.max(settings.pinnedColumnsCount - 1, 0),
+              );
+            } else {
+              handleColumnsOrderChange?.(newColumnsOrder);
             }
           },
         },
@@ -713,7 +724,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [
       columnsIfLoaded,
       handleColumnsOrderChange,
-      handlePinnedColumnsCountChange,
       handleSelectionChange,
       handleSortChange,
       isMobile,
