@@ -47,7 +47,7 @@
     "fuse.js": "^7.0.0",
     "hermes-parallel-coordinates": "^0.6.17",
     "hew": "npm:@hpe.com/hew@^0.6.38",
-    "humanize-duration": "^3.32.0",
+    "humanize-duration": "^3.28.0",
     "immutable": "^4.3.0",
     "io-ts": "^2.2.21",
     "js-sha512": "^0.9.0",
