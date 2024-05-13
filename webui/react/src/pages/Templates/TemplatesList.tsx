@@ -321,7 +321,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
         onSuccess={fetchTemplates}
       />
       <TemplateViewModal.Component template={selectedTemplate} workspaces={workspaces} />
-      <TemplateDeleteModal.Component template={selectedTemplate!} onSuccess={fetchTemplates} />
+      <TemplateDeleteModal.Component template={selectedTemplate} onSuccess={fetchTemplates} />
     </>
   );
 };

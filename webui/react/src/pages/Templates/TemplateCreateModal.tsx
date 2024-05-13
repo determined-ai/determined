@@ -137,7 +137,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
           <Input />
         </Form.Item>
         <Form.Item
-          initialValue={template?.workspaceId || workspaceId}
+          initialValue={template?.workspaceId ?? workspaceId}
           label="Workspace"
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>

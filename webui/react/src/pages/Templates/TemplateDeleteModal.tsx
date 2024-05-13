@@ -5,14 +5,16 @@ import { Template } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 
 interface Props {
-  template: Template;
+  template?: Template;
   onSuccess?: () => void;
 }
 
 const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) => {
   const handleOk = async () => {
+    if (!template) return;
     try {
       await deleteTaskTemplate({ name: template.name });
+      onSuccess?.();
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -22,7 +24,6 @@ const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) 
         type: ErrorType.Server,
       });
     }
-    onSuccess?.();
   };
 
   return (
@@ -35,7 +36,7 @@ const TemplateDeleteModalComponent: React.FC<Props> = ({ template, onSuccess }) 
         text: 'Delete Template',
       }}
       title="Confirm Delete Template">
-      <div>Are you sure you want to delete this template &quot;{template.name}&quot;</div>
+      <div>Are you sure you want to delete this template &quot;{template?.name}&quot;</div>
     </Modal>
   );
 };
