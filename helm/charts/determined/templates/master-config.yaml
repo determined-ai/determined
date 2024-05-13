@@ -56,9 +56,10 @@ stringData:
       {{- end }}
 
     security:
-      {{- if .Values.initialUserPassword }}
-      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote }}
-      {{- end }}
+      {{- if empty (lookup "v1" "Pod" .Release.Namespace "") }}
+      # required for new namespaces
+      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote | required "An initial password for admin and determined users is required!" }}
+      {{- end}}
       {{- if .Values.tlsSecret }}
       tls:
         cert: {{ include "determined.secretPath" . }}tls.crt
