@@ -243,7 +243,12 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             return obj.__json__()
         raise TypeError("Unserializable object {} of type {}".format(obj, type(obj)))
 
-    return json.dumps(jsonable(obj), indent=indent, sort_keys=sort_keys)
+    print("BEFORE JSONABLE")
+    print(obj)
+    obj = json.dumps(jsonable(obj), indent=indent, sort_keys=sort_keys)
+    print("AFTER JSONABLE")
+    print(obj)
+    return obj
 
 
 def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
