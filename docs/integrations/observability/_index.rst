@@ -1,28 +1,30 @@
+.. _kubernetes-observability:
+
 ##########################
  Kubernetes Observability
 ##########################
 
-This guide provides recommendations and helps you set up monitoring for a Determined installation on
-Kubernetes.
+This guide provides recommendations and assists in setting up monitoring for a Determined
+installation on Kubernetes.
 
 ***************
  Prerequisites
 ***************
 
--  Determined must be running in a Kubernetes cluster.
+-  Determined must be running within a Kubernetes cluster.
 -  The Helm value ``observability.enable_prometheus`` must be set to ``true`` (this is the default
    setting).
 -  :ref:`CLI <cli-ug>` must be installed.
--  ``Kubectl`` must be installed and configured.
+-  ``Kubectl`` must be installed and configured appropriately.
 
-******************
- How to Configure
-******************
+*********************
+ Configuration Steps
+*********************
 
 Create a Namespace
 ==================
 
--  Create a Kubernetes namespace, ``det-monitoring``:
+-  Run the following command to create namespace called ``det-monitoring``:
 
    .. code:: bash
 
@@ -31,7 +33,7 @@ Create a Namespace
 Change Directory
 ================
 
--  Navigate to the ``tools/observability`` repository:
+-  Clone the repository and navigate to the ``tools/observability`` directory:
 
    .. code:: bash
 
@@ -41,30 +43,29 @@ Change Directory
 Token Refresh
 =============
 
-The Determined Prometheus export endpoint is secured by authentication. As a result, a Determined
-authentication token, which expires after one week, is required for the Prometheus scraper. In this
-section, we'll configure a token refresh cron job to run on the Kubernetes cluster.
+The Determined Prometheus export endpoint is secured by authentication, requiring a refreshable
+authentication token. Set up a cron job for token refresh as follows:
 
-#. Create a Determined account to use in the job.
+#. Create an account.
 
 .. code:: bash
 
    det -u admin user create tokenrefresher
 
-2. Change the password of the Determined account.
+2. Change the account password.
 
 .. code:: bash
 
    det -u admin user change-password tokenrefresher
 
-3. Store the username and password inside a credential.
+3. Store the credentials.
 
 .. code:: bash
 
    kubectl -n det-monitoring create secret generic token-refresh-username-pass \
      --from-literal="creds=tokenrefresher:testPassword1"
 
-4. Create the job and cron job.
+4. Deploy a cron job.
 
 .. attention::
 
@@ -76,8 +77,8 @@ section, we'll configure a token refresh cron job to run on the Kubernetes clust
 
    kubectl -n det-monitoring apply -f tokenRefresher.yaml
 
-5. After a few minutes, check that the ``det-prom-token`` secret was created and ``det-token`` is
-   more than 0 bytes.
+5. Verify "secret" creation. After a few minutes, check that the ``det-prom-token`` secret was
+   created and ``det-token`` is more than 0 bytes.
 
 .. code:: bash
 
@@ -86,8 +87,10 @@ section, we'll configure a token refresh cron job to run on the Kubernetes clust
 Install DCGM Exporter
 =====================
 
-The DCGM exporter allows Prometheus to collect GPU metrics. The installation method varies depending
-on your environment.
+Depending on your environment, follow these steps for installing the DCGM exporter:
+
+Steps for General Cloud Environments
+------------------------------------
 
 In general, to install DCGM in a cloud-based environment, follow the documentation for that
 environment.
@@ -130,7 +133,7 @@ some features, such as GPU statistics by user, will not be available.
 
    kubectl -n gmp-public port-forward service/nvidia-dcgm-exporter 9400
 
-5. In a new console window, check verify the service.
+5. In a new console window, verify the service.
 
 .. code:: bash
 
@@ -139,9 +142,8 @@ some features, such as GPU statistics by user, will not be available.
 Install Kube Prometheus Stack
 =============================
 
-This section helps you install a Kube Prometheus Stack.
-
-For more information, you can visit the `Kube Prometheus stack documentation
+Follow these instructions for installing a Kube Prometheus Stack. For additional information, you
+can visit the `Kube Prometheus stack documentation
 <https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack>`__.
 
 #. Add the Helm repo and update.
@@ -152,7 +154,7 @@ For more information, you can visit the `Kube Prometheus stack documentation
      https://prometheus-community.github.io/helm-charts && \
      helm repo update
 
-2. Install the Kube Prometheus Stack. Change the password in the below command.
+2. Install the Kube Prometheus Stack. You'll need to change the password in the following command.
 
 .. code:: bash
 
@@ -160,8 +162,8 @@ For more information, you can visit the `Kube Prometheus stack documentation
      --set grafana.adminPassword=testPassword \
      --values grafana-prom-values.yaml
 
-Monitoring Dashboard
-====================
+Monitoring Dashboard Setup
+==========================
 
 -  Add an API monitoring dashboard.
 
@@ -177,13 +179,13 @@ Monitoring Dashboard
    kubectl -n det-monitoring create configmap det-resource-utilization-dash --from-file resource-utilization-dash.json && \
      kubectl -n det-monitoring label configmap det-resource-utilization-dash grafana_dashboard=1
 
--  Check that Prometheus is running correctly by port forwarding.
+-  Check Prometheus operation by port forwarding.
 
 .. code:: bash
 
    kubectl -n det-monitoring port-forward service/monitor-kube-prometheus-st-prometheus 9090:9090
 
--  Verify that Prometheus is scraping DCGM and the Determined API server metrics.
+-  Verify metric scraping.
 
    -  Go to `127.0.0.1:9090 <http://127.0.0.1:9090>`__ and check that the query has two or more
       results with a ``1`` value.
@@ -201,11 +203,40 @@ Monitoring Dashboard
 -  Navigate to `127.0.0.1:9000 <http://127.0.0.1:9000>`__. Sign in with the username ``admin`` and
    the password you set above. You should see the ``Determined API Server Monitoring`` dashboard.
 
+Dashboard Example
+=================
+
+After submitting experiments on the cluster, you should see populated panels in the imported Grafana
+dashboard: **Grafana** -> **Dashboards**.
+
+.. figure:: /assets/images/resource-util-dash-1.png
+   :alt: Resource Utilization Dashboard Headlines
+
+   Resource Utilization Dashboard Headlines
+
+.. figure:: /assets/images/resource-util-dash-2.png
+   :alt: Resource Utilization Dashboard Cluster Overview
+
+   Resource Utilization Dashboard Cluster Overview
+
+.. figure:: /assets/images/resource-util-dash-3.png
+   :alt: Resource Utilization Dashboard GPU Breakdown
+
+   Resource Utilization Dashboard GPU Breakdown
+
+.. figure:: /assets/images/resource-util-dash-4.png
+   :alt: Resource Utilization Dashboard Recent Tasks
+
+   Resource Utilization Dashboard Recent Tasks
+
+Each panel in the dashboard is powered by one or more Prometheus queries.
+
 *********
  Metrics
 *********
 
-Determined does not produce metrics, rather it uses existing tools to report information.
+Determined does not generate its own metrics; instead, it utilizes existing tools to report
+information.
 
 API Performance Metrics
 =======================
@@ -216,41 +247,41 @@ Determined master reports API performance metrics using `grpc ecosystem
 Kubernetes and Container Metrics
 ================================
 
-The kube-prometheus-stack enables kube-state-metrics and cAdvisor by default.
+The kube-prometheus-stack enables ``kube-state-metrics`` and ``cAdvisor`` by default.
 
 -  `kube-state-metrics
    <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#exposed-metrics>`__ reports the
-   state of kubernetes objects, including Determined and any resources it creates
+   state of kubernetes objects, including those created by Determined.
 
 -  `cAdvisor <https://github.com/google/cadvisor/blob/master/docs/storage/prometheus.md>`__ reports
-   resource usage and performance of running containers, for example memory and cpu used
+   the resource usage and performance of running containers, including metrics such as memory and
+   CPU usage.
 
 Nvidia DCGM Exporter
 ====================
 
-Nvidia's Data Center GPU Manager collects data on Nvidia GPUs.
+Nvidia's Data Center GPU Manager (DCGM) collects data on Nvidia GPUs.
 
--  by default, only the most useful `subset
+-  By default, only the most useful `subset
    <https://github.com/GoogleCloudPlatform/prometheus-engine/blob/8dd8a187486cccb5ede3132e5773ae786239dbc2/examples/nvidia-dcgm/exporter.yaml#L139-L169>`__
-   of metrics are scraped by Prometheus
+   of metrics are scraped by Prometheus.
 
--  the full list of metrics generated by DCGM exporter can be found `here
-   <https://github.com/NVIDIA/dcgm-exporter/blob/main/etc/dcp-metrics-included.csv>`__
+-  The full list of metrics generated by DCGM exporter can be found `here
+   <https://github.com/NVIDIA/dcgm-exporter/blob/main/etc/dcp-metrics-included.csv>`__.
 
 Health Status
 =============
 
-Determined master reports a metric, ``determined_healthy``, with value ``1`` when major dependencies
-are reachable and ``0`` otherwise. Visit `alerting
-<https://github.com/determined-ai/determined/blob/observability_feature_branch/docs/integrations/prometheus/_index.rst#alerts>`__
-for information on how to set up alerts.
+Determined master reports a metric, ``determined_healthy``, with value of ``1`` when major
+dependencies are reachable, and ``0`` otherwise. Visit :ref:_prometheus-grafana-alerts` for
+information on how to set up alerts.
 
 Viewing Metrics
 ===============
 
-The Determined Master labels pods it creates with Determined state values. The following pod labels
-can be accessed via ``kube_pod_labels`` metric from kube-state-metrics. Label names will be
-formatted as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id``.
+The Determined Master labels the pods it creates with specific state values. These pod labels can be
+accessed via the ``kube_pod_labels`` metric from kube-state-metrics. Label names will be formatted
+as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id``.
 
 +-----------------------------+---------------------------------------------------+
 | Label Key                   | Label Value                                       |
@@ -274,14 +305,29 @@ formatted as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_co
 |                             | ``Uncategorized``                                 |
 +-----------------------------+---------------------------------------------------+
 
+PromQL Example Query
+====================
+
 Kubernetes resource metrics and GPU metrics can be broken down by Determined resources by joining
-data metrics with ``kube_pod_labels`` state metric. Some helpful resources (visit PromQL
-documentation for more details):
+data metrics with the ``kube_pod_labels`` state metric. As an example, the following PromQL query
+computes the average GPU Utilization by Determined experiment ID.
 
--  `joining metrics
+.. code:: bash
+
+   avg by (label_determined_ai_experiment_id)(
+      DCGM_FI_DEV_GPU_UTIL * on(pod) group_left(label_determined_ai_experiment_id)
+      kube_pod_labels{label_determined_ai_experiment_id!=""}
+   )
+
+Additional Resources
+====================
+
+For more details on metric operations:
+
+-  Learn about `joining metrics
    <https://github.com/kubernetes/kube-state-metrics/tree/main/docs#join-metrics>`__ from
-   kube-state-metrics
+   kube-state-metrics.
 
--  `matching vectors
-   <https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching>`__ from
-   Prometheus
+-  Discover how to perform `vector matching
+   <https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching>`__ in
+   Prometheus queries.
