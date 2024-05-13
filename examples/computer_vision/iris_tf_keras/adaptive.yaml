@@ -4,8 +4,8 @@ data:
   test_url: http://download.tensorflow.org/data/iris_test.csv
 environment:
   image:
-    cpu: determinedai/tensorflow-ngc-dev:f17151a
-    gpu: determinedai/tensorflow-ngc-dev:f17151a
+    cpu: determinedai/tensorflow-ngc-dev:8b3bea3
+    gpu: determinedai/tensorflow-ngc-dev:8b3bea3
 hyperparameters:
   learning_rate:
     type: log
