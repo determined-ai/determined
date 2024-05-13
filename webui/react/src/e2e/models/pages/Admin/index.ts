@@ -8,12 +8,12 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  * @param {Page} page - The '@playwright/test' Page being used by a test
  */
 export abstract class AdminPage extends BasePage {
-  readonly pivot: Pivot = new Pivot({ parent: this });
-  readonly userTab: BaseComponent = new BaseComponent({
+  readonly pivot = new Pivot({ parent: this });
+  readonly userTab = new BaseComponent({
     parent: this.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('user-management'),
   });
-  readonly groupTab: BaseComponent = new BaseComponent({
+  readonly groupTab = new BaseComponent({
     parent: this.pivot.tablist,
     selector: Pivot.selectorTemplateTabs('group-management'),
   });

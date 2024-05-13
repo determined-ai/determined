@@ -1016,6 +1016,12 @@ export interface V1ActivateExperimentsRequest {
      * @memberof V1ActivateExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1ActivateExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to ActivateExperimentsRequest.
@@ -1490,6 +1496,12 @@ export interface V1ArchiveExperimentsRequest {
      * @memberof V1ArchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1ArchiveExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to ArchiveExperimentsRequest.
@@ -1517,6 +1529,44 @@ export interface V1ArchiveModelResponse {
  * @interface V1ArchiveProjectResponse
  */
 export interface V1ArchiveProjectResponse {
+}
+/**
+ * 
+ * @export
+ * @interface V1ArchiveRunsRequest
+ */
+export interface V1ArchiveRunsRequest {
+    /**
+     * The ids of the runs being archived.
+     * @type {Array<number>}
+     * @memberof V1ArchiveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1ArchiveRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ArchiveRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ArchiveRunsRequest.
+ * @export
+ * @interface V1ArchiveRunsResponse
+ */
+export interface V1ArchiveRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1ArchiveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * Response to ArchiveWorkspaceRequest.
@@ -1714,6 +1764,12 @@ export interface V1CancelExperimentsRequest {
      * @memberof V1CancelExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1CancelExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to CancelExperimentsRequest.
@@ -2509,6 +2565,12 @@ export interface V1DeleteExperimentsRequest {
      * @memberof V1DeleteExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1DeleteExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to DeleteExperimentsRequest.
@@ -2556,6 +2618,44 @@ export interface V1DeleteProjectResponse {
      * @memberof V1DeleteProjectResponse
      */
     completed: boolean;
+}
+/**
+ * Delete runs.
+ * @export
+ * @interface V1DeleteRunsRequest
+ */
+export interface V1DeleteRunsRequest {
+    /**
+     * The ids of the runs being deleted.
+     * @type {Array<number>}
+     * @memberof V1DeleteRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being deleted.
+     * @type {number}
+     * @memberof V1DeleteRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1DeleteRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to DeleteRunsResponse.
+ * @export
+ * @interface V1DeleteRunsResponse
+ */
+export interface V1DeleteRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1DeleteRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * Response to DeleteTemplateRequest.
@@ -3049,6 +3149,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     modelDefinitionSize?: number;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1Experiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * Message for results of individual experiments in a multi-experiment action.
@@ -3467,6 +3573,12 @@ export interface V1FlatRunExperiment {
      * @memberof V1FlatRunExperiment
      */
     isMultitrial: boolean;
+    /**
+     * The experiment pachyderm integration config.
+     * @type {any}
+     * @memberof V1FlatRunExperiment
+     */
+    pachydermIntegration?: any;
 }
 /**
  * State of a Generic task - GENERIC_TASK_STATE_UNSPECIFIED: The task state unknown  - GENERIC_TASK_STATE_ACTIVE: The task state unknown  - GENERIC_TASK_STATE_CANCELED: The task state unknown  - GENERIC_TASK_STATE_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_ERROR: The task state unknown  - GENERIC_TASK_STATE_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_PAUSED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_CANCELED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_COMPLETED: The task state unknown  - GENERIC_TASK_STATE_STOPPING_ERROR: The task state unknown
@@ -5372,6 +5484,12 @@ export interface V1KillExperimentsRequest {
      * @memberof V1KillExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1KillExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to KillExperimentsRequest.
@@ -5424,6 +5542,44 @@ export interface V1KillNotebookResponse {
      * @memberof V1KillNotebookResponse
      */
     notebook?: V1Notebook;
+}
+/**
+ * Kill runs.
+ * @export
+ * @interface V1KillRunsRequest
+ */
+export interface V1KillRunsRequest {
+    /**
+     * The ids of the runs being killed.
+     * @type {Array<number>}
+     * @memberof V1KillRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * Project id of the runs being killed.
+     * @type {number}
+     * @memberof V1KillRunsRequest
+     */
+    projectId?: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1KillRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to KillRunsResponse.
+ * @export
+ * @interface V1KillRunsResponse
+ */
+export interface V1KillRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1KillRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * Response to KillShellRequest.
@@ -6442,6 +6598,12 @@ export interface V1MoveExperimentsRequest {
      * @memberof V1MoveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1MoveExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to MoveExperimentsRequest.
@@ -6552,7 +6714,7 @@ export interface V1MoveRunsRequest {
  */
 export interface V1MoveRunsResponse {
     /**
-     * Details on success or error for each experiment.
+     * Details on success or error for each run.
      * @type {Array<V1RunActionResult>}
      * @memberof V1MoveRunsResponse
      */
@@ -7089,6 +7251,38 @@ export interface V1PatchTemplateConfigResponse {
     template: V1Template;
 }
 /**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameRequest
+ */
+export interface V1PatchTemplateNameRequest {
+    /**
+     * The current name.
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    oldName: string;
+    /**
+     * The updated name.
+     * @type {string}
+     * @memberof V1PatchTemplateNameRequest
+     */
+    newName: string;
+}
+/**
+ * 
+ * @export
+ * @interface V1PatchTemplateNameResponse
+ */
+export interface V1PatchTemplateNameResponse {
+    /**
+     * The updated template.
+     * @type {V1Template}
+     * @memberof V1PatchTemplateNameResponse
+     */
+    template: V1Template;
+}
+/**
  * Patch a trial.
  * @export
  * @interface V1PatchTrialRequest
@@ -7313,6 +7507,12 @@ export interface V1PauseExperimentsRequest {
      * @memberof V1PauseExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1PauseExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to PauseExperimentsRequest.
@@ -8222,6 +8422,12 @@ export interface V1PutExperimentsRetainLogsRequest {
      * @memberof V1PutExperimentsRetainLogsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1PutExperimentsRetainLogsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to PutExperimentRetainLogsRequest.
@@ -11188,6 +11394,12 @@ export interface V1UnarchiveExperimentsRequest {
      * @memberof V1UnarchiveExperimentsRequest
      */
     filters?: V1BulkExperimentFilters;
+    /**
+     * Project id that the experiments belong to.
+     * @type {number}
+     * @memberof V1UnarchiveExperimentsRequest
+     */
+    projectId: number;
 }
 /**
  * Response to UnarchiveExperimentsRequest.
@@ -11215,6 +11427,44 @@ export interface V1UnarchiveModelResponse {
  * @interface V1UnarchiveProjectResponse
  */
 export interface V1UnarchiveProjectResponse {
+}
+/**
+ * 
+ * @export
+ * @interface V1UnarchiveRunsRequest
+ */
+export interface V1UnarchiveRunsRequest {
+    /**
+     * The ids of the runs being unarchived.
+     * @type {Array<number>}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the current parent project.
+     * @type {number}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1UnarchiveRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to UnarchiveRunsRequest.
+ * @export
+ * @interface V1UnarchiveRunsResponse
+ */
+export interface V1UnarchiveRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1UnarchiveRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * Response to UnarchiveWorkspaceRequest.
@@ -14166,16 +14416,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Activate multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ActivateExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiments(body: V1ActivateExperimentsRequest, options: any = {}): FetchArgs {
+        activateExperiments(projectId: number, body: V1ActivateExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling activateExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling activateExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/activate`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/activate`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -14240,16 +14496,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Archive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ArchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiments(body: V1ArchiveExperimentsRequest, options: any = {}): FetchArgs {
+        archiveExperiments(projectId: number, body: V1ArchiveExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling archiveExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling archiveExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/archive`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/archive`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -14314,16 +14576,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Cancel multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1CancelExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiments(body: V1CancelExperimentsRequest, options: any = {}): FetchArgs {
+        cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling cancelExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling cancelExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/cancel`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/cancel`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -14575,16 +14843,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Delete multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1DeleteExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiments(body: V1DeleteExperimentsRequest, options: any = {}): FetchArgs {
+        deleteExperiments(projectId: number, body: V1DeleteExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling deleteExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/delete`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/delete`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'DELETE', ...options };
             const localVarHeaderParameter = {} as any;
@@ -15298,16 +15572,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Kill multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1KillExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiments(body: V1KillExperimentsRequest, options: any = {}): FetchArgs {
+        killExperiments(projectId: number, body: V1KillExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling killExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling killExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/kill`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/kill`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -15416,16 +15696,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Move multiple experiments into a project.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1MoveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiments(body: V1MoveExperimentsRequest, options: any = {}): FetchArgs {
+        moveExperiments(projectId: number, body: V1MoveExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling moveExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/move`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/move`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -15534,16 +15820,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Pause multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PauseExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiments(body: V1PauseExperimentsRequest, options: any = {}): FetchArgs {
+        pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling pauseExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling pauseExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/pause`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/pause`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -15740,16 +16032,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Retain logs for an experiment.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PutExperimentsRetainLogsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options: any = {}): FetchArgs {
+        putExperimentsRetainLogs(projectId: number, body: V1PutExperimentsRetainLogsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling putExperimentsRetainLogs.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling putExperimentsRetainLogs.');
             }
-            const localVarPath = `/api/v1/experiments/retain_logs`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/retain_logs`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PUT', ...options };
             const localVarHeaderParameter = {} as any;
@@ -16006,16 +16304,22 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Unarchive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1UnarchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiments(body: V1UnarchiveExperimentsRequest, options: any = {}): FetchArgs {
+        unarchiveExperiments(projectId: number, body: V1UnarchiveExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling unarchiveExperiments.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveExperiments.');
             }
-            const localVarPath = `/api/v1/experiments/unarchive`;
+            const localVarPath = `/api/v1/projects/{projectId}/experiments/unarchive`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -16072,12 +16376,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Activate multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ActivateExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiments(body: V1ActivateExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiments(body, options);
+        activateExperiments(projectId: number, body: V1ActivateExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16110,12 +16415,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Archive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ArchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiments(body: V1ArchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiments(body, options);
+        archiveExperiments(projectId: number, body: V1ArchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16148,12 +16454,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Cancel multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1CancelExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiments(body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(body, options);
+        cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16247,12 +16554,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Delete multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1DeleteExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiments(body, options);
+        deleteExperiments(projectId: number, body: V1DeleteExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16568,12 +16876,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Kill multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1KillExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiments(body: V1KillExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiments(body, options);
+        killExperiments(projectId: number, body: V1KillExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16626,12 +16935,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Move multiple experiments into a project.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1MoveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiments(body: V1MoveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiments(body, options);
+        moveExperiments(projectId: number, body: V1MoveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16684,12 +16994,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Pause multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PauseExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiments(body: V1PauseExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiments(body, options);
+        pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16782,12 +17093,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Retain logs for an experiment.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PutExperimentsRetainLogsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentsRetainLogsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentsRetainLogs(body, options);
+        putExperimentsRetainLogs(projectId: number, body: V1PutExperimentsRetainLogsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutExperimentsRetainLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).putExperimentsRetainLogs(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16894,12 +17206,13 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Unarchive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1UnarchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiments(body: V1UnarchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiments(body, options);
+        unarchiveExperiments(projectId: number, body: V1UnarchiveExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiments(projectId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16932,12 +17245,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Activate multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ActivateExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiments(body: V1ActivateExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).activateExperiments(body, options)(fetch, basePath);
+        activateExperiments(projectId: number, body: V1ActivateExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).activateExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -16952,12 +17266,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Archive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1ArchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiments(body: V1ArchiveExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).archiveExperiments(body, options)(fetch, basePath);
+        archiveExperiments(projectId: number, body: V1ArchiveExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).archiveExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -16972,12 +17287,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Cancel multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1CancelExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).cancelExperiments(body, options)(fetch, basePath);
+        cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).cancelExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17035,12 +17351,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Delete multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1DeleteExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).deleteExperiments(body, options)(fetch, basePath);
+        deleteExperiments(projectId: number, body: V1DeleteExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17221,12 +17538,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Kill multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1KillExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiments(body: V1KillExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).killExperiments(body, options)(fetch, basePath);
+        killExperiments(projectId: number, body: V1KillExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).killExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17252,12 +17570,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Move multiple experiments into a project.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1MoveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiments(body: V1MoveExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).moveExperiments(body, options)(fetch, basePath);
+        moveExperiments(projectId: number, body: V1MoveExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).moveExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17283,12 +17602,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Pause multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PauseExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiments(body: V1PauseExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).pauseExperiments(body, options)(fetch, basePath);
+        pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).pauseExperiments(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17336,12 +17656,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Retain logs for an experiment.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1PutExperimentsRetainLogsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).putExperimentsRetainLogs(body, options)(fetch, basePath);
+        putExperimentsRetainLogs(projectId: number, body: V1PutExperimentsRetainLogsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).putExperimentsRetainLogs(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17403,12 +17724,13 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Unarchive multiple experiments.
+         * @param {number} projectId Project id that the experiments belong to.
          * @param {V1UnarchiveExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiments(body: V1UnarchiveExperimentsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).unarchiveExperiments(body, options)(fetch, basePath);
+        unarchiveExperiments(projectId: number, body: V1UnarchiveExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).unarchiveExperiments(projectId, body, options)(fetch, basePath);
         },
     }
 };
@@ -17435,13 +17757,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Activate multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1ActivateExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public activateExperiments(body: V1ActivateExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).activateExperiments(body, options)(this.fetch, this.basePath)
+    public activateExperiments(projectId: number, body: V1ActivateExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).activateExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17459,13 +17782,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Archive multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1ArchiveExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public archiveExperiments(body: V1ArchiveExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).archiveExperiments(body, options)(this.fetch, this.basePath)
+    public archiveExperiments(projectId: number, body: V1ArchiveExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).archiveExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17483,13 +17807,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Cancel multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1CancelExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public cancelExperiments(body: V1CancelExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).cancelExperiments(body, options)(this.fetch, this.basePath)
+    public cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).cancelExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17554,13 +17879,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Delete multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1DeleteExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public deleteExperiments(body: V1DeleteExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).deleteExperiments(body, options)(this.fetch, this.basePath)
+    public deleteExperiments(projectId: number, body: V1DeleteExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17770,13 +18096,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Kill multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1KillExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public killExperiments(body: V1KillExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).killExperiments(body, options)(this.fetch, this.basePath)
+    public killExperiments(projectId: number, body: V1KillExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).killExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17807,13 +18134,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Move multiple experiments into a project.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1MoveExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public moveExperiments(body: V1MoveExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).moveExperiments(body, options)(this.fetch, this.basePath)
+    public moveExperiments(projectId: number, body: V1MoveExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).moveExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17844,13 +18172,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Pause multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1PauseExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public pauseExperiments(body: V1PauseExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).pauseExperiments(body, options)(this.fetch, this.basePath)
+    public pauseExperiments(projectId: number, body: V1PauseExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).pauseExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17907,13 +18236,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Retain logs for an experiment.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1PutExperimentsRetainLogsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public putExperimentsRetainLogs(body: V1PutExperimentsRetainLogsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).putExperimentsRetainLogs(body, options)(this.fetch, this.basePath)
+    public putExperimentsRetainLogs(projectId: number, body: V1PutExperimentsRetainLogsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).putExperimentsRetainLogs(projectId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -17984,13 +18314,14 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Unarchive multiple experiments.
+     * @param {number} projectId Project id that the experiments belong to.
      * @param {V1UnarchiveExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public unarchiveExperiments(body: V1UnarchiveExperimentsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).unarchiveExperiments(body, options)(this.fetch, this.basePath)
+    public unarchiveExperiments(projectId: number, body: V1UnarchiveExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).unarchiveExperiments(projectId, body, options)(this.fetch, this.basePath)
     }
     
 }
@@ -18279,6 +18610,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/waiting`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling archiveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/archive`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -18680,6 +19049,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteRuns.');
+            }
+            const localVarPath = `/api/v1/runs/delete`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -19552,6 +19959,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/tasks/{taskId}/kill`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling killRuns.');
+            }
+            const localVarPath = `/api/v1/runs/kill`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -20995,6 +21440,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling unarchiveRuns.');
+            }
+            const localVarPath = `/api/v1/runs/unarchive`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -21306,6 +21789,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).archiveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -21485,6 +21987,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21911,6 +22432,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillGenericTaskResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killGenericTask(taskId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).killRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22557,6 +23097,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).unarchiveRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -22721,6 +23280,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Archive runs.
+         * @param {V1ArchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        archiveRuns(body: V1ArchiveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).archiveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Assign multiple users to multiple groups.
          * @param {V1AssignMultipleGroupsRequest} body
          * @param {*} [options] Override http request option.
@@ -22819,6 +23388,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         deleteGroup(groupId: number, options?: any) {
             return InternalApiFp(configuration).deleteGroup(groupId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete a list of runs.
+         * @param {V1DeleteRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+            return InternalApiFp(configuration).deleteRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23056,6 +23635,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
             return InternalApiFp(configuration).killGenericTask(taskId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of runs.
+         * @param {V1KillRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        killRuns(body: V1KillRunsRequest, options?: any) {
+            return InternalApiFp(configuration).killRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -23414,6 +24003,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Unarchive runs.
+         * @param {V1UnarchiveRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
+            return InternalApiFp(configuration).unarchiveRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Unbind resource pool to workspace
          * @param {string} resourcePoolName The resource pool name.
          * @param {V1UnbindRPFromWorkspaceRequest} body
@@ -23557,6 +24156,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Archive runs.
+     * @param {V1ArchiveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public archiveRuns(body: V1ArchiveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).archiveRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Assign multiple users to multiple groups.
      * @param {V1AssignMultipleGroupsRequest} body
      * @param {*} [options] Override http request option.
@@ -23674,6 +24285,18 @@ export class InternalApi extends BaseAPI {
      */
     public deleteGroup(groupId: number, options?: any) {
         return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete a list of runs.
+     * @param {V1DeleteRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public deleteRuns(body: V1DeleteRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).deleteRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -23953,6 +24576,18 @@ export class InternalApi extends BaseAPI {
      */
     public killGenericTask(taskId: string, body: V1KillGenericTaskRequest, options?: any) {
         return InternalApiFp(this.configuration).killGenericTask(taskId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of runs.
+     * @param {V1KillRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public killRuns(body: V1KillRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).killRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -24370,6 +25005,18 @@ export class InternalApi extends BaseAPI {
      */
     public trialsSnapshot(experimentId: number, metricName: string, batchesProcessed: number, metricType?: V1MetricType, group?: string, batchesMargin?: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, batchesProcessed, metricType, group, batchesMargin, periodSeconds, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unarchive runs.
+     * @param {V1UnarchiveRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public unarchiveRuns(body: V1UnarchiveRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).unarchiveRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -29669,10 +30316,11 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -29707,6 +30355,10 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
                 localVarQueryParameter['name'] = name
             }
             
+            if (workspaceIds) {
+                localVarQueryParameter['workspaceIds'] = workspaceIds
+            }
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
@@ -29735,6 +30387,44 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTemplateName.');
+            }
+            const localVarPath = `/api/v1/template/rename`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'PATCH', ...options };
             const localVarHeaderParameter = {} as any;
@@ -29806,7 +30496,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -29903,11 +30593,12 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -29940,6 +30631,25 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTemplateNameResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).patchTemplateName(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -29960,7 +30670,7 @@ export const TemplatesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -30015,11 +30725,12 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
          * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
          * @param {string} [name] Limit templates to those that match the name.
+         * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -30034,6 +30745,16 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
+         * @summary Patch template name.
+         * @param {V1PatchTemplateNameRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+            return TemplatesApiFp(configuration).patchTemplateName(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Post a new template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
@@ -30045,7 +30766,7 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
         },
         /**
          * 
-         * @summary DEPRECATED: Update or create (upsert) the requested template.
+         * @summary Update or create (upsert) the requested template.
          * @param {string} templateName The name of the template.
          * @param {V1Template} body The template to put.
          * @param {*} [options] Override http request option.
@@ -30096,12 +30817,13 @@ export class TemplatesApi extends BaseAPI {
      * @param {number} [offset] Skip the number of templates before returning results. Negative values denote number of templates to skip from the end before returning results.
      * @param {number} [limit] Limit the number of templates. A value of 0 denotes no limit.
      * @param {string} [name] Limit templates to those that match the name.
+     * @param {Array<number>} [workspaceIds] Limit templates to those that match the workspace id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath)
+    public getTemplates(sortBy?: V1GetTemplatesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, workspaceIds?: Array<number>, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, workspaceIds, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -30119,6 +30841,18 @@ export class TemplatesApi extends BaseAPI {
     
     /**
      * 
+     * @summary Patch template name.
+     * @param {V1PatchTemplateNameRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TemplatesApi
+     */
+    public patchTemplateName(body: V1PatchTemplateNameRequest, options?: any) {
+        return TemplatesApiFp(this.configuration).patchTemplateName(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Post a new template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
@@ -30132,7 +30866,7 @@ export class TemplatesApi extends BaseAPI {
     
     /**
      * 
-     * @summary DEPRECATED: Update or create (upsert) the requested template.
+     * @summary Update or create (upsert) the requested template.
      * @param {string} templateName The name of the template.
      * @param {V1Template} body The template to put.
      * @param {*} [options] Override http request option.

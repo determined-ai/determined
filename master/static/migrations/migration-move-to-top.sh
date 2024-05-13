@@ -33,4 +33,3 @@ if [ "$new_time" -le "$cur_max" ]; then
 fi
 
 mv *"_$name.tx.up.sql" "$new_full_name.tx.up.sql"
-mv *"_$name.tx.down.sql" "$new_full_name.tx.down.sql"

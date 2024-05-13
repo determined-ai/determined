@@ -194,13 +194,13 @@
 
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1``.
+      Defaults to: ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``.
 
    -  ``startupHook``: An optional inline script that will be executed as part of task set up.
 
    -  ``gpuImage``: Sets the default Docker image for all GPU tasks. If a Docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1``.
+      to: ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3``.
 
    -  ``logPolicies``: Sets log policies for trials. For details, visit :ref:`log_policies
       <experiment-config-min-validation-period>`.
@@ -224,7 +224,7 @@
 -  ``observability``: Specifies whether Determined enables Prometheus monitoring routes. See
    :ref:`Prometheus <prometheus>` for details.
 
-   -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
+   -  ``enable_prometheus``: Whether Prometheus endpoints are present. Defaults to ``true``.
 
 -  ``tensorboardTimeout``: Specifies the duration in seconds before idle TensorBoard instances are
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
@@ -255,5 +255,36 @@
 -  ``resourcePools``: This section contains the names of the resource pools and their linked
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration
    <master-config-reference>`.
+
+-  ``additional_resource_managers``: This section includes additional resource managers for
+   launching jobs across multiple Kubernetes clusters. Maps to :ref:`additional_resource_managers
+   <master-config-additional-resource-managers>` in the master configuration. An example
+   configuration is provided in the ``values.yaml`` file.
+
+   -  ``resource_manager``: Describes the configuration settings for the resource manager. Maps to
+      :ref:`resource_manager <master-config-resource-manager>` in the master configuration.
+
+      -  ``kubeconfig_secret_name``: Specifies the name of the secret containing the kubeconfig for
+         the resource manager. This kubeconfig is used to connect to the Kubernetes cluster and
+         launch tasks. Note that some kubeconfigs may require additional adjustments or
+         modifications. For example some kubeconfigs reference file paths, which may need to be
+         bind-mounted into the container or have their data paths encoded into the kubeconfig. Other
+         kubeconfigs, like those for GKE, may require installing plugins into the Determined master
+         container and binding certain credential files. (*Required*)
+
+      -  ``kubeconfig_secret_value``: The name of the secret that contains the resource manager's
+         kubeconfig. (*Required*)
+
+   -  ``resource_pools``: The resource pool configuration. See :ref:`resource_pools
+      <cluster-resource-pools>` for available configuration options.
+
+-  ``retentionPolicy``: Specifies configuration settings for the retention of trial logs.
+
+   -  ``logRetentionDays``: Specifies the number of days to retain logs for by default. Values
+      should be between ``-1`` and ``32767``. The default value is ``-1``, retaining logs
+      indefinitely. If set to ``0``, logs will be deleted during the next cleanup.
+
+   -  ``schedule``: Specifies the schedule for cleaning up logs. Can be provided as a cron
+      expression or a duration string.
 
 .. include:: ../../_shared/note-dtrain-learn-more.txt

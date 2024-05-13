@@ -178,7 +178,12 @@ func (ps *PublisherSet) streamHandler(
 	var startupMsg StartupMsg
 	err := socket.ReadJSON(&startupMsg)
 	if err != nil {
-		return fmt.Errorf("error while reading initial startup message: %s", err.Error())
+		if websocket.IsUnexpectedCloseError(
+			err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure,
+		) {
+			return fmt.Errorf("error while reading initial startup message: %s", err.Error())
+		}
+		return nil
 	}
 
 	// startups is where we collect StartupMsg
@@ -391,11 +396,16 @@ func publishLoop[T stream.Msg](
 				pingErrChan <- listener.Ping()
 			}()
 			if err := <-pingErrChan; err != nil {
-				return fmt.Errorf("no active connection: %s", err.Error())
+				return fmt.Errorf("(%s) doesn't have active connection: %s", channelName, err.Error())
 			}
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
+			if notification == nil {
+				// Some notification may be lost during connection loss. Restart the publisher
+				// system to recover.
+				return fmt.Errorf("(%s) lost connection", channelName)
+			}
 			var event stream.Event[T]
 			err = json.Unmarshal([]byte(notification.Extra), &event)
 			if err != nil {

@@ -86,6 +86,7 @@ type IntegrationsConfig struct {
 
 // PachydermConfig stores fields needed to integrate Pachyderm with determined.
 type PachydermConfig struct {
+	// pachyderm daemon address.
 	Address string `json:"address"`
 }
 
@@ -129,6 +130,9 @@ func DefaultConfig() *Config {
 		},
 		FeatureSwitches: []string{},
 		ResourceConfig:  *DefaultResourceConfig(),
+		Observability: ObservabilityConfig{
+			EnablePrometheus: true,
+		},
 		OIDC: OIDCConfig{
 			AuthenticationClaim:         "email",
 			SCIMAuthenticationAttribute: "userName",
@@ -501,6 +505,7 @@ func (i *InternalConfig) Validate() []error {
 }
 
 // ObservabilityConfig is the configuration for observability metrics.
+// Defaulted to true.
 type ObservabilityConfig struct {
 	EnablePrometheus bool `json:"enable_prometheus"`
 }

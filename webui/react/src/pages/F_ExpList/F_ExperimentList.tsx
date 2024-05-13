@@ -46,7 +46,10 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import {
+  RowHeight,
+  // TableViewMode
+} from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -104,6 +107,8 @@ type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
 const NO_PINS_WIDTH = 200;
 
+export const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
@@ -160,7 +165,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
-  const isPagedView = globalSettings.tableViewMode === 'paged';
+  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -183,11 +188,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   });
   const isMobile = useMobile();
   const { openToast } = useToast();
-
-  const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
-    [isLoadingSettings, settings.selection],
-  );
 
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
@@ -231,7 +231,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             resetPagination();
             const loadableFormset = formStore.formset.get();
             Loadable.forEach(loadableFormset, (formSet) =>
-              updateSettings({ filterset: JSON.stringify(formSet) }),
+              updateSettings({
+                filterset: JSON.stringify(formSet),
+                selection: DEFAULT_SELECTION,
+              }),
             );
           });
         });
@@ -244,52 +247,38 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  // partition experiment list into not selected/selected with indices and experiments so we only iterate the result list once
-  const [excludedExperimentIds, selectedExperimentIds] = useMemo(() => {
+  const allSelectedExperimentIds = useMemo(() => {
+    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
+  }, [settings.selection]);
+
+  const loadedSelectedExperimentIds = useMemo(() => {
     const selectedMap = new Map<number, ExperimentWithIndex>();
-    const excludedMap = new Map<number, ExperimentWithIndex>();
     if (isLoadingSettings) {
-      return [excludedMap, selectedMap];
+      return selectedMap;
     }
-    const selectedIdSet = new Set(
-      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
-    );
-    const excludedIdSet = new Set(
-      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
-    );
+    const selectedIdSet = new Set(allSelectedExperimentIds);
     experiments.forEach((e, index) => {
       Loadable.forEach(e, ({ experiment }) => {
-        const mapToAdd =
-          (selectAll && !excludedIdSet.has(experiment.id)) || selectedIdSet.has(experiment.id)
-            ? selectedMap
-            : excludedMap;
-        mapToAdd.set(experiment.id, { experiment, index });
+        if (selectedIdSet.has(experiment.id)) {
+          selectedMap.set(experiment.id, { experiment, index });
+        }
       });
     });
-    return [excludedMap, selectedMap];
-  }, [isLoadingSettings, selectAll, settings.selection, experiments]);
+    return selectedMap;
+  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (selectAll) {
-      Loadable.forEach(total, (t) => {
-        rows = rows.add([0, t]);
-      });
-      excludedExperimentIds.forEach((info) => {
-        rows = rows.remove(info.index);
-      });
-    } else {
-      selectedExperimentIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    }
+    loadedSelectedExperimentIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
+  }, [loadedSelectedExperimentIds]);
 
-  const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
+  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
   const { width: containerWidth } = useResize(contentRef);
 
   const experimentFilters = useMemo(() => {
@@ -637,14 +626,14 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [handleSelectionChange]);
 
-  const handleTableViewModeChange = useCallback(
-    (mode: TableViewMode) => {
-      // Reset page index when table view mode changes.
-      resetPagination();
-      updateGlobalSettings({ tableViewMode: mode });
-    },
-    [resetPagination, updateGlobalSettings],
-  );
+  // const handleTableViewModeChange = useCallback(
+  //   (mode: TableViewMode) => {
+  //     // Reset page index when table view mode changes.
+  //     resetPagination();
+  //     updateGlobalSettings({ tableViewMode: mode });
+  //   },
+  //   [resetPagination, updateGlobalSettings],
+  // );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -745,11 +734,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
   const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (selectedExperimentIds.size === 0) return [];
+    if (loadedSelectedExperimentIds.size === 0) return [];
     return Loadable.filterNotLoaded(experiments, (experiment) =>
-      selectedExperimentIds.has(experiment.experiment.id),
+      loadedSelectedExperimentIds.has(experiment.experiment.id),
     );
-  }, [experiments, selectedExperimentIds]);
+  }, [experiments, loadedSelectedExperimentIds]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -791,7 +780,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
@@ -917,7 +906,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     appTheme,
     isDarkMode,
-    selectAll,
     selection.rows,
     users,
   ]);
@@ -925,7 +913,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
       const items: MenuItem[] = [
-        selection.rows.length > 0
+        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
           ? {
               key: 'select-none',
               label: 'Clear selected',
@@ -946,7 +934,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           key: 'select-all',
           label: 'Select all',
           onClick: () => {
-            handleSelectionChange?.('add-all');
+            handleSelectionChange?.('add', [0, settings.pageLimit]);
           },
         },
       ];
@@ -959,7 +947,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
     const filterCount = formStore.getFieldCount(column.column).get();
 
-    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
     const loadableFormset = formStore.formset.get();
     const filterMenuItemsForColumn = () => {
       const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
@@ -1028,7 +1015,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         },
       },
       { type: 'divider' as const },
-      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      ...(BANNED_FILTER_COLUMNS.has(column.column)
         ? []
         : [
             ...sortMenuItemsForColumn(column, sorts, handleSortChange),
@@ -1089,9 +1076,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           V1LocationType.HYPERPARAMETERS,
         ]}
         compareViewOn={settings.compare}
-        excludedExperimentIds={excludedExperimentIds}
-        experiments={experiments}
-        filters={experimentFilters}
         formStore={formStore}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}
@@ -1102,11 +1086,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectAll={selectAll}
-        selectedExperimentIds={selectedExperimentIds}
-        selection={settings.selection}
+        selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
-        tableViewMode={globalSettings.tableViewMode}
+        // tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
@@ -1115,7 +1097,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
-        onTableViewModeChange={handleTableViewModeChange}
+        // onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>

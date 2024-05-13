@@ -223,10 +223,13 @@ func (c TaskContainerDefaultsConfig) Merge(
 	}
 
 	if otherEnvVars := other.EnvironmentVariables; otherEnvVars != nil {
-		otherEnvs := other.EnvironmentVariables
-		res.EnvironmentVariables.CPU = mergeEnvVars(res.EnvironmentVariables.CPU, otherEnvs.CPU)
-		res.EnvironmentVariables.CUDA = mergeEnvVars(res.EnvironmentVariables.CUDA, otherEnvs.CUDA)
-		res.EnvironmentVariables.ROCM = mergeEnvVars(res.EnvironmentVariables.ROCM, otherEnvs.ROCM)
+		if res.EnvironmentVariables == nil {
+			res.EnvironmentVariables = other.EnvironmentVariables
+		} else {
+			res.EnvironmentVariables.CPU = mergeEnvVars(res.EnvironmentVariables.CPU, otherEnvVars.CPU)
+			res.EnvironmentVariables.CUDA = mergeEnvVars(res.EnvironmentVariables.CUDA, otherEnvVars.CUDA)
+			res.EnvironmentVariables.ROCM = mergeEnvVars(res.EnvironmentVariables.ROCM, otherEnvVars.ROCM)
+		}
 	}
 
 	if other.AddCapabilities != nil {
@@ -299,6 +302,14 @@ func (c TaskContainerDefaultsConfig) Merge(
 	if len(other.Pbs.SbatchArgs()) > 0 {
 		tmp := slices.Clone(append(other.Pbs.SbatchArgs(), res.Pbs.SbatchArgs()...))
 		res.Pbs.SetSbatchArgs(tmp)
+	}
+
+	if other.LogPolicies != nil {
+		if res.LogPolicies == nil {
+			res.LogPolicies = other.LogPolicies
+		} else {
+			res.LogPolicies = res.LogPolicies.Merge(other.LogPolicies)
+		}
 	}
 
 	return res, nil

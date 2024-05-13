@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -207,6 +208,7 @@ func (m *Master) healthCheck(ctx context.Context) model.HealthCheck {
 	hc.Database = model.Healthy
 	_, err := db.Bun().NewSelect().Table("cluster_id").Exists(ctx)
 	if err != nil {
+		log.WithError(err).Error("database marked as unhealthy")
 		hc.Database = model.Unhealthy
 	}
 
@@ -1083,6 +1085,9 @@ func buildRM(
 		}
 	}
 
+	// If multiple resource managers are defined, require license.
+	license.RequireLicense("multiple resource managers")
+
 	// Set the default RM name for the multi-rm, from the default RM index.
 	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
 	rms := map[string]rm.ResourceManager{}
@@ -1515,11 +1520,14 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	webhooks.Init()
 	defer webhooks.Deinit()
-	ssup := stream.NewSupervisor(m.db.URL)
-	go func() {
-		_ = ssup.Run(ctx)
-	}()
-	m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
+
+	if slices.Contains(m.config.FeatureSwitches, "streaming_updates") {
+		ssup := stream.NewSupervisor(m.db.URL)
+		go func() {
+			_ = ssup.Run(ctx)
+		}()
+		m.echo.GET("/stream", api.WebSocketRoute(ssup.Websocket, m.config.EnableCors))
+	}
 
 	return m.startServers(ctx, cert, gRPCLogInitDone)
 }

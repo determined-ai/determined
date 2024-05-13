@@ -21,6 +21,14 @@ spec:
     spec:
       priorityClassName: determined-system-priority
       serviceAccount: genai-{{ .Release.Name }}
+      {{- if .Values.genai.agentGroupID }}
+      {{ $gid := .Values.genai.agentGroupID }}
+      securityContext:
+        runAsUser: {{ $gid }}
+        runAsGroup: {{ $gid }}
+        fsGroup: {{ $gid }}
+        fsGroupChangePolicy: "OnRootMismatch"
+      {{- end }}
       containers:
       - name: genai-{{ .Release.Name }}
         {{ $tag := (required "A valid .Values.genai.version entry required!" .Values.genai.version) }}
@@ -40,6 +48,13 @@ spec:
             value: {{ .Values.db.port | quote }}
           - name: DB_HOST
             value: {{ include "determined.dbHost" . }}
+          {{- if .Values.db.sslMode }}
+          - name: DB_SSL_MODE
+            value: {{ .Values.db.sslMode }}
+          {{- $rootCert := (required "A valid .Values.db.sslRootCert entry required!" .Values.db.sslRootCert )}}
+          - name: DB_SSL_ROOT_CERT
+            value: {{ include "determined.secretPath" . }}{{ $rootCert }}
+          {{- end }}
           - name: LORE_DOCKER_TAG_SUFFIX
             value: {{ $tag | quote }}
           {{- if .Values.genai.sharedFSHostPath }}
@@ -49,6 +64,8 @@ spec:
           - name: K8S_SHARED_PVC_NAME
             value: {{ include "genai.PVCName" . }}
           {{- end }}
+          - name: SHARED_FS_ROOT_PATH
+            value: {{ include "genai.sharedFSMountPath" . }}
           - name: RESOURCE_POOL_EXTRA_METADATA_PATH
             value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
           - name: MESSAGE_QUEUE_HOST
@@ -62,15 +79,16 @@ spec:
         volumeMounts:
           {{- if .Values.genai.sharedFSHostPath }}
           - name: genai-shared-host-path
-            mountPath: /run/determined/workdir/shared_fs
+            mountPath: {{ include "genai.sharedFSMountPath" . }}
           {{- else }}
           - name: genai-pvc-storage
-            mountPath: /run/determined/workdir/shared_fs
+            mountPath: {{ include "genai.sharedFSMountPath" . }}
             readOnly: false
           {{- end }}
           - name: genai-resource-pool-metadata
             mountPath: /run/determined/workdir/rp_config
             readOnly: true
+          {{- include "determined.dbCertVolumeMount" . | nindent 10 }}
         resources:
           requests:
             {{- if .Values.genai.cpuRequest }}
@@ -106,5 +124,6 @@ spec:
         - name: genai-resource-pool-metadata
           configMap:
             name: genai-resource-pool-metadata-{{ .Release.Name }}
+        {{- include "determined.dbCertVolume" . | nindent 8 }}
 {{ end }}
 {{ end }}

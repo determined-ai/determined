@@ -89,13 +89,21 @@ func TestGetTemplates(t *testing.T) {
 		"cde",
 	}
 	var inputs []*templatev1.Template
+	var workspaceIDs []int32
 	for _, inputName := range inputNames {
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err := db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+		workspaceIDs = append(workspaceIDs, int32(w.ID))
 		input := templatev1.Template{
 			Name:        inputName,
 			Config:      fakeTemplate(t),
-			WorkspaceId: 1,
+			WorkspaceId: int32(w.ID),
 		}
-		_, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: &input})
+		_, err = api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: &input})
 		require.NoError(t, err)
 		inputs = append(inputs, &input)
 	}
@@ -138,6 +146,15 @@ func TestGetTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resp.Templates, 2)
 		require.Subset(t, inputNames, templateNames(resp.Templates))
+	})
+
+	t.Run("GetTemplates filter by workspace", func(t *testing.T) {
+		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{
+			WorkspaceIds: []int32{workspaceIDs[0]},
+		})
+		require.NoError(t, err)
+		require.Len(t, resp.Templates, 1)
+		require.Equal(t, inputNames[0], templateNames(resp.Templates)[0])
 	})
 }
 
@@ -217,6 +234,54 @@ func TestPatchTemplateConfig(t *testing.T) {
 	})
 }
 
+func TestPatchTemplateName(t *testing.T) {
+	api := TemplateAPIServer{}
+	ctx := apitest.WithCredentials(context.Background())
+
+	t.Run("TestPatchTemplateName that doesn't exist", func(t *testing.T) {
+		_, err := api.PatchTemplateName(
+			ctx,
+			&apiv1.PatchTemplateNameRequest{
+				OldName: uuid.NewString(),
+				NewName: uuid.NewString(),
+			})
+		require.ErrorContains(t, err, "not found")
+	})
+	t.Run("TestPatchTemplateName functions", func(t *testing.T) {
+		// Create a template and patch name with old name.
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp.Template)
+
+		resp1, err := api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: input.Name})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp1.Template)
+
+		// Create a second templates and patch name with duplicated name.
+		input1 := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		_, err = api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input1})
+		require.NoError(t, err)
+
+		_, err = api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: input1.Name})
+		require.ErrorContains(t, err, "templates_pkey")
+
+		// Patch name with random name.
+		randomName := uuid.NewString()
+		resp1, err = api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: randomName})
+		require.NoError(t, err)
+		require.Equal(t, randomName, resp1.Template.Name)
+	})
+}
+
 func TestPutTemplate(t *testing.T) {
 	api := TemplateAPIServer{}
 	ctx := apitest.WithCredentials(context.Background())
@@ -253,7 +318,54 @@ func TestPutTemplate(t *testing.T) {
 
 		resp, err = api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
 		require.NoError(t, err)
+		requireToJSONEq(t, input.Config, resp.Template.Config)
+	})
+
+	t.Run("TestPutTemplate with workspace change", func(t *testing.T) {
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
 		requireToJSONEq(t, input, resp.Template)
+
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+
+		input.WorkspaceId = int32(w.ID)
+
+		resp1, err := api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
+		require.NoError(t, err)
+		require.Equal(t, resp1.Template.WorkspaceId, int32(w.ID))
+	})
+
+	t.Run("TestPutTemplate with invalid workspace change", func(t *testing.T) {
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp.Template)
+
+		w := &model.Workspace{
+			Name:   uuid.New().String(),
+			UserID: 1,
+		}
+		_, err = db.Bun().NewInsert().Model(w).Exec(ctx)
+		require.NoError(t, err)
+
+		input.WorkspaceId = int32(w.ID) + 1
+
+		_, err = api.PutTemplate(ctx, &apiv1.PutTemplateRequest{Template: input})
+		require.ErrorContains(t, err, "not found")
 	})
 }
 

@@ -39,26 +39,24 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
 
     validation_period = 2
 
-    for i in range(10):
+    num_steps = 6
+
+    for i in range(num_steps):
         step = i + 1
         batch_writer.on_train_step_end(steps_completed=i, metrics={"x": step})
         if i % validation_period == 0:
             batch_writer.on_validation_step_end(steps_completed=i, metrics={"x": step})
 
-    # Sleep for 1 second to make subsequent metrics write to a new file.
-    time.sleep(1)
-
-    for i in range(10, 20):
-        step = i + 1
-        batch_writer.on_train_step_end(steps_completed=i, metrics={"x": step})
-        if i % validation_period == 0:
-            batch_writer.on_validation_step_end(steps_completed=i, metrics={"x": step})
+        # Force next step writes to reset to a new file. This is to test cases where we reset
+        # a file handle then immediately write another event destined for the same file handle,
+        # which would overwrite the file.
+        time.sleep(int(time.time() + 1) - time.time())
 
     train_events = []
     val_events = []
 
     # Read event files saved and verify all metrics are written.
-    event_files = list(tmp_path.iterdir())
+    event_files = sorted(tmp_path.iterdir())
     for file in event_files:
         for event in summary_iterator.summary_iterator(str(file)):
             # TensorFlow injects an event containing metadata at the start of every tfevent
@@ -71,12 +69,11 @@ def test_batch_metric_writer(mock_get_base_path: mock.MagicMock, tmp_path: pathl
                 elif event_data.tag == "Determined/val_x":
                     val_events.append(event_data.simple_value)
 
-    assert len(event_files) == 2
-    assert len(train_events) == 20
-    assert len(val_events) == 20 / validation_period
+    assert len(train_events) == num_steps
+    assert len(val_events) == num_steps / validation_period
 
-    for i in range(20):
+    for i in range(num_steps):
         assert i + 1 in train_events
 
-    for i in range(1, 20, validation_period):
+    for i in range(1, num_steps, validation_period):
         assert i in val_events

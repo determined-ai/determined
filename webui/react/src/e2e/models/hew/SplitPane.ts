@@ -9,7 +9,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  */
 export class SplitPane extends NamedComponent {
   readonly defaultSelector = '[class^="SplitPane_base"]';
-  readonly initial: BaseComponent = new BaseComponent({
+  readonly initial = new BaseComponent({
     parent: this,
     selector: 'div[style*="display: initial"]',
   });

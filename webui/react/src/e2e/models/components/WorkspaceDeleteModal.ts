@@ -8,7 +8,7 @@ import { Modal } from 'e2e/models/hew/Modal';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspaceDeleteModal extends Modal {
-  readonly nameConfirmation: BaseComponent = new BaseComponent({
+  readonly nameConfirmation = new BaseComponent({
     parent: this,
     selector: 'input[id="workspaceName"]',
   });

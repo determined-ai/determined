@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
+import { BasePage } from 'e2e/models/BasePage';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
@@ -9,7 +10,7 @@ test.describe('Authentication', () => {
   });
   test.afterEach(async ({ page, auth }) => {
     const signInPage = new SignIn(page);
-    if ((await page.title()) !== signInPage.title) {
+    if ((await page.title()).indexOf(signInPage.title) === -1) {
       await auth.logout();
     }
   });
@@ -17,7 +18,7 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveTitle('Home - Determined');
+      await expect(page).toHaveTitle(BasePage.getTitle('Home'));
       await expect(page).toHaveURL(/dashboard/);
     });
 
@@ -36,25 +37,33 @@ test.describe('Authentication', () => {
     });
 
     await test.step('Login and expect redirect to previous page', async () => {
-      await auth.login(/models/);
-      await expect(page).toHaveTitle('Model Registry - Determined');
+      await auth.login({ waitForURL: /models/ });
+      await expect(page).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
   });
 
   test('Bad credentials should throw an error', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
-    await auth.login(/login/, { password: 'superstar', username: 'jcom' });
+    await auth.login({ password: 'superstar', username: 'jcom', waitForURL: /login/ });
     await expect(page).toHaveTitle(signInPage.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
+    await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible();
     expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
       'Login failed',
     );
     expect(await signInPage.detAuth.errors.description.pwLocator.textContent()).toContain(
       'invalid credentials',
     );
+  });
+
+  test('Expect submit disabled; Show multiple errors', async ({ page }) => {
+    const signInPage = new SignIn(page);
+    await signInPage.goto();
+    await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
+    await signInPage.detAuth.username.pwLocator.fill('chubbs');
     await signInPage.detAuth.submit.pwLocator.click();
-    await expect(signInPage.detAuth.errors.alert.pwLocator).toHaveCount(2);
-    await expect(signInPage.detAuth.errors.message.pwLocator).toHaveCount(2);
+    await signInPage.detAuth.submit.pwLocator.click();
+    await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2);
   });
 });

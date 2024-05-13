@@ -1,7 +1,7 @@
 from typing import Optional
 
 from determined.common import api
-from determined.common.api import bindings
+from determined.common.api import authentication, bindings
 
 
 class User:
@@ -82,6 +82,15 @@ class User:
         self.reload()
 
     def change_password(self, new_password: str) -> None:
+        """Changes this user's password.
+
+        Arg:
+            new_password: password to set.
+
+        Raises:
+            ValueError: an error describing why the password does not meet complexity requirements.
+        """
+        authentication.check_password_complexity(new_password)
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
         bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)

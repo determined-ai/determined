@@ -98,15 +98,18 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-+-------------+-------------------------------------------------------------------------------+
-| Environment | File Name                                                                     |
-+=============+===============================================================================+
-| CPUs        | ``determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1``          |
-+-------------+-------------------------------------------------------------------------------+
-| NVIDIA GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1``       |
-+-------------+-------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``        |
-+-------------+-------------------------------------------------------------------------------+
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   -  -  Environment
+      -  File Name
+   -  -  CPUs
+      -  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``
+   -  -  NVIDIA GPUs
+      -  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3``
+   -  -  AMD GPUs
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
 
 .. _custom-docker-images:
 
@@ -132,7 +135,7 @@ Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.31.1
+   FROM determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
 
    # Custom Configuration
    RUN apt-get update && \
@@ -195,7 +198,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.31.1
+   FROM determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8

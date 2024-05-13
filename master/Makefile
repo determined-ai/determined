@@ -260,9 +260,7 @@ package-ee: gen buildx
 .PHONY: package-small
 package-small: export DET_SEGMENT_MASTER_KEY ?=
 package-small: export DET_SEGMENT_WEBUI_KEY ?=
-package-small: export DET_EE_LICENSE = $(shell cat ../license.txt)
-package-small: export DET_EE_PUBLIC_KEY = $(shell cat ../public.txt)
-package-small: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+package-small: export GORELEASER_CURRENT_TAG := $(VERSION)
 package-small: gen buildx-small
 	$(GORELEASER) --snapshot --rm-dist -f ./.goreleaser_sharedcluster.yml
 

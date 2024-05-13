@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -622,9 +623,11 @@ func TestReportCheckpointNonTrialErrors(t *testing.T) {
 
 func TestUnusualMetricNames(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
+	longMetric := strings.Repeat("a", 100)
 	expectedMetricsMap := map[string]any{
-		"a.loss": 1.5,
-		"b/loss": 2.5,
+		"a.loss":   1.5,
+		"b/loss":   2.5,
+		longMetric: 4.5,
 	}
 	asciiSweep := ""
 	for i := 1; i <= 255; i++ {
@@ -652,13 +655,17 @@ func TestUnusualMetricNames(t *testing.T) {
 	req := &apiv1.CompareTrialsRequest{
 		TrialIds:      []int32{int32(trial.ID)},
 		MaxDatapoints: 3,
-		MetricNames:   []string{"a.loss", "b/loss", asciiSweep},
+		MetricNames:   []string{"a.loss", "b/loss", asciiSweep, longMetric},
 		StartBatches:  0,
 		EndBatches:    1000,
 		MetricType:    apiv1.MetricType_METRIC_TYPE_VALIDATION,
 	}
-	_, err = api.CompareTrials(ctx, req)
+	resp, err := api.CompareTrials(ctx, req)
 	require.NoError(t, err)
+
+	valuesMap := resp.Trials[0].Metrics[0].Data[0].Values.AsMap()
+	require.Len(t, valuesMap, len(expectedMetricsMap))
+	require.Equal(t, valuesMap[longMetric], expectedMetricsMap[longMetric])
 }
 
 func TestTrialAuthZ(t *testing.T) {

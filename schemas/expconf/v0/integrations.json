@@ -1,0 +1,17 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/integrations.json",
+    "title": "IntegrationsConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "pachyderm": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
+        }
+    }
+}

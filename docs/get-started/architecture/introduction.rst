@@ -863,4 +863,4 @@ Reference
 
 -  YAML: https://learnxinyminutes.com/docs/yaml/
 -  Validate YAML: https://www.yamllint.com/
--  Convert YAML to JSON: https://www.json2yaml.com/convert-yaml-to-json
+-  Convert YAML to JSON: https://www.bairesdev.com/tools/json2yaml/
