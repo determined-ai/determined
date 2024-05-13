@@ -46,7 +46,7 @@ import {
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight } from 'components/OptionsMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -138,7 +138,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [flatRunsSettings],
   );
 
-  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
@@ -295,8 +296,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -305,8 +306,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -317,8 +318,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -337,6 +338,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     settings.pinnedColumnsCount,
     users,
   ]);
+
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateGlobalSettings({ rowHeight: newRowHeight });
+    },
+    [updateGlobalSettings],
+  );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -542,7 +550,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   );
 
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
-    useCallback(() => {}, []);
+    useCallback(() => { }, []);
 
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
@@ -592,12 +600,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -626,32 +634,32 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.max(settings.pinnedColumnsCount - 1, 0),
-                  );
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -708,9 +716,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           sortCount === 0
             ? []
             : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
 
         items.push(
           ...sortMenuItems,
@@ -786,6 +794,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           ]}
           onVisibleColumnChange={handleColumnsOrderChange}
         />
+        <OptionsMenu rowHeight={globalSettings.rowHeight} onRowHeightChange={onRowHeightChange} />
       </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (

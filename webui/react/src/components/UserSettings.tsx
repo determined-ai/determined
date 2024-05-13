@@ -18,11 +18,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import Grid from 'components/Grid';
-import {
-  RowHeight,
-  rowHeightItems,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight, rowHeightItems } from 'components/OptionsMenu';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -234,28 +230,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     ))}
                   </Select>
                 </InlineForm>
-                {/* <InlineForm<TableViewMode>
-                  initialValue={dataGridGlobalSettings.tableViewMode}
-                  label="Infinite Scroll"
-                  valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
-                  onSubmit={(mode) => {
-                    userSettings.setPartial(
-                      dataGridGlobalSettingsConfig,
-                      dataGridGlobalSettingsPath,
-                      {
-                        tableViewMode: mode,
-                      },
-                    );
-                  }}>
-                  <Select searchable={false}>
-                    <Option key="scroll" value="scroll">
-                      On
-                    </Option>
-                    <Option key="paged" value="paged">
-                      Off
-                    </Option>
-                  </Select>
-                </InlineForm> */}
               </div>
             </Section>
             <Section divider title="Shortcuts">

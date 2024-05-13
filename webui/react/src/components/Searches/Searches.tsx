@@ -45,10 +45,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import {
-  RowHeight,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight } from 'components/OptionsMenu';
 import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
@@ -582,15 +579,6 @@ const Searches: React.FC<Props> = ({ project }) => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, [handleSelectionChange]);
-
-  // const handleTableViewModeChange = useCallback(
-  //   (mode: TableViewMode) => {
-  //     // Reset page index when table view mode changes.
-  //     resetPagination();
-  //     updateGlobalSettings({ tableViewMode: mode });
-  //   },
-  //   [resetPagination, updateGlobalSettings],
-  // );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {

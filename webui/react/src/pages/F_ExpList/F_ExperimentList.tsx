@@ -47,10 +47,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import {
-  RowHeight,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -629,15 +626,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     };
   }, [handleSelectionChange]);
 
-  // const handleTableViewModeChange = useCallback(
-  //   (mode: TableViewMode) => {
-  //     // Reset page index when table view mode changes.
-  //     resetPagination();
-  //     updateGlobalSettings({ tableViewMode: mode });
-  //   },
-  //   [resetPagination, updateGlobalSettings],
-  // );
-
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
       updateSettings({ pageLimit: cPageSize });
@@ -1166,7 +1154,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                     </ExperimentActionDropdown>
                   );
                 }}
-                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
+                rowHeight={rowHeightMap[globalSettings.rowHeight]}
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
