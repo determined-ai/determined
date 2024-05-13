@@ -14,6 +14,7 @@ package scim
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func (s *service) GetUsers(c echo.Context) (interface{}, error) {
 		count = *req.Count
 	}
 	if count < 0 {
-		return nil, newBadRequestError(errors.New("count < 0"))
+		return nil, newBadRequestError(fmt.Errorf("count < 0"))
 	}
 
 	startIndex := 0
@@ -97,22 +98,21 @@ func (s *service) GetUsers(c echo.Context) (interface{}, error) {
 		startIndex = *req.StartIndex
 	}
 	if startIndex < 0 {
-		return nil, newBadRequestError(errors.New("startIndex < 0"))
+		return nil, newBadRequestError(fmt.Errorf("startIndex < 0"))
 	}
 
 	// Okta will only filter on userName.
 	var username string
 	const q = "userName eq "
 	if f := req.Filter; f != nil && len(*f) != 0 {
-		if strings.HasPrefix(*f, q) {
-			v, err := strconv.Unquote(strings.TrimPrefix(*f, q))
-			if err != nil {
-				return nil, newBadRequestError(err)
-			}
-			username = v
-		} else {
-			return nil, newBadRequestError(errors.New("unsupported filter"))
+		if !strings.HasPrefix(*f, q) {
+			return nil, newBadRequestError(fmt.Errorf("unsupported filter"))
 		}
+		v, err := strconv.Unquote(strings.TrimPrefix(*f, q))
+		if err != nil {
+			return nil, newBadRequestError(err)
+		}
+		username = v
 	}
 
 	users, err := user.SCIMUserList(c.Request().Context(), startIndex, count, username)
@@ -177,7 +177,7 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 	if err = check.Validate(u); err != nil {
 		return nil, newBadRequestError(err)
 	} else if u.ID.Valid {
-		return nil, newBadRequestError(errors.New("ID set"))
+		return nil, newBadRequestError(fmt.Errorf("ID set"))
 	}
 
 	u.Sanitize()
@@ -231,7 +231,7 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 	if err = check.Validate(u); err != nil {
 		return nil, newBadRequestError(err)
 	} else if u.ID.String() != req.ID {
-		return nil, newBadRequestError(errors.New("ID does not match path"))
+		return nil, newBadRequestError(fmt.Errorf("ID does not match path"))
 	}
 
 	u.Sanitize()
@@ -307,11 +307,11 @@ func (s *service) PatchUser(c echo.Context) (interface{}, error) {
 	var changes model.SCIMUser
 	for _, op := range req.Patch.Operations {
 		if op.Op != "replace" {
-			return nil, newBadRequestError(errors.New("only replace is supported"))
+			return nil, newBadRequestError(fmt.Errorf("only replace is supported"))
 		}
 
 		if len(op.Path) != 0 {
-			return nil, newBadRequestError(errors.New("updating subpaths is not supported"))
+			return nil, newBadRequestError(fmt.Errorf("updating subpaths is not supported"))
 		}
 
 		dec := json.NewDecoder(bytes.NewReader(op.Value))

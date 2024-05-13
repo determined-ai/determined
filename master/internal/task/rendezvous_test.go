@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"gotest.tools/assert"
+
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
-
-	"github.com/davecgh/go-spew/spew"
-	"github.com/google/uuid"
-	"gotest.tools/assert"
-
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -110,13 +110,13 @@ func TestRendezvousValidation(t *testing.T) {
 	}, rendezvousTimeoutDuration)
 
 	_, err := r.watch(sproto.ResourcesID(cproto.NewID()))
-	assert.ErrorContains(t, err, "stale resources")
+	require.ErrorContains(t, err, "stale resources")
 
 	_, err = r.watch(c1)
 	assert.NilError(t, err)
 
 	_, err = r.watch(c1)
-	assert.ErrorContains(t, err, "resources already rendezvoused")
+	require.ErrorContains(t, err, "resources already rendezvoused")
 }
 
 func TestTerminationInRendezvous(t *testing.T) {
@@ -180,7 +180,7 @@ func TestRendezvousTimeout(t *testing.T) {
 	r.resources[c1].Started = &sproto.ResourcesStarted{Addresses: addressesFromContainerID(c1)}
 	r.try()
 
-	assert.ErrorContains(t, r.checkTimeout(),
+	require.ErrorContains(t, r.checkTimeout(),
 		"some containers are taking a long time")
 }
 

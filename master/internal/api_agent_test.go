@@ -15,8 +15,8 @@ func TestSummarizeSlots_EmptySlots(t *testing.T) {
 	slots := make(map[string]*agentv1.Slot)
 	stats := model.SummarizeSlots(slots)
 
-	assert.Equal(t, 0, len(stats.TypeStats))
-	assert.Equal(t, 0, len(stats.BrandStats))
+	assert.Empty(t, len(stats.TypeStats))
+	assert.Empty(t, len(stats.BrandStats))
 }
 
 func TestSummarizeSlots_VariousStates(t *testing.T) {

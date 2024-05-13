@@ -80,7 +80,6 @@ func (s *mockSocket) WriteOutbound(t *testing.T, startup *StartupMsg) {
 	case <-s.closed:
 		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
 	case s.outbound <- startup:
-		break
 	}
 }
 

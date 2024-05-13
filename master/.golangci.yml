@@ -1,8 +1,8 @@
 run:
-  go: 1.20
+  go: "1.20"
 
-  # Deadline for individual linters to complete by.
-  deadline: 1m
+  # Timeout for individual linters to complete by.
+  timeout: 1m
 
   # Include tests files in linting process.
   tests: true
@@ -10,12 +10,10 @@ run:
   # The exit code when at least one issue was found.
   issues-exit-code: 1
 
-  skip-files:
-    - pkg/schemas/expconf/latest.go
-
 output:
-  # Linter output format.
-  format: colored-line-number
+  formats:
+    # Linter output format.
+    - format: colored-line-number
 
   # Print lines of code with issue.
   print-issued-lines: true
@@ -31,22 +29,26 @@ issues:
     - Consider preallocating
     # Exclude "gosec: Errors unhandled" because it duplicates errcheck.
     - G104
+    - G601
     - and that stutters
     - declaration of "(err|ctx)" shadows declaration at
 
   # Independently from option `exclude` golangci-lint uses default exclude patterns.
   exclude-use-default: false
 
+  exclude-files:
+    - pkg/schemas/expconf/latest.go
+
   # Disable the maximum issue count per linter.
-  max-per-linter: 0
+  max-issues-per-linter: 0
 
 linters-settings:
   depguard:
-    list-type: blacklist
-    include-go-root: true
-    packages:
-      - gopkg.in/yaml.v2
-      - github.com/dgrijalva/jwt-go
+    rules:
+      main:
+        deny:
+          - pkg: gopkg.in/yaml.v2
+          - pkg: github.com/dgrijalva/jwt-go
   dupl:
     threshold: 210
   goconst:
@@ -55,40 +57,95 @@ linters-settings:
   gocritic:
     disabled-checks:
       - singleCaseSwitch
-  golint:
-    min-confidence: 0
   goimports:
     local-prefixes: github.com/determined-ai/determined
-  govet:
-    check-shadowing: true
   errcheck:
     exclude-functions:
-      - '(*database/sql.Rows).Close'
-      - '(*github.com/jmoiron/sqlx.NamedStmt).Close'
+      - "(*database/sql.Rows).Close"
+      - "(*github.com/jmoiron/sqlx.NamedStmt).Close"
   lll:
     line-length: 120
   misspell:
     locale: US
   exhaustruct:
     include:
-      - 'github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*'
-      - 'github.com/determined-ai/determined/proto/pkg/userv1.UserWebSetting'
+      - "github.com/determined-ai/determined/master/pkg/schemas/expconf.*Config*"
+      - "github.com/determined-ai/determined/proto/pkg/userv1.UserWebSetting"
   forbidigo:
     forbid:
       - 'fmt\.Print.*'
-      - 'metaV1.NamespaceAll' # Will error if someone has namespace restricted permissions.
-      - 'bundebug.WithVerbose'
-      - 'http.Client' # Use cleanhttp instead.
-      - 'http.Transport' # Use cleanhttp instead.
+      - "metaV1.NamespaceAll" # Will error if someone has namespace restricted permissions.
+      - "bundebug.WithVerbose"
+      - "http.Client" # Use cleanhttp instead.
+      - "http.Transport" # Use cleanhttp instead.
       - 'defer .*\.Lock\(\)'
-  staticcheck:
-    go: "1.20"
+  perfsprint:
+    errorf: false
+    strconcat: false
+  testifylint:
+    disable:
+      - go-require # Requires that require must only be used in the goroutine running the test function.
+  revive:
+    ignore-generated-header: true
+    enable-all-rules: true
+    rules:
+      # Do not enable these linters.
+      - name: function-length # We've internally decided that the char length for lines is 120, not 75.
+        disabled: true
+      - name: line-length-limit # Already have another linter enabled that takes care of this.
+        disabled: true 
+      - name: confusing-naming # We want to keep this to have lower-cased versions of our exported methods.
+        disabled: true 
+      - name: import-alias-naming # We like to use camel-case in our pkg names.
+        disabled: true 
+      - name: nested-structs # We allow nested structs.
+        disabled: true 
+      - name: if-return # Do not enable, as this is a style preference.
+        disabled: true
+      - name: defer # We probably shouldn't enable, we have defers inside loops.
+        disabled: true
+      - name: import-shadowing # We probably shouldn't enable.
+        disabled: true 
+      # Toss-up linters.
+      - name: var-naming # We're pretty inconsisent in using "IDs" vs "Ids" for our variables & API requests.
+        disabled: true
+      - name: deep-exit # We have several instances of log.Fatal().
+        disabled: true 
+      - name: function-result-limit # Sometimes we want to return more than 5 values in a function.
+        disabled: true 
+      - name: max-public-structs # In our defined pkg's, we define so many public structs.
+        disabled: true 
+      - name: modifies-value-receiver # Not an easy solution.
+        disabled: true 
+      - name: add-constant # We probably shouldn't enable, this will make too many messy import cycles.
+        disabled: true 
+      - name: unused-receiver # We probably shouldn't enable, keeping receivers named is consistent across all funcs.
+        disabled: true 
+      - name: argument-limit # When creating new structs, we often pass in more than 8 arguments.
+        disabled: true 
+      - name: unhandled-error # Toss-up linter, I'm not sure what it's supposed to do.
+        disabled: true 
+      - name: unused-parameter # A toss-up linter, it's nice to have parameters named in some cases.
+        disabled: true 
+      # Enable these linters.
+      - name: bare-return # TODO (RM-333)
+        disabled: true 
+      - name: cognitive-complexity # TODO (RM-334)
+        disabled: true
+      - name: cyclomatic # TODO (RM-335)
+        disabled: true
+      - name: use-any # TODO (RM-336)
+        disabled: true
+      - name: flag-parameter # TODO (RM-337)
+        disabled: true 
+      - name: unchecked-type-assertion # TODO (RM-338)
+        disabled: true
 
 linters:
   enable-all: true
   disable:
     # Linters that need triaging. Put all linters here if you upgrade.
-    # Below here are new linters from upgrading to 1.43.0. Since we enable all and disable
+    # Below here are new linters from upgrading to 1.57.2. Since we enable all and disable
     # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
     # golangci-lint can tell you which linters are enabled:
     #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
@@ -96,15 +153,17 @@ linters:
     #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
 
     # Linters that we should probably enable. Please give each a ticket.
-    - cyclop          # TODO(DET-9951)
-    - errorlint       # TODO(DET-9952)
-    - forcetypeassert # TODO(DET-9953)
-    - wrapcheck       # TODO(DET-9954)
-    - maintidx        # TODO(DET-9956)
-    - gocyclo         # TODO(DET-9957)
-    - gocognit        # TODO(DET-9958)
-    - funlen          # TODO(DET-9959)
-    - nestif          # TODO(DET-9960)
+    - cyclop          # TODO (RM-325)
+    - errorlint       # TODO (RM-330)
+    - forcetypeassert # TODO (RM-326)
+    - wrapcheck       # TODO (RM-222)
+    - maintidx        # TODO (RM-327)
+    - gocyclo         # TODO (RM-331)
+    - gocognit        # TODO (RM-328)
+    - funlen          # TODO (RM-332)
+    - nestif          # TODO (RM-329)
+    - nakedret        # TODO (RM-333)
+
 
     # Toss up linters.
     - predeclared
@@ -121,6 +180,7 @@ linters:
     - gochecknoinits
     - goerr113
     - gomnd
+    - inamedparam # We don't enforce this now, but might be useful in the future.
 
     # Linters that we should probably keep disabled.
     - errchkjson       # Requiring us to ignore errors (even if they won't be non nil) feels strange.
@@ -136,6 +196,8 @@ linters:
     - unparam          # We have a lot of unused parameters.
     - gochecknoglobals # We have globals currently and don't have an issue with too many.
     - exhaustive       # We often use switch statements as if statements.
+    - protogetter      # Carolina thinks this is overkill.
+    - tagalign         # Carolina thinks this is unnecessary.
 
     # Linters that are deprecated / replaced / removed.
     - nosnakecase      # Replaced by revive(var-naming).

@@ -438,8 +438,7 @@ func hackAllocationID(spec *cproto.Spec) model.AllocationID {
 		}
 
 		value := split[1]
-		switch split[0] {
-		case AllocationIDEnvVar:
+		if split[0] == AllocationIDEnvVar {
 			return model.AllocationID(value)
 		}
 	}

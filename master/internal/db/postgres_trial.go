@@ -345,8 +345,7 @@ func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunner
 }
 
 // TrialRunIDAndRestarts returns the run id and restart count for a trial.
-func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
-	var runID, restart int
+func (db *PgDB) TrialRunIDAndRestarts(trialID int) (runID int, restart int, err error) {
 	if err := db.sql.QueryRowx(`
 SELECT run_id, restarts
 FROM trials

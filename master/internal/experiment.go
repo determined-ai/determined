@@ -197,11 +197,9 @@ func newExperiment(
 func newUnmanagedExperiment(
 	ctx context.Context,
 	idb bun.IDB,
-	m *Master,
 	expModel *model.Experiment,
 	modelDef []byte,
 	activeConfig expconf.ExperimentConfig,
-	taskSpec *tasks.TaskSpec,
 ) (*internalExperiment, []command.LaunchWarning, error) {
 	expModel.State = model.PausedState
 	expModel.Unmanaged = true
@@ -537,8 +535,7 @@ func (e *internalExperiment) PerformSearcherOperations(msg *apiv1.PostSearcherOp
 				ops = append(ops, *op)
 			}
 		case *experimentv1.SearcherOperation_TrialOperation:
-			switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
-			case *experimentv1.TrialOperation_ValidateAfter:
+			if sub, ok := concreteOperation.TrialOperation.GetUnion().(*experimentv1.TrialOperation_ValidateAfter); ok {
 				op, err := searcher.ValidateAfterFromProto(sub)
 				if err != nil {
 					e.syslog.Error(err)

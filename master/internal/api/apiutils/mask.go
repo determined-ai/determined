@@ -3,7 +3,7 @@ package apiutils
 import (
 	"strings"
 
-	field_mask "google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 // FieldMask is a utility type for efficiently interacting with protobuf FieldMasks in a compliant

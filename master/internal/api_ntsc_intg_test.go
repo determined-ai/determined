@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -132,28 +131,28 @@ func TestCanGetNTSC(t *testing.T) {
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		errors.New("other error"),
+		fmt.Errorf("other error"),
 	).Times(3)
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: nb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
 	_, err = api.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: cmd.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
 	_, err = api.GetShell(ctx, &apiv1.GetShellRequest{ShellId: shell.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
 	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
-		mock.Anything).Return(errors.New("other error")).Once()
+		mock.Anything).Return(fmt.Errorf("other error")).Once()
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: tb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 }
@@ -212,26 +211,26 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
-		errors.New("other error"),
+		fmt.Errorf("other error"),
 	).Times(3)
 
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: nb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.KillCommand(ctx, &apiv1.KillCommandRequest{CommandId: cmd.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.KillShell(ctx, &apiv1.KillShellRequest{ShellId: shell.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
-		errors.New("other error"),
+		fmt.Errorf("other error"),
 	)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: tb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
@@ -285,22 +284,22 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		errors.New("other error"),
+		fmt.Errorf("other error"),
 	).Times(4)
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: nb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: cmd.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.SetShellPriority(ctx, &apiv1.SetShellPriorityRequest{ShellId: shell.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{TensorboardId: tb.Id})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
@@ -328,18 +327,18 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanCreateNSC", mock.Anything, mockUserArg, mock.Anything).Return(
-		errors.New("other error"),
+		fmt.Errorf("other error"),
 	).Times(3)
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Times(3)
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	_, err = api.LaunchCommand(ctx, &apiv1.LaunchCommandRequest{})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	_, err = api.LaunchShell(ctx, &apiv1.LaunchShellRequest{})
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 

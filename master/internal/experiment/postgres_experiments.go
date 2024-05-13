@@ -3,6 +3,7 @@ package experiment
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ func GetExperimentAndCheckCanDoActions(
 	}
 
 	e, err := db.ExperimentByID(ctx, expID)
-	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(expID), true)
+	expNotFound := api.NotFoundErrs("experiment", strconv.Itoa(expID), true)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, model.User{}, expNotFound
 	} else if err != nil {

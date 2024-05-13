@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
 
@@ -26,7 +25,7 @@ func TestAddSCIMUser(t *testing.T) {
 		users     []*model.SCIMUser
 		errString string
 	}{
-		{"simple-case", []*model.SCIMUser{mockSCIMUser(t)}, ""},
+		{"simple-case", []*model.SCIMUser{mockSCIMUser()}, ""},
 		{"multiples-case", []*model.SCIMUser{{
 			Username:   model.NewUUID().String(),
 			ExternalID: "multiples-external-id",
@@ -45,8 +44,8 @@ func TestAddSCIMUser(t *testing.T) {
 			},
 		}}, ""},
 		{"duplicate-case", []*model.SCIMUser{
-			mockSCIMUserWithUsername(t, testUUID),
-			mockSCIMUserWithUsername(t, testUUID),
+			mockSCIMUserWithUsername(testUUID),
+			mockSCIMUserWithUsername(testUUID),
 		}, db.ErrDuplicateRecord.Error()},
 	}
 	for _, tt := range cases {
@@ -102,7 +101,7 @@ func TestSCIMUserList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			expectedUsers := []*model.SCIMUser{}
 			for idx, u := range tt.usernames {
-				addedUser, err := AddSCIMUser(ctx, mockSCIMUserWithUsername(t, u))
+				addedUser, err := AddSCIMUser(ctx, mockSCIMUserWithUsername(u))
 				require.NoError(t, err)
 				if idx+1 >= tt.startIndex && idx < tt.count {
 					expectedUsers = append(expectedUsers, addedUser)
@@ -128,7 +127,7 @@ func TestSCIMUserByID(t *testing.T) {
 		user      *model.SCIMUser
 		errString string
 	}{
-		{"simple-case", mockSCIMUser(t), ""},
+		{"simple-case", mockSCIMUser(), ""},
 		{"error-not-found", nil, "not found"},
 	}
 	for _, tt := range cases {
@@ -163,7 +162,7 @@ func TestUserByAttribute(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			val := model.NewUUID()
-			user := mockSCIMUser(t)
+			user := mockSCIMUser()
 			user.RawAttributes = map[string]interface{}{"id": val}
 
 			addedUser, err := AddSCIMUser(ctx, user)
@@ -198,13 +197,13 @@ func TestSetSCIMUser(t *testing.T) {
 		errString   string
 		matchUUID   bool
 	}{
-		{"simple-case", mockSCIMUser(t), "", true},
-		{"simple-case", mockSCIMUser(t), "does not match updated user ID", false},
+		{"simple-case", mockSCIMUser(), "", true},
+		{"simple-case", mockSCIMUser(), "does not match updated user ID", false},
 		{"empty-set", &model.SCIMUser{}, "duplicate key value", true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			addedUser, err := AddSCIMUser(ctx, mockSCIMUser(t))
+			addedUser, err := AddSCIMUser(ctx, mockSCIMUser())
 			require.NoError(t, err)
 
 			if tt.matchUUID {
@@ -232,16 +231,16 @@ func TestUpdateUserAndDeleteSession(t *testing.T) {
 		matchID     bool
 		errString   string
 	}{
-		{"simple-case-one-field", []string{"username"}, mockSCIMUser(t), true, ""},
-		{"multiple-fields", []string{"name", "emails", "username"}, mockSCIMUser(t), true, ""},
-		{"id-not-found", []string{"username"}, mockSCIMUser(t), false, "does not match updated user ID"},
-		{"id-not-found", []string{"display_name"}, mockSCIMUser(t), false, "does not match updated user ID"},
+		{"simple-case-one-field", []string{"username"}, mockSCIMUser(), true, ""},
+		{"multiple-fields", []string{"name", "emails", "username"}, mockSCIMUser(), true, ""},
+		{"id-not-found", []string{"username"}, mockSCIMUser(), false, "does not match updated user ID"},
+		{"id-not-found", []string{"display_name"}, mockSCIMUser(), false, "does not match updated user ID"},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			// Adding a mock test session -- to test for deletion later
 			// Add a user.
-			addedUser, err := AddSCIMUser(ctx, mockSCIMUser(t))
+			addedUser, err := AddSCIMUser(ctx, mockSCIMUser())
 			require.NoError(t, err)
 
 			var user model.User
@@ -287,22 +286,22 @@ func TestUpdateUserAndDeleteSession(t *testing.T) {
 
 			_, err = db.Bun().NewSelect().Table("user_sessions").
 				Where("user_id = ?", user.ID).Exec(context.Background())
-			require.ErrorAs(t, errors.New("Receive unexpected error: bun: Model(nil)"), &err)
+			require.NoError(t, err)
 		})
 	}
 }
 
-func mockSCIMUser(t *testing.T) *model.SCIMUser {
-	return mockSCIMUserWithUsername(t, model.NewUUID().String())
+func mockSCIMUser() *model.SCIMUser {
+	return mockSCIMUserWithUsername(model.NewUUID().String())
 }
 
-func mockSCIMUserWithUsername(t *testing.T, username string) *model.SCIMUser {
+func mockSCIMUserWithUsername(username string) *model.SCIMUser {
 	user := &model.SCIMUser{
 		Username:     username,
-		DisplayName:  null.StringFrom(fmt.Sprintf("disp-%s", username)),
-		ExternalID:   fmt.Sprintf("external-id-%s", username),
+		DisplayName:  null.StringFrom("disp-" + username),
+		ExternalID:   "external-id-" + username,
 		Name:         model.SCIMName{GivenName: "John", FamilyName: username},
-		Emails:       []model.SCIMEmail{{Type: "personal", SValue: fmt.Sprintf("value-%s", username), Primary: true}},
+		Emails:       []model.SCIMEmail{{Type: "personal", SValue: "value-" + username, Primary: true}},
 		Active:       true,
 		PasswordHash: null.StringFrom("password"),
 	}

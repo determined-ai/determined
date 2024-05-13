@@ -222,17 +222,16 @@ func (s *asyncHalvingSearch) promoteAsync(
 		) {
 			s.TrialRungs[promotionID] = rungIndex + 1
 			nextRung.OutstandingTrials++
-			if !s.EarlyExitTrials[promotionID] {
-				unitsNeeded := mathx.Max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
-				ops = append(ops, NewValidateAfter(promotionID, unitsNeeded))
-				addedTrainWorkload = true
-				s.PendingTrials++
-			} else {
+			if s.EarlyExitTrials[promotionID] {
 				// We make a recursive call that will behave the same
 				// as if we'd actually run the promoted job and received
 				// the worse possible result in return.
 				return s.promoteAsync(ctx, promotionID, ashaExitedMetricValue)
 			}
+			unitsNeeded := mathx.Max(nextRung.UnitsNeeded-rung.UnitsNeeded, 1)
+			ops = append(ops, NewValidateAfter(promotionID, unitsNeeded))
+			addedTrainWorkload = true
+			s.PendingTrials++
 		}
 	}
 

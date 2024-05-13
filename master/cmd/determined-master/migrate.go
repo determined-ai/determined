@@ -18,7 +18,7 @@ func newMigrateCmd() *cobra.Command {
 		Use:   "migrate",
 		Short: "migrate the db",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := runMigrate(cmd, args); err != nil {
+			if err := runMigrate(args); err != nil {
 				log.Error(fmt.Sprintf("%+v", err))
 				os.Exit(1)
 			}
@@ -26,7 +26,7 @@ func newMigrateCmd() *cobra.Command {
 	}
 }
 
-func runMigrate(cmd *cobra.Command, args []string) error {
+func runMigrate(args []string) error {
 	for _, arg := range args {
 		if arg == "down" || arg == "reset" {
 			return fmt.Errorf("migrating down or reseting is not supported")

@@ -229,7 +229,7 @@ func getTotalWeight(states []*groupState) float64 {
 	return total
 }
 
-func accountForPreoffers(preoffers int, offer int) (int, int) {
+func accountForPreoffers(preoffers int, offer int) (int, int) { // nolint: revive
 	if preoffers > 0 {
 		if preoffers == offer {
 			preoffers = 0

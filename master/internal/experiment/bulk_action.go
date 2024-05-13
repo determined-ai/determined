@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -215,7 +216,7 @@ func ActivateExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -255,7 +256,7 @@ func CancelExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -307,7 +308,7 @@ func KillExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -357,7 +358,7 @@ func PauseExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -447,7 +448,7 @@ func DeleteExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -549,7 +550,7 @@ func ArchiveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -650,7 +651,7 @@ func UnarchiveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -753,7 +754,7 @@ func MoveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -890,7 +891,7 @@ func BulkUpdateLogRentention(
 		for _, originalID := range expIDs {
 			if !slices.Contains(editableExperimentIDList, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -932,7 +933,6 @@ func BulkUpdateLogRentention(
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

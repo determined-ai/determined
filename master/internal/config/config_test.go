@@ -48,7 +48,7 @@ func TestDeprecations(t *testing.T) {
 			},
 		},
 	}
-	require.Len(t, c.Deprecations(), 0)
+	require.Empty(t, c.Deprecations())
 
 	c.ResourceConfig.RootPoolsInternal[0].AgentReattachEnabled = true
 	c.ResourceConfig.AdditionalResourceManagersInternal[0].ResourcePools[0].AgentReattachEnabled = true

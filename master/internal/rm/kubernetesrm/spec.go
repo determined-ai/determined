@@ -707,7 +707,7 @@ func configureInitContainer(
 		Name:    "determined-init-container",
 		Command: []string{path.Join(initContainerWorkDir, etc.K8InitContainerEntryScriptResource)},
 		Args: []string{
-			fmt.Sprintf("%d", numArchives), initContainerTarSrcPath, initContainerTarDstPath,
+			strconv.Itoa(numArchives), initContainerTarSrcPath, initContainerTarDstPath,
 		},
 		Image:           image,
 		ImagePullPolicy: imagePullPolicy,

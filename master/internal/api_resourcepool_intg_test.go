@@ -227,7 +227,7 @@ func TestListWorkspacesBoundToRPSucceeds(t *testing.T) {
 		ResourcePoolName: testPoolName,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.WorkspaceIds))
+	require.Len(t, resp.WorkspaceIds, 1)
 	require.Equal(t, workspaceIDs[0], resp.WorkspaceIds[0])
 
 	// test listing on resource pool that has no bindings
@@ -241,7 +241,7 @@ func TestListWorkspacesBoundToRPSucceeds(t *testing.T) {
 		ResourcePoolName: testPool2Name,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 0, len(resp.WorkspaceIds))
+	require.Zero(t, len(resp.WorkspaceIds))
 
 	require.True(t, mockRM.AssertExpectations(t))
 }
@@ -282,7 +282,7 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 		ResourcePoolName: testPoolName,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 0, len(resp.WorkspaceIds))
+	require.Zero(t, len(resp.WorkspaceIds))
 
 	// test patch binding with different workspace
 	_, err = api.OverwriteRPWorkspaceBindings(ctx, &apiv1.OverwriteRPWorkspaceBindingsRequest{
@@ -294,7 +294,7 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 		ResourcePoolName: testPoolName,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.WorkspaceIds))
+	require.Len(t, resp.WorkspaceIds, 1)
 	require.Equal(t, workspaceIDs[1], resp.WorkspaceIds[0])
 
 	// test patch binding with different workspaceID
@@ -308,7 +308,7 @@ func TestPatchBindingsSucceeds(t *testing.T) {
 		ResourcePoolName: testPoolName,
 	})
 	require.NoError(t, err)
-	require.Equal(t, 2, len(resp.WorkspaceIds))
+	require.Len(t, resp.WorkspaceIds, 2)
 	expectedIds := set.FromSlice[int32](workspaceIDs)
 	for _, id := range resp.WorkspaceIds {
 		require.True(t, expectedIds.Contains(id))
@@ -352,7 +352,7 @@ func TestDeleteBindingsSucceeds(t *testing.T) {
 	listReq := &apiv1.ListWorkspacesBoundToRPRequest{ResourcePoolName: testPoolName}
 	resp, err := api.ListWorkspacesBoundToRP(ctx, listReq)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.WorkspaceIds))
+	require.Len(t, resp.WorkspaceIds, 1)
 	require.Equal(t, workspaceIDs[1], resp.WorkspaceIds[0])
 
 	_, err = api.UnbindRPFromWorkspace(ctx, &apiv1.UnbindRPFromWorkspaceRequest{
@@ -363,7 +363,7 @@ func TestDeleteBindingsSucceeds(t *testing.T) {
 
 	resp, err = api.ListWorkspacesBoundToRP(ctx, listReq)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(resp.WorkspaceIds))
+	require.Zero(t, len(resp.WorkspaceIds))
 
 	require.True(t, mockRM.AssertExpectations(t))
 }

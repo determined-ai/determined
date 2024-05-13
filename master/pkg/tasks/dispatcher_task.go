@@ -12,7 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/sirupsen/logrus"
-	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
+	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -800,7 +800,7 @@ func getEnvVarsForLauncherManifest(
 	m["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, masterHost, masterPort)
 	m["DET_MASTER_HOST"] = masterHost
 	m["DET_MASTER_IP"] = masterHost
-	m["DET_MASTER_PORT"] = fmt.Sprintf("%d", masterPort)
+	m["DET_MASTER_PORT"] = strconv.Itoa(masterPort)
 	m["DET_CLUSTER_ID"] = taskSpec.ClusterID
 	// On non-zero exit of any component/step of the sbatch job, terminate with an error
 	m["SLURM_KILL_BAD_EXIT"] = "1"

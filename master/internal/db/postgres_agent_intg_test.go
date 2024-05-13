@@ -37,8 +37,8 @@ func agentStatsForRP(t *testing.T, rp string) []*agentStatsRow {
 
 func TestRecordAgentStats(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	lowStartTimeBound := time.Now()

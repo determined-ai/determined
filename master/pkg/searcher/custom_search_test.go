@@ -33,7 +33,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	ctx := context{rand: rand}
 
 	queue := customSearchMethod.(CustomSearchMethod).getSearcherEventQueue()
-	require.Equal(t, 0, len(queue.events))
+	require.Zero(t, len(queue.events))
 
 	var expEvents []*experimentv1.SearcherEvent
 	var ids idMaker
@@ -129,7 +129,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	// Set customSearcherProgress.
 	searcherProgress := 0.4
 	customSearchMethod.(CustomSearchMethod).setCustomSearcherProgress(searcherProgress)
-	require.Equal(t, searcherProgress, customSearchMethod.progress(nil, nil))
+	require.InEpsilon(t, searcherProgress, customSearchMethod.progress(nil, nil), 0.01)
 
 	// Check removeUpto.
 	err = queue.RemoveUpTo(2)

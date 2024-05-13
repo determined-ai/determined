@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
+	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gotest.tools/assert"
 

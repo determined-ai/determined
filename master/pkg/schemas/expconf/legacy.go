@@ -40,9 +40,7 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 
 	csOnly := raw["checkpoint_storage"]
 
-	// Special case for hdfs.
-	switch m := csOnly.(type) {
-	case map[string]any:
+	if m, ok := csOnly.(map[string]any); ok {
 		if t, ok := m["type"].(string); ok && t == "hdfs" {
 			var saveExpBest, saveTrialBest, saveTrialLatest *int
 			var i float64
@@ -178,32 +176,32 @@ func getHyperparameters(raw map[string]interface{}) (Hyperparameters, error) {
 func getLegacySearcher(raw map[string]interface{}) (LegacySearcher, error) {
 	searcher := raw["searcher"]
 	if searcher == nil {
-		return LegacySearcher{}, errors.New("searcher field missing")
+		return LegacySearcher{}, fmt.Errorf("searcher field missing")
 	}
 
 	tsearcher, ok := searcher.(map[string]interface{})
 	if !ok {
-		return LegacySearcher{}, errors.New("searcher field is not a map")
+		return LegacySearcher{}, fmt.Errorf("searcher field is not a map")
 	}
 
 	name, ok := tsearcher["name"]
 	if !ok {
-		return LegacySearcher{}, errors.New("searcher.name missing")
+		return LegacySearcher{}, fmt.Errorf("searcher.name missing")
 	}
 
 	tname, ok := name.(string)
 	if !ok {
-		return LegacySearcher{}, errors.New("searcher.name is not a string")
+		return LegacySearcher{}, fmt.Errorf("searcher.name is not a string")
 	}
 
 	metric, ok := tsearcher["metric"]
 	if !ok {
-		return LegacySearcher{}, errors.New("searcher.metric missing")
+		return LegacySearcher{}, fmt.Errorf("searcher.metric missing")
 	}
 
 	tmetric, ok := metric.(string)
 	if !ok {
-		return LegacySearcher{}, errors.New("searcher.metric is not a string")
+		return LegacySearcher{}, fmt.Errorf("searcher.metric is not a string")
 	}
 
 	// smallerIsBetter has always had a default, and always the same one
@@ -211,7 +209,7 @@ func getLegacySearcher(raw map[string]interface{}) (LegacySearcher, error) {
 	if smallerIsBetter, ok := tsearcher["smaller_is_better"]; ok && smallerIsBetter != nil {
 		tsmallerIsBetter, ok = smallerIsBetter.(bool)
 		if !ok {
-			return LegacySearcher{}, errors.New("searcher.smaller_is_better is not a boolean")
+			return LegacySearcher{}, fmt.Errorf("searcher.smaller_is_better is not a boolean")
 		}
 	}
 
