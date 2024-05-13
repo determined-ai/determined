@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: determined-master-deployment-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: determined-master-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": pre-install
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pre-install-job
+        image: "alpine:3.19"
+        env:
+          - name: INITIAL_USER_PASSWORD
+            value: {{ coalesce .Values.initialUserPassword .Values.defaultPassword }}
+        command: ["/bin/sh"]
+        args:
+          - "-c"
+          - |
+            if [ -z "${INITIAL_USER_PASSWORD}" ]; then
+              echo 'Setting an initialUserPassword is required for brand new clusters.'
+              echo 'Setting an initialUserPassword is required for brand new clusters.' > /dev/termination-log
+              exit 1;
+            fi
