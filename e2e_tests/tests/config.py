@@ -21,12 +21,12 @@ DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
 DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-ngc-dev:8b3bea3"
 DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-ngc-dev:8b3bea3"
 
-TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
-TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
-PT_CPU_IMAGE = os.environ.get("PT_CPU_IMAGE") or DEFAULT_PT_CPU_IMAGE
-PT_GPU_IMAGE = os.environ.get("PT_GPU_IMAGE") or DEFAULT_PT_GPU_IMAGE
-PT2_CPU_IMAGE = os.environ.get("PT2_CPU_IMAGE") or DEFAULT_PT2_CPU_IMAGE
-PT2_GPU_IMAGE = os.environ.get("PT2_GPU_IMAGE") or DEFAULT_PT2_GPU_IMAGE
+TF2_CPU_IMAGE = DEFAULT_TF2_CPU_IMAGE
+TF2_GPU_IMAGE = DEFAULT_TF2_GPU_IMAGE
+PT_CPU_IMAGE = DEFAULT_PT_CPU_IMAGE
+PT_GPU_IMAGE = DEFAULT_PT_GPU_IMAGE
+PT2_CPU_IMAGE = DEFAULT_PT2_CPU_IMAGE
+PT2_GPU_IMAGE = DEFAULT_PT2_GPU_IMAGE
 GPU_ENABLED = os.environ.get("DET_TEST_GPU_ENABLED", "1") not in ("0", "false")
 
 PROJECT_ROOT_PATH = pathlib.Path(__file__).resolve().parents[2]
