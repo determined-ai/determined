@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -128,4 +129,19 @@ type AgentStats struct {
 	ResourcePool string `db:"resource_pool"`
 	AgentID      string `db:"agent_id"`
 	Slots        int    `db:"slots"`
+}
+
+// SortableSlotIndex returns a slot index that will sort as you want to.
+//
+// This is a hack to fix a bug seen by the webui.
+// The webui displays a list of slots and if they are filled, so they expect that
+// the order of what slots are filled in is consistent. In Kubernetes this is an illusion,
+// we don't know what slot is running what job.
+// Our API returns a map of slot IDs to slots that get returned. This map gets parsed and display
+// in the frontend lexicographically. Just doing indexes breaks when there are more than 10 GPUs
+// per agent since it will go 1,10,11 instead of 1,2,3,4.
+//
+// To fix this on our just pad the numbers with 0s so they sort in the response.
+func SortableSlotIndex(i int) string {
+	return fmt.Sprintf("%03d", i)
 }

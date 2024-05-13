@@ -368,12 +368,6 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	if p.submissionInfo.taskSpec.Owner != nil {
-		// Owner label will disappear if Owner is somehow nil.
-		podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
-	}
-	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
-	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID

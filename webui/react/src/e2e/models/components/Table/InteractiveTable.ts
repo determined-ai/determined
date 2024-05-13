@@ -30,7 +30,7 @@ export class InteractiveTable<
   }
 
   readonly table: Table<RowType, HeadRowType>;
-  readonly skeleton: SkeletonTable = new SkeletonTable({ parent: this });
+  readonly skeleton = new SkeletonTable({ parent: this });
 }
 
 /**
@@ -58,11 +58,15 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     parent: this,
     selector: 'tbody.ant-table-tbody',
   });
+  readonly noData = new BaseComponent({
+    parent: this.#body,
+    selector: '.ant-empty.ant-empty-normal',
+  });
   readonly #head: BaseComponent = new BaseComponent({
     parent: this,
-    selector: 'theader.ant-table-thead',
+    selector: 'thead.ant-table-thead',
   });
-  readonly pagination: Pagination = new Pagination({
+  readonly pagination = new Pagination({
     parent: this._parent,
   });
 
@@ -139,12 +143,12 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
 export class Row extends NamedComponent {
   readonly defaultSelector = 'tr.ant-table-row';
   readonly keyAttribute = 'data-row-key';
-  readonly select: BaseComponent = new BaseComponent({
+  readonly select = new BaseComponent({
     parent: this,
     selector: '.ant-table-selection-column',
   });
 
-  async getID(): Promise<string> {
+  async getId(): Promise<string> {
     const value = await this.pwLocator.getAttribute(this.keyAttribute);
     if (value === null) {
       throw new Error(`All rows should have the attribute ${this.keyAttribute}`);
@@ -162,8 +166,8 @@ export class Row extends NamedComponent {
  */
 export class HeadRow extends NamedComponent {
   readonly defaultSelector = 'tr';
-  readonly selection: BaseComponent = new BaseComponent({
+  readonly selectAll = new BaseComponent({
     parent: this,
-    selector: '.ant-table-selection-column',
+    selector: '.ant-table-selection-column .ant-checkbox-input',
   });
 }

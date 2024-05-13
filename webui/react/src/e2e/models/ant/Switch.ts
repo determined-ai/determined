@@ -8,11 +8,11 @@ import { BaseComponent } from 'e2e/models/BaseComponent';
  * @param {string} obj.selector - the selector for the entire switch. The finding the button or label is handled by this component.
  */
 export class Switch extends BaseComponent {
-  readonly switch: BaseComponent = new BaseComponent({
+  readonly switch = new BaseComponent({
     parent: this,
     selector: 'button[role="switch"]',
   });
-  readonly label: BaseComponent = new BaseComponent({
+  readonly label = new BaseComponent({
     parent: this,
     selector: 'label',
   });

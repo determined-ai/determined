@@ -975,9 +975,11 @@ class v1ActivateExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -985,6 +987,7 @@ class v1ActivateExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1ActivateExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -993,6 +996,7 @@ class v1ActivateExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -1654,9 +1658,11 @@ class v1ArchiveExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -1664,6 +1670,7 @@ class v1ArchiveExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1ArchiveExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -1672,6 +1679,7 @@ class v1ArchiveExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -1691,6 +1699,63 @@ class v1ArchiveExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1ArchiveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1ArchiveRunsRequest(Printable):
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1ArchiveRunsResponse(Printable):
+    """Response to ArchiveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ArchiveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -1924,9 +1989,11 @@ class v1CancelExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -1934,6 +2001,7 @@ class v1CancelExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1CancelExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -1942,6 +2010,7 @@ class v1CancelExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -3068,9 +3137,11 @@ class v1DeleteExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -3078,6 +3149,7 @@ class v1DeleteExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1DeleteExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -3086,6 +3158,7 @@ class v1DeleteExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -3658,6 +3731,7 @@ class v1Experiment(Printable):
     labels: "typing.Optional[typing.Sequence[str]]" = None
     modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
     projectName: "typing.Optional[str]" = None
@@ -3700,6 +3774,7 @@ class v1Experiment(Printable):
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
@@ -3754,6 +3829,8 @@ class v1Experiment(Printable):
             self.modelDefinitionSize = modelDefinitionSize
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
         if not isinstance(progress, Unset):
@@ -3822,6 +3899,8 @@ class v1Experiment(Printable):
             kwargs["modelDefinitionSize"] = obj["modelDefinitionSize"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
         if "progress" in obj:
@@ -3890,6 +3969,8 @@ class v1Experiment(Printable):
             out["modelDefinitionSize"] = self.modelDefinitionSize
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
         if not omit_unset or "progress" in vars(self):
@@ -4313,6 +4394,7 @@ class v1FlatRun(Printable):
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
@@ -4328,6 +4410,7 @@ class v1FlatRunExperiment(Printable):
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -4342,6 +4425,8 @@ class v1FlatRunExperiment(Printable):
             self.externalExperimentId = externalExperimentId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
@@ -4360,6 +4445,8 @@ class v1FlatRunExperiment(Printable):
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -4378,6 +4465,8 @@ class v1FlatRunExperiment(Printable):
             out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         return out
 
 class v1GenericTaskState(DetEnum):
@@ -7308,9 +7397,11 @@ class v1KillExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -7318,6 +7409,7 @@ class v1KillExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1KillExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -7326,6 +7418,7 @@ class v1KillExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -8801,10 +8894,12 @@ class v1MoveExperimentsRequest(Printable):
         *,
         destinationProjectId: int,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.destinationProjectId = destinationProjectId
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -8813,6 +8908,7 @@ class v1MoveExperimentsRequest(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": obj["destinationProjectId"],
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -8822,6 +8918,7 @@ class v1MoveExperimentsRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "destinationProjectId": self.destinationProjectId,
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -9738,6 +9835,54 @@ class v1PatchTemplateConfigResponse(Printable):
         }
         return out
 
+class v1PatchTemplateNameRequest(Printable):
+
+    def __init__(
+        self,
+        *,
+        newName: str,
+        oldName: str,
+    ):
+        self.newName = newName
+        self.oldName = oldName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "newName": obj["newName"],
+            "oldName": obj["oldName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "newName": self.newName,
+            "oldName": self.oldName,
+        }
+        return out
+
+class v1PatchTemplateNameResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchTrialRequest(Printable):
     """Patch a trial."""
     state: "typing.Optional[trialv1State]" = None
@@ -10062,9 +10207,11 @@ class v1PauseExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -10072,6 +10219,7 @@ class v1PauseExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1PauseExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -10080,6 +10228,7 @@ class v1PauseExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -11331,10 +11480,12 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         *,
         experimentIds: "typing.Sequence[int]",
         numDays: int,
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
         self.numDays = numDays
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -11343,6 +11494,7 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
             "numDays": obj["numDays"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -11352,6 +11504,7 @@ class v1PutExperimentsRetainLogsRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
             "numDays": self.numDays,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -15354,9 +15507,11 @@ class v1UnarchiveExperimentsRequest(Printable):
         self,
         *,
         experimentIds: "typing.Sequence[int]",
+        projectId: int,
         filters: "typing.Union[v1BulkExperimentFilters, None, Unset]" = _unset,
     ):
         self.experimentIds = experimentIds
+        self.projectId = projectId
         if not isinstance(filters, Unset):
             self.filters = filters
 
@@ -15364,6 +15519,7 @@ class v1UnarchiveExperimentsRequest(Printable):
     def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "experimentIds": obj["experimentIds"],
+            "projectId": obj["projectId"],
         }
         if "filters" in obj:
             kwargs["filters"] = v1BulkExperimentFilters.from_json(obj["filters"]) if obj["filters"] is not None else None
@@ -15372,6 +15528,7 @@ class v1UnarchiveExperimentsRequest(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "experimentIds": self.experimentIds,
+            "projectId": self.projectId,
         }
         if not omit_unset or "filters" in vars(self):
             out["filters"] = None if self.filters is None else self.filters.to_json(omit_unset)
@@ -15391,6 +15548,63 @@ class v1UnarchiveExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1UnarchiveExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1UnarchiveRunsRequest(Printable):
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1UnarchiveRunsResponse(Printable):
+    """Response to UnarchiveRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UnarchiveRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -16118,12 +16332,16 @@ def post_ActivateExperiments(
     session: "api.BaseSession",
     *,
     body: "v1ActivateExperimentsRequest",
+    projectId: int,
 ) -> "v1ActivateExperimentsResponse":
-    """Activate multiple experiments."""
+    """Activate multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/activate",
+        path=f"/api/v1/projects/{projectId}/experiments/activate",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -16366,12 +16584,16 @@ def post_ArchiveExperiments(
     session: "api.BaseSession",
     *,
     body: "v1ArchiveExperimentsRequest",
+    projectId: int,
 ) -> "v1ArchiveExperimentsResponse":
-    """Archive multiple experiments."""
+    """Archive multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/archive",
+        path=f"/api/v1/projects/{projectId}/experiments/archive",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -16432,6 +16654,27 @@ def post_ArchiveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_ArchiveProject", _resp)
+
+def post_ArchiveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1ArchiveRunsRequest",
+) -> "v1ArchiveRunsResponse":
+    """Archive runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/archive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ArchiveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ArchiveRuns", _resp)
 
 def post_ArchiveWorkspace(
     session: "api.BaseSession",
@@ -16554,12 +16797,16 @@ def post_CancelExperiments(
     session: "api.BaseSession",
     *,
     body: "v1CancelExperimentsRequest",
+    projectId: int,
 ) -> "v1CancelExperimentsResponse":
-    """Cancel multiple experiments."""
+    """Cancel multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/cancel",
+        path=f"/api/v1/projects/{projectId}/experiments/cancel",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -16939,12 +17186,16 @@ def delete_DeleteExperiments(
     session: "api.BaseSession",
     *,
     body: "v1DeleteExperimentsRequest",
+    projectId: int,
 ) -> "v1DeleteExperimentsResponse":
-    """Delete multiple experiments."""
+    """Delete multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="DELETE",
-        path="/api/v1/experiments/delete",
+        path=f"/api/v1/projects/{projectId}/experiments/delete",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -19186,6 +19437,7 @@ def get_GetTemplates(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetTemplatesResponse":
     """Get a list of templates.
 
@@ -19202,6 +19454,7 @@ denote number of templates to skip from the end before returning results.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
+    - workspaceIds: Limit templates to those that match the workspace id.
     """
     _params = {
         "limit": limit,
@@ -19209,6 +19462,7 @@ denote number of templates to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "workspaceIds": workspaceIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -20122,12 +20376,16 @@ def post_KillExperiments(
     session: "api.BaseSession",
     *,
     body: "v1KillExperimentsRequest",
+    projectId: int,
 ) -> "v1KillExperimentsResponse":
-    """Kill multiple experiments."""
+    """Kill multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/kill",
+        path=f"/api/v1/projects/{projectId}/experiments/kill",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -20661,12 +20919,16 @@ def post_MoveExperiments(
     session: "api.BaseSession",
     *,
     body: "v1MoveExperimentsRequest",
+    projectId: int,
 ) -> "v1MoveExperimentsResponse":
-    """Move multiple experiments into a project."""
+    """Move multiple experiments into a project.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/move",
+        path=f"/api/v1/projects/{projectId}/experiments/move",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -20990,6 +21252,27 @@ def patch_PatchTemplateConfig(
         return v1PatchTemplateConfigResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchTemplateConfig", _resp)
 
+def patch_PatchTemplateName(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchTemplateNameRequest",
+) -> "v1PatchTemplateNameResponse":
+    """Patch template name."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/template/rename",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTemplateNameResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTemplateName", _resp)
+
 def patch_PatchTrial(
     session: "api.BaseSession",
     *,
@@ -21116,12 +21399,16 @@ def post_PauseExperiments(
     session: "api.BaseSession",
     *,
     body: "v1PauseExperimentsRequest",
+    projectId: int,
 ) -> "v1PauseExperimentsResponse":
-    """Pause multiple experiments."""
+    """Pause multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/pause",
+        path=f"/api/v1/projects/{projectId}/experiments/pause",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -21675,12 +21962,16 @@ def put_PutExperimentsRetainLogs(
     session: "api.BaseSession",
     *,
     body: "v1PutExperimentsRetainLogsRequest",
+    projectId: int,
 ) -> "v1PutExperimentsRetainLogsResponse":
-    """Retain logs for an experiment."""
+    """Retain logs for an experiment.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="PUT",
-        path="/api/v1/experiments/retain_logs",
+        path=f"/api/v1/projects/{projectId}/experiments/retain_logs",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -21723,7 +22014,7 @@ def put_PutTemplate(
     body: "v1Template",
     template_name: str,
 ) -> "v1PutTemplateResponse":
-    """DEPRECATED: Update or create (upsert) the requested template.
+    """Update or create (upsert) the requested template.
 
     - body: The template to put.
     - template_name: The name of the template.
@@ -22786,12 +23077,16 @@ def post_UnarchiveExperiments(
     session: "api.BaseSession",
     *,
     body: "v1UnarchiveExperimentsRequest",
+    projectId: int,
 ) -> "v1UnarchiveExperimentsResponse":
-    """Unarchive multiple experiments."""
+    """Unarchive multiple experiments.
+
+    - projectId: Project id that the experiments belong to.
+    """
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/experiments/unarchive",
+        path=f"/api/v1/projects/{projectId}/experiments/unarchive",
         params=_params,
         json=body.to_json(True),
         data=None,
@@ -22852,6 +23147,27 @@ def post_UnarchiveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_UnarchiveProject", _resp)
+
+def post_UnarchiveRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1UnarchiveRunsRequest",
+) -> "v1UnarchiveRunsResponse":
+    """Unarchive runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/unarchive",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1UnarchiveRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_UnarchiveRuns", _resp)
 
 def post_UnarchiveWorkspace(
     session: "api.BaseSession",

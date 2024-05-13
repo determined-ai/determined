@@ -17,8 +17,8 @@ export class Pivot extends NamedComponent {
   static selectorTemplateTabs(id: string): string {
     return `div.ant-tabs-tab-btn[id$="${id}"]`;
   }
-  readonly tablist: BaseComponent = new BaseComponent({ parent: this, selector: '.ant-tabs-nav' });
-  readonly tabContent: BaseComponent = new BaseComponent({
+  readonly tablist = new BaseComponent({ parent: this, selector: '.ant-tabs-nav' });
+  readonly tabContent = new BaseComponent({
     parent: this,
     selector: '.ant-tabs-content-holder',
   });

@@ -9,7 +9,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  */
 export class SkeletonSection extends NamedComponent {
   readonly defaultSelector = 'div[data-test-component="skeletonSection"]';
-  readonly header: BaseComponent = new BaseComponent({
+  readonly header = new BaseComponent({
     parent: this,
     selector: '[data-testid="skeletonHeader"]',
   });

@@ -3,6 +3,7 @@ from determined.cli._util import (
     make_pagination_args,
     default_pagination_args,
     unauth_session,
+    session,
     setup_session,
     require_feature_flag,
     print_launch_warnings,

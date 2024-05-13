@@ -182,13 +182,13 @@ func (m *Master) promHealth(ctx context.Context) {
 	}()
 }
 
-//	@Summary Get health of Determined and the dependencies.
-//	@Tags	 Cluster
-//	@ID		 health
-//	@Produce json
-//	@Success 200     {object} model.HealthCheck
-//	@Failure 503     {object} model.HealthCheck
-//	@Router	 /health [get]
+//	@Summary	Get health of Determined and the dependencies.
+//	@Tags		Cluster
+//	@ID			health
+//	@Produce	json
+//	@Success	200	{object}	model.HealthCheck
+//	@Failure	503	{object}	model.HealthCheck
+//	@Router		/health [get]
 //
 // nolint:lll
 func (m *Master) healthCheckEndpoint(c echo.Context) error {
@@ -208,6 +208,7 @@ func (m *Master) healthCheck(ctx context.Context) model.HealthCheck {
 	hc.Database = model.Healthy
 	_, err := db.Bun().NewSelect().Table("cluster_id").Exists(ctx)
 	if err != nil {
+		log.WithError(err).Error("database marked as unhealthy")
 		hc.Database = model.Unhealthy
 	}
 

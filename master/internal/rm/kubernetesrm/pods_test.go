@@ -4,10 +4,74 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
 )
+
+func TestGetNonDetPods(t *testing.T) {
+	hiddenPods := []k8sV1.Pod{
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "no node name",
+			},
+		},
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:   "has det label",
+				Labels: map[string]string{determinedLabel: "t"},
+			},
+		},
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:   "has det system label",
+				Labels: map[string]string{determinedSystemLabel: "f"},
+			},
+		},
+	}
+	expectedPods := []k8sV1.Pod{
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns1",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+		{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name: "ns2",
+			},
+			Spec: k8sV1.PodSpec{
+				NodeName: "a",
+			},
+		},
+	}
+
+	ns1 := &mocks.PodInterface{}
+	ns1.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[0])}, nil)
+
+	ns2 := &mocks.PodInterface{}
+	ns2.On("List", mock.Anything, mock.Anything).Once().
+		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[1])}, nil)
+
+	p := pods{
+		podInterfaces: map[string]typedV1.PodInterface{
+			"ns1": ns1,
+			"ns2": ns2,
+		},
+	}
+
+	actualPods, err := p.getNonDetPods()
+	require.NoError(t, err)
+	require.ElementsMatch(t, expectedPods, actualPods)
+}
 
 func TestTaintTolerated(t *testing.T) {
 	cases := []struct {

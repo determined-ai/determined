@@ -11,11 +11,7 @@ determined-master [MASTER_ARGS] migrate [MIGRATION_ARGS]
 where `MASTER_ARGS` are the normal determined-master command flags,
 and `MIGRATION_ARGS` are `go-pg/migrations` args.
 
-For example, to migrate down to a specific version, run
-
-```bash
-determined-master --config-file /path/to/master.yaml migrate down 20210917133742
-```
+Down migrations are not written and not supported.
 
 ## Creating new migrations
 

@@ -510,7 +510,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/environments:cuda-11.3-pytorch-1.12-tf-2.11-gpu-748dda4
+      image=determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

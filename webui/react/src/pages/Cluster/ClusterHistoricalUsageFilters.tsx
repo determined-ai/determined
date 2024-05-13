@@ -1,6 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import DatePicker from 'hew/DatePicker';
 import Select, { Option, SelectValue } from 'hew/Select';
+import _ from 'lodash';
 import React from 'react';
 
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -53,32 +54,34 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
 
   const handleAfterDateSelect = (afterDate: Dayjs | null) => {
     if (!afterDate) return;
+    const val = _.cloneDeep(value);
 
-    const dateDiff = value.beforeDate.diff(afterDate, value.groupBy);
+    const dateDiff = val.beforeDate.diff(afterDate, val.groupBy);
 
-    if (value.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
-      value.beforeDate = afterDate.clone().add(MAX_RANGE_DAY - 1, 'day');
+    if (val.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
+      val.beforeDate = afterDate.clone().add(MAX_RANGE_DAY - 1, 'day');
     }
-    if (value.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
-      value.beforeDate = afterDate.clone().add(MAX_RANGE_MONTH - 1, 'month');
+    if (val.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
+      val.beforeDate = afterDate.clone().add(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    onChange({ ...value, afterDate });
+    onChange({ ...val, afterDate });
   };
 
   const handleBeforeDateSelect = (beforeDate: Dayjs | null) => {
     if (!beforeDate) return;
+    const val = _.cloneDeep(value);
 
-    const dateDiff = beforeDate.diff(value.afterDate, value.groupBy);
+    const dateDiff = beforeDate.diff(val.afterDate, val.groupBy);
 
-    if (value.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
-      value.afterDate = beforeDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
+    if (val.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
+      val.afterDate = beforeDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
     }
-    if (value.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
-      value.afterDate = beforeDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
+    if (val.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
+      val.afterDate = beforeDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    onChange({ ...value, beforeDate });
+    onChange({ ...val, beforeDate });
   };
 
   const isAfterDateDisabled = (currentDate: Dayjs) => {

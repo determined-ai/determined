@@ -10,8 +10,10 @@ set -e
 # to register the proxy with the Determined master.
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --proxy --download_context_directory
 
+STARTUP_HOOK="startup-hook.sh"
 set -x
 test -f "${TCD_STARTUP_HOOK}" && source "${TCD_STARTUP_HOOK}"
+test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 set +x
 
 if [ "$#" -eq 1 ]; then
