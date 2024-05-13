@@ -554,16 +554,6 @@ func (a *apiServer) PostProject(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	var projectKey string
-	if req.Key == nil {
-		projectKey, err = project.GenerateProjectKey(ctx, req.Name)
-		if err != nil {
-			return nil, fmt.Errorf("error generating project key: %w", err)
-		}
-	} else {
-		projectKey = *req.Key
-	}
-
 	if req.Key != nil {
 		if err = validateProjectKey(*req.Key); err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
