@@ -380,6 +380,16 @@ func (a *apiServer) MoveRuns(
 		if err != nil {
 			return nil, err
 		}
+		tx, err := db.Bun().BeginTx(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				log.WithError(txErr).Error("error rolling back transaction in MoveExperiments")
+			}
+		}()
 		failedExpMoveIds := []int32{-1}
 		successExpMoveIds := []int32{-1}
 		for _, res := range expMoveResults {
@@ -390,7 +400,7 @@ func (a *apiServer) MoveRuns(
 			}
 		}
 		var acceptedIDs []int32
-		if _, err = db.Bun().NewUpdate().Table("runs").
+		if _, err = tx.NewUpdate().Table("runs").
 			Set("project_id = ?", req.DestinationProjectId).
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
@@ -407,8 +417,23 @@ func (a *apiServer) MoveRuns(
 				Id:    acceptID,
 			})
 		}
+
+		if _, err = tx.NewRaw(`UPDATE runs SET r.local_id=s.local_id FROM runs as r 
+		JOIN (SELECT r.id as id, (p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id)) as local_id
+		FROM projects p JOIN runs r ON r.project_id=p.id) as s ON r.id=s.id WHERE r.id IN (?)`,
+			bun.In(validIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's local IDs: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`UPDATE projects SET r.max_local_id=s.max_local_id FROM projects as p
+		JOIN (SELECT project_id, COALESCE(MAX(local_id), 1) as max_local_id FROM runs GROUP BY project_id
+		ORDER BY project_id) as s ON p.id=s.project_id WHERE p.id=?`,
+			req.DestinationProjectId).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating projects max local id: %w", err)
+		}
+
 		var failedRunIDs []int32
-		if err = db.Bun().NewSelect().Table("runs").
+		if err = tx.NewSelect().Table("runs").
 			Column("id").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
@@ -423,7 +448,7 @@ func (a *apiServer) MoveRuns(
 		}
 
 		var successRunIDs []int32
-		if err = db.Bun().NewSelect().Table("runs").
+		if err = tx.NewSelect().Table("runs").
 			Column("id").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(successExpMoveIds)).
@@ -435,6 +460,9 @@ func (a *apiServer) MoveRuns(
 				Error: "",
 				Id:    successRunID,
 			})
+		}
+		if err = tx.Commit(); err != nil {
+			return nil, err
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil
