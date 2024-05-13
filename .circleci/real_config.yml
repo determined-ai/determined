@@ -4231,10 +4231,10 @@ workflows:
           name: test-e2e-slurm-misconfigured
           requires:
             - package-and-push-system-local-ee
-          # filters:
-          #   branches:
-          #     only:
-          #       - main
+          filters:
+            branches:
+              only:
+                - main
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
@@ -4278,10 +4278,10 @@ workflows:
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
-          # filters:
-          #   branches:
-          #     only:
-          #       - main
+          filters:
+            branches:
+              only:
+                - main
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
@@ -5139,7 +5139,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - package-and-push-system-local-ee
-            # - request-hpc-tests
+            - request-hpc-tests
           mark: e2e_slurm_misconfigured
           master_config: |
             task_container_defaults:
