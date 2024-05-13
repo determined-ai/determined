@@ -816,9 +816,7 @@ class TFKerasTrialController(det.TrialController):
         keys = sorted(logs)
         hvd = horovod.hvd
         logger.debug(f"all-reducing logs on worker {hvd.rank()} for {len(keys)} keys {keys}.")
-        return {
-            key: np.array(self._hvd_allreduce(logs[key], average=True, name=key)) for key in keys
-        }
+        return {key: self._hvd_allreduce(logs[key], average=True, name=key) for key in keys}
 
     def _hvd_allreduce(self, value: Any, average: bool, name: str) -> Any:
         # The signature of our horovod allreduce changed after we rebased onto 0.21.
