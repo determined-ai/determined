@@ -1873,6 +1873,33 @@ export const createTaskTemplate: DetApi<Api.V1Template, Api.V1PostTemplateRespon
     request: (params: Api.V1Template) => detApi.Templates.postTemplate(params.name, params),
   };
 
+export const updateTaskTemplate: DetApi<Api.V1Template, Api.V1PutTemplateResponse, void> = {
+  name: 'updateTaskTemplate',
+  postProcess: noOp,
+  request: (params: Api.V1Template) => detApi.Templates.putTemplate(params.name, params),
+};
+
+export const updateTaskTemplateName: DetApi<
+  Api.V1PatchTemplateNameRequest,
+  Api.V1PatchTemplateNameResponse,
+  void
+> = {
+  name: 'updateTaskTemplateName',
+  postProcess: noOp,
+  request: (params: Api.V1PatchTemplateNameRequest) => detApi.Templates.patchTemplateName(params),
+};
+
+export const deleteTaskTemplate: DetApi<
+  Service.DeleteTemplateParams,
+  Api.V1DeleteTemplateResponse,
+  void
+> = {
+  name: 'deleteTaskTemplate',
+  postProcess: noOp,
+  request: (params: Service.DeleteTemplateParams) =>
+    detApi.Templates.deleteTemplate(params.name, params),
+};
+
 export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,
