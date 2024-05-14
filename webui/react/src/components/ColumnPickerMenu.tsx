@@ -270,11 +270,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
         <div className={css.base}>
           {tabs.length > 1 && (
             <Pivot
-              items={[
-                V1LocationType.EXPERIMENT,
-                [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
-                V1LocationType.HYPERPARAMETERS,
-              ].map((tab) => {
+              items={tabs.map((tab) => {
                 const canonicalTab = Array.isArray(tab) ? tab[0] : tab;
                 return {
                   children: (
@@ -291,7 +287,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                   ),
                   forceRender: true,
                   key: canonicalTab,
-                  label: locationLabelMap[canonicalTab],
+                  label: locationLabelMap[canonicalTab as keyof typeof locationLabelMap],
                 };
               })}
             />
@@ -312,7 +308,10 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       }
       open={open}
       onOpenChange={handleOpenChange}>
-      <Button hideChildren={isMobile} icon={<Icon name="columns" title="column picker" />}>
+      <Button
+        data-test-component="columnPickerMenu"
+        hideChildren={isMobile}
+        icon={<Icon name="columns" title="column picker" />}>
         Columns
       </Button>
     </Dropdown>

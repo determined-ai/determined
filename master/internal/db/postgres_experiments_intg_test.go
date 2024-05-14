@@ -668,6 +668,26 @@ func TestTopTrialsByMetric(t *testing.T) {
 	}
 }
 
+func createMetric(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
+	m := &trialv1.TrialMetrics{
+		TrialId:        int32(trID),
+		StepsCompleted: &sc,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					defaultSearcherMetric: {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: mv,
+						},
+					},
+				},
+			},
+			BatchMetrics: []*structpb.Struct{},
+		},
+	}
+	return m
+}
+
 func TestDeleteExperiments(t *testing.T) {
 	ctx := context.Background()
 
@@ -697,26 +717,6 @@ func TestDeleteExperiments(t *testing.T) {
 		numMtrsGen = 2 // Generic metrics per trial
 		numExptSns = 1 // Experiment snapshots per experiment
 	)
-
-	createMetric := func(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
-		m := &trialv1.TrialMetrics{
-			TrialId:        int32(trID),
-			StepsCompleted: &sc,
-			Metrics: &commonv1.Metrics{
-				AvgMetrics: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						defaultSearcherMetric: {
-							Kind: &structpb.Value_NumberValue{
-								NumberValue: mv,
-							},
-						},
-					},
-				},
-				BatchMetrics: []*structpb.Struct{},
-			},
-		}
-		return m
-	}
 
 	checkPointIndex := 1
 	for i := 0; i < numExpts; i++ { // Create experiments
@@ -975,4 +975,130 @@ func validateExperimentMatch(t *testing.T, expected []*model.Experiment, actual 
 
 	// map should be empty
 	require.Equal(t, len(m), 0)
+}
+
+func TestExperimentTotalStepTime(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	t.Run("invalid experiment, return 0.0, no error", func(t *testing.T) {
+		sec, err := ExperimentTotalStepTime(ctx, -1)
+		require.Equal(t, 0.0, sec)
+		require.NoError(t, err)
+	})
+
+	t.Run("experiment with single trial/task with null endtime", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, 0.0, timeInSeconds)
+	})
+
+	t.Run("experiment with single trial/task with set endtime", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		_, task := RequireMockTrial(t, db, exp)
+		alloc := RequireMockAllocation(t, db, task.TaskID)
+		endTime := alloc.StartTime.Add(time.Hour)
+		alloc.EndTime = &endTime // It only changes the memory and not DB.
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, 3600.0, timeInSeconds)
+	})
+
+	t.Run("experiment with multiple trials/tasks", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+
+		// Add 3 tasks to an experiment.
+		_, task := RequireMockTrial(t, db, exp)
+		alloc := RequireMockAllocation(t, db, task.TaskID)
+		endTime := alloc.StartTime.Add(time.Hour) // Adding an hour.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Minute) // Adding a minute.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Second) // Adding a second.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, 3661.0, timeInSeconds)
+	})
+}
+
+func TestExperimentNumSteps(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db := MustResolveTestPostgres(t)
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	t.Run("invalid experiment, return 0, no error", func(t *testing.T) {
+		sec, err := ExperimentNumSteps(ctx, -1)
+		require.Equal(t, int64(0), sec)
+		require.NoError(t, err)
+	})
+
+	t.Run("experiment with single trial metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		trialID := RequireMockTrialID(t, db, exp)
+
+		// Create training metrics (raw_steps).
+		mRaw1 := createMetric(10, 0.5, trialID)
+		err := db.AddTrainingMetrics(ctx, mRaw1)
+		require.NoError(t, err)
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+	})
+
+	t.Run("experiment with single trial multiple raw metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		trialID := RequireMockTrialID(t, db, exp)
+
+		// Create training metrics (raw_steps).
+		for i := 1; i < 5; i++ {
+			mRaw := createMetric(int32(i), 0.5, trialID)
+			err := db.AddTrainingMetrics(ctx, mRaw)
+			require.NoError(t, err)
+		}
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), count)
+	})
+
+	t.Run("experiment with multiple trial raw metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+
+		// Create training metrics (raw_steps).
+		for i := 0; i < 3; i++ {
+			trialID := RequireMockTrialID(t, db, exp)
+			mRaw := createMetric(10, 0.5, trialID)
+			err := db.AddTrainingMetrics(ctx, mRaw)
+			require.NoError(t, err)
+		}
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), count)
+	})
 }

@@ -1,5 +1,5 @@
 import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 import { Nameplate } from 'e2e/models/hew/Nameplate';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
@@ -15,17 +15,45 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this,
     selector: '[data-testid="navSidebar"]',
   });
-  readonly headerDropdown = new HeaderDropdown({
+  readonly header = new BaseComponent({
     parent: this.#nav,
     selector: '[data-testid="headerDropdown"]',
   });
-  readonly home = this.sidebarItem('Home');
-  readonly uncategorized = this.sidebarItem('Uncategorized');
-  readonly modelRegistry = this.sidebarItem('Model Registry');
-  readonly tasks = this.sidebarItem('Tasks');
-  readonly webhooks = this.sidebarItem('Webhooks');
-  readonly cluster = this.sidebarItem('Cluster');
-  readonly workspaces = this.sidebarItem('Workspaces');
+  readonly headerNameplate = new Nameplate({
+    parent: this.header,
+  });
+  readonly headerDropdown = new HeaderDropdown({
+    childNode: this.header,
+    root: this.root,
+  });
+  readonly home = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Home'}"]`,
+  });
+  readonly uncategorized = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Uncategorized'}"]`,
+  });
+  readonly modelRegistry = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Model Registry'}"]`,
+  });
+  readonly tasks = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Tasks'}"]`,
+  });
+  readonly webhooks = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Webhooks'}"]`,
+  });
+  readonly cluster = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Cluster'}"]`,
+  });
+  readonly workspaces = new BaseComponent({
+    parent: this.#nav,
+    selector: `a[aria-label="${'Workspaces'}"]`,
+  });
   readonly createWorkspace = new BaseComponent({
     parent: this.#nav,
     selector: 'span[aria-label="Create workspace"]',
@@ -33,40 +61,47 @@ export class NavigationSideBar extends BaseReactFragment {
   /**
    * Returns a representation of a sidebar NavigationItem with the specified label.
    * For example, a workspace pinned to the sidebar is accessible through it's label here.
-   * @param {string} [label] - the label of the tab, generally the name
+   * @param {string} label - the label of the tab, generally the name
    */
-  public sidebarItem(label: string): BaseComponent {
-    return new BaseComponent({
+  public sidebarWorkspaceItem(label: string): SidebarWorkspaceItem {
+    return new SidebarWorkspaceItem({
       parent: this.#nav,
       selector: `a[aria-label="${label}"]`,
     });
   }
-  readonly actionMenu = new WorkspaceActionDropdown({
-    parent: this.#nav,
-    selector: '', // no open-menu button, only right click on sidebar item to open
-  });
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
   // TODO readonly userSettings= new UserSettings({ parent: this });
 }
+/**
+ * Returns a representation of the HeaderDropdown component.
+ * Until the dropdown component supports test ids, this model will match any open dropdown.
+ * This constructor represents the contents in src/components/NavigationSideBar.
+ *
+ * The dropdown can be opened by calling the open method.
+ * @param {object} obj
+ * @param {BasePage} obj.root - root of the page
+ * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
+ * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
+ */
+class HeaderDropdown extends DropdownMenu {
+  readonly admin = this.menuItem('admin');
+  readonly settings = this.menuItem('settings');
+  readonly theme = this.menuItem('theme-toggle');
+  readonly signOut = this.menuItem('sign-out');
+}
 
-class HeaderDropdown extends Dropdown {
-  readonly nameplate = new Nameplate({
-    parent: this,
-  });
-  readonly admin = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('admin'),
-  });
-  readonly settings = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('settings'),
-  });
-  readonly theme = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('theme-toggle'),
-  });
-  readonly signOut = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('sign-out'),
+/**
+ * Returns the representation of a SidebarWorkspaceItem.
+ * This constructor is a base class for any component in src/components/NavigationSideBar.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
+class SidebarWorkspaceItem extends BaseComponent {
+  readonly actionMenu = new WorkspaceActionDropdown({
+    openMethod: async () => {
+      await this.pwLocator.click({ button: 'right' });
+    },
+    root: this.root,
   });
 }

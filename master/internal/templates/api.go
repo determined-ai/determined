@@ -206,6 +206,41 @@ func (a *TemplateAPIServer) PostTemplate(
 	return &apiv1.PostTemplateResponse{Template: &inserted}, nil
 }
 
+// PatchTemplateName rename a template.
+func (a *TemplateAPIServer) PatchTemplateName(
+	ctx context.Context,
+	req *apiv1.PatchTemplateNameRequest,
+) (*apiv1.PatchTemplateNameResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tpl, err := TemplateByName(ctx, req.OldName)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := AuthZProvider.Get().CanUpdateTemplate(
+		ctx, user, model.AccessScopeID(tpl.WorkspaceID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+
+	var updated templatev1.Template
+	_, err = db.Bun().NewUpdate().Model(&updated).
+		Where("name = ?", req.OldName).
+		Set("name = ?", req.NewName).
+		Returning("*").Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update template name: %w", err)
+	}
+	return &apiv1.PatchTemplateNameResponse{Template: &updated}, nil
+}
+
 // PatchTemplateConfig does a full update of the requested template's config.
 func (a *TemplateAPIServer) PatchTemplateConfig(
 	ctx context.Context,

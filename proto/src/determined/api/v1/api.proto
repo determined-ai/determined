@@ -1363,6 +1363,17 @@ service Determined {
       tags: "Templates"
     };
   }
+  // Patch template name.
+  rpc PatchTemplateName(PatchTemplateNameRequest)
+      returns (PatchTemplateNameResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/template/rename"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Templates"
+    };
+  }
 
   // Delete a template.
   rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {

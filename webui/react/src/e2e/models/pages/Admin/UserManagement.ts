@@ -8,7 +8,7 @@ import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { UserBadge } from 'e2e/models/components/UserBadge';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 import { Select } from 'e2e/models/hew/Select';
 import { Toast } from 'e2e/models/hew/Toast';
 import { AdminPage } from 'e2e/models/pages/Admin/index';
@@ -44,8 +44,11 @@ export class UserManagement extends AdminPage {
     selector: '[data-testid="addUser"]',
   });
   readonly actions = new actionDropdownMenu({
-    parent: this.#actionRow,
-    selector: '[data-testid="actions"]',
+    childNode: new BaseComponent({
+      parent: this.#actionRow,
+      selector: '[data-testid="actions"]',
+    }),
+    root: this,
   });
 
   readonly table = new InteractiveTable({
@@ -177,8 +180,11 @@ class UserRow extends Row {
     selector: '[data-testid="modified"]',
   });
   readonly actions = new UserActionDropdown({
-    parent: this,
-    selector: '[data-testid="actions"]',
+    childNode: new BaseComponent({
+      parent: this,
+      selector: '[data-testid="actions"]',
+    }),
+    root: this.root,
   });
 }
 
@@ -189,19 +195,10 @@ class UserRow extends Row {
  * @param {CanBeParent} obj.parent - The parent used to locate this UserActionDropdown
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-class UserActionDropdown extends Dropdown {
-  readonly edit = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('edit'),
-  });
-  readonly agent = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('agent'),
-  });
-  readonly state = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('state'),
-  });
+class UserActionDropdown extends DropdownMenu {
+  readonly edit = this.menuItem('edit');
+  readonly agent = this.menuItem('agent');
+  readonly state = this.menuItem('state');
 }
 
 /**
@@ -211,19 +208,10 @@ class UserActionDropdown extends Dropdown {
  * @param {CanBeParent} obj.parent - The parent used to locate this ActionDropdownMenu
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-class actionDropdownMenu extends Dropdown {
-  readonly status = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('change-status'),
-  });
-  readonly roles = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('set-roles'),
-  });
-  readonly groups = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('add-to-groups'),
-  });
+class actionDropdownMenu extends DropdownMenu {
+  readonly status = this.menuItem('change-status');
+  readonly roles = this.menuItem('set-roles');
+  readonly groups = this.menuItem('add-to-groups');
 }
 
 /**
@@ -234,18 +222,9 @@ class actionDropdownMenu extends Dropdown {
  * @param {string} obj.selector - Used as a selector used to locate this object
  */
 class RoleSelect extends Select {
-  readonly allRoles = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('All Roles'),
-  });
-  readonly admin = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Admin'),
-  });
-  readonly nonAdmin = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Non-Admin'),
-  });
+  readonly allRoles = this.menuItem('All Roles');
+  readonly admin = this.menuItem('Admin');
+  readonly nonAdmin = this.menuItem('Non-Admin');
 }
 
 /**
@@ -256,16 +235,7 @@ class RoleSelect extends Select {
  * @param {string} obj.selector - Used as a selector used to locate this object
  */
 class StatusSelect extends Select {
-  readonly allStatuses = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('All Statuses'),
-  });
-  readonly activeUsers = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Active Users'),
-  });
-  readonly deactivatedUsers = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Deactivated Users'),
-  });
+  readonly allStatuses = this.menuItem('All Statuses');
+  readonly activeUsers = this.menuItem('Active Users');
+  readonly deactivatedUsers = this.menuItem('Deactivated Users');
 }

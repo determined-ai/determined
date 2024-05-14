@@ -136,7 +136,7 @@ export class UserFixture {
    */
   async editUser(user: User, edit: UserArgs = {}): Promise<User> {
     const row = await this.userManagementPage.getRowByUsernameSearch(user.username);
-    await row.actions.pwLocator.click();
+    await row.actions.open();
     await row.actions.edit.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
@@ -198,11 +198,11 @@ export class UserFixture {
     await this.userManagementPage.table.table.headRow.selectAll.pwLocator.click();
     await expect(this.userManagementPage.table.table.headRow.selectAll.pwLocator).toBeChecked();
     // open group actions
-    await this.userManagementPage.actions.pwLocator.click();
+    await this.userManagementPage.actions.open();
     await this.userManagementPage.actions.status.pwLocator.click();
     // deactivate
     await this.userManagementPage.changeUserStatusModal.pwLocator.waitFor();
-    await this.userManagementPage.changeUserStatusModal.status.pwLocator.click();
+    await this.userManagementPage.changeUserStatusModal.status.openMenu();
     await this.userManagementPage.changeUserStatusModal.status.deactivate.pwLocator.click();
     await this.userManagementPage.changeUserStatusModal.footer.submit.pwLocator.click();
     for (const id of ids) {
@@ -229,7 +229,7 @@ export class UserFixture {
     await expect(async () => {
       // user table can flake if running in parrallel
       const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username)).actions;
-      await actions.pwLocator.click();
+      await actions.open();
       if (
         (await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')
       ) {

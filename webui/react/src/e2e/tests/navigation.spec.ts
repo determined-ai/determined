@@ -59,7 +59,7 @@ test.describe('Navigation', () => {
 
     await test.step('Navigate to Admin', async () => {
       const userManagementPage = new UserManagement(authedPage);
-      await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
+      await userManagementPage.nav.sidebar.headerDropdown.open();
       await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click();
       await authedPage.waitForURL(userManagementPage.getUrlRegExp());
       await expect.soft(authedPage).toHaveTitle(userManagementPage.title);

@@ -38,7 +38,7 @@ test.describe('User Management', () => {
 
   test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
-    await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
+    await userManagementPage.nav.sidebar.headerDropdown.open();
     await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click();
     await expect(page).toHaveTitle(userManagementPage.title);
     await expect(page).toHaveURL(userManagementPage.url);
@@ -82,7 +82,7 @@ test.describe('User Management', () => {
         const userManagementPage = new UserManagement(page);
         await auth.logout();
         await auth.login(testUser);
-        await userManagementPage.nav.sidebar.headerDropdown.pwLocator.click();
+        await userManagementPage.nav.sidebar.headerDropdown.open();
         await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor();
         await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.waitFor({
           state: 'hidden',
@@ -188,7 +188,7 @@ test.describe('User Management', () => {
           await expect(
             repeatWithFallback(
               async () => {
-                await userManagementPage.table.table.pagination.perPage.pwLocator.click();
+                await userManagementPage.table.table.pagination.perPage.openMenu();
                 await userManagementPage.table.table.pagination.perPage.perPage10.pwLocator.click();
               },
               async () => {
@@ -198,7 +198,7 @@ test.describe('User Management', () => {
             ),
           ).toPass({ timeout: 15_000 });
           // filter by active users
-          await userManagementPage.filterStatus.pwLocator.click();
+          await userManagementPage.filterStatus.openMenu();
           await userManagementPage.filterStatus.activeUsers.pwLocator.click();
           await expect(async () => {
             expect(
@@ -291,7 +291,7 @@ test.describe('User Management', () => {
             await expect(
               repeatWithFallback(
                 async () => {
-                  await pagination.perPage.pwLocator.click();
+                  await pagination.perPage.openMenu();
                   await paginationOption.pwLocator.click();
                 },
                 async () => {
@@ -301,7 +301,9 @@ test.describe('User Management', () => {
               ),
             ).toPass({ timeout: 25_000 });
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
-            const matches = (await pagination.perPage.pwLocator.innerText()).match(/(\d+) \/ page/);
+            const matches = (await pagination.perPage.selectionItem.pwLocator.innerText()).match(
+              /(\d+) \/ page/,
+            );
             if (matches === null) {
               throw new Error("Couldn't find pagination selection.");
             }
