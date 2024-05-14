@@ -2315,7 +2315,7 @@ jobs:
           paths:
             - test-unit-harness-cpu-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-gpu:
     docker:
@@ -2339,7 +2339,7 @@ jobs:
           paths:
             - test-unit-harness-gpu-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
@@ -2363,7 +2363,7 @@ jobs:
           paths:
             - test-unit-harness-pytorch2-gpu-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-cpu:
     docker:
@@ -2386,7 +2386,7 @@ jobs:
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2410,7 +2410,7 @@ jobs:
           paths:
             - test-unit-harness-gpu-parallel-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
     docker:
@@ -2434,7 +2434,7 @@ jobs:
           paths:
             - test-unit-harness-gpu-deepspeed-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-harness-tf2:
     docker:
@@ -2459,7 +2459,7 @@ jobs:
           paths:
             - test-unit-harness-tf2-pycov
       - store_test_results:
-          path: /tmp/harness/test-results
+          path: /tmp/test-results
 
   test-unit-storage:
     docker:
