@@ -51,26 +51,26 @@ type ModelMsg struct {
 }
 
 // SeqNum gets the SeqNum from a ModelMsg.
-func (pm *ModelMsg) SeqNum() int64 {
-	return pm.Seq
+func (mm *ModelMsg) SeqNum() int64 {
+	return mm.Seq
 }
 
 // GetID gets the ID from a ModelMsg.
-func (pm *ModelMsg) GetID() int {
-	return pm.ID
+func (mm *ModelMsg) GetID() int {
+	return mm.ID
 }
 
 // UpsertMsg creates a model stream upsert message.
-func (pm *ModelMsg) UpsertMsg() stream.UpsertMsg {
+func (mm *ModelMsg) UpsertMsg() stream.UpsertMsg {
 	return stream.UpsertMsg{
 		JSONKey: ModelsUpsertKey,
-		Msg:     pm,
+		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a model stream delete message.
-func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(pm.ID), 10)
+func (mm *ModelMsg) DeleteMsg() stream.DeleteMsg {
+	deleted := strconv.FormatInt(int64(mm.ID), 10)
 	return stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: deleted,

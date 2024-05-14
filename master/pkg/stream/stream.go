@@ -3,7 +3,7 @@ package stream
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -44,7 +44,6 @@ type UpsertMsg struct {
 
 // MarshalJSON returns a json marshaled UpsertMsg.
 func (u UpsertMsg) MarshalJSON() ([]byte, error) {
-	fmt.Printf("msg: %+v\n", u.Msg)
 	data := map[string]Msg{
 		u.JSONKey: u.Msg,
 	}
@@ -146,28 +145,35 @@ func NewSubscription[T Msg](
 func (s *Subscription[T]) Register() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	s.Publisher.Subscriptions[s] = struct{}{}
+	s.Publisher.Subscriptions = append(s.Publisher.Subscriptions, s)
 }
 
 // Unregister removes a Subscription from its Publisher.
 func (s *Subscription[T]) Unregister() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	delete(s.Publisher.Subscriptions, s)
+	subscriptions := s.Publisher.Subscriptions
+	i := slices.Index(subscriptions, s)
+	if i == -1 {
+		log.Errorf("failed to unregister subscription.")
+		return
+	}
+	subscriptions[i] = subscriptions[len(subscriptions)-1]
+	subscriptions = subscriptions[:len(subscriptions)-1]
 }
 
 // Publisher is responsible for publishing messages of type T
 // to streamers associate with active subscriptions.
 type Publisher[T Msg] struct {
 	Lock          sync.Mutex
-	Subscriptions map[*Subscription[T]]struct{}
+	Subscriptions []*Subscription[T]
 	WakeupID      int64
 }
 
 // NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg]() *Publisher[T] {
 	return &Publisher[T]{
-		Subscriptions: map[*Subscription[T]]struct{}{},
+		Subscriptions: []*Subscription[T]{},
 	}
 }
 
@@ -176,7 +182,7 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	seenStreamersSet := make(map[*Streamer]struct{})
-	for sub := range p.Subscriptions {
+	for _, sub := range p.Subscriptions {
 		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
 			sub.Streamer.Close()
 			seenStreamersSet[sub.Streamer] = struct{}{}
@@ -185,9 +191,16 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Subscriptions = nil
 }
 
+// hydrateMsg goes into the DB by the ID from rawMsg and grabs the fields(hydrated message) that we care about.
+// Here are the different scenarios of an ID in this function:
+// 1. It checks if the ID has been deleted.
+// 2. It checks if the ID has the same Seq as the rawMsg.
+// 3. It checks if the ID has a Seq greater than the rawMsg.
+// 4. It checks if the ID is now considered as a fallout event for the subscriber and still has the same Seq as the rawMsg.
+// 5. It checks if the ID is now considered as a fallout event for the subscriber and has a Seq greater than the rawMsg.
+// The function returns hydrated message scenarios 2 and 4.
 func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EntityCache, sub *Subscription[T], ev Event[T]) interface{} {
-	fmt.Println("hydrate message")
-	var msg interface{}
+	var hydratedMsg interface{}
 	entityCache := EntityCache{}
 
 	entityMsg, err := sub.hydrator(rawMsg.GetID())
@@ -207,22 +220,19 @@ func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EntityCache, 
 	entityCache.UpsertCache = sub.Streamer.PrepareFn(upsertMsg)
 	// check filter again in case project move workspace that would be a fall out
 	if sub.filter(upsertMsg.Msg.(T)) && sub.permissionFilter(upsertMsg.Msg.(T)) {
-		// fmt.Println("helper: check filters again")
 		if entityCache.Seq == rawMsg.SeqNum() {
-			msg = entityCache.UpsertCache
+			hydratedMsg = entityCache.UpsertCache
 		}
 	} else {
 		// This id fall out
-		fmt.Println("detected fallout in hydration")
 		entityCache.DeleteCache = sub.Streamer.PrepareFn(entityMsg.DeleteMsg())
 		if entityCache.Seq == rawMsg.SeqNum() {
-			fmt.Println("send fallout in hydration")
-			msg = entityCache.DeleteCache
+			hydratedMsg = entityCache.DeleteCache
 		}
 	}
 	idToEventCache[rawMsg.GetID()] = entityCache
 
-	return msg
+	return hydratedMsg
 }
 
 // Broadcast receives a list of events, determines if they are
@@ -238,50 +248,40 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	idToEventCache := map[int]EntityCache{}
 
 	// check each event against each subscription
-	for sub := range p.Subscriptions {
-		// fmt.Println("NEW SUB")
+	for _, sub := range p.Subscriptions {
 		func() {
-			for i, ev := range events {
-				fmt.Printf("events idx: %v\n", i)
-				var msg interface{}
+			for _, ev := range events {
+				var msg any
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
+					// update, insert, or fallin: send the record to the client.
 					rawMsg := *ev.After
-					entityCache, ok := idToEventCache[rawMsg.GetID()]
-					fmt.Printf("events idx: %v, entityCache: %+v, ok: %v, filter: %v\n", i, entityCache, ok, sub.filter(*ev.After))
+
 					if entityCache, ok := idToEventCache[rawMsg.GetID()]; ok {
-						// update, insert, or fallin: send the record to the client.
 						cachedSeq := entityCache.Seq
 						if cachedSeq > rawMsg.SeqNum() || cachedSeq == -1 {
 							// ignore this message
-							// fmt.Println("ignore this event. has cache.")
 							continue
 						} else if cachedSeq == rawMsg.SeqNum() && entityCache.UpsertCache != nil {
 							// entityCache.UpsertCache can be nil if the previous event is a fallout.
 							// It doesn't have UpsertCache.
 							msg = entityCache.UpsertCache
-							fmt.Printf("cached msg sent: %#v\n", msg)
 						} else {
 							msg = p.hydrateMsg(rawMsg, idToEventCache, sub, ev)
-							fmt.Printf("updated cached msg sent: %#v\n", msg)
 							if msg == nil {
 								continue
 							}
 						}
 					} else {
-						// fmt.Println("upsert no cached seq")
 						msg = p.hydrateMsg(rawMsg, idToEventCache, sub, ev)
-						fmt.Printf("no cached msg sent: %#v\n", msg)
 						if msg == nil {
 							continue
 						}
-						// fmt.Printf("idToCachedSeq: %+v\n", idToEventCache)
 					}
 
 				case ev.Before != nil && ev.After != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before) &&
 					(!sub.filter(*ev.After) || !sub.permissionFilter(*ev.After)):
 					// fallout: tell the client the record is deleted.
-					fmt.Println("fallout")
 					afterMsg := *ev.After
 
 					if entityCache, ok := idToEventCache[afterMsg.GetID()]; ok {
@@ -300,7 +300,6 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 				case ev.Before != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before):
 					// deletion: tell the client the record is deleted.
 					beforeMsg := *ev.Before
-					fmt.Println("delete msg")
 
 					if entityCache, ok := idToEventCache[beforeMsg.GetID()]; ok {
 						if entityCache.DeleteCache == nil {
@@ -318,7 +317,6 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					}
 
 				default:
-					fmt.Printf("This message is not relavent to the subscriber. Ignore it.\n")
 					log.Tracef("This message is not relavent to the subscriber. Ignore it.\n")
 					continue
 				}
@@ -329,7 +327,6 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					defer sub.Streamer.Cond.L.Unlock()
 					sub.Streamer.Cond.Signal()
 				}
-				fmt.Printf("broadcast msg: %#v\n", msg)
 				sub.Streamer.Msgs = append(sub.Streamer.Msgs, msg)
 			}
 		}()

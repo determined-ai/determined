@@ -23,11 +23,8 @@ const (
 // testPrepareFunc returns a string representation of known messages;
 // otherwise, returns the MarshallableMsg that the streamer sends.
 func testPrepareFunc(i stream.MarshallableMsg) interface{} {
-	// fmt.Printf("testPrepareFunc: %#v, type:%+v\n", i, reflect.TypeOf(i))
 	switch msg := i.(type) {
 	case stream.UpsertMsg:
-		// fmt.Println("is upsertmsg")
-		// fmt.Printf("typedMsg: %#v, type:%+v\n", msg.Msg, reflect.TypeOf(msg.Msg))
 		switch typedMsg := msg.Msg.(type) {
 		case *ProjectMsg:
 			return fmt.Sprintf(
@@ -120,7 +117,6 @@ func (s *mockSocket) ReadIncoming(t *testing.T, data *string) {
 		t.Error(&websocket.CloseError{Code: websocket.CloseAbnormalClosure})
 	case msg := <-s.inbound:
 		stringMsg, ok := msg.(string)
-		// fmt.Printf("stringMsg: %#v\n", msg)
 		if !ok {
 			t.Errorf("read unexpected message, likely due to type not being added to testPrepareFunc: %#v", msg)
 		}
